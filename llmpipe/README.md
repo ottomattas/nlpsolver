@@ -10,6 +10,7 @@ The recommended files for experimenting with LLM as a parser are the following (
 * `nlpsimpleprompt1.txt`: used by `nlpsimplecollect.py` as a system prompt
 * `nlpsimpletext.py`: example input file used by `nlpsimplecollect.py` 
 * `nlpsimpletext1.py`: another example input file for `nlpsimplecollect.py` 
+* `logicexample.txt`: a very simple logic task made from the `nlpsimpletext.py` conversion output, a single handmade rule and a question. You can directly run it in logictools.org.
 
 The other files are examples for more complex LLM parsing (again, configurations at the beginning of the python files) and are essentially updates for the folder `../gpt/` in the same `nlpsolver` repository.
 
