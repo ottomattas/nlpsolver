@@ -1187,6 +1187,7 @@ def parse_int(string):
 
 def clause_list_to_json(clauselist):
   reslst=[]
+  #print("clauselist",clauselist)
   for clause in clauselist:
     clauserep=[]
     if "@logic" in clause: logic=clause["@logic"]

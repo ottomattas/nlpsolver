@@ -6,7 +6,7 @@
 # here and return the results.
 #
 #-----------------------------------------------------------------
-# Copyright 2022 Tanel Tammet (tanel.tammet@gmail.com)
+# Copyright 2024 Tanel Tammet (tanel.tammet@gmail.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,6 +38,25 @@ test_files=["tests_core.py","tests_hans.py","tests_allen.py"]
 
 #test_files=["problems/babi/ajut2.py"]
 
+test_files=["ajut.py"]
+test_files=["tests_hans.py","tests_allen.py"]
+test_files=["tests_hans.py"]
+test_files=["llm_tests_core1.py"]
+test_files=["tests_hans.py"]
+
+#test_files=["llm_tests_hans_resultsa_converted.py"]
+test_files=["llm_tests_core1_resultsa_converted.py"]
+#test_files=["tst5.py"]
+test_files=["llm_tests_allen_results_converted.py"]
+test_files=["tests_wiki1.py"]
+test_files=["tests_wiki1_results_converted.txt"]
+
+# test_files=["tests_wikipedia_merged.py"]
+test_files=["tests_wikipedia_parseresults_converted.py"]
+
+test_files=["tests_wikipedia.py"]
+test_files=["llm_tests_core1_resultsa_converted.py"]
+ 
 show_tests=False # set to False to suppress printing of all tests during work
 show_compact=True # if show_tests is False, set to True to get 0/1 char for each test
 
@@ -54,13 +73,24 @@ outfilebase="testres" # only for multiple processes
 
 def main():
   global test_files
+  options={}
+  new_test_files=[]
   if len(sys.argv)>1:    
-    test_files=[]
     for el in sys.argv[1:]:
       if el in ["-help","--help"]:
-        print("Give .py format test files as arguments to suppress the default selection of test files")
+        print("""Options: --llmsolve, --llmparseall, --solveparsed
+              
+Give .py format test files as arguments to suppress the default selection of test files""")
         return
-      test_files.append(el)    
+      elif el in ["-llmsolve","--llmsolve"]:
+        options["llm_solve_flag"]=True
+      elif el in ["-llmparseall","--llmparseall"]:
+        options["llm_parse_all_flag"]=True  
+      elif el in ["-solveparsed","--solveparsed"]:
+        options["solveparsed_flag"]=True    
+      else:  
+        new_test_files.append(el) 
+  if new_test_files: test_files=new_test_files
   alltests=[]
   for testfile in test_files:
     try:
@@ -77,11 +107,10 @@ def main():
       raise(err)
       return
     alltests.append([testfile,tests])  
-
   allresults=[] 
   for test in alltests:  
     print("\n=== running test "+test[0]+" ===\n")
-    results=single_run_tests(test[1],0,len(test[1]))
+    results=single_run_tests(test[1],0,len(test[1]),options)
     allresults.append(results)
 
   if len(alltests)>1:
@@ -193,16 +222,17 @@ def dev_main():
       print(failstr)
 
 
-def single_run_tests(tests, lower=0, upper=0):
+def single_run_tests(tests, lower=0, upper=0, options={}):
   okresults=[]
   failedresults=[]
   testcount=0-1
   realtestcount=0
   print("Starting to run",len(tests),"tests")
+  options["use_cache_flag"]=False
   if show_tests: print()
   if upper==0: 
     upper=len(tests)  
-  start_time = time.time() 
+  start_time = time.time()   
   for test in tests:    
     testcount+=1
     if testcount<lower: continue
@@ -211,7 +241,11 @@ def single_run_tests(tests, lower=0, upper=0):
     realtestcount+=1
     if show_tests: print("Input:",test[0])
     try:
-      result=answer_question(test[0],{"use_cache_flag":True})
+      if len(test)>2 and options["solveparsed_flag"]:
+        #print("here:",test[2])
+        result=answer_question(test[2],options)
+      else:
+        result=answer_question(test[0],options)
     except KeyboardInterrupt:
       return  
     except:
@@ -226,12 +260,16 @@ def single_run_tests(tests, lower=0, upper=0):
     else:
       failedresults.append([test,result])
       if not show_tests and show_compact: print("0",end="",flush=True)
-    if testcount==1 and len(failedresults)==1 and len(tests)>100:
+    if (testcount==1 and len(failedresults)==1 and len(tests)>100 and 
+       (("llm_solve_flag" not in options) or not (options["llm_solve_flag"])) and
+       (("solveparsed_flag" not in options) or not (options["solveparsed_flag"]))):
       print("First test failed: nlpsolver is apparently not working.")
       print("""Try ./nlpsolver.py "Elephants are animals. Elephants are animals?" to see the error message.""")
       print("Testing halted.")
       return
-    if testcount==10 and len(failedresults)!=0 and len(tests)>100:
+    if (testcount==10 and len(failedresults)!=0 and len(tests)>100 and 
+       (("llm_solve_flag" not in options) or not (options["llm_solve_flag"])) and
+       (("solveparsed_flag" not in options) or not (options["solveparsed_flag"]))):
       print("One of the first ten tests failed: something is too wrong for further testing.")
       print("Testing halted.")
       print()
@@ -254,33 +292,42 @@ def single_run_tests(tests, lower=0, upper=0):
   return results
 
 def okresult(test,result):
+  #print("test,result",test,result)
+  #print("++++ Test: ",test[0],test[1])
+  #print("**** result: ",result)
   expected=test[1]
+  #print("test,result",test,result,type(result),expected,type(expected))
+  if result==True: result="True."
+  elif result==False: result="False."
   if expected==True: expected="True."
   elif expected==False: expected="False."
   if not result:
     return False
   #print("result 1",result)
-  if "(" in result and ")" in result:
-    if strict_confidences: 
-      result="Unknown"
-    tmp=[]
-    inparenthesis=False
-    for char in result:      
-      if char=="(": inparenthesis=True
-      elif char==")": inparenthesis=False
-      elif not inparenthesis:
-        tmp.append(char)
-    result="".join(tmp)
-    result=result.replace(" .",".")
-    #print("result 2",result)
-  result=result.split("\n")
-  result=result[0].strip()
+  #if result==True: result="True."
+  #elif result==False: result="False."
+  if type(result)==str:
+    if "(" in result and ")" in result:
+      if strict_confidences: 
+        result="Unknown"
+      tmp=[]
+      inparenthesis=False
+      for char in result:      
+        if char=="(": inparenthesis=True
+        elif char==")": inparenthesis=False
+        elif not inparenthesis:
+          tmp.append(char)
+      result="".join(tmp)
+      result=result.replace(" .",".")
+      #print("result 2",result)
+    result=result.split("\n")
+    result=result[0].strip()
   if expected==None:
-    if result.startswith("Unknown"):
+    if type(result)==str and result.startswith("Unknown"):
       return True
     else:
       return False  
-  expected=expected.strip()  
+  if type(expected)==str: expected=expected.strip()  
   if expected==result:
     return True
   stdexpected=standardize_answer(expected)  
@@ -294,6 +341,7 @@ def okresult(test,result):
   return False  
 
 def standardize_answer(txt):
+  if type(txt)!=str: return txt
   txt=txt.replace(".","")
   txt=txt.replace(","," ")
   spl=txt.split(" ")

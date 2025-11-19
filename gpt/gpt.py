@@ -21,6 +21,7 @@
 
 # ==== standard libraries ====
 
+import time
 import sys
 import json
 import http.client
@@ -31,6 +32,7 @@ import http.client
 # ======= llm configuration ===
 
 secrets_file="secrets.js"
+claude_secrets_file="claude_secrets.js"
 
 gpt2="davinci-002"         # text-davinci-002 code-davinci-002 babbage-002 
 gpt3="gpt-3.5-turbo-0125"  # 
@@ -38,17 +40,36 @@ gpt4="gpt-4-0125-preview"  # gpt-4  gpt-4-32k
 gpt4="gpt-4o-2024-05-13"
 gpt3_instruct="gpt-3.5-turbo-instruct-0914"  # "gpt-3.5-turbo-instruct" 
 
+gpt4="gpt-4.1-2025-04-14"
+
+
+#gpt5="gpt-5-nano-2025-08-07"
+gpt5="gpt-5-mini-2025-08-07"
+#gpt5="gpt-5-2025-08-07"
+gpt5="gpt-5.1"
+
 temperature=0
 seed=1234
-max_tokens=2000
+default_max_tokens=2000
+
+sleepseconds=2
 
 # ======= other configuration globals ===
 
-gpt_model=gpt4 # default
+gpt_model=gpt5 # default
+claudeversion="claude-3-7-sonnet-20250219"
+# claude-3-7-sonnet-20250219 old
+# claude-haiku-4-5  cheaper
+# claude-sonnet-4-5  middling, coding etc
+# claude-opus-4-1 expensive
+claudeversion="claude-haiku-4-5"
 
-debug=False # set to True to get a printout of data, call and result
+debug=True # set to True to get a printout of data, call and result
 
-helptext="""Usage example: ./gpt.py 4 -s logifyprompt3.txt "John is a nice person."
+helptext="""Usage examples: 
+./gpt.py 4 -s logifyprompt3.txt "John is a nice person."
+./gpt.py claude -s logifyprompt3.txt "John is a nice person."
+
 Use 4 for gpt4, 3 for gpt3, 2 for gpt and instruct for gpt3 instruct version.
 You may skip the -s key along with the (system)prompt file parameter.
 
@@ -64,7 +85,7 @@ def main():
   pfile=""
   texts=[]  
   nextprompt=False
-  max_tokens=None
+  max_tokens=default_max_tokens
   # parse command line
   for el in sys.argv[1:]:
     if el in ["-sys","-s","--sys","--s"]:
@@ -80,8 +101,12 @@ def main():
           gptversion=gpt2  
         elif el=="4":
           gptversion=gpt4  
-        elif el=="instruct":
+        elif el=="5":
+          gptversion=gpt5    
+        elif el=="instruct":          
           gptversion=gpt3_instruct
+        elif el=="claude":  
+          gptversion=claudeversion
         elif el.strip().isnumeric():
           max_tokens=int(el.strip())
         elif len(el)<20 and " " not in el:
@@ -111,12 +136,128 @@ def main():
   debug_print("sysprompt:",sysprompt)
   debug_print("prompt:",prompt)
   # actual call
-  result=call_gpt(gptversion,prompt,sysprompt,max_tokens)
+  if gptversion==claudeversion:
+    result=call_claude(claudeversion,prompt,sysprompt,max_tokens)  
+  else:
+    result=call_gpt(gptversion,prompt,sysprompt,max_tokens)
   print("result:",result)
   
 
-# ========= llm connection =========
+# ========= llm connection for claude =========
 
+"""
+def ask_claude(syspromptfile,prompt): 
+  pfile=syspromptfile          
+  # make a sysprompt
+  sysprompt=""    
+  if pfile:
+    try:
+      f=open(pfile, "r")
+      sysprompt=f.read().strip()
+      f.close()
+    except:
+      show_error("could not read sysprompt file "+pfile)   
+  if not prompt:
+    show_error("no prompt given")    
+  debug_print("sysprompt:",sysprompt)
+  debug_print("prompt:",prompt)
+  # actual call
+  result=call_claude(claudeversion,prompt,sysprompt,max_tokens)  
+  return result  
+"""
+
+
+def call_claude(version,sentences,sysprompt,max_tokens):
+  try:
+    sf=open(claude_secrets_file,"r")
+    txt=sf.read()
+  except:
+    show_error("Could not read file containing claude api key: "+str(claude_secrets_file))
+  """
+  try:  
+    data=json.loads(txt)
+  except:
+    show_error("Could not parse json text containing claude api key in: "+str(claude_secrets_file))  
+  if "claude_key" not in data or not (data["claude_key"]):
+    show_error("Could not find claude api key in: "+str(claude_secrets_file))
+  else:    
+    key=data["claude_key"]
+  """
+  key=txt  
+  # key found ok    
+  #sentences="A fork is a tool you use in the kitchen or when you eat."
+  messages=[]  
+  message={"role": "user", "content": sentences}
+  messages.append(message)  
+ 
+  baseurl="/v1/messages"
+  call={
+       "model": version,
+       "messages": messages,
+       #"seed": seed,
+       #"logprobs": True,
+       #"logprobs": False,
+       "temperature": temperature,
+       "max_tokens": max_tokens
+    }
+  if sysprompt:
+    call["system"]=[{"type":"text", "text":sysprompt, "cache_control": {"type": "ephemeral"}}]
+  if max_tokens:
+    call["max_tokens"]=max_tokens
+
+  debug_print("claude call",call)
+  calltxt=json.dumps(call) 
+  debug_print("claude calltxt:",calltxt)
+
+  trycount=0
+  while True:
+    host = "api.anthropic.com"
+    conn = http.client.HTTPSConnection(host)
+    conn.request("POST", baseurl, calltxt,
+                headers={
+      "content-Type": "application/json", 
+      "anthropic-version": "2023-06-01",
+      "x-api-key": key
+    })    
+    response = conn.getresponse()
+    if response.status!=200 or response.reason!="OK":
+      try:
+        data=json.loads(response.read())    
+        if "error" in data and "message" in data["error"]:
+          message=": "+data["error"]["message"]
+      except:
+        message=""      
+      print("api failure, trying again: ",str(response.status),str(response.reason)+message)  
+      trycount+=1
+      if conn: conn.close()
+      time.sleep(sleepseconds*(trycount+1))
+    else:
+      break  
+    if trycount>3:
+      show_error("after several tries claude responded with error "+str(response.status)+" "+str(response.reason)+message)
+  rawdata = response.read()
+  try:
+    data=json.loads(rawdata)
+  except KeyboardInterrupt:
+    raise  
+  except:
+    show_error("claude response is not a correct json: "+  str(rawdata))
+  if "content" not in data:
+    show_error("claude response does not contain content:"+ str(rawdata))
+
+  # OK answer received  
+  debug_print("claude response:",data)  
+  part=data["content"]  
+  res=""
+  for el in part:
+    if "text" in el:    
+      res+=el["text"].strip()      
+              
+  conn.close()
+  #debug_print("res",res)  
+  return res
+
+# ========= llm connection for gpt =========
 
 def call_gpt(gptversion,sentences,sysprompt,max_tokens):
   try:
@@ -155,6 +296,68 @@ def call_gpt(gptversion,sentences,sysprompt,max_tokens):
      #"logprobs": True,
      "temperature": temperature
     }
+  elif gptversion in [gpt5]:
+    baseurl="/v1/responses"
+    if sysprompt:
+      sysprompt=sysprompt+""""\nFinally, wrap the answer as a json value of the key "result" like this:
+      {"result":actual_result}\n
+"""      
+      messages=[
+        {"role": "system", "content": [{"type": "input_text", "text": sysprompt}]},
+        {"role": "user",   "content": [{"type": "input_text", "text": sentences}]}
+      ]  
+    else:
+      messages=[      
+        {"role": "user",   "content": [{"type": "input_text", "text": sentences}]}
+      ]  
+    effort="none"
+    if gptversion.startswith("gpt-5.1"):
+      effort="none" # "none" | "low" | "medium" | "high"
+    else:
+      effort="minimal" # 'minimal', 'low', 'medium', 'high'.
+    call={
+      "model": gptversion,
+      "input": messages,
+      "text": {
+          "verbosity": "low",
+          "format": { "type": "json_object" }  
+          #"format":  {
+          #  "type": "json_schema",
+          #  "name": "equation_solution",
+          #  "schema": {
+          #     "type": "array"
+          #   }    
+          #}   
+          #          
+          #"strict": true
+      }, 
+      
+      "reasoning": {
+        "effort": effort
+      },
+
+       #"top_p": 0.1
+       #"seed": seed,
+       #"logprobs": True,
+       #"logprobs": False,
+       #"type": "json_object"
+       #"reasoning.effort": "minimal" # minimal | standard | deep
+       #"top_p": 0.01
+    }    
+  elif False and gptversion in [gpt5]:
+   baseurl="/v1/chat/completions"
+   #baseurl="/v1/responses"
+   call={
+       "model": gptversion,
+       "messages": messages,
+       "seed": seed,
+       #"logprobs": True,
+       "logprobs": False,
+       "verbosity": "low",
+       #"type": "json_object"
+       "reasoning_effort": "minimal" # minimal | standard | deep
+       #"top_p": 0.01
+    }  
   else:  
     baseurl="/v1/chat/completions"
     call={
@@ -164,14 +367,21 @@ def call_gpt(gptversion,sentences,sysprompt,max_tokens):
        #"logprobs": True,
        "logprobs": False,
        "temperature": temperature
-    }
+       #"type": "json_object"       
+    }  
   if max_tokens:
-    call["max_tokens"]=max_tokens
+    if gptversion.startswith("gpt-5"):
+      call["max_output_tokens"]=max_tokens
+    else:
+      call["max_tokens"]=max_tokens 
 
   debug_print("gpt call",call)
   calltxt=json.dumps(call) 
   debug_print("gpt call:",calltxt)
 
+  #print(calltxt)
+  #return
+ 
   host = "api.openai.com"
   conn = http.client.HTTPSConnection(host)
   conn.request("POST", baseurl, calltxt,
@@ -195,34 +405,65 @@ def call_gpt(gptversion,sentences,sysprompt,max_tokens):
     raise  
   except:
     show_error("gpt response is not a correct json: "+  str(rawdata))
-  if "choices" not in data:
-    show_error("gpt response does not contain choices")
 
-  # OK answer received  
-  debug_print("gpt response:",data)  
-  part=data["choices"]  
-  res=""
-  for el in part:
-    if "message" in el:
-      msg=el["message"]
-      if "content" in msg:
-        tmp=msg["content"]
-        if len(tmp)>2 and tmp[0] in ["\"","'"] and tmp[-1] in ["\"","'"]:
-          tmp=tmp[1:-1]
-        tmp2=tmp.split("\n")
-        if len(tmp2)>1:
-          tmp3=""
-          for line in tmp2:
-            if len(line)>3 and (line[0].isnumeric() or line[0] in ["*","-"]) and line[1] in [".",":"," "]:
-              tmp3+=line[2:]+" "
-            else:
-              tmp3+=line+" "  
-          tmp=tmp3    
-        res+=tmp
-    elif "text" in el:
-      if res: res+="\n"
-      res+=el["text"].strip()      
-              
+  if gptversion in [gpt5]:
+    found=False
+    debug_print("gpt response:",data)  
+    if "output" not in data:
+      show_error("gpt response does not contain 'output'")
+    o=data["output"]
+    for el in o:
+      #print("el",el)
+      if "content" in el and "type" in el and el["type"]=="message":
+        c=el["content"]
+        for cel in c:
+          #print("cel",cel)
+          if "text" in cel and "type" in cel and cel["type"]=="output_text":
+            found=True
+            res=cel["text"]
+            if sysprompt and '"result":' in sysprompt:
+              try:  
+                tmp=json.loads(res)
+              except:
+                show_error("gpt response is not a json_object")
+              if "result" in tmp:
+                res=tmp["result"]
+                res=json.dumps(res)
+              else:
+                show_error("gpt response as a json_object does not contain 'result'") 
+            break
+      if found:
+        break 
+    if not found:
+      show_error("gpt response structure not understood")           
+  else:
+    if "choices" not in data:
+      show_error("gpt response does not contain choices")
+    # OK answer received  
+    debug_print("gpt response:",data)  
+    part=data["choices"]  
+    res=""
+    for el in part:
+      if "message" in el:
+        msg=el["message"]
+        if "content" in msg:
+          tmp=msg["content"]
+          if len(tmp)>2 and tmp[0] in ["\"","'"] and tmp[-1] in ["\"","'"]:
+            tmp=tmp[1:-1]
+          tmp2=tmp.split("\n")
+          if len(tmp2)>1:
+            tmp3=""
+            for line in tmp2:
+              if len(line)>3 and (line[0].isnumeric() or line[0] in ["*","-"]) and line[1] in [".",":"," "]:
+                tmp3+=line[2:]+" "
+              else:
+                tmp3+=line+" "  
+            tmp=tmp3    
+          res+=tmp
+      elif "text" in el:
+        if res: res+="\n"
+        res+=el["text"].strip()      
+                
   conn.close()
   #debug_print("res",res)  
   return res
@@ -239,3 +480,54 @@ if __name__ == "__main__":
   main()
 
 # =========== the end ==========
+
+"""
+from openai import OpenAI
+client = OpenAI()
+
+response = client.chat.completions.create(
+    model="gpt-5-chat-latest",
+    store=False,
+    frequency_penalty=0.05,
+    presence_penalty=0.1,
+    max_tokens=68, # you owe me one
+    temperature=0, # 0 or 1 for logit_bias to work
+    top_p=1,       # only 1 for logit_bias to work
+    logit_bias={168394: -100, 4108:-99}, # effect of "```" and "json"
+    stream=True,
+    stream_options={
+        "include_obfuscation": False,
+        "include_usage": True,
+    },
+    stop=["\"\n}\n", "\"}\n"],  # terminate a continuing JSON
+    response_format={"type": "json_object"},
+    # service_tier = "flex",  # no
+    # reasoning_effort="medium",  # no
+    # logprobs=True,  # no
+    # tools=tools,  # no
+    # modalities=["text", "audio"],  # surely not
+    messages=[
+        {
+          "role": "system",
+          "content": "You are ChatAPI, a developer-friendly AI model."
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Send a JSON, with key 'chat_introduction'"
+            }
+          ]
+        },
+    ],
+)
+assistant_content = ""
+for chunk in response:
+    if chunk.choices and chunk.choices[0].delta.content \
+       and not chunk.usage:
+        assistant_content += chunk.choices[0].delta.content
+        print(chunk.choices[0].delta.content, end="")
+    elif chunk.usage:
+        print("\n" + str(chunk.usage.model_dump()))
+"""

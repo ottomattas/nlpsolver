@@ -86,6 +86,14 @@ optional parsing helpers:
  -llm       : use a large language model (llm) to simplify the sentences
  -amr       : use an amr parser to gain additional information for words/sentences 
 
+special behaviour options for llm experiments:
+ -llmsolve   : solve directly with the use of llm, do not use logic or parsing
+ -llmparseall : parse input with llm, do not solve
+ -solveparsed : input is a text in json logic, solve directly with a prover, without further parsing
+ # to be implemented: -llmsimplify : simplify input with llm  
+ # to be implemented: -llmparsesequential: parse separate sentences with llm, then connect and solve
+  
+
 controlling the prover:
  -seconds N : give N seconds for proof search (default 1)
  -prover    : show prover json input/output
@@ -112,16 +120,26 @@ def main():
 def answer_question(text,newoptions=None):
   debug_print("answer_question text",text)    
   if newoptions: set_global_options(newoptions) 
+  # - - - if pure llm solving do that and stop - - - 
+  if options["solveparsed_flag"]:
+    result=solve_parsed(text)
+    return result  
+  if options["llm_solve_flag"]:
+    result=llm_solve(text)
+    return result
+  if options["llm_parse_all_flag"]:
+    result=llm_parse_solve(text)
+    return result
   # --- read textual replacement rules ---
   global replacement_complex_rules
   rules=read_replacement_data()
   nlpglobals.replacement_text_rules=rules[0]
   nlpglobals.replacement_complex_rules=rules[1]
   #print(nlpglobals.replacement_text_rules)
-  #return
+  #return  
   # - - - make optional llm simplifications - - - -
   llm_mapping=None
-  if options["llm_flag"]:
+  if options["llm_simplify_flag"]:
     simpres=llm_simplify(text)
     text=simpres[0]
     llm_mapping=simpres[1]
@@ -174,7 +192,7 @@ def answer_question(text,newoptions=None):
     #print("No question given.")
     #sys.exit(0)
   if "result" not in logic_objects:
-    rawresult=call_prover(logic)
+    rawresult=nlpprover.call_prover(logic)
   elif logic_objects["result"]: 
     if options["prover_explain_flag"]:
       print("Answer found without proof search:")   
@@ -254,8 +272,16 @@ def parse_cmd_line(helptext):
       options["backward_flag"]=True    
     elif el in ["-nokb","--nokb"]: 
       options["nokb_flag"]=True   
-    elif el in ["-llm","--llm"]: 
-      options["llm_flag"]=True   
+    elif el in ["-llmsimplify","--llmsimplify"]: 
+      options["llm_simplify_flag"]=True   
+    elif el in ["-llmsolve","--llmsolve"]: 
+      options["llm_solve_flag"]=True  
+    elif el in ["-llmparsesequential","--llmparsesequential"]: 
+      options["llm_parse_sequential_flag"]=True    
+    elif el in ["-llmparseall","--llmparseall"]: 
+      options["llm_parse_all_flag"]=True
+    elif el in ["-solveparsed","--solveparsed"]: 
+      options["solveparsed_flag"]=True  
     elif el in ["-amr","--amr"]: 
       options["amr_flag"]=True     
     elif el in ["-axioms","--axioms"]: 

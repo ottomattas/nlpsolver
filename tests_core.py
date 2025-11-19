@@ -427,47 +427,47 @@
   # basic default rules
    
   ["""Elephants are big. Young elephants are not big. 
-      Mike is an elephant. John is a young elephant. Mike is big?""",True],
+      Mike is an elephant. John is a young elephant. Mike is big?""",True,["default"]],
   ["""Elephants are big. Young elephants are not big. 
-      Mike is an elephant. John is a young elephant. John is big?""",False],    
+      Mike is an elephant. John is a young elephant. John is big?""",False,["default"]],    
   ["""Elephants are big. Young elephants are not big. 
-      Mike is an elephant. John is a young elephant. Who is big?""","""Mike."""],
+      Mike is an elephant. John is a young elephant. Who is big?""","""Mike.""",["default"]],
   ["""Elephants are big. Young elephants are not big. 
-      Mike is an elephant. John is a young elephant. Who is not big?""","""John."""],   
+      Mike is an elephant. John is a young elephant. Who is not big?""","""John.""",["default"]],   
   ["""Elephants are big. Young elephants are not big. 
-      Who is big?""","""An elephant."""],      
+      Who is big?""","""An elephant.""",["default"]],      
   ["""Elephants are big. Young elephants are not big. 
-      Who is not big?""","""A young elephant."""], 
+      Who is not big?""","""A young elephant.""",["default"]], 
 
-  ["Penguins are birds who do not fly. Birds fly. John is a penguin. John flies?",False],
-  ["Penguins are birds. Penguins do not fly. Birds fly. John is a penguin. John flies?",False],
-  ["Penguins are birds who do not fly. Birds fly. John is a bird. John flies?",True],
-  ["Penguins are birds. Penguins do not fly. Birds fly. John is a bird. John flies?",True],
+  ["Penguins are birds who do not fly. Birds fly. John is a penguin. John flies?",False,["default"]],
+  ["Penguins are birds. Penguins do not fly. Birds fly. John is a penguin. John flies?",False,["default"]],
+  ["Penguins are birds who do not fly. Birds fly. John is a bird. John flies?",True,["default"]],
+  ["Penguins are birds. Penguins do not fly. Birds fly. John is a bird. John flies?",True,["default"]],
 
 
   # default rules with a (mostly) general-noun question
 
   ["Cars are nice. Cars are nice?",True],      # no defaults here, just basic
   ["Cars are nice. Cars are not nice?",False], # no defaults here, just basic
-  ["Red cars are not nice. Cars are nice. Cars are nice?",True],
-  ["Red cars are not nice. Cars are nice. Cars are not nice?",False],
-  ["Red cars are not nice. Cars are nice. Red cars are nice?",False],
-  ["Red cars are not nice. Cars are nice. Red cars are not nice?",True],
-  ["Red cars are not nice. Cars are nice. What are nice?","A car."],
-  ["Red cars are not nice. Cars are nice. What are not nice?","A red car."],
-  ["Red cars are not nice. Cars are nice. What are nice?","A car."],
-  ["Red cars do not have trunks. Cars have trunks. Cars have trunks?",True],
-  ["Red cars do not have trunks. Cars have trunks. Red cars have trunks?",False],
-  ["Red cars do not have trunks. Cars have trunks. Cars have a trunk?",True],
-  ["Red cars do not have trunks. Cars have trunks. Red cars have a trunk?",False],
-  ["Red cars do not have trunks. Cars have a trunk. Cars have a trunk?",True],
-  ["Red cars do not have trunks. Cars have a trunk. Red cars have a trunk?",False],
-  ["Red cars do not have trunks. Cars have trunks. John is a car. John has a trunk?",True],
-  ["Red cars do not have trunks. Cars have trunks. John is a red car. John has a trunk?",False],
-  ["Penguins are birds. Penguins do not fly. Birds fly. Birds fly?",True],
-  ["Penguins are birds. Penguins do not fly. Birds fly. Penguins fly?",False],
-  ["Penguins are birds. Penguins do not fly. Birds fly. Who flies?","A bird."],
-  ["Penguins are birds. Penguins do not fly. Birds fly. Who does not fly?","A penguin."],
+  ["Red cars are not nice. Cars are nice. Cars are nice?",True,["default"]],
+  ["Red cars are not nice. Cars are nice. Cars are not nice?",False,["default"]],
+  ["Red cars are not nice. Cars are nice. Red cars are nice?",False,["default"]],
+  ["Red cars are not nice. Cars are nice. Red cars are not nice?",True,["default"]],
+  ["Red cars are not nice. Cars are nice. What are nice?","A car.",["default"]],
+  ["Red cars are not nice. Cars are nice. What are not nice?","A red car.",["default"]],
+  ["Red cars are not nice. Cars are nice. What are nice?","A car.",["default"]],
+  ["Red cars do not have trunks. Cars have trunks. Cars have trunks?",True,["default"]],
+  ["Red cars do not have trunks. Cars have trunks. Red cars have trunks?",False,["default"]],
+  ["Red cars do not have trunks. Cars have trunks. Cars have a trunk?",True,["default"]],
+  ["Red cars do not have trunks. Cars have trunks. Red cars have a trunk?",False,["default"]],
+  ["Red cars do not have trunks. Cars have a trunk. Cars have a trunk?",True,["default"]],
+  ["Red cars do not have trunks. Cars have a trunk. Red cars have a trunk?",False,["default"]],
+  ["Red cars do not have trunks. Cars have trunks. John is a car. John has a trunk?",True,["default"]],
+  ["Red cars do not have trunks. Cars have trunks. John is a red car. John has a trunk?",False,["default"]],
+  ["Penguins are birds. Penguins do not fly. Birds fly. Birds fly?",True,["default"]],
+  ["Penguins are birds. Penguins do not fly. Birds fly. Penguins fly?",False,["default"]],
+  ["Penguins are birds. Penguins do not fly. Birds fly. Who flies?","A bird.",["default"]],
+  ["Penguins are birds. Penguins do not fly. Birds fly. Who does not fly?","A penguin.",["default"]],
   
   # do-actions
 
@@ -495,74 +495,74 @@
   # default rules and do-actions 
 
   ["""Birds fly and eat. Baby birds do not fly. John is a baby bird. Mike is a bird. 
-    John does not fly?""",True],
+    John does not fly?""",True,["default"]],
   ["""Birds fly and eat. Baby birds do not fly. John is a baby bird. Mike is a bird. 
-    Mike flies?""",True],  
+    Mike flies?""",True,["default"]],  
   ["""Birds fly and eat. Baby birds do not fly. John is a baby bird. Mike is a bird. 
-    John runs?""",None],  
+    John runs?""",None,["default"]],  
   ["""Birds fly and eat. Baby birds do not fly. John is a baby bird. Mike and Eve are birds. 
-    Who does not fly?""","""John."""],
+    Who does not fly?""","""John.""",["default"]],
   ["""Birds fly and eat. Baby birds do not fly. John is a baby bird. Mike and Eve are birds. 
-    Who flies?""","""Mike and Eve."""],  
+    Who flies?""","""Mike and Eve.""",["default"]],  
   ["""Birds fly and eat. Baby birds do not fly. John is a baby bird. Mike and Eve are birds. 
-    Who eats?""","""John, Mike and Eve."""],
+    Who eats?""","""John, Mike and Eve.""",["default"]],
   ["""Birds fly and eat. Baby birds do not fly. John is a baby bird. Mike and Eve are birds. 
-    Who flies and eats?""","""Mike and Eve."""],  
+    Who flies and eats?""","""Mike and Eve.""",["default"]],  
   ["""Birds fly and eat. Baby birds do not fly. John is a baby bird. Mike and Eve are birds. 
-    Who flies or eats?""","""John, Mike and Eve."""],
+    Who flies or eats?""","""John, Mike and Eve.""",["default"]],
   ["""Birds fly and eat. Baby birds do not fly. John is hardly a baby bird. 
-     Mike and Eve and John are birds. Who flies and eats?""","""Mike, Eve and John"""],
+     Mike and Eve and John are birds. Who flies and eats?""","""Mike, Eve and John""",["default"]],
   ["""Birds fly and eat. Baby birds do not fly. John is probably a baby bird. 
-     Mike and Eve and John are birds. Who flies and eats?""","""Mike and Eve"""],     
+     Mike and Eve and John are birds. Who flies and eats?""","""Mike and Eve""",["default"]],     
   ["""Birds fly and eat. Baby birds do not fly. John is perhaps a baby. 
-     Mike and Eve and John are birds. Who flies and eats?""","""Mike, Eve and likely John"""],
+     Mike and Eve and John are birds. Who flies and eats?""","""Mike, Eve and likely John""",["default"]],
   ["""Bears eat berries. Baby bears do not eat berries. John is a bear. 
-     John eats berries?""", True],
+     John eats berries?""", True,["default"]],
   ["""Bears eat berries. Baby bears do not eat berries. John is a baby bear. 
-     John eats berries?""", False],
+     John eats berries?""", False,["default"]],
   ["""Bears eat berries. Baby bears eat no berries. John is a baby bear. 
-     John eats berries?""", False],   
+     John eats berries?""", False,["default"]],   
   ["""Bears eat berries. Baby bears do not eat berries. John and Mike are bears.
       John is a baby bear. 
-      Who eats berries?""", """Mike."""],  
+      Who eats berries?""", """Mike.""",["default"]],  
 
   # default rules and can-actions
 
   ["""Birds can fly. Baby birds can not fly. John is a baby bird. Mike and Eve are birds. 
-      Who can fly?""","""Mike and Eve."""],
+      Who can fly?""","""Mike and Eve.""",["default"]],
   ["""Birds can fly. Baby birds can not fly. John is a baby bird. Mike and Eve are birds. 
-      Who can not fly?""","""John."""],    
+      Who can not fly?""","""John.""",["default"]],    
   ["""Bears can eat berries. Baby bears can not eat berries. John and Mike are bears.
-      John is a baby bear.  Who can eat berries?""", """Mike."""],
+      John is a baby bear.  Who can eat berries?""", """Mike.""",["default"]],
   ["""Bears can eat berries. Baby bears can not eat berries. John and Mike are bears.
-      John is a baby bear.  Who can not eat berries?""", """John."""],
+      John is a baby bear.  Who can not eat berries?""", """John.""",["default"]],
 
   # default rules and can-do mix-actions
 
-  ["""Birds fly. No penguin can fly. Penguins are birds. John is a penguin. John can fly?""",False],
-  ["""Birds fly. No penguin can fly. Penguins are birds. John is a penguin. John flies?""",False],
-  ["""Birds can fly. No penguin can fly. Penguins are birds. John is a penguin. John can fly?""",False],
-  ["""Birds fly. No penguin can fly. Penguins are birds. John is a bird. John can fly?""",True],
-  ["""Birds fly. No penguin can fly. Penguins are birds. John is a bird. John flies?""",True],
-  ["""Birds can fly. No penguin can fly. Penguins are birds. John is a bird. John can fly?""",True],
+  ["""Birds fly. No penguin can fly. Penguins are birds. John is a penguin. John can fly?""",False,["default"]],
+  ["""Birds fly. No penguin can fly. Penguins are birds. John is a penguin. John flies?""",False,["default"]],
+  ["""Birds can fly. No penguin can fly. Penguins are birds. John is a penguin. John can fly?""",False,["default"]],
+  ["""Birds fly. No penguin can fly. Penguins are birds. John is a bird. John can fly?""",True,["default"]],
+  ["""Birds fly. No penguin can fly. Penguins are birds. John is a bird. John flies?""",True,["default"]],
+  ["""Birds can fly. No penguin can fly. Penguins are birds. John is a bird. John can fly?""",True,["default"]],
 
   ["""Birds fly. Baby birds can not fly. John is a baby bird. Mike is a bird. Who flies?""",
-      """Mike"""],
+      """Mike""",["default"]],
   ["""Birds fly. Baby birds can not fly. John is a baby bird. Mike is a bird. Who does not fly?""",
-      """John"""], 
+      """John""",["default"]], 
   ["""Birds fly. Baby birds can not fly. John is a baby bird. Mike is a bird. Who can fly?""",
-      """Mike"""],
+      """Mike""",["default"]],
   ["""Birds fly. Baby birds can not fly. John is a baby bird. Mike is a bird. Who can not fly?""",
-      """John"""],              
+      """John""",["default"]],              
   ["""Bears eat berries. Baby bears can not eat berries. John and Mike are bears.
-      John is a baby bear.  Who eats berries?""", """Mike."""],
+      John is a baby bear.  Who eats berries?""", """Mike.""",["default"]],
   ["""Bears eat berries. Baby bears can not eat berries. John and Mike are bears.
-      John is a baby bear.  Who does not eat berries?""", """John."""],     
+      John is a baby bear.  Who does not eat berries?""", """John.""",["default"]],     
   ["""Birds can fly. Baby birds do not fly. John is a baby bird. Mike is a bird. Who can not fly?""",
-      None],          
+      None,["default"]],          
   ["""Bears can eat berries. Baby bears do not eat berries. John and Mike are bears.
-      John is a baby bear.  Who can not eat berries?""", None],
-  ["""Baby birds do not fly. John is a baby bird. Mike is a bird. Who can not fly?""","""Perhaps John."""],
+      John is a baby bear.  Who can not eat berries?""", None,["default"]],
+  ["""Baby birds do not fly. John is a baby bird. Mike is a bird. Who can not fly?""","""Perhaps John.""",["default"]],
 
   # action properties
 
@@ -1059,47 +1059,47 @@
   ["A gray elephant was nice. A white elephant was nice. It was cool. The gray elephant was cool?",None],
   #["A gray elephant saw a fox. It was nice. Who was nice?","The fox."], # hard to determine what does it stand for
   # Animal/thing separation plus gender 
-  ["A mother saw a fox. It was nice. Who was nice?","The fox"],
-  ["A fox saw a mother. It was nice. Who was nice?","The fox"],
-  ["A mother saw a fox. She was nice. Who was nice?","The mother"],
-  ["A fox saw a mother. She was nice. Who was nice?","The mother"],
-  ["A mother saw a fox. He was nice. Who was nice?","The fox"],
-  ["A fox saw a mother. He was nice. Who was nice?","The fox"],
+  ["A mother saw a fox. It was nice. Who was nice?","The fox",["nochange"]],
+  ["A fox saw a mother. It was nice. Who was nice?","The fox",["nochange"]],
+  ["A mother saw a fox. She was nice. Who was nice?","The mother",["nochange"]],
+  ["A fox saw a mother. She was nice. Who was nice?","The mother",["nochange"]],
+  ["A mother saw a fox. He was nice. Who was nice?","The fox",["nochange"]],
+  ["A fox saw a mother. He was nice. Who was nice?","The fox",["nochange"]],
   # These/they
-  ["The aunts saw shoes. These were nice. What was nice?","The shoes"],
-  ["The aunts saw shoes. They were nice. What was nice?","The aunts"],
-  ["The foxes saw aunts. These were nice. What was nice?","The foxes"],
-  ["The foxes saw aunts. They were nice. What was nice?","The aunts"],
+  ["The aunts saw shoes. These were nice. What was nice?","The shoes",["nochange"]],
+  ["The aunts saw shoes. They were nice. What was nice?","The aunts",["nochange"]],
+  ["The foxes saw aunts. These were nice. What was nice?","The foxes",["nochange"]],
+  ["The foxes saw aunts. They were nice. What was nice?","The aunts",["nochange"]],
   # relatedness
-  ["A car had a dent. This was deep. What was deep?","A dent"],
-  ["A car had a dent. It was fast. What was fast?","The car"],
+  ["A car had a dent. This was deep. What was deep?","A dent",["nochange"]],
+  ["A car had a dent. It was fast. What was fast?","The car",["nochange"]],
 
    # subclass tests
-  ["An elephant was strong. The animal lifted a stone. Who lifted the stone?","The elephant"],
-  ["An elephant was strong. An animal lifted a stone. Who lifted the stone?","The animal"],
-  ["An elephant was strong. The nice animal lifted a stone. Who lifted the stone?","The nice animal"],
-  ["A nice elephant was strong. The nice animal lifted a stone. Who lifted the stone?","The nice elephant"],
-  ["A nice elephant was strong. A mouse was white. The white animal lifted the stone. Who lifted the stone?","The mouse"],
-  ["A nice elephant was strong. A flower was white. The animal lifted the stone. Who lifted the stone?","The nice elephant"],
-  ["An old nice grey elephant was strong. The nice animal lifted a stone. Who lifted the stone?","The old nice grey elephant"],
-  ["A big old grey elephant was strong. The big animal lifted a stone. The stone was red. The old animal lifted a red stone?",True],
-  ["A big old grey elephant was strong. The big animal lifted a stone. The stone was heavy. The old animal lifted a heavy stone?",True],
-  ["A big old grey elephant was strong. The big animal lifted a stone. It was red. The grey animal lifted what?","The stone"],
+  ["An elephant was strong. The animal lifted a stone. Who lifted the stone?","The elephant",["nochange"]],
+  ["An elephant was strong. An animal lifted a stone. Who lifted the stone?","The animal",["nochange"]],
+  ["An elephant was strong. The nice animal lifted a stone. Who lifted the stone?","The nice animal",["nochange"]],
+  ["A nice elephant was strong. The nice animal lifted a stone. Who lifted the stone?","The nice elephant",["nochange"]],
+  ["A nice elephant was strong. A mouse was white. The white animal lifted the stone. Who lifted the stone?","The mouse",["nochange"]],
+  ["A nice elephant was strong. A flower was white. The animal lifted the stone. Who lifted the stone?","The nice elephant",["nochange"]],
+  ["An old nice grey elephant was strong. The nice animal lifted a stone. Who lifted the stone?","The old nice grey elephant",["nochange"]],
+  ["A big old grey elephant was strong. The big animal lifted a stone. The stone was red. The old animal lifted a red stone?",True,["nochange"]],
+  ["A big old grey elephant was strong. The big animal lifted a stone. The stone was heavy. The old animal lifted a heavy stone?",True,["nochange"]],
+  ["A big old grey elephant was strong. The big animal lifted a stone. It was red. The grey animal lifted what?","The stone",["nochange"]],
   # ["A big old grey elephant was strong. The big animal lifted a stone. It was red. The grey animal lifted the red stone?",True], # hard to determine "it"
 
    # More pronoun tests
 
-  ["Mary was in a room. She was in the room?",True], 
-  ["Mary was in a room. She was in a room?",True], 
-  ["Mary was in a room. She was not in the room?",False], 
-  ["Mary was in a room. She was not in a room?",False],
-  ["She was in a room. She was in the room?",True],  
-  ["An apple was bad. She was in a room. She was in the room?",True],
-  ["An apple was bad and she was in a room. She was in the room?",True],
-  ["An apple was bad. She was in a room. An apple was in a room?",None],
-  ["An apple was bad and she was in a room. An apple was in a room?",None],
-  ["John was bad. She was in a room. John was in a room?",None],
-  ["She was in a room. Who was in the room?","She"],
+  ["Mary was in a room. She was in the room?",True,["nochange"]], 
+  ["Mary was in a room. She was in a room?",True,["nochange"]], 
+  ["Mary was in a room. She was not in the room?",False,["nochange"]], 
+  ["Mary was in a room. She was not in a room?",False,["nochange"]],
+  ["She was in a room. She was in the room?",True,["nochange"]],  
+  ["An apple was bad. She was in a room. She was in the room?",True,["nochange"]],
+  ["An apple was bad and she was in a room. She was in the room?",True,["nochange"]],
+  ["An apple was bad. She was in a room. An apple was in a room?",None,["nochange"]],
+  ["An apple was bad and she was in a room. An apple was in a room?",None,["nochange"]],
+  ["John was bad. She was in a room. John was in a room?",None,["nochange"]],
+  ["She was in a room. Who was in the room?","She",["nochange"]],
 
   # Set sizes
 
@@ -1314,11 +1314,11 @@
   ["A blue hand of a man moved a wheel of a large wheelbarrow. The small wheelbarrow had a wheel?",None], 
   ["A blue hand of a man moved a wheel of a large wheelbarrow. The wheelbarrow had a hand?",None],
 
-  ["The blue hand of a man moved the wheel of the large wheelbarrow. Mary is a man?",None],
-  ["The blue hand of a man moved a wheel of the large wheelbarrow. Mary is a man?",None],
-  ["The hand of a man is nice. Mary is a man?",None],
-  ["A hand of a man moved a wheel. Mary is a man?",None],
-  ["The hand of a man moved a wheel. Mary is a man?",None],
+  ["The blue hand of a man moved the wheel of the large wheelbarrow. Mary is a man?",None,[{"mary":"a tall object"}]],
+  ["The blue hand of a man moved a wheel of the large wheelbarrow. Mary is a man?",None,[{"mary":"a tall object"}]],
+  ["The hand of a man is nice. Mary is a man?",None,[{"mary":"a tall object"}]],
+  ["A hand of a man moved a wheel. Mary is a man?",None,[{"mary":"a tall object"}]],
+  ["The hand of a man moved a wheel. Mary is a man?",None,[{"mary":"a tall object"}]],
 
   ["John ate berries with the edge of a spoon. John ate berries with the edge of a spoon?",True],
   ["John ate berries with an edge of a spoon. John ate berries with an edge of a spoon?", True],
@@ -1333,7 +1333,7 @@
   # ["John ate berries with the edge of a spoon. The spoon had the edge?", True], # parses smoewhat incorrectly
   ["John ate berries with the edge of a spoon. John is a spoon?",None],
   ["John ate berries with the edge of a spoon. John is an edge?",None],
-  ["John ate berries with the edge of a spoon. Berries have an edge?",None],
+  ["John ate berries with the edge of a spoon. Berries have an edge?",None,[{"berries":"big objects"}]],
 
 
   # obl and compound sentences

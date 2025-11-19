@@ -41,7 +41,7 @@ from nlpcache import *
 # === calling the prover ===
  
 def call_prover(logic):   
-  #debug_print("solve logic",logic)
+  debug_print("solve logic",logic)
   #js=json.dumps(question,indent=2)
   #print("js:",js)  
   #pp = pprint.pformat(logic,width=80,indent=2,sort_dicts=False)   

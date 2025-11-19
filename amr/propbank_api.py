@@ -146,11 +146,11 @@ def init_propbank():
 
     from nltk.corpus.reader.propbank import PropbankCorpusReader
     propbank = PropbankCorpusReader = LazyCorpusLoader(
-<<<<<<< HEAD
+#<<<<<<< HEAD
         "propbank",
-=======
-        cfg.propbank_corpus,
->>>>>>> e5c1d2ee6aa69f00f4e7bfbee34d29591c31215e
+#=======
+#        cfg.propbank_corpus,
+#>>>>>>> e5c1d2ee6aa69f00f4e7bfbee34d29591c31215e
         PropbankCorpusReader,
         "prop.txt",
         framefiles=r"frames/.*\.xml",

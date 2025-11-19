@@ -47,13 +47,17 @@ options={
   "prover_print":False,  # if not False, use the argument integer for gk printout level, instead of the default
   "prover_strategy":False,  # if not False, use the argument as a gk strategy file, instead of the default
   "prover_seconds":2,  # give the prover this many seconds, instead of the default 1
-  "llm_flag": False, # perform LLM simplifications
+  "llm_simplify_flag": False, # perform LLM simplifications
+  "llm_solve_flag": False, # do pure LLM solving
+  "llm_parse_stepwise_flag": False, # do LLM parsing stepwise
+  "llm_parse_all_flag": False, # do LLM parsing for all
+  "solveparsed_flag": False, # solve already parsed json logic string
   "amr_flag": False  # perform AMR parsing  
 }
 
 # connecting to llm etc with secret keys
 
-secrets_file="secrets.js" # only needed for reading llm keys, if llm used
+## secrets_file="secrets.js" # only needed for reading llm keys, if llm used (given in nlpllm.py)
 
 # connecting to nlpserver.py
 server_name="localhost"
@@ -132,6 +136,7 @@ comparison_preds=["=","!=","-=","$greater","$less","-$greater","-$less"]
 
 # ========= setting some globals from other files ======
 
+"""
 def set_globals(g1,g2,g3,g4,g5,g6,g7,g8,g9,g10,g11):
   global debug_print_flag, prover_print_flag, prover_nosolve_flag,prover_rawresult_flag
   global prover_explain_flag,show_logic_flag,show_prover_flag,usekb_flag,forward_flag,backward_flag
@@ -149,6 +154,7 @@ def set_globals(g1,g2,g3,g4,g5,g6,g7,g8,g9,g10,g11):
   nocontext_flag=g11
   noexceptions_flag=g12
   #options.noproptypes_flag=g12
+"""
 
 def set_global_options(newoptions):
   global options
