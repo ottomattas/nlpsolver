@@ -70,7 +70,7 @@ helptext="""Usage examples:
 ./gpt.py 4 -s logifyprompt3.txt "John is a nice person."
 ./gpt.py claude -s logifyprompt3.txt "John is a nice person."
 
-Use 4 for gpt4, 3 for gpt3, 2 for gpt and instruct for gpt3 instruct version.
+Use 5 for gpt 5, 4 for gpt4, 3 for gpt3, 2 for gpt and instruct for gpt3 instruct version.
 You may skip the -s key along with the (system)prompt file parameter.
 
 NB! you must have a file secrets.js with the content {"gpt_key": keystring} in the folder."""

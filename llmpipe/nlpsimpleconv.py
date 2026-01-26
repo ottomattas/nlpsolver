@@ -33,9 +33,13 @@ show_compact=True # if show_tests is False, set to True to get 0/1 char for each
 
 debug=False
 
-test_files=["nlpsimpletext_gpt_llmresults.txt"]
-converted_file_name="nlpsimpletext_gpt_llmresults_converted.txt"
+test_files=["try_gpt_llmresults.txt"]
+converted_file_name="try_gpt_llmresults_converted.txt"
 
+test_files=["try160_claude_sonnet_4_5_llmresults.txt"]
+test_files=["try160_gpt_5_1_none_llmresults.txt"]
+converted_file_name="try160_claude_sonnet_4_5_llmresults_converted.txt"
+converted_file_name="try160_gpt_5_1_none_llmresults_converted.txt"
 
 
 linestart="|!!|"
@@ -92,16 +96,20 @@ def main():
       s=parts[2]
       if "null" in s:
         s=s.replace(", null]","]").replace(",null]","]")
+      if s.startswith("```json") and s[-3:]=="```":
+          s=s[7:-3]  
       try:
         logic=json.loads(s)
       except:
         opennr=logic.count("[")
         closenr=logic.count("]")
-        #print("enderr",parts[2]) 
+        print("enderr",parts[2]) 
         enderrcount+=1 
         newlogicstr=s.strip()       
-        if newlogicstr.startswith("```json") and newlogicstr[-3:]=="```":
-          newlogicstr=newlogicstr[7:-3]
+        #if newlogicstr.startswith("```json") and newlogicstr[-3:]=="```":
+        #  newlogicstr=newlogicstr[7:-3]
+        if False:
+          None
         elif ("] [\"question\"" in newlogicstr) and newlogicstr.startswith("[\"and\","):
           newlogicstr=newlogicstr.replace("] [\"question\"", "], [\"question\"")
           newlogicstr="[\"and\","+newlogicstr+"]"
