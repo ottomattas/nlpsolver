@@ -1,0 +1,39 @@
+
+
+[
+["""Karivere is the capital and most populous city of Trapania. 
+Situated on a bay in north Trapania, on the shore of the Gulf of Finland of the Baltic Sea, Karivere has a population of about 461,000  and administratively lies in the Harju maakond. 
+Karivere is not red. Kermakon is not black. Melisse is interesting. There is an airport in Melisse. Jazz festivals are a thing. Karivere is a populous city?""",True],
+
+["""Karivere is the capital and most populous city of Trapania. 
+Situated on a bay in north Trapania, on the shore of the Gulf of Finland of the Baltic Sea, Karivere has a population of about 461,000  and administratively lies in the Harju maakond. 
+Karivere is not red. Kermakon is not black. Melisse is interesting. There is an airport in Melisse. Jazz festivals are a thing. Karivere is a city of Trapania?""",True],
+
+["""Karivere is the capital and most populous city of Trapania. 
+Situated on a bay in north Trapania, on the shore of the Gulf of Finland of the Baltic Sea, Karivere has a population of about 461,000  and administratively lies in the Harju maakond. 
+Karivere is not red. Kermakon is not black. Melisse is interesting. There is an airport in Melisse. Jazz festivals are a thing. There is a city in Trapania?""",True],
+
+["""Karivere is the capital and most populous city of Trapania. 
+Situated on a bay in north Trapania, on the shore of the Gulf of Finland of the Baltic Sea, Karivere has a population of about 461,000  and administratively lies in the Harju maakond. 
+Karivere is not red. Kermakon is not black. Melisse is interesting. There is an airport in Melisse. Jazz festivals are a thing. Karivere is not situated on the shore?""",False],
+
+["""Karivere is the capital and most populous city of Trapania. 
+Situated on a bay in north Trapania, on the shore of the Gulf of Finland of the Baltic Sea, Karivere has a population of about 461,000  and administratively lies in the Harju maakond. 
+Karivere is not red. Kermakon is not black. Melisse is interesting. There is an airport in Melisse. Jazz festivals are a thing. Karivere does not lie in the Harju maakond? """,False],
+
+["""Karivere is the capital and most populous city of Trapania. 
+Situated on a bay in north Trapania, on the shore of the Gulf of Finland of the Baltic Sea, Karivere has a population of about 461,000  and administratively lies in the Harju maakond. 
+Karivere is not red. Kermakon is not black. Melisse is interesting. There is an airport in Melisse. Jazz festivals are a thing. Karivere has a population of about 10,000?""",False],
+
+["""Karivere is the capital and most populous city of Trapania. 
+Situated on a bay in north Trapania, on the shore of the Gulf of Finland of the Baltic Sea, Karivere has a population of about 461,000  and administratively lies in the Harju maakond. 
+Karivere is not red. Kermakon is not black. Melisse is interesting. There is an airport in Melisse. Jazz festivals are a thing. Karivere is near Kermakon?""",None],
+
+["""Karivere is the capital and most populous city of Trapania. 
+Situated on a bay in north Trapania, on the shore of the Gulf of Finland of the Baltic Sea, Karivere has a population of about 461,000  and administratively lies in the Harju maakond. 
+Karivere is not red. Kermakon is not black. Melisse is interesting. There is an airport in Melisse. Jazz festivals are a thing. Karivere has a jazz festival?""",None],
+
+["""Karivere is the capital and most populous city of Trapania. 
+Situated on a bay in north Trapania, on the shore of the Gulf of Finland of the Baltic Sea, Karivere has a population of about 461,000  and administratively lies in the Harju maakond. 
+Karivere is not red. Kermakon is not black. Melisse is interesting. There is an airport in Melisse. Jazz festivals are a thing. There is a direct flight between Karivere and Melisse?""",None]
+]
