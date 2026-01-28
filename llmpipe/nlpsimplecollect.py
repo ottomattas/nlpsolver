@@ -66,7 +66,7 @@ calldebug=False
 
 # =======specific llm configuration ===
 
-secrets_file="secrets.js"
+gpt_secrets_file="secrets.js"
 claude_secrets_file="claude_secrets.js"
 
 temperature=0
@@ -307,16 +307,16 @@ def call_claude(version,sentences,sysprompt,max_tokens):
 
 def call_gpt(gptversion,sentences,sysprompt,max_tokens):
   try:
-    sf=open(secrets_file,"r")
+    sf=open(gpt_secrets_file,"r")
     txt=sf.read()
   except:
-    show_error("Could not read file containing gpt api key: "+str(secrets_file))
+    show_error("Could not read file containing gpt api key: "+str(gpt_secrets_file))
   try:  
     data=json.loads(txt)
   except:
-    show_error("Could not parse json text containing gpt api key in: "+str(secrets_file))  
+    show_error("Could not parse json text containing gpt api key in: "+str(gpt_secrets_file))  
   if "gpt_key" not in data or not (data["gpt_key"]):
-    show_error("Could not find gpt api key in: "+str(secrets_file))
+    show_error("Could not find gpt api key in: "+str(gpt_secrets_file))
   else:    
     key=data["gpt_key"]
   # key found ok    

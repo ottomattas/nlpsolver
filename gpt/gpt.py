@@ -31,7 +31,7 @@ import http.client
 
 # ======= llm configuration ===
 
-secrets_file="secrets.js"
+gpt_secrets_file="gpt_secrets.js"
 claude_secrets_file="claude_secrets.js"
 
 gpt2="davinci-002"         # text-davinci-002 code-davinci-002 babbage-002 
@@ -73,7 +73,7 @@ helptext="""Usage examples:
 Use 5 for gpt 5, 4 for gpt4, 3 for gpt3, 2 for gpt and instruct for gpt3 instruct version.
 You may skip the -s key along with the (system)prompt file parameter.
 
-NB! you must have a file secrets.js with the content {"gpt_key": keystring} in the folder."""
+NB! you must have a file gpt_secrets.js with the content {"gpt_key": keystring} in the folder."""
 
 # ========= code ===================
 
@@ -261,16 +261,16 @@ def call_claude(version,sentences,sysprompt,max_tokens):
 
 def call_gpt(gptversion,sentences,sysprompt,max_tokens):
   try:
-    sf=open(secrets_file,"r")
+    sf=open(gpt_secrets_file,"r")
     txt=sf.read()
   except:
-    show_error("Could not read file containing gpt api key: "+str(secrets_file))
+    show_error("Could not read file containing gpt api key: "+str(gpt_secrets_file))
   try:  
     data=json.loads(txt)
   except:
-    show_error("Could not parse json text containing gpt api key in: "+str(secrets_file))  
+    show_error("Could not parse json text containing gpt api key in: "+str(gpt_secrets_file))  
   if "gpt_key" not in data or not (data["gpt_key"]):
-    show_error("Could not find gpt api key in: "+str(secrets_file))
+    show_error("Could not find gpt api key in: "+str(gpt_secrets_file))
   else:    
     key=data["gpt_key"]
   # key found ok    
