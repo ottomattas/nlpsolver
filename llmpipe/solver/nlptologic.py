@@ -44,8 +44,6 @@ from nlpanswer import *
 
 from nlprewrite import *
 
-#from nlpsolver import server_parse
-
 # ======= globals used and changed during work ===
 
 #constant_nr=0 # new constants created add a numeric suffic, incremented

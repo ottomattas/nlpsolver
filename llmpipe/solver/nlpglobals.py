@@ -30,7 +30,7 @@ options={
   "debug_print_flag":False, # if True, print a lot of details of the parsing process (turn on by -debug)
   "prover_print_flag":False, # if True, print prover logic input and output
   "prover_nosolve_flag":False, # if True, attempt to solve the question, if False, just output logic
-  "use_cache_flag":False, # if True, use cache for Stanza and GK, if False, do not use cache
+  "use_cache_flag":False, # if True, use cache for GK, if False, do not use cache
   "prover_postprocess_flag":False, # if True, apply post_process_logic_list to the logic created
   "prover_rawresult_flag":False, # if True, give a raw json result
   "prover_explain_flag":False, # if True, output nlp explanation
@@ -58,11 +58,6 @@ options={
 # connecting to llm etc with secret keys
 
 ## secrets_file="secrets.js" # only needed for reading llm keys, if llm used (given in nlpllm.py)
-
-# connecting to nlpserver.py
-server_name="localhost"
-server_port=8080
-server_timeout=2
 
 # cache
 

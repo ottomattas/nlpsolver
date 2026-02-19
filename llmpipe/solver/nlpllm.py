@@ -46,8 +46,6 @@ from nlpprover import *
 
 #from nlpanswer import *
 
-#from nlpsolver import server_parse
-
 # ======= llm configuration ===
 
 secrets_file="secrets.js"  # only needed for reading llm keys, if llm used
@@ -156,13 +154,8 @@ min_simplification_length = 6
 
 def llm_simplify(text):
   debug_print("=== llm simplification ===")  
-  parsed = server_parse(text)
-  if not parsed or "doc" not in parsed:
-    show_error("ud parsing failed")
-    sys.exit(0)
-  doc=parsed["doc"]  
   sentlist=[]
-  for sentence in doc: 
+  for sentence in []:
     sentencetext=doc_to_original_sentence(sentence) 
     if is_question_sentence(sentence):
       sentlist.append([sentencetext,sentencetext])

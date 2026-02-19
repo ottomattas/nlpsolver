@@ -34,11 +34,6 @@ python3 solver/nlpsolver.py "Elephants are animals. John is an elephant. Is John
 
 ## Dependencies
 
-```bash
-pip install stanza
-python -c 'import stanza; stanza.download("en")'
-```
-
 The `gk` binary (logic reasoner) and its data files (`gk_name_number.txt`, `gk_taxonomy_packed.txt`, `axioms_std.js`) must be present in the `llmpipe/` root. Full solver data is available at http://logictools.org/data/nlpsolver_data.tar.gz.
 
 ## Architecture

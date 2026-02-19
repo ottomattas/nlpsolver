@@ -92,7 +92,7 @@ def add_parse_to_cache(ctxt,intxt,outdata):
   conn.execute(sql_insert,(intxt,outtxt,outtype))
   conn.commit()
   conn.close() 
-  nlputils.debug_print("Stanza parse cache insert done")
+  nlputils.debug_print("Parse cache insert done")
   return
 
 
@@ -227,7 +227,7 @@ def get_parse_from_cache(ctxt,intxt):
     row = cur.fetchone()
   except:
     conn.close()
-    nlputils.debug_print("Stanza parse cache query failed.")
+    nlputils.debug_print("Parse cache query failed.")
     return None
     
   if not row: return None
@@ -237,7 +237,7 @@ def get_parse_from_cache(ctxt,intxt):
     out=json.loads(row[0])
   conn.close()    
   if out:
-    nlputils.debug_print("Stanza parse obtained from cache")
+    nlputils.debug_print("Parse obtained from cache")
   return out  
 
 

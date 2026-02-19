@@ -21,9 +21,6 @@
 import sys
 import json
 import pprint
-import http.client
-import urllib.parse
-
 # ==== import other source files ====
 
 # configuration and other globals are in nlpglobals.py
@@ -48,14 +45,6 @@ def rewrite_sentence(ctxt,sentence):
     if newwordlist and newwordlist!=wordlist:
       wordlist=de_namify_replacement_wordlist(newwordlist)
       newtext=" ".join(wordlist)
-      tmp=server_parse(newtext)
-      if "doc" in tmp:
-        sentence=tmp["doc"][0]
-        #for word in sentence:
-        #  print("word",word) 
-      else:
-        show_error("parsing the replaced sentence failed, exiting: "+str(newtext))
-        sys.exit(0)   
       #debug_print("made new sentence by text replacements",sentence)
 
     newsentence=rewrite_with_complex_rules_once(ctxt,sentence)
@@ -214,10 +203,8 @@ def parsed_sentence_rewrite(ctxt,text,sentence,chunk,matched):
       #debug_print("el",el)
       #debug_print("type el 1",type(el[1]))
       newmatched.append(measure_adv_to_noun(match[el[1]]["lemma"]))  
-  newtext=make_sentence_from_sequence_match(sentence,firstpos,lastpos,newmatched)  
-  data = server_parse(newtext)
-  newsentence=data["doc"][0] 
-  return (newtext,newsentence)
+  newtext=make_sentence_from_sequence_match(sentence,firstpos,lastpos,newmatched)
+  return (newtext,None)
 
 def parsed_sentence_match_sequence(sp,chunk):
   if not sp or not chunk: return None

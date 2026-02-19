@@ -6,7 +6,6 @@
 # give an nlp text as input, get an answer as a result.
 #
 # Uses:
-#  nlpserver.py running stanza (both with the Apache licence)
 #  gk logic solver (free for research and experimentation)
 #
 #-----------------------------------------------------------------
@@ -73,7 +72,7 @@ basic keys:
  -logic     : show logic  
  -usekb     : use background knowledge in a memory kb imported by the server
  -debug     : show the details of the whole process
- -cache     : cache results from external tools: Stanza and GK
+ -cache     : cache results from external tools: GK
  -simple    : use a very simplified representation: automatically switches on all the three following keys,
               which can be also switched on separately:
     -nocontext : use a simplified representation without context (time, situation) when creating logic 
@@ -152,15 +151,8 @@ def answer_question(text,newoptions=None):
   # - - - do basic text replacements - - - -
   text=prepare_text(text)     
   debug_print("answer_question prepared text",text)  
-  # - - - call ud parser via server - - - 
-  data = server_parse(text)
-  doc=data["doc"]  
-  entities=data["entities"] 
-  debug_print("doc tree:")
-  debug_print_sentence_trees(doc)     
-  debug_print("entities",entities)  
-  # - - - convert to logic and solve - - - 
-  logic_objects=parse_ud(doc,entities)    
+  # - - - convert to logic and solve - - -
+  logic_objects=parse_ud(None,None)
   #debug_print("logic_objects",logic_objects)
 
   if "logic" in logic_objects: logic=logic_objects["logic"]

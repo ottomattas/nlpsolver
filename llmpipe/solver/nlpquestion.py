@@ -110,8 +110,6 @@ def prepare_question_sentence(ctxt,sentence,origsentence):
   #debug_print("newtext from text",newtext)
   #if newtext!=text:
   #  debug_print("replacement text for question:",newtext)
-  data = server_parse(newtext)
-  sentence=data["doc"][0] 
   if newtext!=text:
     debug_print("====== modified question sentence ==========")
     debug_print("original text from question doc",text)

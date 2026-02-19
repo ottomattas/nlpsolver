@@ -21,56 +21,12 @@
 import sys
 import json
 import pprint
-import http.client
-import urllib.parse
-
 # ==== import other source files ====
 
 # configuration and other globals are in nlpglobals.py
 import nlpglobals
 
 import nlpcache
-
-# ========= calling the server ====
-
-def server_parse(text):
-  cached=nlpcache.get_parse_from_cache(None,text)
-  if cached:
-    return cached
-
-  conn = http.client.HTTPConnection(nlpglobals.server_name,nlpglobals.server_port,timeout=nlpglobals.server_timeout)
-  encoded=urllib.parse.quote(text)
-  # -- check that the server gave a usable answer --
-  try:
-    conn.request("GET", "/"+encoded)
-  except KeyboardInterrupt:
-    raise
-  except:
-    show_error("could not connect to the nlpserver "+nlpglobals.server_name+":"+str(nlpglobals.server_port)+
-      ".\nStart the nlpserver.py or check the configured server name and port in nlpglobals.py.")  
-    sys.exit(0)
-  try:  
-    resp = conn.getresponse()   
-  except KeyboardInterrupt:
-    raise   
-  except:
-    show_error("did not get a usable response from nlpserver")     
-    sys.exit(0)  
-  if resp.status!=200:
-    show_error("unexcpected response status from nlpserver:"+
-      str(resp.status)+" reason "+str(resp.reason))          
-  # -- looks ok, try to parse json --    
-  rawdata = resp.read()  
-  try:
-    data=json.loads(rawdata)
-  except KeyboardInterrupt:
-    raise  
-  except:
-    show_error("nlpserver response is not a correct json: "+  str(rawdata))
-    sys.exit(0)
-  nlpcache.add_parse_to_cache(None,text,data)
-  return data
-
 
 # ==== useful utilities for data  =======
 
