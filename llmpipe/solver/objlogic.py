@@ -1,5 +1,5 @@
 # The object logic handling part of proper logic converter parts of nlpsolver, 
-# used by nlpproperlogic
+# used by properlogic
 #
 #-----------------------------------------------------------------
 # Copyright 2022 Tanel Tammet (tanel.tammet@gmail.com)
@@ -26,26 +26,26 @@ from requests import get
 
 # ==== import other source files ====
 
-# configuration and other globals are in nlpglobals.py
-from nlpglobals import *
+# configuration and other globals are in globals.py
+from globals import *
 
-# small utilities are in nlputils.py
-from nlputils import *
+# small utilities are in utils.py
+from utils import *
 
-# uncertainty analysis and encoding is in nlpuncertain
-from nlpuncertain import *
+# uncertainty analysis and encoding is in uncertain
+from uncertain import *
 
 # pronoun guessing
-from nlppronoun import *
+from pronoun import *
 
-from nlpanswer import *
+from answer import *
 
-import nlpsimplify
+import simplify
 
-import nlptologic
-#from nlptologic import build_property_logic
+import tologic
+#from tologic import build_property_logic
 
-import nlpproperlogic
+import properlogic
 
 # ======= globals used and changed during work ===
 
@@ -213,7 +213,7 @@ def make_obj_logic(ctxt,sentence,var,subjpart,verbpart,objpart,
   #debug_print("make_obj_logic reversepolarity",reversepolarity)
 
   #if (type(objpart)==list and objpart[0]=="props" and is_number_str(objpart[1]["lemma"]) and
-  #    len(objpart)>2 and nlpproperlogic.is_measure_unit(ctxt,objpart[2]["lemma"])):
+  #    len(objpart)>2 and properlogic.is_measure_unit(ctxt,objpart[2]["lemma"])):
   #  # "The length of the car is more than 5 meters."  
   #  return None
 
@@ -327,17 +327,17 @@ def make_obj_logic(ctxt,sentence,var,subjpart,verbpart,objpart,
     elif thing and thing["lemma"] in ["who","which","that"]: propclass=thing
     else: propclass=None
     if issubject:   
-      proplogic=nlpproperlogic.make_qualified_atom_1(ctxt,sentence,verbpart,prop,positive,thisvar,propclass=propclass,subjpart=subjpart)    
+      proplogic=properlogic.make_qualified_atom_1(ctxt,sentence,verbpart,prop,positive,thisvar,propclass=propclass,subjpart=subjpart)    
     elif prop["upos"]=="VERB" and word_has_feat(prop,"VerbForm","Part"):
       # John is a defeated politician    
       uvar="?:"+unknownsubject+str(ctxt["varnum"])
       ctxt["varnum"]+=1
       uactionrepr="?:A"+str(ctxt["varnum"])
       ctxt["varnum"]+=1
-      proplogic=nlpproperlogic.make_atom_2(ctxt,sentence,verbpart,prop,positive,unknownsubject,thisvar,confidence,actionrepr=uactionrepr)
+      proplogic=properlogic.make_atom_2(ctxt,sentence,verbpart,prop,positive,unknownsubject,thisvar,confidence,actionrepr=uactionrepr)
       proplogic=["exists",[uvar], proplogic]
     else:     
-      proplogic=nlpproperlogic.make_qualified_atom_1(ctxt,sentence,verbpart,prop,positive,thisvar,confidence,
+      proplogic=properlogic.make_qualified_atom_1(ctxt,sentence,verbpart,prop,positive,thisvar,confidence,
         propclass=propclass,blocker_preferred=blocker_preferred,subjpart=subjpart)
     
     if proplogic:      
@@ -371,7 +371,7 @@ def make_obj_logic(ctxt,sentence,var,subjpart,verbpart,objpart,
     else: propclass=None
 
     if issubject:
-      thingatom=nlpproperlogic.make_qualified_atom_1(ctxt,sentence,verbpart,thing,
+      thingatom=properlogic.make_qualified_atom_1(ctxt,sentence,verbpart,thing,
         positive,thisvar,propclass=propclass,subjpart=subjpart)
     else:        
       if not propclass and verbpart and type(verbpart)==dict and verbpart["lemma"] in ["be"]:         
@@ -386,7 +386,7 @@ def make_obj_logic(ctxt,sentence,var,subjpart,verbpart,objpart,
           if (subjthing["upos"] in ["NOUN"] and (not thing["upos"] in ["NOUN"]) and
               (not word_has_feat(subjthing,"Number","Plur"))):
             propclass=subjthing          
-      thingatom=nlpproperlogic.make_qualified_atom_1(ctxt,sentence,verbpart,thing,positive,thisvar,
+      thingatom=properlogic.make_qualified_atom_1(ctxt,sentence,verbpart,thing,positive,thisvar,
         confidence,propclass=propclass,blocker_preferred=blocker_preferred,subjpart=subjpart) 
     if thingatom:
       #if deco:
@@ -400,7 +400,7 @@ def make_obj_logic(ctxt,sentence,var,subjpart,verbpart,objpart,
   if issubject and subjpart and type(subjpart)==list and is_theof_or_measure_function(subjpart[0]):
     tmp_logic=["rel2","have",subjpart[2],subjpart]
     if ctxt["addctxt"]:
-      ctxtargument=nlpproperlogic.make_ctxt_argument(ctxt,sentence,verbpart)
+      ctxtargument=properlogic.make_ctxt_argument(ctxt,sentence,verbpart)
       tmp_logic.append(ctxtargument)
     andlist.append(tmp_logic)
 
@@ -463,7 +463,7 @@ def make_simple_obj_logic(ctxt,sentence,var,subjpart,verbpart,objpart,actionvar,
 
   #if (type(objpart)==list and  len(objpart)>2 and objpart[0]=="props" and 
   #    type(objpart[1])==dict and
-  #    is_number_str(objpart[1]["lemma"]) and nlpproperlogic.is_measure_unit(ctxt,objpart[2]["lemma"])):
+  #    is_number_str(objpart[1]["lemma"]) and properlogic.is_measure_unit(ctxt,objpart[2]["lemma"])):
   #  # "The length of the car is more than 5 meters."  
   #  return None
 
@@ -535,7 +535,7 @@ def make_simple_obj_logic(ctxt,sentence,var,subjpart,verbpart,objpart,actionvar,
     elif thing and thing["lemma"] in ["who","which","that"]: propclass=thing
     else: propclass=None 
     #proplogic=make_qualified_atom_1(ctxt,sentence,prop,positive,thisvar,confidence,None,None,propclass)
-    proplogic=nlpproperlogic.make_qualified_atom_1(ctxt,sentence,verbpart,prop,positive,thisvar,confidence,propclass=propclass,subjpart=subjpart)    
+    proplogic=properlogic.make_qualified_atom_1(ctxt,sentence,verbpart,prop,positive,thisvar,confidence,propclass=propclass,subjpart=subjpart)    
     if proplogic:      
       sublist.append(proplogic)
 
@@ -563,7 +563,7 @@ def make_simple_obj_logic(ctxt,sentence,var,subjpart,verbpart,objpart,actionvar,
       top_positive=not top_positive 
       confidence=abs(confidence)   
     
-    thingatom=nlpproperlogic.make_qualified_atom_1(ctxt,sentence,verbpart,thing,True,thisvar,confidence) 
+    thingatom=properlogic.make_qualified_atom_1(ctxt,sentence,verbpart,thing,True,thisvar,confidence) 
 
     if (thingatom and 
         not(thing["lemma"] in no_prop_words) and
@@ -621,7 +621,7 @@ def make_have_logic(ctxt,sentence,var,subjpart,verbpart,objpart,actionvar):
     oargumentconst=find_make_constant(ctxt,sentence,oargument)  
     #debug_print("make_have_logic oargumentconst",oargumentconst)
     oargrepr=oargumentconst
-  elif nlpproperlogic.is_concrete_thing(ctxt,sentence,oargument,oargument_det,verb,iscondition,isconsequence,
+  elif properlogic.is_concrete_thing(ctxt,sentence,oargument,oargument_det,verb,iscondition,isconsequence,
           isobject=True,prefer_non_concrete=True):
     #debug_print("is concrete!!! oargument",oargument)
     tmp_logic=make_simple_obj_logic(ctxt,sentence,dummysubject,subjpart,verbpart,oargprops,actionvar)
@@ -678,7 +678,7 @@ def make_have_logic(ctxt,sentence,var,subjpart,verbpart,objpart,actionvar):
     if not ctxt["isquestion"]:
       tmp_logic=["rel2","have",oargrepr,term]
       if ctxt["addctxt"]:
-        ctxtargument=nlpproperlogic.make_ctxt_argument(ctxt,sentence,verbpart)
+        ctxtargument=properlogic.make_ctxt_argument(ctxt,sentence,verbpart)
         tmp_logic.append(ctxtargument)
       #ctxt["sentence_extralogic"].append(tmp_logic)
       if ("nosaveconstant" in ctxt and ctxt["nosaveconstant"]):
@@ -726,7 +726,7 @@ def make_have_logic(ctxt,sentence,var,subjpart,verbpart,objpart,actionvar):
   #debug_print("cp3 have_logic_atom",have_logic_atom)  
   
   if ctxt["addctxt"]:
-    ctxtargument=nlpproperlogic.make_ctxt_argument(ctxt,sentence,verbpart)
+    ctxtargument=properlogic.make_ctxt_argument(ctxt,sentence,verbpart)
     have_logic_atom.append(ctxtargument)  
   if oarg_logic:
     have_logic=["and",oarg_logic,have_logic_atom]  
@@ -736,7 +736,7 @@ def make_have_logic(ctxt,sentence,var,subjpart,verbpart,objpart,actionvar):
     #have_logic=["exists",[term],have_logic]   
     #having_atom=["exists",[ovar],]
     if not(ctxt["isquestion"]) and not(object_det and object_det["lemma"] in ["the"]):
-      tmp_atom=nlpproperlogic.make_qualified_atom_1(ctxt,sentence,verbpart,thing,True,var,subjpart=subjpart)
+      tmp_atom=properlogic.make_qualified_atom_1(ctxt,sentence,verbpart,thing,True,var,subjpart=subjpart)
       blocker=["$block",0,["$not",have_logic_atom]]
       extra_have_logic=["forall",[term],[arglogic,"=>",["or",blocker,["exists",[var],["and",tmp_atom,have_logic_atom]]]]]
       extra_have_logic=["forall",[term],[arglogic,"=>",["exists",[var],["and",tmp_atom,["or",blocker,have_logic_atom]]]]]
@@ -809,7 +809,7 @@ def make_simple_conj_logic(ctxt,sentence,word,var):
   elif type(word)==dict and word["lemma"] in lemma_confidences:   
     None
   else:  
-    toplogic=nlpproperlogic.make_qualified_atom_1(ctxt,sentence,word,word,positive,var,confidence)
+    toplogic=properlogic.make_qualified_atom_1(ctxt,sentence,word,word,positive,var,confidence)
     toplist.append(toplogic)
   children=get_children(sentence,word)
   for child in children:
@@ -862,11 +862,11 @@ def make_complex_property_atom(ctxt,sentence,origvar,prop,thing,parent_object=No
   #debug_print("make_complex_property_atom parent_object",parent_object)
   replaced=prop
   if parent_object:
-    prelogic=nlpproperlogic.build_single_subsentence_proper_logic(ctxt,sentence,replaced,False,False,1,parent_object)    
+    prelogic=properlogic.build_single_subsentence_proper_logic(ctxt,sentence,replaced,False,False,1,parent_object)    
   elif origvar:
-    prelogic=nlpproperlogic.build_single_subsentence_proper_logic(ctxt,sentence,replaced,False,False,1,[origvar,thing])  
+    prelogic=properlogic.build_single_subsentence_proper_logic(ctxt,sentence,replaced,False,False,1,[origvar,thing])  
   else:
-    prelogic=nlpproperlogic.build_single_subsentence_proper_logic(ctxt,sentence,replaced,False,False,1,["?:X10",thing])   
+    prelogic=properlogic.build_single_subsentence_proper_logic(ctxt,sentence,replaced,False,False,1,["?:X10",thing])   
  
   top_bound_vars=[]
   if prelogic and type(prelogic)==list:
@@ -1107,7 +1107,7 @@ def make_definition(ctxt,clause,keepvars):
   leftside=logic_remove_quantors(leftside,keepvars,["exists"]) 
   #debug_print("make_definition leftside 2",leftside)
   if (not(("isquestion" in ctxt) and ctxt["isquestion"]) and
-      (not nlpproperlogic.noframes) and (not nlpproperlogic.noframevars)):
+      (not properlogic.noframes) and (not properlogic.noframevars)):
     leftside=logic_generalize_framevars(ctxt,leftside)
   #debug_print("make_definition leftside 3",leftside)  
   makeexistvars=[]
@@ -1122,9 +1122,9 @@ def make_definition(ctxt,clause,keepvars):
   #debug_print("makeexistvars",makeexistvars)
   if forallvars:    
     if (makeexistvars and len(makeexistvars)==1 and
-         nlpproperlogic.is_keep_free_var(ctxt,makeexistvars[0])):
+         properlogic.is_keep_free_var(ctxt,makeexistvars[0])):
         #(makeexistvars[0].startswith("?:Tense") or makeexistvars[0].startswith("?:Unit"))):
-      leftside=nlpsimplify.push_quantifier_weakly_inside(leftside,"exists",makeexistvars[0])  
+      leftside=simplify.push_quantifier_weakly_inside(leftside,"exists",makeexistvars[0])  
     else:
       leftside=["exists", makeexistvars, leftside]    
   mainbody=[conseq,"<=>",leftside]
@@ -1220,11 +1220,11 @@ def make_determined_constant(ctxt,sentence,word,det,tmp_logic,verb=None):
   #debug_print("make_determined_constant tmp_logic",tmp_logic)
   #debug_print("make_determined_constant sentence_defs",ctxt["sentence_defs"])  
   const=None
-  if (type(word)==dict and nlpproperlogic.is_measure_unit(ctxt,word["lemma"]) and 
+  if (type(word)==dict and properlogic.is_measure_unit(ctxt,word["lemma"]) and 
         word_has_child_in_deprel_upos(ctxt,sentence,word,["nummod"],["NUM"])):
     #debug_print("to create a measure word",word)
     #if ctxt["addctxt"]:
-    #  ctxtargument=nlpproperlogic.make_ctxt_argument(ctxt,sentence,verb)
+    #  ctxtargument=properlogic.make_ctxt_argument(ctxt,sentence,verb)
     #else:
     #  ctxtargument=None   
     value=word_has_child_in_deprel_upos(ctxt,sentence,word,["nummod"],["NUM"])       
@@ -1327,7 +1327,7 @@ def make_the_or_measure_term(ctxt,sentence,word,argrepr,verb,tmp_isquestion=Fals
   #debug_print("make_the_or_measure_term ctxt",ctxt)
   parent=get_parent(sentence,word)
   if ctxt["addctxt"]:
-    ctxtargument=nlpproperlogic.make_ctxt_argument(ctxt,sentence,verb)
+    ctxtargument=properlogic.make_ctxt_argument(ctxt,sentence,verb)
   else:
     ctxtargument=None  
 
@@ -1596,7 +1596,7 @@ def is_subset_of_context_logic(ctxt,logic,context_constant,context_logic):
         if l1el[0]!=l2el[0]: continue        
         #debug_print("l2el b",l2el)
         if l2el[0]=="isa" and l1el[0]=="isa":
-          if nlpprover.is_subclass(ctxt,l1el[1],l2el[1]):
+          if prover.is_subclass(ctxt,l1el[1],l2el[1]):
             found=True
             break
       if not found:    

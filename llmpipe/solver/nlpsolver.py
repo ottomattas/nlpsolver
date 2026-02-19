@@ -32,22 +32,22 @@ import sys
 
 # ==== import other source files ====
 
-# configuration and other globals are in nlpglobals.py
-from nlpglobals import *
+# configuration and other globals are in globals.py
+from globals import *
 
-# the core ud-to-logic converter parts are in nlptologic.py
-from nlptologic import *
+# the core ud-to-logic converter parts are in tologic.py
+from tologic import *
 
-# prover calling and prover result conversion parts are in nlpprover.py
-from nlpprover import *
+# prover calling and prover result conversion parts are in prover.py
+from prover import *
 
-# optional llm simplifications are in nlpllm
-from nlpllm import *
+# optional llm simplifications are in llm
+from llm import *
 
-# small utilities are in nlputils.py
-from nlputils import *
+# small utilities are in utils.py
+from utils import *
 
-from nlpcache import *
+from cache import *
 
 # ====== main is used for calling on command line ======
 
@@ -119,7 +119,7 @@ def main():
 def answer_question(text,newoptions=None):
   debug_print("answer_question text",text)
 
-  nlpglobals.options["debug_print_flag"]=True
+  globals.options["debug_print_flag"]=True
 
   if newoptions: set_global_options(newoptions) 
   # - - - if pure llm solving do that and stop - - - 
@@ -138,9 +138,9 @@ def answer_question(text,newoptions=None):
   # --- read textual replacement rules ---
   global replacement_complex_rules
   rules=read_replacement_data()
-  nlpglobals.replacement_text_rules=rules[0]
-  nlpglobals.replacement_complex_rules=rules[1]
-  #print(nlpglobals.replacement_text_rules)
+  globals.replacement_text_rules=rules[0]
+  globals.replacement_complex_rules=rules[1]
+  #print(globals.replacement_text_rules)
   #return  
   # - - - make optional llm simplifications - - - -
   llm_mapping=None
@@ -190,7 +190,7 @@ def answer_question(text,newoptions=None):
     #print("No question given.")
     #sys.exit(0)
   if "result" not in logic_objects:
-    rawresult=nlpprover.call_prover(logic)
+    rawresult=prover.call_prover(logic)
   elif logic_objects["result"]: 
     if options["prover_explain_flag"]:
       print("Answer found without proof search:")   

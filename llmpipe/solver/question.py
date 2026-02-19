@@ -1,5 +1,5 @@
 # The question handling part of proper logic converter parts of nlpsolver, 
-# used by nlpproperlogic
+# used by properlogic
 #
 #-----------------------------------------------------------------
 # Copyright 2022 Tanel Tammet (tanel.tammet@gmail.com)
@@ -21,22 +21,22 @@
 
 # ==== import other source files ====
 
-# configuration and other globals are in nlpglobals.py
-from nlpglobals import *
+# configuration and other globals are in globals.py
+from globals import *
 
-# small utilities are in nlputils.py
-from nlputils import *
+# small utilities are in utils.py
+from utils import *
 
-# uncertainty analysis and encoding is in nlpuncertain
-from nlpuncertain import *
-
-# pronoun guessing
-from nlppronoun import *
+# uncertainty analysis and encoding is in uncertain
+from uncertain import *
 
 # pronoun guessing
-from nlpobjlogic import *
+from pronoun import *
 
-from nlpanswer import *
+# pronoun guessing
+from objlogic import *
+
+from answer import *
 
 # ======= globals used and changed during work ===
 
@@ -154,7 +154,7 @@ def dummify_text(ctxt,text,orig_parsed_text):
   #debug_print("tmp2",tmp2)
   #debug_print("firstpart",sp[:tmp2])
   if tmp>0:
-    dummy=nlpglobals.dummy_name+"_"+str(ctxt["dummy_nr"])
+    dummy=globals.dummy_name+"_"+str(ctxt["dummy_nr"])
     ctxt["dummy_nr"]=ctxt["dummy_nr"]+1
     newsp=split_sentence_remove_trailingchar(sp[tmp:],"?")
     newsp=newsp+[make_question_beword(sp,tmp,["is","was","are","were"]),"on","a",dummy+"?"]
@@ -162,7 +162,7 @@ def dummify_text(ctxt,text,orig_parsed_text):
     ctxt["question_type"]="where_is"
     #debug_print("dummify sets question_type")
   elif tmp2>0:
-    dummy=nlpglobals.dummy_name+"_"+str(ctxt["dummy_nr"])
+    dummy=globals.dummy_name+"_"+str(ctxt["dummy_nr"])
     ctxt["dummy_nr"]=ctxt["dummy_nr"]+1
     newsp=split_sentence_remove_trailingchar(sp[tmp2:],"?")+["on","a",dummy+"?"]
     newsp=[make_question_beword(sp,tmp2,["does","did"])]+newsp
@@ -170,7 +170,7 @@ def dummify_text(ctxt,text,orig_parsed_text):
     ctxt["question_type"]="where_does"
     #debug_print("dummify sets question_type")  
   elif tmp3>0:
-    dummy=nlpglobals.dummy_name+"_"+str(ctxt["dummy_nr"])
+    dummy=globals.dummy_name+"_"+str(ctxt["dummy_nr"])
     ctxt["dummy_nr"]=ctxt["dummy_nr"]+1
     newsp=split_sentence_remove_trailingchar(sp[tmp3:],"?")
     newsp=newsp+[make_question_beword(sp,tmp3,["is","was","are","were"]),"during","a",dummy+"?"]
@@ -178,7 +178,7 @@ def dummify_text(ctxt,text,orig_parsed_text):
     ctxt["question_type"]="when_is"
     #debug_print("dummify sets question_type")
   elif tmp4>0:
-    dummy=nlpglobals.dummy_name+"_"+str(ctxt["dummy_nr"])
+    dummy=globals.dummy_name+"_"+str(ctxt["dummy_nr"])
     ctxt["dummy_nr"]=ctxt["dummy_nr"]+1
     newsp=split_sentence_remove_trailingchar(sp[tmp4:],"?")+["during","a",dummy+"?"]
     newsp=[make_question_beword(sp,tmp4,["does","did"])]+newsp
@@ -193,7 +193,7 @@ def dummify_text(ctxt,text,orig_parsed_text):
         sp[1].lower() in ["is","was","where"] and
         sp[-2] in ["of","about"]):
     #debug_print("ckpt0")
-    dummy=nlpglobals.dummy_name+"_"+str(ctxt["dummy_nr"])
+    dummy=globals.dummy_name+"_"+str(ctxt["dummy_nr"])
     ctxt["dummy_nr"]=ctxt["dummy_nr"]+1
     newsp=[sp[1].capitalize()]+sp[2:-1]+[dummy+"?"]
   else:
@@ -210,7 +210,7 @@ def dummify_text(ctxt,text,orig_parsed_text):
             el.lower()==orig_parsed_text[0]["lemma"].lower() )) or
           el in ["who?","whom?","what?","which?"] or el.lower() in ["who?","whom?","what?","which?"] or
           ((el.lower() in ["who","whom","what","which"]) and len(sp)==count+1 and sp[count]=="?") ):
-        dummy=nlpglobals.dummy_name+"_"+str(ctxt["dummy_nr"])
+        dummy=globals.dummy_name+"_"+str(ctxt["dummy_nr"])
         ctxt["dummy_nr"]=ctxt["dummy_nr"]+1
         newsp.append(dummy)  
         ctxt["question_type"]=el.lower().strip("?")
@@ -226,7 +226,7 @@ def dummify_text(ctxt,text,orig_parsed_text):
         if ((el["deprel"] in ["nmod"] and word_has_feat(el,"PronType","Rel") and 
             (el in ["who","what","which"] or el.lower() in ["who","what","which"])) or       
             el in ["who?","what?","which?"] or el.lower() in ["who?","what?","which?"]):
-          dummy=nlpglobals.dummy_name+"_"+str(ctxt["dummy_nr"])
+          dummy=globals.dummy_name+"_"+str(ctxt["dummy_nr"])
           ctxt["dummy_nr"]=ctxt["dummy_nr"]+1
           newsp.append(dummy)  
           ctxt["question_type"]=el.lower().strip("?")

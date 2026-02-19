@@ -25,10 +25,10 @@ import hashlib
 
 # ==== import other source files ====
 
-# configuration and other globals are in nlpglobals.py
-from nlpglobals import *
+# configuration and other globals are in globals.py
+from globals import *
 
-import nlputils
+import utils
 
 # ======= code ==========
 
@@ -79,7 +79,7 @@ def add_parse_to_cache(ctxt,intxt,outdata):
     except:
       print("Error: cache index creation failed")
       sys.exit(0)  
-    nlputils.debug_print("Cache database created.")
+    utils.debug_print("Cache database created.")
   except:
     #print("cache note: could not check input presence in cache")
     conn.close()
@@ -92,7 +92,7 @@ def add_parse_to_cache(ctxt,intxt,outdata):
   conn.execute(sql_insert,(intxt,outtxt,outtype))
   conn.commit()
   conn.close() 
-  nlputils.debug_print("Parse cache insert done")
+  utils.debug_print("Parse cache insert done")
   return
 
 
@@ -145,7 +145,7 @@ def add_proof_to_cache(inparams,outdata):
     except:
       print("Error: cache index creation failed")
       sys.exit(0)  
-    nlputils.debug_print("Cache database created.")
+    utils.debug_print("Cache database created.")
   except:
     #print("cache note: could not check input presence in cache")
     conn.close()
@@ -158,7 +158,7 @@ def add_proof_to_cache(inparams,outdata):
   conn.execute(sql_insert,(intxt,outtxt,outtype))
   conn.commit()
   conn.close() 
-  nlputils.debug_print("proof cache insert done")
+  utils.debug_print("proof cache insert done")
   return
 
 
@@ -227,7 +227,7 @@ def get_parse_from_cache(ctxt,intxt):
     row = cur.fetchone()
   except:
     conn.close()
-    nlputils.debug_print("Parse cache query failed.")
+    utils.debug_print("Parse cache query failed.")
     return None
     
   if not row: return None
@@ -237,7 +237,7 @@ def get_parse_from_cache(ctxt,intxt):
     out=json.loads(row[0])
   conn.close()    
   if out:
-    nlputils.debug_print("Parse obtained from cache")
+    utils.debug_print("Parse obtained from cache")
   return out  
 
 
@@ -259,7 +259,7 @@ def get_proof_from_cache(ctxt,inparams):
     row = cur.fetchone()
   except:
     conn.close()
-    nlputils.debug_print("GK proof cache query failed.")
+    utils.debug_print("GK proof cache query failed.")
     return None
     
   if not row: return None
@@ -269,7 +269,7 @@ def get_proof_from_cache(ctxt,inparams):
     out=json.loads(row[0])
   conn.close()    
   if out:
-    nlputils.debug_print("GK proof obtained from cache")
+    utils.debug_print("GK proof obtained from cache")
   return out  
 
 

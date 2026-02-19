@@ -27,21 +27,21 @@ import os
 
 # ==== import other source files ====
 
-# configuration and other globals are in nlpglobals.py
-import nlpglobals
+# configuration and other globals are in globals.py
+import globals
 
-# making a nice nlp answer from json answer is in nlpanswer.py
-from nlpanswer import *
+# making a nice nlp answer from json answer is in answer.py
+from answer import *
 
-# small utilities are in nlputils.py
-from nlputils import *
+# small utilities are in utils.py
+from utils import *
 
-from nlpcache import *
+from cache import *
 
 # === calling the prover ===
  
 def call_prover(logic):     
-  if nlpglobals.options["debug_print_flag"]: 
+  if globals.options["debug_print_flag"]: 
     print("solve logic:")
     print("[")
     for i in range(len(logic)):
@@ -66,7 +66,7 @@ def call_prover(logic):
     return("Error: failed to make a temporary file to write input to. ")  
   #print("infilename",infilename) 
   try:
-    #infile=open(nlpglobals.prover_infile,"w")    
+    #infile=open(globals.prover_infile,"w")    
     #infile=open(infilename,"w")
     os.write(infile,str.encode(instr))
     os.close(infile)
@@ -76,14 +76,14 @@ def call_prover(logic):
   except:
     os.remove(infilename)
     return("Error: failed to write prover infile "+infilename)     
-  path=nlpglobals.prover_fname
+  path=globals.prover_fname
   #decodedd=data.decode('ascii')
   #print("capi called with data",decodedd)
   params=[path]
   if not options["nokb_flag"]: 
     params=params+["-usekb",memkb_name]
   if options["prover_axiomfiles"]==False:
-    params.append(nlpglobals.prover_axiomfile)
+    params.append(globals.prover_axiomfile)
   else:
     for el in options["prover_axiomfiles"]:
       params.append(el)
@@ -94,8 +94,8 @@ def call_prover(logic):
   if options["prover_seconds"]:
     params=params+["-seconds",str(options["prover_seconds"])]    
   params.append(infilename)
-  if options["usekb_flag"]: params=params+nlpglobals.usekb_prover_params
-  else: params=params+nlpglobals.prover_params
+  if options["usekb_flag"]: params=params+globals.usekb_prover_params
+  else: params=params+globals.prover_params
   params=params+["--datafolder",prover_datafolder]
   if options["prover_print_flag"] or options["show_prover_flag"]:
     print("\n=== prover params: === \n\n"," ".join(params))
@@ -128,7 +128,7 @@ def get_relatedness(ctxt,lemma1,lemma2):
     #debug_print("key,val",key,ctxt["relatedness_cache"][key])
     #debug_print("get_relatedness gave from cache",ctxt["relatedness_cache"][key]) 
     return ctxt["relatedness_cache"][key]
-  path=nlpglobals.prover_fname
+  path=globals.prover_fname
   task="path,"+str(lemma1)+","+str(lemma2)
   params=[path,"-usekb","-task",task]
   res=0
@@ -167,7 +167,7 @@ def is_subclass(ctxt,lemma1,lemma2):
     #debug_print("key,val",key,ctxt["subclass_cache"][key])
     #debug_print("get_relatedness gave from cache",ctxt["subclass_cache"][key]) 
     return ctxt["subclass_cache"][key]
-  path=nlpglobals.prover_fname
+  path=globals.prover_fname
   task="taxcompare,"+str(lemma1)+","+str(lemma2)
   params=[path,"-usekb","-task",task]
   res=0

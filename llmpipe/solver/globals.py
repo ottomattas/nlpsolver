@@ -57,11 +57,11 @@ options={
 
 # connecting to llm etc with secret keys
 
-## secrets_file="secrets.js" # only needed for reading llm keys, if llm used (given in nlpllm.py)
+## secrets_file="secrets.js" # only needed for reading llm keys, if llm used (given in llm.py)
 
 # cache
 
-cache_db_name="nlpcache.db"
+cache_db_name="cache.db"
 
 # solving logic with a prover
 prover_fname="../gk/gk"  # gk binary

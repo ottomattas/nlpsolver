@@ -1,4 +1,4 @@
-# The proper logic converter parts of nlpsolver, used by nlptologic
+# The proper logic converter parts of nlpsolver, used by tologic
 #
 #-----------------------------------------------------------------
 # Copyright 2022 Tanel Tammet (tanel.tammet@gmail.com)
@@ -25,22 +25,22 @@ from requests import get
 
 # ==== import other source files ====
 
-# configuration and other globals are in nlpglobals.py
-from nlpglobals import *
+# configuration and other globals are in globals.py
+from globals import *
 
-# small utilities are in nlputils.py
-from nlputils import *
+# small utilities are in utils.py
+from utils import *
 
-# uncertainty analysis and encoding is in nlpuncertain
-from nlpuncertain import *
+# uncertainty analysis and encoding is in uncertain
+from uncertain import *
 
 # pronoun guessing
-from nlppronoun import *
+from pronoun import *
 
-from nlpobjlogic import *
+from objlogic import *
 
-import nlptologic
-#from nlptologic import build_property_logic
+import tologic
+#from tologic import build_property_logic
 
 # ======= globals used and changed during work ===
 
@@ -679,7 +679,7 @@ def build_single_subsentence_proper_logic(ctxt,sentence,tree,
         if not is_concrete_thing(ctxt,sentence,object,object_det,verb,iscondition,isconsequence,isobject=True):
           #debug_print("cp3 is_of")
           if obj_quant_confidence==1: obj_quant_confidence=0.95   
-      elif (verb and verb["lemma"] in nlpglobals.abstract_verbs and object and 
+      elif (verb and verb["lemma"] in globals.abstract_verbs and object and 
             word_has_feat(object,"Number","Plur")):
            #(word_has_feat(object,"Number","Plur") or 
            # not is_concrete_thing(ctxt,sentence,object,object_det,verb,iscondition,isconsequence,isobject=True))):
@@ -863,8 +863,8 @@ def build_single_subsentence_proper_logic(ctxt,sentence,tree,
         #debug_print("actionrepr",actionrepr)
         #debug_print("relation_word",relation_word)
         
-        if ((verb and verb["lemma"] in nlpglobals.abstract_verbs) or
-            (relation_word and relation_word["lemma"] in nlpglobals.abstract_verbs)):
+        if ((verb and verb["lemma"] in globals.abstract_verbs) or
+            (relation_word and relation_word["lemma"] in globals.abstract_verbs)):
           # "Mary likes mice"
           # "Mary is afraid of mice"
           obj_logic_function=None
@@ -1583,35 +1583,35 @@ def make_atom_2(ctxt,sentence,verb,thing,positive,var1,var2,confidence=1,act_typ
   #debug_print("make_atom_2 lemma",lemma)  
   #debug_print("make_atom_2 raw relation_type", relation_type) 
   
-  if relation_type and relation_type in nlpglobals.relation_type_translate:
-    relation_type=nlpglobals.relation_type_translate[relation_type]
+  if relation_type and relation_type in globals.relation_type_translate:
+    relation_type=globals.relation_type_translate[relation_type]
   elif not relation_type:
-    if lemma in nlpglobals.relation_type_translate:
-      relation_type=nlpglobals.relation_type_translate[lemma]
+    if lemma in globals.relation_type_translate:
+      relation_type=globals.relation_type_translate[lemma]
       act_type=None
       actionrepr=None
-    elif lemma in nlpglobals.relation_type_reverse_translate:  
+    elif lemma in globals.relation_type_reverse_translate:  
       reversepos=True
-      relation_type=nlpglobals.relation_type_reverse_translate[lemma] 
+      relation_type=globals.relation_type_reverse_translate[lemma] 
       act_type=None
       actionrepr=None
 
-  if relation_type in nlpglobals.relation_type_negative_translate:
-    relation_type=nlpglobals.relation_type_negative_translate[relation_type]
+  if relation_type in globals.relation_type_negative_translate:
+    relation_type=globals.relation_type_negative_translate[relation_type]
     positive=not positive
 
   #debug_print("make_atom_2 translated relation_type", relation_type)   
 
   if targetverblemma:
     if (relation_type or lemma in ["have"] or
-       (targetverblemma in nlpglobals.abstract_verbs)):
+       (targetverblemma in globals.abstract_verbs)):
       pred="rel2"
     elif act_type:
       pred=act_type  
     else:
       pred="act2"  
   elif (relation_type or lemma in ["have"] or
-       (verb and verb["lemma"] in nlpglobals.abstract_verbs)):
+       (verb and verb["lemma"] in globals.abstract_verbs)):
     pred="rel2"
   elif act_type:
     pred=act_type  

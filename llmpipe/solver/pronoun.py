@@ -23,17 +23,17 @@ import math
 
 # ==== import other source files ====
 
-# configuration and other globals are in nlpglobals.py
-from nlpglobals import *
+# configuration and other globals are in globals.py
+from globals import *
 
-# small utilities are in nlputils.py
-from nlputils import *
+# small utilities are in utils.py
+from utils import *
 
-from nlpglobals import *
+from globals import *
 
-import nlpproperlogic
-import nlptologic
-import nlpprover
+import properlogic
+import tologic
+import prover
 
 # =========== code ==========
 
@@ -62,26 +62,26 @@ def resolve_pronoun(ctxt,sentence,word,tree,verb=None,otherword=None):
         #debug_print("  ctxt[passed_words]",ctxt["passed_words"])
         #debug_print("  ctxt[objects]",ctxt["objects"])
         #debug_print("resolve pronoun parentparent",parentparent)
-        object_det=nlpproperlogic.get_word_det(ctxt,sentence,parentparent)  
+        object_det=properlogic.get_word_det(ctxt,sentence,parentparent)  
         #debug_print("  object_det",object_det)
         if object_det:
-          objconst=nlpproperlogic.make_determined_constant(ctxt,sentence,parentparent,object_det,None)
+          objconst=properlogic.make_determined_constant(ctxt,sentence,parentparent,object_det,None)
         else:  
-          objconst=nlpproperlogic.find_make_constant(ctxt,sentence,parentparent)
+          objconst=properlogic.find_make_constant(ctxt,sentence,parentparent)
         return [objconst,parentparent]
     # get previous word
-    previous=nlptologic.get_previous_word(sentence,word)
+    previous=tologic.get_previous_word(sentence,word)
     if previous and previous["upos"] in ["NOUN","PROPN"]:
-      objconst=nlpproperlogic.find_make_constant(ctxt,sentence,previous)
+      objconst=properlogic.find_make_constant(ctxt,sentence,previous)
       return [objconst,previous]
 
   locals=ctxt["passed_words"]  
   #debug_print("resolve pronoun locals",locals)
 
-  if verb: verb=nlpproperlogic.get_thing(verb)
+  if verb: verb=properlogic.get_thing(verb)
   if type(verb)==dict: verblemma=verb["lemma"] 
   else: verblemma=None   
-  if otherword: otherword=nlpproperlogic.get_thing(otherword)
+  if otherword: otherword=properlogic.get_thing(otherword)
   if type(otherword)==dict:otherwordlemma=otherword["lemma"]
   else: otherwordlemma=None
 
@@ -127,8 +127,8 @@ def resolve_pronoun(ctxt,sentence,word,tree,verb=None,otherword=None):
 
       #debug_print("objword",objword)
       #debug_print("gender",gender)  
-      #debug_print("is_subclass(ctxt,lemma1,lemma2)",nlpprover.is_subclass(ctxt,"animal",objword["lemma"]))
-      #debug_print("is_subclass(ctxt,lemma1,lemma2)",nlpprover.is_subclass(ctxt,"person",objword["lemma"]))      
+      #debug_print("is_subclass(ctxt,lemma1,lemma2)",prover.is_subclass(ctxt,"animal",objword["lemma"]))
+      #debug_print("is_subclass(ctxt,lemma1,lemma2)",prover.is_subclass(ctxt,"person",objword["lemma"]))      
 
       if word["lemma"] in ["he"]:
         if gender=="m": score+=10
@@ -172,11 +172,11 @@ def resolve_pronoun(ctxt,sentence,word,tree,verb=None,otherword=None):
         elif word["lemma"] in ["they"] and "ner" in objword and "ORG" in objword["ner"]:
           score+=5  
         else:  
-          isperson=nlpprover.is_subclass(ctxt,"person",objword["lemma"])
+          isperson=prover.is_subclass(ctxt,"person",objword["lemma"])
           if isperson:
             score+=5
           else:          
-            isanimal=nlpprover.is_subclass(ctxt,"animal",objword["lemma"])
+            isanimal=prover.is_subclass(ctxt,"animal",objword["lemma"])
             if isanimal: 
               score+=3
             else:
@@ -246,8 +246,8 @@ def resolve_pronoun(ctxt,sentence,word,tree,verb=None,otherword=None):
   return [sortedres[0][1][0],sortedres[0][1][1]]
 
 def complex_relatedness(ctxt,word1,word2):
-  related1=nlpprover.get_relatedness(ctxt,word1,word2)
-  related2=nlpprover.get_relatedness(ctxt,word2,word1)
+  related1=prover.get_relatedness(ctxt,word1,word2)
+  related2=prover.get_relatedness(ctxt,word2,word1)
   if related1>related2: related=related1
   else: related=related2
   return related

@@ -23,28 +23,28 @@ import http.client
 
 # ==== import other source files ====
 
-# configuration and other globals are in nlpglobals.py
-from nlpglobals import *
+# configuration and other globals are in globals.py
+from globals import *
 
-# small utilities are in nlputils.py
-from nlputils import *
+# small utilities are in utils.py
+from utils import *
 
-# proper logic part is in nlpproperlogic
-#from nlpproperlogic import *
+# proper logic part is in properlogic
+#from properlogic import *
 
-# question special handling is in nlpquestion
-from nlpquestion import *
+# question special handling is in question
+from question import *
 
-# prover calling and prover result conversion parts are in nlpprover.py
-from nlpprover import *
+# prover calling and prover result conversion parts are in prover.py
+from prover import *
 
-# logic simplification is in nlpsimplify
-#from nlpsimplify import *
+# logic simplification is in simplify
+#from simplify import *
 
-# uncertainty analysis and encoding is in nlpuncertain
-#from nlpuncertain import *
+# uncertainty analysis and encoding is in uncertain
+#from uncertain import *
 
-#from nlpanswer import *
+#from answer import *
 
 # ======= llm configuration ===
 

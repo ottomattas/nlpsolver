@@ -23,10 +23,10 @@ import json
 import pprint
 # ==== import other source files ====
 
-# configuration and other globals are in nlpglobals.py
-import nlpglobals
+# configuration and other globals are in globals.py
+import globals
 
-import nlpcache
+import cache
 
 # ==== useful utilities for data  =======
 
@@ -123,9 +123,9 @@ def logic_generalize_framevars(ctxt,frm):
   #debug_print("frm",frm)
   if not frm: return frm
   if type(frm)!=list: return frm
-  if frm[0]==nlpglobals.ctxt_function and not(is_var(frm[2])):
+  if frm[0]==globals.ctxt_function and not(is_var(frm[2])):
     newfrm=frm.copy()
-    framenr=nlpglobals.frame_var_prefix+str(ctxt["varnum"])
+    framenr=globals.frame_var_prefix+str(ctxt["varnum"])
     ctxt["varnum"]+=1
     newfrm[2]=framenr
     return newfrm  
@@ -160,13 +160,13 @@ def prop_flatten_logic_term(term):
   thisop=term[0]
   if thisop in ["logic"]:
     res=prop_flatten_logic_term(term[2])
-  elif not (thisop in nlpglobals.logic_ops) and len(term)>1 and term[1] in ["&","|"]:
+  elif not (thisop in globals.logic_ops) and len(term)>1 and term[1] in ["&","|"]:
     #debug_print("term",term)
     if term[1]=="&": op="and"
     else: op="or"
     lst=[op]
     for el in term:
-      if not (el in nlpglobals.logic_ops):
+      if not (el in globals.logic_ops):
         lst.append(prop_flatten_logic_term(el))
     #debug_print("lst",lst)
     #sys.exit(0)    
@@ -257,7 +257,7 @@ def prop_flatten_logic_term(term):
   
   if (type(res)==list and res[0]=="not" and type(res[1])==list and type(res[1][0])==str):
     pred=res[1][0]
-    if pred in nlpglobals.logic_ops or pred=="logic":
+    if pred in globals.logic_ops or pred=="logic":
       return res
     elif pred[0]=="-":
       return [pred[1:]]+res[1][1:]
@@ -341,9 +341,9 @@ def collect_frame_vars(term):
   candidates=collect_free_vars(term)  
   res=[]
   for var in candidates:
-    if var.startswith(nlpglobals.frame_var_prefix):
+    if var.startswith(globals.frame_var_prefix):
       res.append(var)
-    #if var.startswith(nlpglobals.unit_var_prefix):
+    #if var.startswith(globals.unit_var_prefix):
     #  res.append(var)  
   return res    
 
@@ -360,7 +360,7 @@ def collect_frame_vars_lex(term,vars=[]):
   if not term: return vars
   if type(term)!=list:
     if type(term)==str:
-      if term.startswith(nlpglobals.frame_var_prefix):
+      if term.startswith(globals.frame_var_prefix):
         if term not in vars:
           vars.append(term)
           return vars
@@ -498,7 +498,7 @@ def get_next_word(sentence,word):
 
 def end_punct_word(word):
   lemma=word["lemma"]
-  if lemma in nlpglobals.end_punctuation_lemmas:
+  if lemma in globals.end_punctuation_lemmas:
     return True
   else:
     return False
@@ -626,7 +626,7 @@ def process_lemma(lemma):
 # ====== print ud list as a tree ===================
 
 def debug_print_sentence_trees(sentences):
-  if not nlpglobals.options["debug_print_flag"]: return
+  if not globals.options["debug_print_flag"]: return
   nr=0
   for sentence in sentences:
     print("\nsentence "+str(nr)+":"+"\n============")
@@ -634,7 +634,7 @@ def debug_print_sentence_trees(sentences):
     nr+=1
 
 def debug_print_sentence_tree(sentence,rootid=0,spaces="",printedids=[]):
-  if not nlpglobals.options["debug_print_flag"]: return
+  if not globals.options["debug_print_flag"]: return
   if not sentence: return 
   #print("sentence:",sentence)
   printedids=printedids[::-1] # copy
@@ -653,7 +653,7 @@ def debug_print_sentence_tree(sentence,rootid=0,spaces="",printedids=[]):
         
 
 def nice_word_strrep(word):
-  if not nlpglobals.options["debug_print_flag"]: return
+  if not globals.options["debug_print_flag"]: return
   s=word["lemma"]
   s+=" [id:"+str(word["id"])
   s+=" text:"+word["text"]
@@ -668,7 +668,7 @@ def nice_word_strrep(word):
 
 
 def debug_print_logical_sentence_tree(tree,spaces=""):
-  if not nlpglobals.options["debug_print_flag"]: return
+  if not globals.options["debug_print_flag"]: return
   if not tree: return 
   #debug_print("print",tree)
   if type(tree)==dict:
@@ -780,7 +780,7 @@ def object_list_to_str(obj,commas=True):
   return s  
 
 def debug_print_logic_list(lst,spaces=""):
-  if not nlpglobals.options["debug_print_flag"]: return
+  if not globals.options["debug_print_flag"]: return
   #debug_print("lst",lst)
   #debug_print("spaces",len(spaces))
   if lst==0: print(lst)
@@ -814,7 +814,7 @@ def debug_print_logic_list(lst,spaces=""):
       
 
 def debug_print_logic(tree,spaces="",newline=True):
-  if not nlpglobals.options["debug_print_flag"]: return
+  if not globals.options["debug_print_flag"]: return
   if (not tree) and tree!=0: return 
   if type(tree)!=list:
     print(spaces+str(tree).replace(", ",",").replace("'",""))
@@ -982,7 +982,7 @@ def remove_confidences_from_logic(lst):
   #debug_print("remove_confidences_from_logic lst",lst)
   if not lst: return lst  
   if type(lst)==list:
-    res=list(filter(lambda x: type(x)!=list or x[0]!=nlpglobals.confidence_function,lst))
+    res=list(filter(lambda x: type(x)!=list or x[0]!=globals.confidence_function,lst))
     res=list(map(lambda x: remove_confidences_from_logic(x), res))
   else:
     res=lst
@@ -1044,7 +1044,7 @@ def make_text_from_doc_sep(doc):
   return res.strip()
 
 
-# ===== split sentence utils used by nlpquestion ===
+# ===== split sentence utils used by question ===
 
 def split_sentence_startswith_pos(sp,chunk):
   if not sp or not chunk: return 0
@@ -1073,8 +1073,8 @@ def split_sentence_remove_trailingchar(sp,c):
 
 def measure_adv_to_noun(s):
   #debug_print("s",s)
-  for el in nlpglobals.measure_words:
-    val=nlpglobals.measure_words[el]
+  for el in globals.measure_words:
+    val=globals.measure_words[el]
     if "morenouns" in val:
       if s in val["morenouns"]: return el
     elif "lessnouns" in val:
@@ -1083,8 +1083,8 @@ def measure_adv_to_noun(s):
 
 def is_unitword(s):
   #debug_print("s",s)
-  for el in nlpglobals.measure_words:
-    val=nlpglobals.measure_words[el]
+  for el in globals.measure_words:
+    val=globals.measure_words[el]
     if "units" in val:
       if s in val["units"]: return el
   return False  
@@ -1181,7 +1181,7 @@ def clause_list_to_json(clauselist):
 # ====== debug printing and error handling ==========
 
 def debug_print(label,format="placeholder1",data="placeholder2"):
-  if not nlpglobals.options["debug_print_flag"]: return
+  if not globals.options["debug_print_flag"]: return
   print()
   print(label,end='') 
   if format!="placeholder1" and data=="placeholder2":
@@ -1212,7 +1212,7 @@ def debug_print(label,format="placeholder1",data="placeholder2"):
     print(" :",data)
 
 def debug_pprint(label,data="placeholder"):
-  if not nlpglobals.options["debug_print_flag"]: return
+  if not globals.options["debug_print_flag"]: return
   print()
   print(label,end='')
   if data=="placeholder": 

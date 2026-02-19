@@ -22,27 +22,27 @@ import sys
 
 # ==== import other source files ====
 
-# configuration and other globals are in nlpglobals.py
-from nlpglobals import *
+# configuration and other globals are in globals.py
+from globals import *
 
-# small utilities are in nlputils.py
-from nlputils import *
+# small utilities are in utils.py
+from utils import *
 
-# proper logic part is in nlpproperlogic
-from nlpproperlogic import *
+# proper logic part is in properlogic
+from properlogic import *
 
-# question special handling is in nlpquestion
-from nlpquestion import *
+# question special handling is in question
+from question import *
 
-# logic simplification is in nlpsimplify
-from nlpsimplify import *
+# logic simplification is in simplify
+from simplify import *
 
-# uncertainty analysis and encoding is in nlpuncertain
-from nlpuncertain import *
+# uncertainty analysis and encoding is in uncertain
+from uncertain import *
 
-from nlpanswer import *
+from answer import *
 
-from nlprewrite import *
+from rewrite import *
 
 # ======= globals used and changed during work ===
 
@@ -84,7 +84,7 @@ def parse_ud(doc,entities):
     #debug_print("sentence2",sentence2)
     sentence3=fix_capital_propn(ctxt,sentence2,entities)
     #debug_print("sentence3",sentence3)
-    #print("replacement_text_rules",nlpglobals.replacement_text_rules)
+    #print("replacement_text_rules",globals.replacement_text_rules)
     sentence4=rewrite_sentence(ctxt,sentence3)    
     #sentence4=fix_capital_propn(ctxt,sentence4)
     #debug_print("rewrite_sentence gave sentence4 1",sentence4)
@@ -474,8 +474,8 @@ def fix_plural_to_singular(ctxt,doc):
   if type(doc)!=list: return doc
   for word in doc:
     if (word["lemma"] and word["upos"] in ["NOUN"] and 
-        word_has_feat(word,"Number","Plur") and word["lemma"] in nlpglobals.plural_to_singular):
-      word["lemma"]=nlpglobals.plural_to_singular[word["lemma"]]     
+        word_has_feat(word,"Number","Plur") and word["lemma"] in globals.plural_to_singular):
+      word["lemma"]=globals.plural_to_singular[word["lemma"]]     
   #debug_print("fix_plural_to_singular result doc",doc) 
   return doc
 
@@ -498,7 +498,7 @@ def fix_capital_propn(ctxt,doc,entities):
           word["lemma"]=entity["text"].lower()
           break
     elif (word["id"]!=1 and word["upos"]=="PROPN" and word["text"]==word["lemma"] and 
-          word["text"][0].islower() and word["text"][0].upper()+word["text"][1:] in nlpglobals.first_names):
+          word["text"][0].islower() and word["text"][0].upper()+word["text"][1:] in globals.first_names):
       #debug_print("found word",word)
       word["text"]=word["text"][0].upper()+word["text"][1:]
       word["lemma"]=word["text"]      

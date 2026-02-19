@@ -22,11 +22,11 @@ import sys
 
 # ==== import other source files ====
 
-# configuration and other globals are in nlpglobals.py
-from nlpglobals import *
+# configuration and other globals are in globals.py
+from globals import *
 
-# small utilities are in nlputils.py
-from nlputils import *
+# small utilities are in utils.py
+from utils import *
 
 # ========= logic simplification ====
 
@@ -654,7 +654,7 @@ def generalize_logic_list(ctxt,logic):
 
 def generalize_atom(ctxt,atom):
   if (not atom) or type(atom)!=list: return atom
-  if atom[0] not in nlpglobals.comparison_preds: return atom
+  if atom[0] not in globals.comparison_preds: return atom
   res=[generalize_term(ctxt,x) for x in atom] 
   return res
 
@@ -672,7 +672,7 @@ def generalize_term(ctxt,term):
   return res
 
 
-  if atom[0] not in nlpglobals.comparison_preds: return atom
+  if atom[0] not in globals.comparison_preds: return atom
   res=[generalize_term(ctxt,x) for x in atom] 
   return res
 
@@ -870,7 +870,7 @@ def xpost_process_logic_term(term,pos,boundvars):
   # here term is not a list
   if term in boundvars:
     return term  
-  elif term in nlpglobals.logic_ops or term in ["$not"]: #["and","or","not","$not","&","<=","=>","<=>"]:
+  elif term in globals.logic_ops or term in ["$not"]: #["and","or","not","$not","&","<=","=>","<=>"]:
     return term
   if rdfstyle and pos>0:
     if not term[0] in ["?","$"]:

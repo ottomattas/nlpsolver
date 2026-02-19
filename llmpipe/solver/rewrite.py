@@ -23,9 +23,9 @@ import json
 import pprint
 # ==== import other source files ====
 
-# configuration and other globals are in nlpglobals.py
-import nlpglobals
-from nlputils import *
+# configuration and other globals are in globals.py
+import globals
+from utils import *
 
 # ===== configuration ==================
 
@@ -69,7 +69,7 @@ def make_namified_replacement_wordlist(sentence):
       wordlist.append("#name#"+el["text"])
     elif ((el["upos"]=="PROPN" or word_has_feat(el,"PronType","Prs")) and 
           el["ner"]=='O' and 
-          el["text"].islower() and txt[0].upper()+txt[1:] in nlpglobals.first_names):
+          el["text"].islower() and txt[0].upper()+txt[1:] in globals.first_names):
       wordlist.append("#name#"+txt[0].upper()+txt[1:])      
       #el["text"]=txt[0].upper()+txt[1:]
     else:  
@@ -94,7 +94,7 @@ def rewrite_text_list(ctxt,wordlist):
   while True:
     made_changes=False
     # --- collect candidate rules ---
-    text_rule_candidates=collect_rule_candidates(ctxt,wordlist,nlpglobals.replacement_text_rules)    
+    text_rule_candidates=collect_rule_candidates(ctxt,wordlist,globals.replacement_text_rules)    
     if not text_rule_candidates:
       return wordlist  
     # --- run over candidate rules ---  
@@ -117,7 +117,7 @@ def rewrite_with_complex_rules_once(ctxt,sentence):
     wordlist.append(el["text"])
     if "lemma" in el and el["lemma"]!=el["text"]:
       wordlist.append(el["lemma"])
-  rule_candidates=collect_rule_candidates(ctxt,wordlist,nlpglobals.replacement_complex_rules)    
+  rule_candidates=collect_rule_candidates(ctxt,wordlist,globals.replacement_complex_rules)    
   if not rule_candidates:
     #debug_print("rewrite_with_complex_rules_once found no usable complex rules")
     return sentence
@@ -272,7 +272,7 @@ def parsed_sentence_match_sequence(sp,chunk):
           break  
         elif opt: reslst.append(None)
       elif chunkel=="$certaintyphrase":
-        if spel["lemma"] in nlpglobals.lemma_confidences:
+        if spel["lemma"] in globals.lemma_confidences:
           onematch=True
           if not optdrop: reslst.append(spel)
         elif not (optdrop or opt):
@@ -284,7 +284,7 @@ def parsed_sentence_match_sequence(sp,chunk):
         for i in range(sptmp,len(sp)):
           word=sp[i]
           if (word["upos"] in ["NOUN","PROPN","ADJ","DET"] or
-              word["lemma"] in nlpglobals.complex_question_words):
+              word["lemma"] in globals.complex_question_words):
             phraselst.append(word)
             if firstpos==None: firstpos=i
           else:            

@@ -40,19 +40,12 @@ result_file_suffix="_promptresults.txt"
 linestart="|!!|"
 separator=" |$$| "
 
-sleepseconds=2
-
-use_llm="claude"
+#use_llm="claude"
 #use_llm="gpt"
-#use_llm="gemini"
+use_llm="gemini"
 
-#gpt5="gpt-5-nano-2025-08-07"
-#gpt5="gpt-5-mini-2025-08-07"
-#gpt5="gpt-5-2025-08-07"
+
 gptversion="gpt-5.2"
-
-#claudeversion="claude-3-7-sonnet-20250219"
-# claude-3-7-sonnet-20250219 old
 # claude-haiku-4-5  cheaper
 # claude-sonnet-4-5  middling, coding etc
 # claude-opus-4-1 expensive
@@ -64,9 +57,9 @@ calldebug=False
 
 # =======specific llm configuration ===
 
-gpt_secrets_file="gpt_secrets.js"
-claude_secrets_file="claude_secrets.js"
-gemini_secrets_file="gemini_secrets.js"
+gpt_secrets_file="../gpt/gpt_secrets.js"
+claude_secrets_file="../gpt/claude_secrets.js"
+gemini_secrets_file="../gpt/gemini_secrets.js"
 
 temperature=0
 seed=1234
@@ -429,7 +422,7 @@ def call_gpt(gptversion,sentences,sysprompt,max_tokens):
   messages.append(message2)  
 
   
-  if gptversion.startswith("gpt-5"): #gptversion in [gpt5]:
+  if gptversion.startswith("gpt-5"):
     baseurl="/v1/responses"
     if sysprompt:
       sysprompt=sysprompt+""""\nFinally, wrap the answer as a json value of the key "result" like this:

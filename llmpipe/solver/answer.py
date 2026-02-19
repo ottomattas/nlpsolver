@@ -23,14 +23,14 @@ import json
 
 # ==== import other source files ====
 
-# configuration and other globals are in nlpglobals.py
-import nlpglobals
+# configuration and other globals are in globals.py
+import globals
 
-# small utilities are in nlputils.py
-from nlputils import *
+# small utilities are in utils.py
+from utils import *
 
-# uncertainty analysis and encoding in nlpuncertain.py
-from nlpuncertain import *
+# uncertainty analysis and encoding in uncertain.py
+from uncertain import *
 
 # ==== making a nice nlp result from the prover result ====
 
