@@ -59,6 +59,7 @@ The primary workflow converts natural language to logic in two stages via LLM ca
 The `solver/` directory contains a symbolic NLP pipeline invoked by `nlptest.py` and directly via `nlpsolver.py`:
 
 - `nlpsolver.py` — CLI entry point; orchestrates the full pipeline
+- `llmparse.py` — Two-stage LLM parser; primary entry point is `parse_text(text)` → `(stage1_json, stage2_json, stats)`
 - `llmcall.py` — LLM API wrapper (Claude/GPT/Gemini) with retries; primary entry point is `call_llm(sysprompt, input_text)`
 - `nlptologic.py` — Converts Universal Dependencies (UD) parse trees to logic
 - `nlpproperlogic.py` — Builds first-order logic predicates
