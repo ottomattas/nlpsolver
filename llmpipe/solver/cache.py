@@ -273,6 +273,125 @@ def get_proof_from_cache(ctxt,inparams):
   return out  
 
 
+# --------- LLM response cache -----------
+#
+# LLM calls are cached by default (use_llm_cache_flag defaults to True).
+# The cache key is a SHA-256 hash that encodes every parameter that can
+# affect the model response: provider, version, temperature, seed,
+# max_tokens, sysprompt and the user input text.  A cached result is
+# therefore only reused when ALL of these are identical to a previous call.
+#
+# The underlying table is llm_cache in the same SQLite database used for
+# parse_cache and proof_cache.
+
+
+def make_llm_cache_key(llm, version, temperature, seed, max_tokens, sysprompt, input_text):
+  """Return a deterministic SHA-256 hex digest that uniquely identifies an
+  LLM call by all parameters that affect its output.
+
+  Any change in provider, version, temperature, seed, max_tokens,
+  sysprompt or input produces a different key, so stale results are
+  never returned.
+  """
+  import hashlib
+  key_obj = {
+    "llm":         llm         or "",
+    "version":     version     or "",
+    "temperature": temperature,
+    "seed":        seed,
+    "max_tokens":  max_tokens  or 0,
+    "sysprompt":   sysprompt   or "",
+    "input":       input_text  or "",
+  }
+  canonical = json.dumps(key_obj, sort_keys=True, ensure_ascii=False)
+  return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def get_llm_from_cache(key):
+  """Look up a cached LLM response by its key.
+
+  LLM caching is ON by default (use_llm_cache_flag defaults to True in
+  globals.options).  Returns the cached output string, or None if there
+  is no matching entry or caching is disabled.
+  """
+  if not options.get("use_llm_cache_flag", True): return None
+  if not cache_db_name: return None
+  if not key: return None
+
+  try:
+    conn = sqlite3.connect(cache_db_name)
+  except:
+    return None
+  try:
+    sql_query = """select outtxt from llm_cache where keyhash=?"""
+    cur = conn.cursor()
+    cur.execute(sql_query, (key,))
+    row = cur.fetchone()
+  except:
+    conn.close()
+    utils.debug_print("LLM cache query failed.")
+    return None
+
+  conn.close()
+  if not row:
+    return None
+  utils.debug_print("LLM response obtained from cache")
+  return row[0]
+
+
+def add_llm_to_cache(key, result):
+  """Store an LLM response in the cache under the given key.
+
+  Silently skipped when caching is disabled (use_llm_cache_flag=False)
+  or when key / result are empty.  Creates the llm_cache table on first use.
+  """
+  if not options.get("use_llm_cache_flag", True): return
+  if not cache_db_name: return
+  if not key or not result: return
+  if type(result) != str: return
+
+  try:
+    conn = sqlite3.connect(cache_db_name)
+  except:
+    print("Error: could not connect to the cache database", cache_db_name)
+    return
+
+  try:
+    sql_query = """select outtxt from llm_cache where keyhash=?"""
+    cur = conn.cursor()
+    cur.execute(sql_query, (key,))
+    row = cur.fetchone()
+  except sqlite3.OperationalError:
+    # Table does not exist yet — create it.
+    try:
+      sql_create = """create table llm_cache
+        (id integer primary key autoincrement, keyhash text, outtxt text,
+        timestamp datetime default current_timestamp)"""
+      conn.execute(sql_create)
+      conn.commit()
+      sql_idx = """create unique index llm_cache_keyhash on llm_cache (keyhash)"""
+      conn.execute(sql_idx)
+      conn.commit()
+      row = None
+    except:
+      print("Error: llm_cache table creation failed")
+      conn.close()
+      return
+  except:
+    conn.close()
+    return
+
+  if row:
+    conn.close()
+    return  # already cached
+
+  sql_insert = """insert into llm_cache (keyhash, outtxt) values (?,?)"""
+  conn.execute(sql_insert, (key, result))
+  conn.commit()
+  conn.close()
+  utils.debug_print("LLM cache insert done")
+
+
 # --------- clear caches -------------------
 
 
@@ -298,12 +417,12 @@ def clear_proof_cache(ctxt):
   if not cache_db_name: return
 
   try:
-    conn = sqlite3.connect(cache_db_name) 
+    conn = sqlite3.connect(cache_db_name)
   except:
-    return  
-  
-  sql = """delete from proof_cache;"""    
-  try:   
+    return
+
+  sql = """delete from proof_cache;"""
+  try:
     cur = conn.cursor()
     cur.execute(sql)
   except:
@@ -312,6 +431,25 @@ def clear_proof_cache(ctxt):
   conn.close()
   return
 
+
+def clear_llm_cache():
+  """Delete all entries from the LLM response cache."""
+  if not cache_db_name: return
+
+  try:
+    conn = sqlite3.connect(cache_db_name)
+  except:
+    return
+
+  sql = """delete from llm_cache;"""
+  try:
+    cur = conn.cursor()
+    cur.execute(sql)
+    conn.commit()
+  except:
+    print("Error: llm cache clearing failed.")
+  conn.close()
+  return
 
 
 # =========== the end ==========

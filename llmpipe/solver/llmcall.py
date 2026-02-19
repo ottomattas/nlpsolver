@@ -24,6 +24,13 @@ import sys
 import json
 import http.client
 
+# LLM response cache (same SQLite db used for prover and parse caches).
+# Import is conditional so llmcall.py remains usable stand-alone for testing.
+try:
+  import cache as _cache
+except ImportError:
+  _cache = None
+
 # ======== configuration ========
 
 # Which LLM to use: "gpt", "claude", or "gemini"
@@ -55,24 +62,71 @@ calldebug = False
 
 def call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None):
   """Call the configured LLM with a system prompt and input text.
+
   llm, version, max_tokens override module-level configuration when given.
-  Returns the result string on success, or None on error (error is printed)."""
+  Returns the result string on success, or None on error (error is printed).
+
+  LLM responses are cached by default.  The cache key encodes the provider,
+  version, temperature, seed, max_tokens, sysprompt and input text, so a
+  cached result is only reused when every one of these is identical.
+  Caching is controlled by globals.options["use_llm_cache_flag"] (default
+  True) and can be disabled per-run via -nollmcache in solve.py.
+  """
   llm = llm or use_llm
   max_tokens = max_tokens or default_max_tokens
+
+  # Resolve the actual version here so the cache key is fully deterministic.
+  if llm == "claude":
+    ver = version or claudeversion
+  elif llm == "gemini":
+    ver = version or geminiversion
+  else:
+    ver = version or gptversion
+
+  # --- check cache ---
+  cached = _get_llm_cached(llm, ver, max_tokens, sysprompt, input_text)
+  if cached is not None:
+    return cached
+
+  # --- call the LLM ---
   try:
     if llm == "claude":
-      ver = version or claudeversion
-      return call_claude(ver, input_text, sysprompt, max_tokens)
+      result = call_claude(ver, input_text, sysprompt, max_tokens)
     elif llm == "gemini":
-      ver = version or geminiversion
-      return call_gemini(ver, input_text, sysprompt, max_tokens)
+      result = call_gemini(ver, input_text, sysprompt, max_tokens)
     else:
-      ver = version or gptversion
-      return call_gpt(ver, input_text, sysprompt, max_tokens)
+      result = call_gpt(ver, input_text, sysprompt, max_tokens)
   except KeyboardInterrupt:
     raise
   except Exception as e:
     return llm_error("unexpected error calling LLM: " + str(e))
+
+  # --- store to cache ---
+  _store_llm_cached(llm, ver, max_tokens, sysprompt, input_text, result)
+
+  return result
+
+
+def _get_llm_cached(llm, ver, max_tokens, sysprompt, input_text):
+  """Return a cached LLM result, or None if not cached / cache disabled."""
+  if _cache is None:
+    return None
+  try:
+    key = _cache.make_llm_cache_key(llm, ver, temperature, seed, max_tokens, sysprompt, input_text)
+    return _cache.get_llm_from_cache(key)
+  except Exception:
+    return None
+
+
+def _store_llm_cached(llm, ver, max_tokens, sysprompt, input_text, result):
+  """Store result in the LLM cache (silently ignored on any error)."""
+  if _cache is None or result is None:
+    return
+  try:
+    key = _cache.make_llm_cache_key(llm, ver, temperature, seed, max_tokens, sysprompt, input_text)
+    _cache.add_llm_to_cache(key, result)
+  except Exception:
+    pass
 
 
 # ======== gemini ========

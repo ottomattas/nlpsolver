@@ -52,7 +52,12 @@ options={
   "llm_parse_stepwise_flag": False, # do LLM parsing stepwise
   "llm_parse_all_flag": False, # do LLM parsing for all
   "solveparsed_flag": False, # solve already parsed json logic string
-  "amr_flag": False,  # perform AMR parsing   
+  "amr_flag": False,  # perform AMR parsing
+  # LLM response caching: ON by default.
+  # The cache key covers provider, version, temperature, seed, max_tokens,
+  # sysprompt and input text, so a cached result is only reused when every
+  # call parameter is identical.  Set to False or pass -nollmcache to disable.
+  "use_llm_cache_flag": True,
 }
 
 # connecting to llm etc with secret keys
