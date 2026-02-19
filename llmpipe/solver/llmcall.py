@@ -79,6 +79,22 @@ def call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None):
 
 # https://ai.google.dev/gemini-api/docs/text-generation
 
+def _gemini_supports_thinking(version):
+  """Return True if this Gemini model version supports thinkingConfig.
+  Thinking is supported by models with 'thinking' in the name and by
+  Gemini 2.5+ series (which have built-in thinking capability)."""
+  v = version.lower()
+  if "thinking" in v:
+    return True
+  # gemini-2.5-* and any future major version (3+) support thinking
+  import re
+  m = re.match(r"gemini-(\d+)[\.-]", v)
+  if m and int(m.group(1)) >= 3:
+    return True
+  if v.startswith("gemini-2.5"):
+    return True
+  return False
+
 def call_gemini(version, sentences, sysprompt, max_tokens):
   try:
     sf = open(gemini_secrets_file, "r")
@@ -88,13 +104,15 @@ def call_gemini(version, sentences, sysprompt, max_tokens):
     return llm_error("Could not read Gemini API key file: " + str(gemini_secrets_file))
 
   baseurl = "/v1beta/models/" + version + ":generateContent"
+  genconfig = {
+    "maxOutputTokens": max_tokens,
+    "temperature": temperature
+  }
+  if _gemini_supports_thinking(version):
+    genconfig["thinkingConfig"] = {"thinkingLevel": "medium"}
   call = {
     "contents": [{"parts": [{"text": sentences}]}],
-    "generationConfig": {
-      "maxOutputTokens": max_tokens,
-      "thinkingConfig": {"thinkingLevel": "medium"},
-      "temperature": temperature
-    }
+    "generationConfig": genconfig
   }
   if sysprompt:
     call["system_instruction"] = {"parts": [{"text": sysprompt}]}
