@@ -4,7 +4,7 @@
 # Run without arguments to get instructions.
 #
 #-----------------------------------------------------------------
-# Copyright 2023 Tanel Tammet (tanel.tammet@gmail.com)
+# Copyright 2025 Tanel Tammet (tanel.tammet@gmail.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,11 @@ import sys
 import json
 import http.client
 
+import time
+import urllib3
+from urllib3.util import Timeout
+
+
 # ==== import other source files ====
 
 
@@ -33,6 +38,7 @@ import http.client
 
 gpt_secrets_file="gpt_secrets.js"
 claude_secrets_file="claude_secrets.js"
+gemini_secrets_file="gemini_secrets.js"
 
 gpt2="davinci-002"         # text-davinci-002 code-davinci-002 babbage-002 
 gpt3="gpt-3.5-turbo-0125"  # 
@@ -46,7 +52,7 @@ gpt4="gpt-4.1-2025-04-14"
 #gpt5="gpt-5-nano-2025-08-07"
 gpt5="gpt-5-mini-2025-08-07"
 #gpt5="gpt-5-2025-08-07"
-gpt5="gpt-5.1"
+gpt5="gpt-5.2"
 
 temperature=0
 seed=1234
@@ -63,12 +69,15 @@ claudeversion="claude-3-7-sonnet-20250219"
 # claude-sonnet-4-5  middling, coding etc
 # claude-opus-4-1 expensive
 claudeversion="claude-haiku-4-5"
+geminiversion="gemini-3-flash-preview"
 
 debug=True # set to True to get a printout of data, call and result
+#debug=False
 
 helptext="""Usage examples: 
 ./gpt.py 4 -s logifyprompt3.txt "John is a nice person."
 ./gpt.py claude -s logifyprompt3.txt "John is a nice person."
+./gpt.py gemini -s logifyprompt3.txt "John is a nice person."
 
 Use 5 for gpt 5, 4 for gpt4, 3 for gpt3, 2 for gpt and instruct for gpt3 instruct version.
 You may skip the -s key along with the (system)prompt file parameter.
@@ -107,6 +116,8 @@ def main():
           gptversion=gpt3_instruct
         elif el=="claude":  
           gptversion=claudeversion
+        elif el=="gemini":  
+          gptversion=geminiversion  
         elif el.strip().isnumeric():
           max_tokens=int(el.strip())
         elif len(el)<20 and " " not in el:
@@ -138,10 +149,132 @@ def main():
   # actual call
   if gptversion==claudeversion:
     result=call_claude(claudeversion,prompt,sysprompt,max_tokens)  
+  elif gptversion==geminiversion:
+    result=call_gemini(geminiversion,prompt,sysprompt,max_tokens)      
   else:
     result=call_gpt(gptversion,prompt,sysprompt,max_tokens)
   print("result:",result)
+
+
+
+# ========= llm connection for gemini =========
+
+
+# https://ai.google.dev/gemini-api/docs/text-generation
+# https://ai.google.dev/api/generate-content#v1beta.GenerationConfig
+
+def call_gemini(version,sentences,sysprompt,max_tokens):
+  try:
+    sf=open(gemini_secrets_file,"r")
+    txt=sf.read()
+  except:
+    show_error("Could not read file containing gemini api key: "+str(gemini_secrets_file)) 
+  key=txt  
+  # key found ok    
+  #sentences="A fork is a tool you use in the kitchen or when you eat."  
+  textcontent=sysprompt+"\n"+sentences
+ 
+  baseurl="/v1beta/models/"+version+":generateContent"
+  call={       
+        "contents": [{
+              "parts": [{"text": sentences}]
+            }],
+        "generationConfig": {
+          "maxOutputTokens": 200,          
+          "thinkingConfig": {
+            "thinkingLevel": "low"
+          },
+          "temperature": 0
+        }
+  }    
+  if sysprompt:
+    call["system_instruction"]={"parts": [{"text": sysprompt}]}     
+  #if max_tokens:
+  #  call["max_tokens"]=max_tokens
+
+  debug_print("gemini call",call)
+  calltxt=json.dumps(call) 
+  debug_print("gemini calltxt:",calltxt)
+
+  trycount=0
+  while True:
+    host = "generativelanguage.googleapis.com"
+    conn = http.client.HTTPSConnection(host, timeout=3)
+    conn.request("POST", baseurl, calltxt, 
+                headers={
+      "content-Type": "application/json", 
+      "x-goog-api-key": key
+    })    
+    response = conn.getresponse()
+    if response.status!=200 or response.reason!="OK":
+      try:
+        data=json.loads(response.read())    
+        if "error" in data and "message" in data["error"]:
+          message=": "+data["error"]["message"]
+      except:
+        message=""      
+      print("api failure, trying again: ",str(response.status),str(response.reason)+message)  
+      trycount+=1
+      if conn: conn.close()
+      time.sleep(sleepseconds*(trycount+1))
+    else:
+      break  
+    if trycount>3:
+      show_error("after several tries claude responded with error "+str(response.status)+" "+str(response.reason)+message)
+  rawdata = response.read()
+  #print("rawdata",rawdata)
+  try:
+    data=json.loads(rawdata)
+  except KeyboardInterrupt:
+    raise  
+  except:
+    show_error("gemini response is not a correct json: "+  str(rawdata))
+
+  if "candidates" not in data:
+    show_error("gemini response does not contain candidates:"+ str(rawdata))  
+  data=data["candidates"]
   
+  data=data[0]
+
+  if "content" not in data:
+    show_error("gemini response does not contain content:"+ str(data))
+  data=data["content"]
+
+  if "parts" not in data:
+    show_error("gemini response does not contain parts:"+ str(data))  
+  data=data["parts"]  
+  
+  # OK answer received  
+  debug_print("gemini response:",data)  
+ 
+  res=""
+  for el in data:
+    if "text" in el:    
+      res+=el["text"].strip()      
+              
+  conn.close()
+  #debug_print("res",res)  
+  return res
+
+"""
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "No, penguins **cannot fly** through the air. They are flightless birds.\n\nWhile most birds have hollow, light bones to help them stay airborne, penguins have **heavy, solid bones**. These act like a diver’s weight belt, helping them stay underwater.\n\nHowever, there are two interesting ways to look at how they \"fly\":\n\n1.  **Underwater \"Flight\":** Penguins are incredible swimmers. They use their wings (which are shaped like stiff flippers) to propel themselves through the water using the same flapping motion that other birds use to fly through the sky. Because of this, scientists often say penguins \"fly\" through the ocean.\n2.  **Evolution:** Millions of years ago, the ancestors of penguins *could* fly. Over time, they evolved to become specialized hunters in the ocean. As they became better at swimming and diving, they lost the ability to fly in the air.\n\n**Fun Fact:** Although they can't fly, some species of penguins can leap up to 6 to 9 feet out of the water to land on ice ledges—a move called \"porpoising.\"",
+            "thoughtSignature": "ErIKCq8KAXLI2nxgrFuudAGx6w1MeCQ6EiFlJcW7fFe8b30Ioa6Pu66g6Xb+A+k1tu7SS8FOQoSjnun3FoKys9eB+mnhnGYBu8t/dGgiQV48PegLfSUI8RxwaC4dn/n9+Ey9uiQBwwdKSjzbtjfnzRaMnp9nT2fjtIOcTDcwfAPDroLUGu3NmPu9TWLMdS6jUdanyequPWc0dAH5HU7icZcs4vtsGxiCs92ISpAXO4UFJgRz/EyiUapBW5rIOaHNlT67gm3dmse8eH5zvpOMBDLiJEEwWd5+nix3K6TlvR/bdwb9ONFtqSJ2UuMRmJ3wn4505wEgB6XR9G/ND6r4MX5xiKIII9ArSjqnvuqweznaQSd/jF7bf7t1/gsfND4b30mPBfBQM6JhMwGV1nrBKaTUiZLjqG/vd6eU74Fziuz6LLuB+7w30bA2wCunha+TQb9P1ODE5Ckl496yQxnIZ3TjuyIZLEaCE9ztcSRheaLJzmX3NdYPWSbrNHvs5Rt4X7uHGf27dvbdHMhDkpTsWDAixlCV5WDGZweswCiscB1UGmllPjVs6dcVDvj+HG6InmASPUqYjd2KP2d1rQ7aO7ceqc1ebFTTNveijrqudPWoR4jMNsfxAf0N9cR+gojnV9/bsPldV2z6JhIUs0Kf/0/u7C40AMMtMjt4tCuohnWZkGnE8vYtjHpGAygwljmwm9wfUbNoJt1whHnjgi4FPqphh6XZkNUF1ySGc7DcWwrqqDRyzbm39QHShMUAsn9cWUmjsghI5IX18UWSr8diPP7YWt1GMp2YV2/oS4fp3LDtZhk+bbK26RJ11ouZsdxkixY7kjXh3VdMtNeSWCWCyPGMAww5XAu6Mt4Cxf2LY4ik6USb4a+8J4JY86FLhfqFYfIjbnB3Ha30fqGymYk/tD+4A//NyhjVhnv5vBAHOB/uG2B6YHB2hXU0c36aiOg5bhtBHvTGGKTYPMG8DTn++7S2lGxnj+FvobutQGDqeHtnp8FgfSD4QkyeeyVjgBVG94dlnWH2iO5yDlI/qStB7GNBZYm15DY9AzfWmcix+5BzmbFYkXILl8cpgt4/Y5I8Ii/w7pJSUCOJeksKINptXoXafuokNDwMrdg08kZBFl36uDH3R/Hl+RipzvFg3O8wXM8/ZelskYqO0B/5ZjOuIudPltwFjT5YSBRDwNBN/+mHQzQETHOK8Q0PGig5O8Cpl97cHcnzm9g6OC/k7LpQXtzZMH9eaDzd0eGX9Q3rv+88s0xQQ9N9WNL3kTTLJ/uSybvjLSlbqk0uHqJyBuJ8RfJDJgfZjHFKxtk3hO2upF5vPb0mAm8PGEHVQ5YsxipKIGjJ4bc6u0hY+bOwlOjU7o54LNbWuucwqz19BcoIzEp2nvPwuJFSvXcdP50xRCH0S3UKdNQg2ibo5VeymvGrbbvo2z+gjGLvnRhP2s10q9KaUQou2+NL9i1B3DNIgXYTt6j4irNCChSJVnjMcIWCRXATIjCUOX5D6VZjTa8gKtASAhsOB/zqUAx8f/JQPufQDNPhPpe47pqcUjHzgv9DTPKZybvmqE3QpFaxLHaJG2DqsxRXoig4bD11BKijt2t2/Umt7nlB4cXrA03UdYTiMVlo/yqpUtwhprv7zvBgGzSBnkWRN9+ffK4BM6HL/Pg24rXoLo4ZW8dNPxLyFCD1kKMsFaejjRjBAARH/36mTGhXntBHzbGrYUt8tSFDFw6R3oKJTCcu4dGSYRFZOlaYlV490vdAZsWXUq42BHPHSZtmfTROvA=="
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 0
+    }
+  ],
+"""
+
 
 # ========= llm connection for claude =========
 
@@ -313,6 +446,8 @@ def call_gpt(gptversion,sentences,sysprompt,max_tokens):
     effort="none"
     if gptversion.startswith("gpt-5.1"):
       effort="none" # "none" | "low" | "medium" | "high"
+    elif gptversion.startswith("gpt-5.2"):
+      effort="low" # "'none', 'low', 'medium', 'high', and 'xhigh' 
     else:
       effort="minimal" # 'minimal', 'low', 'medium', 'high'.
     call={

@@ -1,0 +1,1942 @@
+
+
+------------
+
+INPUT:
+
+[
+  {
+    "raw": "John is a person.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "John 1 is a person.",
+        "type": "situation",
+        "entities": [
+          {"id": "John 1", "type": "concrete"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",["@id","S1",["holds","W0",["isa","person","John 1"]]]]
+
+--------
+
+INPUT:
+
+[
+  {
+    "raw": "Tallinn is a city.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "Tallinn 1 is a city.",
+        "type": "real",
+        "entities": [
+          {"id":"Tallinn 1","type":"concrete","url":"https://en.wikipedia.org/wiki/Tallinn"},
+          {"id":"city","type":"generic"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+[
+  "and",
+  ["@id","S1",
+    ["holds","W0",
+      ["isa","city","https://en.wikipedia.org/wiki/Tallinn"]
+    ]
+  ]
+]
+
+
+---------
+
+INPUT:
+
+[
+  {
+    "raw": "John smiled.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "John 1 smiled.",
+        "type": "situation",
+        "entities": [
+          {"id": "John 1", "type": "concrete"}
+        ],
+        "next_state": "W1",
+        "time": "past"
+      }
+    ]
+  },
+  {
+    "raw": "Mike frowned.",
+    "units": [
+      {
+        "unit_id": "S2",
+        "text": "Mike 2 frowned.",
+        "type": "situation",
+        "entities": [
+          {"id": "Mike 2", "type": "concrete"}
+        ],
+        "pre_state": "W1",
+        "next_state": "W2",
+        "time": "past"
+      }
+    ]
+  },
+  {
+    "raw": "They were happy.",
+    "units": [
+      {
+        "unit_id": "S3",
+        "text": "John 1 and Mike 2 were happy.",
+        "type": "situation",
+        "entities": [
+          {"id":"John 1","type": "concrete"},
+          {"id":"Mike 2","type": "concrete"}
+        ],
+        "gradables": [["happy", "none", "person"]],
+        "pre_state": "W2",
+        "time": "past"
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","smile"],
+            ["has actor","E","John 1"],
+            ["has time","E","past"]
+          ]
+        ]
+      ],
+      ["next","W0","W1"]
+    ]
+  ],
+
+  ["@id","S2",
+    ["and",
+      ["holds","W1",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","frown"],
+            ["has actor","E","Mike 2"],
+            ["has time","E","past"]
+          ]
+        ]
+      ],
+      ["next","W1","W2"]
+    ]
+  ],
+
+  ["@id","S3",
+    ["and",
+      ["holds","W2",
+        ["and",
+          ["has property","happy","John 1"],
+          ["has degree property","happy","John 1","none","person"],
+          ["has property","happy","Mike 2"],
+          ["has degree property","happy","Mike 2","none","person"]
+        ]
+      ],
+      ["state time","W2","past"]
+    ]
+  ]
+
+]
+
+----
+
+INPUT:
+
+[
+  {
+    "raw": "Alice is smart and red.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "Alice 1 is smart.",
+        "type": "situation",
+        "entities": [
+          {"id": "Alice 1","type": "concrete"}
+        ],
+        "gradables": [["smart", "none", "person"]]
+      },
+      {
+        "unit_id": "S2",
+        "text": "Alice 1 is red.",
+        "type": "situation",
+        "entities": [
+          {"id": "Alice 1","type": "concrete"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+[
+  "and",
+  ["@id","S1",
+    ["holds","W0",
+      ["has degree property","smart","Alice 1","none","person"]
+    ]
+  ],
+  ["@id","S2",
+    ["holds","W0",
+      ["has property","red","Alice 1"]
+    ]
+  ]
+]
+
+
+-------------
+
+INPUT:
+
+[
+  {
+    "raw": "John is in Paris or London.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "John 1 is in Paris 2 or London 3.",
+        "type": "situation",
+        "entities": [
+          {"id": "John 1","type": "concrete"},
+          {"id": "Paris 2","type": "concrete","url": "https://en.wikipedia.org/wiki/Paris"},
+          {"id": "London 3","type": "concrete","url": "https://en.wikipedia.org/wiki/London"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+[
+  "and",
+  ["@id","S1",
+    ["holds","W0",
+      ["or",
+        ["is rel2","in","John 1","https://en.wikipedia.org/wiki/Paris"],
+        ["is rel2","in","John 1","https://en.wikipedia.org/wiki/London"]
+      ]
+    ]
+  ]
+]
+
+-----------
+
+INPUT:
+
+[
+  {
+    "raw": "Alice is smart and either kind or funny.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "Alice 1 is smart.",
+        "type": "situation",
+        "entities": [
+          {"id": "Alice 1","type": "concrete"}
+        ],
+        "gradables": [["smart", "none", "person"]]
+      },
+      {
+        "unit_id": "S2",
+        "text": "Alice 1 is kind or funny.",
+        "type": "situation",
+        "entities": [
+          {"id": "Alice 1","type": "concrete"}
+        ],
+        "gradables": [
+          ["kind", "none", "person"],
+          ["funny", "none", "person"]
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+[
+  "and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["has degree property","smart","Alice 1","none","person"]
+      ]
+    ]
+  ],
+  ["@id","S2",
+    ["and",
+      ["holds","W0",
+        ["or",
+          ["has degree property","kind","Alice 1","none","person"],
+          ["has degree property","funny","Alice 1","none","person"]
+        ]
+      ]
+    ]
+  ]
+]
+
+-------------
+
+INPUT:
+
+[
+  {
+    "raw": "Eve does not have a bike.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "Eve 1 does not have a bike.",
+        "type": "situation",
+        "entities": [
+          {"id": "Eve 1","type": "concrete"},
+          {"id": "bike","type": "generic"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["holds","W0",
+      ["not",
+        ["exists","X",
+          ["and",["isa","bike","X"],["have","Eve 1","X"]]
+        ]
+      ]
+    ]
+  ]
+]
+
+
+------
+
+INPUT:
+
+[
+  {
+    "raw": "All green things are rough.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "Green things are rough.",
+        "type": "strict_rule",
+        "entities": [
+          {"id": "green things", "type": "generic"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+[
+  "and",
+  ["@id","S1",
+    ["holds","W0",
+      ["forall","X",
+        ["implies",
+          ["and",
+            ["isa","thing","X"],
+            ["has property","green","X"]
+          ],
+          ["has property","rough","X"]
+        ]
+      ]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
+[
+  {
+    "raw": "Dogs eat meat.",
+    "units": [
+      {
+        "unit_id":"S1",
+        "text":"Dogs eat meat.",
+        "type":"normal_rule",
+        "entities":[
+          {"id":"dogs","type":"generic"},
+          {"id":"meat","type":"generic","scope":"kind"}
+        ],
+        "confidence":0.99
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["forall","X",
+          ["normally",
+            ["implies",
+              ["isa","dog","X"],
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","eat"],
+                  ["has actor","E","X"],
+                  ["has target","E","meat"],
+                  ["typical","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      ["@p","S1",0.99]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
+[
+  {
+    "raw":"If X is connected to Y and Y is connected to Z, then X is connected to Z.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"If X is connected to Y and Y is connected to Z, then X is connected to Z.",
+        "type":"strict_rule",
+        "entities":[
+          {"id":"X","type":"generic"},
+          {"id":"Y","type":"generic"},
+          {"id":"Z","type":"generic"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["holds","W0",
+      ["forall","X",
+        ["forall","Y",
+          ["forall","Z",
+            ["implies",
+              ["and",
+                ["is rel2","connected to","X","Y"],
+                ["is rel2","connected to","Y","Z"]
+              ],
+              ["is rel2","connected to","X","Z"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
+[
+  {
+    "raw":"Dogs have tails.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"Dogs have tails.",
+        "type":"normal_rule",
+        "entities":[
+          {"id":"dogs","type":"generic"},
+          {"id":"tails","type":"generic","scope":"dependent"}
+        ],
+        "confidence":0.99
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","dog","X"],
+            ["normally",
+              ["exists","Y",
+                ["and", ["isa","tail","Y"], ["have","X","Y"]]
+              ]
+            ]
+          ]
+        ]
+      ],
+      ["@p","S1",0.99]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
+[
+  {
+    "raw":"Dogs do not have tails.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"Dogs do not have tails.",
+        "type":"strict_rule",
+        "entities":[
+          {"id":"dogs","type":"generic"},
+          {"id":"tails","type":"generic","scope":"dependent"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["holds","W0",
+      ["forall","X",
+        ["implies",
+          ["isa","dog","X"],
+          ["not",
+            ["exists","Y",
+              ["and",["isa","tail","Y"],["have","X","Y"]]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
+[
+  {
+    "raw": "No stone is alive.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "No stone is alive.",
+        "type": "strict_rule",
+        "entities": [
+          {"id":"stone","type":"generic"},
+          {"id":"alive","type":"generic"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["holds","W0",
+      ["forall","X",
+        ["implies",
+          ["isa","stone","X"],
+          ["not",["has property","alive","X"]]
+        ]
+      ]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
+[
+  {
+    "raw":"Chinese have a capital.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"Chinese have a capital.",
+        "type":"normal_rule",
+        "entities":[
+          {"id":"chinese","type":"generic"},
+          {"id":"capital","type":"generic","scope":"global"}
+        ],
+        "confidence":0.99
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["exists","Y",
+          ["and",
+            ["isa","capital","Y"],
+            ["forall","X",
+              ["implies",["isa","chinese","X"],["have","X","Y"]]
+            ]
+          ]
+        ]
+      ],
+      ["@p","S1",0.99]
+    ]
+  ]
+]
+
+-------------
+
+INPUT:
+
+[
+  {
+    "raw":"John has a car?",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"Does John 1 have a car?",
+        "type":"query",
+        "entities":[
+          {"id":"John 1","type":"concrete"},
+          {"id":"car","type":"generic"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["question",
+      ["exists","X",
+        ["and",["isa","car","X"],["have","John 1","X"]]
+      ]
+    ]
+  ]
+]
+
+---------
+
+INPUT:
+
+[
+  {
+    "raw":"Is a box at a red house?",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"Is a box at a red house?",
+        "type":"query",
+        "entities":[
+          {"id":"box","type":"generic"},
+          {"id":"house","type":"generic"}
+        ]
+      }
+    ]
+  }
+]
+
+["and",
+  ["@id","S1",
+    ["question",
+      ["exists","X",
+        ["exists","Y",
+          ["and",
+            ["isa","box","X"],
+            ["isa","house","Y"],
+            ["has property","red","Y"],
+            ["is rel2","at","X","Y"]
+          ]
+        ]
+      ]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
+[
+  {
+    "raw":"Who likes Mike?",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"Which person likes Mike 1?",
+        "type":"query",
+        "entities":[
+          {"id":"person","type":"generic"},
+          {"id":"Mike 1","type":"concrete"}
+        ],
+        "gradables":[
+          ["like","none","person"]
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["ask","X",
+      ["and",
+        ["isa","person","X"],
+        ["has degree rel2","like","X","Mike 1","none","person"]
+      ]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
+[
+  {
+    "raw":"Some animals are small.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"Some animals are small.",
+        "type":"normal_rule",
+        "entities":[
+          {"id":"animals","type":"generic"}
+        ],
+        "gradables":[["small","none","none"]],
+        "confidence":0.99
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["exists","X",
+          ["and",
+            ["isa","animal","X"],
+            ["has degree property","small","X","none","none"]
+          ]
+        ]
+      ],
+      ["@p","S1",0.99]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
+[
+  {
+    "raw":"The car of John is red.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"The car 2 is the car of John 1.",
+        "type":"situation",
+        "entities":[
+          {"id":"John 1","type":"concrete"},
+          {"id":"car 2","type":"concrete"}
+        ],
+        "definites":[["car of","car 2","John 1"]]
+      },
+      {
+        "unit_id":"S2",
+        "text":"The car 2 is red.",
+        "type":"situation",
+        "entities":[
+          {"id":"car 2","type":"concrete"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["and",
+          ["isa","car","car 2"],
+          ["is rel2","car of","car 2","John 1"]
+        ]
+      ],
+      ["@definite","S1","W0","car of","John 1","car 2"]
+    ]
+  ],
+  ["@id","S2",
+    ["holds","W0",
+      ["and",
+        ["isa","car","car 2"],
+        ["has property","red","car 2"]
+      ]
+    ]
+  ]
+]
+
+------------
+
+INPUT:
+
+
+[
+  {
+    "raw":"Keila is very close to Tallinn.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"Keila 1 is very close to Tallinn 2.",
+        "type":"real",
+        "entities":[
+          {"id":"Keila 1","type":"concrete","url":"https://en.wikipedia.org/wiki/Keila"},
+          {"id":"Tallinn 2","type":"concrete","url":"https://en.wikipedia.org/wiki/Tallinn"}
+        ],
+        "gradables":[["close to","high","city"]]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+[
+  "and",
+  ["@id","S1",
+    ["holds","W0",
+      ["and",
+        ["is rel2","close to","https://en.wikipedia.org/wiki/Keila","https://en.wikipedia.org/wiki/Tallinn"],
+        ["has degree rel2","close to","https://en.wikipedia.org/wiki/Keila","https://en.wikipedia.org/wiki/Tallinn","high","city"]
+      ]
+    ]
+  ]
+]
+
+------
+
+INPUT:
+
+[
+  {
+    "raw":"John was probably in Paris or London.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"John 1 was probably in Paris 2 or London 3.",
+        "type":"situation",
+        "entities":[
+          {"id":"John 1","type":"concrete"},
+          {"id":"Paris 2","type":"concrete","url":"https://en.wikipedia.org/wiki/Paris"},
+          {"id":"London 3","type":"concrete","url":"https://en.wikipedia.org/wiki/London"}
+        ],
+        "confidence":0.9,
+        "time":"past"
+      }
+    ]
+  }
+]
+  
+OUTPUT:
+
+[
+  "and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["or",
+          ["is rel2","in","John 1","https://en.wikipedia.org/wiki/Paris"],
+          ["is rel2","in","John 1","https://en.wikipedia.org/wiki/London"]
+        ]
+      ],
+      ["state time","W0","past"],
+      ["@p","S1",0.9]
+    ]
+  ]
+]
+
+-------------
+
+INPUT:
+ 
+[
+  {
+    "raw":"John has two red and three green apples.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"John 1 has two red apples 2.",
+        "type":"situation",
+        "entities":[
+          {"id":"John 1","type":"concrete"},
+          {"id":"apples 2","type":"concrete"}
+        ]
+      },
+      {
+        "unit_id":"S2",
+        "text":"John 1 has three green apples 3.",
+        "type":"situation",
+        "entities":[
+          {"id":"John 1","type":"concrete"},
+          {"id":"apples 3","type":"concrete"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["and",
+          ["exists","S1",
+            ["and",
+              ["isa","set","S1"],
+              ["is set of","apple","S1"],
+              ["member has property","red","S1"],
+              ["=",2,["$count","S1"]],
+              ["have","John 1","S1"]
+            ]
+          ],
+          ["exists","S2",
+            ["and",
+              ["isa","set","S2"],
+              ["is set of","apple","S2"],
+              ["member has property","green","S2"],
+              ["=",3,["$count","S2"]],
+              ["have","John 1","S2"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+]
+
+-------
+
+INPUT:
+
+[
+  {
+    "raw":"Does John have several apples?",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"Does John 1 have more than 2 apples?",
+        "type":"query",
+        "entities":[
+          {"id":"John 1","type":"concrete"},
+          {"id":"apples","type":"generic"}
+        ]
+      }
+    ]
+  }
+]
+
+Output:
+
+["and",
+  ["@id","S1",
+    ["question",
+      ["exists","S",
+        ["and",
+          ["isa","set","S"],
+          ["is set of","apple","S"],
+          ["have","John 1","S"],
+          [">",["$count","S"],2]
+        ]
+      ]
+    ]
+  ]
+]
+
+---
+INPUT:
+
+[
+  {
+    "raw": "A very big mouse ran away.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "A very big mouse 1 ran away.",
+        "type": "situation",
+        "entities": [
+          {"id": "mouse 1", "type": "concrete"}
+        ],
+        "gradables": [["big", "high", "mouse"]],
+        "next_state": "W1"
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["and",
+          ["isa","mouse","mouse 1"],
+          ["has degree property","big","mouse 1","high","mouse"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","run"],
+              ["has actor","E","mouse 1"],
+              ["has direction","E","away"],
+              ["has time","E","past"]
+            ]  
+          ]  
+        ]
+      ],
+      ["next","W0","W1"]
+    ]
+  ]
+]
+
+-------
+
+INPUT:
+
+[
+  {
+    "raw": "The house is slightly warm.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "The house 1 is slightly warm.",
+        "type": "situation",
+        "entities": [
+          {"id":"house 1","type":"concrete"}
+        ],
+        "gradables": [["warm", "low", "house"]]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["and",
+          ["isa","house","house 1"],
+          ["has degree property","warm","house 1","low","house"]
+        ]
+      ]
+    ]
+  ]
+]
+
+-------
+
+INPUT:
+
+[
+  {
+    "raw":"Garbage can will be in the room.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"Garbage can 1 will be in the room 2.",
+        "type":"situation",
+        "entities":[
+          {"id":"Garbage can 1","type":"concrete","subtype":"compound"},
+          {"id":"room 2","type":"concrete"}
+        ],
+        "time":"future"
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["and",
+          ["isa","Garbage can","Garbage can 1"],
+          ["isa","room","room 2"],
+          ["is rel2","in","Garbage can 1","room 2"]
+        ]
+      ],
+      ["state time","W0","future"]
+    ]
+  ]
+]
+
+-------
+
+INPUT:
+
+[
+  {
+    "raw":"An elephant was strong.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"An elephant 1 was strong.",
+        "type":"situation",
+        "entities":[
+          {"id":"An elephant 1","type":"concrete"}
+        ],
+        "gradables":[["strong","none","elephant"]],
+        "pre_state":"W0",
+        "time":"past"
+      }
+    ]
+  },
+  {
+    "raw":"The animal lifted a stone.",
+    "units":[
+      {
+        "unit_id":"S2",
+        "text":"An elephant 1 lifted a stone 2.",
+        "type":"situation",
+        "entities":[
+          {"id":"An elephant 1","type":"concrete"},
+          {"id":"stone 2","type":"concrete"}
+        ],
+        "pre_state":"W0",
+        "next_state":"W1",
+        "time":"past"
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["and",
+          ["isa","elephant","An elephant 1"],
+          ["has degree property","strong","An elephant 1","none","elephant"]
+        ]
+      ],
+      ["state time","W0","past"]
+    ]
+  ],
+  ["@id","S2",
+    ["and",
+      ["holds","W0",
+        ["and",
+          ["isa","elephant","An elephant 1"],
+          ["isa","stone","stone 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","lift"],
+              ["has actor","E","An elephant 1"],
+              ["has target","E","stone 2"],
+              ["has time","E","past"]
+            ]
+          ]
+        ]
+      ],
+      ["next","W0","W1"]
+    ]
+  ]
+]
+
+-------
+INPUT:
+
+[
+  {
+    "raw":"John has a red car.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"John 1 has a red car 2.",
+        "type":"situation",
+        "entities":[
+          {"id":"John 1","type":"concrete"},
+          {"id":"car 2","type":"concrete"}
+        ]
+      },
+      {
+        "unit_id":"S2",
+        "text":"The car 2 is red.",
+        "type":"situation",
+        "entities":[
+          {"id":"car 2","type":"concrete"}
+        ]
+      }
+    ]
+  },
+  {
+    "raw":"He drives it fast.",
+    "units":[
+      {
+        "unit_id":"S3",
+        "text":"John 1 drives the car 2 fast.",
+        "type":"situation",
+        "entities":[
+          {"id":"John 1","type":"concrete"},
+          {"id":"car 2","type":"concrete"}
+        ],
+        "gradables":[["fast","none","driving"]]
+      }
+    ]
+  },
+  {
+    "raw":"Probably, he is a racer.",
+    "units":[
+      {
+        "unit_id":"S4",
+        "text":"John 1 is a racer.",
+        "type":"situation",
+        "entities":[
+          {"id":"John 1","type":"concrete"},
+          {"id":"racer","type":"generic"}
+        ],
+        "confidence":0.8
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["holds","W0",
+      ["and",
+        ["isa","car","car 2"],
+        ["have","John 1","car 2"]
+      ]
+    ]
+  ],
+  ["@id","S2",
+    ["holds","W0",
+      ["has property","red","car 2"]
+    ]
+  ],
+  ["@id","S3",
+    ["holds","W0",
+      ["exists","E",
+        ["and",
+          ["isa","activity","E"],
+          ["has type","E","drive"],
+          ["has actor","E","John 1"],
+          ["has target","E","car 2"],
+          ["has degree property","fast","E","none","driving"]
+        ]
+      ]
+    ]
+  ],
+  ["@id","S4",
+    ["and",
+      ["holds","W0",
+        ["isa","racer","John 1"]
+      ],
+      ["@p","S4",0.8]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
+[
+  {
+    "raw": "John woke up and one hour later he left.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "John 1 woke up.",
+        "type": "situation",
+        "entities": [
+          {"id":"John 1","type":"concrete"}
+        ],
+        "pre_state": "W0",
+        "next_state": "W1",
+        "time": "past"
+      },
+      {
+        "unit_id": "S2",
+        "text": "John 1 left.",
+        "type": "situation",
+        "entities": [
+          {"id":"John 1","type":"concrete"}
+        ],
+        "pre_state": "W1",
+        "next_state": "W2",
+        "time": ["relative","+1 hour","W1"]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","wake up"],
+            ["has actor","E","John 1"],
+            ["has time","E","past"]
+          ]
+        ]
+      ],
+      ["next","W0","W1"]
+    ]
+  ],
+
+  ["@id","S2",
+    ["and",
+      ["holds","W1",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","leave"],
+            ["has actor","E","John 1"],
+            ["has time","E",["relative","+1 hour","W1"]]
+          ]
+        ]
+      ],
+      ["next","W1","W2"]
+    ]
+  ]
+
+]
+
+-----------
+
+INPUT:
+
+[
+  {
+    "raw": "John knew that Mary is rich.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "John 1 knew that Mary 2 is rich.",
+        "type": "situation",
+        "entities": [
+          {"id":"John 1","type":"concrete"},
+          {"id":"Mary 2","type":"concrete"}
+        ],
+        "gradables": [["rich","none","person"]],
+        "pre_state": "W0",
+        "time": "past",
+        "mental_holder": "John 1",
+        "mental_attitude": "knowledge",
+        "epistemic_force": "factive",
+        "attitude_target": "S2"
+      },
+      {
+        "unit_id": "S2",
+        "text": "Mary 2 is rich.",
+        "type": "situation",
+        "entities": [
+          {"id":"Mary 2","type":"concrete"}
+        ],
+        "gradables": [["rich","none","person"]],
+        "pre_state": "W0"
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+
+  ["@id","S1",
+    ["and",
+
+      ["holds","W0",
+        ["and",
+          ["isa","Mary","Mary 2"],
+          ["has degree property","rich","Mary 2","none","person"]
+        ]
+      ],
+
+      ["state time","W0","past"],
+
+      ["kb","K_S1","John 1","knowledge","W0"],
+      ["kb force","K_S1","factive"],
+      ["kb holds","K_S1",
+        ["and",
+          ["isa","Mary","Mary 2"],
+          ["has degree property","rich","Mary 2","none","person"]
+        ]
+      ]
+
+    ]
+  ],
+
+  ["@id","S2",
+    ["holds","W0",
+      ["and",
+        ["isa","Mary","Mary 2"],
+        ["has degree property","rich","Mary 2","none","person"]
+      ]
+    ]
+  ]
+
+]
+
+-----------
+
+INPUT:
+
+[
+  {
+    "raw":"John believes that Chinese have a capital.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"John 1 believes that Chinese have a capital.",
+        "type":"situation",
+        "entities":[
+          {"id":"John 1","type":"concrete"},
+          {"id":"chinese","type":"generic"},
+          {"id":"capital","type":"generic","scope":"global"}
+        ],
+        "mental_holder":"John 1",
+        "mental_attitude":"belief",
+        "epistemic_force":"non_factive",
+        "attitude_target":"S2"
+      },
+      {
+        "unit_id":"S2",
+        "text":"Chinese have a capital.",
+        "type":"normal_rule",
+        "entities":[
+          {"id":"chinese","type":"generic"},
+          {"id":"capital","type":"generic","scope":"global"}
+        ],
+        "confidence":0.99
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+
+  ["@id","S1",
+    ["and",
+      ["kb","K_S1","John 1","belief","W0"],
+      ["kb force","K_S1","non_factive"],
+      ["kb holds","K_S1",
+        ["exists","Y",
+          ["and",
+            ["isa","capital","Y"],
+            ["forall","X",
+              ["implies",
+                ["isa","chinese","X"],
+                ["have","X","Y"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+
+  ["@id","S2",
+    ["and",
+      ["holds","W0",
+        ["exists","Y",
+          ["and",
+            ["isa","capital","Y"],
+            ["forall","X",
+              ["implies",
+                ["isa","chinese","X"],
+                ["have","X","Y"]
+              ]
+            ]
+          ]
+        ]
+      ],
+      ["@p","S2",0.99]
+    ]
+  ]
+
+]
+
+-----------
+
+INPUT:
+
+[
+  {
+    "raw":"John thinks that Mary believes that Peter is rich.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"Peter 3 is rich.",
+        "type":"situation",
+        "entities":[
+          {"id":"Peter 3","type":"concrete"},
+          {"id":"Mary 2","type":"concrete"}
+        ],
+        "mental_holder":"Mary 2",
+        "mental_attitude":"belief",
+        "epistemic_force":"non_factive"
+      },
+      {
+        "unit_id":"S2",
+        "text":"Mary 2 believes that Peter 3 is rich.",
+        "type":"situation",
+        "entities":[
+          {"id":"Peter 3","type":"concrete"},
+          {"id":"Mary 2","type":"concrete"},
+          {"id":"John 1","type":"concrete"}
+        ],
+        "mental_holder":"John 1",
+        "mental_attitude":"belief",
+        "epistemic_force":"non_factive",
+        "attitude_target":"S1"
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+
+  ["@id","S1",
+    ["and",
+
+      ["kb","K_S1","Mary 2","belief","W0"],
+      ["kb force","K_S1","non_factive"],
+      ["kb holds","K_S1",
+        ["and",
+          ["isa","Peter","Peter 3"],
+          ["has degree property","rich","Peter 3","none","person"]
+        ]
+      ]
+
+    ]
+  ],
+
+  ["@id","S2",
+    ["and",
+
+      ["kb","K_S2","John 1","belief","W0"],
+      ["kb force","K_S2","non_factive"],
+      ["kb holds","K_S2",
+        ["and",
+          ["kb","K_S1","Mary 2","belief","W0"],
+          ["kb force","K_S1","non_factive"],
+          ["kb holds","K_S1",
+            ["and",
+              ["isa","Peter","Peter 3"],
+              ["has degree property","rich","Peter 3","none","person"]
+            ]
+          ]
+        ]
+      ]
+
+    ]
+  ]
+
+]
+
+-----------
+
+INPUT:
+
+[
+  {
+    "raw":"If a stone is light, it can be thrown.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"If a stone is light, the stone can be thrown.",
+        "type":"normal_rule",
+        "entities":[
+          {"id":"stone","type":"generic"}
+        ],
+        "gradables":[["light","none","stone"]],
+        "confidence":0.98
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["forall","X",
+          ["normally",
+            ["implies",
+              ["and",
+                ["isa","stone","X"],
+                ["has degree property","light","X","none","stone"]
+              ],
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","throw"],
+                  ["has target","E","X"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      ["@p","S1",0.98]
+    ]
+  ]
+]
+
+--------
+
+INPUT:
+
+[
+  {
+    "raw":"Spearing food is easy.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"A person spears food easily.",
+        "type":"normal_rule",
+        "entities":[
+          {"id":"person","type":"generic"},
+          {"id":"food","type":"generic","scope":"kind"}
+        ],
+        "confidence":0.95
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","person","X"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","spear"],
+                ["has actor","E","X"],
+                ["has target","E","food"]
+              ]
+            ]
+          ]
+        ]
+      ],
+      ["@p","S1",0.95]
+    ]
+  ]
+]
+
+----
+
+INPUT:
+
+[
+  {
+    "raw": "The weight of the box exceeds 10 kilograms.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "The weight 2 of the box 1 exceeds 10 kilograms.",
+        "type": "real",
+        "entities": [
+          {"id":"the box 1","type":"concrete"},
+          {"id":"the weight 2","type":"concrete","text":"weight"},
+          {"id":"10 kilograms","type":"concrete"}
+        ],
+        "definites": [["weight of","the weight 2","the box 1"]]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["and",
+          ["isa","weight","the weight 2"],
+          ["isa","box","the box 1"],
+          ["is rel2","weight of","the weight 2","the box 1"],
+          [">","the weight 2","10 kilograms"]
+        ]
+      ],
+      ["@definite","S1","W0","weight of","the box 1","the weight 2"]
+    ]
+  ]
+]
+
+-------
+
+INPUT:
+[
+  {
+    "raw":"Students study.",
+    "units":[    
+      {
+        "unitid": "S1",
+        "text": "Students study.",
+        "type": "normal_rule",
+        "ents": [{"id": "students", "type": "generic"}]
+      }
+    ]  
+  }  
+]
+
+OUTPUT:
+
+["@id", "S1",
+  ["holds", "W0",
+    ["forall", "X",
+      ["implies",
+        ["isa", "student", "X"],
+        ["exists", "E",
+          ["and",
+            ["isa", "activity", "E"],
+            ["has type", "E", "study"],
+            ["has actor", "E", "X"],
+            ["typical", "E"] 
+          ]
+        ]
+      ]
+    ]
+  ]
+]
+
+
+--------
+
+INPUT:
+
+[
+  {
+    "raw":"Birds fly, but penguins don't.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"Birds can fly.",
+        "type":"normal_rule",
+        "entities":[
+          {"id":"birds","type":"generic"}
+        ],
+        "confidence":0.95
+      },
+      {
+        "unit_id":"S2",
+        "text":"Penguins cannot fly.",
+        "type":"strict_rule",
+        "entities":[
+          {"id":"penguins","type":"generic"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","bird","X"],
+            ["normally",["can","X","fly"]]
+          ]
+        ]
+      ],
+      ["@p","S1",0.95]
+    ]
+  ],
+  ["@id","S2",
+    ["holds","W0",
+      ["forall","X",
+        ["implies",
+          ["isa","penguin","X"],
+          ["not",["can","X","fly"]]
+        ]
+      ]
+    ]
+  ]
+]
+
+
+--------
+
+INPUT:
+
+[
+  {
+    "raw":"Penguins are flightless, semi-aquatic sea birds living in the Southern Hemisphere.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"Penguins are birds.",
+        "type":"strict_rule",
+        "entities":[
+          {"id":"penguins","type":"generic"},
+          {"id":"birds","type":"generic"}
+        ]
+      },
+      {
+        "unit_id":"S2",
+        "text":"Penguins are sea birds.",
+        "type":"strict_rule",
+        "entities":[
+          {"id":"sea birds","type":"generic","subtype":"compound"}
+        ]
+      },
+      {
+        "unit_id":"S3",
+        "text":"Penguins cannot fly.",
+        "type":"strict_rule",
+        "entities":[
+          {"id":"penguins","type":"generic"}
+        ]
+      },
+      {
+        "unit_id":"S4",
+        "text":"Penguins live in water.",
+        "type":"normal_rule",
+        "entities":[
+          {"id":"penguins","type":"generic"},
+          {"id":"water","type":"generic","scope":"kind"}
+        ],
+        "confidence":0.95
+      },
+      {
+        "unit_id":"S5",
+        "text":"Penguins live on land.",
+        "type":"normal_rule",
+        "entities":[
+          {"id":"penguins","type":"generic"},
+          {"id":"land","type":"generic","scope":"kind"}
+        ],
+        "confidence":0.95
+      },
+      {
+        "unit_id":"S6",
+        "text":"Penguins live in the Southern Hemisphere 1.",
+        "type":"normal_rule",
+        "entities":[
+          {"id":"penguins","type":"generic"},
+          {"id":"Southern Hemisphere 1","type":"concrete","url":"https://en.wikipedia.org/wiki/Southern_Hemisphere"}
+        ],
+        "confidence":0.99
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+
+["and",
+  ["@id","S1",["holds","W0",["forall","X",["implies",["isa","penguin","X"],["isa","bird","X"]]]]],
+  ["@id","S2",["holds","W0",["forall","X",["implies",["isa","penguin","X"],["isa","sea bird","X"]]]]],
+  ["@id","S3",["holds","W0",["forall","X",["implies",["isa","penguin","X"],["not",["can","X","fly"]]]]]],
+  ["@id","S4",["and",
+    ["holds","W0",["forall","X",["implies",["isa","penguin","X"],["normally",["is rel2","live in","X","water"]]]]],
+    ["@p","S4",0.95]
+  ]],
+  ["@id","S5",["and",
+    ["holds","W0",["forall","X",["implies",["isa","penguin","X"],["normally",["is rel2","live on","X","land"]]]]],
+    ["@p","S5",0.95]
+  ]],
+  ["@id","S6",["and",
+    ["holds","W0",["forall","X",["implies",["isa","penguin","X"],["normally",["is rel2","live in","X","https://en.wikipedia.org/wiki/Southern_Hemisphere"]]]]],
+    ["@p","S6",0.99]
+  ]]
+]

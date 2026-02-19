@@ -52,7 +52,7 @@ options={
   "llm_parse_stepwise_flag": False, # do LLM parsing stepwise
   "llm_parse_all_flag": False, # do LLM parsing for all
   "solveparsed_flag": False, # solve already parsed json logic string
-  "amr_flag": False  # perform AMR parsing  
+  "amr_flag": False,  # perform AMR parsing   
 }
 
 # connecting to llm etc with secret keys
@@ -69,7 +69,8 @@ server_timeout=2
 cache_db_name="nlpcache.db"
 
 # solving logic with a prover
-prover_fname="./gk"
+prover_fname="../gk/gk"  # gk binary
+prover_datafolder="../gk"  # "/opt/nlpsolver/gk/" # where gk_name_number.txt etc are located
 memkb_name="1000"  # in-memory knowledge base name (number)
 prover_infile="gk_infile.js"
 prover_axiomfile="axioms_std.js"

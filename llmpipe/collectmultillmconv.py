@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-# Collecting gpt results for data
+# Tools for working on prompts
 #
-# Run the program and it will collect the output
+# Run the program and it will call LLMs and collect the output
 #
 #-----------------------------------------------------------------
-# Copyright 2022 Tanel Tammet (tanel.tammet@gmail.com)
+# Copyright 2026 Tanel Tammet (tanel.tammet@gmail.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,42 +27,36 @@ import http.client
 
 # ======== configuration ======
 
-test_files=["try160.py"]
-test_files=["try160medium.py"]
-#test_files=["try6.py"]
+syspromptfile="prompts/logifyprompt7_stage1.txt"
+promptfile="prompts/logifyprompt6.txt"
 
 show_tests=True # set to False to suppress printing of all tests during work
 show_compact=True # if show_tests is False, set to True to get 0/1 char for each test
 
 debug=False
 
-result_file_suffix="_llmresults.txt"
+result_file_suffix="_promptresults.txt"
 
 linestart="|!!|"
 separator=" |$$| "
 
 sleepseconds=2
 
-#use_llm="claude"
+use_llm="claude"
 #use_llm="gpt"
-use_llm="gemini"
+#use_llm="gemini"
 
-
-#syspromptfile="nlpsimpleprompt1.txt"
-syspromptfile="prompts/logifyprompt6.txt"
-
-#gptversion="gpt-4.1-2025-04-14" 
 #gpt5="gpt-5-nano-2025-08-07"
 #gpt5="gpt-5-mini-2025-08-07"
 #gpt5="gpt-5-2025-08-07"
-gptversion="gpt-5.1"
+gptversion="gpt-5.2"
 
 #claudeversion="claude-3-7-sonnet-20250219"
 # claude-3-7-sonnet-20250219 old
 # claude-haiku-4-5  cheaper
 # claude-sonnet-4-5  middling, coding etc
 # claude-opus-4-1 expensive
-claudeversion="claude-sonnet-4-5"
+claudeversion="claude-haiku-4-5"
 geminiversion="gemini-3-flash-preview"
 
 debug=True # set to True to get a printout of data, call and result
@@ -76,59 +70,41 @@ gemini_secrets_file="gemini_secrets.js"
 
 temperature=0
 seed=1234
-default_max_tokens=4000
+default_max_tokens=8000
 
 sleepseconds=2
-timeout=40
+timeout=60
 
 # ======== testing program ======
 
 
 def main():
-  global test_files
-  options={}
-  alltests=[]
-  for testfile in test_files:
-    try:
-      f=open(testfile,"r")
-      s=f.read()      
-    except:
-      print("Could not read test file",testfile)  
-      return
-    f.close()
-    try:  
-      tests=eval(s)
-    except BaseException as err:
-      print("Error parsing test file",testfile)
-      print()
-      raise(err)
-      return
-    alltests.append([testfile,tests])  
-  allresults=[] 
-  for test in alltests:  
-    print("\n=== running test "+test[0]+" ===\n")
-    results=single_run_tests(test[0],test[1],0,len(test[1]),options)
-    allresults.append(results)
+  try:
+    f=open(promptfile,"r")
+    lines=f.readlines()      
+  except:
+    print("Could not read prompt file",promptfile)  
+    return
+  f.close()
+  inexamples=False
+  tests=[]
+  for line in lines:
+    if line.startswith("Examples:"):
+      inexamples=True
+      continue
+    if not inexamples: continue
+    line=line.strip()
+    if not line: continue
+    sline=line.split("=>")
+    intxt=sline[0].strip()
+    if intxt.startswith('"'): intxt=intxt[1:]
+    if intxt.endswith('"'): intxt=intxt[:-1]
+    intxt=intxt.strip()
 
-  if len(alltests)>1:
-    sum_realtestcount=0
-    sum_lenokresults=0
-    sum_failedresults=[]
-    for result in allresults:
-      sum_realtestcount+=result[0]
-      sum_lenokresults+=result[1]
-      sum_failedresults+=result[2]
-    print("\n=== Summary for all tests ===\n")
-    print("Tests run:",sum_realtestcount)
-    print("OK tests:",sum_lenokresults)
-    print("Failed tests:",len(sum_failedresults))
-    if len(sum_failedresults)>0:
-      print()
-      print("Tests which failed:")
-      for result in sum_failedresults:
-        print("Input:",result[0][0])
-        print("Expected:",result[0][1])
-        print("Received:",result[1])
+    print(intxt)
+    tests.append(intxt)
+  single_run_tests(promptfile,tests)    
+
 
 
 def single_run_tests(testfile, tests, lower=0, upper=0, options={}):
@@ -163,8 +139,8 @@ def single_run_tests(testfile, tests, lower=0, upper=0, options={}):
     if testcount<lower: continue
     if testcount>=upper: break
     realtestcount+=1
-    if show_tests: print("Input:",test[0])
-    prompt=test[0]
+    if show_tests: print("Input:",test)
+    prompt=test
 
     debug_print("prompt:",prompt)
     if not prompt:
@@ -202,7 +178,7 @@ def single_run_tests(testfile, tests, lower=0, upper=0, options={}):
  
     if show_tests: print("Received:",result) 
     if show_tests: print()   
-    outtext=linestart+prompt+separator+str(test[1])+separator+str(result)+"\n"
+    outtext=linestart+prompt+separator+str(result)+"\n"
     outfile.write(outtext)
     outfile.flush()
     #print("result:",result)    
@@ -275,7 +251,14 @@ def call_gemini(version,sentences,sysprompt,max_tokens):
       "content-Type": "application/json", 
       "x-goog-api-key": key
     })    
-    response = conn.getresponse()
+    try:
+      response = conn.getresponse()
+    except:
+      print("connection failure, trying again ")  
+      trycount+=1
+      if conn: conn.close()
+      time.sleep(sleepseconds*(trycount+1))
+      continue  
     if response.status!=200 or response.reason!="OK":
       try:
         data=json.loads(response.read())    
@@ -346,6 +329,7 @@ def call_claude(version,sentences,sysprompt,max_tokens):
        "messages": messages,
        "temperature": temperature,
        "max_tokens": max_tokens
+       #"reasoning_effort": "low"
     }
   #if sysprompt:
   #  sysprompt=sysprompt+"""\nFinally, wrap the answer as a json value of the key "result" like this:
@@ -370,8 +354,15 @@ def call_claude(version,sentences,sysprompt,max_tokens):
       "anthropic-version": "2023-06-01",
       "x-api-key": key
       #"anthropic-beta": "structured-outputs-2025-11-13"
-    })    
-    response = conn.getresponse()  
+    })          
+    try:
+      response = conn.getresponse()
+    except:
+      print("connection failure, trying again ")  
+      trycount+=1
+      if conn: conn.close()
+      time.sleep(sleepseconds*(trycount+1))
+      continue  
     if response.status!=200 or response.reason!="OK":
       try:
         data=json.loads(response.read())    
@@ -455,6 +446,8 @@ def call_gpt(gptversion,sentences,sysprompt,max_tokens):
     effort="none"
     if gptversion.startswith("gpt-5.1"):
       effort="none" # "none" | "low" | "medium" | "high"
+    elif gptversion.startswith("gpt-5.2"):
+      effort="none" # "none" | "low" | "medium" | "high"  
     else:
       effort="minimal" # 'minimal', 'low', 'medium', 'high'.
     call={
@@ -495,8 +488,17 @@ def call_gpt(gptversion,sentences,sysprompt,max_tokens):
                headers={
     "Host": host, "Content-Type": "application/json", "Authorization": "Bearer "+key 
   })
-  
   response = conn.getresponse()
+  """
+  try:
+    response = conn.getresponse()
+  except:
+    print("connection failure, trying again ")  
+    trycount+=1
+    if conn: conn.close()
+    time.sleep(sleepseconds*(trycount+1))
+    continue
+  """  
   if response.status!=200 or response.reason!="OK":
     try:
       data=json.loads(response.read())    

@@ -40,8 +40,15 @@ from nlpcache import *
 
 # === calling the prover ===
  
-def call_prover(logic):   
-  debug_print("solve logic",logic)
+def call_prover(logic):     
+  if nlpglobals.options["debug_print_flag"]: 
+    print("solve logic:")
+    print("[")
+    for i in range(len(logic)):
+      s="  "+json.dumps(logic[i])
+      if i<len(logic)-1: s+=","
+      print(s)
+    print("]")  
   #js=json.dumps(question,indent=2)
   #print("js:",js)  
   #pp = pprint.pformat(logic,width=80,indent=2,sort_dicts=False)   
@@ -88,12 +95,15 @@ def call_prover(logic):
     params=params+["-seconds",str(options["prover_seconds"])]    
   params.append(infilename)
   if options["usekb_flag"]: params=params+nlpglobals.usekb_prover_params
-  else: params=params+nlpglobals.prover_params        
+  else: params=params+nlpglobals.prover_params
+  params=params+["--datafolder",prover_datafolder]
   if options["prover_print_flag"] or options["show_prover_flag"]:
     print("\n=== prover params: === \n\n"," ".join(params))
 
-  sres=get_proof_from_cache(None,params)
+  print("\n=== prover params: === \n\n"," ".join(params))
+  sres=get_proof_from_cache(None,params)  
   if not sres:
+    print("params",params)
     try:  
       calc=subprocess.Popen(params, stdout=subprocess.PIPE).communicate()[0]
     except KeyboardInterrupt:

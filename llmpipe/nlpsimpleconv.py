@@ -37,9 +37,13 @@ test_files=["try_gpt_llmresults.txt"]
 converted_file_name="try_gpt_llmresults_converted.txt"
 
 test_files=["try160_claude_sonnet_4_5_llmresults.txt"]
-test_files=["try160_gpt_5_1_none_llmresults.txt"]
+test_files=["try160_gemini_llmresults.txt"]
+test_files=["try160medium_gemini_llmresults.txt"]
+
+
 converted_file_name="try160_claude_sonnet_4_5_llmresults_converted.txt"
-converted_file_name="try160_gpt_5_1_none_llmresults_converted.txt"
+converted_file_name="try160_gemini_llmresults_converted.txt"
+converted_file_name="try160medium_gemini_llmresults_converted.txt"
 
 
 linestart="|!!|"

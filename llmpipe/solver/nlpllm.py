@@ -275,7 +275,7 @@ def llm_parse_solve(text):
     jresult=json.loads(result)
   except:  
     return "Json parse error"
-  debug_print("jresult:",jresult)
+  #debug_print("jresult:",jresult)
   result=llm_parsed_solve(jresult)
   return result
 
@@ -289,9 +289,9 @@ def llm_parsed_solve(logic):
       return "Json parse error"
   else:
     jresult=logic  
-  debug_print("jresult",jresult)
+  #debug_print("jresult",jresult)
   clauses=make_clause_list_from_llm(jresult)
-  debug_print("clauses",clauses)
+  #debug_print("clauses",clauses)
   rawresult=call_prover(clauses)
   debug_print("rawresult",rawresult)
   try:
@@ -426,6 +426,24 @@ def fix_llm_logic(logic):
     tmp=[fix_llm_logic(x) for x in logic[1:]]
     res=[tmp[0],"=>",tmp[1]]
     return res
+  elif logic[0] in ["xor"]:
+    tmp=[fix_llm_logic(x) for x in logic[1:]]
+    res=["<~>",tmp[0],tmp[1]]
+    return res
+  elif logic[0] in ["<"]:
+    tmp=[fix_llm_logic(x) for x in logic[1:]]
+    res=["$less",tmp[0],tmp[1]]    
+    return res
+  elif logic[0] in [">"]:
+    tmp=[fix_llm_logic(x) for x in logic[1:]]
+    res=["$greater",tmp[0],tmp[1]]
+  elif logic[0] in ["<="]:
+    tmp=[fix_llm_logic(x) for x in logic[1:]]
+    res=["$lesseq",tmp[0],tmp[1]]    
+    return res
+  elif logic[0] in [">="]:
+    tmp=[fix_llm_logic(x) for x in logic[1:]]
+    res=["$greatereq",tmp[0],tmp[1]]  
   else:
     res=[fix_llm_logic(x) for x in logic]
     return res 

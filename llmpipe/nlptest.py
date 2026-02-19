@@ -67,6 +67,12 @@ test_files=["llm_core_test_claude_prompt6_parseresults_converted.txt"]
 test_files=["try_gpt_llmresults_converted.txt"]
 test_files=["try_claude_llmresults_converted.txt"]
 
+
+test_files=["results/try160_gemini_llmresults_converted.txt"]
+#test_files=["results/try160_gpt_5_1_none_llmresults_converted.txt"]
+#test_files=["results/try160_claude_sonnet_4_5_llmresults_converted.txt"]
+test_files=["try_test.txt"]
+
 show_tests=True # set to False to suppress printing of all tests during work
 show_compact=True # if show_tests is False, set to True to get 0/1 char for each test
 

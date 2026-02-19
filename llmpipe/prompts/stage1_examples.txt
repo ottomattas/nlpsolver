@@ -1,0 +1,1261 @@
+Input: "John is a person."
+
+Output:
+
+[{
+  "raw": "John is a person.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "John 1 is a person.",
+      "type": "situation",
+      "entities": [{"id": "John 1", "type": "concrete"}]
+    }
+  ]
+}]
+
+---
+
+Input: "Tallinn is a city."
+
+Output:
+
+[{
+  "raw": "Tallinn is a city.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Tallinn 1 is a city.",
+      "type": "real",
+      "entities": [{"id":"Tallinn 1","type":"concrete","url":"https://en.wikipedia.org/wiki/Tallinn"}]
+    }
+  ]
+}]
+
+---
+
+Input: "Keila is very close to Tallinn."
+
+Output:
+
+[{
+  "raw": "Keila is very close to Tallinn.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Keila 1 is very close to Tallinn 2.",
+      "type": "real",
+      "entities": [
+        {"id": "Keila 1", "type": "concrete","url": "https://en.wikipedia.org/wiki/Keila"},
+        {"id": "Tallinn 2","type": "concrete","url": "https://en.wikipedia.org/wiki/Tallinn"}
+      ],
+      "gradables": [["close to", "high", "city"]]
+    }
+  ]
+}]
+
+---
+
+Input: "Alice is smart and red."
+
+Output:
+
+[{
+  "raw": "Alice is smart and red.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Alice 1 is smart.",
+      "type": "situation",
+      "entities": [{"id": "Alice 1","type": "concrete"}],
+      "gradables": [["smart", "none", "person"]]
+    },
+    {
+      "unit_id": "S2",
+      "text": "Alice 1 is red.",
+      "type": "situation",
+      "entities": [{"id": "Alice 1","type": "concrete"}]
+    }
+  ]
+}]
+
+---
+
+Input: "There is a dog in the yard."
+
+Output:
+
+[{
+  "raw": "There is a dog in the yard.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "A dog 1 is in the yard 2.",
+      "type": "situation",
+      "entities": [
+        {"id":"dog 1","type":"concrete"},
+        {"id":"yard 2","type":"concrete"}
+      ]
+    }
+  ]
+}]
+
+---
+
+Input: "John is in Paris or London."
+
+Output:
+
+[{
+  "raw": "John is in Paris or London.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "John 1 is in Paris 2 or London 3.",
+      "type": "situation",
+      "entities": [
+        {"id": "John 1","type": "concrete"},
+        {"id": "Paris 2","type": "concrete","url": "https://en.wikipedia.org/wiki/Paris"},
+        {"id": "London 3","type": "concrete","url": "https://en.wikipedia.org/wiki/London"}
+      ],
+      "time": "present"
+    }
+  ]
+}]
+
+---
+
+Input: "Alice is smart and either kind or funny."
+
+Output:
+
+[{
+  "raw": "Alice is smart and either kind or funny.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Alice 1 is smart.",
+      "type": "situation",
+      "entities": [{"id": "Alice 1","type": "concrete"}],
+      "gradables": [["smart", "none", "person"]]
+    },
+    {
+      "unit_id": "S2",
+      "text": "Alice 1 is kind or funny.",
+      "type": "situation",
+      "entities": [{"id": "Alice 1","type": "concrete"}],
+      "gradables": [
+        ["kind", "none", "person"],
+        ["funny", "none", "person"]
+      ]
+    }
+  ]
+}]
+
+---
+
+Input: "Eve does not have a bike."
+
+Output:
+
+[{
+  "raw": "Eve does not have a bike.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Eve 1 does not have a bike.",
+      "type": "situation",
+      "entities": [
+        {"id": "Eve 1","type": "concrete"},
+        {"id": "bike","type": "generic"}
+      ]
+    }
+  ]
+}]
+
+---
+
+Input: "John smiled. Mike frowned. They were happy."
+
+Output:
+
+[{
+  "raw": "John smiled. Mike frowned. They were happy.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "John 1 smiled.",
+      "type": "situation",
+      "entities": [{ "id": "John 1", "type": "concrete" }],
+      "next_state": "W1",
+      "time": "past"
+    },
+    {
+      "unit_id": "S2",
+      "text": "Mike 2 frowned.",
+      "type": "situation",
+      "entities": [{ "id": "Mike 2", "type": "concrete" }],
+      "pre_state": "W1",
+      "next_state": "W2",
+      "time": "past"
+    },
+    {
+      "unit_id": "S3",
+      "text": "John 1 and Mike 2 were happy.",
+      "type": "situation",
+      "entities": [
+        { "id":"John 1","type": "concrete" },
+        { "id":"Mike 2","type": "concrete" }
+      ],
+      "gradables": [["happy", "none", "person"]],
+      "pre_state": "W2",
+      "time": "past"
+    }
+  ]
+}]
+
+---
+
+Input: "John bought a red car."
+
+Output:
+
+[{
+  "raw": "John bought a red car.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "John 1 bought a car 2.",
+      "type": "situation",
+      "entities": [
+        {"id":"John 1","type":"concrete"},
+        {"id":"car 2","type":"concrete"}
+      ],
+      "next_state": "W1",
+      "time": "past"
+    },
+    {
+      "unit_id": "S2",
+      "text": "The car 2 is red.",
+      "type": "situation",
+      "entities": [
+        {"id":"car 2","type":"concrete"}
+      ],
+      "pre_state": "W1",
+      "time": "past"
+    }
+  ]
+}]
+
+---
+
+Input: "In 1995, Tallinn was the capital of Estonia."
+
+Output:
+
+[{
+  "raw": "In 1995, Tallinn was the capital of Estonia.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Tallinn 1 was the capital 2 of Estonia 3.",
+      "type": "real",
+      "entities": [
+        {"id":"Tallinn 1","type":"concrete","url":"https://en.wikipedia.org/wiki/Tallinn"},
+        {"id":"the capital 2","type":"concrete","text":"capital"},
+        {"id":"Estonia 3","type":"concrete","url":"https://en.wikipedia.org/wiki/Estonia"}
+      ],
+      "definites": [["capital of","the capital 2","Estonia 3"]],
+      "time": "1995"
+    }
+  ]
+}]
+
+---
+
+Input: "Mary probably owns a dog."
+
+Output:
+
+[{
+  "raw": "Mary probably owns a dog.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Mary 1 owns a dog.",
+      "type": "situation",
+      "entities": [
+        {"id":"Mary 1","type":"concrete"},
+        {"id":"dog","type":"generic"}
+      ],
+      "confidence": 0.8,
+      "time": "present"
+    }
+  ]
+}]
+
+---
+
+Input: "John has a car?"
+
+Output: 
+
+[{
+  "raw": "John has a car?",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Does John 1 have a car?",
+      "type": "query",
+      "entities": [
+        {"id": "John 1","type": "concrete"},
+        {"id": "car","type": "generic"}
+      ]
+    }
+  ]
+}]
+
+---
+
+Input: "Is a box at a red house?"
+
+Output: 
+
+[{
+  "raw": "Is a box at a red house?",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Is a box at a red house?",
+      "type": "query",
+      "entities": [
+        {"id": "box","type":"generic"},
+        {"id": "house","type":"generic"}
+      ]
+    }
+  ]
+}]
+
+---
+
+Input: "Who likes Mike?"
+
+Output: 
+
+[{
+  "raw": "Who likes Mike?",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Which person likes Mike 1?",
+      "type": "query",
+      "entities": [
+        {"id": "person","type": "generic"},
+        {"id": "Mike 1","type": "concrete"}
+      ],
+      "gradables": [["like", "none", "person"]]
+    }
+  ]
+}]
+
+---
+
+Input: "All green things are rough."
+
+Output:
+
+[{
+  "raw": "All green things are rough.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "All things that are green are rough.",
+      "type": "strict_rule",
+      "entities": [
+        {"id":"things","type":"generic"}
+      ],
+      "gradables": [
+        ["green","none","thing"],
+        ["rough","none","thing"]
+      ]
+    }
+  ]
+}]
+
+---
+
+Input: "Dogs eat meat."
+
+Output:
+
+[{
+  "raw": "Dogs eat meat.",
+  "units": [
+    {
+      "unit_id":"S1",
+      "text":"Dogs eat meat.",
+      "type":"normal_rule",
+      "entities":[
+        {"id":"dogs","type":"generic"},
+        {"id":"meat","type":"generic","scope":"kind"}
+      ],
+      "confidence":0.99
+    }
+  ]
+}]
+
+---
+
+Input: "Dogs have tails."
+
+Output:
+
+[{
+  "raw": "Dogs have tails.",
+  "units": [
+    {
+      "unit_id":"S1",
+      "text":"Dogs have tails.",
+      "type":"normal_rule",
+      "entities":[
+        {"id":"dogs","type":"generic"},
+        {"id":"tails","type":"generic","scope":"dependent"}
+      ],
+      "confidence":0.99
+    }
+  ]
+}]
+
+---
+
+Input: "Chinese have a capital."
+
+Output:
+
+[{
+  "raw": "Chinese have a capital.",
+  "units": [
+    {
+      "unit_id":"S1",
+      "text":"Chinese have a capital.",
+      "type":"normal_rule",
+      "entities":[
+        {"id":"chinese","type":"generic"},
+        {"id":"capital","type":"generic","scope":"global"}
+      ],
+      "confidence":0.99
+    }
+  ]
+}]
+
+---
+
+Input: "Some animals are small."
+
+Output: 
+
+[{
+  "raw": "Some animals are small.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Some animals are small.",
+      "type": "normal_rule",
+      "entities": [
+        {"id":"animals","type":"generic"}
+      ],
+      "confidence": 0.99
+    }
+  ]
+}]
+
+---
+
+Input: "If a stone is light, it can be thrown."
+
+Output:
+
+[{
+  "raw": "If a stone is light, it can be thrown.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "If a stone is light, the stone can be thrown.",
+      "type": "normal_rule",
+      "entities": [
+        {"id": "stone", "type": "generic"}
+      ],
+      "gradables": [["light", "none", "stone"]],
+      "confidence": 0.98
+    }
+  ]
+}]
+
+---
+
+Input: "Not all dogs bark."
+
+Output:
+
+[{
+  "raw": "Not all dogs bark.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Not all dogs bark.",
+      "type": "normal_rule",
+      "entities": [
+        {"id":"dogs","type":"generic"}
+      ]
+    }
+  ]
+}]
+
+---
+
+Input: "Spearing food is easy."
+
+Output:
+
+[{
+  "raw": "Spearing food is easy.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "A person spears food easily.",
+      "type": "normal_rule",
+      "entities": [
+        {"id": "person","type": "generic"},
+        {"id": "food","type":"generic","scope":"kind"}
+      ],
+      "confidence": 0.95
+    }
+  ]
+}]
+
+---
+
+Input: "Birds fly, but penguins don't."
+
+Output:
+
+[{
+  "raw": "Birds fly, but penguins don't.",
+  "units": [
+    {
+      "unit_id":"S1",
+      "text":"Birds can fly.",
+      "type":"normal_rule",
+      "entities":[
+        {"id":"birds","type":"generic"}
+      ],
+      "confidence":0.95
+    },
+    {
+      "unit_id":"S2",
+      "text":"Penguins cannot fly.",
+      "type":"strict_rule",
+      "entities":[
+        {"id":"penguins","type":"generic"}
+      ]
+    }
+  ]
+}]
+
+---
+
+Input: "Close the door!"
+
+Output:
+
+[{
+  "raw": "Close the door!",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "You should close the door 1.",
+      "type": "situation",
+      "entities": [
+        {"id":"you 0","type":"generic"},
+        {"id":"door 1","type":"concrete"}
+      ],
+      "time": "present"
+    }
+  ]
+}]
+
+---
+
+Input: "What a beautiful house!"
+
+Output:
+
+[{
+  "raw": "What a beautiful house!",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "The house 1 is very beautiful.",
+      "type": "situation",
+      "entities": [
+        {"id":"house 1","type":"concrete"}
+      ],
+      "gradables": [["beautiful","high","house"]],
+      "time": "present"
+    }
+  ]
+}]
+
+---
+
+Input: "John's sister met Mary."
+
+Output:
+
+[{
+  "raw": "John's sister met Mary.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "John 1's sister 2 met Mary 3.",
+      "type": "situation",
+      "entities": [
+        {"id":"John 1","type":"concrete"},
+        {"id":"sister 2","type":"concrete","text":"sister"},
+        {"id":"Mary 3","type":"concrete"}
+      ],
+      "time": "past"
+    },
+    {
+      "unit_id": "S2",
+      "text": "Sister 2 is the sister of John 1.",
+      "type": "situation",
+      "entities": [
+        {"id":"sister 2","type":"concrete","text":"sister"},
+        {"id":"John 1","type":"concrete"}
+      ],
+      "time": "past"
+    }
+  ]
+}]
+
+---
+
+Input: "John didn't see Mary, but he heard her."
+
+Output:
+
+[{
+  "raw": "John didn't see Mary, but he heard her.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "John 1 did not see Mary 2.",
+      "type": "situation",
+      "entities": [
+        {"id":"John 1","type":"concrete"},
+        {"id":"Mary 2","type":"concrete"}
+      ],
+      "time": "past"
+    },
+    {
+      "unit_id": "S2",
+      "text": "John 1 heard Mary 2.",
+      "type": "situation",
+      "entities": [
+        {"id":"John 1","type":"concrete"},
+        {"id":"Mary 2","type":"concrete"}
+      ],
+      "time": "past"
+    }
+  ]
+}]
+---
+
+Input: "John walked in Mary's house."
+
+Output:
+
+[{
+  "raw": "John walked in Mary's house.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "John 1 walked in Mary 2's house 3.",
+      "type": "situation",
+      "entities": [
+        {"id":"John 1","type":"concrete"},
+        {"id":"Mary 2","type":"concrete"},
+        {"id":"house 3","type":"concrete"}
+      ],
+      "time": "past"
+    },
+    {
+      "unit_id": "S2",
+      "text": "Mary 2 owns the house 3.",
+      "type": "situation",
+      "entities": [
+        {"id":"Mary 2","type":"concrete"},
+        {"id":"house 3","type":"concrete"}
+      ]
+    }
+  ]
+}]
+
+---
+
+Input: "The handle of the fork is long."
+
+Output:
+
+[{
+  "raw": "The handle of the fork is long.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "The handle 1 of the fork 2 is long.",
+      "type": "situation",
+      "entities": [
+        {"id":"the handle 1","type":"concrete","text":"handle"},
+        {"id":"fork 2","type":"concrete"}
+      ],
+      "gradables": [["long","none","handle"]],
+      "definites": [["handle of","the handle 1","fork 2"]],
+      "time": "present"
+    },
+    {
+      "unit_id": "S2",
+      "text": "The handle 1 is the handle of the fork 2.",
+      "type": "situation",
+      "entities": [
+        {"id":"the handle 1","type":"concrete","text":"handle"},
+        {"id":"fork 2","type":"concrete"}
+      ],
+      "definites": [["handle of","the handle 1","fork 2"]],
+      "time": "present"
+    }
+  ]
+}]
+
+---
+
+Input: "The car of John is red."
+
+Output:
+
+[{
+  "raw": "The car of John is red.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "The car 2 is the car of John 1.",
+      "type": "situation",
+      "entities": [
+        {"id":"John 1","type":"concrete"},
+        {"id":"car 2","type":"concrete"}
+      ],
+      "definites": [["car of","car 2","John 1"]]
+    },
+    {
+      "unit_id": "S2",
+      "text": "The car 2 is red.",
+      "type": "situation",
+      "entities": [
+        {"id":"car 2","type":"concrete"}
+      ]
+    }
+  ]
+}]
+
+---
+
+Input: "John has two red and three green apples. Does John have several apples?"
+
+Output:
+
+[
+  {
+    "raw": "John has two red and three green apples.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "John 1 has two red apples 2.",
+        "type": "situation",
+        "entities": [
+          {"id":"John 1","type":"concrete"},
+          {"id":"apples 2","type":"concrete"}
+        ]
+      },
+      {
+        "unit_id": "S2",
+        "text": "John 1 has three green apples 3.",
+        "type": "situation",
+        "entities": [
+          {"id":"John 1","type":"concrete"},
+          {"id":"apples 3","type":"concrete"}
+        ]
+      }
+    ]
+  },
+  {
+    "raw": "Does John have several apples?",
+    "units": [
+      {
+        "unit_id":"S3",
+        "text":"Does John 1 have more than 2 apples?",
+        "type":"query",
+        "entities":[
+          {"id":"John 1","type":"concrete"},
+          {"id":"apples","type":"generic"}
+        ]
+      }
+    ]
+  }
+]
+
+---
+
+Input: "A very big mouse ran away."
+
+Output:
+
+[{
+  "raw": "A very big mouse ran away.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "A very big mouse 1 ran away.",
+      "type": "situation",
+      "entities": [
+        {"id":"mouse 1","type":"concrete"}
+      ],
+      "gradables": [["big", "high", "mouse"]],
+      "next_state": "W1",
+      "time":"past"
+    }
+  ]
+}]
+
+---
+
+Input: "The house is slightly warm."
+
+Output:
+
+[{
+  "raw": "The house is slightly warm.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "The house 1 is slightly warm.",
+      "type": "situation",
+      "entities": [
+        {"id":"house 1","type":"concrete"}
+      ],
+      "gradables": [["warm", "low", "house"]]
+    }
+  ]
+}]
+
+---
+
+Input: "Garbage can will be in the room."
+
+Output:
+
+[{
+  "raw": "Garbage can will be in the room.",
+  "units": [
+    {
+      "unit_id":"S1",
+      "text":"Garbage can 1 will be in the room 2.",
+      "type":"situation",
+      "entities":[
+        {"id":"Garbage can 1","type":"concrete","subtype":"compound"},
+        {"id":"room 2","type":"concrete"}
+      ],
+      "time":"future"
+    }
+  ]
+}]
+
+---
+
+Input: "An elephant was strong. The animal lifted a stone."
+
+Output:
+
+[
+  {
+    "raw": "An elephant was strong.",
+    "units": [
+      {
+        "unit_id":"S1",
+        "text":"An elephant 1 was strong.",
+        "type":"situation",
+        "entities":[
+          {"id":"An elephant 1","type":"concrete"}
+        ],
+        "gradables": [["strong", "none", "elephant"]],
+        "pre_state":"W0",
+        "time":"past"
+      }
+    ]
+  },
+  {
+    "raw": "The animal lifted a stone.",
+    "units": [
+      {
+        "unit_id":"S2",
+        "text":"An elephant 1 lifted a stone 2.",
+        "type":"situation",
+        "entities":[
+          {"id":"An elephant 1","type":"concrete"},
+          {"id":"stone 2","type":"concrete"}
+        ],
+        "pre_state":"W0",
+        "next_state":"W1",
+        "time":"past"
+      }
+    ]
+  }
+]
+
+---
+
+Input: "John has a red car. He drives it fast. Probably, he is a racer."
+
+Output:
+
+[
+  {
+    "raw": "John has a red car.",
+    "units": [
+      {
+        "unit_id":"S1",
+        "text":"John 1 has a red car 2.",
+        "type":"situation",
+        "entities":[
+          {"id":"John 1","type":"concrete"},
+          {"id":"car 2","type":"concrete"}
+        ]
+      },
+      {
+        "unit_id":"S2",
+        "text":"The car 2 is red.",
+        "type":"situation",
+        "entities":[
+          {"id":"car 2","type":"concrete"}
+        ]
+      }
+    ]
+  },
+  {
+    "raw": "He drives it fast.",
+    "units": [
+      {
+        "unit_id":"S3",
+        "text":"John 1 drives the car 2 fast.",
+        "type":"situation",
+        "entities":[
+          {"id":"John 1","type":"concrete"},
+          {"id":"car 2","type":"concrete"}
+        ],
+        "gradables":[["fast","none","driving"]]
+      }
+    ]
+  },
+  {
+    "raw": "Probably, he is a racer.",
+    "units": [
+      {
+        "unit_id":"S4",
+        "text":"John 1 is a racer.",
+        "type":"situation",
+        "entities":[
+          {"id":"John 1","type":"concrete"},
+          {"id":"racer","type":"generic"}
+        ],
+        "confidence":0.8
+      }
+    ]
+  }
+]
+
+
+---
+
+Input: "Yesterday in a forest owned by Mary, John ate berries with the edge of a spoon."
+
+Output:
+
+[{
+  "raw": "Yesterday in a forest owned by Mary, John ate berries with the edge of a spoon.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "John 1 ate berries 2 in a forest 3 with the edge 4 of a spoon 5.",
+      "type": "situation",
+      "entities": [
+        {"id":"John 1","type":"concrete"},
+        {"id":"berries 2","type":"concrete"},
+        {"id":"a forest 3","type":"concrete"},
+        {"id":"the edge 4","type":"concrete","text":"edge"},
+        {"id":"a spoon 5","type":"concrete"}
+      ],
+      "definites": [["edge of","the edge 4","a spoon 5"]],
+      "pre_state": "W0",
+      "time": ["relative","-1 day","narrative_now"],
+      "location": "a forest 3"
+    },
+    {
+      "unit_id": "S2",
+      "text": "Mary 6 owned a forest 3.",
+      "type": "situation",
+      "entities": [
+        {"id":"Mary 6","type":"concrete"},
+        {"id":"a forest 3","type":"concrete"}
+      ],
+      "pre_state": "W0"
+    },
+    {
+      "unit_id": "S3",
+      "text": "The edge 4 is the edge of a spoon 5.",
+      "type": "situation",
+      "entities": [
+        {"id":"the edge 4","type":"concrete","text":"edge"},
+        {"id":"a spoon 5","type":"concrete"}
+      ],
+      "definites": [["edge of", "the edge 4", "a spoon 5"]],
+      "pre_state": "W0"
+    }
+  ]
+}]
+
+---
+
+Input: "The length of Emajogi is 80 kilometers."
+
+Output:
+
+[{
+  "raw": "The length of Emajogi is 80 kilometers.",
+  "units": [
+    {
+      "unit_id":"S1",
+      "text":"The length 2 of Emajogi 1 is 80 kilometers.",
+      "type":"real",
+      "entities":[
+        {"id":"Emajogi 1","type":"concrete","url":"https://en.wikipedia.org/wiki/Emajogi"},
+        {"id":"the length 2","type":"concrete","text":"length"},
+        {"id":"80 kilometers","type":"concrete"}
+      ],
+      "definites":[["length of","the length 2","Emajogi 1"]]
+    },
+    {
+      "unit_id":"S2",
+      "text":"The length 2 is the length of Emajogi 1.",
+      "type":"real",
+      "entities":[
+        {"id":"the length 2","type":"concrete","text":"length"},
+        {"id":"Emajogi 1","type":"concrete","url":"https://en.wikipedia.org/wiki/Emajogi"}
+      ],
+      "definites":[["length of","the length 2","Emajogi 1"]]
+    }
+  ]
+}]
+
+---
+
+Input: "The price of milk is above 5 euros."
+
+Output:
+
+[{
+  "raw": "The price of milk is above 5 euros.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "The price 1 of milk 2 is greater than 5 euros.",
+      "type": "real",
+      "entities": [
+        {"id":"the price 1","type":"concrete","text":"price"},
+        {"id":"milk 2","type":"generic","scope":"kind"},
+        {"id":"5 euros","type":"concrete"}
+      ],
+      "definites": [["price of","the price 1","milk 2"]]
+    }
+  ]
+}]
+
+---
+
+Input: "John woke up and one hour later he left."
+
+Output: 
+
+[{
+  "raw": "John woke up and one hour later he left.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "John 1 woke up.",
+      "type": "situation",
+      "entities": [{"id":"John 1","type":"concrete"}],
+      "pre_state": "W0",
+      "next_state": "W1",
+      "time": "past"
+    },
+    {
+      "unit_id": "S2",
+      "text": "John 1 left.",
+      "type": "situation",
+      "entities": [{"id":"John 1","type":"concrete"}],
+      "pre_state": "W1",
+      "next_state": "W2",
+      "time": ["relative", "+1 hour", "W1"]
+    }
+  ]
+}]
+
+---
+
+Input: "John knew that Mary is rich."
+
+Output: 
+
+[{
+  "raw": "John knew that Mary is rich.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "John 1 knew that Mary 2 is rich.",
+      "type": "situation",
+      "entities": [
+        {"id": "John 1", "type": "concrete"},
+        {"id": "Mary 2", "type": "concrete"}
+      ],
+      "gradables": [["rich", "none", "person"]],
+      "pre_state": "W0",
+      "time": "past",
+      "mental_holder": "John 1",
+      "mental_attitude": "knowledge",
+      "epistemic_force": "factive",
+      "attitude_target": "S2"
+    },
+    {
+      "unit_id": "S2",
+      "text": "Mary 2 is rich.",
+      "type": "situation",
+      "entities": [
+        {"id": "Mary 2", "type": "concrete"}
+      ],
+      "gradables": [["rich", "none", "person"]],
+      "pre_state": "W0"
+    }
+  ]
+}]
+
+---
+
+
+Input: "John thinks that Mary believes that Peter is rich."
+
+Output:
+
+[{
+  "raw": "John thinks that Mary believes that Peter is rich.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Peter 3 is rich.",
+      "type": "situation",
+      "entities": [
+        {"id":"Peter 3","type":"concrete"},
+        {"id":"Mary 2","type":"concrete"}
+      ],
+      "mental_holder": "Mary 2",
+      "mental_attitude": "belief",
+      "epistemic_force": "non_factive"
+    },
+    {
+      "unit_id": "S2",
+      "text": "Mary 2 believes that Peter 3 is rich.",
+      "type": "situation",
+      "entities": [
+        {"id":"Peter 3","type":"concrete"},
+        {"id":"Mary 2","type":"concrete"},
+        {"id":"John 1","type":"concrete"}
+      ],
+      "mental_holder": "John 1",
+      "mental_attitude": "belief",
+      "epistemic_force": "non_factive",
+      "attitude_target": "S1"
+    }
+  ]
+}]
+
+---
+
+Input: "Penguins are flightless, semi-aquatic sea birds living in the Southern Hemisphere."
+
+Output:
+
+[{
+  "raw": "Penguins are flightless, semi-aquatic sea birds living in the Southern Hemisphere.",
+  "units": [
+    {
+      "unit_id":"S1",
+      "text":"Penguins are birds.",
+      "type":"strict_rule",
+      "entities":[
+        {"id":"penguins","type":"generic"},
+        {"id":"birds","type":"generic"}
+      ]
+    },
+    {
+      "unit_id":"S2",
+      "text":"Penguins are sea birds.",
+      "type":"strict_rule",
+      "entities":[
+        {"id":"sea birds","type":"generic","subtype":"compound"}
+      ]
+    },
+    {
+      "unit_id":"S3",
+      "text":"Penguins cannot fly.",
+      "type":"strict_rule",
+      "entities":[{"id":"penguins","type":"generic"}]
+    },
+    {
+      "unit_id":"S4",
+      "text":"Penguins live in water.",
+      "type":"normal_rule",
+      "entities":[
+        {"id":"penguins","type":"generic"},
+        {"id":"water","type":"generic","scope":"kind"}
+      ],
+      "confidence":0.95
+    },
+    {
+      "unit_id":"S5",
+      "text":"Penguins live on land.",
+      "type":"normal_rule",
+      "entities":[
+        {"id":"penguins","type":"generic"},
+        {"id":"land","type":"generic","scope":"kind"}
+      ],
+      "confidence":0.95
+    },
+    {
+      "unit_id":"S6",
+      "text":"Penguins live in the Southern Hemisphere 1.",
+      "type":"normal_rule",
+      "entities":[
+        {"id":"penguins","type":"generic"},
+        {"id":"Southern Hemisphere 1","type":"concrete","url":"https://en.wikipedia.org/wiki/Southern_Hemisphere"}
+      ],
+      "confidence":0.99
+    }
+  ]
+}]

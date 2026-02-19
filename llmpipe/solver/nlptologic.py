@@ -369,9 +369,11 @@ def parse_ud(doc,entities):
   if not clauses:
     show_error("failed to parse any sentences. Try simpler sentences.")
     sys.exit(0)
+
   if options["debug_print_flag"]:
-    print("\nclauses:\n")
+    print("\nXXXXXclauses:\n")
     print(clause_list_to_json(uncertain_clauses).replace("\"",""))
+    
   #debug_print_logic_list(uncertain_clauses)
   final_result=uncertain_clauses 
   final_result=check_logic(ctxt,final_result)

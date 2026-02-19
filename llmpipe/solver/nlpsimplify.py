@@ -97,7 +97,8 @@ def logic_replace_nameatoms(lst,nameatoms,namedict):
 
 # ========= logic clausification ====
 
-def clausify_logic_list(ctxt,lst):     
+def clausify_logic_list(ctxt,lst):    
+  #print("*** lst",lst) 
   if not lst: return lst  
   if type(lst)!=list: return lst
   res=[]
@@ -112,6 +113,7 @@ def clausify_logic_list(ctxt,lst):
   return res
 
 def clausify_top_logic(ctxt,frm): 
+  #print("*** frm",frm) 
   #debug_print("clausify_top_logic frm",frm)
   if type(frm)==dict:    
     newfrm=frm.copy()

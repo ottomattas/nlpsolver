@@ -118,7 +118,7 @@ def main():
 
 
 def answer_question(text,newoptions=None):
-  debug_print("answer_question text",text)    
+  debug_print("answer_question text",text)
 
   nlpglobals.options["debug_print_flag"]=True
 
@@ -127,7 +127,9 @@ def answer_question(text,newoptions=None):
   if options["solveparsed_flag"]:
     result=solve_parsed(text)
     return result  
-    sys.exit(0)
+  sys.exit(0)
+  
+  # ---------- we do not run the stuff below for llmpipe ------
   if options["llm_solve_flag"]:
     result=llm_solve(text)
     return result
