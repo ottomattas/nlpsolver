@@ -69,7 +69,9 @@ server_timeout=2
 cache_db_name="nlpcache.db"
 
 # solving logic with a prover
-prover_fname="./gk"
+prover_fname="../gk/gk" # gk binary
+prover_datafolder="../gk"  # where gk_name_number.txt etc are located
+
 memkb_name="1000"  # in-memory knowledge base name (number)
 prover_infile="gk_infile.js"
 prover_axiomfile="axioms_std.js"

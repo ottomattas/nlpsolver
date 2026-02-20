@@ -89,6 +89,7 @@ def call_prover(logic):
   params.append(infilename)
   if options["usekb_flag"]: params=params+nlpglobals.usekb_prover_params
   else: params=params+nlpglobals.prover_params        
+  params=params+["--datafolder",prover_datafolder]
   if options["prover_print_flag"] or options["show_prover_flag"]:
     print("\n=== prover params: === \n\n"," ".join(params))
 

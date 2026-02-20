@@ -39,6 +39,7 @@ except ImportError:
 
 # Which LLM to use: "gpt", "claude", or "gemini"
 use_llm = "claude"
+use_llm = "gemini"
 
 # Model versions
 gptversion = "gpt-5.1"

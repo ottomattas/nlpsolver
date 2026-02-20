@@ -45,12 +45,34 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "solver"))
 
 import solve
+import llmcall
 
 
 # ======== defaults ========
 
 DEFAULT_TEST_FILE = "tests/tests_core.py"
 DEFAULT_LOG_FILE  = "solvetest.log"
+
+
+# ======== LLM info ========
+
+def _active_llm_info():
+  """Return (llm_name, version_string) reflecting the currently active LLM.
+
+  solve.llm / solve.llm_version override llmcall defaults when set.
+  """
+  llm = solve.llm or llmcall.use_llm
+  if solve.llm_version:
+    version = solve.llm_version
+  elif llm == "claude":
+    version = llmcall.claudeversion
+  elif llm == "gpt":
+    version = llmcall.gptversion
+  elif llm == "gemini":
+    version = llmcall.geminiversion
+  else:
+    version = "unknown"
+  return llm, version
 
 
 # ======== entry point ========
@@ -62,7 +84,9 @@ def main():
   if tests is None:
     sys.exit(1)
 
+  llm_name, llm_ver = _active_llm_info()
   print("Running {:d} tests from {}".format(len(tests), test_file))
+  print("LLM:     {} ({})".format(llm_name, llm_ver))
   print("Log:     {}".format(run_opts["log_file"]))
   print()
 
@@ -114,8 +138,10 @@ def _run_tests(tests, test_file, solve_opts, run_opts):
     logf = None
 
   ts = time.strftime("%Y-%m-%d %H:%M:%S")
+  llm_name, llm_ver = _active_llm_info()
   _log(logf, "solvetest log — {}".format(ts))
   _log(logf, "Test file : {}".format(test_file))
+  _log(logf, "LLM       : {} ({})".format(llm_name, llm_ver))
   _log(logf, "Tests     : {:d}".format(len(tests)))
   _log(logf, "")
 
