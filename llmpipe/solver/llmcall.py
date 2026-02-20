@@ -91,12 +91,12 @@ def call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None):
   cached = _get_llm_cached(llm, ver, max_tokens, sysprompt, input_text)
   if cached is not None:
     if debug:
-      print("[llmcall] cache hit (" + llm + " " + ver + ")")
+      print("cache hit (" + llm + " " + ver + ")")
     return cached
 
   # --- call the LLM ---
   if debug:
-    print("[llmcall] calling " + llm + " " + ver + " ...")
+    print("calling " + llm + " " + ver + " ...")
   try:
     if llm == "claude":
       result = call_claude(ver, input_text, sysprompt, max_tokens)

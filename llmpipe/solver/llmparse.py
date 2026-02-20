@@ -108,7 +108,7 @@ def parse_text(text, llm=None, version=None, tokens=None):
 
   stats = _make_stats()
 
-  _debug_write("=" * 60)
+  _debug_write("\n"+"="*30 + " llmparse " + "="*30+"\n")
   _debug_write("INPUT: " + text)
 
   # --- stage 1 ---
@@ -418,13 +418,13 @@ def add_stats(total, delta):
 
 def _debug_write(msg):
   if debug:
-    print("[llmparse]", msg)
+    print(msg)
   if debug_file:
     try:
       with open(debug_file, "a") as f:
-        f.write("[llmparse] " + msg + "\n")
+        f.write(msg + "\n")
     except Exception as e:
-      print("[llmparse] Could not write to debug file:", e)
+      print("Could not write to debug file:", e)
 
 
 def _debug_write_json(label, text):

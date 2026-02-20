@@ -222,15 +222,21 @@ def _format_explanation(answers, sentence_map, show_logic=False):
       continue
 
     # Which sent_* names appear in this proof?
-    used_names  = _collect_sent_names(proof)
+    used_names   = _collect_sent_names(proof)
     sorted_names = sorted(used_names, key=_sent_name_sort_key)
-    sent_nr     = {name: i + 1 for i, name in enumerate(sorted_names)}
 
-    # Numbered sentence list
+    # Deduplicate by raw text: multiple ASUs from the same source sentence
+    # share the same raw string and must share the same sentence number.
+    sent_nr    = {}   # sent_SN -> display number
+    seen_raws  = {}   # raw text -> display number (first assigned)
     sent_lines = ["Sentences used:"]
     for name in sorted_names:
       raw = sentence_map.get(name, name)
-      sent_lines.append("  (" + str(sent_nr[name]) + ") " + raw)
+      if raw not in seen_raws:
+        nr = len(seen_raws) + 1
+        seen_raws[raw] = nr
+        sent_lines.append("  (" + str(nr) + ") " + raw)
+      sent_nr[name] = seen_raws[raw]
 
     # Proof step list
     step_lines = ["Proof steps:"]
@@ -367,21 +373,46 @@ def _clause_to_str(clause):
 
 # ---- entity name helper ----
 
+# Safe letters for labelling noun-phrase constants.
+# Skips letters that are common stage-2 variable names (E, K, N, S, V, X, Y, Z)
+# so that "car B" can never be confused with a proof variable.
+_SAFE_LETTERS = "ABCDFGHIJLMPQRTUW"   # 17 slots; enough for any realistic proof
+
+
 def _entity_name(val):
   """Display name for a logic constant or variable.
 
-  Strips the ?:-variable prefix and trailing disambiguation numbers
-  (e.g. 'John 1' -> 'John', '?:X' -> 'X', 'W0' -> 'W0').
-  World constants (W0, W1, ...) are returned unchanged.
+  - Variables (?:X)           -> strip prefix -> "X"
+  - Proper-name constants     -> strip trailing number -> "John 1" -> "John"
+  - Noun-phrase constants     -> replace number with safe letter ->
+                                 "car 2" -> "car B",  "dog 1" -> "dog A"
+
+  Proper names are detected by an uppercase first character.
+  Noun-phrase constants (lowercase first char) carry a letter label so
+  that distinct entities remain distinguishable across proof steps, and
+  the label letters never collide with stage-2 variable names.
+
+  For disambiguation numbers beyond the 17-letter safe set the original
+  number is kept as a fallback (e.g. "car 20").
   """
   if not isinstance(val, str):
     return str(val)
   if val.startswith("?:"):
     val = val[2:]
-  m = re.match(r'^(.*\S)\s+\d+$', val)
-  if m:
-    val = m.group(1)
-  return val
+  m = re.match(r'^(.*\S)\s+(\d+)$', val)
+  if not m:
+    return val
+  base = m.group(1)
+  n    = int(m.group(2))
+  if base[:1].isupper():
+    # Proper name — drop the number entirely
+    return base
+  # Noun-phrase constant — replace number with a safe letter
+  if 1 <= n <= len(_SAFE_LETTERS):
+    label = _SAFE_LETTERS[n - 1]        # 1->A, 2->B, 3->C, 4->D, 5->F, …
+  else:
+    label = str(n)                       # fallback for very large indices
+  return base + " " + label
 
 
 # ---- degree / gradable helpers ----

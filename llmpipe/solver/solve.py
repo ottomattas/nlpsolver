@@ -75,18 +75,23 @@ max_tokens  = None   # int, or None for default
 
 
 
-def main():
+def main(): 
   """
   logic=[
-    {"@logic": ["p","a"]},
-    {"@logic": ["r","b"]},
-    {"@logic": ["or",["-p","?:X"],["r","?:X"]]},
-    {"@question": ["r","?:X"]}
+{"@logic": ["isa","car","car 2"],
+ "@name": "sent_S1"},
+{"@logic": ["have","John 1","car 2"],
+ "@name": "sent_S2"},
+{"@logic": ["isa","person","John 1"],
+ "@name": "sent_S3"}, 
+{"@question": ["exists",["?:X"],["and",["isa","person","?:X"],["isa","car","?:Y"],["have","?:X","?:Y"]],
+ "@name": "sent_S4"}
   ]
+
   r=prover.call_prover(logic)
   print(r)
-  return
-  """ 
+  sys.exit(0)
+  """
   text, opts = _parse_cmd_line()
   if opts.get("clearcache_flag"):
     counts = cache.clear_all_caches()
