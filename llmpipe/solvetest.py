@@ -95,15 +95,29 @@ def _load_tests(test_file):
 # ======== test runner ========
 
 def _run_tests(tests, test_file, solve_opts, run_opts):
-  """Run all tests; write a detailed log; return a results dict."""
-  verbose   = run_opts.get("verbose", False)
-  log_file  = run_opts.get("log_file", DEFAULT_LOG_FILE)
+  """Run all tests; write each result to the log immediately; return a results dict."""
+  verbose    = run_opts.get("verbose", False)
+  log_file   = run_opts.get("log_file", DEFAULT_LOG_FILE)
   stop_after = run_opts.get("stop_after", 0)
 
   entries  = []
   n_passed = 0
   n_failed = 0
   start    = time.time()
+
+  # Open the log file once and write the header; each entry is flushed
+  # immediately so the log is intact even if testing is interrupted.
+  try:
+    logf = open(log_file, "w")
+  except OSError as e:
+    print("Warning: could not open log file {}: {}".format(log_file, e))
+    logf = None
+
+  ts = time.strftime("%Y-%m-%d %H:%M:%S")
+  _log(logf, "solvetest log — {}".format(ts))
+  _log(logf, "Test file : {}".format(test_file))
+  _log(logf, "Tests     : {:d}".format(len(tests)))
+  _log(logf, "")
 
   for i, test in enumerate(tests):
     if not isinstance(test, list) or len(test) < 2:
@@ -122,6 +136,7 @@ def _run_tests(tests, test_file, solve_opts, run_opts):
       got = solve.english_to_answer(text, dict(solve_opts))
     except KeyboardInterrupt:
       print("\nInterrupted.")
+      _log(logf, "--- interrupted ---")
       break
     except Exception as e:
       got = "Error: " + str(e)
@@ -137,6 +152,15 @@ def _run_tests(tests, test_file, solve_opts, run_opts):
     }
     entries.append(entry)
 
+    # Write this entry to the log and flush immediately so it survives cancellation
+    status = "PASS" if ok else "FAIL"
+    _log(logf, "[{:d}] {}  {}  expected={}".format(nr, status, text[:100], _fmt(expected)))
+    if not ok:
+      _log(logf, "     got      : {}".format(
+        got[:200] if isinstance(got, str) else str(got)))
+    if logf:
+      logf.flush()
+
     if ok:
       n_passed += 1
       if verbose:
@@ -149,6 +173,7 @@ def _run_tests(tests, test_file, solve_opts, run_opts):
         print("  FAIL  expected={}  got={}".format(_fmt(expected), _fmt(got)))
       else:
         print("F", end="", flush=True)
+    sys.stdout.flush()
 
     if stop_after and n_failed >= stop_after:
       print("\nStopping after {:d} failure(s).".format(stop_after))
@@ -159,7 +184,16 @@ def _run_tests(tests, test_file, solve_opts, run_opts):
   if not verbose:
     print()   # newline after the dot/F progress line
 
-  _write_log(log_file, test_file, entries, elapsed)
+  # Write summary footer to the log
+  _log(logf, "")
+  _log(logf, "Tests run : {:d}".format(len(entries)))
+  _log(logf, "Passed    : {:d}".format(n_passed))
+  _log(logf, "Failed    : {:d}".format(n_failed))
+  _log(logf, "Time      : {:.1f}s".format(elapsed))
+  _log(logf, "--- end ---")
+
+  if logf:
+    logf.close()
 
   return {
     "total":   len(entries),
@@ -282,35 +316,10 @@ def _print_summary(results):
 
 # ======== log file ========
 
-def _write_log(log_file, test_file, entries, elapsed):
-  """Write a detailed log of all test results to log_file."""
-  lines = []
-  ts = time.strftime("%Y-%m-%d %H:%M:%S")
-  lines.append("solvetest log — {}".format(ts))
-  lines.append("Test file : {}".format(test_file))
-  lines.append("Tests run : {:d}".format(len(entries)))
-  passed = sum(1 for e in entries if e["ok"])
-  failed = sum(1 for e in entries if not e["ok"])
-  lines.append("Passed    : {:d}".format(passed))
-  lines.append("Failed    : {:d}".format(failed))
-  lines.append("Time      : {:.1f}s".format(elapsed))
-  lines.append("")
-
-  for e in entries:
-    status = "PASS" if e["ok"] else "FAIL"
-    lines.append("[{:d}] {}  {}".format(e["nr"], status, e["text"][:100]))
-    if not e["ok"]:
-      lines.append("     expected : {}".format(_fmt(e["expected"])))
-      lines.append("     got      : {}".format(e["got"][:200] if isinstance(e["got"], str) else str(e["got"])))
-
-  lines.append("")
-  lines.append("--- end ---")
-
-  try:
-    with open(log_file, "w") as f:
-      f.write("\n".join(lines) + "\n")
-  except OSError as e:
-    print("Warning: could not write log file {}: {}".format(log_file, e))
+def _log(logf, line):
+  """Write one line to the open log file handle (no-op if logf is None)."""
+  if logf:
+    logf.write(line + "\n")
 
 
 # ======== argument parsing ========
