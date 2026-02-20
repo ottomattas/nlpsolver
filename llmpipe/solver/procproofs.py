@@ -25,8 +25,12 @@ import re
 
 # Proper-name bases that appear with more than one distinct number in the
 # current proof (e.g. "John" when both "John 1" and "John 3" are present).
-# Set once by _compute_ambiguous_bases() before any rendering begins.
+# Set once by _compute_ambiguity() before any rendering begins.
 _ambiguous_bases = set()
+
+# URL display names (last path segment) that map to two or more different URLs.
+# When a name is in this set, the full URL is appended even in the answer line.
+_ambiguous_url_names = set()
 
 
 # ======== main entry point ========
@@ -78,8 +82,7 @@ def process_proof(proof_result, text=None, s1_json=None, logic=None, options=Non
   # Scan the full logic input (all clauses sent to the prover) so that
   # entities present in the problem but absent from this specific proof path
   # are still counted.  Fall back to scanning just the answers if logic is None.
-  global _ambiguous_bases
-  _ambiguous_bases = _compute_ambiguous_bases(logic if logic is not None else answers)
+  _compute_ambiguity(logic if logic is not None else answers)
 
   # Format the answer value(s)
   answer_str = _format_answers(answers, askvars=askvars)
@@ -164,30 +167,16 @@ def _format_answers(answers, askvars=None):
 def _ans_atom_name(atom):
   """Return the display name from a $ans atom like ["$ans", "John 1"].
 
-  Strips the trailing disambiguation number (e.g. "John 1" -> "John",
-  "Mike 2" -> "Mike").  Leaves the value unchanged if it has no suffix.
+  Used for the answer line — URLs appear without the parenthetical URL
+  unless the display name is ambiguous (maps to 2+ different URLs).
   """
   if not isinstance(atom, list) or len(atom) < 2:
     return str(atom)
   val = atom[1]
   if not isinstance(val, str):
     return str(val)
-  if val.startswith("?:"):       # strip variable prefix ("?:X" -> "X")
-    val = val[2:]
-  m = re.match(r'^(.*\S)\s+(\d+)$', val)
-  if not m:
-    return val
-  base = m.group(1)
-  n    = int(m.group(2))
-  # Keep number for ambiguous proper names; drop for unambiguous ones.
-  if base[:1].isupper() and base in _ambiguous_bases:
-    return base + " " + str(n)
-  if base[:1].isupper():
-    return base
-  # Noun-phrase constants in $ans: use safe-letter label
-  if 1 <= n <= len(_SAFE_LETTERS):
-    return base + " " + _SAFE_LETTERS[n - 1]
-  return val
+  # with_url=False: only append URL when the name is ambiguous
+  return _entity_name(val, with_url=False)
 
 
 def _fmt_conf(conf):
@@ -203,23 +192,30 @@ def _answer_goodness(ans):
   return conf * 10_000_000 - length - blockers
 
 
-def _compute_ambiguous_bases(answers):
-  """Return the set of proper-name bases that appear with 2+ distinct numbers.
+def _compute_ambiguity(obj):
+  """Scan obj and set _ambiguous_bases and _ambiguous_url_names.
 
-  E.g. if "John 1" and "John 3" both appear anywhere in the proof, "John"
-  is in the returned set and rendering will keep the number ("John 3") rather
-  than stripping it to "John".
+  _ambiguous_bases: proper-name bases appearing with 2+ distinct numbers
+    (e.g. "John" when both "John 1" and "John 3" are present).
+  _ambiguous_url_names: URL display names that resolve to 2+ different URLs
+    (e.g. "Paris" if two different Paris URLs appear).
   """
-  base_numbers = {}
-  for ans in answers:
-    _scan_constants(ans, base_numbers)
-  return {base for base, nums in base_numbers.items() if len(nums) > 1}
+  global _ambiguous_bases, _ambiguous_url_names
+  base_numbers = {}   # base -> set of ints
+  url_names    = {}   # display_name -> set of URLs
+  _scan_constants(obj, base_numbers, url_names)
+  _ambiguous_bases     = {b for b, nums in base_numbers.items() if len(nums) > 1}
+  _ambiguous_url_names = {n for n, urls in url_names.items()    if len(urls)  > 1}
 
 
-def _scan_constants(obj, base_numbers):
-  """Recursively scan obj (any nested structure) for 'Name N' proper constants."""
+def _scan_constants(obj, base_numbers, url_names):
+  """Recursively scan obj for proper-name constants and URL constants."""
   if isinstance(obj, str):
     if obj.startswith("?:"):
+      return
+    if obj.startswith("http://") or obj.startswith("https://"):
+      name = _extract_url_name(obj)
+      url_names.setdefault(name, set()).add(obj)
       return
     m = re.match(r'^(.*\S)\s+(\d+)$', obj)
     if m:
@@ -228,10 +224,40 @@ def _scan_constants(obj, base_numbers):
         base_numbers.setdefault(base, set()).add(int(m.group(2)))
   elif isinstance(obj, list):
     for el in obj:
-      _scan_constants(el, base_numbers)
+      _scan_constants(el, base_numbers, url_names)
   elif isinstance(obj, dict):
     for v in obj.values():
-      _scan_constants(v, base_numbers)
+      _scan_constants(v, base_numbers, url_names)
+
+
+def _extract_url_name(url):
+  """Extract a human-readable display name from a URL.
+
+  Takes the last non-empty path segment, strips URL encoding, converts
+  underscores to spaces.  Falls back to the full URL if no segment found.
+
+  Examples:
+    https://en.wikipedia.org/wiki/Paris            -> "Paris"
+    https://en.wikipedia.org/wiki/New_York_City    -> "New York City"
+    https://dbpedia.org/resource/Eiffel_Tower      -> "Eiffel Tower"
+  """
+  try:
+    # Drop query string and fragment
+    path = url.split("?")[0].split("#")[0]
+    segments = [s for s in path.split("/") if s]
+    # segments[0] is the scheme-less domain; name is the last path component
+    # (index >= 2 means there is at least one path element after the domain)
+    if len(segments) >= 2:
+      name = segments[-1]
+    elif segments:
+      name = segments[-1]
+    else:
+      return url
+    # Basic URL decoding and underscore expansion
+    name = name.replace("_", " ").replace("%20", " ").replace("%27", "'")
+    return name if name else url
+  except Exception:
+    return url
 
 
 # ======== sentence map ========
@@ -437,26 +463,33 @@ def _clause_to_str(clause):
 _SAFE_LETTERS = "ABCDFGHIJLMPQRTUW"   # 17 slots; enough for any realistic proof
 
 
-def _entity_name(val):
+def _entity_name(val, with_url=False):
   """Display name for a logic constant or variable.
 
   - Variables (?:X)           -> strip prefix -> "X"
+  - URL constants             -> extract last path segment ->
+                                   "Paris" or "Paris (https://...)" depending
+                                   on with_url and _ambiguous_url_names
   - Proper-name constants     -> strip trailing number -> "John 1" -> "John"
+                                 (keeps number when base is in _ambiguous_bases)
   - Noun-phrase constants     -> replace number with safe letter ->
                                  "car 2" -> "car B",  "dog 1" -> "dog A"
 
-  Proper names are detected by an uppercase first character.
-  Noun-phrase constants (lowercase first char) carry a letter label so
-  that distinct entities remain distinguishable across proof steps, and
-  the label letters never collide with stage-2 variable names.
-
-  For disambiguation numbers beyond the 17-letter safe set the original
-  number is kept as a fallback (e.g. "car 20").
+  with_url=True  : append full URL in parentheses for URL constants
+                   (used in proof steps for traceability)
+  with_url=False : omit URL unless the display name is ambiguous
+                   (used in answer line for readability)
   """
   if not isinstance(val, str):
     return str(val)
   if val.startswith("?:"):
     val = val[2:]
+  # URL constant
+  if val.startswith("http://") or val.startswith("https://"):
+    name = _extract_url_name(val)
+    if with_url or name in _ambiguous_url_names:
+      return name + " (" + val + ")"
+    return name
   m = re.match(r'^(.*\S)\s+(\d+)$', val)
   if not m:
     return val
@@ -526,11 +559,11 @@ def _atom_to_english(atom):
   args = atom[1:]
 
   def e(i):
-    """Display name of args[i]."""
+    """Display name of args[i] — always with URL appended for URL constants."""
     if i >= len(args):
       return "?"
     v = args[i]
-    return _entity_name(v) if isinstance(v, str) else str(v)
+    return _entity_name(v, with_url=True) if isinstance(v, str) else str(v)
 
   # ---- core predicates ----
 
@@ -789,7 +822,7 @@ def _atom_fallback(atom):
   parts = []
   for a in atom[1:]:
     if isinstance(a, str):
-      parts.append(_entity_name(a))
+      parts.append(_entity_name(a, with_url=True))
     elif isinstance(a, list):
       parts.append(_atom_to_english(a))
     else:
