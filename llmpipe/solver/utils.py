@@ -77,7 +77,7 @@ def clause_list_to_json(clauselist):
     if "@logic" in clause: clauserep.append("\"@logic\": " + logicstr)
     if "@question" in clause: clauserep.append("\"@question\": " + logicstr)
     for key in clause:
-      if not (key in ["@logic", "@question"]):
+      if not (key in ["@logic", "@question", "@askvars"]):
         clauserep.append(",\n " + json.dumps(key) + ": " + json.dumps(clause[key]))
         count += 1
     clauserep.append("}")

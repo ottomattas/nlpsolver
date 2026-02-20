@@ -72,7 +72,7 @@ def rawlogic_convert(logic):
   for item in items:
     objs = _convert_id_package(item)
     if objs:
-      result.extend(objs)
+      result.extend(objs)  
   return result
 
 
@@ -91,8 +91,31 @@ def _convert_id_package(item):
     return []
 
   if is_question:
-    converted = _rename_for_question(formula, {})
-    return [{"@name": name, "@question": converted}]
+    # Distinguish wh-questions (["ask", var, body]) from yes/no questions.
+    askvars = None
+    if isinstance(formula, list) and len(formula) >= 3 and formula[0] == "ask":
+      ask_var = str(formula[1])
+      body    = formula[2]
+      askvars = 1
+      flat = _flatten_q_atoms(body, {ask_var: "?:" + ask_var})
+    else:
+      flat = _flatten_q_atoms(formula, {})
+
+    if not flat:
+      return []
+
+    # Emit in the format clause_list_to_json / GK expect:
+    #   1 atom  -> bare atom                  ["pred", arg, ...]
+    #   N atoms -> list-of-one-AND            [["and", atom1, atom2, ...]]
+    if len(flat) == 1:
+      q_formula = flat[0]
+    else:
+      q_formula = [["and"] + flat]
+
+    obj = {"@name": name, "@question": q_formula}
+    if askvars is not None:
+      obj["@askvars"] = askvars
+    return [obj]
 
   # Clausify the formula.
   clauses = _clausify(formula)
@@ -125,9 +148,10 @@ def _extract_package(package):
     return True, None, None
 
   elif op == "ask":
-    # ["ask", var, F]  — existential query
+    # ["ask", var, F]  — wh-question; return as-is so _convert_id_package can
+    # identify the answer variable before flattening.
     if len(package) >= 3:
-      return True, ["exists", package[1], package[2]], None
+      return True, package, None
     return True, None, None
 
   elif op == "and":
@@ -423,27 +447,37 @@ def _extract_clauses(frm):
   return [frm]
 
 
-# ======== question variable renaming ========
+# ======== question formula flattening ========
 
-def _rename_for_question(frm, varmap):
-  """Rename quantified variables to ?:VAR format (for question formulas).
-  No skolemization or clausification — just rename bound vars.
+def _flatten_q_atoms(frm, varmap):
+  """Strip all quantifiers and flatten AND conjunctions in a question formula.
+
+  Every bound variable (forall or exists) is renamed to ?:VAR and the
+  quantifier wrapper is dropped.  Nested ["and", ...] conjunctions are
+  recursively flattened.  All other formulas (atoms, or, etc.) have the
+  varmap applied and are returned as a single-element list.
+
+  Returns a flat list of atoms ready for the @question value.
   """
-  if isinstance(frm, str):
-    return varmap.get(frm, frm)
   if not isinstance(frm, list) or not frm:
-    return frm
+    return []
   op = frm[0]
 
-  if op in ("forall", "exists"):
-    var = frm[1]
+  if op in ("exists", "forall"):
+    var    = str(frm[1])
     gk_var = "?:" + var
-    new_varmap = dict(varmap)
-    new_varmap[var] = gk_var
-    body = _rename_for_question(frm[2], new_varmap)
-    return [op, gk_var, body]
+    new_vm = dict(varmap)
+    new_vm[var] = gk_var
+    return _flatten_q_atoms(frm[2], new_vm)
 
-  return [_rename_for_question(el, varmap) for el in frm]
+  if op == "and":
+    atoms = []
+    for el in frm[1:]:
+      atoms.extend(_flatten_q_atoms(el, varmap))
+    return atoms
+
+  # Atom or other formula (or, not, …) — apply varmap, return as one item.
+  return [_apply_varmap(frm, varmap)]
 
 
 # =========== the end ==========

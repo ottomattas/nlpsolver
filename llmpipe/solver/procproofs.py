@@ -62,8 +62,12 @@ def process_proof(proof_result, text=None, s1_json=None, logic=None, options=Non
   # Build sent_SN -> raw sentence text map from stage-1 output
   sentence_map = _build_sentence_map(s1_json)
 
+  # How many $ans arguments are actual answer variables (1 for a single-ask
+  # wh-question; None means show all, e.g. yes/no or a pair question).
+  askvars = _extract_askvars(logic)
+
   # Format the answer value(s)
-  answer_str = _format_answers(answers)
+  answer_str = _format_answers(answers, askvars=askvars)
 
   # Optionally append a step-by-step proof explanation
   explain     = options.get("prover_explain_flag", False)
@@ -78,8 +82,26 @@ def process_proof(proof_result, text=None, s1_json=None, logic=None, options=Non
 
 # ======== answer formatting ========
 
-def _format_answers(answers):
-  """Collect answer values from all (non-duplicate) answer entries and join."""
+def _extract_askvars(logic):
+  """Return the @askvars count from the @question clause in logic, or None."""
+  if not logic or not isinstance(logic, list):
+    return None
+  for obj in logic:
+    if isinstance(obj, dict) and "@question" in obj and "@askvars" in obj:
+      try:
+        return int(obj["@askvars"])
+      except (TypeError, ValueError):
+        return None
+  return None
+
+
+def _format_answers(answers, askvars=None):
+  """Collect answer values from all (non-duplicate) answer entries and join.
+
+  askvars: if set, only the first askvars $ans atoms in each answer are
+  shown in the output (the rest are auxiliary existential variables).
+  The detailed proof explanation is unaffected.
+  """
   parts = []
   seen  = []
   for ans in answers:
@@ -94,9 +116,12 @@ def _format_answers(answers):
     elif val is False:
       s = "False"
     elif isinstance(val, list) and val:
-      # Each element is an $ans atom like ["$ans", "John 1"]
-      names = [_ans_atom_name(a) for a in val]
-      s = "(" + " or ".join(names) + ")" if len(names) > 1 else names[0]
+      # Each element is an $ans atom like ["$ans", "John 1"].
+      # If askvars is set, only show the first askvars atoms (the
+      # rest are auxiliary variables not being asked for).
+      display = val[:askvars] if askvars is not None else val
+      names = [_ans_atom_name(a) for a in display]
+      s = "(" + " or ".join(names) + ")" if len(names) > 1 else names[0] if names else str(val)
     else:
       s = str(val)
 
