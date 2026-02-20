@@ -89,6 +89,8 @@ def main():
     print("No text given.\n" + helptext)
     sys.exit(0)
   result = english_to_answer(text, opts)
+  if opts.get("prover_explain_flag"):
+    print("Result:")
   print(result)
 
 
@@ -153,6 +155,10 @@ def english_to_answer(text, options=None):
 
   if debug:
     print("Proof result:", proof_result)
+
+  if options and options.get("show_logic_flag"):
+    print("prover output:")
+    print(proof_result)
 
   # --- process_proof: post-process prover output into final answer (procproofs.py) ---
   answer = process_proof(proof_result, text=text, s1_json=s1_json, logic=logic, options=options)
