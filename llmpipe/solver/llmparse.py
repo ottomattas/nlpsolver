@@ -20,6 +20,7 @@
 #-------------------------------------------------------------------
 
 import sys
+import os
 import json
 import re
 
@@ -29,11 +30,14 @@ import pretty
 
 # ======== prompt file configuration ========
 
-# Paths relative to the llmpipe/ working directory
-stage1_instructions_file = "prompts/stage1_instructions.txt"
-stage1_examples_file     = "prompts/stage1_examples.txt"
-stage2_instructions_file = "prompts/stage2_instructions.txt"
-stage2_examples_file     = "prompts/stage2_examples.txt"
+# Absolute path to llmpipe/ (parent of this file's directory), so that
+# prompt files are found regardless of the working directory at runtime.
+_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+stage1_instructions_file = os.path.join(_root, "prompts", "stage1_instructions.txt")
+stage1_examples_file     = os.path.join(_root, "prompts", "stage1_examples.txt")
+stage2_instructions_file = os.path.join(_root, "prompts", "stage2_instructions.txt")
+stage2_examples_file     = os.path.join(_root, "prompts", "stage2_examples.txt")
 
 # Separator inserted between instructions and examples when building a prompt
 examples_separator = "\n\nExamples:\n\n"
