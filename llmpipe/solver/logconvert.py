@@ -58,6 +58,8 @@ def rawlogic_convert(logic):
   Output: list of {"@name":..., "@logic":CLAUSE} / {"@name":..., "@question":F}
   Returns None on fatal error.
   """
+  global _skolem_nr
+  _skolem_nr = 0          # reset once for the whole conversion
   if not logic or not isinstance(logic, list):
     return None
 
@@ -182,9 +184,6 @@ def _clausify(formula):
     - a single atom: ["pred", arg, ...]
     - a list of atoms (disjunction): [["pred1",...], ["pred2",...], ...]
   """
-  global _skolem_nr
-  _skolem_nr = 0
-
   f1 = _implies_to_or(formula)
   f2 = _push_neg(f1, True)
   f3 = _skolemize(f2, [], {})
