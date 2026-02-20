@@ -462,6 +462,19 @@ def _clause_to_str(clause):
 # so that "car B" can never be confused with a proof variable.
 _SAFE_LETTERS = "ABCDFGHIJLMPQRTUW"   # 17 slots; enough for any realistic proof
 
+# Prepositions used as relations in ["is rel2", RELATION, E1, E2].
+# These render as "E1 is RELATION E2" (no "of").
+# Anything else (relational nouns: parent, part, member, …) renders as
+# "E1 is RELATION of E2".
+_PREPOSITIONS = {
+  "in", "at", "on", "near", "by", "beside", "under", "above", "below",
+  "over", "inside", "outside", "between", "through", "around", "across",
+  "before", "after", "within", "from", "to", "into", "onto", "upon",
+  "behind", "beyond", "along", "among", "toward", "towards",
+  "with", "without", "during", "since", "until", "till", "off", "up", "down",
+  "next to", "close to", "far from",
+}
+
 
 def _entity_name(val, with_url=False):
   """Display name for a logic constant or variable.
@@ -601,7 +614,10 @@ def _atom_to_english(atom):
   if pred == "is rel2":
     # ["is rel2", RELATION, ENTITY1, ENTITY2]
     if len(args) >= 3:
-      return e(1) + " is " + e(0) + " of " + e(2)
+      rel = e(0)
+      if rel.lower() in _PREPOSITIONS:
+        return e(1) + " is " + rel + " " + e(2)
+      return e(1) + " is " + rel + " of " + e(2)
     return _atom_fallback(atom)
 
   if pred == "can":
