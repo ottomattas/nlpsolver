@@ -84,8 +84,8 @@ def _pp(obj, depth, nq, col=None):
   if col + len(compact) <= 100:
     return compact
 
-  ind       = "  " * depth        # indentation for closing bracket / brace
-  child_ind = "  " * (depth + 1)  # indentation for child elements (items 2..n)
+  ind       = "  " * depth    # indentation for closing bracket / brace
+  child_ind = " " * (col + 1) # align subsequent list items with first item (one column right of [)
 
   if isinstance(obj, list):
     if not obj:
