@@ -22,7 +22,11 @@
 import time
 import sys
 import json
+import os
 import http.client
+
+# Absolute path to llmpipe/ so secrets files are found from any working directory.
+_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # LLM response cache (same SQLite db used for prover and parse caches).
 # Import is conditional so llmcall.py remains usable stand-alone for testing.
@@ -41,10 +45,10 @@ gptversion = "gpt-5.1"
 claudeversion = "claude-sonnet-4-6"
 geminiversion = "gemini-2.0-flash"
 
-# API key files (paths relative to the llmpipe/ working directory)
-gpt_secrets_file = "../gpt/gpt_secrets.js"
-claude_secrets_file = "../gpt/claude_secrets.js"
-gemini_secrets_file = "../gpt/gemini_secrets.js"
+# API key files (absolute paths relative to llmpipe/)
+gpt_secrets_file = os.path.join(_root, "../gpt/gpt_secrets.js")
+claude_secrets_file = os.path.join(_root, "../gpt/claude_secrets.js")
+gemini_secrets_file = os.path.join(_root, "../gpt/gemini_secrets.js")
 
 # Call parameters
 temperature = 0

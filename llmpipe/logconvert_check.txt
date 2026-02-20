@@ -1,0 +1,159 @@
+======================================================================
+EXAMPLE 1: John is a person
+----------------------------------------------------------------------
+INPUT:
+[and, [@id, S1, [holds, W0, [isa,person,John_1]]]]
+
+OUTPUT:
+[{@name: sent_S1, @logic: [isa,person,John_1]}]
+
+======================================================================
+EXAMPLE 2: John is in Paris or London
+----------------------------------------------------------------------
+INPUT:
+[and,
+  [@id,
+    S1,
+    [holds,
+      W0,
+      [or,
+        [is_rel2,in,John_1,https://en.wikipedia.org/wiki/Paris],
+        [is_rel2,in,John_1,https://en.wikipedia.org/wiki/London]
+      ]]]]
+
+OUTPUT:
+[{@name: sent_S1,
+  @logic: [[is_rel2,in,John_1,https://en.wikipedia.org/wiki/Paris],
+      [is_rel2,in,John_1,https://en.wikipedia.org/wiki/London]
+    ]}]
+
+======================================================================
+EXAMPLE 3: Eve does not have a bike
+----------------------------------------------------------------------
+INPUT:
+[and, [@id, S1, [holds, W0, [not, [exists, X, [and, [isa,bike,X], [have,Eve_1,X]]]]]]]
+
+OUTPUT:
+[{@name: sent_S1, @logic: [[-isa,bike,?:X], [-have,Eve_1,?:X]]}]
+
+======================================================================
+EXAMPLE 4: All green things are rough (strict rule)
+----------------------------------------------------------------------
+INPUT:
+[and,
+  [@id,
+    S1,
+    [holds,
+      W0,
+      [forall, X, [implies, [and, [isa,thing,X], [has_property,green,X]], [has_property,rough,X]]]
+    ]]]
+
+OUTPUT:
+[{@name: sent_S1, @logic: [[-isa,thing,?:X], [-has_property,green,?:X], [has_property,rough,?:X]]}]
+
+======================================================================
+EXAMPLE 5: Dogs have tails (normal rule, confidence 0.99)
+----------------------------------------------------------------------
+INPUT:
+[and,
+  [@id,
+    S1,
+    [and,
+      [holds,
+        W0,
+        [forall,
+          X,
+          [implies, [isa,dog,X], [normally, [exists, Y, [and, [isa,tail,Y], [have,X,Y]]]]]
+        ]
+      ],
+      [@p,S1,0.99]
+    ]]]
+
+OUTPUT:
+[{@name: sent_S1,
+  @logic: [[-isa,dog,?:X], [normally, [exists, Y, [and, [isa,tail,Y], [have,?:X,Y]]]]],
+  @confidence: 0.99
+  }]
+
+======================================================================
+EXAMPLE 6: Dogs do not have tails (strict negation rule)
+----------------------------------------------------------------------
+INPUT:
+[and,
+  [@id,
+    S1,
+    [holds,
+      W0,
+      [forall, X, [implies, [isa,dog,X], [not, [exists, Y, [and, [isa,tail,Y], [have,X,Y]]]]]]
+    ]]]
+
+OUTPUT:
+[{@name: sent_S1, @logic: [[-isa,dog,?:X], [-isa,tail,?:Y], [-have,?:X,?:Y]]}]
+
+======================================================================
+EXAMPLE 7: Transitivity: X connected Y, Y connected Z => X connected Z
+----------------------------------------------------------------------
+INPUT:
+[and,
+  [@id,
+    S1,
+    [holds,
+      W0,
+      [forall,
+        X,
+        [forall,
+          Y,
+          [forall,
+            Z,
+            [implies,
+              [and, [is_rel2,connected_to,X,Y], [is_rel2,connected_to,Y,Z]],
+              [is_rel2,connected_to,X,Z]
+            ]]]]]]]
+
+OUTPUT:
+[{@name: sent_S1,
+  @logic: [[-is_rel2,connected_to,?:X,?:Y],
+      [-is_rel2,connected_to,?:Y,?:Z],
+      [is_rel2,connected_to,?:X,?:Z]
+    ]}]
+
+======================================================================
+EXAMPLE 8: Chinese have a capital (exists outside forall, Skolem function)
+----------------------------------------------------------------------
+INPUT:
+[and,
+  [@id,
+    S1,
+    [and,
+      [holds,
+        W0,
+        [exists, Y, [and, [isa,capital,Y], [forall, X, [implies, [isa,chinese,X], [have,X,Y]]]]]
+      ],
+      [@p,S1,0.99]
+    ]]]
+
+OUTPUT:
+[{@name: sent_S1, @logic: [isa,capital,sk0], @confidence: 0.99},
+  {@name: sent_S1, @logic: [[-isa,chinese,?:X], [have,?:X,sk0]], @confidence: 0.99}
+]
+
+======================================================================
+EXAMPLE 9: John has a car? (question)
+----------------------------------------------------------------------
+INPUT:
+[and, [@id, S1, [question, [exists, X, [and, [isa,car,X], [have,John_1,X]]]]]]
+
+OUTPUT:
+[{@name: sent_S1, @question: [exists, ?:X, [and, [isa,car,?:X], [have,John_1,?:X]]]}]
+
+======================================================================
+EXAMPLE 10: Who likes Mike? (ask query)
+----------------------------------------------------------------------
+INPUT:
+[and, [@id, S1, [ask, X, [and, [isa,person,X], [has_degree_rel2,like,X,Mike_1,none,person]]]]]
+
+OUTPUT:
+[{@name: sent_S1,
+  @question: [exists, ?:X, [and, [isa,person,?:X], [has_degree_rel2,like,?:X,Mike_1,none,person]]]
+  }]
+

@@ -34,6 +34,7 @@
 
 import sys
 import json
+import pretty
 
 # ==== import other source files ====
 
@@ -110,7 +111,7 @@ def english_to_answer(text, options=None):
 
   if debug:
     print("[solve] Logic after rawlogic_convert:")
-    print(json.dumps(logic, indent=2))
+    pretty.pp_logic(logic)
 
   # --- call the theorem prover ---
   try:

@@ -25,6 +25,7 @@ import re
 
 # llmcall.py must be importable (run from the llmpipe/ working directory)
 from llmcall import call_llm
+import pretty
 
 # ======== prompt file configuration ========
 
@@ -140,7 +141,7 @@ def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, stats):
   stats[key + "_calls"] += 1
 
   _debug_write("\n--- Stage " + str(stage_nr) + " call ---")
-  _debug_write("INPUT:\n" + input_text)
+  _debug_write_json("INPUT:", input_text)
 
   raw = call_llm(sysprompt, input_text, llm=llm, version=version, max_tokens=tokens)
 
@@ -148,7 +149,7 @@ def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, stats):
     stats[key + "_llm_errors"] += 1
     return (None, None, "stage " + str(stage_nr) + " LLM call returned None")
 
-  _debug_write("RAW OUTPUT:\n" + raw)
+  _debug_write_json("RAW OUTPUT:", raw)
 
   # --- first parse attempt ---
   parsed, err = _try_parse(raw)
@@ -181,7 +182,7 @@ def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, stats):
     stats[key + "_retry_fail"] += 1
     return (None, raw, "stage " + str(stage_nr) + " retry LLM call returned None")
 
-  _debug_write("RETRY OUTPUT:\n" + raw2)
+  _debug_write_json("RETRY OUTPUT:", raw2)
 
   parsed, err = _try_parse(raw2)
   if parsed is not None:
@@ -420,6 +421,16 @@ def _debug_write(msg):
         f.write("[llmparse] " + msg + "\n")
     except Exception as e:
       print("[llmparse] Could not write to debug file:", e)
+
+
+def _debug_write_json(label, text):
+  """Write label + text to the debug output.  If text is valid JSON, pretty-print it."""
+  try:
+    obj = json.loads(text)
+    msg = label + "\n" + pretty.pp_str(obj)
+  except Exception:
+    msg = label + "\n" + text
+  _debug_write(msg)
 
 
 def _print_error(msg):

@@ -19,7 +19,6 @@
 # ==== standard libraries ====
 
 import sys
-import pprint
 import subprocess
 import tempfile
 import os
@@ -100,11 +99,9 @@ def call_prover(logic):
   if options["prover_print_flag"] or options["show_prover_flag"]:
     print("\n=== prover params: === \n\n"," ".join(params))
 
-  print("\n=== prover params: === \n\n"," ".join(params))
-  sres=get_proof_from_cache(None,params)  
+  sres=get_proof_from_cache(None,params)
   if not sres:
-    print("params",params)
-    try:  
+    try:
       calc=subprocess.Popen(params, stdout=subprocess.PIPE).communicate()[0]
     except KeyboardInterrupt:
       raise  
@@ -117,89 +114,6 @@ def call_prover(logic):
     print("\n=== prover output: === \n\n",sres)
     print("\n=== end of prover output === \n\n")   
   return sres
-
-
-def get_relatedness(ctxt,lemma1,lemma2):   
-  #debug_print("get_relatedness for lemma1, lemma2",[lemma1,lemma2])  
-  #return 0
-  key=lemma1+"#"+lemma2
-  #debug_print("key",key)
-  if "relatedness_cache" in ctxt and key in ctxt["relatedness_cache"]:
-    #debug_print("key,val",key,ctxt["relatedness_cache"][key])
-    #debug_print("get_relatedness gave from cache",ctxt["relatedness_cache"][key]) 
-    return ctxt["relatedness_cache"][key]
-  path=globals.prover_fname
-  task="path,"+str(lemma1)+","+str(lemma2)
-  params=[path,"-usekb","-task",task]
-  res=0
-  try:  
-    calc=subprocess.Popen(params, stdout=subprocess.PIPE).communicate()[0]
-  except KeyboardInterrupt:
-    raise  
-  except:
-    #return "Error: prover gk is not available or crashed: check nlpgobals.py for gk path."  
-    return 0    
-  try:  
-    sres=calc.decode('ascii') 
-    parts=sres.split(" ")
-    res=float(parts[0].strip())  
-  except:
-    #debug_print("err")
-    res=0  
-  if res==0 and """{"error":""" in sres:
-    #debug_print("get_relatedness co-occurrence calculation gave",sres)
-    None
-  if not ("relatedness_cache" in ctxt): ctxt["relatedness_cache"]={} 
-  ctxt["relatedness_cache"][key]=res
-  #if options["prover_print_flag"]:  
-  #  print("\n=== prover output: === \n\n",sres)
-  #  print("\n=== end of prover output === \n\n") 
-  #debug_print("get_relatedness gave",res) 
-  return res
-
-
-def is_subclass(ctxt,lemma1,lemma2):   
-  #debug_print("is_subclass for lemma1, lemma2",[lemma1,lemma2])  
-  #return 0
-  key=lemma1+"#"+lemma2
-  #debug_print("key",key)
-  if "subclass_cache" in ctxt and key in ctxt["subclass_cache"]:
-    #debug_print("key,val",key,ctxt["subclass_cache"][key])
-    #debug_print("get_relatedness gave from cache",ctxt["subclass_cache"][key]) 
-    return ctxt["subclass_cache"][key]
-  path=globals.prover_fname
-  task="taxcompare,"+str(lemma1)+","+str(lemma2)
-  params=[path,"-usekb","-task",task]
-  res=0
-  try:  
-    calc=subprocess.Popen(params, stdout=subprocess.PIPE).communicate()[0]
-  except KeyboardInterrupt:
-    raise  
-  except:
-    #return "Error: prover gk is not available or crashed: check nlpgobals.py for gk path."  
-    return 0    
-  try:  
-    sres=calc.decode('ascii') 
-    searchstr=lemma1+" is more general than "+lemma2
-    if searchstr in sres:
-      res=True
-    else:
-      res=False
-  except:
-    #debug_print("err")
-    res=0  
-  if res==0 and """{"error":""" in sres:
-    None
-    #debug_print("is_subclass calculation gave",sres)
-  if not ("subclass_cache" in ctxt): ctxt["subclass_cache"]={} 
-  ctxt["subclass_cache"][key]=res
-  #if options["prover_print_flag"]:  
-  #  print("\n=== prover output: === \n\n",sres)
-  #  print("\n=== end of prover output === \n\n") 
-  #debug_print("is_subclass gave",res) 
-  return res
-
-
 
 
 # =========== the end ==========

@@ -17,6 +17,11 @@
 #-------------------------------------------------------------------
 
 import sys
+import os
+
+# Absolute path to llmpipe/ (parent of this file's directory), so that all
+# data-file paths work regardless of the working directory at runtime.
+_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 replacement_text_rules=None
 replacement_complex_rules=None
@@ -31,8 +36,7 @@ options={
   "prover_print_flag":False, # if True, print prover logic input and output
   "prover_nosolve_flag":False, # if True, attempt to solve the question, if False, just output logic
   "use_cache_flag":False, # if True, use cache for GK, if False, do not use cache
-  "prover_postprocess_flag":False, # if True, apply post_process_logic_list to the logic created
-  "prover_rawresult_flag":False, # if True, give a raw json result
+  "prover_rawresult_flag":False, # if True, give a raw json result (handled by procproofs.py)
   "prover_explain_flag":False, # if True, output nlp explanation
   "show_logic_flag":False, # if True, output also conventional logic for sentences and nlp explanation
   "show_prover_flag":False, # if True, show prover input and output
@@ -47,12 +51,6 @@ options={
   "prover_print":False,  # if not False, use the argument integer for gk printout level, instead of the default
   "prover_strategy":False,  # if not False, use the argument as a gk strategy file, instead of the default
   "prover_seconds":2,  # give the prover this many seconds, instead of the default 1
-  "llm_simplify_flag": False, # perform LLM simplifications
-  "llm_solve_flag": False, # do pure LLM solving
-  "llm_parse_stepwise_flag": False, # do LLM parsing stepwise
-  "llm_parse_all_flag": False, # do LLM parsing for all
-  "solveparsed_flag": False, # solve already parsed json logic string
-  "amr_flag": False,  # perform AMR parsing
   # LLM response caching: ON by default.
   # The cache key covers provider, version, temperature, seed, max_tokens,
   # sysprompt and input text, so a cached result is only reused when every
@@ -66,14 +64,14 @@ options={
 
 # cache
 
-cache_db_name="cache.db"
+cache_db_name=os.path.join(_root, "cache.db")
 
 # solving logic with a prover
-prover_fname="../gk/gk"  # gk binary
-prover_datafolder="../gk"  # "/opt/nlpsolver/gk/" # where gk_name_number.txt etc are located
+prover_fname=os.path.join(_root, "../gk/gk")  # gk binary
+prover_datafolder=os.path.join(_root, "../gk")  # where gk_name_number.txt etc are located
 memkb_name="1000"  # in-memory knowledge base name (number)
 prover_infile="gk_infile.js"
-prover_axiomfile="axioms_std.js"
+prover_axiomfile=os.path.join(_root, "axioms_std.js")
 prover_params=["-defaults","-confidence","0.1","-keepconfidence","0.1"] # additional prover params, always appended
 usekb_prover_params=["-usekb","-confidence","0.1","-keepconfidence","0.1"] # additional prover params, always appended
 
