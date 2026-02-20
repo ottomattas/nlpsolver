@@ -44,6 +44,7 @@ import globals
 
 # two-stage LLM parser: English -> ASUs -> logic
 import llmparse
+import llmcall
 
 # logic improvement (stub: pass-through until real logic-convert rules are added)
 from logconvert import rawlogic_convert
@@ -68,6 +69,28 @@ max_tokens  = None   # int, or None for default
 
 
 # ======== main pipeline ========
+
+
+
+def main():
+  """
+  logic=[
+    {"@logic": ["p","a"]},
+    {"@logic": ["r","b"]},
+    {"@logic": ["or",["-p","?:X"],["r","?:X"]]},
+    {"@question": ["r","?:X"]}
+  ]
+  r=prover.call_prover(logic)
+  print(r)
+  return
+  """ 
+  text, opts = _parse_cmd_line()
+  if not text:
+    print("No text given.\n" + helptext)
+    sys.exit(0)
+  result = english_to_answer(text, opts)
+  print(result)
+
 
 def english_to_answer(text, options=None):
   """Full pipeline: English -> LLM parse -> logic convert -> prove -> answer.
@@ -135,52 +158,6 @@ def english_to_answer(text, options=None):
 
 # ======== command-line interface ========
 
-helptext = """call solve.py with a natural language text like
-"Elephants are big. John is an elephant. Who is big?"
-and/or a filename as an argument, with optional keys:
-
-basic keys:
- -explain   : give an English explanation/proof of the answer
- -logic     : show the parsed logic
- -debug     : show the details of the whole process
- -cache     : cache GK prover results (prover cache is OFF by default)
- -nosolve   : parse to logic, show prover input, but do not run the prover
- -rawresult : output only the raw JSON result from the prover
- -help      : output this helptext
-
-LLM caching (ON by default — cached per provider, version, all parameters and input):
- -nollmcache  : disable LLM response caching for this run
-
-LLM selection:
- -llm NAME    : LLM provider: gpt, claude, or gemini (default: from llmcall.py config)
- -version VER : model version string, e.g. claude-sonnet-4-6, gpt-4o
-
-controlling the prover:
- -seconds N    : give N seconds for proof search (default 2)
- -prover       : show prover JSON input/output
- -rawresult    : output only the raw JSON result from the prover
- -axioms file1.js ... fileN.js : use these files as axioms instead of axioms_std.js
- -strategy file.js : use the given JSON strategy file instead of the default
- -printlevel N : use N>10 to see more of the search process (10 is default, try 12)
- -usekb        : use background knowledge in a shared-memory KB
- -nokb         : do not use a shared memory knowledge base
-
-logic representation options (for future use):
- -simple          : simplified representation: no context, no exceptions, simple properties
-    -nocontext       : no context (time, situation) information in logic
-    -noexceptions    : no exception (blocker) information in logic
-    -simpleproperties: simplified properties without strength and type parameters
-"""
-
-
-def main():
-  text, opts = _parse_cmd_line()
-  if not text:
-    print("No text given.\n" + helptext)
-    sys.exit(0)
-  result = english_to_answer(text, opts)
-  print(result)
-
 
 def _parse_cmd_line():
   """Parse sys.argv; return (text, options_dict)."""
@@ -206,6 +183,8 @@ def _parse_cmd_line():
       debug = True
       opts["debug_print_flag"] = True
       opts["prover_print_flag"] = True
+      llmparse.debug = True
+      llmcall.debug = True
     elif el in ["-explain", "--explain"]:
       opts["prover_explain_flag"] = True
     elif el in ["-logic", "--logic"]:
@@ -325,6 +304,45 @@ def _parse_cmd_line():
       text = textpart
 
   return (text, opts)
+
+helptext = """call solve.py with a natural language text like
+"Elephants are big. John is an elephant. Who is big?"
+and/or a filename as an argument, with optional keys:
+
+basic keys:
+ -explain   : give an English explanation/proof of the answer
+ -logic     : show the parsed logic
+ -debug     : show the details of the whole process
+ -cache     : cache GK prover results (prover cache is OFF by default)
+ -nosolve   : parse to logic, show prover input, but do not run the prover
+ -rawresult : output only the raw JSON result from the prover
+ -help      : output this helptext
+
+LLM caching (ON by default — cached per provider, version, all parameters and input):
+ -nollmcache  : disable LLM response caching for this run
+
+LLM selection:
+ -llm NAME    : LLM provider: gpt, claude, or gemini (default: from llmcall.py config)
+ -version VER : model version string, e.g. claude-sonnet-4-6, gpt-4o
+
+controlling the prover:
+ -seconds N    : give N seconds for proof search (default 2)
+ -prover       : show prover JSON input/output
+ -rawresult    : output only the raw JSON result from the prover
+ -axioms file1.js ... fileN.js : use these files as axioms instead of axioms_std.js
+ -strategy file.js : use the given JSON strategy file instead of the default
+ -printlevel N : use N>10 to see more of the search process (10 is default, try 12)
+ -usekb        : use background knowledge in a shared-memory KB
+ -nokb         : do not use a shared memory knowledge base
+
+logic representation options (for future use):
+ -simple          : simplified representation: no context, no exceptions, simple properties
+    -nocontext       : no context (time, situation) information in logic
+    -noexceptions    : no exception (blocker) information in logic
+    -simpleproperties: simplified properties without strength and type parameters
+"""
+
+
 
 
 # ========= main caller =========
