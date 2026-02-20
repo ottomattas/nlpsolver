@@ -22,6 +22,7 @@ import sys
 import subprocess
 import tempfile
 import os
+import pretty
 #import json
 
 # ==== import other source files ====
@@ -39,24 +40,35 @@ from cache import *
 
 # === calling the prover ===
  
-def call_prover(logic):     
-  if globals.options["debug_print_flag"]: 
-    print("solve logic:")
-    print("[")
-    for i in range(len(logic)):
-      s="  "+json.dumps(logic[i])
-      if i<len(logic)-1: s+=","
-      print(s)
-    print("]")  
+"""
+Example logic argument:
+
+[
+    {"@logic": ["p","a"]},
+    {"@logic": ["r","b"]},
+    {"@logic": ["or",["-p","?:X"],["r","?:X"]]},
+    {"@question": ["r","?:X"]}
+]
+"""
+
+def call_prover(logic):       
+
+  if (options["prover_print_flag"] or options["show_prover_flag"]) and not options["prover_nosolve_flag"]:
+    print("\n=== prover input: === \n")
+    pretty.pp_logic(logic)
+  elif options["show_logic_flag"]:
+    print("prover input: \n")
+    pretty.pp_logic(logic)
+    print("\n")
+
   #js=json.dumps(question,indent=2)
   #print("js:",js)  
   #pp = pprint.pformat(logic,width=80,indent=2,sort_dicts=False)   
   #instr=pp.replace("'","\"")
   instr=clause_list_to_json(logic)
-  #debug_print("ppnice",ppnice)
-  if (options["prover_print_flag"] or options["show_prover_flag"]) and not options["prover_nosolve_flag"]:
-    print("\n=== prover input: === \n")
-    print(instr)
+  if globals.options["debug_print_flag"]: 
+    print("\nprover instr:\n")  
+    print(instr)        
   if options["prover_nosolve_flag"]:
     return(instr)    
   try:  

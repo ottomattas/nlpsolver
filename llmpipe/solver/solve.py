@@ -156,6 +156,14 @@ def english_to_answer(text, options=None):
   if debug:
     print("Proof result:", proof_result)
 
+  # -nosolve: prover was not run; logic JSON was already shown by prover.py
+  if options and options.get("prover_nosolve_flag"):
+    return ""
+
+  # -rawresult: caller wants the raw prover JSON, skip post-processing
+  if options and options.get("prover_rawresult_flag"):
+    return proof_result
+
   if options and options.get("show_logic_flag"):
     print("prover output:")
     print(proof_result)
