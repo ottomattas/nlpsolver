@@ -55,6 +55,9 @@ from procproofs import process_proof
 # gk theorem prover caller
 import prover
 
+# cache utilities
+import cache
+
 
 # ======== configuration ========
 
@@ -85,6 +88,11 @@ def main():
   return
   """ 
   text, opts = _parse_cmd_line()
+  if opts.get("clearcache_flag"):
+    counts = cache.clear_all_caches()
+    print("Cache cleared: {:d} LLM, {:d} proof, {:d} parse entries removed.".format(
+      counts["llm"], counts["proof"], counts["parse"]))
+    sys.exit(0)
   if not text:
     print("No text given.\n" + helptext)
     sys.exit(0)
@@ -209,6 +217,8 @@ def _parse_cmd_line():
       opts["show_logic_flag"] = True
     elif el in ["-cache", "--cache"]:
       opts["use_cache_flag"] = True
+    elif el in ["-clearcache", "--clearcache"]:
+      opts["clearcache_flag"] = True
     elif el in ["-nollmcache", "--nollmcache"]:
       # LLM response caching is ON by default; this disables it for this run
       opts["use_llm_cache_flag"] = False
@@ -338,6 +348,7 @@ basic keys:
 
 LLM caching (ON by default — cached per provider, version, all parameters and input):
  -nollmcache  : disable LLM response caching for this run
+ -clearcache  : clear all caches (LLM, proof, parse) and exit
 
 LLM selection:
  -llm NAME    : LLM provider: gpt, claude, or gemini (default: from llmcall.py config)

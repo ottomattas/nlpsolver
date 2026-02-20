@@ -452,4 +452,36 @@ def clear_llm_cache():
   return
 
 
+def clear_all_caches():
+  """Clear all cache tables (llm_cache, proof_cache, parse_cache).
+
+  Returns a dict {"llm": N, "proof": N, "parse": N} with the number of
+  rows deleted from each table.  Missing tables count as 0 deleted rows.
+  """
+  if not cache_db_name:
+    return {"llm": 0, "proof": 0, "parse": 0}
+
+  try:
+    conn = sqlite3.connect(cache_db_name)
+  except:
+    print("Error: could not connect to the cache database", cache_db_name)
+    return {"llm": 0, "proof": 0, "parse": 0}
+
+  counts = {}
+  for table in ("llm_cache", "proof_cache", "parse_cache"):
+    key = table.split("_")[0]   # "llm", "proof", "parse"
+    try:
+      cur = conn.cursor()
+      cur.execute("delete from " + table)
+      conn.commit()
+      counts[key] = cur.rowcount
+    except sqlite3.OperationalError:
+      counts[key] = 0   # table does not exist yet
+    except:
+      counts[key] = 0
+
+  conn.close()
+  return counts
+
+
 # =========== the end ==========
