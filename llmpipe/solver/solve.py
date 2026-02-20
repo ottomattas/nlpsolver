@@ -113,28 +113,32 @@ def english_to_answer(text, options=None):
   # --- stage 1 & 2: parse English to logic via two-stage LLM ---
   # (LLM results are cached automatically; see llmcall.py and cache.py)
   if debug:
-    print("[solve] Parsing:", text)
+    print("Parsing:", text)
 
   s1_json, s2_json, parse_stats = llmparse.parse_text(
     text, llm=llm, version=llm_version, tokens=max_tokens
   )
 
   if debug:
-    print("[solve] Parse complete.")
+    print("Parse complete.")
     llmparse.print_stats(parse_stats)
 
   if s2_json is None:
     return "Error: LLM parsing failed (stage 2 produced no output)."
 
   # --- rawlogic_convert: improve / adjust the parsed logic (logconvert.py) ---
+
+  if debug:
+    print("\n============= rawlogic_convert ===============\n")
+
   logic = rawlogic_convert(s2_json)
 
   if logic is None:
     return "Error: rawlogic_convert returned None."
 
-  if debug:
-    print("[solve] Logic after rawlogic_convert:")
-    pretty.pp_logic(logic)
+  #if debug:
+  #  print("Logic after rawlogic_convert: \n")
+  #  pretty.pp_logic(logic)
 
   # --- call the theorem prover ---
   try:
@@ -148,10 +152,10 @@ def english_to_answer(text, options=None):
     return "Error: prover returned None."
 
   if debug:
-    print("[solve] Proof result:", proof_result)
+    print("Proof result:", proof_result)
 
   # --- process_proof: post-process prover output into final answer (procproofs.py) ---
-  answer = process_proof(proof_result, text=text, logic=logic, options=options)
+  answer = process_proof(proof_result, text=text, s1_json=s1_json, logic=logic, options=options)
 
   return answer
 
