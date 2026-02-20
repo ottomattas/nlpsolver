@@ -23,6 +23,12 @@ import json
 import re
 
 
+# Proper-name bases that appear with more than one distinct number in the
+# current proof (e.g. "John" when both "John 1" and "John 3" are present).
+# Set once by _compute_ambiguous_bases() before any rendering begins.
+_ambiguous_bases = set()
+
+
 # ======== main entry point ========
 
 def process_proof(proof_result, text=None, s1_json=None, logic=None, options=None):
@@ -65,6 +71,15 @@ def process_proof(proof_result, text=None, s1_json=None, logic=None, options=Non
   # How many $ans arguments are actual answer variables (1 for a single-ask
   # wh-question; None means show all, e.g. yes/no or a pair question).
   askvars = _extract_askvars(logic)
+
+  # Determine which proper-name bases are ambiguous (multiple entities share
+  # the same base name, e.g. "John 1" and "John 3") so that rendering can
+  # keep the distinguishing number instead of silently dropping it.
+  # Scan the full logic input (all clauses sent to the prover) so that
+  # entities present in the problem but absent from this specific proof path
+  # are still counted.  Fall back to scanning just the answers if logic is None.
+  global _ambiguous_bases
+  _ambiguous_bases = _compute_ambiguous_bases(logic if logic is not None else answers)
 
   # Format the answer value(s)
   answer_str = _format_answers(answers, askvars=askvars)
@@ -159,8 +174,20 @@ def _ans_atom_name(atom):
     return str(val)
   if val.startswith("?:"):       # strip variable prefix ("?:X" -> "X")
     val = val[2:]
-  m = re.match(r'^(.*)\s+\d+$', val)
-  return m.group(1) if m else val
+  m = re.match(r'^(.*\S)\s+(\d+)$', val)
+  if not m:
+    return val
+  base = m.group(1)
+  n    = int(m.group(2))
+  # Keep number for ambiguous proper names; drop for unambiguous ones.
+  if base[:1].isupper() and base in _ambiguous_bases:
+    return base + " " + str(n)
+  if base[:1].isupper():
+    return base
+  # Noun-phrase constants in $ans: use safe-letter label
+  if 1 <= n <= len(_SAFE_LETTERS):
+    return base + " " + _SAFE_LETTERS[n - 1]
+  return val
 
 
 def _fmt_conf(conf):
@@ -174,6 +201,37 @@ def _answer_goodness(ans):
   length   = len(ans.get("positive proof", [])) + len(ans.get("negative proof", []))
   blockers = 5 * len(ans.get("blockers", []))
   return conf * 10_000_000 - length - blockers
+
+
+def _compute_ambiguous_bases(answers):
+  """Return the set of proper-name bases that appear with 2+ distinct numbers.
+
+  E.g. if "John 1" and "John 3" both appear anywhere in the proof, "John"
+  is in the returned set and rendering will keep the number ("John 3") rather
+  than stripping it to "John".
+  """
+  base_numbers = {}
+  for ans in answers:
+    _scan_constants(ans, base_numbers)
+  return {base for base, nums in base_numbers.items() if len(nums) > 1}
+
+
+def _scan_constants(obj, base_numbers):
+  """Recursively scan obj (any nested structure) for 'Name N' proper constants."""
+  if isinstance(obj, str):
+    if obj.startswith("?:"):
+      return
+    m = re.match(r'^(.*\S)\s+(\d+)$', obj)
+    if m:
+      base = m.group(1)
+      if base[:1].isupper():
+        base_numbers.setdefault(base, set()).add(int(m.group(2)))
+  elif isinstance(obj, list):
+    for el in obj:
+      _scan_constants(el, base_numbers)
+  elif isinstance(obj, dict):
+    for v in obj.values():
+      _scan_constants(v, base_numbers)
 
 
 # ======== sentence map ========
@@ -405,7 +463,10 @@ def _entity_name(val):
   base = m.group(1)
   n    = int(m.group(2))
   if base[:1].isupper():
-    # Proper name — drop the number entirely
+    # Proper name — keep the number when multiple entities share the same base
+    # (e.g. "John 1" vs "John 3"); drop it when there is only one "John".
+    if base in _ambiguous_bases:
+      return base + " " + str(n)
     return base
   # Noun-phrase constant — replace number with a safe letter
   if 1 <= n <= len(_SAFE_LETTERS):
