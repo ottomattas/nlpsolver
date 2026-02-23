@@ -326,7 +326,7 @@ def _format_explanation(answers, sentence_map, show_logic=False):
       continue
     seen_vals.append(val)
 
-    proof = ans.get("positive proof")
+    proof = ans.get("positive proof") or ans.get("negative proof")
     if not proof:
       continue
 
