@@ -491,9 +491,14 @@ def _clause_to_str(clause):
   if consequences:
     return " or ".join(consequences)
   if conditions:
-    # Pure-negative clause: render each atom with its natural negated form
-    # ("X is not Y", "X does not have Y", etc.) instead of "not: X is Y".
-    return " and ".join(_atom_to_english_negated(a) for a in neg_atoms)
+    if len(conditions) == 1:
+      # Single negated atom: render in natural negated form.
+      return _atom_to_english_negated(neg_atoms[0])
+    else:
+      # Multi-atom pure-negative clause ¬A₁ ∨ … ∨ ¬Aₙ is logically equivalent
+      # to A₁ ∧ … ∧ Aₙ₋₁ → ¬Aₙ.  Render as "if A₁ and … then not-Aₙ".
+      return ("if " + " and ".join(conditions[:-1]) +
+              " then " + _atom_to_english_negated(neg_atoms[-1]))
   return "(empty)"
 
 
