@@ -32,6 +32,11 @@ _ambiguous_bases = set()
 # When a name is in this set, the full URL is appended even in the answer line.
 _ambiguous_url_names = set()
 
+# Map from Skolem constant name (e.g. "sk0") to its type string (e.g. "animal"),
+# derived by scanning proof steps for isa(TYPE, skN) atoms.
+# Reset per proof by _compute_skolem_types().
+_skolem_types = {}
+
 
 # ======== main entry point ========
 
@@ -230,6 +235,26 @@ def _scan_constants(obj, base_numbers, url_names):
       _scan_constants(v, base_numbers, url_names)
 
 
+def _compute_skolem_types(proof):
+  """Scan proof steps for isa(TYPE, skN) atoms and populate _skolem_types.
+
+  Called once per proof before rendering so that Skolem constants can be
+  displayed as "some TYPE skN" (e.g. sk0 -> "some animal sk0").
+  Only the first isa fact for each skN is kept.
+  """
+  global _skolem_types
+  _skolem_types = {}
+  for step in proof:
+    clause = step[2] if len(step) > 2 else []
+    if not isinstance(clause, list):
+      continue
+    for atom in clause:
+      if not isinstance(atom, list) or len(atom) < 3:
+        continue
+      if atom[0] == "isa" and isinstance(atom[2], str) and re.match(r'^sk\d+$', atom[2]):
+        _skolem_types.setdefault(atom[2], str(atom[1]))
+
+
 def _extract_url_name(url):
   """Extract a human-readable display name from a URL.
 
@@ -322,8 +347,11 @@ def _format_explanation(answers, sentence_map, show_logic=False):
         sent_lines.append("  (" + str(nr) + ") " + raw)
       sent_nr[name] = seen_raws[raw]
 
-    # Proof step list
-    step_lines = ["Proof steps:"]
+    # Proof step list — use "by contradiction" header when proof ends in Contradiction.
+    _compute_skolem_types(proof)
+    is_contradiction = any(len(s) > 2 and s[2] is False for s in proof)
+    proof_header = "Proof steps (by contradiction):" if is_contradiction else "Proof steps:"
+    step_lines = [proof_header]
     for step in proof:
       step_lines.append(_format_step(step, sent_nr, show_logic=show_logic))
 
@@ -432,8 +460,18 @@ def _clause_to_str(clause):
   if not isinstance(clause, list):
     return str(clause)
 
-  conditions   = []   # negated atoms  -> "if ..."
-  consequences = []   # positive atoms -> "then ..."
+  # Detect the contradiction-assumption step: a single negated $defq* atom,
+  # which represents the refutation assumption "suppose the answer is no".
+  if (len(clause) == 1 and isinstance(clause[0], list) and clause[0] and
+      isinstance(clause[0][0], str) and clause[0][0].startswith("-$defq")):
+    if len(clause[0]) <= 1:
+      return "assume for contradiction: the answer is no"
+    else:
+      return "assume for contradiction: no such answer exists"
+
+  conditions   = []   # positively-rendered negated atoms -> "if ..."
+  neg_atoms    = []   # base atoms (pred without "-") for pure-negative rendering
+  consequences = []   # positively-rendered positive atoms -> "then ..."
 
   for atom in clause:
     if not isinstance(atom, list) or not atom:
@@ -442,7 +480,9 @@ def _clause_to_str(clause):
     if pred == "$ans":
       consequences.append(_ans_atom_name(atom) + " is an answer")
     elif pred.startswith("-"):
-      conditions.append(_atom_to_english([pred[1:]] + list(atom[1:])))
+      base = [pred[1:]] + list(atom[1:])
+      conditions.append(_atom_to_english(base))
+      neg_atoms.append(base)
     else:
       consequences.append(_atom_to_english(atom))
 
@@ -451,7 +491,9 @@ def _clause_to_str(clause):
   if consequences:
     return " or ".join(consequences)
   if conditions:
-    return "not: " + " and ".join(conditions)
+    # Pure-negative clause: render each atom with its natural negated form
+    # ("X is not Y", "X does not have Y", etc.) instead of "not: X is Y".
+    return " and ".join(_atom_to_english_negated(a) for a in neg_atoms)
   return "(empty)"
 
 
@@ -502,6 +544,12 @@ def _entity_name(val, with_url=False):
     return "some non-" + val[len("$some_not_"):].replace("_", " ")
   if val.startswith("$some_"):
     return "some " + val[len("$some_"):].replace("_", " ")
+  # Skolem constants: sk0, sk1, ... -> "some TYPE skN" using proof context
+  if re.match(r'^sk\d+$', val):
+    typ = _skolem_types.get(val)
+    if typ:
+      return "some " + typ + " " + val
+    return val
   # URL constant
   if val.startswith("http://") or val.startswith("https://"):
     name = _extract_url_name(val)
@@ -823,6 +871,15 @@ def _atom_to_english(atom):
   if pred == "kb force":
     return _atom_fallback(atom)
 
+  # ---- $defq* question-definition atoms ----
+
+  if pred.startswith("$defq"):
+    if not args:
+      return "answer holds"
+    if len(args) == 1:
+      return e(0) + " is an answer"
+    return _atom_fallback(atom)
+
   # ---- traceability (skip in English) ----
 
   if pred in ("@id", "@p", "@definite"):
@@ -849,6 +906,187 @@ def _atom_fallback(atom):
     else:
       parts.append(str(a))
   return pred + "(" + ", ".join(parts) + ")" if parts else pred
+
+
+def _atom_to_english_negated(atom):
+  """Render a single atom in its natural negated English form.
+
+  Used for pure-negative clauses (all atoms negated, no positive atoms) so
+  that "X is not Y" / "X does not have Y" is produced instead of the
+  awkward "not: X is Y".  Falls back to "not: " + positive form for any
+  predicate not explicitly listed here.
+
+  The atom argument is the BASE atom (predicate name WITHOUT the leading "-").
+  """
+  if not isinstance(atom, list) or not atom:
+    return "not: " + str(atom)
+
+  pred = str(atom[0])
+  args = atom[1:]
+
+  def e(i):
+    if i >= len(args): return "?"
+    v = args[i]
+    return _entity_name(v, with_url=True) if isinstance(v, str) else str(v)
+
+  # ---- core predicates ----
+
+  if pred == "isa":
+    if len(args) >= 2:
+      typ = e(0); ent = e(1)
+      if typ == "activity": return ent + " is not an activity"
+      if typ == "set":      return ent + " is not a set"
+      return ent + " is not " + _indef_article(typ) + " " + typ
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "has property":
+    if len(args) >= 2:
+      return e(1) + " is not " + e(0)
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "have":
+    if len(args) >= 2:
+      return e(0) + " does not have " + e(1)
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "has part":
+    if len(args) >= 2:
+      return e(0) + " does not have " + e(1) + " as a part"
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "is rel2":
+    if len(args) >= 3:
+      rel = e(0)
+      if rel.lower() in _PREPOSITIONS:
+        return e(1) + " is not " + rel + " " + e(2)
+      return e(1) + " is not " + rel + " of " + e(2)
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "can":
+    if len(args) >= 2:
+      return e(0) + " cannot " + e(1)
+    return "not: " + _atom_fallback(atom)
+
+  # ---- gradable predicates ----
+
+  if pred == "has degree property":
+    if len(args) >= 4:
+      prop = e(0); ent = e(1)
+      adv, art_type = _degree_parts(e(2))
+      relcls = e(3)
+      art = "the" if art_type == "def" else _indef_article(adv if adv else prop)
+      return ent + " is not " + art + " " + adv + prop + " " + relcls
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "has degree rel2":
+    if len(args) >= 4:
+      adv, _ = _degree_parts(e(3))
+      return e(1) + " is not " + adv + e(0) + " of " + e(2)
+    return "not: " + _atom_fallback(atom)
+
+  # ---- event reification predicates ----
+
+  if pred == "has type":
+    if len(args) >= 2:
+      return e(0) + " is not a " + e(1) + " event"
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "has actor":
+    if len(args) >= 2:
+      return e(1) + " does not perform " + e(0)
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "has target":
+    if len(args) >= 2:
+      return e(0) + " does not target " + e(1)
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "has location":
+    if len(args) >= 2:
+      return e(0) + " does not take place at " + e(1)
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "has instrument":
+    if len(args) >= 2:
+      return e(0) + " does not use " + e(1)
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "has manner":
+    if len(args) >= 2:
+      return e(0) + " does not happen in a " + e(1) + " manner"
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "has direction":
+    if len(args) >= 2:
+      return e(0) + " does not go towards " + e(1)
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "has time":
+    if len(args) >= 2:
+      return e(0) + " does not happen at " + e(1)
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "typical":
+    if len(args) >= 1:
+      return e(0) + " is not typical"
+    return "not typical"
+
+  # ---- state / world predicates ----
+
+  if pred == "holds":
+    if len(args) >= 2 and isinstance(args[1], list):
+      return _atom_to_english_negated(args[1])
+    return "not: " + _atom_fallback(atom)
+
+  # ---- set predicates ----
+
+  if pred == "is set of":
+    if len(args) >= 2:
+      return e(1) + " is not a set of " + e(0)
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "member":
+    if len(args) >= 2:
+      return e(0) + " is not a member of " + e(1)
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "member has property":
+    if len(args) >= 2:
+      return "members of " + e(1) + " are not " + e(0)
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "is subset of":
+    if len(args) >= 2:
+      return e(0) + " is not a subset of " + e(1)
+    return "not: " + _atom_fallback(atom)
+
+  # ---- comparison predicates ----
+
+  if pred == "=":
+    if len(args) >= 2:
+      return e(0) + " does not equal " + e(1)
+    return "not: " + _atom_fallback(atom)
+
+  if pred == "<":
+    if len(args) >= 2:
+      return e(0) + " is not less than " + e(1)
+    return "not: " + _atom_fallback(atom)
+
+  if pred == ">":
+    if len(args) >= 2:
+      return e(0) + " is not greater than " + e(1)
+    return "not: " + _atom_fallback(atom)
+
+  # ---- $defq* ----
+
+  if pred.startswith("$defq"):
+    if not args:      return "the answer does not hold"
+    if len(args) == 1: return e(0) + " is not an answer"
+    return "not: " + _atom_fallback(atom)
+
+  # ---- fallback ----
+
+  return "not: " + _atom_to_english(atom)
 
 
 # ======== JSON parsing ========
