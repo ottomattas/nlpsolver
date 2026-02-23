@@ -38,6 +38,8 @@
 # limitations under the License.
 #-------------------------------------------------------------------
 
+import re
+
 # Logical connectives that are NOT predicates.
 _connectives = {"and", "or", "not", "implies", "equivalent", "xor", "forall", "exists"}
 
@@ -47,6 +49,9 @@ _opaque_wrappers = {"normally", "-normally"}
 
 # Counter for Skolem function/constant names (reset per top-level call).
 _skolem_nr = 0
+
+# Counter for $defq predicate names (reset per top-level call).
+_defq_nr = 0
 
 
 # ======== main entry point ========
@@ -58,8 +63,9 @@ def rawlogic_convert(logic):
   Output: list of {"@name":..., "@logic":CLAUSE} / {"@name":..., "@question":F}
   Returns None on fatal error.
   """
-  global _skolem_nr
+  global _skolem_nr, _defq_nr
   _skolem_nr = 0          # reset once for the whole conversion
+  _defq_nr   = 0
   if not logic or not isinstance(logic, list):
     return None
 
@@ -94,30 +100,36 @@ def _convert_id_package(item):
 
   if is_question:
     # Distinguish wh-questions (["ask", var, body]) from yes/no questions.
-    askvars = None
     if isinstance(formula, list) and len(formula) >= 3 and formula[0] == "ask":
       ask_var = str(formula[1])
       body    = formula[2]
-      askvars = 1
-      flat = _flatten_q_atoms(body, {ask_var: "?:" + ask_var})
+      if _is_simple_question_formula(body):
+        # Single atom with ≤1 variable: direct @question, no $defq wrapper.
+        free_vars_in_body = sorted(_collect_body_free_vars(body))
+        varmap = {ask_var: "?:" + ask_var}
+        varmap.update({v: "?:" + v for v in free_vars_in_body})
+        flat = _flatten_q_atoms(body, varmap)
+        if not flat:
+          return []
+        q_formula = flat[0] if len(flat) == 1 else [["and"] + flat]
+        return [{"@name": name, "@question": q_formula, "@askvars": 1}]
+      else:
+        # Complex case: wrap in $defq biconditional.
+        return _build_defq_question(name, ask_var, body)
     else:
-      flat = _flatten_q_atoms(formula, {})
-
-    if not flat:
-      return []
-
-    # Emit in the format clause_list_to_json / GK expect:
-    #   1 atom  -> bare atom                  ["pred", arg, ...]
-    #   N atoms -> list-of-one-AND            [["and", atom1, atom2, ...]]
-    if len(flat) == 1:
-      q_formula = flat[0]
-    else:
-      q_formula = [["and"] + flat]
-
-    obj = {"@name": name, "@question": q_formula}
-    if askvars is not None:
-      obj["@askvars"] = askvars
-    return [obj]
+      # Yes/no question.
+      if _is_simple_question_formula(formula):
+        # Single atom with ≤1 variable: direct @question, no $defq wrapper.
+        free_vars_in_formula = sorted(_collect_body_free_vars(formula))
+        varmap = {v: "?:" + v for v in free_vars_in_formula}
+        flat = _flatten_q_atoms(formula, varmap)
+        if not flat:
+          return []
+        q_formula = flat[0] if len(flat) == 1 else [["and"] + flat]
+        return [{"@name": name, "@question": q_formula}]
+      else:
+        # Complex case: wrap in $defq biconditional.
+        return _build_defq_question(name, None, formula)
 
   # Clausify the formula.
   clauses = _clausify(formula)
@@ -359,7 +371,15 @@ def _distribute(frm):
     return frm  # opaque atom
 
   if op == "and":
-    return ["and"] + [_distribute(el) for el in frm[1:]]
+    # Distribute each child and flatten any nested ANDs that result.
+    result = []
+    for el in frm[1:]:
+      d = _distribute(el)
+      if isinstance(d, list) and d and d[0] == "and":
+        result.extend(d[1:])
+      else:
+        result.append(d)
+    return ["and"] + result
 
   if op == "or":
     # Recursively distribute each sub-formula first
@@ -444,6 +464,143 @@ def _extract_clauses(frm):
 
   # Single atom (predicate or opaque wrapper)
   return [frm]
+
+
+# ======== $defq question wrapping ========
+
+def _is_simple_question_formula(frm):
+  """Return True if frm is a single positive atom with at most 1 distinct variable.
+
+  Simple questions are handled with a direct @question entry (no $defq wrapper).
+  Complex questions (multiple atoms, 2+ variables, or nested connectives) need
+  the $defq biconditional approach so the prover has richer resolution paths.
+
+  Examples:
+    ["isa", "animal", "John 1"]  -> True  (0 variables)
+    ["isa", "animal", "X"]       -> True  (1 variable)
+    ["have", "X", "Y"]           -> False (2 variables)
+    ["and", ...]                 -> False (connective, not a single atom)
+    ["forall", "X", ...]         -> False (quantifier, not a single atom)
+  """
+  if not isinstance(frm, list) or not frm:
+    return False
+  pred = frm[0]
+  if not isinstance(pred, str) or pred in _connectives or pred.startswith("-"):
+    return False
+  for arg in frm[1:]:
+    if isinstance(arg, list):
+      return False              # nested structure -> not a flat atom
+  vars_seen = set()
+  for arg in frm[1:]:
+    if isinstance(arg, str) and _looks_like_var(arg):
+      vars_seen.add(arg)
+  return len(vars_seen) <= 1
+
+
+def _looks_like_var(s):
+  """Return True if s looks like a stage-2 variable name (e.g. X, Y, S1).
+
+  Variable names in stage-2 LLM output are uppercase-initial identifiers
+  without spaces, e.g. X, Y, Z, S1, Var.  Strings starting with '?:' are
+  already in GK format and also count as variables.
+  Constants are either lowercase ('car', 'elephant'), numbered ('John 1',
+  'car 2'), or URLs — none of which match the pattern.
+  """
+  if not isinstance(s, str) or ' ' in s:
+    return False
+  if s.startswith('?:'):
+    return True
+  return bool(re.match(r'^[A-Z][A-Za-z0-9]*$', s))
+
+
+def _collect_body_free_vars(frm, bound=None):
+  """Collect free variable names appearing in a stage-2 formula.
+
+  Returns a set of plain variable names (e.g. {"Y", "Z"}) that:
+    - appear as atom arguments
+    - look like variable names (see _looks_like_var)
+    - are NOT bound by any forall/exists quantifier in frm
+    - are NOT in the initial 'bound' set
+
+  Used to find the non-ask free variables that must be wrapped in 'exists'
+  before constructing the $defq biconditional.
+  """
+  if bound is None:
+    bound = frozenset()
+  if not isinstance(frm, list) or not frm:
+    return set()
+  op = frm[0]
+  if op in ("forall", "exists"):
+    var = str(frm[1])
+    return _collect_body_free_vars(frm[2], bound | {var})
+  if op in _connectives:
+    result = set()
+    for el in frm[1:]:
+      result |= _collect_body_free_vars(el, bound)
+    return result
+  # Atom: frm[0] is the predicate, frm[1:] are arguments.
+  result = set()
+  for arg in frm[1:]:
+    if isinstance(arg, str) and _looks_like_var(arg) and arg not in bound:
+      result.add(arg)
+    elif isinstance(arg, list):
+      result |= _collect_body_free_vars(arg, bound)
+  return result
+
+
+def _build_defq_question(name, ask_var, body):
+  """Build $defq biconditional @logic clauses and a @question entry.
+
+  For a wh-question (ask_var is not None, e.g. "X"):
+    Constructs:  forall X. ($defq0(X) <=> exists Ys. body)
+    Emits:       @logic clauses (with @sourcetype:"question") from the CNF
+                 @question: [$defq0, ?:X]  with @askvars: 1
+
+  For a yes/no question (ask_var is None):
+    Constructs:  $defq0() <=> body
+    Emits:       @logic clauses (with @sourcetype:"question") from the CNF
+                 @question: [$defq0]
+
+  Non-ask free variables in body are automatically wrapped in 'exists' so
+  the clausification handles them correctly (Skolem functions of ask_var).
+  """
+  global _defq_nr
+  defq_name = "$defq" + str(_defq_nr)
+  _defq_nr += 1
+
+  # Wrap body in 'exists' for every free variable that is not the ask variable.
+  initial_bound = {ask_var} if ask_var else set()
+  free_vars = sorted(_collect_body_free_vars(body, bound=initial_bound))
+  wrapped_body = body
+  for fv in free_vars:
+    wrapped_body = ["exists", fv, wrapped_body]
+
+  # Build the biconditional formula.
+  if ask_var:
+    defq_atom = [defq_name, ask_var]
+    frm = ["forall", ask_var, ["equivalent", defq_atom, wrapped_body]]
+    q_atom = [defq_name, "?:" + ask_var]
+    askvars = 1
+  else:
+    defq_atom = [defq_name]
+    frm = ["equivalent", defq_atom, wrapped_body]
+    q_atom = [defq_name]
+    askvars = None
+
+  # Clausify using the existing CNF machinery (handles forall/exists/equivalent).
+  clauses = _clausify(frm)
+
+  # Each clause gets @sourcetype:"question" to mark it as question-derived.
+  result = []
+  for clause in clauses:
+    result.append({"@name": name, "@sourcetype": "question", "@logic": clause})
+
+  # The @question entry itself does not carry @sourcetype.
+  q_obj = {"@name": name, "@question": q_atom}
+  if askvars is not None:
+    q_obj["@askvars"] = askvars
+  result.append(q_obj)
+  return result
 
 
 # ======== question formula flattening ========
