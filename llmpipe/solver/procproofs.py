@@ -497,6 +497,11 @@ def _entity_name(val, with_url=False):
     return str(val)
   if val.startswith("?:"):
     val = val[2:]
+  # Population constants: $some_not_* -> "some non-*",  $some_* -> "some *"
+  if val.startswith("$some_not_"):
+    return "some non-" + val[len("$some_not_"):].replace("_", " ")
+  if val.startswith("$some_"):
+    return "some " + val[len("$some_"):].replace("_", " ")
   # URL constant
   if val.startswith("http://") or val.startswith("https://"):
     name = _extract_url_name(val)

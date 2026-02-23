@@ -76,11 +76,21 @@ def rawlogic_convert(logic):
   else:
     return None
 
+  # Build population facts by scanning the raw stage-2 input first.
+  pop_facts = _populate_clauses(items)
+
   result = []
   for item in items:
     objs = _convert_id_package(item)
     if objs:
-      result.extend(objs)  
+      result.extend(objs)
+
+  # Insert population facts immediately before the first @question entry
+  # so they are available as background knowledge during proof search.
+  first_q = next((i for i, o in enumerate(result) if "@question" in o), len(result))
+  for i, fact in enumerate(pop_facts):
+    result.insert(first_q + i, fact)
+
   return result
 
 
@@ -601,6 +611,186 @@ def _build_defq_question(name, ask_var, body):
     q_obj["@askvars"] = askvars
   result.append(q_obj)
   return result
+
+
+# ======== population fact injection ========
+
+def _norm_for_const(s):
+  """Normalise a class/property name for use in a $some_* constant name.
+  Spaces become underscores; other characters kept as-is.
+  """
+  return str(s).replace(" ", "_")
+
+
+def _is_ground_term(term):
+  """Return True if term is a ground constant (not a variable or term with vars).
+
+  Strings that look like variables (uppercase-initial no-space identifiers, or
+  ?:-prefixed GK variables) are not ground.  Lists (Skolem function terms) are
+  not ground.  All other strings are treated as ground constants.
+  """
+  return isinstance(term, str) and not _looks_like_var(term)
+
+
+def _scan_item_formula(frm, name, polarity, classes, has_props, deg_props):
+  """Recursively scan a formula for isa / has-property / has-degree-property atoms.
+
+  Works on both raw stage-2 formulas (connectives and/or/not/forall/exists/
+  implies/equivalent/xor/ask) and clausified GK clause lists (disjunctions
+  represented as a list whose first element is itself a list).
+
+  Arguments:
+    frm       -- formula or clause to scan
+    name      -- sent_SN name to record on first occurrence
+    polarity  -- True = positive context, False = negative context
+    classes   -- dict: CLASS -> {"name", "has_pos", "has_neg"}
+    has_props -- dict: PROPERTY -> {"name", "has_pos", "has_neg"}
+    deg_props -- dict: (PROPERTY, RELCLASS) -> {"name", "has_pos", "has_neg"}
+  """
+  if not isinstance(frm, list) or not frm:
+    return
+  first = frm[0]
+
+  # Clausified disjunction: first element is itself a list (atom).
+  if isinstance(first, list):
+    for atom in frm:
+      _scan_item_formula(atom, name, polarity, classes, has_props, deg_props)
+    return
+
+  pred = first
+
+  # Structural connectives — recurse, tracking polarity.
+  if pred in ("and", "or", "implies", "equivalent", "xor"):
+    for el in frm[1:]:
+      _scan_item_formula(el, name, polarity, classes, has_props, deg_props)
+    return
+  if pred == "not":
+    if len(frm) >= 2:
+      _scan_item_formula(frm[1], name, not polarity, classes, has_props, deg_props)
+    return
+  if pred in ("forall", "exists"):
+    if len(frm) >= 3:
+      _scan_item_formula(frm[2], name, polarity, classes, has_props, deg_props)
+    return
+  # ["ask", var, body] — scan the body.
+  if pred == "ask":
+    if len(frm) >= 3:
+      _scan_item_formula(frm[2], name, polarity, classes, has_props, deg_props)
+    return
+
+  # Atom (may carry a "-" negation prefix on the predicate name).
+  if isinstance(pred, str) and pred.startswith("-"):
+    actual_pred = pred[1:]
+    atom_pol    = not polarity
+  else:
+    actual_pred = pred
+    atom_pol    = polarity
+
+  args = frm[1:]
+
+  if actual_pred == "isa" and len(args) >= 2:
+    cls    = str(args[0])
+    entity = args[1]
+    if cls not in classes:
+      classes[cls] = {"name": name, "has_pos": False, "has_neg": False}
+    if _is_ground_term(entity):
+      if atom_pol:
+        classes[cls]["has_pos"] = True
+      else:
+        classes[cls]["has_neg"] = True
+
+  elif actual_pred == "has property" and len(args) >= 2:
+    prop   = str(args[0])
+    entity = args[1]
+    if prop not in has_props:
+      has_props[prop] = {"name": name, "has_pos": False, "has_neg": False}
+    if _is_ground_term(entity):
+      if atom_pol:
+        has_props[prop]["has_pos"] = True
+      else:
+        has_props[prop]["has_neg"] = True
+
+  elif actual_pred == "has degree property" and len(args) >= 4:
+    prop     = str(args[0])
+    entity   = args[1]
+    relclass = args[3]
+    # Only include when RELCLASS is a constant (not a variable).
+    if isinstance(relclass, str) and not _looks_like_var(relclass):
+      key = (prop, relclass)
+      if key not in deg_props:
+        deg_props[key] = {"name": name, "has_pos": False, "has_neg": False}
+      if _is_ground_term(entity):
+        if atom_pol:
+          deg_props[key]["has_pos"] = True
+        else:
+          deg_props[key]["has_neg"] = True
+
+
+def _build_population_facts(classes, has_props, deg_props):
+  """Build the list of @logic population entries from collected scan data.
+
+  For each key, emits a positive and/or negative synthetic clause, skipping
+  whichever polarity is already covered by an existing ground constant.
+  Every entry carries @sourcetype:"populate".
+  """
+  result = []
+
+  for cls, info in classes.items():
+    name = info["name"]
+    cn   = _norm_for_const(cls)
+    if not info["has_pos"]:
+      result.append({"@name": name, "@sourcetype": "populate",
+                     "@logic": ["isa", cls, "$some_" + cn]})
+    if not info["has_neg"]:
+      result.append({"@name": name, "@sourcetype": "populate",
+                     "@logic": ["-isa", cls, "$some_not_" + cn]})
+
+  for prop, info in has_props.items():
+    name = info["name"]
+    cn   = _norm_for_const(prop)
+    if not info["has_pos"]:
+      result.append({"@name": name, "@sourcetype": "populate",
+                     "@logic": ["has property", prop, "$some_" + cn]})
+    if not info["has_neg"]:
+      result.append({"@name": name, "@sourcetype": "populate",
+                     "@logic": ["-has property", prop, "$some_not_" + cn]})
+
+  for (prop, relclass), info in deg_props.items():
+    name = info["name"]
+    cn   = _norm_for_const(prop) + "_" + _norm_for_const(relclass)
+    if not info["has_pos"]:
+      result.append({"@name": name, "@sourcetype": "populate",
+                     "@logic": ["has degree property", prop, "$some_" + cn,
+                                "none", relclass]})
+    if not info["has_neg"]:
+      result.append({"@name": name, "@sourcetype": "populate",
+                     "@logic": ["-has degree property", prop, "$some_not_" + cn,
+                                "none", relclass]})
+
+  return result
+
+
+def _populate_clauses(items):
+  """Scan all @id items in the raw stage-2 input and return population entries.
+
+  This is the main entry point called from rawlogic_convert.  The underlying
+  scanner (_scan_item_formula) handles both raw stage-2 and clausified forms,
+  so this function can also be applied to a clausified clause list.
+  """
+  classes   = {}   # CLASS -> {"name", "has_pos", "has_neg"}
+  has_props = {}   # PROPERTY -> {"name", "has_pos", "has_neg"}
+  deg_props = {}   # (PROPERTY, RELCLASS) -> {"name", "has_pos", "has_neg"}
+
+  for item in items:
+    if not isinstance(item, list) or len(item) < 3 or item[0] != "@id":
+      continue
+    name    = "sent_" + str(item[1])
+    package = item[2]
+    _is_q, formula, _conf = _extract_package(package)
+    if formula is not None:
+      _scan_item_formula(formula, name, True, classes, has_props, deg_props)
+
+  return _build_population_facts(classes, has_props, deg_props)
 
 
 # ======== question formula flattening ========
