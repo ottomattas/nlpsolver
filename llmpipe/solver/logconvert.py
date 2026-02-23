@@ -40,6 +40,8 @@
 
 import re
 
+from globals import options as _g_options
+
 # Logical connectives that are NOT predicates.
 _connectives = {"and", "or", "not", "implies", "equivalent", "xor", "forall", "exists"}
 
@@ -208,9 +210,10 @@ def _clausify(formula):
   """
   f1 = _implies_to_or(formula)
   f2 = _push_neg(f1, True)
-  f3 = _skolemize(f2, [], {})
-  f4 = _distribute(f3)
-  return _extract_clauses(f4)
+  f3 = _expand_normally(f2)
+  f4 = _skolemize(f3, [], {})
+  f5 = _distribute(f4)
+  return _extract_clauses(f5)
 
 
 def _implies_to_or(frm):
@@ -303,6 +306,135 @@ def _push_neg(frm, pos):
       return [pred[1:]] + frm[1:]
     else:
       return ["-" + pred] + frm[1:]
+  return frm
+
+
+def _expand_normally(frm):
+  """Expand normally(...) wrappers into defeasible clauses with $block atoms.
+
+  Must be called after _push_neg (NNF), before _skolemize.
+
+  The body inside normally is still in raw stage-2 form (not NNF), so this
+  function applies _implies_to_or and _push_neg to the body itself.
+
+  If options["noexceptions_flag"] is True, strips normally without blockers.
+
+  For each clause (or-disjunction) that contains normally(body):
+    - Processes body through implies elimination + NNF push.
+    - Collects all literals: regular outer literals + body literals.
+    - Classifies: negative conditions (start with "-") vs positive heads.
+    - Uses the last positive literal as the head (the conclusion to be blocked).
+    - Builds priority ["$", CLASS, N] where CLASS is the class from the last
+      -isa condition (or "$generic"), and N = len(non-isa conditions) + 1.
+    - Returns the clause with ["$block", priority, ["$not", head]] appended.
+
+  A lone normally(body) not inside an or is normalised to a 1-element
+  disjunction before processing.
+
+  Conjunction (and) bodies are too complex for a single blocker and are
+  treated as certain (no $block generated).
+  """
+  if not isinstance(frm, list) or not frm:
+    return frm
+  op = frm[0]
+
+  if op == "and":
+    return ["and"] + [_expand_normally(el) for el in frm[1:]]
+
+  if op in ("forall", "exists"):
+    return [op, frm[1], _expand_normally(frm[2])]
+
+  if op in _opaque_wrappers or op == "or":
+    # Normalise: a lone normally(...) is treated as a one-element disjunction.
+    elements = [frm] if op in _opaque_wrappers else frm[1:]
+
+    # Separate normally-wrappers from regular literals.
+    regular_lits = []
+    body_lits = []    # literals extracted from normally-body formulas
+
+    for el in elements:
+      if isinstance(el, list) and el and el[0] in _opaque_wrappers:
+        body = el[1] if len(el) >= 2 else None
+        if body is None:
+          continue
+        is_pos = not el[0].startswith("-")
+        # Process body: implies elimination then NNF push.
+        processed = _push_neg(_implies_to_or(body), is_pos)
+        # Flatten processed body into a flat list of literals.
+        # _push_neg may produce nested ors (e.g. from de Morgan on conjunctive
+        # conditions), so flatten one level before collecting.
+        if isinstance(processed, list) and processed and processed[0] == "or":
+          for lit in processed[1:]:
+            if isinstance(lit, list) and lit and lit[0] == "or":
+              body_lits.extend(lit[1:])   # one-level flatten of nested or
+            else:
+              body_lits.append(lit)
+        elif isinstance(processed, list) and processed and processed[0] == "and":
+          # Conjunction body: too complex for a single blocker; treat as certain.
+          regular_lits.append(_expand_normally(processed))
+        elif isinstance(processed, list) and processed:
+          body_lits.append(processed)
+        # else: empty body — skip
+      else:
+        regular_lits.append(el)
+
+    # Recurse into regular literals (may contain nested normally, and/or, …).
+    regular_lits = [_expand_normally(el) for el in regular_lits]
+
+    all_lits = regular_lits + body_lits
+    if not all_lits:
+      return frm
+
+    # If no normally bodies were extracted (all were complex conjunctions),
+    # return as a plain or-clause.
+    if not body_lits:
+      if len(all_lits) == 1:
+        return all_lits[0]
+      return ["or"] + all_lits
+
+    # Check noexceptions flag: treat normally as certain, no $block.
+    if _g_options.get("noexceptions_flag", False):
+      if len(all_lits) == 1:
+        return all_lits[0]
+      return ["or"] + all_lits
+
+    # Classify literals: negative conditions vs positive heads.
+    neg_lits = [l for l in all_lits
+                if isinstance(l, list) and l and
+                isinstance(l[0], str) and l[0].startswith("-")]
+    pos_lits = [l for l in all_lits
+                if not (isinstance(l, list) and l and
+                        isinstance(l[0], str) and l[0].startswith("-"))]
+
+    if not pos_lits:
+      # No positive head found: cannot create a blocker; treat as certain.
+      if len(all_lits) == 1:
+        return all_lits[0]
+      return ["or"] + all_lits
+
+    # Use the last positive literal as the head (the conclusion to be blocked).
+    head     = pos_lits[-1]
+    other_pos = pos_lits[:-1]
+
+    # Compute priority: [$, CLASS, N]
+    #   CLASS = class from the last -isa condition, or "$generic" if none.
+    #   N     = (number of non-isa negative conditions) + 1.
+    isa_conds   = [l for l in neg_lits if l[0] == "-isa"]
+    non_isa_neg = [l for l in neg_lits if l[0] != "-isa"]
+    priornr = len(non_isa_neg) + 1
+    if isa_conds and len(isa_conds[-1]) >= 2:
+      cls = str(isa_conds[-1][1])
+    else:
+      cls = "$generic"
+    priority = ["$", cls, priornr]
+    blocker  = ["$block", priority, ["$not", head]]
+
+    result_lits = neg_lits + other_pos + [head, blocker]
+    if len(result_lits) == 1:
+      return result_lits[0]
+    return ["or"] + result_lits
+
+  # Atomic formula — no expansion needed.
   return frm
 
 
