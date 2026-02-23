@@ -93,6 +93,9 @@ def rawlogic_convert(logic):
   for i, fact in enumerate(pop_facts):
     result.insert(first_q + i, fact)
 
+  # Fix RELCLASS mismatches in question degree-predicate atoms.
+  _coerce_relclass(result)
+
   return result
 
 
@@ -923,6 +926,120 @@ def _populate_clauses(items):
       _scan_item_formula(formula, name, True, classes, has_props, deg_props)
 
   return _build_population_facts(classes, has_props, deg_props)
+
+
+# ======== RELCLASS coercion ========
+
+# Maps predicate name -> (entity_arg_index, relclass_arg_index).
+# Used to identify which argument is the entity (for class lookup) and which
+# is the RELCLASS (to be replaced when it doesn't match the entity's known class).
+_degree_preds_relclass = {
+  "has degree property": (2, 4),   # [pred, PROP, ENTITY, DEGREE, RELCLASS]
+  "has degree rel2":     (2, 5),   # [pred, REL, E1, E2, DEGREE, RELCLASS]
+}
+
+
+def _coerce_relclass(result):
+  """Fix RELCLASS mismatches in question degree-predicate atoms.
+
+  Scans assertional @logic clauses (not question-derived, not populate) for
+  ground isa(CLASS, CONST) facts to build a CONST -> {CLASS, ...} map.
+
+  Then, for every degree-predicate atom in @question or @sourcetype:question
+  @logic entries: if
+    - the ENTITY argument is a known ground constant, AND
+    - RELCLASS is not among that constant's established isa classes, AND
+    - the constant has exactly one established isa class
+  then RELCLASS is replaced with that single known class.
+
+  Modifies result in place.
+  """
+  # --- 1. build const_classes from assertional @logic entries ---
+  const_classes = {}   # CONST -> set of CLASS strings
+
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    src = obj.get("@sourcetype")
+    if src in ("question", "populate"):
+      continue
+    if "@logic" not in obj:
+      continue
+    clause = obj["@logic"]
+    # Single atom: ["isa", CLASS, CONST]
+    if (isinstance(clause, list) and len(clause) >= 3 and
+        isinstance(clause[0], str) and clause[0] == "isa" and
+        _is_ground_term(clause[2])):
+      const_classes.setdefault(clause[2], set()).add(str(clause[1]))
+    # Disjunctive clause: list of atom-lists (ground isa rarely here, but scan anyway)
+    elif isinstance(clause, list) and clause and isinstance(clause[0], list):
+      for atom in clause:
+        if (isinstance(atom, list) and len(atom) >= 3 and
+            isinstance(atom[0], str) and atom[0] == "isa" and
+            _is_ground_term(atom[2])):
+          const_classes.setdefault(atom[2], set()).add(str(atom[1]))
+
+  if not const_classes:
+    return
+
+  # --- 2. apply coercion to question entries ---
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    if "@question" in obj:
+      obj["@question"] = _coerce_atom(obj["@question"], const_classes)
+    if "@logic" in obj and obj.get("@sourcetype") == "question":
+      obj["@logic"] = _coerce_clause(obj["@logic"], const_classes)
+
+
+def _coerce_atom(atom, const_classes):
+  """Recursively substitute RELCLASS in degree-predicate atoms.
+
+  Handles both raw question formulas (with connectives and quantifiers)
+  and flat GK clause atoms.
+  """
+  if not isinstance(atom, list) or not atom:
+    return atom
+  pred = atom[0]
+  if not isinstance(pred, str):
+    return atom
+
+  # Degree predicate (possibly with a leading "-" negation prefix).
+  base = pred[1:] if pred.startswith("-") else pred
+  if base in _degree_preds_relclass:
+    entity_idx, relclass_idx = _degree_preds_relclass[base]
+    if len(atom) > relclass_idx:
+      entity   = atom[entity_idx]   if len(atom) > entity_idx   else None
+      relclass = atom[relclass_idx]
+      if (entity and _is_ground_term(entity) and
+          entity in const_classes and
+          isinstance(relclass, str) and
+          relclass not in const_classes[entity]):
+        known = const_classes[entity]
+        if len(known) == 1:
+          new_atom = list(atom)
+          new_atom[relclass_idx] = next(iter(known))
+          return new_atom
+    return atom
+
+  # Logical connectives / quantifiers: recurse.
+  if pred in ("and", "or", "not"):
+    return [pred] + [_coerce_atom(el, const_classes) for el in atom[1:]]
+  if pred in ("forall", "exists") and len(atom) >= 3:
+    return [pred, atom[1], _coerce_atom(atom[2], const_classes)]
+
+  return atom
+
+
+def _coerce_clause(clause, const_classes):
+  """Apply _coerce_atom to a GK clause (single atom or disjunction)."""
+  if not isinstance(clause, list) or not clause:
+    return clause
+  # Disjunction: first element is itself a list of atoms.
+  if isinstance(clause[0], list):
+    return [_coerce_atom(atom, const_classes) for atom in clause]
+  # Single atom.
+  return _coerce_atom(clause, const_classes)
 
 
 # ======== question formula flattening ========
