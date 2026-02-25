@@ -74,6 +74,10 @@ def process_proof(proof_result, text=None, s1_json=None, logic=None, options=Non
   # Sort: highest confidence first, shorter proofs preferred
   answers = sorted(answers, key=_answer_goodness, reverse=True)
 
+  # For wh-questions: keep only answers in the best object-type tier
+  # (concrete > Skolem > population), preserving the goodness order within tier.
+  answers = _filter_by_best_tier(answers)
+
   # Build sent_SN -> raw sentence text map from stage-1 output
   sentence_map = _build_sentence_map(s1_json)
 
@@ -195,6 +199,61 @@ def _answer_goodness(ans):
   length   = len(ans.get("positive proof", [])) + len(ans.get("negative proof", []))
   blockers = 5 * len(ans.get("blockers", []))
   return conf * 10_000_000 - length - blockers
+
+
+def _ans_object_tier(val):
+  """Return the object-type tier for an answer value.
+
+  Tiers (lower is better / more preferred):
+    0 -- CONCRETE: a specific named constant (e.g. "John 1", a URL)
+    1 -- SKOLEM:   a Skolem constant ("sk0", "sk1", ...)
+    2 -- POPULATION: a class-population constant ("$some_*", "$some_not_*")
+
+  Boolean answers (True/False) always return 0 so they are never filtered out.
+  When val is a list of $ans atoms, the tier of the *most concrete* atom wins.
+  """
+  if val is True or val is False or val is None:
+    return 0
+  if not isinstance(val, list):
+    return 0
+  best = 2
+  for atom in val:
+    if not isinstance(atom, list) or len(atom) < 2:
+      continue
+    s = atom[1]
+    if not isinstance(s, str):
+      best = 0   # non-string arg → treat as concrete
+      break
+    if s.startswith("$some_"):
+      tier = 2
+    elif re.match(r'^sk\d+$', s):
+      tier = 1
+    else:
+      tier = 0
+    if tier < best:
+      best = tier
+    if best == 0:
+      break
+  return best
+
+
+def _filter_by_best_tier(answers):
+  """Return answers filtered to the best (lowest) object-type tier.
+
+  Boolean answers are never filtered out.  If all answers are boolean,
+  or if no object answers exist, the list is returned unchanged.
+  """
+  tiers = [_ans_object_tier(a.get("answer")) for a in answers]
+  obj_tiers = [t for a, t in zip(answers, tiers)
+               if not isinstance(a.get("answer"), bool)]
+  if not obj_tiers:
+    return answers
+  best = min(obj_tiers)
+  if best == 2:
+    # All object answers are population constants — keep them all as-is.
+    return answers
+  return [a for a, t in zip(answers, tiers)
+          if isinstance(a.get("answer"), bool) or t == best]
 
 
 def _compute_ambiguity(obj):
