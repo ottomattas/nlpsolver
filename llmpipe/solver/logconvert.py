@@ -213,10 +213,14 @@ def _clausify(formula):
   """
   f1 = _implies_to_or(formula)
   f2 = _push_neg(f1, True)
+  # Pass 1: push normally(...) inside exists/and until it wraps a single atom.
   f3 = _expand_normally(f2)
   f4 = _skolemize(f3, [], {})
   f5 = _distribute(f4)
-  return _extract_clauses(f5)
+  # Pass 2: expand normally(atom) -> $block now that clauses are flat and
+  # Skolem terms have replaced existential variables.
+  f6 = _expand_normally(f5)
+  return _extract_clauses(f6)
 
 
 def _implies_to_or(frm):
@@ -312,20 +316,51 @@ def _push_neg(frm, pos):
   return frm
 
 
+def _push_normally_inside(frm):
+  """Push normally inward through exists/and until it wraps a single atom.
+
+  Called from _expand_normally (pass 1) when normally wraps a complex body.
+
+    normally(exists var, body) -> exists var, _push_normally_inside(body)
+    normally(and(A1,...,An))   -> and(A1,...,An-1, normally(An))
+    normally(atom)             -> normally(atom)  [base case]
+
+  The result is passed to _skolemize, which eliminates the exists and
+  substitutes Skolem terms.  The remaining normally(atom) wrappers are
+  then expanded into $block clauses by _expand_normally pass 2.
+  """
+  if not isinstance(frm, list) or not frm:
+    return ["normally", frm]
+  op = frm[0]
+  if op == "exists":
+    return ["exists", frm[1], _push_normally_inside(frm[2])]
+  if op == "and":
+    if len(frm) > 2:
+      # and(A1,...,An) -> and(A1,...,An-1, normally(An))
+      return ["and"] + list(frm[1:-1]) + [["normally", frm[-1]]]
+    if len(frm) == 2:
+      # and(A1) -> normally(A1)
+      return ["normally", frm[1]]
+  # Atom or other: wrap with normally
+  return ["normally", frm]
+
+
 def _expand_normally(frm):
   """Expand normally(...) wrappers into defeasible clauses with $block atoms.
 
-  Must be called after _push_neg (NNF), before _skolemize.
+  Called twice in _clausify:
+    Pass 1 (before _skolemize): pushes normally inside complex bodies
+      (exists / and) so that after Skolemization each normally wraps a
+      single concrete atom.
+    Pass 2 (after _distribute): expands normally(atom) into $block clauses.
 
-  The body inside normally is still in raw stage-2 form (not NNF), so this
-  function applies _implies_to_or and _push_neg to the body itself.
+  The body inside normally is still in raw stage-2 form (not NNF) when
+  encountered in pass 1, so _implies_to_or and _push_neg are applied first.
 
   If options["noexceptions_flag"] is True, strips normally without blockers.
 
-  For each clause (or-disjunction) that contains normally(body):
-    - Processes body through implies elimination + NNF push.
-    - Collects all literals: regular outer literals + body literals.
-    - Classifies: negative conditions (start with "-") vs positive heads.
+  For each clause (or-disjunction) that contains normally(atom):
+    - Classifies literals: negative conditions (start with "-") vs positive heads.
     - Uses the last positive literal as the head (the conclusion to be blocked).
     - Builds priority ["$", CLASS, N] where CLASS is the class from the last
       -isa condition (or "$generic"), and N = len(non-isa conditions) + 1.
@@ -333,9 +368,6 @@ def _expand_normally(frm):
 
   A lone normally(body) not inside an or is normalised to a 1-element
   disjunction before processing.
-
-  Conjunction (and) bodies are too complex for a single blocker and are
-  treated as certain (no $block generated).
   """
   if not isinstance(frm, list) or not frm:
     return frm
@@ -353,7 +385,8 @@ def _expand_normally(frm):
 
     # Separate normally-wrappers from regular literals.
     regular_lits = []
-    body_lits = []    # literals extracted from normally-body formulas
+    pushed_lits  = []  # from _push_normally_inside; must NOT be re-expanded here
+    body_lits    = []  # literals extracted from normally-body formulas
 
     for el in elements:
       if isinstance(el, list) and el and el[0] in _opaque_wrappers:
@@ -372,9 +405,17 @@ def _expand_normally(frm):
               body_lits.extend(lit[1:])   # one-level flatten of nested or
             else:
               body_lits.append(lit)
-        elif isinstance(processed, list) and processed and processed[0] == "and":
-          # Conjunction body: too complex for a single blocker; treat as certain.
-          regular_lits.append(_expand_normally(processed))
+        elif isinstance(processed, list) and processed and processed[0] in ("and", "exists"):
+          # Complex body (conjunction or existential): push normally inward so
+          # that after Skolemization it wraps a single atom (pass 2 handles it).
+          # Use pushed_lits (not regular_lits) to prevent pass-1 re-expansion of
+          # the normally(atom) we just placed deep inside — it has no outer -isa
+          # context yet and would generate a $block with wrong priority.
+          if is_pos:
+            pushed_lits.append(_push_normally_inside(processed))
+          else:
+            # -normally with complex body: expand as certain (negated).
+            regular_lits.append(_expand_normally(processed))
         elif isinstance(processed, list) and processed:
           body_lits.append(processed)
         # else: empty body — skip
@@ -382,14 +423,15 @@ def _expand_normally(frm):
         regular_lits.append(el)
 
     # Recurse into regular literals (may contain nested normally, and/or, …).
+    # pushed_lits are intentionally excluded from this recursion.
     regular_lits = [_expand_normally(el) for el in regular_lits]
 
-    all_lits = regular_lits + body_lits
+    all_lits = regular_lits + pushed_lits + body_lits
     if not all_lits:
       return frm
 
-    # If no normally bodies were extracted (all were complex conjunctions),
-    # return as a plain or-clause.
+    # If no normally bodies were extracted (all were complex conjunctions or
+    # pushed inside exists/and for pass 2), return as a plain or-clause.
     if not body_lits:
       if len(all_lits) == 1:
         return all_lits[0]

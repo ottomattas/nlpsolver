@@ -582,6 +582,15 @@ _PREPOSITIONS = {
 }
 
 
+def _conjugate_verb(v):
+  """Third-person singular present tense of a bare verb (simple heuristic)."""
+  if v.endswith(("s", "sh", "ch", "x", "z")):
+    return v + "es"
+  if v.endswith("y") and len(v) > 1 and v[-2] not in "aeiou":
+    return v[:-1] + "ies"
+  return v + "s"
+
+
 def _entity_name(val, with_url=False):
   """Display name for a logic constant or variable.
 
@@ -732,7 +741,8 @@ def _atom_to_english(atom):
     # ["is rel2", RELATION, ENTITY1, ENTITY2]
     if len(args) >= 3:
       rel = e(0)
-      if rel.lower() in _PREPOSITIONS:
+      last = rel.split()[-1].lower() if rel else ""
+      if rel.lower() in _PREPOSITIONS or last in _PREPOSITIONS or last == "of":
         return e(1) + " is " + rel + " " + e(2)
       return e(1) + " is " + rel + " of " + e(2)
     return _atom_fallback(atom)
@@ -766,6 +776,11 @@ def _atom_to_english(atom):
       ent1  = e(1)
       ent2  = e(2)
       adv, _ = _degree_parts(e(3))
+      last = rel.split()[-1].lower() if rel else ""
+      if last in _PREPOSITIONS or last == "of":
+        return ent1 + " is " + adv + rel + " " + ent2
+      if " " not in rel:
+        return ent1 + " " + adv + _conjugate_verb(rel) + " " + ent2
       return ent1 + " is " + adv + rel + " of " + ent2
     return _atom_fallback(atom)
 
@@ -1021,7 +1036,8 @@ def _atom_to_english_negated(atom):
   if pred == "is rel2":
     if len(args) >= 3:
       rel = e(0)
-      if rel.lower() in _PREPOSITIONS:
+      last = rel.split()[-1].lower() if rel else ""
+      if rel.lower() in _PREPOSITIONS or last in _PREPOSITIONS or last == "of":
         return e(1) + " is not " + rel + " " + e(2)
       return e(1) + " is not " + rel + " of " + e(2)
     return "not: " + _atom_fallback(atom)
@@ -1045,7 +1061,13 @@ def _atom_to_english_negated(atom):
   if pred == "has degree rel2":
     if len(args) >= 4:
       adv, _ = _degree_parts(e(3))
-      return e(1) + " is not " + adv + e(0) + " of " + e(2)
+      rel = e(0)
+      last = rel.split()[-1].lower() if rel else ""
+      if last in _PREPOSITIONS or last == "of":
+        return e(1) + " is not " + adv + rel + " " + e(2)
+      if " " not in rel:
+        return e(1) + " does not " + adv + rel + " " + e(2)
+      return e(1) + " is not " + adv + rel + " of " + e(2)
     return "not: " + _atom_fallback(atom)
 
   # ---- event reification predicates ----
