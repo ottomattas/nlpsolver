@@ -112,13 +112,45 @@ Scalar & Comparative Normalization:
 
 Question Word Transformation:
 
-Transform question words into "Which [Category]" phrases:
-- Who -> "Which person".
-- Where -> "Which place / Which location".
-- When -> "Which time".
-- What -> "Which thing / Which object".
-- How many -> "Which number of / How many"
+Normalize WH-questions into "Which [placeholder]" phrasing ONLY for readability,
+but do NOT introduce semantic type constraints via the placeholder category.
 
+Default placeholders:
+- Who   -> "Which entity"
+- What  -> "Which entity"
+- Which -> keep the stated category if explicitly present (e.g., "Which person", "Which animal")
+- Where -> "Which entity"  (do not force Place/Location unless explicitly stated)
+- When  -> "Which entity"  (do not force Time unless explicitly stated)
+- How many -> keep numeric wording (e.g., "How many ...") and treat the WH variable as an entity/quantity placeholder
+
+Entity annotation rule for WH placeholders:
+- When you introduce a WH placeholder entity (e.g., "entity"), mark it as a placeholder:
+  {"id":"entity","type":"generic","wh_placeholder": true}
+
+Important:
+- Only add a type restriction like "person", "place", "time", etc. if the original question explicitly contains it
+  (e.g., "Which person is an animal?" keeps person), otherwise default to "entity" with wh_placeholder=true.
+
+Question Mark Rule (MANDATORY):
+
+If the raw sentence ends with "?", then the sentence package MUST contain at least one ASU with:
+  "type": "query"
+
+- If the question is a WH-question (who/what/which/where/when/how many), apply the Question Word Transformation rules.
+- Otherwise, treat it as a yes/no question and generate a query ASU that asks whether the full proposition is true.
+
+Conjunctive/Disjunctive Questions:
+- If the sentence is of the form "A and B?" and both parts are asserted together, you may split A and B into separate situation ASUs (per section 2.1),
+  BUT you MUST also add a query ASU asking the combined question "Is A and B?".
+  EXCEPTION: if one branch is the negation of the other (B = "not A"), do NOT split;
+  treat it as a single query ASU (see Negation-complement rule below).
+- If the sentence contains "or/either" (not jointly asserted), keep it inside ONE query ASU (do not split into separate ASUs).
+- Negation-complement rule (MANDATORY):
+  If the question has the form "P or not P?" or "P and not P?" where both sides involve
+  the SAME proposition and its negation, produce EXACTLY ONE query ASU for the whole sentence.
+  Do NOT create any real/situation ASU for either branch.
+  This applies whether P is a simple predicate ("John is a man") or a compound one
+  ("John is a tall man", "John has a car", "John is in Estonia").
 
 == 4. TYPE CLASSIFICATION (ASU.type) ==
 
@@ -290,6 +322,9 @@ Extract only when explicit.
 --- confidence ---
 Include only when not equal to 1.0.
 
+"Most" should give confidence ~0.65-0.70, "many" ~0.50, "some" ~0.30, 
+"usually/normally/generally/almost all" in range 0.8-0.99.
+
 --- time ---
 Include if explicitly stated or required by tense for situation.
 
@@ -331,7 +366,6 @@ Intensity:
 - none
 
 Do NOT add for non-gradable adjectives.
-
 
 == 13. DEFINITE RELATIONAL DESCRIPTIONS ==
 

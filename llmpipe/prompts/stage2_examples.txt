@@ -557,6 +557,128 @@ OUTPUT:
 
 ---
 
+
+INPUT:
+
+[
+  {
+    "raw": "Bears eat most boxers.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "Bears eat most boxers.",
+        "type": "normal_rule",
+        "entities": [
+          {"id": "bears", "type": "generic"},
+          {"id": "boxers", "type": "generic"}
+        ],
+        "confidence": 0.9
+      }
+    ]
+  },
+  {
+    "raw": "Mike is a boxer.",
+    "units": [
+      {
+        "unit_id": "S2",
+        "text": "Mike 1 is a boxer.",
+        "type": "situation",
+        "entities": [
+          {"id": "Mike 1", "type": "concrete"},
+          {"id": "boxer", "type": "generic"}
+        ]
+      }
+    ]
+  },
+  {
+    "raw": "Greg is a bear.",
+    "units": [
+      {
+        "unit_id": "S3",
+        "text": "Greg 2 is a bear.",
+        "type": "situation",
+        "entities": [
+          {"id": "Greg 2", "type": "concrete"},
+          {"id": "bear", "type": "generic"}
+        ]
+      }
+    ]
+  },
+  {
+    "raw": "Bears eat Mike?",
+    "units": [
+      {
+        "unit_id": "S4",
+        "text": "Do bears eat Mike 1?",
+        "type": "query",
+        "entities": [
+          {"id": "bears", "type": "generic"},
+          {"id": "Mike 1", "type": "concrete"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","bear","X"],
+            ["forall","Y",
+              ["implies",
+                ["isa","boxer","Y"],
+                ["normally",
+                  ["exists","E",
+                    ["and",
+                      ["isa","activity","E"],
+                      ["has type","E","eat"],
+                      ["has actor","E","X"],
+                      ["has target","E","Y"],
+                      ["typical","E"]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      ["@p","S1",0.9]
+    ]
+  ],
+  ["@id","S2",
+    ["holds","W0",["isa","boxer","Mike 1"]]
+  ],
+  ["@id","S3",
+    ["holds","W0",["isa","bear","Greg 2"]]
+  ],
+  ["@id","S4",
+    ["question",
+      ["exists","X",
+        ["and",
+          ["isa","bear","X"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","eat"],
+              ["has actor","E","X"],
+              ["has target","E","Mike 1"],
+              ["typical","E"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+]
+
+---
+
 INPUT:
 
 [
@@ -708,20 +830,47 @@ INPUT:
 
 INPUT:
 
+[{
+  "raw": "Who likes Mike?",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Which entity likes Mike 1?",
+      "type": "query",
+      "entities": [
+        {"id": "entity","type": "generic","wh_placeholder": true},
+        {"id": "Mike 1","type": "concrete"}
+      ],
+      "gradables": [["like", "none", "person"]]
+    }
+  ]
+}]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["ask","X",
+      ["has degree rel2","like","X","Mike 1","none","person"]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
 [
   {
-    "raw":"Who likes Mike?",
-    "units":[
+    "raw": "Where is John?",
+    "units": [
       {
-        "unit_id":"S1",
-        "text":"Which person likes Mike 1?",
-        "type":"query",
-        "entities":[
-          {"id":"person","type":"generic"},
-          {"id":"Mike 1","type":"concrete"}
-        ],
-        "gradables":[
-          ["like","none","person"]
+        "unit_id": "S1",
+        "text": "Which entity is John 1 located in?",
+        "type": "query",
+        "entities": [
+          {"id": "entity","type": "generic","wh_placeholder": true},
+          {"id": "John 1","type": "concrete"}
         ]
       }
     ]
@@ -733,9 +882,43 @@ OUTPUT:
 ["and",
   ["@id","S1",
     ["ask","X",
-      ["and",
-        ["isa","person","X"],
-        ["has degree rel2","like","X","Mike 1","none","person"]
+      ["is rel2","located in","John 1","X"]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
+[
+  {
+    "raw": "Which person owns a car?",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "Which person owns a car?",
+        "type": "query",
+        "entities": [
+          {"id": "person","type": "generic"},
+          {"id": "car","type": "generic","scope":"dependent"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["ask","X",
+      ["exists","Y",
+        ["and",
+          ["isa","person","X"],
+          ["isa","car","Y"],
+          ["have","X","Y"]
+        ]
       ]
     ]
   ]
@@ -1775,18 +1958,13 @@ INPUT:
 
 OUTPUT:
 
-["@id", "S1",
-  ["holds", "W0",
-    ["forall", "X",
-      ["implies",
-        ["isa", "student", "X"],
-        ["exists", "E",
-          ["and",
-            ["isa", "activity", "E"],
-            ["has type", "E", "study"],
-            ["has actor", "E", "X"],
-            ["typical", "E"] 
-          ]
+["and",
+  ["@id","S1",
+    ["holds","W0",
+      ["forall","X",
+        ["implies",
+          ["isa","student","X"],
+          ["normally",["typically","X","study"]]
         ]
       ]
     ]

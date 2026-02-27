@@ -44,6 +44,12 @@
 
   [["-do2","?:W","?:X","?:Y","?:Z", "?:CT"], ["do1","?:W","?:X","?:Z", "?:CT"]],
 
+  // Bridge axioms for new-pipeline habitual activity predicates:
+  // typical(E) + has_type(E,V) + has_actor(E,X)  =>  typically(X,V)
+  // typically(X,V)  =>  can(X,V)
+  [["-typical","?:E"],["-has type","?:E","?:V"],["-has actor","?:E","?:X"],["typically","?:X","?:V"]],
+  [["-typically","?:X","?:V"],["can","?:X","?:V"]],
+
   {"@logic": [["do1","?:W","?:X","?:Z", "?:CT"], ["-can1","?:W","?:X","?:Z", "?:CT"]], "@confidence": 0.15},  
   {"@logic": [["do2","?:W","?:X","?:Y","?:Z", "?:CT"], ["-can2","?:W","?:X","?:Y","?:Z", "?:CT"]], "@confidence": 0.15},
 

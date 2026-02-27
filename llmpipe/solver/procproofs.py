@@ -37,6 +37,14 @@ _ambiguous_url_names = set()
 # Reset per proof by _compute_skolem_types().
 _skolem_types = {}
 
+# Maps from str(skolem_function_term) to verb/actor/target strings,
+# derived by scanning proof steps for has_type/has_actor/has_target atoms
+# whose subject is a Skolem function (a list starting with sk\d+).
+# Reset per proof by _compute_skolem_types().
+_skolem_fn_verbs   = {}   # str(term) -> verb string  (e.g. "eat")
+_skolem_fn_actors  = {}   # str(term) -> actor string (e.g. "Greg 2")
+_skolem_fn_targets = {}   # str(term) -> target string (e.g. "Mike 1")
+
 
 # ======== main entry point ========
 
@@ -294,15 +302,29 @@ def _scan_constants(obj, base_numbers, url_names):
       _scan_constants(v, base_numbers, url_names)
 
 
-def _compute_skolem_types(proof):
-  """Scan proof steps for isa(TYPE, skN) atoms and populate _skolem_types.
+def _is_skolem_fn(val):
+  """Return True if val is a Skolem function term: a list whose first element
+  matches sk\\d+ (e.g. ["sk0", "Greg 2", "Mike 1"])."""
+  return (isinstance(val, list) and val and
+          isinstance(val[0], str) and re.match(r'^sk\d+$', val[0]))
 
-  Called once per proof before rendering so that Skolem constants can be
-  displayed as "some TYPE skN" (e.g. sk0 -> "some animal sk0").
-  Only the first isa fact for each skN is kept.
+
+def _compute_skolem_types(proof):
+  """Scan proof steps and populate Skolem lookup tables.
+
+  _skolem_types      : skN (string constant) -> type string from isa(TYPE,skN)
+  _skolem_fn_verbs   : str(fn_term) -> verb   from has_type(fn_term, VERB)
+  _skolem_fn_actors  : str(fn_term) -> actor  from has_actor(fn_term, ACTOR)
+  _skolem_fn_targets : str(fn_term) -> target from has_target(fn_term, TARGET)
+
+  Called once per proof before rendering.  Only the first fact for each key
+  is kept.
   """
-  global _skolem_types
-  _skolem_types = {}
+  global _skolem_types, _skolem_fn_verbs, _skolem_fn_actors, _skolem_fn_targets
+  _skolem_types     = {}
+  _skolem_fn_verbs  = {}
+  _skolem_fn_actors = {}
+  _skolem_fn_targets = {}
   for step in proof:
     clause = step[2] if len(step) > 2 else []
     if not isinstance(clause, list):
@@ -310,8 +332,20 @@ def _compute_skolem_types(proof):
     for atom in clause:
       if not isinstance(atom, list) or len(atom) < 3:
         continue
-      if atom[0] == "isa" and isinstance(atom[2], str) and re.match(r'^sk\d+$', atom[2]):
+      pred = atom[0]
+      # isa(TYPE, skN) — for simple Skolem constants
+      if pred == "isa" and isinstance(atom[2], str) and re.match(r'^sk\d+$', atom[2]):
         _skolem_types.setdefault(atom[2], str(atom[1]))
+      # has_type / has_actor / has_target where subject is a Skolem function
+      elif pred == "has type" and _is_skolem_fn(atom[1]):
+        key = str(atom[1])
+        _skolem_fn_verbs.setdefault(key, str(atom[2]))
+      elif pred == "has actor" and _is_skolem_fn(atom[1]):
+        key = str(atom[1])
+        _skolem_fn_actors.setdefault(key, str(atom[2]))
+      elif pred == "has target" and _is_skolem_fn(atom[1]):
+        key = str(atom[1])
+        _skolem_fn_targets.setdefault(key, str(atom[2]))
 
 
 def _extract_url_name(url):
@@ -414,6 +448,16 @@ def _format_explanation(answers, sentence_map, show_logic=False):
     for step in proof:
       step_lines.append(_format_step(step, sent_nr, show_logic=show_logic))
 
+    # Append exceptions section from answer-level blockers (grounded constants).
+    blockers = ans.get("blockers", [])
+    if blockers:
+      blocker_strs = [_block_to_english(blk) for blk in blockers]
+      blocker_strs = [s for s in blocker_strs if s]
+      if blocker_strs:
+        step_lines.append("Exceptions checked and not holding:")
+        for bs in blocker_strs:
+          step_lines.append("  " + bs)
+
     block = "\n".join(sent_lines) + "\n" + "\n".join(step_lines)
 
     if multi:
@@ -464,7 +508,7 @@ def _format_step(step, sent_nr, show_logic=False):
   why_str    = _format_why(reason, sent_nr)
   line       = "  (" + str(nr) + ") " + clause_str + "  [" + why_str + "]"
   if show_logic:
-    line += "\n        " + str(clause)
+    line += "\n        " + _format_clause_logic(clause)
   return line
 
 
@@ -512,6 +556,38 @@ def _answer_label(val):
 # Negated atoms are rendered as "if" conditions; positive atoms as "then" consequences.
 # _atom_to_english handles every predicate in the stage-2 whitelist.
 
+def _block_to_english(block_atom):
+  """Render a $block atom as an English exception string.
+
+  Structure: ["$block", PRIORITY, ["$not", INNER_ATOM]]
+  Returns the negated rendering of INNER_ATOM (e.g. "John cannot fly"),
+  or "" if the atom is malformed.
+  """
+  if not isinstance(block_atom, list) or len(block_atom) < 3:
+    return ""
+  inner = block_atom[2]
+  if (isinstance(inner, list) and inner and inner[0] == "$not"
+      and len(inner) > 1 and isinstance(inner[1], list)):
+    return _atom_to_english_negated(inner[1])
+  if isinstance(inner, list):
+    return _atom_to_english(inner)
+  return str(inner)
+
+
+def _format_clause_logic(clause):
+  """Format a proof clause for logic display: compact JSON, no spaces inside
+  atoms, one space between atoms.  A single-atom clause is unwrapped."""
+  if clause is False or clause is None:
+    return "false"
+  if not isinstance(clause, list):
+    return json.dumps(clause, ensure_ascii=False)
+  if len(clause) == 1:
+    return json.dumps(clause[0], separators=(',', ':'), ensure_ascii=False)
+  return "[" + ", ".join(
+    json.dumps(a, separators=(',', ':'), ensure_ascii=False) for a in clause
+  ) + "]"
+
+
 def _clause_to_str(clause):
   """Convert a proof clause to a human-readable if-then English string."""
   if clause is False or clause is None:
@@ -528,15 +604,20 @@ def _clause_to_str(clause):
     else:
       return "assume for contradiction: no such answer exists"
 
-  conditions   = []   # positively-rendered negated atoms -> "if ..."
-  neg_atoms    = []   # base atoms (pred without "-") for pure-negative rendering
-  consequences = []   # positively-rendered positive atoms -> "then ..."
+  conditions    = []   # positively-rendered negated atoms -> "if ..."
+  neg_atoms     = []   # base atoms (pred without "-") for pure-negative rendering
+  consequences  = []   # positively-rendered positive atoms -> "then ..."
+  blocker_texts = []   # "except when ..." rendered from $block atoms
 
   for atom in clause:
     if not isinstance(atom, list) or not atom:
       continue
     pred = str(atom[0])
-    if pred == "$ans":
+    if pred == "$block":
+      bt = _block_to_english(atom)
+      if bt:
+        blocker_texts.append(bt)
+    elif pred == "$ans":
       consequences.append(_ans_atom_name(atom) + " is an answer")
     elif pred.startswith("-"):
       base = [pred[1:]] + list(atom[1:])
@@ -546,19 +627,28 @@ def _clause_to_str(clause):
       consequences.append(_atom_to_english(atom))
 
   if conditions and consequences:
-    return "if " + " and ".join(conditions) + " then " + " or ".join(consequences)
-  if consequences:
-    return " or ".join(consequences)
-  if conditions:
+    result = "if " + " and ".join(conditions) + " then " + " or ".join(consequences)
+  elif consequences:
+    result = " or ".join(consequences)
+  elif conditions:
     if len(conditions) == 1:
       # Single negated atom: render in natural negated form.
-      return _atom_to_english_negated(neg_atoms[0])
+      result = _atom_to_english_negated(neg_atoms[0])
     else:
       # Multi-atom pure-negative clause ¬A₁ ∨ … ∨ ¬Aₙ is logically equivalent
       # to A₁ ∧ … ∧ Aₙ₋₁ → ¬Aₙ.  Render as "if A₁ and … then not-Aₙ".
-      return ("if " + " and ".join(conditions[:-1]) +
-              " then " + _atom_to_english_negated(neg_atoms[-1]))
-  return "(empty)"
+      result = ("if " + " and ".join(conditions[:-1]) +
+                " then " + _atom_to_english_negated(neg_atoms[-1]))
+  elif blocker_texts:
+    # Clause is purely $block atoms — the exception condition itself was derived.
+    return "exception holds: " + " and ".join(blocker_texts)
+  else:
+    result = "(empty)"
+
+  if blocker_texts:
+    result += ", except when " + " and ".join(blocker_texts)
+
+  return result
 
 
 # ---- entity name helper ----
@@ -591,9 +681,68 @@ def _conjugate_verb(v):
   return v + "s"
 
 
+def _to_gerund(verb):
+  """Return the gerund (-ing) form of a bare verb (simple heuristic).
+
+  eat->eating, bark->barking, run->running, bite->biting, study->studying.
+  """
+  if not verb:
+    return verb + "ing"
+  # lie/die -> lying/dying
+  if verb.endswith("ie"):
+    return verb[:-2] + "ying"
+  # bake/bite/save -> baking/biting/saving  (drop silent e, but not ee/oe)
+  if (verb.endswith("e") and len(verb) > 2
+      and verb[-2] not in "aeiou" and not verb.endswith("ee")):
+    return verb[:-1] + "ing"
+  # run/sit/get -> running/sitting/getting  (CVC, double final consonant)
+  vowels = "aeiou"
+  if (len(verb) >= 3
+      and verb[-1] not in vowels + "wxyhz"
+      and verb[-2] in vowels
+      and verb[-3] not in vowels):
+    return verb + verb[-1] + "ing"
+  return verb + "ing"
+
+
+def _skolem_fn_to_name(term):
+  """Render a Skolem function term ["sk0", arg1, arg2, ...] as English.
+
+  Uses _skolem_fn_verbs / _skolem_fn_actors / _skolem_fn_targets (populated by
+  _compute_skolem_types) to describe the reified event.
+
+  Examples:
+    ["sk0","Greg 2","Mike 1"]  -> "the eating by Greg of Mike"
+    ["sk0","?:X","Mike 1"]     -> "the eating of Mike"
+    ["sk0","?:X","?:Y"]        -> "the eating event"
+    (no verb found)            -> "the event"
+  """
+  key  = str(term)
+  verb = _skolem_fn_verbs.get(key)
+  if not verb:
+    return "the event"
+  gerund = _to_gerund(verb)
+
+  actor_raw  = _skolem_fn_actors.get(key, "")
+  target_raw = _skolem_fn_targets.get(key, "")
+
+  # Only use ground (non-variable) actor/target in the description
+  actor  = actor_raw  if actor_raw  and not actor_raw.startswith("?:") else ""
+  target = target_raw if target_raw and not target_raw.startswith("?:") else ""
+
+  if actor and target:
+    return "the " + gerund + " by " + _entity_name(actor) + " of " + _entity_name(target)
+  if actor:
+    return "the " + gerund + " by " + _entity_name(actor)
+  if target:
+    return "the " + gerund + " of " + _entity_name(target)
+  return "the " + gerund + " event"
+
+
 def _entity_name(val, with_url=False):
   """Display name for a logic constant or variable.
 
+  - Skolem functions (lists)  -> "the eating by Greg of Mike" etc.
   - Variables (?:X)           -> strip prefix -> "X"
   - URL constants             -> extract last path segment ->
                                    "Paris" or "Paris (https://...)" depending
@@ -608,6 +757,8 @@ def _entity_name(val, with_url=False):
   with_url=False : omit URL unless the display name is ambiguous
                    (used in answer line for readability)
   """
+  if _is_skolem_fn(val):
+    return _skolem_fn_to_name(val)
   if not isinstance(val, str):
     return str(val)
   if val.startswith("?:"):
@@ -701,8 +852,7 @@ def _atom_to_english(atom):
     """Display name of args[i] — always with URL appended for URL constants."""
     if i >= len(args):
       return "?"
-    v = args[i]
-    return _entity_name(v, with_url=True) if isinstance(v, str) else str(v)
+    return _entity_name(args[i], with_url=True)
 
   # ---- core predicates ----
 
@@ -838,6 +988,12 @@ def _atom_to_english(atom):
     # ["typical", EVENT]
     if len(args) >= 1:
       return e(0) + " is typical"
+    return "typically"
+
+  if pred == "typically":
+    # ["typically", ENTITY, VERB]
+    if len(args) >= 2:
+      return e(0) + " typically " + _conjugate_verb(str(args[1]))
     return "typically"
 
   # ---- state / world predicates ----
@@ -1005,8 +1161,7 @@ def _atom_to_english_negated(atom):
 
   def e(i):
     if i >= len(args): return "?"
-    v = args[i]
-    return _entity_name(v, with_url=True) if isinstance(v, str) else str(v)
+    return _entity_name(args[i], with_url=True)
 
   # ---- core predicates ----
 
@@ -1116,6 +1271,11 @@ def _atom_to_english_negated(atom):
     if len(args) >= 1:
       return e(0) + " is not typical"
     return "not typical"
+
+  if pred == "typically":
+    if len(args) >= 2:
+      return e(0) + " does not typically " + str(args[1])
+    return "not typically"
 
   # ---- state / world predicates ----
 

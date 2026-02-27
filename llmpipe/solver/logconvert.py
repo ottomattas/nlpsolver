@@ -977,7 +977,7 @@ def _populate_clauses(items):
 # is the RELCLASS (to be replaced when it doesn't match the entity's known class).
 _degree_preds_relclass = {
   "has degree property": (2, 4),   # [pred, PROP, ENTITY, DEGREE, RELCLASS]
-  "has degree rel2":     (2, 5),   # [pred, REL, E1, E2, DEGREE, RELCLASS]
+  "has degree rel2":     (2, 5),   # [pred, REL, E1, E2, DEGREE, RELCLASS] — RELCLASS describes E1
 }
 
 

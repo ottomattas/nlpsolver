@@ -115,48 +115,68 @@ Each PACKAGE must contain:
 Default state:
 W = ASU.pre_state else "W0"
 
-
 == 2. ENTITY HANDLING ==
 
 2.1 Concrete Entities
 
 If entity.type == "concrete":
-- Do NOT introduce a variable.
-- Use entity.id as the constant symbol.
-- If url exists, use the url instead of the id as the constant symbol.
 
-Do NOT depend on entity.text for constant naming.
+1. Do NOT introduce a variable.
+2. Use entity.id as the constant symbol.
+3. If entity.url exists, use the url instead of entity.id as the constant symbol.
+4. Do NOT depend on entity.text for constant naming.
+
 
 2.2 Generic Entities
 
-If entity.type == generic:
-Quantification and variable introduction are strictly determined by the scope (see 2.3).
+If entity.type == "generic":
 
-If scope == "kind":
-- Treat the id as a constant symbol.
-- Do NOT introduce a variable.
-- Do NOT bind it with quantifiers.
+A. scope == "kind"
 
-For all other generic types (dependent, global, or unspecified):
-- Introduce exactly one fresh variable per generic entity.
-- Replace the entity id with that variable everywhere in the compiled content of the ASU.
-- Bind the variable according to the specific scoping rules defined in Section 2.3.
+1. Treat entity.id as a constant symbol.
+2. Do NOT introduce a variable.
+3. Do NOT bind it with quantifiers.
 
-Variable names:
-- Entities: X, Y, Z, X1, Y1, Z1  
-- Events: E, E1, E2
-- Sets: S, S1, S2
+B. entity.wh_placeholder == true
+
+1. Introduce exactly one fresh variable.
+2. Use that variable as the WH variable in the query.
+3. Do NOT generate any constraint of the form:
+     ["isa", entity.id, VAR]
+4. Ignore entity.id entirely during compilation.
+5. Do NOT treat entity.id as an ontology class.
+6. Do NOT introduce additional quantifiers beyond those required by the query type.
+
+This rule overrides normal generic handling for WH placeholders.
+
+C. All other generic entities
+
+1. Introduce exactly one fresh variable.
+2. Replace the entity id with that variable everywhere in the compiled content of the ASU.
+3. Bind the variable according to Section 2.3 (GENERIC SCOPE RULES).
+
+
+Variable Naming Rules:
+
+- Entity variables: X, Y, Z, X1, Y1, Z1
+- Event variables: E, E1, E2
+- Set variables: S, S1, S2
 - Knowledge bases: K_Sx
-- Numeric/Scalar Values: N (counts) and V (measure, cost, attribute values)
+- Numeric values:
+    - N for counts
+    - V for scalar measurements
+
+Rules:
+
+- Each generic entity introduces exactly one variable unless scope == "kind".
+- Do NOT reuse variables.
+- All variables must be bound.
+- Do NOT add quantifiers beyond those required by scope rules.
 
 
-== 2.3 GENERIC SCOPE RULES ==
+2.3 GENERIC SCOPE RULES
 
-For entity.type == "generic", the quantification pattern and binding location depend on the scope:
-
---- scope == "kind" ---
-
-Treat entity.id as a constant symbol.
+For entity.type == "generic" and not scope == "kind" and not wh_placeholder:
 
 --- scope == "dependent" ---
 
@@ -205,11 +225,11 @@ Canonical pattern:
 ]
 
 GENERAL RULES:
-- Each generic introduces exactly one variable (unless kind).
+
+- Each generic introduces exactly one variable.
 - Do NOT reuse variables.
 - All variables must be bound.
 - Do NOT add quantifiers beyond those required.
-
 
 == 3. MAIN ASSERTION COMPILATION ==
 
@@ -237,8 +257,50 @@ Case A -- Non-activity default:
 Wrap rule body in ["normally", BODY]
 
 Case B -- Habitual activity / action:
-Introduce an event E, and add the predicate ["typical", E] within the existential scope.
-Wrap under universal.
+
+Track 1 (simple form) -- use when the activity has NO object and NO event modifiers
+(no location, instrument, manner, target, direction):
+
+  ["forall","X",
+    ["implies",
+      ANTE,
+      ["normally", ["typically","X",VERB]]
+    ]
+  ]
+
+Track 2 (Davidsonian form) -- use when the activity HAS an object or ANY event modifier:
+
+  ["forall","X",
+    ["implies",
+      ANTE,
+      ["normally",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E",VERB],
+            ["has actor","E","X"],
+            ...optional modifiers (has target, has location, etc.)...,
+            ["typical","E"]
+          ]
+        ]
+      ]
+    ]
+  ]
+
+  CRITICAL: ["typical","E"] MUST always be the LAST conjunct in the event "and".
+  It is the defeasible anchor; the $block is placed on it.
+
+Questions about an activity stated as a normal_rule:
+- Track 1 question: ["question", ["typically", ENTITY, VERB]]
+- Track 2 question: include ["typical","E"] as the LAST conjunct in the "and".
+  WITHOUT ["typical","E"] in the question, defeasibility is bypassed and the
+  proof uses strict resolution, ignoring any overrides.
+
+Case C -- Two-entity interaction rule (subject acts on object from independent class):
+When a normal_rule has TWO generic entities and the object entity is an independently-
+existing class member (not a new entity born per subject), use DOUBLE FORALL.
+Examples: "Bears eat most boxers", "Cats chase mice".
+Non-example: "Dogs have tails".
 
 situation / real
 - If generics exist -> bind with exists.
@@ -295,6 +357,7 @@ Do NOT invent new predicates.
 ["has direction", E, DIRECTION]
 ["has time", E, TIME]
 ["typical", E]
+["typically", ENTITY, VERB]
 
 --- State / World Predicates ---
 
