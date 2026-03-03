@@ -39,8 +39,23 @@
 #-------------------------------------------------------------------
 
 import re
+import os as _os
 
 from globals import options as _g_options
+
+
+# ======== gradable property whitelist ========
+
+def _load_gradable_props():
+  """Load solver/gradables.txt into a frozenset of lowercase property names."""
+  try:
+    path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "gradables.txt")
+    with open(path) as f:
+      return frozenset(line.strip().lower() for line in f if line.strip())
+  except Exception:
+    return frozenset()
+
+_GRADABLE_PROPS = _load_gradable_props()
 
 # Logical connectives that are NOT predicates.
 _connectives = {"and", "or", "not", "implies", "equivalent", "xor", "forall", "exists"}
@@ -138,6 +153,14 @@ def rawlogic_convert(logic, s1_json=None):
       ctxt = ["$ctxt", _fresh_fv(), _fresh_fv(), _fresh_fv(), _fresh_fv()]
       _inject_ctxt_into_objs([fact], ctxt)
 
+  # Normalize has property / has degree property based on the gradable whitelist.
+  # Must run before _coerce_relclass so relclass coercion sees the correct predicate.
+  _normalize_gradable_predicates(result)
+
+  # Remove isa/entity literals: positive ones make a clause a tautology (remove
+  # the whole clause); negative ones are always false (remove just the literal).
+  _strip_isa_entity(result)
+
   # Fix RELCLASS mismatches in question degree-predicate atoms.
   _coerce_relclass(result)
 
@@ -145,6 +168,12 @@ def rawlogic_convert(logic, s1_json=None):
   # their non-gradable equivalents so the prover sees simpler atoms.
   if _g_options.get("noproptypes_flag", False):
     _strip_degree_predicates(result)
+
+  # Strip @sourcetype before handing the clause list to the prover;
+  # it is an internal annotation only needed during logconvert processing.
+  for obj in result:
+    if isinstance(obj, dict):
+      obj.pop("@sourcetype", None)
 
   return result
 
@@ -1342,6 +1371,141 @@ def _flatten_q_atoms(frm, varmap):
 
   # Atom or other formula (or, not, …) — apply varmap, return as one item.
   return [_apply_varmap(frm, varmap)]
+
+
+# ======== gradable predicate normalization ========
+
+def _normalize_gradable_predicates(result):
+  """Normalize has property / has degree property atoms based on _GRADABLE_PROPS.
+
+  For every atom in @logic and @question entries:
+    - "has degree property" where PROP not in whitelist
+        → "has property" (DEGREE and RELCLASS dropped; $ctxt preserved)
+    - "has property" where PROP is in whitelist
+        → "has degree property" with DEGREE="none", RELCLASS=fresh_var ($ctxt preserved)
+    - "has degree property" where PROP is in whitelist and RELCLASS == "entity"
+        → RELCLASS replaced with a fresh free variable ("entity" is universal
+          and blocks unification against specific-class annotations like "person")
+
+  This ensures consistent predicate names across rules, facts, and queries
+  regardless of whether Stage 1/Stage 2 emitted adjectives annotations.
+  Modifies result in place.
+  """
+  if not _GRADABLE_PROPS:
+    return result
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    if "@logic" in obj:
+      obj["@logic"] = _norm_grad_frm(obj["@logic"])
+    if "@question" in obj:
+      obj["@question"] = _norm_grad_frm(obj["@question"])
+  return result
+
+
+def _norm_grad_frm(frm):
+  """Recursively normalize one formula or GK clause for gradable predicates."""
+  if not isinstance(frm, list) or not frm:
+    return frm
+
+  first = frm[0]
+
+  # GK disjunctive clause: first element is itself a list — recurse into each atom.
+  if isinstance(first, list):
+    return [_norm_grad_frm(a) for a in frm]
+
+  if not isinstance(first, str):
+    return frm
+
+  pred = first
+  neg  = pred.startswith("-")
+  base = pred[1:] if neg else pred
+  pfx  = "-" if neg else ""
+
+  if base == "has degree property" and len(frm) >= 5:
+    # ["has degree property", PROP, ENTITY, DEGREE, RELCLASS, optional_$ctxt]
+    prop = frm[1]
+    if isinstance(prop, str) and prop.lower() not in _GRADABLE_PROPS:
+      # Strip to has property; preserve $ctxt at position 5 if present.
+      new_atom = [pfx + "has property", frm[1], frm[2]]
+      if len(frm) >= 6:
+        new_atom.append(frm[5])
+      return new_atom
+    # Keep as degree property; replace "entity" relclass with a free variable
+    # since "entity" is universally true and carries no useful constraint.
+    relclass = frm[4]
+    if relclass == "entity":
+      new_atom = [frm[0], frm[1], frm[2], frm[3], _fresh_fv()]
+      if len(frm) >= 6:
+        new_atom.append(frm[5])
+      return new_atom
+
+  elif base == "has property" and len(frm) >= 3:
+    # ["has property", PROP, ENTITY, optional_$ctxt]
+    prop = frm[1]
+    if isinstance(prop, str) and prop.lower() in _GRADABLE_PROPS:
+      # Upgrade to has degree property; use a free variable for relclass
+      # (avoids spurious "entity" constant that can block unification).
+      new_atom = [pfx + "has degree property", frm[1], frm[2], "none", _fresh_fv()]
+      if len(frm) >= 4:
+        new_atom.append(frm[3])
+      return new_atom
+
+  # Logical connectives / quantifiers: recurse into sub-formulas.
+  return [frm[0]] + [_norm_grad_frm(a) if isinstance(a, list) else a
+                     for a in frm[1:]]
+
+
+# ======== isa-entity stripping ========
+
+def _strip_isa_entity(result):
+  """Remove all isa/entity literals from the clause list.
+
+  Since "entity" is the universal base type (everything is an entity), the
+  literal ["isa","entity",X] is always true and ["-isa","entity",X] is always
+  false.  Keeping them causes spurious unification failures when a rule that
+  uses a generic variable (annotated as entity) tries to match a concrete fact.
+
+  Rules:
+    - Any clause containing a POSITIVE ["isa","entity",X] literal is a
+      tautology → remove the entire clause dict.
+    - Any ["-isa","entity",X] literal is always false → remove just the
+      literal from its clause.  If the clause becomes empty after removal,
+      remove the entire clause dict.
+
+  Only @logic dicts are touched; @question dicts are left unchanged.
+  Modifies result in place and returns it.
+  """
+  def _is_pos_isa_entity(lit):
+    return (isinstance(lit, list) and len(lit) >= 3
+            and lit[0] == "isa" and lit[1] == "entity")
+
+  def _is_neg_isa_entity(lit):
+    return (isinstance(lit, list) and len(lit) >= 3
+            and lit[0] == "-isa" and lit[1] == "entity")
+
+  keep = []
+  for obj in result:
+    if not isinstance(obj, dict) or "@logic" not in obj:
+      keep.append(obj)
+      continue
+    clause = obj["@logic"]
+    # Unit atom (single literal, not a list-of-lists).
+    if clause and not isinstance(clause[0], list):
+      if _is_pos_isa_entity(clause) or _is_neg_isa_entity(clause):
+        continue          # drop entire clause dict
+      keep.append(obj)
+      continue
+    # Disjunctive clause (list of literal lists).
+    if any(_is_pos_isa_entity(lit) for lit in clause):
+      continue            # tautology → drop entire clause dict
+    filtered = [lit for lit in clause if not _is_neg_isa_entity(lit)]
+    if not filtered:
+      continue            # empty clause after removal → drop
+    obj["@logic"] = filtered
+    keep.append(obj)
+  result[:] = keep
+  return result
 
 
 # ======== degree-predicate stripping (noproptypes_flag) ========

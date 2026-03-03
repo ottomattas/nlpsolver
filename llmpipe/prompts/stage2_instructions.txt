@@ -39,7 +39,7 @@ Optional ASU fields:
 - "confidence": float
 - "time": string or structured list
 - "location": entity id
-- "gradables": list of [word, degree, relclass]
+- "adjectives": list of [word, degree, relclass]
 - "mental_holder": string
 - "mental_attitude": string
 - "epistemic_force": "factive" | "non_factive" | "counterfactual"
@@ -345,6 +345,30 @@ Do NOT invent new predicates.
 ["is rel2", RELATION, ENTITY1, ENTITY2]
 ["can", ENTITY, ACTION]
 
+--- Property and Relation Predicate Selection Rule (MANDATORY) ---
+
+For each property word in the ASU text:
+- If the word appears in ASU.adjectives:
+    Use ["has degree property", WORD, ENTITY, DEGREE, RELCLASS]
+    where DEGREE and RELCLASS come from the matching adjectives entry.
+    Do NOT also emit ["has property"] for the same word.
+- If the word does NOT appear in ASU.adjectives (or adjectives is absent):
+    Use ["has property", WORD, ENTITY]
+    Do NOT use ["has degree property"] for this word.
+
+Never emit both ["has property"] and ["has degree property"] for the same word.
+
+For each binary relation word in the ASU text:
+- If the word appears in ASU.adjectives:
+    Use ["has degree rel2", WORD, ENTITY1, ENTITY2, DEGREE, RELCLASS]
+    where DEGREE and RELCLASS come from the matching adjectives entry.
+    Do NOT also emit ["is rel2"] for the same word.
+- If the word does NOT appear in ASU.adjectives (or adjectives is absent):
+    Use ["is rel2", WORD, ENTITY1, ENTITY2]
+    Do NOT use ["has degree rel2"] for this word.
+
+Never emit both ["is rel2"] and ["has degree rel2"] for the same word.
+
 --- Event Reification Predicates ---
 
 ["isa", "activity", E]
@@ -414,7 +438,7 @@ If ASU.next_state exists:
 - strict_rule -> never normally
 - normal_rule -> normally or typically
 - can only when explicit
-- Degree only if gradables provided
+- has degree property iff word in adjectives; has property otherwise; never both; same rule applies to has degree rel2 vs is rel2
 - Mental only if provided
 - Sets only when required
 - URLs substituted everywhere
