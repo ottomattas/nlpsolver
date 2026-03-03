@@ -1354,6 +1354,21 @@ INPUT:
         "time":"past"
       }
     ]
+  },
+  {
+    "raw":"Was the elephant strong before it lifted the stone?",
+    "units":[
+      {
+        "unit_id":"S3",
+        "text":"Was An elephant 1 strong before lifting the stone 2?",
+        "type":"query",
+        "entities":[
+          {"id":"An elephant 1","type":"concrete"}
+        ],
+        "gradables":[["strong","none","elephant"]],
+        "pre_state":"W0"
+      }
+    ]
   }
 ]
 
@@ -1390,8 +1405,96 @@ OUTPUT:
       ],
       ["next","W0","W1"]
     ]
+  ],
+  ["@id","S3",
+    ["and",
+      ["question",
+        ["and",
+          ["isa","elephant","An elephant 1"],
+          ["has degree property","strong","An elephant 1","none","elephant"]
+        ]
+      ],
+      ["@world","W0"]
+    ]
   ]
 ]
+
+-------
+
+INPUT:
+
+[
+  {
+    "raw": "John bought a car.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "John 1 bought a car 2.",
+        "type": "situation",
+        "entities": [
+          {"id": "John 1", "type": "concrete"},
+          {"id": "car 2", "type": "concrete"}
+        ],
+        "pre_state": "W0",
+        "next_state": "W1",
+        "time": "past"
+      }
+    ]
+  },
+  {
+    "raw": "Does he have the car now?",
+    "units": [
+      {
+        "unit_id": "S2",
+        "text": "Does John 1 have the car 2 now?",
+        "type": "query",
+        "entities": [
+          {"id": "John 1", "type": "concrete"},
+          {"id": "car 2", "type": "concrete"}
+        ],
+        "pre_state": "W1",
+        "time": "present"
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["and",
+          ["isa","car","car 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","buy"],
+              ["has actor","E","John 1"],
+              ["has target","E","car 2"],
+              ["has time","E","past"]
+            ]
+          ]
+        ]
+      ],
+      ["next","W0","W1"]
+    ]
+  ],
+  ["@id","S2",
+    ["and",
+      ["question",
+        ["and",
+          ["isa","car","car 2"],
+          ["have","John 1","car 2"]
+        ]
+      ],
+      ["@world","W1"],
+      ["@tense","present"]
+    ]
+  ]
+]
+
 
 -------
 INPUT:
@@ -1521,6 +1624,19 @@ INPUT:
         "time": ["relative","+1 hour","W1"]
       }
     ]
+  },
+  {
+    "raw": "Did John ever wake up?",
+    "units": [
+      {
+        "unit_id": "S3",
+        "text": "Did John 1 wake up at some point?",
+        "type": "query",
+        "entities": [
+          {"id":"John 1","type":"concrete"}
+        ]
+      }
+    ]
   }
 ]
 
@@ -1557,6 +1673,18 @@ OUTPUT:
         ]
       ],
       ["next","W1","W2"]
+    ]
+  ],
+
+  ["@id","S3",
+    ["question",
+      ["exists","E",
+        ["and",
+          ["isa","activity","E"],
+          ["has type","E","wake up"],
+          ["has actor","E","John 1"]
+        ]
+      ]
     ]
   ]
 
@@ -2117,4 +2245,101 @@ OUTPUT:
     ["holds","W0",["forall","X",["implies",["isa","penguin","X"],["normally",["is rel2","live in","X","https://en.wikipedia.org/wiki/Southern_Hemisphere"]]]]],
     ["@p","S6",0.99]
   ]]
+]
+
+
+-----------
+
+INPUT:
+
+[
+  {
+    "raw": "John had a ball.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "John 1 had a ball 2.",
+        "type": "situation",
+        "entities": [
+          {"id": "John 1", "type": "concrete"},
+          {"id": "ball 2", "type": "concrete"}
+        ],
+        "time": "past"
+      }
+    ]
+  },
+  {
+    "raw": "John gave the ball to Peter.",
+    "units": [
+      {
+        "unit_id": "S2",
+        "text": "John 1 gave the ball 2 to Peter 3.",
+        "type": "situation",
+        "entities": [
+          {"id": "John 1", "type": "concrete"},
+          {"id": "ball 2", "type": "concrete"},
+          {"id": "Peter 3", "type": "concrete"}
+        ],
+        "pre_state": "W0",
+        "next_state": "W1",
+        "time": "past"
+      }
+    ]
+  },
+  {
+    "raw": "Does John have the ball?",
+    "units": [
+      {
+        "unit_id": "S3",
+        "text": "Does John 1 have the ball 2?",
+        "type": "query",
+        "entities": [
+          {"id": "John 1", "type": "concrete"},
+          {"id": "ball 2", "type": "concrete"}
+        ],
+        "pre_state": "W1"
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["holds","W0",
+      ["and",
+        ["isa","ball","ball 2"],
+        ["have","John 1","ball 2"]
+      ]
+    ]
+  ],
+  ["@id","S2",
+    ["and",
+      ["holds","W0",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","give"],
+            ["has actor","E","John 1"],
+            ["has target","E","ball 2"],
+            ["has direction","E","Peter 3"],
+            ["has time","E","past"]
+          ]
+        ]
+      ],
+      ["next","W0","W1"]
+    ]
+  ],
+  ["@id","S3",
+    ["and",
+      ["question",
+        ["and",
+          ["isa","ball","ball 2"],
+          ["have","John 1","ball 2"]
+        ]
+      ],
+      ["@world","W1"]
+    ]
+  ]
 ]

@@ -111,6 +111,7 @@ Each PACKAGE must contain:
   - Mental structure
   - ["state time",W,TIME]
   - ["state location",W,LOC]
+  - ["@world", W]   -- world hint for questions; include when ASU.pre_state is set
 
 Default state:
 W = ASU.pre_state else "W0"
@@ -313,7 +314,23 @@ Yes/No:
 Wh:
 ["ask","X", BODY]
 
-No state anchoring for questions.
+No ["holds",W,f] anchoring for questions.
+
+World annotation rule (MANDATORY when ASU.pre_state is set):
+  If the query ASU has pre_state: Wk, wrap the question in a compound package:
+    ["and", ["question", BODY], ["@world", "Wk"]]
+    ["and", ["ask", "X", BODY], ["@world", "Wk"]]
+  If pre_state is absent, use the bare ["question",...] or ["ask",...] form.
+
+Tense annotation rule (MANDATORY when ASU.time is set):
+  If the query ASU has a time field with value T (e.g. "past", "present",
+  "future"), add ["@tense", T] as a sibling alongside the question:
+    ["and", ["question", BODY], ["@tense", "T"]]
+    ["and", ["ask", "X", BODY], ["@tense", "T"]]
+  Both ["@world", Wk] and ["@tense", T] may appear together as siblings:
+    ["and", ["question", BODY], ["@world", "Wk"], ["@tense", "T"]]
+  If ASU.time is absent, do NOT add ["@tense",...]. The tense remains a
+  free variable, which is the correct default for timeless queries.
 
 
 == 5. PREDICATE INVENTORY (Closed Whitelist) ==
@@ -375,6 +392,8 @@ Do NOT invent new predicates.
 ["@id", "Sx", FORMULA]
 ["@p", "Sx", P]
 ["@definite", "Sx", W, REL, ARG, VALUE]
+["@world", W]
+["@tense", T]
 
 --- Mental Predicates ---
 
@@ -411,6 +430,8 @@ If ASU.next_state exists:
 - One ["@id","Sx",...] per ASU
 - No free variables
 - No invented predicates
+- query with pre_state -> wrap with ["@world", Wk]
+- query with time T -> add ["@tense", T] sibling
 - strict_rule -> never normally
 - normal_rule -> normally or typically
 - can only when explicit

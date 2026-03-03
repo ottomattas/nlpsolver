@@ -201,6 +201,21 @@ def _fmt_conf(conf):
   return str(round(conf, 2))
 
 
+def _fmt_pct(conf):
+  """Format a confidence float as a percentage string, e.g. 0.81 -> '81%'."""
+  return str(round(conf * 100)) + "%"
+
+
+def _extract_step_conf(reason):
+  """Return the trailing confidence value from a proof step reason, or 1.0."""
+  if not isinstance(reason, list) or not reason:
+    return 1.0
+  last = reason[-1]
+  if isinstance(last, float) or (isinstance(last, int) and not isinstance(last, bool)):
+    return float(last)
+  return 1.0
+
+
 def _answer_goodness(ans):
   """Sorting key: high confidence, shorter proof is better."""
   conf     = ans.get("confidence", 0)
@@ -460,6 +475,10 @@ def _format_explanation(answers, sentence_map, show_logic=False):
 
     block = "\n".join(sent_lines) + "\n" + "\n".join(step_lines)
 
+    conf = ans.get("confidence", 1)
+    if conf < 0.9999:
+      block = "Confidence " + _fmt_pct(conf) + ".\n" + block
+
     if multi:
       label = _answer_label(val)
       block = label + ":\n" + block
@@ -506,7 +525,10 @@ def _format_step(step, sent_nr, show_logic=False):
 
   clause_str = _clause_to_str(clause)
   why_str    = _format_why(reason, sent_nr)
-  line       = "  (" + str(nr) + ") " + clause_str + "  [" + why_str + "]"
+  conf       = _extract_step_conf(reason)
+  if conf < 0.9999:
+    why_str = why_str + ", confidence " + _fmt_pct(conf)
+  line = "  (" + str(nr) + ") " + clause_str + "  [" + why_str + "]"
   if show_logic:
     line += "\n        " + _format_clause_logic(clause)
   return line
@@ -521,7 +543,7 @@ def _format_why(reason, sent_nr):
     source   = reason[1] if len(reason) > 1 else ""
     polarity = reason[2] if len(reason) > 2 else ""
     if polarity == "goal":
-      return "from the question"
+      return "negated question"
     if source in sent_nr:
       return "sentence " + str(sent_nr[source])
     return source
@@ -640,8 +662,8 @@ def _clause_to_str(clause):
       result = ("if " + " and ".join(conditions[:-1]) +
                 " then " + _atom_to_english_negated(neg_atoms[-1]))
   elif blocker_texts:
-    # Clause is purely $block atoms — the exception condition itself was derived.
-    return "exception holds: " + " and ".join(blocker_texts)
+    # Clause is purely $block atoms — outstanding exception(s) still to be ruled out.
+    return "outstanding exception: " + " and ".join(blocker_texts)
   else:
     result = "(empty)"
 

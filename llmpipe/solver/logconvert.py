@@ -55,6 +55,19 @@ _skolem_nr = 0
 # Counter for $defq predicate names (reset per top-level call).
 _defq_nr = 0
 
+# Counter for fresh free-variable names in $ctxt injection (reset per top-level call).
+_fv_nr = 0
+
+# Predicates that receive a $ctxt term as their last argument during context injection.
+# Structural predicates (isa, holds, state*, next, kb*, @*, $*, =, <, >) are excluded.
+_CTXT_ELIGIBLE = frozenset({
+  "has property", "have", "has part", "can", "is rel2",
+  "has degree property", "has degree rel2",
+  "has type", "has actor", "has target", "has location",
+  "has instrument", "has manner", "has direction", "has time",
+  "typical", "typically",
+})
+
 
 # ======== main entry point ========
 
@@ -65,9 +78,10 @@ def rawlogic_convert(logic):
   Output: list of {"@name":..., "@logic":CLAUSE} / {"@name":..., "@question":F}
   Returns None on fatal error.
   """
-  global _skolem_nr, _defq_nr
+  global _skolem_nr, _defq_nr, _fv_nr
   _skolem_nr = 0          # reset once for the whole conversion
   _defq_nr   = 0
+  _fv_nr     = 0
   if not logic or not isinstance(logic, list):
     return None
 
@@ -93,8 +107,19 @@ def rawlogic_convert(logic):
   for i, fact in enumerate(pop_facts):
     result.insert(first_q + i, fact)
 
+  # Inject $ctxt into population facts (all-free variables; they are background rules).
+  if not _g_options.get("nocontext_flag", False):
+    for fact in pop_facts:
+      ctxt = ["$ctxt", _fresh_fv(), _fresh_fv(), _fresh_fv(), _fresh_fv()]
+      _inject_ctxt_into_objs([fact], ctxt)
+
   # Fix RELCLASS mismatches in question degree-predicate atoms.
   _coerce_relclass(result)
+
+  # When -simpleproperties / -simple is active, replace degree predicates with
+  # their non-gradable equivalents so the prover sees simpler atoms.
+  if _g_options.get("noproptypes_flag", False):
+    _strip_degree_predicates(result)
 
   return result
 
@@ -109,7 +134,7 @@ def _convert_id_package(item):
   package = item[2]
   name = "sent_" + str(sid)
 
-  is_question, formula, confidence = _extract_package(package)
+  is_question, formula, confidence, world, location, knower, tense = _extract_package_ctx(package)
   if formula is None:
     return []
 
@@ -127,33 +152,56 @@ def _convert_id_package(item):
         if not flat:
           return []
         q_formula = flat[0] if len(flat) == 1 else [["and"] + flat]
-        return [{"@name": name, "@question": q_formula, "@askvars": 1}]
+        result = [{"@name": name, "@question": q_formula, "@askvars": 1}]
       else:
         # Complex case: wrap in $defq biconditional.
-        return _build_defq_question(name, ask_var, body)
+        result = _build_defq_question(name, ask_var, body)
     else:
       # Yes/no question.
-      if _is_simple_question_formula(formula):
-        # Single atom with ≤1 variable: direct @question, no $defq wrapper.
+      # When $ctxt is active, always use $defq so the @question atom is the
+      # machinery literal ["$defq0"] (no free variables → GK returns plain
+      # `true` rather than `$ans(W0,…)` which confuses answer extraction).
+      if _is_simple_question_formula(formula) and _g_options.get("nocontext_flag", False):
+        # Direct @question only when $ctxt is disabled.
         free_vars_in_formula = sorted(_collect_body_free_vars(formula))
         varmap = {v: "?:" + v for v in free_vars_in_formula}
         flat = _flatten_q_atoms(formula, varmap)
         if not flat:
           return []
         q_formula = flat[0] if len(flat) == 1 else [["and"] + flat]
-        return [{"@name": name, "@question": q_formula}]
+        result = [{"@name": name, "@question": q_formula}]
       else:
-        # Complex case: wrap in $defq biconditional.
-        return _build_defq_question(name, None, formula)
+        # Complex formula, or: simple but $ctxt active → $defq biconditional.
+        result = _build_defq_question(name, None, formula)
+  else:
+    # Clausify the formula.
+    clauses = _clausify(formula)
+    result = []
+    for clause in clauses:
+      obj = {"@name": name, "@logic": clause}
+      if confidence is not None:
+        obj["@confidence"] = confidence
+      result.append(obj)
 
-  # Clausify the formula.
-  clauses = _clausify(formula)
-  result = []
-  for clause in clauses:
-    obj = {"@name": name, "@logic": clause}
-    if confidence is not None:
-      obj["@confidence"] = confidence
-    result.append(obj)
+  # Inject $ctxt into @logic entries (not @question entries).
+  if not _g_options.get("nocontext_flag", False):
+    if _is_rule_formula(formula):
+      situation  = _fresh_fv()
+      tense_term = _fresh_fv()   # rules are tense-independent
+    elif is_question:
+      # For questions: world from ["@world",W] if Stage 2 forwarded pre_state, else free var.
+      # Tense from ["@tense",T] if Stage 2 forwarded ASU.time, else free var.
+      situation  = world if world is not None else _fresh_fv()
+      tense_term = tense if tense is not None else _fresh_fv()
+    else:
+      # Situational facts: world from ["holds",W,F]; tense from ["state time",W,T].
+      situation  = world if world is not None else _fresh_fv()
+      tense_term = tense if tense is not None else "present"
+    loc_term = location if location is not None else _fresh_fv()
+    kn_term  = knower  if knower  is not None else _fresh_fv()
+    ctxt = ["$ctxt", tense_term, situation, loc_term, kn_term]
+    _inject_ctxt_into_objs(result, ctxt)
+
   return result
 
 
@@ -200,6 +248,155 @@ def _extract_package(package):
   else:
     # Unknown package type — treat as raw formula assertion.
     return False, package, None
+
+
+def _extract_package_ctx(package):
+  """Like _extract_package but also returns (world, location, knower, tense).
+
+  Returns: (is_question, formula, confidence, world, location, knower, tense)
+    world    -- the W constant from ["holds", W, F], or None
+    location -- the LOC from a sibling ["state location", W, LOC], or None
+    knower   -- the HOLDER from a sibling ["kb", K, HOLDER, ...], or None
+    tense    -- T from a sibling ["@tense", T] (query tense hint), or
+                T from a sibling ["state time", W, T] (situational tense), or None.
+               ["@tense"] takes priority if both appear in the same package.
+  """
+  if not isinstance(package, list) or not package:
+    return False, None, None, None, None, None, None
+
+  op = package[0]
+
+  if op == "holds":
+    if len(package) >= 3:
+      return False, package[2], None, package[1], None, None, None
+    return False, None, None, None, None, None, None
+
+  elif op == "question":
+    if len(package) >= 2:
+      return True, package[1], None, None, None, None, None
+    return True, None, None, None, None, None, None
+
+  elif op == "ask":
+    if len(package) >= 3:
+      return True, package, None, None, None, None, None
+    return True, None, None, None, None, None, None
+
+  elif op == "and":
+    main_pkg   = None
+    confidence = None
+    location   = None
+    knower     = None
+    tense      = None
+    tense_hint = None   # from ["@tense", T] sibling (query tense forwarding)
+    world_hint = None   # from ["@world", W] sibling (query pre_state forwarding)
+    for el in package[1:]:
+      if not isinstance(el, list) or not el:
+        continue
+      elop = el[0]
+      if elop == "@p" and len(el) == 3:
+        confidence = el[2]
+      elif elop == "state location" and len(el) >= 3:
+        location = el[2]
+      elif elop == "state time" and len(el) >= 3:
+        tense = el[2]
+      elif elop == "@tense" and len(el) >= 2:
+        tense_hint = el[1]
+      elif elop == "kb" and len(el) >= 3:
+        knower = el[2]   # ["kb", K, HOLDER, ATTITUDE, W]
+      elif elop == "@world" and len(el) >= 2:
+        world_hint = el[1]
+      elif main_pkg is None:
+        main_pkg = el
+    # ["@tense"] overrides ["state time"] if both somehow appear.
+    final_tense = tense_hint if tense_hint is not None else tense
+    if main_pkg is not None:
+      is_q, formula, _, world, loc2, kn2, _ = _extract_package_ctx(main_pkg)
+      if location is None:
+        location = loc2
+      if knower is None:
+        knower = kn2
+      # ["@world",W] overrides the world from the inner package (used for questions).
+      if world_hint is not None:
+        world = world_hint
+      return is_q, formula, confidence, world, location, knower, final_tense
+    return False, None, confidence, world_hint, location, knower, final_tense
+
+  else:
+    return False, package, None, None, None, None, None
+
+
+# ======== context injection ========
+
+def _fresh_fv():
+  """Return a fresh GK free-variable name, e.g. '?:Fv1', '?:Fv2', …"""
+  global _fv_nr
+  _fv_nr += 1
+  return "?:Fv" + str(_fv_nr)
+
+
+def _is_rule_formula(frm):
+  """Return True if frm contains 'forall' or 'normally' at any nesting level."""
+  if not isinstance(frm, list) or not frm:
+    return False
+  if frm[0] in ("forall", "normally"):
+    return True
+  return any(_is_rule_formula(el) for el in frm[1:])
+
+
+def _inject_ctxt_atom(atom, ctxt):
+  """Append ctxt as the last argument of an eligible GK atom.
+
+  Handles:
+    - ["$block", priority, ["$not", INNER]] — recurses into INNER
+    - Eligible atoms (base pred in _CTXT_ELIGIBLE) — appends ctxt
+    - Everything else — returns unchanged
+  """
+  if not isinstance(atom, list) or not atom:
+    return atom
+  pred = atom[0]
+  if not isinstance(pred, str):
+    return atom
+  base = pred[1:] if pred.startswith("-") else pred
+
+  if base == "$block" and len(atom) >= 3:
+    body = atom[2]
+    if isinstance(body, list) and len(body) >= 2 and body[0] == "$not":
+      inner = _inject_ctxt_atom(body[1], ctxt)
+      return [atom[0], atom[1], ["$not", inner]]
+    return atom
+
+  if base in _CTXT_ELIGIBLE:
+    return list(atom) + [ctxt]
+
+  return atom
+
+
+def _inject_ctxt_clause(clause, ctxt):
+  """Inject ctxt into a GK clause (single atom or disjunction of atoms)."""
+  if not isinstance(clause, list) or not clause:
+    return clause
+  if isinstance(clause[0], list):
+    # Disjunctive clause: list of atom-lists
+    return [_inject_ctxt_atom(atom, ctxt) for atom in clause]
+  # Single atom
+  return _inject_ctxt_atom(clause, ctxt)
+
+
+def _inject_ctxt_into_objs(objs, ctxt):
+  """Inject ctxt into @logic and @question entries of clause dicts (in place).
+
+  For @logic: handles single atoms and disjunctive clauses.
+  For @question: injects into the question atom if eligible (simple questions).
+    $defq machinery atoms (e.g. ["$defq0"]) are not in _CTXT_ELIGIBLE and are
+    left unchanged, so complex $defq questions are unaffected.
+  """
+  for obj in objs:
+    if not isinstance(obj, dict):
+      continue
+    if "@logic" in obj:
+      obj["@logic"] = _inject_ctxt_clause(obj["@logic"], ctxt)
+    if "@question" in obj:
+      obj["@question"] = _inject_ctxt_atom(obj["@question"], ctxt)
 
 
 # ======== clausification ========
@@ -1115,6 +1312,62 @@ def _flatten_q_atoms(frm, varmap):
 
   # Atom or other formula (or, not, …) — apply varmap, return as one item.
   return [_apply_varmap(frm, varmap)]
+
+
+# ======== degree-predicate stripping (noproptypes_flag) ========
+
+def _strip_degree_predicates(result):
+  """Replace degree predicates with their non-gradable equivalents throughout
+  the result clause list.  Called from rawlogic_convert when noproptypes_flag
+  is True.  Modifies each clause dict in place and returns the same list.
+
+    has degree property(PROP, ENTITY, DEGREE, RELCLASS) -> has property(PROP, ENTITY)
+    has degree rel2(REL, E1, E2, DEGREE, RELCLASS)      -> is rel2(REL, E1, E2)
+
+  Handles negated forms ("-has degree property", "-has degree rel2") as well,
+  and recurses into nested sub-formulas (e.g. inside $block / $not).
+  """
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    if "@logic" in obj:
+      obj["@logic"] = _strip_deg_frm(obj["@logic"])
+    if "@question" in obj:
+      obj["@question"] = _strip_deg_frm(obj["@question"])
+  return result
+
+
+def _strip_deg_frm(frm):
+  """Recursively strip degree info from one formula or GK clause."""
+  if not isinstance(frm, list) or not frm:
+    return frm
+
+  first = frm[0]
+
+  # GK clause: first element is itself a list (atom) — recurse into each atom.
+  if isinstance(first, list):
+    return [_strip_deg_frm(a) for a in frm]
+
+  if not isinstance(first, str):
+    return frm
+
+  # Atom whose predicate may carry a "-" negation prefix.
+  pred = first
+  neg  = pred.startswith("-")
+  base = pred[1:] if neg else pred
+  pfx  = "-" if neg else ""
+
+  if base == "has degree property" and len(frm) >= 3:
+    # [pred, PROP, ENTITY, DEGREE, RELCLASS] -> [simple_pred, PROP, ENTITY]
+    return [pfx + "has property", frm[1], frm[2]]
+
+  if base == "has degree rel2" and len(frm) >= 4:
+    # [pred, REL, E1, E2, DEGREE, RELCLASS] -> [simple_pred, REL, E1, E2]
+    return [pfx + "is rel2", frm[1], frm[2], frm[3]]
+
+  # Any other formula/atom: recurse into sub-elements to catch nested occurrences.
+  return [frm[0]] + [_strip_deg_frm(a) if isinstance(a, list) else a
+                     for a in frm[1:]]
 
 
 # =========== the end ==========
