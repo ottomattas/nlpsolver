@@ -71,10 +71,32 @@ _CTXT_ELIGIBLE = frozenset({
 
 # ======== main entry point ========
 
-def rawlogic_convert(logic):
+def _build_asu_index(s1_json):
+  """Build a {unit_id: ASU} dict from Stage-1 JSON for programmatic $ctxt injection.
+
+  s1_json is the list of sentence packages returned by llmparse.parse_text().
+  Returns an empty dict when s1_json is None or malformed.
+  """
+  if not s1_json or not isinstance(s1_json, list):
+    return {}
+  index = {}
+  for pkg in s1_json:
+    if not isinstance(pkg, dict):
+      continue
+    for asu in pkg.get("units", []):
+      if isinstance(asu, dict):
+        uid = asu.get("unit_id")
+        if uid:
+          index[uid] = asu
+  return index
+
+
+def rawlogic_convert(logic, s1_json=None):
   """Convert stage-2 LLM output to a GK-compatible clause list.
 
   Input:  stage-2 list ["and", ["@id","S1",PACKAGE], ...]
+          s1_json -- Stage-1 JSON from llmparse.parse_text(), used for
+                     programmatic $ctxt injection (tense, world, location).
   Output: list of {"@name":..., "@logic":CLAUSE} / {"@name":..., "@question":F}
   Returns None on fatal error.
   """
@@ -92,12 +114,15 @@ def rawlogic_convert(logic):
   else:
     return None
 
+  # Build unit_id -> ASU index for programmatic $ctxt injection from Stage-1 data.
+  asu_index = _build_asu_index(s1_json)
+
   # Build population facts by scanning the raw stage-2 input first.
   pop_facts = _populate_clauses(items)
 
   result = []
   for item in items:
-    objs = _convert_id_package(item)
+    objs = _convert_id_package(item, asu_index)
     if objs:
       result.extend(objs)
 
@@ -126,7 +151,7 @@ def rawlogic_convert(logic):
 
 # ======== package extraction ========
 
-def _convert_id_package(item):
+def _convert_id_package(item, asu_index=None):
   """Process ["@id", sid, PACKAGE] → list of GK clause dicts."""
   if not isinstance(item, list) or len(item) < 3 or item[0] != "@id":
     return []
@@ -137,6 +162,23 @@ def _convert_id_package(item):
   is_question, formula, confidence, world, location, knower, tense = _extract_package_ctx(package)
   if formula is None:
     return []
+
+  # Override $ctxt parameters with Stage-1 ASU data when available.
+  # Stage-1 "time", "pre_state", "location" are more reliable than scanning
+  # Stage-2 siblings; this is the programmatic $ctxt injection (option B).
+  if asu_index:
+    asu = asu_index.get(sid)
+    if asu is not None:
+      s1_tense = asu.get("time")
+      if s1_tense is not None:
+        tense = s1_tense
+      if is_question:
+        s1_world = asu.get("pre_state")
+        if s1_world is not None:
+          world = s1_world
+      s1_loc = asu.get("location")
+      if s1_loc is not None:
+        location = s1_loc
 
   if is_question:
     # Distinguish wh-questions (["ask", var, body]) from yes/no questions.
@@ -189,12 +231,11 @@ def _convert_id_package(item):
       situation  = _fresh_fv()
       tense_term = _fresh_fv()   # rules are tense-independent
     elif is_question:
-      # For questions: world from ["@world",W] if Stage 2 forwarded pre_state, else free var.
-      # Tense from ["@tense",T] if Stage 2 forwarded ASU.time, else free var.
+      # For questions: world from Stage-1 pre_state (or free var); tense from Stage-1 time.
       situation  = world if world is not None else _fresh_fv()
       tense_term = tense if tense is not None else _fresh_fv()
     else:
-      # Situational facts: world from ["holds",W,F]; tense from ["state time",W,T].
+      # Situational facts: world from ["holds",W,F]; tense from Stage-1 time field.
       situation  = world if world is not None else _fresh_fv()
       tense_term = tense if tense is not None else "present"
     loc_term = location if location is not None else _fresh_fv()
@@ -256,10 +297,10 @@ def _extract_package_ctx(package):
   Returns: (is_question, formula, confidence, world, location, knower, tense)
     world    -- the W constant from ["holds", W, F], or None
     location -- the LOC from a sibling ["state location", W, LOC], or None
+                (fallback only; Stage-1 ASU "location" takes priority via _convert_id_package)
     knower   -- the HOLDER from a sibling ["kb", K, HOLDER, ...], or None
-    tense    -- T from a sibling ["@tense", T] (query tense hint), or
-                T from a sibling ["state time", W, T] (situational tense), or None.
-               ["@tense"] takes priority if both appear in the same package.
+    tense    -- T from a sibling ["state time", W, T], or None
+                (fallback only; Stage-1 ASU "time" takes priority via _convert_id_package)
   """
   if not isinstance(package, list) or not package:
     return False, None, None, None, None, None, None
@@ -287,8 +328,6 @@ def _extract_package_ctx(package):
     location   = None
     knower     = None
     tense      = None
-    tense_hint = None   # from ["@tense", T] sibling (query tense forwarding)
-    world_hint = None   # from ["@world", W] sibling (query pre_state forwarding)
     for el in package[1:]:
       if not isinstance(el, list) or not el:
         continue
@@ -299,27 +338,18 @@ def _extract_package_ctx(package):
         location = el[2]
       elif elop == "state time" and len(el) >= 3:
         tense = el[2]
-      elif elop == "@tense" and len(el) >= 2:
-        tense_hint = el[1]
       elif elop == "kb" and len(el) >= 3:
         knower = el[2]   # ["kb", K, HOLDER, ATTITUDE, W]
-      elif elop == "@world" and len(el) >= 2:
-        world_hint = el[1]
       elif main_pkg is None:
         main_pkg = el
-    # ["@tense"] overrides ["state time"] if both somehow appear.
-    final_tense = tense_hint if tense_hint is not None else tense
     if main_pkg is not None:
       is_q, formula, _, world, loc2, kn2, _ = _extract_package_ctx(main_pkg)
       if location is None:
         location = loc2
       if knower is None:
         knower = kn2
-      # ["@world",W] overrides the world from the inner package (used for questions).
-      if world_hint is not None:
-        world = world_hint
-      return is_q, formula, confidence, world, location, knower, final_tense
-    return False, None, confidence, world_hint, location, knower, final_tense
+      return is_q, formula, confidence, world, location, knower, tense
+    return False, None, confidence, None, location, knower, tense
 
   else:
     return False, package, None, None, None, None, None

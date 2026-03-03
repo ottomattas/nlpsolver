@@ -146,7 +146,7 @@ def english_to_answer(text, options=None):
   if debug:
     print("\n============= rawlogic_convert ===============\n")
 
-  logic = rawlogic_convert(s2_json)
+  logic = rawlogic_convert(s2_json, s1_json)
 
   if logic is None:
     return "Error: rawlogic_convert returned None."
