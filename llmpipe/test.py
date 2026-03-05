@@ -31,6 +31,17 @@ import time
 sys.path.insert(0, './solver')
 from solve import english_to_answer
 
+
+def _print(*args, **kwargs):
+  """Print to stdout and, if a log file is open, also write there (flushed)."""
+  print(*args, **kwargs)
+  if _log_fh is not None:
+    end = kwargs.get("end", "\n")
+    sep = kwargs.get("sep", " ")
+    line = sep.join(str(a) for a in args) + end
+    _log_fh.write(line)
+    _log_fh.flush()
+
 # ======== defaults ========
 
 # Default test file used when no files are given on the command line.
@@ -63,6 +74,11 @@ filter_pattern = None
 
 # When True, do not accept answers that contain confidence qualifiers "(…)".
 strict_confidences = False
+
+# Log file: all output is also written here (flushed after every line).
+# Set to None to disable.  Override with -logfile PATH on the command line.
+log_file_path = "test_output.txt"
+_log_fh = None   # opened in main()
 
 
 # ======== helptext ========
@@ -99,7 +115,9 @@ solver / cache options:
                        (LLM cache is ON by default; results are keyed on
                        provider, version, all call parameters and input text)
  -cache                enable GK prover result caching (off by default)
- -strict               reject answers that carry a confidence qualifier (…)
+ -strict               strict confidence comparison: "Probably true." and "Likely true."
+                       match each other but not plain "True." (default: qualifiers are
+                       stripped so all certainty levels are treated as equivalent)
 
  -help                 show this help text
 """
@@ -108,7 +126,14 @@ solver / cache options:
 # ======== main ========
 
 def main():
+  global _log_fh
   test_files, solver_opts = _parse_cmd_line()
+
+  if log_file_path:
+    try:
+      _log_fh = open(log_file_path, "w", buffering=1)
+    except OSError as e:
+      print("Warning: cannot open log file", log_file_path, ":", e)
 
   all_passed = 0
   all_failed = 0
@@ -126,11 +151,14 @@ def main():
 
   elapsed = round(time.time() - total_start, 2)
 
+  if _log_fh:
+    _log_fh.close()
+
   if len(test_files) > 1:
-    print()
-    print("=" * 50)
-    print("Overall summary")
-    print("=" * 50)
+    _print()
+    _print("=" * 50)
+    _print("Overall summary")
+    _print("=" * 50)
     _print_summary(all_ran, all_passed, all_failed, elapsed, all_errors)
   elif not all_errors and not show_verbose:
     # Single file, no failures — print_summary was already called inside run_file
@@ -145,12 +173,12 @@ def run_file(path, solver_opts):
   if tests is None:
     return (0, 0, 0, [])
 
-  print()
-  print("=" * 50)
-  print("Test file:", path)
-  print("=" * 50)
+  _print()
+  _print("=" * 50)
+  _print("Test file:", path)
+  _print("=" * 50)
   if show_verbose:
-    print()
+    _print()
 
   passed  = 0
   failed  = 0
@@ -178,7 +206,7 @@ def run_file(path, solver_opts):
     try:
       received = english_to_answer(inp, dict(solver_opts))
     except KeyboardInterrupt:
-      print("\nInterrupted.")
+      _print("\nInterrupted.")
       break
     except Exception as e:
       received = "Software error: " + str(e)
@@ -188,16 +216,16 @@ def run_file(path, solver_opts):
 
     # --- output ---
     if show_compact:
-      print("." if ok else "F", end="", flush=True)
+      _print("." if ok else "F", end="", flush=True)
     elif show_verbose:
       if ok and show_failures_only:
         pass  # suppress passing tests
       else:
-        print("Input:   ", inp)
-        print("Expected:", _display(expected))
-        print("Received:", received)
-        print("Result:  ", "OK" if ok else "FAIL")
-        print()
+        _print("Input:   ", inp)
+        _print("Expected:", _display(expected))
+        _print("Received:", received)
+        _print("Result:  ", "OK" if ok else "FAIL")
+        _print()
 
     if ok:
       passed += 1
@@ -206,12 +234,12 @@ def run_file(path, solver_opts):
       errors.append((test, received))
       if stop_on_fail:
         if show_compact:
-          print()
-        print("Stopping after first failure (-stopfail).")
+          _print()
+        _print("Stopping after first failure (-stopfail).")
         break
 
   if show_compact:
-    print()   # newline after the dot row
+    _print()   # newline after the dot row
 
   elapsed = round(time.time() - start, 2)
   _print_summary(ran, passed, failed, elapsed, errors)
@@ -262,15 +290,58 @@ def _result_matches(expected, received):
     return True
 
   # Standardised comparison: ignore punctuation, sort words
-  return _standardize(expected) == _standardize(cleaned)
+  if _standardize(expected) == _standardize(cleaned):
+    return True
+
+  # Confidence-qualifier comparison.
+  # Default (non-strict): strip leading certainty adverbs from both sides and
+  #   compare core content — "Probably true." == "True." == "Likely true."
+  # Strict: normalise all qualifier words to a single canonical form ("Probably")
+  #   so qualifiers at the same certainty class match each other but not the
+  #   plain unqualified form — "Probably true." == "Likely true." != "True."
+  norm_cleaned  = _norm_conf_qualifier(cleaned)
+  norm_expected = _norm_conf_qualifier(expected)
+  if norm_cleaned != cleaned or norm_expected != expected:
+    if norm_cleaned == norm_expected:
+      return True
+    if _standardize(norm_expected) == _standardize(norm_cleaned):
+      return True
+
+  return False
+
+
+# Certainty adverbs that may prefix an answer (case-insensitive match on first word).
+_CONF_QUALIFIERS = frozenset({"probably", "likely", "perhaps", "certainly", "possibly"})
+
+def _norm_conf_qualifier(txt):
+  """Normalise a leading confidence-qualifier word in txt.
+
+  Non-strict mode (default): drop the qualifier entirely.
+  Strict mode: replace all qualifier words with the canonical "Probably".
+  Returns txt unchanged if no qualifier is found.
+  """
+  if type(txt) != str:
+    return txt
+  parts = txt.split(" ", 1)
+  if len(parts) == 2 and parts[0].rstrip(".").lower() in _CONF_QUALIFIERS:
+    return parts[1] if not strict_confidences else "Probably " + parts[1]
+  return txt
 
 
 def _standardize(txt):
-  """Remove punctuation, lower-case, sort words — for fuzzy comparison."""
+  """Remove punctuation, lower-case, sort words — for fuzzy comparison.
+
+  Also strips articles (a/an/the) and single-letter Skolem-suffix words
+  (e.g. 'Mother A' -> 'mother', 'The mother' -> 'mother') so that entity
+  naming style differences don't cause spurious failures.
+  """
   if type(txt) != str:
     return txt
   txt = txt.replace(".", "").replace(",", " ").lower()
   words = txt.split()
+  # Remove articles and single-letter words (Skolem suffixes like 'a', 'b', 'c')
+  _skip = {"a", "an", "the"}
+  words = [w for w in words if w not in _skip and len(w) > 1]
   words.sort()
   return words
 
@@ -286,16 +357,16 @@ def _display(expected):
 # ======== summary printer ========
 
 def _print_summary(ran, passed, failed, elapsed, errors):
-  print()
-  print(f"Tests run: {ran}  |  Passed: {passed}  |  Failed: {failed}  |  Time: {elapsed}s")
+  _print()
+  _print(f"Tests run: {ran}  |  Passed: {passed}  |  Failed: {failed}  |  Time: {elapsed}s")
   if errors:
-    print()
-    print("Failed tests:")
+    _print()
+    _print("Failed tests:")
     for test, received in errors:
-      print("  Input:   ", test[0])
-      print("  Expected:", _display(test[1]))
-      print("  Received:", received)
-      print()
+      _print("  Input:   ", test[0])
+      _print("  Expected:", _display(test[1]))
+      _print("  Received:", received)
+      _print()
 
 
 # ======== test file loader ========

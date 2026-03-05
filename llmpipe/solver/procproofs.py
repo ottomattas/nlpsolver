@@ -44,6 +44,7 @@ _skolem_types = {}
 _skolem_fn_verbs   = {}   # str(term) -> verb string  (e.g. "eat")
 _skolem_fn_actors  = {}   # str(term) -> actor string (e.g. "Greg 2")
 _skolem_fn_targets = {}   # str(term) -> target string (e.g. "Mike 1")
+_skolem_fn_types   = {}   # sk_name -> object type from isa(TYPE,[sk_name,...]) (e.g. "roof")
 
 
 # ======== main entry point ========
@@ -85,6 +86,7 @@ def process_proof(proof_result, text=None, s1_json=None, logic=None, options=Non
   # For wh-questions: keep only answers in the best object-type tier
   # (concrete > Skolem > population), preserving the goodness order within tier.
   answers = _filter_by_best_tier(answers)
+  answers = _filter_tautological_population_answers(answers, logic)
 
   # Build sent_SN -> raw sentence text map from stage-1 output
   sentence_map = _build_sentence_map(s1_json)
@@ -102,7 +104,10 @@ def process_proof(proof_result, text=None, s1_json=None, logic=None, options=Non
   _compute_ambiguity(logic if logic is not None else answers)
 
   # Format the answer value(s)
-  answer_str = _format_answers(answers, askvars=askvars)
+  if _is_where_query(logic):
+    answer_str = _format_where_answers(answers, logic=logic)
+  else:
+    answer_str = _format_answers(answers, askvars=askvars)
 
   # Optionally append a step-by-step proof explanation
   explain     = options.get("prover_explain_flag", False)
@@ -130,6 +135,185 @@ def _extract_askvars(logic):
   return None
 
 
+def _is_where_query(logic):
+  """Return True if logic contains a @where_query marker (set by logconvert)."""
+  if not logic or not isinstance(logic, list):
+    return False
+  for obj in logic:
+    if isinstance(obj, dict) and obj.get("@where_query"):
+      return True
+  return False
+
+
+def _location_entity_name(val, entity_props=None):
+  """Format a location entity constant for display in a 'where' answer.
+
+  Delegates to _entity_name for URL/Skolem/proper-noun handling, then
+  adds "the" article (with any adjectives) for common noun phrases.
+
+  "house 2"             -> "the house"
+  "house 3" (red)       -> "the red house"  (with entity_props lookup)
+  "London 1"            -> "London"          (proper noun: no article)
+  "https://.../Estonia" -> "Estonia"
+  """
+  if not isinstance(val, str):
+    return str(val)
+  # URL constants: use _entity_name which extracts the last path segment
+  if val.startswith("http://") or val.startswith("https://"):
+    return _entity_name(val, with_url=False)
+  # Strip trailing digit suffix
+  m = re.match(r'^(.*\S)\s+\d+$', val)
+  base = m.group(1) if m else val
+  if base[:1].isupper():
+    return base       # proper noun — no article
+  # Strip leading "the " or "The " (entity names sometimes include the article)
+  if base.lower().startswith("the "):
+    base = base[4:]
+  # Look up adjectives for this entity (e.g. "red" for "house 3")
+  adjs = entity_props.get(val, []) if entity_props else []
+  adj_prefix = " ".join(adjs) + " " if adjs else ""
+  return "the " + adj_prefix + base
+
+
+def _where_conf_prefix(conf):
+  """Return a confidence qualifier prefix for a where answer, or None if below threshold.
+
+  conf >= 0.95: no prefix (plain answer)
+  conf >= 0.85: "Likely"
+  conf >= 0.60: "Probably"
+  conf <  0.60: return empty string to signal Unknown
+  """
+  if conf >= 0.95:
+    return ""
+  if conf >= 0.85:
+    return "Likely"
+  if conf >= 0.60:
+    return "Probably"
+  return None   # below threshold -> Unknown
+
+
+def _build_entity_props(logic):
+  """Build a dict mapping entity constant -> list of its property adjectives.
+
+  Scans assertional @logic clauses for ["has property", adj, entity, ...] atoms.
+  Returns {entity: [adj, ...]} where adj strings are in order of occurrence.
+  """
+  props = {}
+  if not logic:
+    return props
+  for obj in logic:
+    if not isinstance(obj, dict) or "@logic" not in obj:
+      continue
+    if obj.get("@sourcetype") == "question":
+      continue
+    clause = obj["@logic"]
+    # Accept single atom or list of atoms (disjunctive clause)
+    atoms = clause if isinstance(clause[0], list) else [clause]
+    for atom in atoms:
+      if (isinstance(atom, list) and len(atom) >= 3
+          and atom[0] == "has property"
+          and isinstance(atom[1], str) and isinstance(atom[2], str)):
+        adj    = atom[1]
+        entity = atom[2]
+        if not entity.startswith("$"):
+          props.setdefault(entity, [])
+          if adj not in props[entity]:
+            props[entity].append(adj)
+  return props
+
+
+def _format_where_answers(answers, logic=None):
+  """Format where-query answers as location strings.
+
+  Each answer has val = [["$ans", prep, entity], ...].
+  Returns e.g. "In the house." or "In the house and in the city."
+  Applies confidence prefix ("Probably", "Likely") when confidence < 0.95.
+  Returns "Unknown." when all answers are below the 0.60 confidence threshold.
+  If logic is provided, adjectives for location entities are reconstructed.
+  """
+  entity_props = _build_entity_props(logic)
+
+  parts = []
+  seen  = set()
+  best_conf = 0.0
+  for ans in answers:
+    val  = ans.get("answer")
+    conf = ans.get("confidence", 1.0)
+    if not isinstance(val, list) or not val:
+      continue
+    atom = val[0]   # first (should be only) $ans atom
+    if not isinstance(atom, list) or len(atom) < 3:
+      continue
+    prep       = atom[1]
+    entity_raw = atom[2]
+    if not isinstance(prep, str) or not isinstance(entity_raw, str):
+      continue
+    key = (prep, entity_raw)
+    if key in seen:
+      continue
+    seen.add(key)
+    if conf > best_conf:
+      best_conf = conf
+    parts.append(prep + " " + _location_entity_name(entity_raw, entity_props))
+
+  if not parts:
+    return "Unknown."
+
+  prefix = _where_conf_prefix(best_conf)
+  if prefix is None:
+    return "Unknown."
+
+  if len(parts) == 1:
+    loc = parts[0]
+  elif len(parts) == 2:
+    loc = parts[0] + " and " + parts[1]
+  else:
+    loc = ", ".join(parts[:-1]) + " and " + parts[-1]
+
+  if prefix:
+    res = prefix + " " + loc
+  else:
+    res = loc
+
+  res = res[0].upper() + res[1:]
+  if not res.endswith("."):
+    res += "."
+  return res
+
+
+def _format_bool_answer(val, conf):
+  """Format a True/False answer with verbal confidence qualifier.
+
+  Threshold scheme (chosen to match natural-language quantifiers):
+    True,  conf >= 0.99 -> "True"
+    True,  conf >= 0.60 -> "Probably true"
+    True,  conf >= 0.40 -> "Likely true"
+    True,  conf <  0.40 -> flip to false direction with p_false = 1-conf
+    False, conf >= 0.99 -> "False"
+    False, conf >= 0.85 -> "Likely false"  (e.g. "hardly")
+    False, conf >= 0.60 -> "Probably false" (e.g. "unlikely")
+    False, conf <  0.60 -> "Likely false"
+  """
+  if conf >= 0.95:
+    return "True" if val else "False"
+  if val is True:
+    if conf < 0.40:
+      # More likely false than true — express as false with flipped confidence
+      p_false = 1.0 - conf
+      if p_false >= 0.85:
+        return "Likely false"
+      return "Probably false"
+    if conf >= 0.60:
+      return "Probably true"
+    return "Likely true"
+  else:  # val is False
+    if conf >= 0.85:
+      return "Likely false"
+    if conf >= 0.60:
+      return "Probably false"
+    return "Likely false"
+
+
 def _format_answers(answers, askvars=None):
   """Collect answer values from all (non-duplicate) answer entries and join.
 
@@ -146,10 +330,8 @@ def _format_answers(answers, askvars=None):
       continue
     seen.append(val)
 
-    if val is True:
-      s = "True"
-    elif val is False:
-      s = "False"
+    if val is True or val is False:
+      s = _format_bool_answer(val, conf)
     elif isinstance(val, list) and val:
       # Each element is an $ans atom like ["$ans", "John 1"].
       # If askvars is set, only show the first askvars atoms (the
@@ -157,11 +339,12 @@ def _format_answers(answers, askvars=None):
       display = val[:askvars] if askvars is not None else val
       names = [_ans_atom_name(a) for a in display]
       s = "(" + " or ".join(names) + ")" if len(names) > 1 else names[0] if names else str(val)
+      if conf < 0.99:
+        s += " (confidence " + _fmt_conf(conf) + ")"
     else:
       s = str(val)
-
-    if conf < 0.99:
-      s += " (confidence " + _fmt_conf(conf) + ")"
+      if conf < 0.99:
+        s += " (confidence " + _fmt_conf(conf) + ")"
     parts.append(s)
 
   if not parts:
@@ -279,6 +462,74 @@ def _filter_by_best_tier(answers):
           if isinstance(a.get("answer"), bool) or t == best]
 
 
+def _extract_question_isa_type(logic):
+  """If the @question atom is ["isa", TYPE, var], return TYPE. Otherwise None."""
+  if not logic or not isinstance(logic, list):
+    return None
+  for obj in logic:
+    if not isinstance(obj, dict) or "@question" not in obj:
+      continue
+    q = obj["@question"]
+    if isinstance(q, list) and len(q) >= 3 and q[0] == "isa":
+      return str(q[1])
+  return None
+
+
+def _is_tautological_population_answer(ans, question_type):
+  """Return True if ans is a $some_* constant proved directly via
+  the population axiom isa QUESTION_TYPE SKOLEM (a circular 2-step proof)."""
+  if question_type is None:
+    return False
+  val = ans.get("answer")
+  if not isinstance(val, list) or not val:
+    return False
+  if not isinstance(val[0], list) or len(val[0]) < 2:
+    return False
+  answer_const = val[0][1]
+  if not isinstance(answer_const, str) or not answer_const.startswith("$some_"):
+    return False
+  proof = ans.get("positive proof", [])
+  for step in proof:
+    if len(step) < 3:
+      continue
+    justification = step[1]
+    clause = step[2]
+    if not isinstance(justification, list) or not justification:
+      continue
+    if justification[0] != "in":
+      continue
+    # single atom ["isa", TYPE, CONST]
+    if isinstance(clause, list) and len(clause) >= 3 and clause[0] == "isa":
+      if str(clause[1]) == question_type and clause[2] == answer_const:
+        return True
+    # wrapped single atom [["isa", TYPE, CONST]]
+    if isinstance(clause, list) and len(clause) == 1:
+      inner = clause[0]
+      if isinstance(inner, list) and len(inner) >= 3 and inner[0] == "isa":
+        if str(inner[1]) == question_type and inner[2] == answer_const:
+          return True
+  return False
+
+
+def _filter_tautological_population_answers(answers, logic):
+  """Remove tautological population answers when non-tautological ones exist.
+
+  A tautological answer is a $some_TYPE constant proved solely via the
+  population axiom 'isa QUESTION_TYPE $some_TYPE' — i.e. the proof is
+  circular: 'some animal is an animal because some animal is an animal'.
+  Such answers are filtered out when at least one non-tautological answer
+  also exists.
+  """
+  question_type = _extract_question_isa_type(logic)
+  if question_type is None:
+    return answers
+  tautological = [a for a in answers
+                  if _is_tautological_population_answer(a, question_type)]
+  if not tautological or len(tautological) == len(answers):
+    return answers
+  return [a for a in answers if a not in tautological]
+
+
 def _compute_ambiguity(obj):
   """Scan obj and set _ambiguous_bases and _ambiguous_url_names.
 
@@ -336,10 +587,12 @@ def _compute_skolem_types(proof):
   is kept.
   """
   global _skolem_types, _skolem_fn_verbs, _skolem_fn_actors, _skolem_fn_targets
-  _skolem_types     = {}
-  _skolem_fn_verbs  = {}
-  _skolem_fn_actors = {}
+  global _skolem_fn_types
+  _skolem_types      = {}
+  _skolem_fn_verbs   = {}
+  _skolem_fn_actors  = {}
   _skolem_fn_targets = {}
+  _skolem_fn_types   = {}   # sk_name (e.g. "sk0") -> object type from isa(TYPE, [sk_name,...])
   for step in proof:
     clause = step[2] if len(step) > 2 else []
     if not isinstance(clause, list):
@@ -351,6 +604,10 @@ def _compute_skolem_types(proof):
       # isa(TYPE, skN) — for simple Skolem constants
       if pred == "isa" and isinstance(atom[2], str) and re.match(r'^sk\d+$', atom[2]):
         _skolem_types.setdefault(atom[2], str(atom[1]))
+      # isa(TYPE, [skN, ...]) — Skolem function used as an object (e.g. a roof witness)
+      elif pred == "isa" and _is_skolem_fn(atom[2]):
+        fn_name = atom[2][0]
+        _skolem_fn_types.setdefault(fn_name, str(atom[1]))
       # has_type / has_actor / has_target where subject is a Skolem function
       elif pred == "has type" and _is_skolem_fn(atom[1]):
         key = str(atom[1])
@@ -524,7 +781,7 @@ def _format_step(step, sent_nr, show_logic=False):
   clause = step[2] if len(step) > 2 else []
 
   clause_str = _clause_to_str(clause)
-  why_str    = _format_why(reason, sent_nr)
+  why_str    = _format_why(reason, sent_nr, clause)
   conf       = _extract_step_conf(reason)
   if conf < 0.9999:
     why_str = why_str + ", confidence " + _fmt_pct(conf)
@@ -534,7 +791,7 @@ def _format_step(step, sent_nr, show_logic=False):
   return line
 
 
-def _format_why(reason, sent_nr):
+def _format_why(reason, sent_nr, clause=None):
   """Format the 'why' part of a proof step reason."""
   if not isinstance(reason, list) or not reason:
     return "unknown"
@@ -543,7 +800,11 @@ def _format_why(reason, sent_nr):
     source   = reason[1] if len(reason) > 1 else ""
     polarity = reason[2] if len(reason) > 2 else ""
     if polarity == "goal":
-      return "negated question"
+      # $auto_negated_question is the refutation assumption (assumed for contradiction)
+      if source == "$auto_negated_question":
+        return "assumption"
+      # Other goal-sourced clauses (backward chaining from the question)
+      return "from question"
     if source in sent_nr:
       return "sentence " + str(sent_nr[source])
     return source
@@ -578,22 +839,76 @@ def _answer_label(val):
 # Negated atoms are rendered as "if" conditions; positive atoms as "then" consequences.
 # _atom_to_english handles every predicate in the stage-2 whitelist.
 
+def _forall_or_to_english(frm):
+  """Render ["forall", VAR, ["or", ["-isa", TYPE, VAR], CONCL]] as English.
+
+  This is the GK encoding of ∀VAR.(TYPE(VAR) → CONCL), i.e. "all TYPEs are ...".
+  Returns a string, or None if the pattern does not match.
+  """
+  if not (isinstance(frm, list) and len(frm) == 3 and frm[0] == "forall"):
+    return None
+  var  = frm[1]
+  body = frm[2]
+  if not (isinstance(body, list) and body and body[0] == "or"):
+    return None
+  # Find the -isa(TYPE, VAR) guard and the positive conclusion atom(s)
+  neg_isa = None
+  concls  = []
+  for el in body[1:]:
+    if (isinstance(el, list) and el and el[0] == "-isa"
+        and len(el) >= 3 and el[2] == var):
+      neg_isa = el
+    else:
+      concls.append(el)
+  if neg_isa is None or not concls:
+    return None
+  typ = str(neg_isa[1])
+
+  def _concl_pred(c):
+    """Render a conclusion atom without its subject (the universal variable)."""
+    if not isinstance(c, list) or not c:
+      return str(c)
+    p = str(c[0])
+    neg = p.startswith("-")
+    base = p[1:] if neg else p
+    # has degree property: [pred, PROP, ENTITY(=VAR), DEGREE, RELCLASS]
+    if base == "has degree property" and len(c) >= 3 and c[2] == var:
+      adv, _ = _degree_parts(_entity_name(c[3]) if len(c) > 3 else "")
+      prop = str(c[1])
+      prefix = "not " if neg else ""
+      return prefix + adv + prop
+    # has property: [pred, PROP, ENTITY(=VAR)]
+    if base == "has property" and len(c) >= 3 and c[2] == var:
+      prop = str(c[1])
+      return ("not " if neg else "") + prop
+    # fallback to full atom rendering
+    base_atom = [base] + list(c[1:])
+    return _atom_to_english_negated(base_atom) if neg else _atom_to_english(c)
+
+  concl_text = " and ".join(_concl_pred(c) for c in concls)
+  return "all " + typ + "s are " + concl_text
+
+
 def _block_to_english(block_atom):
   """Render a $block atom as an English exception string.
 
-  Structure: ["$block", PRIORITY, ["$not", INNER_ATOM]]
-  Returns the negated rendering of INNER_ATOM (e.g. "John cannot fly"),
-  or "" if the atom is malformed.
+  Structure: ["$block", PRIORITY, ["$not", INNER]]
+  Returns the negated rendering of INNER, or "" if malformed.
   """
   if not isinstance(block_atom, list) or len(block_atom) < 3:
     return ""
   inner = block_atom[2]
-  if (isinstance(inner, list) and inner and inner[0] == "$not"
-      and len(inner) > 1 and isinstance(inner[1], list)):
-    return _atom_to_english_negated(inner[1])
-  if isinstance(inner, list):
-    return _atom_to_english(inner)
-  return str(inner)
+  if not (isinstance(inner, list) and inner and inner[0] == "$not"
+          and len(inner) > 1 and isinstance(inner[1], list)):
+    if isinstance(inner, list):
+      return _atom_to_english(inner)
+    return str(inner)
+  body = inner[1]
+  # Special case: forall-or pattern encodes a universal rule head.
+  foe = _forall_or_to_english(body)
+  if foe is not None:
+    return "not: " + foe
+  return _atom_to_english_negated(body)
 
 
 def _format_clause_logic(clause):
@@ -675,6 +990,12 @@ def _clause_to_str(clause):
 
 # ---- entity name helper ----
 
+_VOWELS = frozenset("aeiouAEIOU")
+
+def _indef_article(noun):
+  """Return 'an' if noun starts with a vowel sound, else 'a'."""
+  return "an" if noun and noun[0] in _VOWELS else "a"
+
 # Safe letters for labelling noun-phrase constants.
 # Skips letters that are common stage-2 variable names (E, K, N, S, V, X, Y, Z)
 # so that "car B" can never be confused with a proof variable.
@@ -731,17 +1052,29 @@ def _skolem_fn_to_name(term):
   """Render a Skolem function term ["sk0", arg1, arg2, ...] as English.
 
   Uses _skolem_fn_verbs / _skolem_fn_actors / _skolem_fn_targets (populated by
-  _compute_skolem_types) to describe the reified event.
+  _compute_skolem_types) to describe the reified event.  Falls back to
+  _skolem_fn_types (keyed by function name) for non-event Skolem objects.
 
-  Examples:
+  Examples (event Skolem):
     ["sk0","Greg 2","Mike 1"]  -> "the eating by Greg of Mike"
     ["sk0","?:X","Mike 1"]     -> "the eating of Mike"
     ["sk0","?:X","?:Y"]        -> "the eating event"
-    (no verb found)            -> "the event"
+  Examples (object Skolem, type="roof"):
+    ["sk0","$some_car"]        -> "the roof of some car"
+    ["sk0","?:X"]              -> "a roof"
+    (no type found)            -> "the event"
   """
   key  = str(term)
   verb = _skolem_fn_verbs.get(key)
   if not verb:
+    # Not a reified event — try object-type lookup keyed by function name.
+    fn_name = term[0] if isinstance(term, list) and term else ""
+    obj_type = _skolem_fn_types.get(fn_name)
+    if obj_type:
+      arg = term[1] if len(term) > 1 else None
+      if arg is None or (isinstance(arg, str) and arg.startswith("?:")):
+        return _indef_article(obj_type) + " " + obj_type
+      return "the " + obj_type + " of " + _entity_name(arg)
     return "the event"
   gerund = _to_gerund(verb)
 
@@ -785,11 +1118,16 @@ def _entity_name(val, with_url=False):
     return str(val)
   if val.startswith("?:"):
     val = val[2:]
-  # Population constants: $some_not_* -> "some non-*",  $some_* -> "some *"
+    # Purely numeric names are prover-generated fresh variables — prefix with "V"
+    if val.isdigit():
+      val = "V" + val
+  # Population constants: $some_not_* -> "a non-*",  $some_* -> "a/an *"
   if val.startswith("$some_not_"):
-    return "some non-" + val[len("$some_not_"):].replace("_", " ")
+    noun = val[len("$some_not_"):].replace("_", " ")
+    return _indef_article(noun) + " non-" + noun
   if val.startswith("$some_"):
-    return "some " + val[len("$some_"):].replace("_", " ")
+    noun = val[len("$some_"):].replace("_", " ")
+    return _indef_article(noun) + " " + noun
   # Skolem constants: sk0, sk1, ... -> "some TYPE skN" using proof context
   if re.match(r'^sk\d+$', val):
     typ = _skolem_types.get(val)
@@ -933,6 +1271,10 @@ def _atom_to_english(atom):
       prop    = e(0)
       ent     = e(1)
       adv, art_type = _degree_parts(e(2))
+      relcls_raw = args[3] if len(args) > 3 else ""
+      if isinstance(relcls_raw, str) and relcls_raw.startswith("?:"):
+        # Unbound variable — omit class noun and article
+        return ent + " is " + adv + prop
       relcls  = e(3)
       if art_type == "def":
         art = "the"

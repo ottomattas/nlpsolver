@@ -31,7 +31,10 @@
 
   
   [["-rel2","in","?:X","?:Y", "?:CT"], ["-rel2","in","?:Y","?:Z", "?:CT"],
-   ["rel2","in","?:X","?:Z", "?:CT"]], 
+   ["rel2","in","?:X","?:Z", "?:CT"]],
+
+  [["-is rel2","in","?:X","?:Y", "?:CT"], ["-is rel2","in","?:Y","?:Z", "?:CT"],
+   ["is rel2","in","?:X","?:Z", "?:CT"]],
 
   [["-act1","?:W","?:X","?:Z", "?:CT"], ["can1","?:W","?:X","?:Z", "?:CT"]], 
   [["-act2","?:W","?:X","?:Y","?:Z", "?:CT"], ["can1","?:W","?:X","?:Z", "?:CT"]],
@@ -44,11 +47,35 @@
 
   [["-do2","?:W","?:X","?:Y","?:Z", "?:CT"], ["do1","?:W","?:X","?:Z", "?:CT"]],
 
-  // Bridge axioms for new-pipeline habitual activity predicates:
-  // typical(E) + has_type(E,V) + has_actor(E,X)  =>  typically(X,V)
-  // typically(X,V)  =>  can(X,V)
-  [["-typical","?:E"],["-has type","?:E","?:V"],["-has actor","?:E","?:X"],["typically","?:X","?:V"]],
-  [["-typically","?:X","?:V"],["can","?:X","?:V"]],
+  // Motion verb: has_actor(E, X) + has_direction(E, L) => is_rel2(in, X, L)
+  // Covers "John travelled to L", "Mary journeyed to L", etc.
+  [["-has actor","?:E","?:X","?:CT"],["-has direction","?:E","?:L","?:CT"],
+   ["is rel2","in","?:X","?:L","?:CT"]],
+
+  // Bridge axioms for new-pipeline habitual activity predicates.
+  //
+  // Activity predicates → typically:
+  //   typical(E,CT) + has_type(E,V,CT) + has_actor(E,X,CT)  =>  typically(X,V,CT)
+  [["-typical","?:E","?:CT"],["-has type","?:E","?:V","?:CT"],["-has actor","?:E","?:X","?:CT"],["typically","?:X","?:V","?:CT"]],
+  // typically → can (3-arg, with context):
+  [["-typically","?:X","?:V","?:CT"],["can","?:X","?:V","?:CT"]],
+
+  // Bridge A — activity → can (without requiring typical):
+  //   isa(activity,E) + has_type(E,V,CT) + has_actor(E,X,CT)  =>  can(X,V,CT)
+  //   Needed so that the biconditional backward witness for a negative
+  //   activity question (e.g. "John does not fly?") can contradict ¬can(X,V).
+  [["-isa","activity","?:E"],["-has type","?:E","?:V","?:CT"],["-has actor","?:E","?:X","?:CT"],["can","?:X","?:V","?:CT"]],
+
+  // Bridge B — can → canonical typical activity (Skolem term can_act(X,V)):
+  //   can(X,V,CT)  =>  isa(activity, can_act(X,V))
+  //                 +  typical(can_act(X,V), CT)
+  //                 +  has_type(can_act(X,V), V, CT)
+  //                 +  has_actor(can_act(X,V), X, CT)
+  //   Allows activity-based queries to match capability assertions.
+  [["-can","?:X","?:V","?:CT"],["isa","activity",["can_act","?:X","?:V"]]],
+  [["-can","?:X","?:V","?:CT"],["typical",["can_act","?:X","?:V"],"?:CT"]],
+  [["-can","?:X","?:V","?:CT"],["has type",["can_act","?:X","?:V"],"?:V","?:CT"]],
+  [["-can","?:X","?:V","?:CT"],["has actor",["can_act","?:X","?:V"],"?:X","?:CT"]],
 
   {"@logic": [["do1","?:W","?:X","?:Z", "?:CT"], ["-can1","?:W","?:X","?:Z", "?:CT"]], "@confidence": 0.15},  
   {"@logic": [["do2","?:W","?:X","?:Y","?:Z", "?:CT"], ["-can2","?:W","?:X","?:Y","?:Z", "?:CT"]], "@confidence": 0.15},

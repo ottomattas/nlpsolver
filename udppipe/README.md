@@ -85,8 +85,13 @@ About hardware:
 Running nlpsolver
 -----------------
 
-Before running nlpsolver you need to start 
+Before running nlpsolver you need to start either with
 
+    ./nlpserver.py
+    
+or for venv-based installation, with
+
+    source  my-venv/bin/activate
     ./nlpserver.py
 
 The server initializes Stanza, reads relevant data to 3 gigabytes of shared memory for gk

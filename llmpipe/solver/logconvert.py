@@ -83,6 +83,13 @@ _CTXT_ELIGIBLE = frozenset({
   "typical", "typically",
 })
 
+# Spatial prepositions handled by "Where is X?" queries.
+_SPATIAL_PREPS = ["in", "on", "at", "near", "above", "under"]
+
+# Stage-2 meta-predicates that indicate a "Where is X?" location query.
+_WHERE_META_PREDS = frozenset({"located in", "located at", "located on",
+                               "located near", "location", "located"})
+
 
 # ======== main entry point ========
 
@@ -115,10 +122,11 @@ def rawlogic_convert(logic, s1_json=None):
   Output: list of {"@name":..., "@logic":CLAUSE} / {"@name":..., "@question":F}
   Returns None on fatal error.
   """
-  global _skolem_nr, _defq_nr, _fv_nr
+  global _skolem_nr, _defq_nr, _fv_nr, _gobj_nr
   _skolem_nr = 0          # reset once for the whole conversion
   _defq_nr   = 0
   _fv_nr     = 0
+  _gobj_nr   = 0
   if not logic or not isinstance(logic, list):
     return None
 
@@ -152,6 +160,9 @@ def rawlogic_convert(logic, s1_json=None):
     for fact in pop_facts:
       ctxt = ["$ctxt", _fresh_fv(), _fresh_fv(), _fresh_fv(), _fresh_fv()]
       _inject_ctxt_into_objs([fact], ctxt)
+
+  # Infer have(Y,E,CT) from possessive is_rel2(T+" of",E,Y,CT) + isa(T,E) pairs.
+  _add_possessive_have(result)
 
   # Normalize has property / has degree property based on the gradable whitelist.
   # Must run before _coerce_relclass so relclass coercion sees the correct predicate.
@@ -209,12 +220,31 @@ def _convert_id_package(item, asu_index=None):
       if s1_loc is not None:
         location = s1_loc
 
+  is_where_question = False
   if is_question:
     # Distinguish wh-questions (["ask", var, body]) from yes/no questions.
     if isinstance(formula, list) and len(formula) >= 3 and formula[0] == "ask":
       ask_var = str(formula[1])
       body    = formula[2]
-      if _is_simple_question_formula(body):
+      # "Where is X?" pattern: body contains ["is rel2", <meta-pred>, entity, ask_var]
+      where_atom = _find_where_atom(body, ask_var)
+      if where_atom is not None:
+        entity = where_atom[2]
+        atom_pred = where_atom[1]
+        # Use specific prep when query uses a concrete spatial preposition;
+        # use all preps for meta-predicates like "located in".
+        specific_prep = atom_pred if atom_pred in _WHERE_SPATIAL_PREPS else None
+        # When the entity is a stage-2 variable (e.g. "E" from an event),
+        # _build_where_question would generate an over-broad biconditional
+        # matching ANY event's location.  Instead, use _build_defq_question
+        # which preserves all constraints from the original body.
+        entity_is_s2var = isinstance(entity, str) and bool(_S2_VAR_RE.match(entity))
+        if specific_prep and entity_is_s2var:
+          result = _build_defq_question(name, ask_var, body, where_prep=specific_prep)
+        else:
+          result = _build_where_question(name, entity, ask_var, specific_prep=specific_prep)
+        is_where_question = True
+      elif _is_simple_question_formula(body):
         # Single atom with ≤1 variable: direct @question, no $defq wrapper.
         free_vars_in_body = sorted(_collect_body_free_vars(body))
         varmap = {ask_var: "?:" + ask_var}
@@ -226,7 +256,11 @@ def _convert_id_package(item, asu_index=None):
         result = [{"@name": name, "@question": q_formula, "@askvars": 1}]
       else:
         # Complex case: wrap in $defq biconditional.
-        result = _build_defq_question(name, ask_var, body)
+        # Detect has_location(E, ask_var) → encode "in" as the preposition.
+        where_prep = _find_haslocation_prep(body, ask_var)
+        result = _build_defq_question(name, ask_var, body, where_prep=where_prep)
+        if where_prep:
+          is_where_question = True
     else:
       # Yes/no question.
       # When $ctxt is active, always use $defq so the @question atom is the
@@ -243,6 +277,9 @@ def _convert_id_package(item, asu_index=None):
         result = [{"@name": name, "@question": q_formula}]
       else:
         # Complex formula, or: simple but $ctxt active → $defq biconditional.
+        # Fix contradictory ["and", ["not", A], A] that LLM generates for
+        # "No X is Y?" questions — simplify to just ["not", A].
+        formula = _simplify_contradictory_and(formula)
         result = _build_defq_question(name, None, formula)
   else:
     # Clausify the formula.
@@ -260,9 +297,15 @@ def _convert_id_package(item, asu_index=None):
       situation  = _fresh_fv()
       tense_term = _fresh_fv()   # rules are tense-independent
     elif is_question:
-      # For questions: world from Stage-1 pre_state (or free var); tense from Stage-1 time.
-      situation  = world if world is not None else _fresh_fv()
-      tense_term = tense if tense is not None else _fresh_fv()
+      if is_where_question:
+        # Where-query biconditionals must be world-agnostic: location facts
+        # may come from any world state (e.g. W0 travel facts vs W2 query).
+        situation  = _fresh_fv()
+        tense_term = _fresh_fv()
+      else:
+        # For questions: world from Stage-1 pre_state (or free var); tense from Stage-1 time.
+        situation  = world if world is not None else _fresh_fv()
+        tense_term = tense if tense is not None else _fresh_fv()
     else:
       # Situational facts: world from ["holds",W,F]; tense from Stage-1 time field.
       situation  = world if world is not None else _fresh_fv()
@@ -417,6 +460,9 @@ def _inject_ctxt_atom(atom, ctxt):
     return atom
   base = pred[1:] if pred.startswith("-") else pred
 
+  if base == "or":
+    return ["or"] + [_inject_ctxt_atom(sub, ctxt) for sub in atom[1:]]
+
   if base == "$block" and len(atom) >= 3:
     body = atom[2]
     if isinstance(body, list) and len(body) >= 2 and body[0] == "$not":
@@ -460,6 +506,151 @@ def _inject_ctxt_into_objs(objs, ctxt):
 
 # ======== clausification ========
 
+# Predicates whose second positional argument (index 2) is an "object" entity
+# that the LLM may express as a bare plural type name like "berries" or "carrots".
+# These need expansion to a fresh variable + isa constraint so that the prover
+# can match them against specific instances.
+_GENERIC_OBJ_PREDS = frozenset({
+  "has target", "has location", "has direction", "has instrument",
+})
+
+# Bare type name: all lowercase letters (no digits, no uppercase, no suffix number).
+_BARE_TYPE_RE = re.compile(r'^[a-z][a-z]*$')
+
+# Counter for fresh variables introduced by _expand_generic_objects (module-level).
+_gobj_nr = 0
+
+def _singularize(word):
+  """Very basic English singularization (plural → singular type name)."""
+  if word.endswith("ies") and len(word) > 3:
+    return word[:-3] + "y"          # berries→berry, activities→activity
+  if word.endswith("ses") and len(word) > 3:
+    return word[:-2]                # buses→bus
+  if word.endswith("xes") and len(word) > 3:
+    return word[:-2]                # foxes→fox
+  if word.endswith("ches") and len(word) > 4:
+    return word[:-2]                # matches→match
+  if word.endswith("shes") and len(word) > 4:
+    return word[:-2]                # wishes→wish
+  if word.endswith("s") and not word.endswith("ss") and len(word) > 2:
+    return word[:-1]                # carrots→carrot, bears→bear
+  return word
+
+def _expand_generic_objects(frm):
+  """Replace bare plural type names in object positions with fresh vars + isa.
+
+  Transforms ["has target", event, "berries"] into:
+    ["exists", "Gobj1", ["and", ["isa", "berry", "Gobj1"],
+                                ["has target", event, "Gobj1"]]]
+
+  This allows the prover to unify the generic type name with specific instances
+  (e.g. sk0 where isa(berry, sk0)) via the isa constraint.  Recurses into all
+  sub-formulas.
+  """
+  global _gobj_nr
+  if not isinstance(frm, list) or not frm:
+    return frm
+  op = frm[0]
+  if op in _GENERIC_OBJ_PREDS and len(frm) >= 3:
+    obj = frm[2]
+    if isinstance(obj, str) and _BARE_TYPE_RE.match(obj):
+      sing = _singularize(obj)
+      var  = "Gobj" + str(_gobj_nr)
+      _gobj_nr += 1
+      rest = [frm[0], frm[1], var] + list(frm[3:])
+      return ["exists", var, ["and", ["isa", sing, var], rest]]
+  # Recurse into sub-formulas (connectives, quantifiers, wrappers)
+  if isinstance(op, str) and op in (_connectives | _opaque_wrappers):
+    return [op] + [_expand_generic_objects(el) for el in frm[1:]]
+  return frm
+
+
+def _strip_typical_from_antecedent(frm):
+  """Remove ["typical", ...] atoms from conjunctions in implies-antecedents.
+
+  The LLM adds typical(E) to activity descriptions in conditional antecedents
+  (e.g. "if X eats berries" → exists E. isa(activity,E) ∧ typical(E) ∧ ...).
+  Specific events never carry typical, so the conditional never fires.
+  Strip typical from the antecedent only — it's a valid guard in consequents.
+  """
+  if not isinstance(frm, list) or not frm:
+    return frm
+  op = frm[0]
+  if op == "implies" and len(frm) == 3:
+    ant = _drop_typical_conjuncts(frm[1])
+    con = _strip_typical_from_antecedent(frm[2])
+    return [op, ant, con]
+  if op in _connectives or op in _opaque_wrappers:
+    return [op] + [_strip_typical_from_antecedent(el) for el in frm[1:]]
+  return frm
+
+def _drop_typical_conjuncts(frm):
+  """Recursively remove ["typical", ...] atoms from "and" conjunctions.
+
+  Only drops typical when it is one conjunct among others.  A standalone
+  ["typical", ...] that is the entire antecedent is left unchanged.
+  """
+  if not isinstance(frm, list) or not frm:
+    return frm
+  op = frm[0]
+  if op == "and":
+    kept = []
+    for el in frm[1:]:
+      if isinstance(el, list) and el and el[0] == "typical":
+        continue      # drop typical conjunct
+      kept.append(_drop_typical_conjuncts(el))
+    if len(kept) == 1:
+      return kept[0]
+    if not kept:
+      return frm    # nothing left — leave original to avoid empty formula
+    return ["and"] + kept
+  if op in ("exists", "forall") and len(frm) == 3:
+    return [op, frm[1], _drop_typical_conjuncts(frm[2])]
+  return frm
+
+
+def _normalize_type_case(frm):
+  """Lowercase the type-name argument in 'isa' atoms throughout a formula.
+
+  The LLM sometimes capitalises type names in certain sentences (e.g. "Baby bird"
+  from "Baby birds do not fly") while lowercasing them in others ("baby bird"
+  from "John is a baby bird").  Normalising to lowercase ensures consistent
+  unification inside the prover.
+  Only the CLASS argument (frm[1]) of an 'isa' or '-isa' atom is lowercased;
+  entity constants (frm[2]) keep their original casing.
+  """
+  if not isinstance(frm, list) or not frm:
+    return frm
+  op = frm[0]
+  if op in ("isa", "-isa") and len(frm) >= 2 and isinstance(frm[1], str):
+    return [op, frm[1].lower()] + [_normalize_type_case(a) for a in frm[2:]]
+  if isinstance(op, str):
+    return [op] + [_normalize_type_case(el) for el in frm[1:]]
+  return frm
+
+
+def _normalize_quantifiers(frm):
+  """Normalize multi-body quantifiers into standard 3-element form.
+
+  LLMs sometimes generate ["exists","X",f1,f2,...] without an explicit "and"
+  wrapper.  Convert these to ["exists","X",["and",f1,f2,...]] so the rest of
+  the pipeline can assume the standard 3-element ["exists", var, body] form.
+  """
+  if not isinstance(frm, list) or not frm:
+    return frm
+  op = frm[0]
+  if op in ("exists", "forall"):
+    if len(frm) > 3:
+      body = ["and"] + [_normalize_quantifiers(f) for f in frm[2:]]
+      return [op, frm[1], body]
+    if len(frm) == 3:
+      return [op, frm[1], _normalize_quantifiers(frm[2])]
+    return frm
+  if op in _connectives:
+    return [op] + [_normalize_quantifiers(el) for el in frm[1:]]
+  return frm
+
+
 def _clausify(formula):
   """Convert a formula to a list of GK clauses (CNF).
 
@@ -467,7 +658,15 @@ def _clausify(formula):
     - a single atom: ["pred", arg, ...]
     - a list of atoms (disjunction): [["pred1",...], ["pred2",...], ...]
   """
-  f1 = _implies_to_or(formula)
+  # Normalise type-name casing in isa/−isa atoms (LLM may capitalise inconsistently).
+  fn = _normalize_type_case(formula)
+  # Strip typical() from implies-antecedents (LLM adds it even in conditionals
+  # where it shouldn't be required, causing rules to miss specific events).
+  fa = _strip_typical_from_antecedent(fn)
+  # Expand bare plural type names in object positions to fresh vars + isa.
+  fe = _expand_generic_objects(fa)
+  f0 = _normalize_quantifiers(fe)
+  f1 = _implies_to_or(f0)
   f2 = _push_neg(f1, True)
   # Pass 1: push normally(...) inside exists/and until it wraps a single atom.
   f3 = _expand_normally(f2)
@@ -911,6 +1110,28 @@ def _extract_clauses(frm):
 
 # ======== $defq question wrapping ========
 
+def _simplify_contradictory_and(frm):
+  """Simplify ["and", ["not", A], A] to ["not", A].
+
+  The LLM sometimes generates such a contradictory conjunction for yes/no
+  questions that ask about a universally-negative statement (e.g. "No elephant
+  is an animal?" → ["and", ["not", exists-elephant-animal], exists-elephant-animal]).
+  In that case the correct question formula is just the negative part ["not", A].
+
+  Only the pattern NOT-first is simplified.  The pattern A-first (["and", A, ["not", A]])
+  is left unchanged because in that case the original self-contradictory formula
+  happens to let the prover return the correct answer (e.g. False for
+  "John is not defeated?" when John IS defeated).
+  """
+  if not (isinstance(frm, list) and len(frm) == 3 and frm[0] == "and"):
+    return frm
+  a, b = frm[1], frm[2]
+  # Pattern: ["not", X] and X  (negation comes first)
+  if isinstance(a, list) and a and a[0] == "not" and len(a) == 2 and a[1] == b:
+    return a
+  return frm
+
+
 def _is_simple_question_formula(frm):
   """Return True if frm is a single positive atom with at most 1 distinct variable.
 
@@ -943,17 +1164,18 @@ def _is_simple_question_formula(frm):
 def _looks_like_var(s):
   """Return True if s looks like a stage-2 variable name (e.g. X, Y, S1).
 
-  Variable names in stage-2 LLM output are uppercase-initial identifiers
-  without spaces, e.g. X, Y, Z, S1, Var.  Strings starting with '?:' are
-  already in GK format and also count as variables.
-  Constants are either lowercase ('car', 'elephant'), numbered ('John 1',
-  'car 2'), or URLs — none of which match the pattern.
+  Variables in stage-2 LLM output are a single uppercase letter optionally
+  followed by digits: X, Y, Z, E, S, W, S1, S2, X1, W0.  Strings starting
+  with '?:' are already in GK format and also count as variables.
+
+  Multi-letter capitalized words (English, French, German, Buddhist …) are
+  proper-noun constants, not variables, and must NOT match.
   """
   if not isinstance(s, str) or ' ' in s:
     return False
   if s.startswith('?:'):
     return True
-  return bool(re.match(r'^[A-Z][A-Za-z0-9]*$', s))
+  return bool(re.match(r'^[A-Z][0-9]*$', s))
 
 
 def _collect_body_free_vars(frm, bound=None):
@@ -991,7 +1213,29 @@ def _collect_body_free_vars(frm, bound=None):
   return result
 
 
-def _build_defq_question(name, ask_var, body):
+def _find_haslocation_prep(body, ask_var):
+  """Return "in" if body contains ["has location", event_var, ask_var], else None.
+
+  Searches recursively through "and"/"exists"/"forall" wrappers.
+  Used to detect activity-location queries like "Where did John eat candy?"
+  where stage-2 encodes the location as has_location(E, X) with X as the
+  ask variable.  The implied preposition is always "in".
+  """
+  if not isinstance(body, list) or not body:
+    return None
+  if body[0] == "has location" and len(body) == 3 and body[2] == ask_var:
+    return "in"
+  if body[0] == "and":
+    for item in body[1:]:
+      found = _find_haslocation_prep(item, ask_var)
+      if found is not None:
+        return found
+  if body[0] in ("exists", "forall") and len(body) >= 3:
+    return _find_haslocation_prep(body[2], ask_var)
+  return None
+
+
+def _build_defq_question(name, ask_var, body, where_prep=None):
   """Build $defq biconditional @logic clauses and a @question entry.
 
   For a wh-question (ask_var is not None, e.g. "X"):
@@ -1003,6 +1247,10 @@ def _build_defq_question(name, ask_var, body):
     Constructs:  $defq0() <=> body
     Emits:       @logic clauses (with @sourcetype:"question") from the CNF
                  @question: [$defq0]
+
+  where_prep: if set (e.g. "in"), the $defq atom becomes 2-arg [$defqN, prep, X]
+    so that the answer includes the preposition.  Sets @askvars:2 and
+    @where_query:True.  Used for has_location activity-location queries.
 
   Non-ask free variables in body are automatically wrapped in 'exists' so
   the clausification handles them correctly (Skolem functions of ask_var).
@@ -1020,10 +1268,16 @@ def _build_defq_question(name, ask_var, body):
 
   # Build the biconditional formula.
   if ask_var:
-    defq_atom = [defq_name, ask_var]
+    if where_prep:
+      # 2-arg $defq: [$defqN, "in", X] — encodes the preposition in the answer.
+      defq_atom = [defq_name, where_prep, ask_var]
+      q_atom    = [defq_name, "?:Rel", "?:" + ask_var]
+      askvars   = 2
+    else:
+      defq_atom = [defq_name, ask_var]
+      q_atom    = [defq_name, "?:" + ask_var]
+      askvars   = 1
     frm = ["forall", ask_var, ["equivalent", defq_atom, wrapped_body]]
-    q_atom = [defq_name, "?:" + ask_var]
-    askvars = 1
   else:
     defq_atom = [defq_name]
     frm = ["equivalent", defq_atom, wrapped_body]
@@ -1042,6 +1296,102 @@ def _build_defq_question(name, ask_var, body):
   q_obj = {"@name": name, "@question": q_atom}
   if askvars is not None:
     q_obj["@askvars"] = askvars
+  if where_prep:
+    q_obj["@where_query"] = True
+  result.append(q_obj)
+  return result
+
+
+_WHERE_SPATIAL_PREPS = frozenset(_SPATIAL_PREPS)
+
+
+def _find_where_atom(body, ask_var):
+  """Find and return a where-query atom within body, or None.
+
+  Matches atoms of the form  ["is rel2", pred, entity, ask_var]  where:
+    - pred is a meta-predicate (e.g. "located in") in _WHERE_META_PREDS, OR
+    - pred is a concrete spatial preposition (e.g. "near") in _WHERE_SPATIAL_PREPS
+  In either case the ask_var must appear as the LAST positional argument
+  (position 3), making it the location being queried.
+
+  Handles forms:
+    Simple:      ["is rel2", pred, entity, ask_var]
+    Compound:    ["and", ..., <matching atom>, ...]
+    Existential: ["exists", var, <body>]
+  Returns the matching atom list if found, else None.
+  """
+  if not isinstance(body, list) or not body:
+    return None
+  if (body[0] == "is rel2" and len(body) == 4 and body[3] == ask_var
+      and body[1] in (_WHERE_META_PREDS | _WHERE_SPATIAL_PREPS)):
+    return body
+  if body[0] == "and":
+    for item in body[1:]:
+      found = _find_where_atom(item, ask_var)
+      if found is not None:
+        return found
+  if body[0] in ("exists", "forall") and len(body) >= 3:
+    return _find_where_atom(body[2], ask_var)
+  return None
+
+
+def _is_where_body(body, ask_var):
+  """Return True if body contains a 'Where is X?' pattern."""
+  return _find_where_atom(body, ask_var) is not None
+
+
+_S2_VAR_RE = re.compile(r'^[A-Z][A-Za-z0-9]*$')
+
+
+def _s2var_to_gk(name_str):
+  """Convert a stage-2 variable name like 'Y' to a GK variable '?:Y'.
+
+  Stage-2 variables are uppercase-initial identifiers (X, Y, Entity, ...).
+  Constants (John 1, box 1, etc.) contain spaces or start lowercase.
+  If already a GK variable (starts with "?:"), returned unchanged.
+  """
+  if isinstance(name_str, str):
+    if name_str.startswith("?:"):
+      return name_str
+    if _S2_VAR_RE.match(name_str):
+      return "?:" + name_str
+  return name_str
+
+
+def _build_where_question(name, entity, ask_var, specific_prep=None):
+  """Build biconditional @logic clauses and @question entry for 'Where is X?'.
+
+  For each preposition p in the applicable set, generates two CNF clauses:
+    Forward:  ["-is rel2", p, entity_gk, "?:Q1"], [$defqN, p, "?:Q1"]
+    Backward: ["-" + defqN, p, "?:Q1"],            ["is rel2", p, entity_gk, "?:Q1"]
+
+  entity may be a stage-2 variable name (e.g. "Y") — it is converted to a GK
+  variable ("?:Y") so the biconditional matches any entity's location.
+
+  If specific_prep is given (e.g. "near"), only that preposition is used;
+  otherwise all _SPATIAL_PREPS are used (for meta-predicate queries like "located in").
+
+  The @question is [$defqN, ?:Rel, ?:Q1] with @askvars=2 and @where_query=True.
+  $ctxt is injected into "is rel2" atoms automatically by _inject_ctxt_into_objs.
+  """
+  global _defq_nr
+  defq_name = "$defq" + str(_defq_nr)
+  _defq_nr += 1
+
+  entity_gk = _s2var_to_gk(entity)
+  preps = [specific_prep] if specific_prep else _SPATIAL_PREPS
+
+  result = []
+  for prep in preps:
+    # Forward: is_rel2(prep, entity_gk, Q1) => defqN(prep, Q1)
+    fwd = [["-is rel2", prep, entity_gk, "?:Q1"], [defq_name, prep, "?:Q1"]]
+    result.append({"@name": name, "@sourcetype": "question", "@logic": fwd})
+    # Backward: defqN(prep, Q1) => is_rel2(prep, entity_gk, Q1)
+    bwd = [["-" + defq_name, prep, "?:Q1"], ["is rel2", prep, entity_gk, "?:Q1"]]
+    result.append({"@name": name, "@sourcetype": "question", "@logic": bwd})
+
+  q_atom = [defq_name, "?:Rel", "?:Q1"]
+  q_obj = {"@name": name, "@question": q_atom, "@askvars": 2, "@where_query": True}
   result.append(q_obj)
   return result
 
@@ -1107,6 +1457,15 @@ def _scan_item_formula(frm, name, polarity, classes, has_props, deg_props):
     return
   # ["ask", var, body] — scan the body.
   if pred == "ask":
+    if len(frm) >= 3:
+      _scan_item_formula(frm[2], name, polarity, classes, has_props, deg_props)
+    return
+  # Transparent wrappers — recurse into the formula argument.
+  if pred == "normally" or pred == "question":
+    if len(frm) >= 2:
+      _scan_item_formula(frm[1], name, polarity, classes, has_props, deg_props)
+    return
+  if pred == "holds":
     if len(frm) >= 3:
       _scan_item_formula(frm[2], name, polarity, classes, has_props, deg_props)
     return
@@ -1220,6 +1579,8 @@ def _populate_clauses(items):
     name    = "sent_" + str(item[1])
     package = item[2]
     _is_q, formula, _conf = _extract_package(package)
+    if _is_q:
+      continue   # never populate from the question sentence — circular by construction
     if formula is not None:
       _scan_item_formula(formula, name, True, classes, has_props, deg_props)
 
@@ -1285,16 +1646,23 @@ def _coerce_relclass(result):
     if not isinstance(obj, dict):
       continue
     if "@question" in obj:
-      obj["@question"] = _coerce_atom(obj["@question"], const_classes)
+      obj["@question"] = _coerce_atom(obj["@question"], const_classes, is_question=True)
     if "@logic" in obj and obj.get("@sourcetype") == "question":
-      obj["@logic"] = _coerce_clause(obj["@logic"], const_classes)
+      obj["@logic"] = _coerce_clause(obj["@logic"], const_classes, is_question=True)
 
 
-def _coerce_atom(atom, const_classes):
+def _coerce_atom(atom, const_classes, is_question=False):
   """Recursively substitute RELCLASS in degree-predicate atoms.
 
   Handles both raw question formulas (with connectives and quantifiers)
   and flat GK clause atoms.
+
+  is_question: when True (processing @question or @sourcetype:question entries),
+    the RELCLASS in "has degree rel2" atoms is always replaced with a fresh free
+    variable so the question unifies with any rule regardless of its RELCLASS.
+    (E.g. "cat" from Emily's type vs "animal" from the generic rule both unify
+    with a free variable.)  For "has degree property" the original mismatch-based
+    coercion is preserved.
   """
   if not isinstance(atom, list) or not atom:
     return atom
@@ -1309,6 +1677,12 @@ def _coerce_atom(atom, const_classes):
     if len(atom) > relclass_idx:
       entity   = atom[entity_idx]   if len(atom) > entity_idx   else None
       relclass = atom[relclass_idx]
+      # For "has degree rel2" in questions: always use a free variable for
+      # RELCLASS so the question matches any rule regardless of its RELCLASS.
+      if is_question and base == "has degree rel2" and isinstance(relclass, str):
+        new_atom = list(atom)
+        new_atom[relclass_idx] = _fresh_fv()
+        return new_atom
       if (entity and _is_ground_term(entity) and
           entity in const_classes and
           isinstance(relclass, str) and
@@ -1322,22 +1696,22 @@ def _coerce_atom(atom, const_classes):
 
   # Logical connectives / quantifiers: recurse.
   if pred in ("and", "or", "not"):
-    return [pred] + [_coerce_atom(el, const_classes) for el in atom[1:]]
+    return [pred] + [_coerce_atom(el, const_classes, is_question) for el in atom[1:]]
   if pred in ("forall", "exists") and len(atom) >= 3:
-    return [pred, atom[1], _coerce_atom(atom[2], const_classes)]
+    return [pred, atom[1], _coerce_atom(atom[2], const_classes, is_question)]
 
   return atom
 
 
-def _coerce_clause(clause, const_classes):
+def _coerce_clause(clause, const_classes, is_question=False):
   """Apply _coerce_atom to a GK clause (single atom or disjunction)."""
   if not isinstance(clause, list) or not clause:
     return clause
   # Disjunction: first element is itself a list of atoms.
   if isinstance(clause[0], list):
-    return [_coerce_atom(atom, const_classes) for atom in clause]
+    return [_coerce_atom(atom, const_classes, is_question) for atom in clause]
   # Single atom.
-  return _coerce_atom(clause, const_classes)
+  return _coerce_atom(clause, const_classes, is_question)
 
 
 # ======== question formula flattening ========
@@ -1506,6 +1880,111 @@ def _strip_isa_entity(result):
     keep.append(obj)
   result[:] = keep
   return result
+
+
+# ======== possessive have inference ========
+
+_ACTIVITY_ROLE_PREDS = frozenset({
+  "has target", "has actor", "has instrument", "has direction", "has location",
+})
+
+def _add_possessive_have(result):
+  """Infer have(Y,E,CT) from paired isa(T,E) + is_rel2(T+" of",E,Y,CT) facts.
+
+  "The car of Mary" produces:
+    isa("car", car2)
+    is_rel2("car of", car2, Mary, CT)
+  but "Mary has a car?" checks have(Mary, sk, CT).  This function bridges the
+  gap by emitting have(Mary, car2, CT) whenever the isa type T matches the
+  relation prefix (T+" of").
+
+  Context (tense, world, location, knower) for the generated have fact:
+  - If the possessed entity E appears as the argument of an activity-role fact
+    (has_target, has_actor, has_instrument, etc.) we use that fact's CT.
+    This handles "John saw a twig of an elephant" correctly: twig2 is the
+    has_target of a past see-event, so have(elephant, twig2, CT_past) is
+    emitted rather than a spurious present-tense fact.
+  - Otherwise fall back to the CT from the is_rel2 fact itself (correct for
+    direct possessives like "The bike of John is blue" with no containing event).
+
+  The isa-type check prevents spurious have for non-possessive relations such
+  as is_rel2("afraid of", wolf, mice) — there is no isa("afraid", wolf).
+
+  Only ground (non-variable, non-compound-term) entity arguments are processed.
+  New facts are inserted before the first @question entry.
+  """
+  def _is_ground_str(v):
+    return isinstance(v, str) and not v.startswith("?:")
+
+  # Pass 1a: collect isa(T, E) facts for ground T and E.
+  isa_types = {}          # entity_str -> set of type_str
+  for obj in result:
+    if not isinstance(obj, dict) or "@logic" not in obj:
+      continue
+    clause = obj["@logic"]
+    if not (isinstance(clause, list) and clause
+            and isinstance(clause[0], str) and clause[0] == "isa"
+            and len(clause) >= 3):
+      continue
+    typ, ent = clause[1], clause[2]
+    if _is_ground_str(typ) and _is_ground_str(ent):
+      isa_types.setdefault(ent, set()).add(typ)
+
+  # Pass 1b: collect CT of the first activity-role fact mentioning each entity.
+  # has_target(act, E, CT) / has_actor(act, E, CT) / has_instrument(act, E, CT) …
+  # E is always at argument position 2 (index 2) for these predicates.
+  entity_event_ct = {}    # entity_str -> CT from containing activity
+  for obj in result:
+    if not isinstance(obj, dict) or "@logic" not in obj:
+      continue
+    clause = obj["@logic"]
+    if not (isinstance(clause, list) and clause
+            and isinstance(clause[0], str)
+            and clause[0] in _ACTIVITY_ROLE_PREDS
+            and len(clause) >= 4):
+      continue
+    ent = clause[2]
+    ct  = clause[3] if len(clause) > 3 else None
+    if _is_ground_str(ent) and ent not in entity_event_ct and ct is not None:
+      entity_event_ct[ent] = ct
+
+  # Pass 2: find is_rel2(R, E, Y, CT_possessive) where R ends in " of" and
+  # isa(T, E) exists with T+" of" == R.  Emit have(Y, E, CT_chosen).
+  new_facts = []
+  seen = set()
+  for obj in result:
+    if not isinstance(obj, dict) or "@logic" not in obj:
+      continue
+    clause = obj["@logic"]
+    if not (isinstance(clause, list) and clause
+            and isinstance(clause[0], str) and clause[0] == "is rel2"
+            and len(clause) >= 4):
+      continue
+    rel, ent, owner = clause[1], clause[2], clause[3]
+    ct_possessive = clause[4] if len(clause) > 4 else None
+    if not (isinstance(rel, str) and rel.endswith(" of")):
+      continue
+    if not (_is_ground_str(ent) and _is_ground_str(owner)):
+      continue
+    expected_type = rel[:-3]    # strip trailing " of"
+    if ent not in isa_types or expected_type not in isa_types[ent]:
+      continue
+    # Prefer the activity-event CT (correct tense) over the possessive CT.
+    ct = entity_event_ct.get(ent, ct_possessive)
+    have_clause = ["have", owner, ent]
+    if ct is not None:
+      have_clause.append(list(ct) if isinstance(ct, list) else ct)
+    key = (owner, ent)
+    if key in seen:
+      continue
+    seen.add(key)
+    new_facts.append({"@name": obj.get("@name", "sent_?"), "@logic": have_clause})
+
+  if not new_facts:
+    return
+  first_q = next((i for i, o in enumerate(result) if "@question" in o), len(result))
+  for i, fact in enumerate(new_facts):
+    result.insert(first_q + i, fact)
 
 
 # ======== degree-predicate stripping (noproptypes_flag) ========
