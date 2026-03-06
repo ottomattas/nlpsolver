@@ -30,9 +30,6 @@ import pretty
 # configuration and other globals are in globals.py
 import globals
 
-# making a nice nlp answer from json answer is in answer.py
-from answer import *
-
 # small utilities are in utils.py
 from utils import *
 

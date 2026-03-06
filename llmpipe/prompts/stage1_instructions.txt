@@ -53,6 +53,8 @@ Do NOT split:
 - Implications
 - Alternatives
 - Any structure where parts are not jointly asserted
+- Multiple adjectives modifying the same noun into separate ASUs
+  if they are intended to describe the same instance or instance-class (e.g., "long not red trunks").
 
 If OR/XOR is present -> keep inside one ASU.
 
@@ -61,7 +63,7 @@ If "or/either" appears, keep it inside one ASU (never split into separate ASUs).
 If "if/then/unless" appears, keep the whole conditional in one ASU (never split antecedent/consequent).
 
 Never split a sentence if doing so changes logical scope or truth conditions.
-
+ 
 --- 2.2 Modifier Handling ---
 
 - Keep instruments, manner, and location attached to the main verb.
@@ -139,18 +141,44 @@ If the raw sentence ends with "?", then the sentence package MUST contain at lea
 - If the question is a WH-question (who/what/which/where/when/how many), apply the Question Word Transformation rules.
 - Otherwise, treat it as a yes/no question and generate a query ASU that asks whether the full proposition is true.
 
+You must determine if a question is asking about a category (Class-Level) or searching for an instance (Existential).
+
+1. Class-Level (Generic) Normalization: 
+   When asking a property of a plural generic subject in a general sense (e.g., "Are elephants animals?", "Do birds fly?"), 
+   normalize the 'text' field by adding "all" or "typically" to clarify it is a class-level query.
+   - "Are elephants animals?" -> "Are all elephants animals?"
+   - "Do birds fly?" -> "Do all birds fly?"
+
+2. Existential (Instance-Search) Preservation:
+   When searching for the existence of an individual or subset (e.g., "Are there any red bears?", "Is there a dog in the yard?"),
+   preserve the existential phrasing. Do NOT add "all".
+   - "Are there red bears?" -> "Does there exist a red bear?"
+
+3. Strict Negation: 
+   For a negative question (e.g., "Are elephants not animals?"), produce exactly one query ASU containing that negation.
+   - NEVER invent or append a positive alternative (e.g., "Are elephants animals and not animals?") unless the source text explicitly contains both branches.
+
+4. Ambiguity Resolution:
+   In cases of high ambiguity, default to the Class-Level (Universal) interpretation if the subject is a bare plural (e.g., "Foxes are toys?"). 
+   Default to Existential if there is a locative or temporary state (e.g., "Are foxes in the box?").
+
+
 Conjunctive/Disjunctive Questions:
 - If the sentence is of the form "A and B?" and both parts are asserted together, you may split A and B into separate situation ASUs (per section 2.1),
   BUT you MUST also add a query ASU asking the combined question "Is A and B?".
   EXCEPTION: if one branch is the negation of the other (B = "not A"), do NOT split;
   treat it as a single query ASU (see Negation-complement rule below).
 - If the sentence contains "or/either" (not jointly asserted), keep it inside ONE query ASU (do not split into separate ASUs).
-- Negation-complement rule (MANDATORY):
+- Strict Negation Rule: For a simple negative question (e.g., "Is John not at home?", "Are birds not animals?"), 
+  produce exactly one query ASU containing the negation.
+  Never invent a positive branch (e.g., "Is John at home and not at home?") unless the source text explicitly contains both (e.g., "Is John at home or not?").  
+- Negation-complement rule:
   If the question has the form "P or not P?" or "P and not P?" where both sides involve
   the SAME proposition and its negation, produce EXACTLY ONE query ASU for the whole sentence.
   Do NOT create any real/situation ASU for either branch.
   This applies whether P is a simple predicate ("John is a man") or a compound one
-  ("John is a tall man", "John has a car", "John is in Estonia").
+  ("John is a tall man", "John has a car", "John is in Estonia").  
+  Do NOT apply this rule to simple negative questions (e.g., Are elephants not animals?", "Is John not at home?").
 
 == 4. TYPE CLASSIFICATION (ASU.type) ==
 
@@ -214,7 +242,6 @@ Create an entity for every noun phrase in simplified_text except:
 - Predicate nouns used only as type labels
   (e.g., "John is a doctor" -> no doctor entity)
 
-
 --- 7.1 Entity Types ---
 
 "concrete" -> specific instance
@@ -234,8 +261,7 @@ indefinite objects are usually generic unless clearly specific.
 
 In "does not have/there is no" patterns, the missing object is generic 
 unless a specific named object is mentioned.
-
-
+  
 --- 7.2 Entity IDs ---
 
 - Famous names: "Name 1" + url
@@ -247,6 +273,11 @@ Rules:
 - Do NOT paraphrase generic IDs.
 - Reuse IDs consistently.
 - Determiners for concrete IDs must stay stable.
+- Global ID Consistency rule:
+  You must maintain a single, unified entity registry for the entire input. 
+  If a specific entity (e.g., "John") appears in multiple sentences, it MUST carry the exact
+  same ID (e.g., "John 1") in every sentence package where it occurs. Do not reset numbering
+  or increment IDs for the same individual when moving to a new sentence package.
 
 
 --- 7.3 ENTITY.text USAGE RULE (IMPORTANT) ---
@@ -322,8 +353,37 @@ Extract only when explicit.
 --- confidence ---
 Include only when not equal to 1.0.
 
-"Most" should give confidence ~0.65-0.70, "many" ~0.50, "some" ~0.30, 
-"usually/normally/generally/almost all" in range 0.8-0.99.
+Confidence represents logical strength. 
+Determine if a sentence is a non-quantified situation or a quantified rule and apply the corresponding value. 
+Include this field only when the value is NOT equal to 1.0.
+
+PART 1: Non-Quantified Situations & Frequency Adverbs:
+
+Use individuals (e.g., "John is usually home") or bare plurals without explicit quantifier words (e.g., "Elephants have trunks").
+
+* Usually / Normally / Generally / Almost all -> 0.95 
+* Often -> 0.75
+* Sometimes -> 0.50
+* Rarely -> 0.20
+* No adverb present (e.g., "John is a fox") -> Omit field (assumes 1.0) 
+
+PART 2: Quantified Statements (Explicit Quantifiers)
+
+Use ONLY when the specific quantifier word is present in the source text. Values indicate logical coverage:
+
+* "Some" / "A" / "An" -> 0.99 (CRITICAL: This represents a certain existential fact. Do NOT use 0.3 here.) 
+* "Most" -> 0.80 
+* "Many" -> 0.60
+* "A few" -> 0.30
+
+Quantifier Handling Summary Table:
+| Word in Text           | Confidence | Logic Interpretation    |
+|------------------------|------------|-------------------------|
+| "Some" / "A" / "An"    | 0.99       | Exists (Certain Fact)   |
+| "Normally" / "Usually" | 0.95       | Universal Default       |
+| "Most"                 | 0.80       | Universal Default       |
+| "Many"                 | 0.60       | Universal Default       |
+| "A few"                | 0.30       | Universal Default       |
 
 --- time ---
 
@@ -373,6 +433,9 @@ property that could be an adjective — do not omit it from query ASUs.
 Entry format:
 ["word","intensity","relative_class"]
 
+The "word" in the adjectives entry must be the base property. 
+Do NOT include negation markers like "not" or "non-" in the word field (e.g., for "not red", use "red").
+
 Intensity:
 - high   (comparative or amplified: "very tall", "extremely fast")
 - low    (diminutive: "a bit cold", "slightly warm")
@@ -386,15 +449,12 @@ If no specific class is known from context, use "entity" as default.
 
 == 13. DEFINITE RELATIONAL DESCRIPTIONS ==
 
-If simplified_text contains a definite possessive or "of" construction
-with a relational noun:
-
-Add under:
-"definites": [ ["ROLE of","VALUE_ID","ARG_ID"], ... ]
-
-Apply only to definite forms.
-Do NOT add for indefinite forms.
-
+If simplified_text contains a definite possessive or "of" construction 
+with a relational noun  (e.g., "John's father", "the price of milk"):
+-  Add under a "definites" field: [ ["ROLE of", "VALUE_ID", "ARG_ID"], ... ].
+-  Mandatory Exclusion: Do NOT add this field or create a second relation-stating ASU for 
+   indefinite forms (e.g., "John is a father of Mike", "Mary saw a sister of Paul").
+-  Use "definites" only when the text refers to a specific, unique relationship or attribute instance.
 
 == 14. OUTPUT FORMAT ==
 

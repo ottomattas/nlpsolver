@@ -11,34 +11,40 @@ representation so that a developer or LLM can quickly start extending or modifyi
 
 1. [Quick start](#1-quick-start)
 2. [Pipeline overview](#2-pipeline-overview)
-3. [Representation overview](#3-representation-overview)
-   - 3.1 [Stage-1 ASU JSON](#31-stage-1-asu-json)
-   - 3.2 [Stage-2 logic JSON](#32-stage-2-logic-json)
-   - 3.3 [GK clause list](#33-gk-clause-list)
-   - 3.4 [The adjectives field](#34-the-adjectives-field)
-   - 3.5 [The $ctxt context term](#35-the-ctxt-context-term)
-   - 3.6 [Defeasible reasoning and $block](#36-defeasible-reasoning-and-block)
-4. [Source files](#4-source-files)
-   - 4.1 [solve.py](#41-solvepy)
-   - 4.2 [llmparse.py](#42-llmparsepy)
-   - 4.3 [llmcall.py](#43-llmcallpy)
-   - 4.4 [logconvert.py](#44-logconvertpy)
-   - 4.5 [procproofs.py](#45-procproofspy)
-   - 4.6 [prover.py](#46-proverpy)
-   - 4.7 [pretty.py](#47-prettypy)
-   - 4.8 [cache.py](#48-cachepy)
-   - 4.9 [globals.py](#49-globalspy)
-   - 4.10 [utils.py](#410-utilspy)
-5. [Prompt files](#5-prompt-files)
-6. [Key algorithms in logconvert.py](#6-key-algorithms-in-logconvertpy)
-   - 6.1 [Package extraction](#61-package-extraction)
-   - 6.2 [FOL to CNF clausification](#62-fol-to-cnf-clausification)
-   - 6.3 [Defeasible expansion](#63-defeasible-expansion)
-   - 6.4 [Context injection ($ctxt)](#64-context-injection-ctxt)
-   - 6.5 [Gradable property normalisation](#65-gradable-property-normalisation)
-   - 6.6 [Population facts](#66-population-facts)
-7. [Configuration and options](#7-configuration-and-options)
-8. [Extending and modifying the pipeline](#8-extending-and-modifying-the-pipeline)
+3. [Repository layout](#3-repository-layout)
+4. [Representation overview](#4-representation-overview)
+   - 4.1 [Stage-1 ASU JSON](#41-stage-1-asu-json)
+   - 4.2 [Stage-2 logic JSON](#42-stage-2-logic-json)
+   - 4.3 [GK clause list](#43-gk-clause-list)
+   - 4.4 [The adjectives field](#44-the-adjectives-field)
+   - 4.5 [The $ctxt context term](#45-the-ctxt-context-term)
+   - 4.6 [Defeasible reasoning and $block](#46-defeasible-reasoning-and-block)
+5. [Source files](#5-source-files)
+   - 5.1 [solve.py](#51-solvepy)
+   - 5.2 [llmparse.py](#52-llmparsepy)
+   - 5.3 [llmcall.py](#53-llmcallpy)
+   - 5.4 [logconvert.py](#54-logconvertpy)
+   - 5.5 [lc_clausify.py](#55-lc_clausifypy)
+   - 5.6 [lc_questions.py](#56-lc_questionspy)
+   - 5.7 [procproofs.py](#57-procproofspy)
+   - 5.8 [proof_render.py](#58-proof_renderpy)
+   - 5.9 [proof_explain.py](#59-proof_explainpy)
+   - 5.10 [prover.py](#510-proverpy)
+   - 5.11 [pretty.py](#511-prettypy)
+   - 5.12 [cache.py](#512-cachepy)
+   - 5.13 [globals.py](#513-globalspy)
+   - 5.14 [utils.py](#514-utilspy)
+6. [Prompt files](#6-prompt-files)
+7. [Key algorithms in logconvert.py and lc_clausify.py](#7-key-algorithms-in-logconvertpy-and-lc_clausifypy)
+   - 7.1 [Package extraction](#71-package-extraction)
+   - 7.2 [FOL to CNF clausification](#72-fol-to-cnf-clausification)
+   - 7.3 [Defeasible expansion](#73-defeasible-expansion)
+   - 7.4 [Context injection ($ctxt)](#74-context-injection-ctxt)
+   - 7.5 [Gradable property normalisation](#75-gradable-property-normalisation)
+   - 7.6 [Population facts](#76-population-facts)
+8. [Configuration and options](#8-configuration-and-options)
+9. [The mkdata toolkit](#9-the-mkdata-toolkit)
+10. [Extending and modifying the pipeline](#10-extending-and-modifying-the-pipeline)
 
 ---
 
@@ -61,6 +67,7 @@ python3 solver/solve.py -nosolve "..."
 
 # Run the test suite
 python3 test.py
+python3 test.py tests/tests_core.py -llm claude
 ```
 
 ---
@@ -77,7 +84,7 @@ llmparse.parse_text()              [solver/llmparse.py]
     │   (LLM responses cached in cache.db)
     │
     ▼
-logconvert.rawlogic_convert()      [solver/logconvert.py]
+logconvert.rawlogic_convert()      [solver/logconvert.py + lc_clausify.py + lc_questions.py]
     │   Logic JSON → GK clause list
     │   FOL → CNF, Skolemisation, defeasible expansion,
     │   context injection, gradable normalisation
@@ -89,7 +96,7 @@ prover.call_prover()               [solver/prover.py]
     │   Returns raw JSON result string
     │
     ▼
-procproofs.process_proof()         [solver/procproofs.py]
+procproofs.process_proof()         [solver/procproofs.py + proof_render.py + proof_explain.py]
     │   Parses prover JSON
     │   Selects best proof, formats answer
     │   Optionally renders step-by-step explanation
@@ -103,12 +110,57 @@ The command-line entry point is `main()` in the same file.
 
 ---
 
-## 3. Representation overview
+## 3. Repository layout
+
+```
+llmpipe/
+├── solver/              Core pipeline modules
+│   ├── solve.py         CLI entry point; english_to_answer() library function
+│   ├── llmparse.py      Two-stage LLM parser
+│   ├── llmcall.py       LLM API wrapper (GPT / Claude / Gemini, no SDK)
+│   ├── logconvert.py    Stage-2 JSON → GK clause list (main driver)
+│   ├── lc_clausify.py   FOL → CNF clausification
+│   ├── lc_questions.py  Wh-question encoding and population facts
+│   ├── procproofs.py    Prover output → answer string
+│   ├── proof_render.py  Atom/clause rendering helpers
+│   ├── proof_explain.py Step-by-step proof explanation formatter
+│   ├── prover.py        gk binary interface
+│   ├── pretty.py        JSON pretty-printer (Style B)
+│   ├── cache.py         SQLite cache for LLM responses and prover results
+│   ├── globals.py       Options dict and file paths
+│   ├── utils.py         debug_print, clause_list_to_json
+│   └── gradables.txt    Whitelist of gradable adjectives (~400 entries)
+│
+├── prompts/             LLM system prompts
+│   ├── stage1_instructions.txt
+│   ├── stage1_examples.txt
+│   ├── stage2_instructions.txt
+│   └── stage2_examples.txt
+│
+├── tests/               Test cases
+│   ├── tests_core.py    Core test suite ([text, expected_answer] pairs)
+│   ├── tests_medium_core.py
+│   └── tests_small.py
+│
+├── mkdata/              Synonym/antonym data builder (standalone, own venv)
+│   └── README.md        Full documentation for mkdata
+│
+├── axioms_std.js        Default background-knowledge axioms for gk
+├── cache.db             SQLite cache (auto-created; not committed)
+│
+├── test.py              Test runner
+├── checkprompt.py       Validate JSON in prompt example files
+└── DOCUMENTATION.md     Full developer documentation
+```
+
+---
+
+## 4. Representation overview
 
 The pipeline uses three successive JSON representations.  Understanding all three is essential for
 any work on the system.
 
-### 3.1 Stage-1 ASU JSON
+### 4.1 Stage-1 ASU JSON
 
 **Produced by:** Stage-1 LLM call
 **Consumed by:** Stage-2 LLM call and `logconvert.py`
@@ -172,7 +224,7 @@ Semantic Units* (ASUs).  Each ASU is one minimal proposition that can be true or
 | `mental_holder` / `mental_attitude` / `epistemic_force` / `attitude_target` | For propositional attitudes (`knows that`, `believes that`) |
 | `definites` | List of `[REL, VALUE_ID, ARG_ID]` for definite descriptions (`"the handle of the fork"`) |
 
-### 3.2 Stage-2 logic JSON
+### 4.2 Stage-2 logic JSON
 
 **Produced by:** Stage-2 LLM call
 **Consumed by:** `logconvert.rawlogic_convert()`
@@ -232,7 +284,7 @@ Each `PACKAGE` is one of:
 | Count | `N` |
 | Scalar value | `V` |
 
-### 3.3 GK clause list
+### 4.3 GK clause list
 
 **Produced by:** `logconvert.rawlogic_convert()`
 **Consumed by:** `prover.call_prover()`
@@ -267,12 +319,12 @@ which default conclusions can be blocked by more specific rules.  Priority has t
 `["$", CLASS, N]` where CLASS is the subject class (e.g. `"bird"`) and N is an integer.
 
 **Context atom:** `["$ctxt", TENSE, WORLD, LOCATION, KNOWER]`
-Appended to eligible predicate atoms (see §3.5).  All four components are either concrete
+Appended to eligible predicate atoms (see §4.5).  All four components are either concrete
 constants or fresh free variables.
 
 **Confidence:** Some clause dicts also carry `"@confidence": 0.8` (from `@p` metadata).
 
-### 3.4 The adjectives field
+### 4.4 The adjectives field
 
 All adjectives/properties in Stage-1 output carry an `"adjectives"` field:
 
@@ -293,7 +345,7 @@ Stage 2 then uses this field to decide which predicate to emit (`has degree prop
 the whitelist in `solver/gradables.txt`: words not in the whitelist are downgraded from
 `has degree property` to `has property` regardless of what Stage 2 produced.
 
-### 3.5 The $ctxt context term
+### 4.5 The $ctxt context term
 
 Every eligible predicate atom in the GK clause list is augmented with a trailing `$ctxt` term:
 
@@ -319,7 +371,7 @@ Eligible predicates (`_CTXT_ELIGIBLE` in `logconvert.py`): `has property`, `have
 
 Context injection can be disabled with `-nocontext` (or `-simple`).
 
-### 3.6 Defeasible reasoning and $block
+### 4.6 Defeasible reasoning and $block
 
 Normal rules (type `normal_rule` in Stage 1) produce defeasible clauses.  The pattern for a
 typical bird-fly rule is:
@@ -340,11 +392,11 @@ Defeasible expansion can be disabled with `-noexceptions` (or `-simple`).
 
 ---
 
-## 4. Source files
+## 5. Source files
 
 All Python source lives in `solver/`.  All scripts are run from `llmpipe/`.
 
-### 4.1 solve.py
+### 5.1 solve.py
 
 **Role:** CLI entry point and library facade.
 
@@ -371,7 +423,7 @@ returns a string starting with `"Error:"` rather than raising.
 -simple            No context, no exceptions, simple properties
 ```
 
-### 4.2 llmparse.py
+### 5.2 llmparse.py
 
 **Role:** Two-stage LLM parser.
 
@@ -400,13 +452,13 @@ commas, balancing brackets.
 **Prompt composition:** `_compose_prompt(instructions_file, examples_file)` concatenates
 instructions + `"\n\nExamples:\n\n"` + examples into a single system prompt string.
 
-### 4.3 llmcall.py
+### 5.3 llmcall.py
 
 **Role:** Low-level LLM API wrapper.
 
 **Key function:** `call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None) -> str | None`
 
-Dispatches to `_call_gpt`, `_call_claude`, or `_call_gemini` based on the `use_llm` setting.
+Dispatches to `call_gemini`, `call_claude`, or `call_gpt` based on the `use_llm` setting.
 Each provider-specific function makes the HTTP call directly (no SDK) with retries and a sleep
 between retries.
 
@@ -415,6 +467,10 @@ cache key encodes: provider, version, temperature, seed, max_tokens, sysprompt, 
 a match is found, the cached response is returned immediately.  The result of every new LLM call
 is stored in the cache before returning.  Caching is controlled by
 `globals.options["use_llm_cache_flag"]` (default `True`).
+
+**Debug output:** Uses `utils.debug_print` with module-level `debug` and `calldebug` flags:
+- `debug = True` logs each provider's raw response
+- `calldebug = True` logs the full request body sent to the API
 
 **Configuration** (edit at the top of `llmcall.py`):
 
@@ -431,14 +487,16 @@ max_retries    = 3
 API keys are read from JSON files: `../gpt/gpt_secrets.js`, `../gpt/claude_secrets.js`,
 `../gpt/gemini_secrets.js` (relative to `llmpipe/`).
 
-### 4.4 logconvert.py
+### 5.4 logconvert.py
 
-**Role:** Logic conversion — the most complex module.
+**Role:** Main driver for logic conversion — orchestrates the full Stage-2 JSON → GK clause
+list pipeline.  The heavy computation is split across three files: `logconvert.py` handles
+package extraction, context injection, and post-processing passes; `lc_clausify.py` does FOL→CNF
+compilation; `lc_questions.py` handles question encoding and population facts.
 
 **Key function:** `rawlogic_convert(logic, s1_json=None) -> list | None`
 
-Converts the Stage-2 nested JSON formula into a flat GK clause list, applying a sequence of
-transformations:
+Converts the Stage-2 nested JSON formula into a flat GK clause list:
 
 ```
 ["and", ["@id","S1",PACKAGE], ...] (Stage-2 input)
@@ -450,14 +508,8 @@ transformations:
     │    _convert_id_package(item, asu_index)
     │        _extract_package_ctx()        unpack PACKAGE: formula, world, tense, etc.
     │        override with Stage-1 ASU data (tense, world, location)
-    │        _clausify(formula) if assertion:
-    │            _implies_to_or()          eliminate implies/equivalent/xor
-    │            _push_neg()               NNF push
-    │            _expand_normally()  pass 1  push normally inside exists/and
-    │            _skolemize()              eliminate existentials → Skolem terms
-    │            _distribute()            distribute OR over AND → CNF
-    │            _expand_normally()  pass 2  normally(atom) → $block clause
-    │            _extract_clauses()        collect flat clause list
+    │        clausify(formula) if assertion  [→ lc_clausify.py]
+    │        build_defq_question() if wh-question  [→ lc_questions.py]
     │        inject $ctxt into result
     │
     ├─ insert population facts before first @question
@@ -469,28 +521,79 @@ transformations:
     └─ strip @sourcetype                  remove internal annotation before prover
 ```
 
-See §6 for detailed discussion of the key algorithms.
-
 **Module-level constants:**
 
 - `_GRADABLE_PROPS` — frozenset loaded from `solver/gradables.txt`; ~400 lowercase property names
 - `_CTXT_ELIGIBLE` — frozenset of predicates that receive a `$ctxt` argument
-- `_connectives` — logical connectives that are not predicates
-- `_opaque_wrappers` — `{"normally", "-normally"}`; clausification does not recurse inside
 
 **Counter globals** (reset at the start of each `rawlogic_convert` call):
 
-- `_skolem_nr` — Skolem constant/function counter
-- `_defq_nr` — `$defq` predicate name counter (for complex questions)
-- `_fv_nr` — fresh free-variable counter (`?:Fv1`, `?:Fv2`, …)
+- `lc_clausify._skolem_nr`, `lc_clausify._gobj_nr` — Skolem and generic-object counters
+- `lc_questions._defq_nr` — `$defq` predicate name counter (for complex questions)
+- `_fv_nr` (in `logconvert`) — fresh free-variable counter (`?:Fv1`, `?:Fv2`, …)
 
-### 4.5 procproofs.py
+See §7 for detailed discussion of the key algorithms.
+
+### 5.5 lc_clausify.py
+
+**Role:** FOL → CNF clausification compiler.
+
+**Public API used by `logconvert.py`:**
+
+- `clausify(formula) -> list` — converts a first-order formula to a list of CNF clauses
+- `looks_like_var(s) -> bool` — true if `s` starts with `?:` (GK variable convention)
+- `apply_varmap(formula, varmap) -> formula` — substitute variables by name
+- `connectives` — frozenset of logical connective names (not predicates)
+
+**Clausification pipeline** (inside `clausify`):
+
+```
+_normalize_type_case
+_strip_typical_from_antecedent
+_expand_generic_objects
+_normalize_quantifiers
+_implies_to_or                 eliminate implies / equivalent / xor
+_push_neg                      push negations in to reach NNF
+_expand_normally (pass 1)      push normally inside exists/and
+_skolemize                     eliminate existentials → Skolem terms
+_distribute                    distribute or over and → CNF
+_expand_normally (pass 2)      normally(atom) → $block clause
+_extract_clauses               collect flat clause list
+```
+
+**Module-level counters** (reset externally by `rawlogic_convert`):
+
+- `_skolem_nr` — next Skolem constant/function index
+- `_gobj_nr` — generic-object counter for `_expand_generic_objects`
+
+### 5.6 lc_questions.py
+
+**Role:** Wh-question encoding and population-fact collection.
+
+**Public API used by `logconvert.py`:**
+
+- `build_defq_question(formula, askvars, fresh_fv_fn) -> list` — encode a wh-question as a set
+  of GK clauses using `$defq` predicates
+- `find_where_atom(formula) -> atom | None` — find the location atom in a where-question body
+- `build_where_question(formula, fresh_fv_fn) -> list` — encode a where-question
+- `flatten_q_atoms(formula) -> list` — flatten an `ask` formula into a list of atoms
+- `scan_item_formula(formula, entity_types) -> list` — scan a formula for population facts
+- `build_population_facts(entity_types, mentioned) -> list` — build `isa TYPE ENTITY` fact clauses
+- `is_ground_term(t) -> bool` — true if `t` contains no variables
+- `is_simple_question_formula(f) -> bool` — true if `f` is a single atom (not compound)
+- `collect_body_free_vars(formula) -> set` — free variables in a formula
+- `find_haslocation_prep(formula) -> str | None` — extract spatial preposition from a location atom
+- `simplify_contradictory_and(formula) -> formula` — remove trivially-false conjuncts
+- `S2_VAR_RE` — regex matching Stage-2 variable names (`?:X`, `?:E`, etc.)
+- `WHERE_SPATIAL_PREPS` — set of spatial prepositions handled as where-questions
+
+### 5.7 procproofs.py
 
 **Role:** Post-processing of raw prover output into a human-readable answer.
 
 **Key function:** `process_proof(proof_result, text=None, s1_json=None, logic=None, options=None) -> str`
 
-1. Parses the raw prover JSON string (`_parse_result`).
+1. Parses the raw prover JSON string.
 2. Checks for `"result": "answer found"`.  Returns `"Unknown."` if not found.
 3. Sorts answers by `_answer_goodness` (confidence desc, proof length asc).
 4. Filters to the best object-type tier: concrete entities > Skolem constants > population facts.
@@ -498,17 +601,48 @@ See §6 for detailed discussion of the key algorithms.
    - Boolean `True`/`False` → `"True"` / `"False"`
    - Named entities → display name (strips numbering when unambiguous, strips URL when
      display name is unambiguous)
-   - Confidence < 0.99 → appends `"(confidence X%)"``
-6. Optionally renders a step-by-step proof explanation (`_format_explanation`) when
-   `-explain` is used.  The explanation walks proof steps, maps clause names (`sent_S1`) back
-   to original sentences via `s1_json`, and renders atom lists as readable English.
+   - Confidence < 0.99 → appends `"(confidence X%)"`
+6. Optionally renders a step-by-step proof explanation (via `proof_explain.format_explanation`)
+   when `-explain` is used.
 
-**Ambiguity handling:** Before formatting, `_compute_ambiguity` scans the full logic list to find
-entity names that appear with more than one number (e.g. `"John 1"` and `"John 3"`).  Such names
-keep their distinguishing number in output.  Similarly, URL display names that map to two
-different URLs are printed with the URL.
+**Ambiguity handling:** Before formatting, `compute_ambiguity` (from `proof_render.py`) scans
+the full logic list to find entity names that appear with more than one number (e.g. `"John 1"`
+and `"John 3"`).  Such names keep their distinguishing number in output.
 
-### 4.6 prover.py
+**Imports from proof_render.py:** `compute_ambiguity`, `entity_name`, `ans_atom_name`
+**Imports from proof_explain.py:** `format_explanation`, `build_sentence_map`, `ans_display_key`
+
+### 5.8 proof_render.py
+
+**Role:** Low-level rendering of proof atoms and clauses as English strings.
+
+**Public API:**
+
+- `compute_ambiguity(logic) -> (set, set)` — returns `(ambiguous_names, ambiguous_urls)` by
+  scanning the full clause list for multiply-numbered entities
+- `compute_skolem_types(proof)` — annotate each Skolem constant in a proof with the type inferred
+  from `isa` literals in the proof steps (mutates step dicts in-place)
+- `entity_name(atom_arg, ambiguous, ambig_urls) -> str` — format one entity argument for display
+- `ans_atom_name(atom) -> str` — format the answer atom of a proof step
+- `clause_to_str(clause) -> str` — convert a raw clause list to a readable string
+- `format_clause_logic(clause) -> str` — format clause as FOL-style logic notation
+- `block_to_english(blocker) -> str` — convert a `$block` literal to a readable exception string
+
+### 5.9 proof_explain.py
+
+**Role:** Builds the full step-by-step proof explanation presented to the user.
+
+**Public API:**
+
+- `build_sentence_map(s1_json) -> dict` — builds `{"sent_S1": "raw text", ...}` from Stage-1
+  output; maps each clause name back to the original English sentence it came from
+- `format_explanation(answers, sentence_map, show_logic=False) -> str` — main entry point;
+  produces the `"Explained:\n\n..."` block for all (non-duplicate) answers; groups proof steps
+  under "Sentences used:", "Knowledge used:", and "Proof steps:"
+- `ans_display_key(val, askvars=None) -> hashable` — canonical dedup key for an answer value;
+  ignores auxiliary world-state arguments
+
+### 5.10 prover.py
 
 **Role:** Interface to the `gk` binary theorem prover.
 
@@ -530,7 +664,7 @@ llmpipe/axioms_std.js          default axiom file
 ../gk/gk_taxonomy_packed.txt   taxonomy data
 ```
 
-### 4.7 pretty.py
+### 5.11 pretty.py
 
 **Role:** Human-readable pretty-printing of JSON structures.
 
@@ -547,7 +681,7 @@ to align with the first.  Consecutive closing-bracket-only lines are merged onto
 **`noquotes` mode** (`pretty.noquotes = True`): suppresses quotation marks and replaces spaces
 in strings with underscores — more readable for debugging.
 
-### 4.8 cache.py
+### 5.12 cache.py
 
 **Role:** SQLite-backed cache for LLM responses and prover results.
 
@@ -561,12 +695,13 @@ Key functions: `get_llm_from_cache`, `add_llm_to_cache`, `get_proof_from_cache`,
 `globals.options["use_llm_cache_flag"]`.  Proof caching is off by default and enabled with
 `-cache`.
 
-### 4.9 globals.py
+### 5.13 globals.py
 
 **Role:** Global configuration, file paths, and the `options` dict.
 
-The `options` dict is imported into every module via `from globals import *` and controls runtime
-behaviour:
+Contains only what is actually used by the active pipeline:
+
+**`options` dict** — runtime behaviour flags:
 
 | Key | Default | Effect |
 |-----|---------|--------|
@@ -581,27 +716,40 @@ behaviour:
 | `nocontext_flag` | `False` | Disable $ctxt injection |
 | `noexceptions_flag` | `False` | Disable defeasible $block |
 | `noproptypes_flag` | `False` | Strip degree predicates |
-| `nokb_flag` | `False` | Skip shared-memory KB |
+| `nokb_flag` | `True` | Skip shared-memory KB |
 
-File paths (set from environment/relative paths):
+**File paths** (computed relative to `llmpipe/`):
 
 ```python
-prover_fname    = "../gk/gk"
-prover_axiomfile = "axioms_std.js"
+cache_db_name     = "cache.db"
+prover_fname      = "../gk/gk"
+prover_axiomfile  = "axioms_std.js"
 prover_datafolder = "../gk"
+memkb_name        = "1000"
+prover_infile     = "gk_infile.js"
+prover_params     = ["-defaults", "-confidence", "0.1", "-keepconfidence", "0.1"]
+usekb_prover_params = ["-usekb", "-confidence", "0.1", "-keepconfidence", "0.1"]
 ```
 
-### 4.10 utils.py
+**`set_global_options(newoptions)`** — merge a dict into `options`; called by `solve.py` with
+the parsed CLI flags.
 
-**Role:** Two small utility functions used across the pipeline.
+### 5.14 utils.py
 
-- `debug_print(msg)` — prints `msg` if `options["debug_print_flag"]` is True.
+**Role:** Shared utility functions used across the pipeline.
+
+- `debug_print(label, data=None, flag=None)` — prints a labelled debug message when `flag` is
+  truthy.  If `flag` is `None` (default), falls back to `globals.options["debug_print_flag"]`.
+  Pass an explicit boolean to use a different flag (e.g. `llmcall.py` passes its module-level
+  `debug` and `calldebug` variables).  Formats `data` intelligently: lists are printed one
+  element per line (nested lists indented), dicts show key/value pairs.
+
 - `clause_list_to_json(logic) -> str` — converts the Python GK clause list to a JSON string
   suitable for passing to the `gk` binary.  Uses `json.dumps` with compact separators.
 
 ---
 
-## 5. Prompt files
+## 6. Prompt files
 
 All four prompt files live in `prompts/`.  They are concatenated into system prompts by
 `llmparse._compose_prompt`:
@@ -634,11 +782,11 @@ An important constraint: **examples must be consistent with instructions**.  In 
 
 ---
 
-## 6. Key algorithms in logconvert.py
+## 7. Key algorithms in logconvert.py and lc_clausify.py
 
-### 6.1 Package extraction
+### 7.1 Package extraction
 
-`_extract_package_ctx(package)` unwraps a Stage-2 PACKAGE and returns
+`_extract_package_ctx(package)` (in `logconvert.py`) unwraps a Stage-2 PACKAGE and returns
 `(is_question, formula, confidence, world, location, knower, tense)`.
 
 The PACKAGE shapes it handles:
@@ -652,10 +800,10 @@ After extraction, `_convert_id_package` overrides `tense`, `world`, and `locatio
 from the matching Stage-1 ASU (when `asu_index` is available).  Stage-1 data is authoritative
 because it is produced closer to the English source.
 
-### 6.2 FOL to CNF clausification
+### 7.2 FOL to CNF clausification
 
-`_clausify(formula)` converts a first-order formula into conjunctive normal form through five
-passes:
+`clausify(formula)` (in `lc_clausify.py`) converts a first-order formula into conjunctive normal
+form through five passes:
 
 1. **`_implies_to_or`** — eliminate `implies`, `equivalent`, `xor`:
    - `implies(A,B)` → `or(not(A), B)`
@@ -686,11 +834,11 @@ passes:
    - Recursive until no `or` wraps an `and`
 
 6. **`_expand_normally` pass 2** — expand remaining `normally(atom)` into `$block` clauses:
-   - See §6.3 below
+   - See §7.3 below
 
 7. **`_extract_clauses`** — collect all flat clauses from the resulting `and` tree
 
-### 6.3 Defeasible expansion
+### 7.3 Defeasible expansion
 
 After Skolemisation and CNF distribution, every `normally(atom)` appears inside an `or` clause
 alongside conditions (negative literals `-isa bird ?:X`) and other conclusions.
@@ -714,10 +862,10 @@ uses to defeat the bird default.
 With `-noexceptions`, the `$block` is suppressed and `normally` becomes equivalent to a strict
 implication.
 
-### 6.4 Context injection ($ctxt)
+### 7.4 Context injection ($ctxt)
 
-After clausification, `_inject_ctxt_into_objs` appends a `["$ctxt",T,W,L,K]` term to every
-eligible predicate atom in every `@logic` clause.
+After clausification, `_inject_ctxt_into_objs` (in `logconvert.py`) appends a
+`["$ctxt",T,W,L,K]` term to every eligible predicate atom in every `@logic` clause.
 
 The four `$ctxt` components per ASU:
 
@@ -733,10 +881,10 @@ Situational facts use concrete world/tense values so they match only facts in th
 
 Context injection can be disabled globally with `nocontext_flag`.
 
-### 6.5 Gradable property normalisation
+### 7.5 Gradable property normalisation
 
-`_normalize_gradable_predicates(result)` iterates over all clauses and applies `_norm_grad_frm`
-to every predicate atom:
+`_normalize_gradable_predicates(result)` (in `logconvert.py`) iterates over all clauses and
+applies `_norm_grad_frm` to every predicate atom:
 
 - `has degree property PROP ...` where PROP is **not** in `_GRADABLE_PROPS`
   → convert to `has property PROP ENTITY` (drop degree/relclass)
@@ -754,20 +902,21 @@ After this normalisation, `_strip_isa_entity` removes any remaining `["isa","ent
 - Positive `isa entity X` makes a clause a tautology → remove the entire clause
 - Negative `-isa entity X` is always false → remove just the literal
 
-### 6.6 Population facts
+### 7.6 Population facts
 
-`_populate_clauses(items)` makes one pass over all Stage-2 items before clausification and
-collects *population facts*: `isa TYPE ENTITY` atoms for every concrete entity that appears as
-an argument of a `forall`-quantified rule.  For example, if a rule says "all birds can fly" and
-a concrete entity `tweety 1` appears as an `isa bird tweety 1` fact, that fact must be inserted
-before the question so the prover can use it.
+`_populate_clauses(items)` (in `logconvert.py`, using helpers from `lc_questions.py`) makes one
+pass over all Stage-2 items before clausification and collects *population facts*: `isa TYPE
+ENTITY` atoms for every concrete entity that appears as an argument of a `forall`-quantified
+rule.  For example, if a rule says "all birds can fly" and a concrete entity `tweety 1` appears
+as an `isa bird tweety 1` fact, that fact must be inserted before the question so the prover can
+use it.
 
 Population facts are tagged with `"@sourcetype": "populate"` internally (stripped before the
 prover sees them) so that `_coerce_relclass` can treat them differently from question clauses.
 
 ---
 
-## 7. Configuration and options
+## 8. Configuration and options
 
 **To change the default LLM provider or model**, edit `solver/llmcall.py`:
 ```python
@@ -791,7 +940,47 @@ english_to_answer(text, {"use_llm_cache_flag": False})
 
 ---
 
-## 8. Extending and modifying the pipeline
+## 9. The mkdata toolkit
+
+`mkdata/` is a standalone toolkit (separate venv, no dependency on `solver/`) for building the
+synonym/antonym data files consumed by the reasoning pipeline.
+
+**What it produces:**
+
+- `syn_rewrite_<pos>.txt` — hard rewrite table (word → canonical, similarity ≥ 0.90); used
+  by `logconvert.py` to normalise predicate names before clausification
+- `syn_axioms_<pos>.js` — soft GK axiom file (0.70 ≤ similarity < 0.90); passed to the `gk`
+  prover alongside `axioms_std.js` for near-synonym bridging during proof search
+
+One pair of files per part of speech: N (nouns), A (adjectives), V (verbs/relations).
+
+**Key scripts:**
+
+| Script | Purpose |
+|--------|---------|
+| `build_syn_data.py` | Main pipeline: Format-A cluster file → rewrite table + GK axioms |
+| `make_anto_synonyms.py` | Build cluster files from scratch using fastText + WordNet |
+| `make_gradables.py` | Library module: extract gradable adjectives from a text corpus |
+| `merge.py` | Cluster merger library used by `build_syn_data.py` |
+
+**Quick regeneration** (when `syn_*_10.txt` cluster files are updated):
+```bash
+cd mkdata/
+venv/bin/python build_syn_data.py syn_n_10.txt N
+venv/bin/python build_syn_data.py syn_a_10.txt A
+venv/bin/python build_syn_data.py syn_v_10.txt V
+```
+
+See `mkdata/README.md` for full documentation including environment setup, cluster file format,
+and instructions for rebuilding cluster files from scratch (~30–90 min, requires `cc.en.300.bin`).
+
+> **Integration status:** The output files are not yet wired into the `solver/` pipeline.  When
+> integration is done, `syn_rewrite_*.txt` will be loaded by `logconvert.py` and `syn_axioms_*.js`
+> will be passed to `prover.py` alongside `axioms_std.js`.
+
+---
+
+## 10. Extending and modifying the pipeline
 
 ### Adding new predicates
 
@@ -800,7 +989,7 @@ english_to_answer(text, {"use_llm_cache_flag": False})
 2. Add examples to `prompts/stage2_examples.txt` showing the new predicate in context.
 3. If the predicate should receive `$ctxt`, add it to `_CTXT_ELIGIBLE` in `logconvert.py`.
 4. If `procproofs.py` needs to render the predicate in an explanation, add a rendering rule in
-   `_render_atom`.
+   `proof_render.py`.
 
 ### Modifying Stage-1 parsing behaviour
 
@@ -819,16 +1008,16 @@ sections are:
 
 ### Adding a new LLM provider
 
-In `llmcall.py`, add a `_call_newprovider(sysprompt, input_text, version, max_tokens)` function
-following the pattern of `_call_claude` or `_call_gpt`, then dispatch from `call_llm` when
+In `llmcall.py`, add a `call_newprovider(sysprompt, input_text, version, max_tokens)` function
+following the pattern of `call_claude` or `call_gpt`, then dispatch from `call_llm` when
 `llm == "newprovider"`.
 
 ### Improving proof post-processing
 
 `procproofs.py` is where answer extraction and explanation rendering live.  Key extension points:
-- `_format_explanation` — generates the step-by-step English proof
-- `_answer_goodness` — the sorting key for ranking multiple candidate answers
-- `_filter_by_best_tier` — selects among concrete, Skolem, and population answers
+- `proof_explain.format_explanation` — generates the step-by-step English proof
+- `_answer_goodness` in `procproofs.py` — the sorting key for ranking multiple candidate answers
+- `_filter_by_best_tier` in `procproofs.py` — selects among concrete, Skolem, and population answers
 
 ### Running tests
 

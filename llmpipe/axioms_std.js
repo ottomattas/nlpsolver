@@ -1,312 +1,139 @@
-// gk_axiomfile.js
-// 
-// a tiny world model used for regression testing
-
 [
- 
-  [["-isa", "thing", "?:Y"],["isa", "object", "?:Y"]],
-  [["-isa", "object", "?:Y"],["isa", "thing", "?:Y"]],
+  // == 1. BASIC TAXONOMY ==
+  [["-isa", "thing", "?:Y"], ["isa", "object", "?:Y"]],
+  [["-isa", "object", "?:Y"], ["isa", "thing", "?:Y"]],
 
-  [["-sclass","?:Y1","?:Y2"],["-rel2_of","part","?:X","?:Y1","?:CT"],["-rel2_of","part","?:X","?:Y2","?:CT"]],
-  [["-isa","?:Y1","?:Y2"],["-rel2_of","part","?:X","?:Y1","?:CT"],["-rel2_of","part","?:X","?:Y2","?:CT"]],
-
-  [["-rel2_of","part","?:X","?:Y","?:CT"],["rel2","have","?:Y","?:X","?:CT"]],
-
-  [["-prop","?:W","?:X",3,"?:C", "?:CT"],["prop","?:W","?:X","$generic","?:C", "?:CT"]],
-  [["-prop","?:W","?:X",1,"?:C", "?:CT"],["prop","?:W","?:X","$generic","?:C", "?:CT"]],
-  [["-prop","?:W","?:X",1,"?:C", "?:CT"],["-prop","?:W","?:X",3,"?:C", "?:CT"]],
-
-  [["-rel2_of","?:W","?:X","?:Y", "?:CT"], ["isa","?:W","?:X"]], 
-
-  [["-isa","?:X","?:Y"], ["prop","?:X","?:Y","$generic","$generic", "?:CT"]], 
-  [["-rel2_of","have","?:X",["of","?:Y","?:X"], "?:CT"], ["isa","?:Y",["of","?:Y","?:X"]]],
-
-  [["-rel2_than","?:R","?:X","?:Y", "?:CT"], ["-rel2_than","?:R","?:Y","?:Z", "?:CT"],
-   ["rel2_than","?:R","?:X","?:Z", "?:CT"]],
-
-  [["-rel2_than","?:R","?:X","?:Y", "?:CT"], ["-rel2_than","?:R","?:Y","?:X", "?:CT"]],
-
-  [["-rel2_than","?:R","?:X","?:Y", "?:CT"], ["-prop","?:R","?:Y","?:Z","?:C", "?:CT"],
-   ["prop","?:R","?:X","?:Z","?:C", "?:CT"]],
-
-  
-  [["-rel2","in","?:X","?:Y", "?:CT"], ["-rel2","in","?:Y","?:Z", "?:CT"],
-   ["rel2","in","?:X","?:Z", "?:CT"]],
-
-  [["-is rel2","in","?:X","?:Y", "?:CT"], ["-is rel2","in","?:Y","?:Z", "?:CT"],
-   ["is rel2","in","?:X","?:Z", "?:CT"]],
-
-  [["-act1","?:W","?:X","?:Z", "?:CT"], ["can1","?:W","?:X","?:Z", "?:CT"]], 
-  [["-act2","?:W","?:X","?:Y","?:Z", "?:CT"], ["can1","?:W","?:X","?:Z", "?:CT"]],
-
-  [["-do1","?:W","?:X","?:Z", "?:CT"], ["can1","?:W","?:X","?:Z", "?:CT"]],  
-  [["-do2","?:W","?:X","?:Y","?:Z", "?:CT"], ["can2","?:W","?:X","?:Y","?:Z", "?:CT"]],
-  [["-do2","?:W","?:X","?:Y","?:Z", "?:CT"], ["can1","?:W","?:X","?:Z", "?:CT"]],
-
-  [["-act2","?:W","?:X","?:Y","?:Z", "?:CT"], ["act1","?:W","?:X","?:Z", "?:CT"]],
-
-  [["-do2","?:W","?:X","?:Y","?:Z", "?:CT"], ["do1","?:W","?:X","?:Z", "?:CT"]],
-
-  // Motion verb: has_actor(E, X) + has_direction(E, L) => is_rel2(in, X, L)
-  // Covers "John travelled to L", "Mary journeyed to L", etc.
-  [["-has actor","?:E","?:X","?:CT"],["-has direction","?:E","?:L","?:CT"],
-   ["is rel2","in","?:X","?:L","?:CT"]],
-
-  // Bridge axioms for new-pipeline habitual activity predicates.
-  //
-  // Activity predicates → typically:
-  //   typical(E,CT) + has_type(E,V,CT) + has_actor(E,X,CT)  =>  typically(X,V,CT)
-  [["-typical","?:E","?:CT"],["-has type","?:E","?:V","?:CT"],["-has actor","?:E","?:X","?:CT"],["typically","?:X","?:V","?:CT"]],
-  // typically → can (3-arg, with context):
-  [["-typically","?:X","?:V","?:CT"],["can","?:X","?:V","?:CT"]],
-
-  // Bridge A — activity → can (without requiring typical):
-  //   isa(activity,E) + has_type(E,V,CT) + has_actor(E,X,CT)  =>  can(X,V,CT)
-  //   Needed so that the biconditional backward witness for a negative
-  //   activity question (e.g. "John does not fly?") can contradict ¬can(X,V).
-  [["-isa","activity","?:E"],["-has type","?:E","?:V","?:CT"],["-has actor","?:E","?:X","?:CT"],["can","?:X","?:V","?:CT"]],
-
-  // Bridge B — can → canonical typical activity (Skolem term can_act(X,V)):
-  //   can(X,V,CT)  =>  isa(activity, can_act(X,V))
-  //                 +  typical(can_act(X,V), CT)
-  //                 +  has_type(can_act(X,V), V, CT)
-  //                 +  has_actor(can_act(X,V), X, CT)
-  //   Allows activity-based queries to match capability assertions.
-  [["-can","?:X","?:V","?:CT"],["isa","activity",["can_act","?:X","?:V"]]],
-  [["-can","?:X","?:V","?:CT"],["typical",["can_act","?:X","?:V"],"?:CT"]],
-  [["-can","?:X","?:V","?:CT"],["has type",["can_act","?:X","?:V"],"?:V","?:CT"]],
-  [["-can","?:X","?:V","?:CT"],["has actor",["can_act","?:X","?:V"],"?:X","?:CT"]],
-
-  {"@logic": [["do1","?:W","?:X","?:Z", "?:CT"], ["-can1","?:W","?:X","?:Z", "?:CT"]], "@confidence": 0.15},  
-  {"@logic": [["do2","?:W","?:X","?:Y","?:Z", "?:CT"], ["-can2","?:W","?:X","?:Y","?:Z", "?:CT"]], "@confidence": 0.15},
-
-  [["-rel2_of","make","?:X","?:Y","?:I", "?:CT"], ["-do2","?:A","?:Y","?:Z","?:I2", "?:CT"], ["do2","?:A","?:X","?:Z","?:I2", "?:CT"]],
-  [["-rel2_of","make","?:X","?:Y","?:I", "?:CT"], ["do2","?:A","?:Y","?:Z","?:I2", "?:CT"], ["-do2","?:A","?:X","?:Z","?:I2", "?:CT"]],
-  
-
-  {"@logic": [["-prop", "?:X", "?:Y", "?:Z", "$generic", "?:CT"],["-isa", "?:U", "?:Y"],["prop", "?:X", "?:Y", "?:Z", "?:U", "?:CT"],
-              ["$block",0,["$not",["prop", "?:X", "?:Y", "?:Z", "?:U", "?:CT"]]]],
-   "@confidence": 0.8},
-
-  [ ["=","?:N",["$count",["$setof",["and","?:X1","?:X2"],"?:Y1"]]], "=>", ["$greatereq",["$count",["$setof","?:X1","?:Y1"]],"?:N"]],
-  [ ["=","?:N",["$count",["$setof",["and","?:X1","?:X2"],"?:Y1"]]], "=>", ["$greatereq",["$count",["$setof","?:X2","?:Y1"]],"?:N"]],
-  [ ["=","?:N",["$count",["$setof",["and","?:X1","?:X2","?:X3"],"?:Y1"]]], "=>", ["$greatereq",["$count",["$setof","?:X1","?:Y1"]],"?:N"]],
-  [ ["=","?:N",["$count",["$setof",["and","?:X1","?:X2","?:X3"],"?:Y1"]]], "=>", ["$greatereq",["$count",["$setof","?:X2","?:Y1"]],"?:N"]],
-  [ ["=","?:N",["$count",["$setof",["and","?:X1","?:X2","?:X3"],"?:Y1"]]], "=>", ["$greatereq",["$count",["$setof","?:X3","?:Y1"]],"?:N"]],
-  [ ["=","?:N",["$count",["$setof",["and","?:X1","?:X2","?:X3"],"?:Y1"]]], "=>", ["$greatereq",["$count",["$setof",["and","?:X1","?:X3"],"?:Y1"]],"?:N"]],
-  [ ["=","?:N",["$count",["$setof",["and","?:X1","?:X2","?:X3"],"?:Y1"]]], "=>", ["$greatereq",["$count",["$setof",["and","?:X2","?:X3"],"?:Y1"]],"?:N"]],
-  [ ["=","?:N",["$count",["$setof",["and","?:X1","?:X2","?:X3"],"?:Y1"]]], "=>", ["$greatereq",["$count",["$setof",["and","?:X1","?:X2"],"?:Y1"]],"?:N"]],
-
-
-  {"@confidence":0.99, "@logic": [["-rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", 1]],["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", 2]],
-   ["$block",0,["$not",["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", 2]]]]]}, 
-  
-  {"@confidence":0.99,"@logic": [["-rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", 2]],["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", 3]],
-   ["$block",0,["$not",["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", 3]]]]]}, 
-
-  [["-prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "?:T", 1]],["prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "?:T", 2]],
-   ["$block",0,["$not",["prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "?:T", 2]]]]], 
-
-  [["-prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "?:T", 2]],["prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "?:T", 3]],
-   ["$block",0,["$not",["prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "?:T", 3]]]]],  
-  
-  // added two new persistence
-
-  [["-prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "?:T", 2]],["prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "?:T", 1]],
-   ["$block",0,["$not",["prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "?:T", 1]]]]], 
-
-  [["-prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "?:T", 3]],["prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "?:T", 2]],
-   ["$block",0,["$not",["prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "?:T", 2]]]]], 
-
-  // end of added persistence 
-
-  [["-prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "Past", 1]],["prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "Pres", 2]],
-   ["$block",0,["$not",["prop", "?:R", "?:X", "?:A", "?:B", ["$ctxt", "Pres", 2]]]]],  
-  
-  
-  [["-rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Past", 1]],["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Pres", 1]],
-   ["$block",1,["$not",["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Pres", 1]]]]], 
-
-  [["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Past", 2]],["-rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Pres", 2]],
-   ["$block",2,["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Pres", 2]]]], 
-
-  [["-rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Past", 2]],["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Pres", 2]],
-   ["$block",1,["$not",["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Pres", 2]]]]], 
-
-  [["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Past", 3]],["-rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Pres", 3]],
-   ["$block",2,["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Pres", 3]]]],  
-
-  [["-rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Past", 4]],["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Pres", 4]],
-   ["$block",1,["$not",["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Pres", 4]]]]], 
-
-  [["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Past", 4]],["-rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Pres", 4]],
-   ["$block",2,["rel2", "?:R", "?:X", "?:Y", ["$ctxt", "Pres", 4]]]],   
-  
-  
-  [["-rel2","on","?:X","?:Y",["$ctxt", "?:T", 1]],
-   ["-act2","eat","?:Z","?:X","?:I",["$ctxt", "?:T", 1]],
-   ["-rel2","on","?:X","?:Y",["$ctxt", "?:T", 2]] ],
-
+  // == 2. PART-WHOLE & POSSESSION ==
+  // If Y1 is a subtype of Y2, and Y1 has part X, then Y2 has part X
   [
-   ["-act2","take","?:Z","?:X","?:I",["$ctxt", "?:T", 1]],
-   ["-rel2","on","?:X","?:Y",["$ctxt", "?:T", 2]] ], 
-
-  [["-rel2","on","?:X","?:Y",["$ctxt", "?:T", 2]],
-   ["-act2","eat","?:Z","?:X","?:I",["$ctxt", "?:T", 2]],
-   ["-rel2","on","?:X","?:Y",["$ctxt", "?:T", 3]] ],
-
+    ["-isa", "?:Y1", "?:Y2"], 
+    ["-has part", "?:Y1", "?:X", "?:Ctxt"], 
+    ["has part", "?:Y2", "?:X", "?:Ctxt"]
+  ],
+  // "Has part" implies "Have" (possession) [cite: 127, 345]
   [
-   ["-act2","take","?:Z","?:X","?:I",["$ctxt", "?:T", 2]],
-   ["-rel2","on","?:X","?:Y",["$ctxt", "?:T", 3]] ],  
-
+    ["-has part", "?:Y", "?:X", "?:Ctxt"], 
+    ["have", "?:Y", "?:X", "?:Ctxt"]
+  ],
+  // Transitivity of Part-Whole
   [
-   ["-act2","put","?:Z","?:X","?:I",["$ctxt", "?:T", 1]],
-   ["-rel2","on","?:I","?:N",["$ctxt", "?:T", 1]],
-   ["rel2","on","?:X","?:N",["$ctxt", "?:T", 2]] ], 
+    ["-has part", "?:A", "?:B", "?:Ctxt"],
+    ["-has part", "?:B", "?:C", "?:Ctxt"],
+    ["has part", "?:A", "?:C", "?:Ctxt"]
+  ],
 
-
-  {"@logic": ["or", ["rel2","where","?:X","?:Y","?:Z"], ["-rel2","in","?:X","?:Y","?:Z"]]},  
-  {"@logic": ["or", ["rel2","where","?:X","?:Y","?:Z"], ["-rel2","on","?:X","?:Y","?:Z"]]},   
-  {"@logic": ["or", ["rel2","where","?:X","?:Y","?:Z"], ["-rel2","at","?:X","?:Y","?:Z"]]},  
-  {"@logic": ["or", ["rel2","where","?:X","?:Y","?:Z"], ["-rel2","under","?:X","?:Y","?:Z"]]},  
-  {"@logic": ["or", ["rel2","where","?:X","?:Y","?:Z"], ["-rel2","over","?:X","?:Y","?:Z"]]},
-
-  ["isa","meter",["$measure1","?:W","?:O","meter","?:C"]], // the unit X of the measure is X
-  ["isa","dollar",["$measure1","?:W","?:O","dollar","?:C"]],
-  ["isa","ton",["$measure1","?:W","?:O","ton","?:C"]],
-  ["isa","color",["$theof1","color","?:O","?:C"]], // the color of an object is a color
-  ["isa","weight",["$theof1","weight","?:O","?:C"]],
-  ["isa","price",["$theof1","price","?:O","?:C"]],
-
-  //  axioms for babi
-
+  // == 3. GRADABLE RELATIONS (TRANSITIVITY & LOGIC) ==
+  // Transitivity for TRUE comparative relations only (degree=high/more/less).
+  // Intentionally excludes degree="none" (binary relations like "afraid of")
+  // to avoid spurious transitive chains. [cite: 350, 357]
   [
-  ["-act1","go","?:S","?:A",["$ctxt","?:T","?:F"]], 
-  ["-rel2","to","?:A","?:D",["$ctxt","?:T","?:F"]], 
-  ["rel2","at","?:S","?:D",["$ctxt","?:T",["$afteract",["act1","go","?:S","?:A","?:F"],"?:F"]]]
+    ["-has degree rel2", "?:R", "?:X", "?:Y", "high", "?:Rel", "?:Ctxt"],
+    ["-has degree rel2", "?:R", "?:Y", "?:Z", "high", "?:Rel", "?:Ctxt"],
+    ["has degree rel2", "?:R", "?:X", "?:Z", "high", "?:Rel", "?:Ctxt"]
   ],
-
   [
-  ["-act1","go","?:S","?:A",["$ctxt","?:T","?:F"]], 
-  ["-rel2","from","?:A","?:D",["$ctxt","?:T","?:F"]], 
-  ["-rel2","at","?:S","?:D",["$ctxt","?:T",["$afteract",["act1","go","?:S","?:A","?:F"],"?:F"]]]
+    ["-has degree rel2", "?:R", "?:X", "?:Y", "more", "?:Rel", "?:Ctxt"],
+    ["-has degree rel2", "?:R", "?:Y", "?:Z", "more", "?:Rel", "?:Ctxt"],
+    ["has degree rel2", "?:R", "?:X", "?:Z", "more", "?:Rel", "?:Ctxt"]
+  ],
+  [
+    ["-has degree rel2", "?:R", "?:X", "?:Y", "less", "?:Rel", "?:Ctxt"],
+    ["-has degree rel2", "?:R", "?:Y", "?:Z", "less", "?:Rel", "?:Ctxt"],
+    ["has degree rel2", "?:R", "?:X", "?:Z", "less", "?:Rel", "?:Ctxt"]
+  ],
+  // Comparative to Property Bridge: If X is taller than Y, then X is tall [cite: 345, 355]
+  [
+    ["-has degree rel2", "?:R", "?:X", "?:Y", "?:Deg", "?:Rel", "?:Ctxt"],
+    ["has degree property", "?:R", "?:X", "none", "?:Rel", "?:Ctxt"]
   ],
 
-  {"@logic":  [
-      ["-rel2", "at", "?:S","?:D", ["$ctxt", "Past", "?:F1"]],
-      ["rel2", "at", "?:S","?:D", ["$ctxt", "Pres", "?:F2"]],
-      ["$block",0,["$not",["rel2", "at", "?:S","?:D", ["$ctxt", "Pres", "?:F2"]]]]
-    ],
-    "@confidence": 0.85},
+  // == 4. SPATIAL & CATEGORICAL TRANSITIVITY ==
+  // Transitivity for non-gradable "is rel2" relations [cite: 352, 353]
+  [["-is rel2", "in", "?:X", "?:Y", "?:Ctxt"], ["-is rel2", "in", "?:Y", "?:Z", "?:Ctxt"], ["is rel2", "in", "?:X", "?:Z", "?:Ctxt"]],
+  [["-is rel2", "inside", "?:X", "?:Y", "?:Ctxt"], ["-is rel2", "inside", "?:Y", "?:Z", "?:Ctxt"], ["is rel2", "inside", "?:X", "?:Z", "?:Ctxt"]],
+  [["-is rel2", "located in", "?:X", "?:Y", "?:Ctxt"], ["-is rel2", "located in", "?:Y", "?:Z", "?:Ctxt"], ["is rel2", "located in", "?:X", "?:Z", "?:Ctxt"]],
+  [["-is rel2", "connected to", "?:X", "?:Y", "?:Ctxt"], ["-is rel2", "connected to", "?:Y", "?:Z", "?:Ctxt"], ["is rel2", "connected to", "?:X", "?:Z", "?:Ctxt"]],
+  [["-is rel2", "part of", "?:X", "?:Y", "?:Ctxt"], ["-is rel2", "part of", "?:Y", "?:Z", "?:Ctxt"], ["is rel2", "part of", "?:X", "?:Z", "?:Ctxt"]],
+  // "contains" is the converse of "in": A contains B ↔ B is in A
+  [["-is rel2", "contains", "?:A", "?:B", "?:Ctxt"], ["is rel2", "in", "?:B", "?:A", "?:Ctxt"]],
+  [["-is rel2", "in", "?:B", "?:A", "?:Ctxt"], ["is rel2", "contains", "?:A", "?:B", "?:Ctxt"]],
 
-  {"@logic":  [
-      ["rel2", "at", "?:S","?:D", ["$ctxt", "Past", "?:F1"]],
-      ["-rel2", "at", "?:S","?:D", ["$ctxt", "Pres", "?:F2"]],
-      ["$block",0,["rel2", "at", "?:S","?:D", ["$ctxt", "Pres", "?:F2"]]]
-    ],
-    "@confidence": 0.85},  
+  // == 5. ACTIVITY & MOVEMENT (BAbI TASK LOGIC) ==
+  // Davidsonian Activity Reification: activity + has type + has actor [cite: 334, 335, 354]
+  [
+    ["-typical", "?:E", "?:Ctxt"],
+    ["-has type", "?:E", "?:V", "?:Ctxt"],
+    ["-has actor", "?:E", "?:X", "?:Ctxt"],
+    ["typically", "?:X", "?:V", "?:Ctxt"]
+  ],
+  // Capability: If one typically does V, one can do V [cite: 354]
+  [["-typically", "?:X", "?:V", "?:Ctxt"], ["can", "?:X", "?:V", "?:Ctxt"]],
+  // Movement Results: If X 'go'es to Dest, X is 'at' Dest in the next state [cite: 146, 147]
+  [
+    ["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
+    ["-has type", "?:E", "go", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
+    ["-has destination", "?:E", "?:Dest", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
+    ["is rel2", "at", "?:X", "?:Dest", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]
+  ],
+  // Movement also works with has_direction (synonym for has_destination in some parses)
+  [
+    ["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
+    ["-has type", "?:E", "go", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
+    ["-has direction", "?:E", "?:Dest", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
+    ["is rel2", "at", "?:X", "?:Dest", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]
+  ],
+  // Movement Synonyms
+  [["-has type", "?:E", "travel", "?:Ctxt"], ["has type", "?:E", "go", "?:Ctxt"]],
+  [["-has type", "?:E", "journey", "?:Ctxt"], ["has type", "?:E", "go", "?:Ctxt"]],
+  [["-has type", "?:E", "move", "?:Ctxt"], ["has type", "?:E", "go", "?:Ctxt"]],
 
-    [
-      ["-act1","travel","?:S","?:A",["$ctxt","?:T","?:F"]], 
-      ["act1","go","?:S","?:A",["$ctxt","?:T","?:F"]]      
-    ],
-    [
-      ["-act1","journey","?:S","?:A",["$ctxt","?:T","?:F"]], 
-      ["act1","go","?:S","?:A",["$ctxt","?:T","?:F"]]      
-    ],
-    [
-      ["-act1","move","?:S","?:A",["$ctxt","?:T","?:F"]], 
-      ["act1","go","?:S","?:A",["$ctxt","?:T","?:F"]]      
-    ],
+  // == 6. PERSISTENCE (FRAME PROBLEM) ==
+  // Default persistence of relations from W0 to W1 unless blocked [cite: 36, 148, 166]
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
+      ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
+    ]
+  },
+  // Persistence of "have" (possession) from W0 to W1 [cite: 36, 148]
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-have", "?:Y", "?:X", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
+      ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
+    ]
+  },
 
-  // taking and putting stuff away
-  /*
-  {"@logic":  ["or",
-    ["-act2", "take", "?:S","?:O","?:A",["$ctxt", "Past", "?:F1"]],
-    ["rel2", "have", "?:S","?:O", ["$ctxt", "Past", ["$afteract",["act2","take","?:S","?:O","?:A","?:F1"],"?:F1"]]] //,
-    //["$block",0,["$not",["rel2", "have", "?:S","?:O", ["$ctxt", "Past", "?:F2"]]]]
+  // == 7. SETS & COUNTING ==
+  // Subset Cardinality: |A ∩ B| <= |A| [cite: 355]
+  [
+    ["=", "?:N", ["$count", ["$setof", ["and", "?:X1", "?:X2"], "?:Y1"]]],
+    ["=>", ["$greatereq", ["$count", ["$setof", "?:X1", "?:Y1"]], "?:N"]]
   ],
-  "@confidence": 0.85},
+  // Two-condition set cardinality
+  [
+    ["=", "?:N", ["$count", ["$setof", ["and", "?:X1", "?:X2", "?:X3"], "?:Y1"]]],
+    ["=>", ["$greatereq", ["$count", ["$setof", ["and", "?:X1", "?:X2"], "?:Y1"]], "?:N"]]
+  ],
+  // Three-condition set cardinality
+  [
+    ["=", "?:N", ["$count", ["$setof", ["and", "?:X1", "?:X2", "?:X3", "?:X4"], "?:Y1"]]],
+    ["=>", ["$greatereq", ["$count", ["$setof", ["and", "?:X1", "?:X2", "?:X3"], "?:Y1"]], "?:N"]]
+  ],
+  // Set Type Constraint
+  [["-member", "?:X", "?:S", "?:Ctxt"], ["-is set of", "?:Type", "?:S", "?:Ctxt"], ["isa", "?:Type", "?:X"]],
 
-  {"@logic":  ["or",
-    ["-act2", "discard", "?:S","?:O","?:A",["$ctxt", "Past", "?:F1"]],
-    ["-rel2", "have", "?:S","?:O", ["$ctxt", "Past", ["$afteract",["act2","discard","?:S","?:O","?:A","?:F1"],"?:F1"]]] //,
-    //["$block",0,["$not",["rel2", "have", "?:S","?:O", ["$ctxt", "Past", "?:F2"]]]]
-  ],
-  "@confidence": 0.85},
- */
-  {"@logic":  ["or",   
-    ["-rel2", "have", "?:S","?:O", ["$ctxt", "Past", "?:F1"]],
-    ["rel2", "have", "?:S","?:O", ["$ctxt", "Pres", "?:F2"]], //,
-    ["$block",0,["$not",["rel2", "have", "?:S","?:O", ["$ctxt", "Pres", "?:F2"]]]]
-  ],
-  "@confidence": 0.85},
-
-  // - nrs
-  
-  {"@logic":  ["or",
-    ["-act2", "take", "?:S","?:O","?:A",["$ctxt", "Past", 1]],
-    ["rel2", "have", "?:S","?:O", ["$ctxt", "Past", 2]], //,
-    ["$block",0,["$not",["rel2", "have", "?:S","?:O", ["$ctxt", "Past", 2]]]]
-  ],
-  "@confidence": 0.85},
-  
-  {"@logic":  ["or",
-    ["-act2", "take", "?:S","?:O","?:A",["$ctxt", "Past", 2]],
-    ["rel2", "have", "?:S","?:O", ["$ctxt", "Past", 3]], //,
-    ["$block",0,["$not",["rel2", "have", "?:S","?:O", ["$ctxt", "Past", 3]]]]
-  ],
-  "@confidence": 0.85},
- 
-  {"@logic":  ["or",
-    ["-act2", "discard", "?:S","?:O","?:A",["$ctxt", "?:T", 1]],
-    ["-rel2", "have", "?:S","?:O", ["$ctxt", "?:T", 2]] //,
-    //["$block",0,["$not",["rel2", "have", "?:S","?:O", ["$ctxt", "Past", "?:F2"]]]]
-  ],
-  "@confidence": 0.85},
-
-  {"@logic":  ["or",
-    ["-act2", "discard", "?:S","?:O","?:A",["$ctxt", "?:T", 2]],
-    ["-rel2", "have", "?:S","?:O", ["$ctxt", "?:T", 3]] //,
-    //["$block",0,["$not",["rel2", "have", "?:S","?:O", ["$ctxt", "Past", "?:F2"]]]]
-  ],
-  "@confidence": 0.85},
-
-  {"@logic":  ["or",   
-    ["-rel2", "have", "?:S","?:O", ["$ctxt", "Past", "?:F1"]],
-    ["rel2", "have", "?:S","?:O", ["$ctxt", "Pres", "?:F2"]], //,
-    ["$block",0,["$not",["rel2", "have", "?:S","?:O", ["$ctxt", "Pres", "?:F2"]]]]
-  ],
-  "@confidence": 0.85},
-
-  {"@logic":  ["or",   
-    ["rel2", "have", "?:S","?:O", ["$ctxt", "Past", "?:F1"]],
-    ["-rel2", "have", "?:S","?:O", ["$ctxt", "Pres", "?:F2"]], //,
-    ["$block",0,["rel2", "have", "?:S","?:O", ["$ctxt", "Pres", "?:F2"]]]
-  ],
-  "@confidence": 0.85}
-  
-
-  /*
-  {"@logic":  ["or",
-    ["-act2", "take", "?:S","?:O","?:A",["$ctxt", "Past", 1]],
-    ["rel2", "have", "?:S","?:O", ["$ctxt", "Past", 2]] //,
-    //["$block",0,["$not",["rel2", "have", "?:S","?:O", ["$ctxt", "Past", "?:F2"]]]]
-  ],
-  "@confidence": 0.85}
-  */
-  // if smth has the color property (like the color of smth is red) X, then it has a property X (like is red)  
-  //[["-prop","?:X",["$theof1","color","?:O","?:C"],"?:U","?:W","?:C"],
-  // ["prop","?:X","?:O","$generic","$generic","?:C"]]
-  // inverse holds for real colors  ???
-  // [["prop","red",["$theof1","color","?:O","?:C"],"?:U","?:W","?:C"],
-  //  ["-prop","red","?:O","$generic","$generic","?:C"]] 
-
-  /* 
-  {"@logic": ["or",  ["-$greater","?:X","?:Y"], ["-$greater","?:Y","?:Z"], ["$greater","?:X","?:Z"]]},
-  {"@logic": ["or",  ["-$less","?:X","?:Y"], ["-$less","?:Y","?:Z"], ["$less","?:X","?:Z"]]},  
-  
-  {"@logic": ["or",  ["-$greater","?:X","?:Y"], ["$less","?:Z","?:Y"]]},
-  {"@logic": ["or",  ["$greater","?:X","?:Y"], ["-$less","?:Z","?:Y"]]}
-  */
+  // == 8. MEASUREMENTS & ATTRIBUTES ==
+  // Value Holders [cite: 306, 307]
+  [["isa", "weight", ["$theof1", "weight", "?:O", "?:Ctxt"]]],
+  [["isa", "price", ["$theof1", "price", "?:O", "?:Ctxt"]]],
+  [["isa", "length", ["$theof1", "length", "?:O", "?:Ctxt"]]],
+  // Property to Attribute Mapping
+  [
+    ["-has degree property", "red", "?:X", "none", "?:Rel", "?:Ctxt"],
+    ["is rel2", "color of", "red", "?:X", "?:Ctxt"]
+  ]
 ]

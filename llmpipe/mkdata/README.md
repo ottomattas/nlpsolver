@@ -36,9 +36,6 @@ mkdata/
 ├── syn_n_10.txt                 # ~1046 noun synonym clusters
 ├── syn_a_10.txt                 # ~572  adjective synonym clusters
 ├── syn_v_10.txt                 # ~999  verb/relation synonym clusters
-├── ant_n.txt                    # noun antonym clusters (same canonical IDs)
-├── ant_a.txt                    # adjective antonym clusters
-├── ant_v.txt                    # verb antonym clusters
 │
 │── Generated output files (committed)
 ├── syn_rewrite_n.txt            # noun hard rewrite table
@@ -48,48 +45,28 @@ mkdata/
 ├── syn_axioms_a.js              # adjective soft GK axioms
 ├── syn_axioms_v.js              # verb soft GK axioms
 │
-│── Gradable adjective lists (output of run_gradables.py, committed)
-├── gradables.txt                # original list
-├── gradables_new.txt            # updated list (run_gradables.py output)
-│
 │── Core scripts (committed)
 ├── build_syn_data.py            # Format-A -> rewrite table + GK axioms
 ├── merge.py                     # cluster merger library (used by build_syn_data.py)
 ├── make_anto_synonyms.py        # build syn/ant cluster files from fastText + WordNet
 ├── make_gradables.py            # gradable adjective extractor (library module)
-├── run_gradables.py             # runner for make_gradables.py
-│
-│── Auxiliary/analysis scripts (committed)
-├── check_adj_coverage.py        # check which adjectives are covered by clusters
-├── fix_clusters.py              # repair malformed cluster lines
-├── fix_syn_n.py                 # noun-specific cluster repair
-├── make_missing_clusters.py     # fill gaps in cluster coverage
-├── make_noun_synonyms_wordnet.py# WordNet-only noun synonym extraction
-├── make_syn_a_4.py              # historical: built syn_a (predecessor to syn_a_10)
-├── make_syn_n_additions.py      # add extra noun clusters
-├── merge_syn_a.py               # historical: merge wrapper for adjectives
-├── merge_syn_n.py               # historical: merge wrapper for nouns
 │
 │── Seed vocabulary lists (committed)
 ├── childwords.txt               # child vocabulary seed list (used by make_anto_synonyms.py)
 │
 │── Notes (committed)
 ├── bridging_notes.txt           # design notes
-├── missing_adjs.txt             # adjectives not yet covered by clusters
 │
 │── Large model files (NOT committed — too large for git)
 ├── cc.en.300.bin                # fastText Common Crawl model, ~6.7 GB
-├── cc.en.300.bin.gz             # compressed original, ~4.5 GB
-│
-│── Large word list (NOT committed — too large for git)
-└── important_words.txt          # graded sight-word list, ~373 MB
+└── cc.en.300.bin.gz             # compressed original, ~4.5 GB
 ```
 
 ---
 
 ## Cluster file format (Format A)
 
-All `syn_*.txt` and `ant_*.txt` files use **Format A**:
+The `syn_*.txt` input files (and antonym files produced by `make_anto_synonyms.py`) use **Format A**:
 
 ```
 CANONICAL_ID, word1, score1, word2, score2, ...
@@ -221,18 +198,6 @@ rows = extract_gradable_adjs(docs, nlp, min_count=5)
 
 ---
 
-### `run_gradables.py` — runner for make_gradables.py
-
-Runs `extract_gradable_adjs` over NLTK corpora (Brown, Reuters, Gutenberg,
-Webtext, Inaugural, Movie Reviews, ABC) and writes one lemma per line to
-`gradables_new.txt`.
-
-```bash
-venv/bin/python run_gradables.py
-```
-
----
-
 ## Output file formats
 
 ### Rewrite table (`syn_rewrite_<pos>.txt`)
@@ -283,20 +248,23 @@ All scripts run inside a local `venv/`. The venv is not committed to git.
 ```bash
 cd mkdata/
 python3 -m venv venv
-venv/bin/pip install wordfreq fasttext nltk numpy spacy
-venv/bin/python -m spacy download en_core_web_sm
+venv/bin/pip install wordfreq fasttext nltk numpy
 venv/bin/python -c "
 import nltk
 nltk.download('wordnet')
 nltk.download('omw-1.4')
-nltk.download('brown')
-nltk.download('reuters')
-nltk.download('gutenberg')
-nltk.download('webtext')
-nltk.download('inaugural')
-nltk.download('movie_reviews')
-nltk.download('abc')
-nltk.download('punkt_tab')
+"
+```
+
+`make_gradables.py` additionally requires spaCy and more NLTK corpora if you
+use it directly:
+```bash
+venv/bin/pip install spacy
+venv/bin/python -m spacy download en_core_web_sm
+venv/bin/python -c "
+import nltk
+for pkg in ['brown','reuters','gutenberg','webtext','inaugural','movie_reviews','abc','punkt_tab']:
+    nltk.download(pkg)
 "
 ```
 
@@ -311,7 +279,6 @@ nltk.download('punkt_tab')
 |------|------|--------------|
 | `cc.en.300.bin` | ~6.7 GB | `gunzip cc.en.300.bin.gz` |
 | `cc.en.300.bin.gz` | ~4.5 GB | `wget https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.en.300.bin.gz` |
-| `important_words.txt` | ~373 MB | graded sight-word list; contact maintainer |
 
 A lighter alternative fastText model (lower coverage, ~1 GB uncompressed):
 ```bash
@@ -356,13 +323,6 @@ venv/bin/python make_anto_synonyms.py \
 venv/bin/python build_syn_data.py syn_n_10.txt N
 venv/bin/python build_syn_data.py syn_a_10.txt A
 venv/bin/python build_syn_data.py syn_v_10.txt V
-```
-
-### Rebuild gradable adjective list
-
-```bash
-venv/bin/python run_gradables.py
-# Output: gradables_new.txt
 ```
 
 ---

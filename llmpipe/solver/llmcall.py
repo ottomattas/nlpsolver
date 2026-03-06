@@ -35,6 +35,8 @@ try:
 except ImportError:
   _cache = None
 
+import utils
+
 # ======== configuration ========
 
 # Which LLM to use: "gpt", "claude", or "gemini"
@@ -180,7 +182,7 @@ def call_gemini(version, sentences, sysprompt, max_tokens):
   if sysprompt:
     call["system_instruction"] = {"parts": [{"text": sysprompt}]}
 
-  calldebug_print("gemini call", call)
+  utils.debug_print("gemini call", call, flag=calldebug)
   calltxt = json.dumps(call)
 
   trycount = 0
@@ -236,7 +238,7 @@ def call_gemini(version, sentences, sysprompt, max_tokens):
   if "parts" not in data:
     return llm_error("Gemini response has no parts: " + str(data))
 
-  debug_print("gemini response:", data)
+  utils.debug_print("gemini response:", data, flag=debug)
   res = ""
   for el in data["parts"]:
     if "text" in el:
@@ -264,7 +266,7 @@ def call_claude(version, sentences, sysprompt, max_tokens):
   if sysprompt:
     call["system"] = [{"type": "text", "text": sysprompt, "cache_control": {"type": "ephemeral"}}]
 
-  calldebug_print("claude call", call)
+  utils.debug_print("claude call", call, flag=calldebug)
   calltxt = json.dumps(call)
 
   trycount = 0
@@ -318,7 +320,7 @@ def call_claude(version, sentences, sysprompt, max_tokens):
   if "content" not in data:
     return llm_error("Claude response has no content: " + str(rawdata))
 
-  debug_print("claude response:", data)
+  utils.debug_print("claude response:", data, flag=debug)
   res = ""
   for el in data["content"]:
     if "text" in el:
@@ -373,7 +375,7 @@ def call_gpt(version, sentences, sysprompt, max_tokens):
     if max_tokens:
       call["max_tokens"] = max_tokens
 
-  calldebug_print("gpt call", call)
+  utils.debug_print("gpt call", call, flag=calldebug)
   calltxt = json.dumps(call)
 
   trycount = 0
@@ -424,7 +426,7 @@ def call_gpt(version, sentences, sysprompt, max_tokens):
   except:
     return llm_error("GPT response is not valid JSON: " + str(rawdata))
 
-  debug_print("gpt response:", data)
+  utils.debug_print("gpt response:", data, flag=debug)
 
   if version.startswith("gpt-5"):
     if "output" not in data:
@@ -451,14 +453,6 @@ def call_gpt(version, sentences, sysprompt, max_tokens):
 
 
 # ======== utilities ========
-
-def debug_print(a, b=""):
-  if debug:
-    print(a, b)
-
-def calldebug_print(a, b=""):
-  if calldebug:
-    print(a, b)
 
 def llm_error(msg):
   print("LLM error:", msg)

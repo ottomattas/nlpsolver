@@ -20,17 +20,22 @@ import json
 import globals
 
 
-def debug_print(label, format="placeholder1", data="placeholder2"):
-  if not globals.options["debug_print_flag"]: return
+def debug_print(label, data=None, flag=None):
+  """Print a labelled debug message when the relevant flag is set.
+
+  flag defaults to globals.options["debug_print_flag"].  Pass an explicit
+  boolean (e.g. a module-level debug variable) to use a different flag.
+  """
+  if flag is None:
+    flag = globals.options["debug_print_flag"]
+  if not flag:
+    return
   print()
   print(label, end='')
-  if format != "placeholder1" and data == "placeholder2":
-    data = format
-    format = "placeholder1"
-  if data == "placeholder2":
+  if data is None:
     print()
     return
-  if format and type(data) == list:
+  if type(data) == list:
     print(":")
     for el in data:
       if el and type(el) == list:
@@ -40,10 +45,6 @@ def debug_print(label, format="placeholder1", data="placeholder2"):
         print("  ]")
       else:
         print(" ", el)
-  elif type(data) == list:
-    print(":")
-    for el in data:
-      print(" ", el)
   elif type(data) == dict:
     print(":")
     for key in data:
