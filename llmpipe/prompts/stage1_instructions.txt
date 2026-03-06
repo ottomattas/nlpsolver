@@ -64,6 +64,24 @@ If "if/then/unless" appears, keep the whole conditional in one ASU (never split 
 
 Never split a sentence if doing so changes logical scope or truth conditions.
  
+---- 2.1.1. COORDINATED SUBJECT DISTRIBUTION (MANDATORY) ----
+
+If a sentence asserts a property or rule about multiple distinct categories or subjects joined by "and" 
+(e.g., "Elephants and sparrows are animals"), you MUST split them into separate ASUs.
+
+1. Class-Level Rules: Distribute the rule across each category:
+   - "Elephants and sparrows are animals."
+     -> S1: "Elephants are animals."
+     -> S2: "Sparrows are animals."
+
+2. Predicate Distribution: If multiple entities perform the same action or hold the same state individually, split them:
+   - "John and Mary smiled."
+     -> S1: "John smiled."
+     -> S2: "Mary smiled."
+
+3. Exception (Collective Action): Do NOT split if the action is inherently joint or collective 
+  (e.g., "John and Mary met", "The students gathered").
+
 --- 2.2 Modifier Handling ---
 
 - Keep instruments, manner, and location attached to the main verb.
@@ -135,8 +153,9 @@ Important:
 
 Question Mark Rule (MANDATORY):
 
-If the raw sentence ends with "?", then the sentence package MUST contain at least one ASU with:
+If the raw sentence ends with "?", then the sentence package MUST contain EXACTLY ONE ASU with:
   "type": "query"
+Never produce more than one query ASU for a single question sentence.
 
 - If the question is a WH-question (who/what/which/where/when/how many), apply the Question Word Transformation rules.
 - Otherwise, treat it as a yes/no question and generate a query ASU that asks whether the full proposition is true.
@@ -444,8 +463,30 @@ Intensity:
 Use "none" when no comparative or superlative is expressed.
 
 For relative_class, use the entity type the property is measured relative
-to (e.g. "tall" for a person → "person"; "fast" for a car → "car").
+to (e.g. "tall" for a person -> "person"; "fast" for a car -> "car").
 If no specific class is known from context, use "entity" as default.
+
+Follow this priority for selecting the relative_class:
+  
+- Specific Class:the specific category if the property is explicitly bound to a single class or a clear measurement scale.
+  "Small animals are nice" -> relative_class "animal".  
+- General "entity" default: if the property is qualitative and applies to multiple different classes in the same context, 
+  or if the specific class is uncertain/very general.
+  "If animal or bird is nice..." -> relative_class "entity" ( applies to both animal and bird).
+- Rule/Fact Synchronization: when a concrete individual (e.g., John 1) is mentioned in a rule-based context,
+  always use the relative_class from the rule for that individual's properties
+  If the rule uses ["nice", "none", "entity"], John's property must also be ["nice", "none", "entity"], not "person".
+
+--- 12.1. PREDICATE NOUN PRESERVATION (MANDATORY) ---
+
+You MUST distinguish between true adjectives and predicate nouns:
+- If a word represents a category or class membership (e.g., "animal", "bird"), treat it as an ENTITY, not an adjective.
+- NEVER include predicate nouns in the 'adjectives' list.
+- Adjectives should only be descriptive properties that are not the primary category of the entity (e.g., "red", "fast").
+
+Example: "Elephants are either animals or birds."
+- entities: [{"id": "elephants", "type": "generic"}, {"id": "animals", "type": "generic"}, {"id": "birds", "type": "generic"}]
+- adjectives: [] (Empty, because 'animal' and 'bird' are categories)
 
 == 13. DEFINITE RELATIONAL DESCRIPTIONS ==
 

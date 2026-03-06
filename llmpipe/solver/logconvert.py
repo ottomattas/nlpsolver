@@ -651,7 +651,15 @@ def _coerce_atom(atom, const_classes, is_question=False):
         new_atom = list(atom)
         new_atom[relclass_idx] = _fresh_fv()
         return new_atom
-      if (entity and is_ground_term(entity) and
+      # Only apply mismatch-coercion in assertional (non-question) contexts.
+      # In questions the LLM's RELCLASS is semantically intentional and must be
+      # preserved: "Is John a good toy?" keeps "toy" even though John's ISA
+      # class is "fox".  Coercing "toy" → "fox" breaks unification with the
+      # rule "foxes are good toys" (RELCLASS "toy").
+      # The "entity" placeholder edge-case is already handled upstream by
+      # _normalize_gradable_predicates.
+      if (not is_question and
+          entity and is_ground_term(entity) and
           entity in const_classes and
           isinstance(relclass, str) and
           relclass not in const_classes[entity]):

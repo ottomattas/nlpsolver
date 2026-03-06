@@ -262,31 +262,34 @@ def _format_where_answers(answers, logic=None):
   return res
 
 
-def _format_bool_answer(val, conf):
+def _format_bool_answer(val, conf, has_conflict=False):
   """Format a True/False answer with verbal confidence qualifier.
 
-  Threshold scheme (chosen to match natural-language quantifiers):
-    True,  conf >= 0.99 -> "True"
-    True,  conf >= 0.60 -> "Probably true"
-    True,  conf >= 0.40 -> "Likely true"
-    True,  conf <  0.40 -> flip to false direction with p_false = 1-conf
-    False, conf >= 0.99 -> "False"
-    False, conf >= 0.85 -> "Likely false"  (e.g. "hardly")
-    False, conf >= 0.60 -> "Probably false" (e.g. "unlikely")
-    False, conf <  0.60 -> "Likely false"
+  has_conflict: True when the prover returned both a positive and a negative
+  proof; confidence then represents the net surplus of positive over negative
+  evidence rather than pure positive-chain strength.
+
+  Threshold scheme:
+    True,  conf >= 0.95              -> "True"
+    True,  conf >= 0.70              -> "Probably true"
+    True,  conf >= 0.40, no conflict -> "Likely true"
+    True,  conf >= 0.10              -> "Possibly true (confidence X)"
+    True,  conf <  0.10              -> "Unknown."
+    False, conf >= 0.95              -> "False"
+    False, conf >= 0.85              -> "Likely false"  (e.g. "hardly")
+    False, conf >= 0.60              -> "Probably false" (e.g. "unlikely")
+    False, conf <  0.60              -> "Likely false"
   """
   if conf >= 0.95:
     return "True" if val else "False"
   if val is True:
-    if conf < 0.40:
-      # More likely false than true — express as false with flipped confidence
-      p_false = 1.0 - conf
-      if p_false >= 0.85:
-        return "Likely false"
-      return "Probably false"
-    if conf >= 0.60:
+    if conf >= 0.70:
       return "Probably true"
-    return "Likely true"
+    if conf >= 0.40 and not has_conflict:
+      return "Likely true"
+    if conf >= 0.10:
+      return "Possibly true (confidence " + _fmt_conf(conf) + ")"
+    return "Unknown."
   else:  # val is False
     if conf >= 0.85:
       return "Likely false"
@@ -315,8 +318,7 @@ def _format_answers(answers, askvars=None):
     if val is True or val is False:
       key = val
     elif isinstance(val, list) and val:
-      display = val[:askvars] if askvars is not None else val
-      key = tuple(ans_atom_name(a) for a in display)
+      key = tuple(ans_atom_name(a) for a in val)
     else:
       key = str(val)
     if key in seen_keys:
@@ -324,14 +326,25 @@ def _format_answers(answers, askvars=None):
     seen_keys.add(key)
 
     if val is True or val is False:
-      s = _format_bool_answer(val, conf)
+      has_conflict = ("negative proof" in ans) and ("positive proof" in ans)
+      s = _format_bool_answer(val, conf, has_conflict=has_conflict)
     elif isinstance(val, list) and val:
       # Each element is an $ans atom like ["$ans", "John 1"].
-      # If askvars is set, only show the first askvars atoms (the
-      # rest are auxiliary variables not being asked for).
-      display = val[:askvars] if askvars is not None else val
-      names = [ans_atom_name(a) for a in display]
-      s = "(" + " or ".join(names) + ")" if len(names) > 1 else names[0] if names else str(val)
+      # When len(val) > askvars, the prover produced a disjunctive residual:
+      # multiple possible values for the same ask variable(s).  Group atoms
+      # into chunks of size askvars; each chunk is one alternative.
+      # Example: askvars=1, val=[[$ans,Mike],[$ans,Mary]] → "Mike or Mary"
+      if askvars and len(val) > askvars:
+        groups = [val[i:i+askvars] for i in range(0, len(val), askvars)]
+        alt_strs = []
+        for grp in groups:
+          names = [ans_atom_name(a) for a in grp]
+          alt_strs.append(" and ".join(names) if len(names) > 1 else names[0])
+        s = " or ".join(alt_strs)
+      else:
+        display = val[:askvars] if askvars is not None else val
+        names = [ans_atom_name(a) for a in display]
+        s = names[0] if len(names) == 1 else "(" + " and ".join(names) + ")"
       if conf < 0.99:
         s += " (confidence " + _fmt_conf(conf) + ")"
     else:

@@ -184,12 +184,11 @@ def _answer_label(val):
 # ======== answer dedup helpers ========
 
 def ans_display_key(val, askvars=None):
-  """Canonical dedup key for an answer value — ignores auxiliary world-state args."""
+  """Canonical dedup key for an answer value."""
   if val is True or val is False or val is None:
     return val
   if isinstance(val, list) and val:
-    display = val[:askvars] if askvars is not None else val
-    return tuple(ans_atom_name(a) for a in display)
+    return tuple(ans_atom_name(a) for a in val)
   return str(val)
 
 

@@ -126,7 +126,6 @@ If entity.type == "concrete":
 3. If entity.url exists, use the url instead of entity.id as the constant symbol.
 4. Do NOT depend on entity.text for constant naming.
 
-
 2.2 Generic Entities
 
 If entity.type == "generic":
@@ -315,8 +314,80 @@ Wh:
 
 No ["holds",W,f] anchoring for questions.
 
+Case D -- Copula (Is/Are) Rule (Categorization):
+If a rule uses a copula (e.g., "A are B", "A are good B"), it is a categorization or subset claim, 
+NOT a relation between separate individuals.
 
-== 5. PREDICATE INVENTORY (Closed Whitelist) ==
+- Use a single forall over the subject variable X.
+- Apply all properties to that same variable: forall X (A) -> [normally] (and(isa(B, X), has degree property(..., X, ...))).
+- Never use Case C (nested forall or exists) for "is" or "are" sentences.
+
+situation / real
+- Generics: If they exist, bind with exists.
+- Specifics: (e.g., "John") No quantifier.
+
+query
+- Yes/No: ["question", BODY]
+- Wh-: ["ask", "X", BODY]
+- Anchoring: No ["holds", W, f] anchoring for questions.
+- Plural Generic Queries (MANDATORY): If a Yes/No query involves a plural generic subject
+  without an explicit quantifier (e.g., "Are elephants animals?"), treat it as a claim about the entire class.
+  Use the universal pattern: ["question", ["forall", "X", ["implies", ["isa", CLASS, "X"], PROPERTY_OF_X]]].
+- Negation Handling: If the question is negative (e.g., "Are birds not blue?"), wrap the property in a not operator; 
+  never include "not" in the property string itself: ["not", ["isa", "animal", "X"]].
+
+Questions about an activity:
+- Track 1: ["question", ["typically", ENTITY, VERB]]
+- Track 2: Include ["typical","E"] as the LAST conjunct in the "and". 
+
+=== 4.1. PREDICATE NOUN RULE (MANDATORY) ===
+
+When a sentence asserts that an entity belongs to a category with an adjective
+(e.g., "John is a good fox" or "John is a big toy"), you must NOT create a separate entity for the noun. 
+
+1. Direct Mapping: use the 'isa' predicate
+   - "John is a fox" -> ["isa", "fox", "John 1"]
+
+2. Adjective Attachment: apply adjectives/degree properties to the subject's ID, using the noun as the measurement class.
+   - "John is a good fox" -> ["and", ["isa", "fox", "John 1"],  ["has degree property", "good", "John 1", "none", "fox"]]
+
+3. Prohibited Forms: 
+   - NEVER use "is rel2" to link a subject to a category (e.g., ["is rel2", "is", "John 1", "fox"]).
+   - NEVER use "exists" to create a second variable for the predicate noun (e.g., ["exists", "Y", ["and", ["isa", "fox", "Y"], ...]]).
+
+== 4.2. CONDITIONAL EXISTENTIAL SCOPE (MANDATORY) ==
+
+When a rule has the form "If [Subject] has a [Object], it is [Property]", the existential quantifier 
+for the [Object] must be part of the ANTECEDENT (the condition), not the consequent (the result).
+
+When a rule has multiple conditions (e.g., class membership AND possession), you MUST flatten them into a single 
+'and' block in the antecedent.
+
+1. NO NESTED IMPLIES: Never use the pattern ["implies", CLASS, ["implies", CONDITION, RESULT]].
+2. FLAT ANTECEDENT: Use ["implies", ["and", CLASS_OR_OR, CONDITION], RESULT].
+   - Example: "If a bird has a tail, it is cute" ->
+     ["implies", 
+        ["and", ["isa", "bird", "X"], ["exists", "Y", ["and", ["isa", "tail", "Y"], ["have", "X", "Y"]]]],
+        ["has degree property", "cute", "X", "none", "entity"]
+     ]
+
+
+== 5. CONCRETE OBJECT CATEGORIZATION ==
+
+When a situation introduces a concrete ID for an object (e.g., "tail 2", "trunk 1"), you MUST explicitly declare its 
+category using an 'isa' predicate in the same ASU. Example:
+["and", ["have", "John 1", "tail 2"], ["isa", "tail", "tail 2"]]
+
+
+== 6. WRAPPER INTEGRITY (MANDATORY) ==
+
+Every ASU must be wrapped in EXACTLY ONE ["@id", "Sx", ...] structure.
+
+1. NO NESTED WRAPPERS: Do NOT include a second "@id" or "@p" tag inside the content of an ASU.
+   - CORRECT: ["@id", "S5", ["question", ...]]
+   - INCORRECT: ["@id", "S5", ["@id", "S5", ["question", ...]]]
+
+== 7. PREDICATE INVENTORY (Closed Whitelist) ==
 
 Use ONLY the following JSON forms.
 Do NOT invent new predicates.
@@ -355,7 +426,10 @@ For each property word in the ASU text:
 - If the word does NOT appear in ASU.adjectives (or adjectives is absent):
     Use ["has property", WORD, ENTITY]
     Do NOT use ["has degree property"] for this word.
-
+- If the ASU text contains a negation of a property (e.g., "is not red" or "not red trunks"), 
+  and that property is listed in ASU.adjectives, you MUST wrap the predicate in a not operator: 
+  ["not", ["has degree property", "red", ENTITY, DEGREE, RELCLASS]]. 
+  
 Never emit both ["has property"] and ["has degree property"] for the same word.
 
 For each binary relation word in the ASU text:

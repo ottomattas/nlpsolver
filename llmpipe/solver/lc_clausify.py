@@ -337,6 +337,25 @@ def _push_neg(frm, pos):
 
 # ======== normally expansion ========
 
+def _forall_to_freevars(frm):
+  """Expand ["forall", var, body] into a flat list of GK literals.
+
+  Treats var as a free (implicitly universally quantified) GK variable "?:var".
+  body is expected to be an atom or ["or", lit, ...] (NNF, no nested quantifiers).
+  Used to flatten xor exclusivity constraints: ∀Y f(Y) ∨ ∀Z g(Z) ≡ ∀Y∀Z(f(Y)∨g(Z)).
+  """
+  if not (isinstance(frm, list) and len(frm) == 3 and frm[0] == "forall"):
+    return [frm]
+  var  = frm[1]
+  body = frm[2]
+  gk_var = "?:" + var
+  # Substitute var -> gk_var throughout body
+  body_renamed = apply_varmap(body, {var: gk_var})
+  if isinstance(body_renamed, list) and body_renamed and body_renamed[0] == "or":
+    return list(body_renamed[1:])
+  return [body_renamed]
+
+
 def _push_normally_inside(frm):
   """Push normally inward through exists/and until it wraps a single atom.
 
@@ -424,6 +443,29 @@ def _expand_normally(frm):
           for lit in processed[1:]:
             if isinstance(lit, list) and lit and lit[0] == "or":
               body_lits.extend(lit[1:])   # one-level flatten of nested or
+            elif isinstance(lit, list) and lit and lit[0] == "forall":
+              # Expand ∀Y body(Y) as free-variable literals.
+              # Justification: (∀Y f(Y)) ∨ (∀Z g(Z)) ≡ ∀Y∀Z(f(Y) ∨ g(Z)),
+              # so treating Y and Z as implicitly-universally-quantified free
+              # variables in GK gives exactly the right semantics.
+              # This arises from xor's exclusivity constraint:
+              # ¬∃Y P(Y) ∨ ¬∃Z Q(Z) (after push_neg) becomes
+              # ∀Y¬P(Y) ∨ ∀Z¬Q(Z), which is safely flattened this way.
+              body_lits.extend(_forall_to_freevars(lit))
+            elif isinstance(lit, list) and lit and lit[0] == "and":
+              # "and" in an or-child arises from de-Morgan on a disjunctive
+              # antecedent: normally(implies(or(A1,A2), B)) → or(and(¬A1,¬A2), B).
+              # These are conditions, not $block candidates — move to regular_lits
+              # so they end up as clause conditions without triggering a pass-1 $block.
+              regular_lits.extend(lit[1:])
+            elif isinstance(lit, list) and lit and lit[0] == "exists":
+              # "exists" in an or-child is the existential consequent of an implies.
+              # Push normally inside so that after Skolemization the $block will
+              # wrap a flat atom (handled in pass 2), not the whole exists formula.
+              if is_pos:
+                pushed_lits.append(_push_normally_inside(lit))
+              else:
+                body_lits.append(lit)
             else:
               body_lits.append(lit)
         elif isinstance(processed, list) and processed and processed[0] in ("and", "exists"):
