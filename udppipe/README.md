@@ -29,7 +29,7 @@ or nontrivial machine learning, except for the components used internally by Sta
 Installation
 ------------
 
-The system requires Linux and has been developed using Python 3.8 and later.
+The system requires Linux and has been developed using Python 3.8 and later (currently using 3.10+).
 The only external dependencies except Python are:
 * The Stanford Stanza NLP package https://stanfordnlp.github.io/stanza/ 
     converting English to a [UD](https://universaldependencies.org/) graph.
