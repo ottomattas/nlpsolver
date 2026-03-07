@@ -36,6 +36,22 @@ import re
 
 # ======== module-level state (reset per proof) ========
 
+# Entity display-name map built from stage-1 JSON.
+# Maps entity id strings and URL strings to human-readable display names
+# derived from the user's original phrasing (e.g. "America 1" -> "America",
+# "https://.../United_States" -> "America", "car 1" -> "the red car").
+# Set once per proof by set_entity_map(); consulted first in entity_name().
+_entity_map = {}
+
+def set_entity_map(emap):
+  """Install a new entity display-name map for the current proof."""
+  global _entity_map
+  _entity_map = emap if isinstance(emap, dict) else {}
+
+def get_entity_display(val):
+  """Return the entity_map display name for val, or None if not mapped."""
+  return _entity_map.get(val)
+
 # Proper-name bases that appear with more than one distinct number in the
 # current proof (e.g. "John" when both "John 1" and "John 3" are present).
 # Set once by compute_ambiguity() before any rendering begins.
@@ -375,6 +391,13 @@ def entity_name(val, with_url=False):
     return _skolem_fn_to_name(val)
   if not isinstance(val, str):
     return str(val)
+  # Check entity map first: prefer the user's original phrasing over the
+  # default URL-basename or id-suffix logic below.
+  if val in _entity_map:
+    name = _entity_map[val]
+    if with_url and (val.startswith("http://") or val.startswith("https://")):
+      return name + " (" + val + ")"
+    return name
   if val.startswith("?:"):
     val = val[2:]
     # Purely numeric names are prover-generated fresh variables — prefix with "V"
@@ -525,6 +548,32 @@ def format_clause_logic(clause):
   ) + "]"
 
 
+def _defq_ans_bridge(clause):
+  """Detect the $defq/$ans bridge pattern in a 2-atom clause.
+
+  Returns 'unwrap' for [-$defq*(args...), $ans(args...)]  -- defq drives ans
+  Returns 'wrap'   for [$defq*(args...), -$ans(args...)]  -- ans drives defq
+  Returns None otherwise (including wrong atom count or mismatched args).
+
+  Both orderings (a,b) and (b,a) are checked.
+  """
+  if not isinstance(clause, list) or len(clause) != 2:
+    return None
+  a, b = clause[0], clause[1]
+  if not isinstance(a, list) or not isinstance(b, list) or not a or not b:
+    return None
+  for first, second in [(a, b), (b, a)]:
+    pa = str(first[0]);  args_a = first[1:]
+    pb = str(second[0]); args_b = second[1:]
+    if args_a != args_b:
+      continue
+    if pa.startswith("-$defq") and pb == "$ans":
+      return "unwrap"
+    if pa.startswith("$defq") and pb == "-$ans":
+      return "wrap"
+  return None
+
+
 def clause_to_str(clause):
   """Convert a proof clause to a human-readable if-then English string."""
   if clause is False or clause is None:
@@ -541,6 +590,14 @@ def clause_to_str(clause):
     else:
       return "assume for contradiction: no such answer exists"
 
+  # Detect the $defq/$ans bridge step that connects the internal answer
+  # marker to the output answer atom (or vice versa).
+  bridge = _defq_ans_bridge(clause)
+  if bridge == "unwrap":
+    return "technical answer unwrap step"
+  if bridge == "wrap":
+    return "technical answer wrap step"
+
   conditions    = []   # positively-rendered negated atoms -> "if ..."
   neg_atoms     = []   # base atoms (pred without "-") for pure-negative rendering
   consequences  = []   # positively-rendered positive atoms -> "then ..."
@@ -555,7 +612,12 @@ def clause_to_str(clause):
       if bt:
         blocker_texts.append(bt)
     elif pred == "$ans":
-      consequences.append(ans_atom_name(atom) + " is an answer")
+      ans_args = atom[1:]
+      if len(ans_args) >= 2:
+        bracket = "[" + ", ".join(entity_name(a, with_url=True) for a in ans_args) + "]"
+        consequences.append(bracket + " is an answer")
+      else:
+        consequences.append(ans_atom_name(atom) + " is an answer")
     elif pred.startswith("-"):
       base = [pred[1:]] + list(atom[1:])
       conditions.append(_atom_to_english(base))
@@ -882,8 +944,9 @@ def _atom_to_english(atom):
     if not args:
       return "answer holds"
     if len(args) == 1:
-      return e(0) + " is an answer"
-    return _atom_fallback(atom)
+      return e(0) + " is the answer"
+    bracket = "[" + ", ".join(entity_name(a, with_url=True) for a in args) + "]"
+    return bracket + " is the answer"
 
   # ---- traceability (skip in English) ----
 
@@ -1102,9 +1165,10 @@ def _atom_to_english_negated(atom):
   # ---- $defq* ----
 
   if pred.startswith("$defq"):
-    if not args:      return "the answer does not hold"
-    if len(args) == 1: return e(0) + " is not an answer"
-    return "not: " + _atom_fallback(atom)
+    if not args:       return "the answer does not hold"
+    if len(args) == 1: return e(0) + " is not the answer"
+    bracket = "[" + ", ".join(entity_name(a, with_url=True) for a in args) + "]"
+    return bracket + " is not the answer"
 
   # ---- fallback ----
 

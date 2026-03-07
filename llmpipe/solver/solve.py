@@ -52,6 +52,9 @@ from logconvert import rawlogic_convert
 # proof post-processing (stub: pass-through until answer extraction is implemented)
 from procproofs import process_proof
 
+# semantic normalisation of GK clauses
+import semnormalize
+
 # gk theorem prover caller
 import prover
 
@@ -151,9 +154,9 @@ def english_to_answer(text, options=None):
   if logic is None:
     return "Error: rawlogic_convert returned None."
 
-  #if debug:
-  #  print("Logic after rawlogic_convert: \n")
-  #  pretty.pp_logic(logic)
+  # --- semantic normalisation: antonym folding + canonical substitution ---
+  if not globals.options.get("nosemnormal_flag"):
+    logic = semnormalize.sem_normalize_clauses(logic)
 
   # --- call the theorem prover ---
   try:
@@ -227,6 +230,8 @@ def _parse_cmd_line():
     elif el in ["-nollmcache", "--nollmcache"]:
       # LLM response caching is ON by default; this disables it for this run
       opts["use_llm_cache_flag"] = False
+    elif el in ["-nosemnormal", "--nosemnormal"]:
+      opts["nosemnormal_flag"] = True
     elif el in ["-nosolve", "--nosolve"]:
       opts["prover_nosolve_flag"] = True
     elif el in ["-rawresult", "--rawresult"]:
@@ -354,6 +359,9 @@ basic keys:
 LLM caching (ON by default — cached per provider, version, all parameters and input):
  -nollmcache  : disable LLM response caching for this run
  -clearcache  : clear all caches (LLM, proof, parse) and exit
+
+semantic normalisation (ON by default):
+ -nosemnormal : disable antonym folding and canonical word substitution
 
 LLM selection:
  -llm NAME    : LLM provider: gpt, claude, or gemini (default: from llmcall.py config)

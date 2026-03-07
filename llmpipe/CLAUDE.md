@@ -55,13 +55,17 @@ English text
 - `solve.py` — CLI entry point and `english_to_answer(text, options)` function
 - `llmparse.py` — two-stage LLM parser; `parse_text(text)` → `(s1_json, s2_json, stats)`
 - `llmcall.py` — LLM API wrapper (GPT/Claude/Gemini) with retries and SQLite caching; `call_llm(sysprompt, input_text)`
-- `logconvert.py` — converts stage-2 JSON to GK clause list; `rawlogic_convert(logic)` implements full FOL-to-CNF: implies/xor/equivalent elimination, NNF push, Skolemization, distribution, clause extraction
-- `procproofs.py` — post-processes prover output (currently a pass-through stub)
+- `logconvert.py` — main driver for stage-2 JSON → GK clause list; `rawlogic_convert(logic)`; handles package extraction, context injection, post-processing passes
+- `lc_clausify.py` — FOL-to-CNF compiler used by logconvert: implies/xor/equivalent elimination, NNF push, normally expansion, Skolemization, distribution, clause extraction
+- `lc_questions.py` — question wrapping (`ask`/`question` → `@question`/`@askvars`) and population fact injection
+- `procproofs.py` — post-processes prover output; formats answers (bool, who, where), confidence labels, proof explanation dispatch
+- `proof_explain.py` — generates English proof explanations from prover proof steps
+- `proof_render.py` — renders proof atoms and steps as human-readable strings
 - `prover.py` — invokes the `gk` binary subprocess; `call_prover(logic)`
 - `cache.py` — SQLite-backed cache for LLM responses and prover results
 - `globals.py` — global `options` dict and file paths (uses `os.path` for absolute paths)
 - `pretty.py` — JSON pretty-printer; `pp_str/pp_logic/pp_stage1/pp_stage2`; Style B layout with `noquotes` mode
-- `utils.py` — two utility functions used by the pipeline: `debug_print`, `clause_list_to_json`
+- `utils.py` — utility functions: `debug_print`, `clause_list_to_json`
 
 ### Logic Representation
 

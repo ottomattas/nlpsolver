@@ -29,6 +29,7 @@ import re
 from proof_render import (
   compute_skolem_types,
   ans_atom_name,
+  entity_name,
   clause_to_str,
   format_clause_logic,
   block_to_english,
@@ -173,22 +174,35 @@ def _format_step(step, sent_nr, show_logic=False):
 
 
 def _answer_label(val):
-  """Short label for use in 'For X:' headings."""
+  """Short label for use in answer headings, e.g. '[in, Estonia]:'."""
   if val is True:  return "True"
   if val is False: return "False"
   if isinstance(val, list) and val:
-    return ans_atom_name(val[0])
+    atom = val[0]
+    if isinstance(atom, list) and len(atom) >= 3:
+      # Multi-arg $ans (e.g. where-query): bracket notation [arg1, arg2, ...]
+      return "[" + ", ".join(entity_name(a) for a in atom[1:]) + "]"
+    return ans_atom_name(atom)
   return str(val)
 
 
 # ======== answer dedup helpers ========
 
 def ans_display_key(val, askvars=None):
-  """Canonical dedup key for an answer value."""
+  """Canonical dedup key for an answer value.
+
+  Covers all arguments of every $ans atom so that multi-arg where-query
+  answers like ["$ans","in","Estonia"] and ["$ans","in","Europe"] produce
+  distinct keys rather than both collapsing to ("in",).
+  """
   if val is True or val is False or val is None:
     return val
   if isinstance(val, list) and val:
-    return tuple(ans_atom_name(a) for a in val)
+    def _atom_key(atom):
+      if not isinstance(atom, list) or len(atom) < 2:
+        return str(atom)
+      return tuple(entity_name(a) for a in atom[1:])
+    return tuple(_atom_key(a) for a in val)
   return str(val)
 
 

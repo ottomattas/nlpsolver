@@ -25,6 +25,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------
 
+import re
 import sys
 import time
 
@@ -75,6 +76,12 @@ filter_pattern = None
 # When True, do not accept answers that contain confidence qualifiers "(…)".
 strict_confidences = False
 
+# When True, spatial prepositions must match exactly between expected and received.
+# When False (default), a leading preposition on one side but not the other is OK
+# (e.g. "Estonia" and "in Estonia" are treated as equivalent).
+# Comparison is always case-insensitive.
+strict_prepositions = False
+
 # Log file: all output is also written here (flushed after every line).
 # Set to None to disable.  Override with -logfile PATH on the command line.
 log_file_path = "test_output.txt"
@@ -118,6 +125,9 @@ solver / cache options:
  -strict               strict confidence comparison: "Probably true." and "Likely true."
                        match each other but not plain "True." (default: qualifiers are
                        stripped so all certainty levels are treated as equivalent)
+ -strictprep           strict preposition matching: "in Estonia" and "Estonia" are
+                       treated as different answers (default: permissive — a leading
+                       spatial preposition on one side but not the other is ignored)
 
  -help                 show this help text
 """
@@ -289,6 +299,11 @@ def _result_matches(expected, received):
   if expected == cleaned:
     return True
 
+  # Phrase-level comparison: order-independent, preposition-permissive
+  if type(expected) == str and type(cleaned) == str:
+    if _phrases_match(expected, cleaned):
+      return True
+
   # Standardised comparison: ignore punctuation, sort words
   if _standardize(expected) == _standardize(cleaned):
     return True
@@ -310,8 +325,71 @@ def _result_matches(expected, received):
   return False
 
 
+# Spatial prepositions that may prefix location phrases in answers.
+# These are stripped for comparison only when one side has a prep and the other does not.
+_SPATIAL_PREPS = frozenset({
+  "in", "on", "at", "near", "above", "under", "below", "over",
+  "inside", "outside", "behind", "beside", "between", "by",
+  "within", "upon", "onto", "into",
+})
+
+# Articles stripped when normalising phrase content.
+_ARTICLES = frozenset({"a", "an", "the"})
+
 # Certainty adverbs that may prefix an answer (case-insensitive match on first word).
 _CONF_QUALIFIERS = frozenset({"probably", "likely", "perhaps", "certainly", "possibly"})
+
+
+def _split_and_phrases(txt):
+  """Split a string on ' and ', ', and ', or ', ' into individual phrases."""
+  parts = re.split(r',\s+and\s+|,\s+|\s+and\s+', txt)
+  return [p.strip() for p in parts if p.strip()]
+
+
+def _parse_phrase(phrase):
+  """Return (prep, content) for a phrase (all lowercase, stripped of articles).
+
+  prep is the leading spatial preposition (lowercase) or "".
+  content is the remaining words, lowercased, articles removed, joined by space.
+  """
+  words = phrase.lower().replace(".", "").replace(",", "").split()
+  prep = ""
+  if words and words[0] in _SPATIAL_PREPS:
+    prep = words[0]
+    words = words[1:]
+  words = [w for w in words if w not in _ARTICLES]
+  return prep, " ".join(words)
+
+
+def _phrases_match(expected_str, received_str):
+  """Return True if expected_str and received_str represent the same set of phrases.
+
+  Order is always ignored.  Preposition handling depends on strict_prepositions:
+    permissive (default): "Estonia" == "in Estonia" (prep on one side only → OK)
+    strict: prepositions must match exactly on both sides.
+  Comparison is case-insensitive and strips articles.
+  """
+  exp_phrases = _split_and_phrases(expected_str)
+  rec_phrases = _split_and_phrases(received_str)
+  if len(exp_phrases) != len(rec_phrases):
+    return False
+  if len(exp_phrases) <= 1:
+    return False  # single phrase — handled by existing checks
+
+  exp_parsed = sorted([_parse_phrase(p) for p in exp_phrases], key=lambda x: x[1])
+  rec_parsed = sorted([_parse_phrase(p) for p in rec_phrases], key=lambda x: x[1])
+
+  for (ep, ec), (rp, rc) in zip(exp_parsed, rec_parsed):
+    if ec != rc:
+      return False
+    if strict_prepositions:
+      if ep != rp:
+        return False
+    else:
+      # permissive: both have preps → must match; one absent → OK
+      if ep and rp and ep != rp:
+        return False
+  return True
 
 def _norm_conf_qualifier(txt):
   """Normalise a leading confidence-qualifier word in txt.
@@ -395,7 +473,7 @@ def _load_test_file(path):
 def _parse_cmd_line():
   """Return (list_of_test_files, solver_options_dict)."""
   global show_verbose, show_compact, show_quiet, show_failures_only
-  global stop_on_fail, limit, skip, filter_pattern, strict_confidences
+  global stop_on_fail, limit, skip, filter_pattern, strict_confidences, strict_prepositions
 
   solver_opts = {}
   test_files  = []
@@ -427,6 +505,8 @@ def _parse_cmd_line():
       stop_on_fail = True
     elif el in ["-strict", "--strict"]:
       strict_confidences = True
+    elif el in ["-strictprep", "--strictprep"]:
+      strict_prepositions = True
     elif el in ["-nollmcache", "--nollmcache"]:
       solver_opts["use_llm_cache_flag"] = False
     elif el in ["-cache", "--cache"]:

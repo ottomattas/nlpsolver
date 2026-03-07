@@ -24,8 +24,12 @@
 import json
 import re
 
-from proof_render import compute_ambiguity, entity_name, ans_atom_name
+from proof_render import (
+  compute_ambiguity, entity_name, ans_atom_name,
+  set_entity_map, get_entity_display,
+)
 from proof_explain import format_explanation, build_sentence_map, ans_display_key
+from entity_map import build_entity_map
 
 
 # ======== main entry point ========
@@ -68,6 +72,10 @@ def process_proof(proof_result, text=None, s1_json=None, logic=None, options=Non
   # (concrete > Skolem > population), preserving the goodness order within tier.
   answers = _filter_by_best_tier(answers)
   answers = _filter_tautological_population_answers(answers, logic)
+
+  # Build entity display-name map from stage-1 output (user's original phrasing)
+  # and install it in proof_render so that entity_name() uses it globally.
+  set_entity_map(build_entity_map(s1_json))
 
   # Build sent_SN -> raw sentence text map from stage-1 output
   sentence_map = build_sentence_map(s1_json)
@@ -129,16 +137,21 @@ def _is_where_query(logic):
 def _location_entity_name(val, entity_props=None):
   """Format a location entity constant for display in a 'where' answer.
 
-  Delegates to entity_name for URL/Skolem/proper-noun handling, then
-  adds "the" article (with any adjectives) for common noun phrases.
+  Checks the entity_map first (user's original phrasing, with qualifier and
+  article already incorporated).  Falls back to URL-name extraction and
+  common-noun article logic.
 
   "house 2"             -> "the house"
-  "house 3" (red)       -> "the red house"  (with entity_props lookup)
+  "house 3" (red)       -> "the red house"  (entity_map or entity_props lookup)
   "London 1"            -> "London"          (proper noun: no article)
   "https://.../Estonia" -> "Estonia"
   """
   if not isinstance(val, str):
     return str(val)
+  # Entity map overrides everything — already has correct article and qualifier
+  em = get_entity_display(val)
+  if em is not None:
+    return em
   # URL constants: use entity_name which extracts the last path segment
   if val.startswith("http://") or val.startswith("https://"):
     return entity_name(val, with_url=False)

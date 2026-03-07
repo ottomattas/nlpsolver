@@ -53,6 +53,11 @@ options={
   # sysprompt and input text, so a cached result is only reused when every
   # call parameter is identical.  Set to False or pass -nollmcache to disable.
   "use_llm_cache_flag": True,
+  # Semantic normalisation: ON by default.
+  # Applies antonym folding and canonical word substitution to GK clauses
+  # before they are passed to the prover.  Set to True or pass -nosemnormal
+  # to disable.
+  "nosemnormal_flag": False,
 }
 
 # cache

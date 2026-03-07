@@ -3,7 +3,7 @@
   [["-isa", "thing", "?:Y"], ["isa", "object", "?:Y"]],
   [["-isa", "object", "?:Y"], ["isa", "thing", "?:Y"]],
 
-  // == 2. PART-WHOLE & POSSESSION ==
+  // == 2. PART-WHOLE & POSSESSION  ==
   // If Y1 is a subtype of Y2, and Y1 has part X, then Y2 has part X
   [
     ["-isa", "?:Y1", "?:Y2"], 
@@ -21,6 +21,21 @@
     ["-has part", "?:B", "?:C", "?:Ctxt"],
     ["has part", "?:A", "?:C", "?:Ctxt"]
   ],
+  
+  /*
+  // == X. INSIDE, OUTSIDE etc  ==
+  [ 
+    ["-has degree rel2","in","?:R", "?:X", "?:Y", "high", "?:Rel", "?:Ctxt"], 
+    ["-has degree rel2","in","?:R", "?:X", "?:Y", "high", "?:Rel", "?:Ctxt"],  
+    ["-has degree rel2","in","?:R", "?:X", "?:Y", "high", "?:Rel", "?:Ctxt"]
+  ],
+  
+  [ 
+    ["-has degree rel2","in","?:R", "?:X", "?:Y", "high", "?:Rel", "?:Ctxt"], 
+    ["-has degree rel2","in","?:R", "?:X", "?:Y", "high", "?:Rel", "?:Ctxt"],  
+    ["-has degree rel2","in","?:R", "?:X", "?:Y", "high", "?:Rel", "?:Ctxt"]
+  ],
+  */
 
   // == 3. GRADABLE RELATIONS (TRANSITIVITY & LOGIC) ==
   // Transitivity for TRUE comparative relations only (degree=high/more/less).
@@ -50,6 +65,7 @@
   // == 4. SPATIAL & CATEGORICAL TRANSITIVITY ==
   // Transitivity for non-gradable "is rel2" relations [cite: 352, 353]
   [["-is rel2", "in", "?:X", "?:Y", "?:Ctxt"], ["-is rel2", "in", "?:Y", "?:Z", "?:Ctxt"], ["is rel2", "in", "?:X", "?:Z", "?:Ctxt"]],
+  //[["-is rel2", "on", "?:X", "?:Y", "?:Ctxt"], ["-is rel2", "on", "?:Y", "?:Z", "?:Ctxt"], ["is rel2", "on", "?:X", "?:Z", "?:Ctxt"]],
   [["-is rel2", "inside", "?:X", "?:Y", "?:Ctxt"], ["-is rel2", "inside", "?:Y", "?:Z", "?:Ctxt"], ["is rel2", "inside", "?:X", "?:Z", "?:Ctxt"]],
   [["-is rel2", "located in", "?:X", "?:Y", "?:Ctxt"], ["-is rel2", "located in", "?:Y", "?:Z", "?:Ctxt"], ["is rel2", "located in", "?:X", "?:Z", "?:Ctxt"]],
   [["-is rel2", "connected to", "?:X", "?:Y", "?:Ctxt"], ["-is rel2", "connected to", "?:Y", "?:Z", "?:Ctxt"], ["is rel2", "connected to", "?:X", "?:Z", "?:Ctxt"]],
@@ -57,6 +73,9 @@
   // "contains" is the converse of "in": A contains B ↔ B is in A
   [["-is rel2", "contains", "?:A", "?:B", "?:Ctxt"], ["is rel2", "in", "?:B", "?:A", "?:Ctxt"]],
   [["-is rel2", "in", "?:B", "?:A", "?:Ctxt"], ["is rel2", "contains", "?:A", "?:B", "?:Ctxt"]],
+  
+  // AND/OR add a synonym bridge:
+  [["-is rel2", "on", "?:X", "?:Y", "?:Ctxt"], ["is rel2", "in", "?:X", "?:Y", "?:Ctxt"]],
 
   // == 5. ACTIVITY & MOVEMENT (BAbI TASK LOGIC) ==
   // Davidsonian Activity Reification: activity + has type + has actor [cite: 334, 335, 354]

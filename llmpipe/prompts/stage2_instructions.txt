@@ -145,8 +145,9 @@ B. entity.wh_placeholder == true
 4. Ignore entity.id entirely during compilation.
 5. Do NOT treat entity.id as an ontology class.
 6. Do NOT introduce additional quantifiers beyond those required by the query type.
+7. The final ASU output must use ["ask", VAR, BODY] and not ["question", ...]
+8. The entity.id of a wh_placeholder must never appear in the compiled logic.
 
-This rule overrides normal generic handling for WH placeholders.
 
 C. All other generic entities
 
@@ -378,8 +379,19 @@ When a situation introduces a concrete ID for an object (e.g., "tail 2", "trunk 
 category using an 'isa' predicate in the same ASU. Example:
 ["and", ["have", "John 1", "tail 2"], ["isa", "tail", "tail 2"]]
 
+== 6. SEMANTIC PREDICATE MAPPING / GENERIC SEMANTIC ANCHORING (MANDATORY) ==
 
-== 6. WRAPPER INTEGRITY (MANDATORY) ==
+Use the most generic "Anchor" predicate for common relations.
+
+6.1. CONTAINMENT & LOCATION FLIP
+- For contains', 'has inside', or 'is the location of': use the predicate 'in' and FLIP the arguments.
+  Example: "Earth contains Europe" -> ["is rel2", "in", "Europe", "Earth"]
+
+6.2. PREPOSITION GENERALIZATION
+- For geographic or celestial entities (planet, continent, city, etc), prioritize the predicate 'in' over 'on' or 'at'.
+- Example "John is at the park" -> ["is rel2", "in", "John", "park"]
+  
+== 7. WRAPPER INTEGRITY (MANDATORY) ==
 
 Every ASU must be wrapped in EXACTLY ONE ["@id", "Sx", ...] structure.
 
@@ -387,7 +399,7 @@ Every ASU must be wrapped in EXACTLY ONE ["@id", "Sx", ...] structure.
    - CORRECT: ["@id", "S5", ["question", ...]]
    - INCORRECT: ["@id", "S5", ["@id", "S5", ["question", ...]]]
 
-== 7. PREDICATE INVENTORY (Closed Whitelist) ==
+== 8. PREDICATE INVENTORY (Closed Whitelist) ==
 
 Use ONLY the following JSON forms.
 Do NOT invent new predicates.
