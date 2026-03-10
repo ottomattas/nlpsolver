@@ -437,6 +437,7 @@ def _expand_normally(frm):
     regular_lits = []
     pushed_lits  = []  # from _push_normally_inside; must NOT be re-expanded here
     body_lits    = []  # literals extracted from normally-body formulas
+    normally_disjunctive = False  # True when normally body was an "or"
 
     for el in elements:
       if isinstance(el, list) and el and el[0] in _opaque_wrappers:
@@ -444,6 +445,11 @@ def _expand_normally(frm):
         if body is None:
           continue
         is_pos = not el[0].startswith("-")
+        # Check whether the raw body is a genuine disjunction (not an implies
+        # that will become an or after conversion).  Only a raw "or" body means
+        # the normally wrapped a true disjunction — skip $block for those.
+        if (isinstance(body, list) and body and body[0] == "or"):
+          normally_disjunctive = True
         # Process body: implies elimination then NNF push.
         processed = _push_neg(_implies_to_or(body), is_pos)
         # Flatten processed body into a flat list of literals.
@@ -571,9 +577,17 @@ def _expand_normally(frm):
         return result_lits[0]
       return ["or"] + result_lits
 
+    # Disjunctive normally body: normally(or(A, B)) should not get a $block
+    # because there is no single head to defeat. Matches UDP behaviour where
+    # make_clause_blockers returns None for clauses with multiple disjuncts.
+    if normally_disjunctive:
+      result_lits = neg_lits + pos_lits
+      if len(result_lits) == 1:
+        return result_lits[0]
+      return ["or"] + result_lits
+
     # Use the last positive literal as the head (the conclusion to be blocked).
     head     = pos_lits[-1]
-    other_pos = pos_lits[:-1]
 
     # Compute priority: [$, CLASS, N]
     #   CLASS = class from the last -isa condition, or "$generic" if none.
@@ -588,7 +602,7 @@ def _expand_normally(frm):
     priority = ["$", cls, priornr]
     blocker  = ["$block", priority, ["$not", head]]
 
-    result_lits = neg_lits + other_pos + [head, blocker]
+    result_lits = neg_lits + [head, blocker]
     if len(result_lits) == 1:
       return result_lits[0]
     return ["or"] + result_lits

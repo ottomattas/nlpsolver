@@ -265,6 +265,21 @@ Fields:
 When a concrete sentence echoes a verb from a rule in the same input,
 use the same mode as the rule.
 
+5.3. Global Action Synchronization (CRITICAL)
+
+You must ensure that every instance of a verb root (e.g., "fly") across different ASUs in the same package uses the same mode:
+
+1.  Explicit Markers: If the ASU uses "can," "is able to," or "possible," use capability. 
+    If it uses "normally," "typically," or "usually," use habitual. 
+2.  If a strict_rule or normal_rule defines an action (e.g., "Birds fly"), 
+    every subsequent ASU mentioning that action -- including negations and queries - -MUST use the same mode
+    (e.g., capability or habitual) unless an explicit marker says otherwise.
+3.  Negation Mapping: If a rule states a capability (e.g., "can fly"), a sentence like "John does not fly" must be interpreted
+    as a denial of that capability (mode: capability), NOT as a specific event (mode: event).   
+4.  Default Query Preference: When no rule or marker is present, default queries with a bare verb (e.g., "John swims?")
+    as capability-
+
+
 == 6. RELATIONAL NOUN EXPANSION (MANDATORY) ==
 
 If simplified_text contains a possessive or "of" phrase
@@ -446,7 +461,7 @@ PART 2: Non-Quantified Situations & Frequency Adverbs:
 
 Use individuals (e.g., "John is usually home") or bare plurals without explicit quantifier words (e.g., "Elephants have trunks").
 
-* Usually / Normally / Generally / Almost all -> 0.95 
+* Usually / Normally / Generally / Almost all -> 0.98 
 * Often / Probably / Likely -> 0.8
 * Maybe / Possibly -> 0.6
 * Sometimes -> 0.5
@@ -466,7 +481,7 @@ Quantifier Handling Summary Table:
 | Word in Text           | Confidence | Logic Interpretation    |
 |------------------------|------------|-------------------------|
 | "Some" / "A" / "An"    | 0.99       | Exists (Certain Fact)   |
-| "Normally" / "Usually" | 0.95       | Universal Default       |
+| "Normally" / "Usually" | 0.98       | Universal Default       |
 | "Most"                 | 0.80       | Universal Default       |
 | "Many"                 | 0.70       | Universal Default       |
 | "A few"                | 0.30       | Universal Default       |

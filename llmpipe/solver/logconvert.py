@@ -190,6 +190,9 @@ def rawlogic_convert(logic, s1_json=None):
   # Build population facts by scanning the raw stage-2 input first.
   pop_facts = _populate_clauses(items)
 
+  # Build compound type subsumption rules (e.g. "baby bird" -> "bird").
+  compound_subs = _build_compound_subsumption(items)
+
   # Track how many times each unit_id has been seen so we can generate
   # globally unique clause names (sent_S1, sent_S1_2, sent_S1_3, ...).
   uid_count = {}
@@ -208,15 +211,16 @@ def rawlogic_convert(logic, s1_json=None):
   # are available as given facts throughout the proof.
   result = entity_cat_clauses + result
 
-  # Insert population facts immediately before the first @question entry
-  # so they are available as background knowledge during proof search.
+  # Insert population facts and compound subsumption rules immediately before
+  # the first @question entry so they are available as background knowledge.
+  background = pop_facts + compound_subs
   first_q = next((i for i, o in enumerate(result) if "@question" in o), len(result))
-  for i, fact in enumerate(pop_facts):
+  for i, fact in enumerate(background):
     result.insert(first_q + i, fact)
 
-  # Inject $ctxt into population facts (all-free variables; they are background rules).
+  # Inject $ctxt into population and subsumption facts (free-variable rules).
   if not _g_options.get("nocontext_flag", False):
-    for fact in pop_facts:
+    for fact in background:
       ctxt = ["$ctxt", _fresh_fv(), _fresh_fv(), _fresh_fv(), _fresh_fv()]
       _inject_ctxt_into_objs([fact], ctxt)
 
@@ -608,6 +612,54 @@ def _populate_clauses(items):
       scan_item_formula(formula, name, True, classes, has_props, deg_props)
 
   return build_population_facts(classes, has_props, deg_props)
+
+
+# ======== compound type subsumption ========
+
+def _scan_compound_types(items):
+  """Scan all @id items for isa / -isa atoms with space-containing type names.
+
+  Returns a set of compound type strings (e.g. {"baby bird"}).
+  """
+  compounds = set()
+
+  def _walk(frm):
+    if not isinstance(frm, list) or not frm:
+      return
+    op = frm[0]
+    if isinstance(op, str) and op in ("isa", "-isa") and len(frm) >= 3:
+      typename = frm[1]
+      if isinstance(typename, str) and " " in typename:
+        compounds.add(typename)
+    for el in frm[1:]:
+      if isinstance(el, list):
+        _walk(el)
+
+  for item in items:
+    if not isinstance(item, list) or len(item) < 3 or item[0] != "@id":
+      continue
+    _walk(item[2])
+
+  return compounds
+
+
+def _build_compound_subsumption(items):
+  """Build subsumption rules for compound type names.
+
+  For each compound type like "baby bird", emits a clause:
+    [-isa, "baby bird", "?:X"], ["isa", "bird", "?:X"]
+  so the prover can derive isa(bird, X) from isa(baby bird, X).
+  The head noun is the last word of the compound.
+  """
+  compounds = _scan_compound_types(items)
+  result = []
+  for ctype in sorted(compounds):
+    head = ctype.split()[-1]
+    result.append({
+      "@name": "compound_sub",
+      "@logic": [["-isa", ctype, "?:X"], ["isa", head, "?:X"]]
+    })
+  return result
 
 
 # ======== context injection ========

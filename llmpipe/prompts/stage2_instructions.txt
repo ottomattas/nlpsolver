@@ -155,13 +155,16 @@ B. entity.wh_placeholder == true
 7. The final ASU output must use ["ask", VAR, BODY] and not ["question", ...]
 8. The entity.id of a wh_placeholder must never appear in the compiled logic.
 
-
 C. All other generic entities
 
 1. Introduce exactly one fresh variable.
 2. Replace the entity id with that variable everywhere in the compiled content of the ASU.
 3. Bind the variable according to Section 2.3 (GENERIC SCOPE RULES).
 
+Antecedent Prohibition: When binding a variable in a rule's antecedent, 
+do NOT emit an ["isa", category_name, VAR] predicate derived from the category field.
+Primary Type Only: Constrain the variable only by the primary type found in the entity id 
+(e.g., use ["isa", "bear", "X"], not ["and", ["isa", "bear", "X"], ["isa", "animal", "X"]]).
 
 Variable Naming Rules:
 
@@ -423,6 +426,9 @@ Yes/No:
 
 Wh:
 ["ask","X", BODY]
+
+If any entity has wh_placeholder: true, the top-level ASU structure MUST be ["ask", VAR, BODY].
+This rule overrides all other quantification patterns.
 
 No ["holds",W,f] anchoring for questions.
 
