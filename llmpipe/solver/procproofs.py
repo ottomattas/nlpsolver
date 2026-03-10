@@ -453,24 +453,44 @@ def _filter_by_best_tier(answers):
           if isinstance(a.get("answer"), bool) or t == best]
 
 
-def _extract_question_isa_type(logic):
-  """If the @question atom is ["isa", TYPE, var], return TYPE. Otherwise None."""
+def _extract_question_pop_key(logic):
+  """Extract (pred, prop_or_class) identifying the question's population predicate.
+
+  Returns a tuple used by _is_tautological_population_answer to detect circular
+  population-constant proofs. Returns None if no matching question found.
+
+  Supported patterns:
+    ["isa", CLASS, ?:var]               -> ("isa", CLASS)
+    ["has degree property", PROP, ...]  -> ("has degree property", PROP)
+    ["has property", PROP, ...]         -> ("has property", PROP)
+  """
   if not logic or not isinstance(logic, list):
     return None
   for obj in logic:
     if not isinstance(obj, dict) or "@question" not in obj:
       continue
     q = obj["@question"]
-    if isinstance(q, list) and len(q) >= 3 and q[0] == "isa":
-      return str(q[1])
+    if not isinstance(q, list) or len(q) < 2:
+      continue
+    pred = q[0]
+    if pred in ("isa", "has degree property", "has property"):
+      return (pred, str(q[1]))
   return None
 
 
-def _is_tautological_population_answer(ans, question_type):
-  """Return True if ans is a $some_* constant proved directly via
-  the population axiom isa QUESTION_TYPE SKOLEM (a circular 2-step proof)."""
-  if question_type is None:
-    return False
+def _is_tautological_population_answer(ans, question_pop_key):
+  """Return True if ans is a $some_* constant proved directly via the
+  population clause that asserts the very property/class being queried.
+
+  Two checks:
+    1. For direct questions (question_pop_key known): $some_* constant proved
+       via a single-atom population clause [PRED, PROP, answer_const, ...]
+       where PRED/PROP match the question.
+    2. For $defq-wrapped questions (question_pop_key is None): $some_not_*
+       constant proved via its own negative population clause
+       ["-PRED", ..., answer_const, ...] — always circular regardless of
+       what the question predicate is.
+  """
   val = ans.get("answer")
   if not isinstance(val, list) or not val:
     return False
@@ -479,6 +499,7 @@ def _is_tautological_population_answer(ans, question_type):
   answer_const = val[0][1]
   if not isinstance(answer_const, str) or not answer_const.startswith("$some_"):
     return False
+
   proof = ans.get("positive proof", [])
   for step in proof:
     if len(step) < 3:
@@ -489,33 +510,42 @@ def _is_tautological_population_answer(ans, question_type):
       continue
     if justification[0] != "in":
       continue
-    # single atom ["isa", TYPE, CONST]
-    if isinstance(clause, list) and len(clause) >= 3 and clause[0] == "isa":
-      if str(clause[1]) == question_type and clause[2] == answer_const:
-        return True
-    # wrapped single atom [["isa", TYPE, CONST]]
-    if isinstance(clause, list) and len(clause) == 1:
-      inner = clause[0]
-      if isinstance(inner, list) and len(inner) >= 3 and inner[0] == "isa":
-        if str(inner[1]) == question_type and inner[2] == answer_const:
-          return True
+    # Unwrap single-element list wrapper if present: [[atom]] -> [atom]
+    inner_clause = clause
+    if (isinstance(clause, list) and len(clause) == 1
+        and isinstance(clause[0], list)):
+      inner_clause = clause[0]
+    if not (isinstance(inner_clause, list) and len(inner_clause) >= 3):
+      continue
+    # Check 1: matches question predicate/property (direct, non-$defq questions).
+    if (question_pop_key is not None
+        and inner_clause[0] == question_pop_key[0]
+        and str(inner_clause[1]) == question_pop_key[1]
+        and inner_clause[2] == answer_const):
+      return True
+    # Check 2: $some_not_* proved from its own negative population clause.
+    # Predicate-agnostic: any single negated atom naming the answer constant
+    # at position 2 is the negative population clause that defines it.
+    if (answer_const.startswith("$some_not_")
+        and isinstance(inner_clause[0], str)
+        and inner_clause[0].startswith("-")
+        and inner_clause[2] == answer_const):
+      return True
   return False
 
 
 def _filter_tautological_population_answers(answers, logic):
   """Remove tautological population answers when non-tautological ones exist.
 
-  A tautological answer is a $some_TYPE constant proved solely via the
-  population axiom 'isa QUESTION_TYPE $some_TYPE' — i.e. the proof is
-  circular: 'some animal is an animal because some animal is an animal'.
-  Such answers are filtered out when at least one non-tautological answer
-  also exists.
+  A tautological answer is a $some_* constant proved solely via the
+  population clause that asserts the very property/class being queried —
+  i.e. the proof is circular: 'some big elephant is big because some big
+  elephant is big (by population)'. Such answers are filtered out when at
+  least one non-tautological answer also exists.
   """
-  question_type = _extract_question_isa_type(logic)
-  if question_type is None:
-    return answers
+  question_pop_key = _extract_question_pop_key(logic)
   tautological = [a for a in answers
-                  if _is_tautological_population_answer(a, question_type)]
+                  if _is_tautological_population_answer(a, question_pop_key)]
   if not tautological or len(tautological) == len(answers):
     return answers
   return [a for a in answers if a not in tautological]

@@ -72,6 +72,7 @@ INPUT:
         "entities": [
           {"id": "John 1", "type": "concrete"}
         ],
+        "actions": [{"root": "smile", "mode": "event"}],
         "next_state": "W1",
         "time": "past"
       }
@@ -87,6 +88,7 @@ INPUT:
         "entities": [
           {"id": "Mike 2", "type": "concrete"}
         ],
+        "actions": [{"root": "frown", "mode": "event"}],
         "pre_state": "W1",
         "next_state": "W2",
         "time": "past"
@@ -425,6 +427,7 @@ INPUT:
           {"id":"dogs","type":"generic"},
           {"id":"meat","type":"generic","scope":"kind"}
         ],
+        "actions":[{"root": "eat", "mode": "habitual", "roles": {"target": "meat"}}],
         "confidence":0.99
       }
     ]
@@ -438,9 +441,9 @@ OUTPUT:
     ["and",
       ["holds","W0",
         ["forall","X",
-          ["normally",
-            ["implies",
-              ["isa","dog","X"],
+          ["implies",
+            ["isa","dog","X"],
+            ["normally",
               ["exists","E",
                 ["and",
                   ["isa","activity","E"],
@@ -455,6 +458,66 @@ OUTPUT:
         ]
       ],
       ["@p","S1",0.99]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
+[
+  {
+    "raw": "If bears eat red berries, they are healthy.",
+    "units": [
+      {
+        "unit_id":"S1",
+        "text":"If a bear eats red berries, the bear is healthy.",
+        "type":"normal_rule",
+        "entities":[
+          {"id":"bear","type":"generic","category":"animal"},
+          {"id":"berries","type":"generic","scope":"dependent"}
+        ],
+        "actions":[{"root": "eat", "mode": "habitual", "roles": {"target": "berries"}}],
+        "adjectives":[["red","none","berry"],["healthy","none","bear"]],
+        "confidence":0.95
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["forall","X",
+          ["normally",
+            ["implies",
+              ["and",
+                ["isa","bear","X"],
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","eat"],
+                    ["has actor","E","X"],
+                    ["exists","Y",
+                      ["and",
+                        ["isa","berry","Y"],
+                        ["has degree property","red","Y","none","berry"],
+                        ["has target","E","Y"]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              ["has degree property","healthy","X","none","bear"]
+            ]
+          ]
+        ]
+      ],
+      ["@p","S1",0.95]
     ]
   ]
 ]
@@ -604,6 +667,7 @@ INPUT:
           {"id": "bears", "type": "generic"},
           {"id": "boxers", "type": "generic"}
         ],
+        "actions": [{"root": "eat", "mode": "habitual", "roles": {"target": "boxers"}}],
         "confidence": 0.9
       }
     ]
@@ -646,7 +710,8 @@ INPUT:
         "entities": [
           {"id": "bears", "type": "generic"},
           {"id": "Mike 1", "type": "concrete"}
-        ]
+        ],
+        "actions": [{"root": "eat", "mode": "habitual", "roles": {"target": "Mike 1"}}]
       }
     ]
   }
@@ -1034,6 +1099,48 @@ INPUT:
 
 [
   {
+    "raw": "Many bears are big.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "Many bears are big.",
+        "type": "normal_rule",
+        "entities": [
+          {"id": "bears", "type": "generic", "category": "animal"}
+        ],
+        "adjectives": [["big", "none", "bear"]],
+        "confidence": 0.80
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+ ["@id",
+   "S1",
+   ["and",
+     ["holds",
+       "W0",
+       ["forall",
+         "X",
+         ["implies",
+           ["isa","bear","X"],
+           ["normally", ["has degree property","big","X","none","bear"]]
+          ]]
+      ],
+     ["@p","S1",0.8]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
+[
+  {
     "raw":"The car of John is red.",
     "units":[
       {
@@ -1217,6 +1324,7 @@ INPUT:
         "text": "John 1 smokes.",
         "type": "normal_rule",
         "entities": [{"id": "John 1", "type": "concrete"}],
+        "actions": [{"root": "smoke", "mode": "habitual"}],
         "confidence": 0.1
       }
     ]
@@ -1228,7 +1336,8 @@ INPUT:
         "unit_id": "S2",
         "text": "Does John 1 smoke?",
         "type": "query",
-        "entities": [{"id": "John 1", "type": "concrete"}]
+        "entities": [{"id": "John 1", "type": "concrete"}],
+        "actions": [{"root": "smoke", "mode": "habitual"}]
       }
     ]
   }
@@ -1363,6 +1472,7 @@ INPUT:
         "entities": [
           {"id": "mouse 1", "type": "concrete"}
         ],
+        "actions": [{"root": "run", "mode": "event", "roles": {"direction": "away"}}],
         "adjectives": [["big", "high", "mouse"]],
         "next_state": "W1"
       }
@@ -1502,6 +1612,7 @@ INPUT:
           {"id":"An elephant 1","type":"concrete"},
           {"id":"stone 2","type":"concrete"}
         ],
+        "actions":[{"root": "lift", "mode": "event", "roles": {"target": "stone 2"}}],
         "pre_state":"W0",
         "next_state":"W1",
         "time":"past"
@@ -1584,6 +1695,7 @@ INPUT:
           {"id":"John 1","type":"concrete"},
           {"id":"car 2","type":"concrete"}
         ],
+        "actions":[{"root": "drive", "mode": "habitual", "roles": {"target": "car 2", "manner": "fast"}}],
         "adjectives":[["fast","none","driving"]]
       }
     ]
@@ -1623,13 +1735,16 @@ OUTPUT:
   ],
   ["@id","S3",
     ["holds","W0",
-      ["exists","E",
-        ["and",
-          ["isa","activity","E"],
-          ["has type","E","drive"],
-          ["has actor","E","John 1"],
-          ["has target","E","car 2"],
-          ["has degree property","fast","E","none","driving"]
+      ["normally",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","drive"],
+            ["has actor","E","John 1"],
+            ["has target","E","car 2"],
+            ["has manner","E","fast"],
+            ["has degree property","fast","E","none","driving"]
+          ]
         ]
       ]
     ]
@@ -1659,6 +1774,7 @@ INPUT:
         "entities": [
           {"id":"John 1","type":"concrete"}
         ],
+        "actions": [{"root": "wake", "mode": "event"}],
         "pre_state": "W0",
         "next_state": "W1",
         "time": "past"
@@ -1670,6 +1786,7 @@ INPUT:
         "entities": [
           {"id":"John 1","type":"concrete"}
         ],
+        "actions": [{"root": "leave", "mode": "event"}],
         "pre_state": "W1",
         "next_state": "W2",
         "time": ["relative","+1 hour","W1"]
@@ -1688,7 +1805,7 @@ OUTPUT:
         ["exists","E",
           ["and",
             ["isa","activity","E"],
-            ["has type","E","wake up"],
+            ["has type","E","wake"],
             ["has actor","E","John 1"],
             ["has time","E","past"]
           ]
@@ -1970,6 +2087,7 @@ INPUT:
         "entities":[
           {"id":"stone","type":"generic"}
         ],
+        "actions":[{"root": "throw", "mode": "capability", "roles": {"target": "stone"}}],
         "adjectives":[["light","none","stone"]],
         "confidence":0.98
       }
@@ -1984,17 +2102,19 @@ OUTPUT:
     ["and",
       ["holds","W0",
         ["forall","X",
-          ["normally",
-            ["implies",
-              ["and",
-                ["isa","stone","X"],
-                ["has degree property","light","X","none","stone"]
-              ],
+          ["implies",
+            ["and",
+              ["isa","stone","X"],
+              ["has degree property","light","X","none","stone"]
+            ],
+            ["normally",
               ["exists","E",
                 ["and",
+                  ["can","X","E"],
                   ["isa","activity","E"],
                   ["has type","E","throw"],
-                  ["has target","E","X"]
+                  ["has target","E","X"],
+                  ["typical","E"]
                 ]
               ]
             ]
@@ -2069,6 +2189,7 @@ INPUT:
           {"id":"person","type":"generic"},
           {"id":"food","type":"generic","scope":"kind"}
         ],
+        "actions":[{"root": "spear", "mode": "habitual", "roles": {"target": "food"}}],
         "confidence":0.95
       }
     ]
@@ -2084,12 +2205,15 @@ OUTPUT:
         ["forall","X",
           ["implies",
             ["isa","person","X"],
-            ["exists","E",
-              ["and",
-                ["isa","activity","E"],
-                ["has type","E","spear"],
-                ["has actor","E","X"],
-                ["has target","E","food"]
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","spear"],
+                  ["has actor","E","X"],
+                  ["has target","E","food"],
+                  ["typical","E"]
+                ]
               ]
             ]
           ]
@@ -2152,7 +2276,8 @@ INPUT:
         "unitid": "S1",
         "text": "Students study.",
         "type": "normal_rule",
-        "ents": [{"id": "students", "type": "generic"}]
+        "ents": [{"id": "students", "type": "generic"}],
+        "actions": [{"root": "study", "mode": "habitual"}]
       }
     ]  
   }  
@@ -2189,6 +2314,7 @@ INPUT:
         "entities":[
           {"id":"birds","type":"generic"}
         ],
+        "actions":[{"root": "fly", "mode": "capability"}],
         "confidence":0.95
       },
       {
@@ -2197,7 +2323,8 @@ INPUT:
         "type":"strict_rule",
         "entities":[
           {"id":"penguins","type":"generic"}
-        ]
+        ],
+        "actions":[{"root": "fly", "mode": "capability"}]
       }
     ]
   }
@@ -2264,7 +2391,8 @@ INPUT:
         "type":"strict_rule",
         "entities":[
           {"id":"penguins","type":"generic"}
-        ]
+        ],
+        "actions":[{"root": "fly", "mode": "capability"}]
       },
       {
         "unit_id":"S4",
@@ -2274,6 +2402,7 @@ INPUT:
           {"id":"penguins","type":"generic"},
           {"id":"water","type":"generic","scope":"kind"}
         ],
+        "actions":[{"root": "live", "mode": "habitual", "roles": {"location": "water"}}],
         "confidence":0.95
       },
       {
@@ -2284,6 +2413,7 @@ INPUT:
           {"id":"penguins","type":"generic"},
           {"id":"land","type":"generic","scope":"kind"}
         ],
+        "actions":[{"root": "live", "mode": "habitual", "roles": {"location": "land"}}],
         "confidence":0.95
       },
       {
@@ -2294,6 +2424,7 @@ INPUT:
           {"id":"penguins","type":"generic"},
           {"id":"Southern Hemisphere 1","type":"concrete","url":"https://en.wikipedia.org/wiki/Southern_Hemisphere"}
         ],
+        "actions":[{"root": "live", "mode": "habitual", "roles": {"location": "Southern Hemisphere 1"}}],
         "confidence":0.99
       }
     ]
@@ -2308,15 +2439,30 @@ OUTPUT:
   ["@id","S2",["holds","W0",["forall","X",["implies",["isa","penguin","X"],["isa","sea bird","X"]]]]],
   ["@id","S3",["holds","W0",["forall","X",["implies",["isa","penguin","X"],["not",["can","X","fly"]]]]]],
   ["@id","S4",["and",
-    ["holds","W0",["forall","X",["implies",["isa","penguin","X"],["normally",["is rel2","live in","X","water"]]]]],
+    ["holds","W0",["forall","X",["implies",["isa","penguin","X"],
+      ["normally",["exists","E",["and",
+        ["isa","activity","E"],["has type","E","live"],["has actor","E","X"],
+        ["has location","E","water"],["typical","E"]
+      ]]]
+    ]]],
     ["@p","S4",0.95]
   ]],
   ["@id","S5",["and",
-    ["holds","W0",["forall","X",["implies",["isa","penguin","X"],["normally",["is rel2","live on","X","land"]]]]],
+    ["holds","W0",["forall","X",["implies",["isa","penguin","X"],
+      ["normally",["exists","E",["and",
+        ["isa","activity","E"],["has type","E","live"],["has actor","E","X"],
+        ["has location","E","land"],["typical","E"]
+      ]]]
+    ]]],
     ["@p","S5",0.95]
   ]],
   ["@id","S6",["and",
-    ["holds","W0",["forall","X",["implies",["isa","penguin","X"],["normally",["is rel2","live in","X","https://en.wikipedia.org/wiki/Southern_Hemisphere"]]]]],
+    ["holds","W0",["forall","X",["implies",["isa","penguin","X"],
+      ["normally",["exists","E",["and",
+        ["isa","activity","E"],["has type","E","live"],["has actor","E","X"],
+        ["has location","E","https://en.wikipedia.org/wiki/Southern_Hemisphere"],["typical","E"]
+      ]]]
+    ]]],
     ["@p","S6",0.99]
   ]]
 ]

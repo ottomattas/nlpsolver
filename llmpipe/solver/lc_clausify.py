@@ -421,7 +421,17 @@ def _expand_normally(frm):
 
   if op in _opaque_wrappers or op == "or":
     # Normalise: a lone normally(...) is treated as a one-element disjunction.
-    elements = [frm] if op in _opaque_wrappers else frm[1:]
+    elements_raw = [frm] if op in _opaque_wrappers else frm[1:]
+    # Flatten nested "or" elements that arise from De Morgan expansion of
+    # not(and(A,B)) → or(-A,-B) in _push_neg.  Without this, or(-A,-B) lands
+    # in pos_lits (its op is "or", not "-…") and sends the formula down the
+    # positive-head branch instead of the correct negative-head branch.
+    elements = []
+    for _el in elements_raw:
+      if isinstance(_el, list) and _el and _el[0] == "or":
+        elements.extend(_el[1:])
+      else:
+        elements.append(_el)
 
     # Separate normally-wrappers from regular literals.
     regular_lits = []

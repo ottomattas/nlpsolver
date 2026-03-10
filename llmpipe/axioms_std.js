@@ -87,6 +87,26 @@
   ],
   // Capability: If one typically does V, one can do V [cite: 354]
   [["-typically", "?:X", "?:V", "?:Ctxt"], ["can", "?:X", "?:V", "?:Ctxt"]],
+
+
+  [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
+   ["isa", "activity", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"]]],
+
+  [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
+   ["has type", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"], "?:V"]],
+
+  [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
+   ["has actor", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"], "?:X"]],
+
+  [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
+   ["has time", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"], "?:Time"]],
+
+  [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
+   ["has location", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"], "?:Loc"]],
+
+  [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
+   ["typical", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"]]],
+
   // Movement Results: If X 'go'es to Dest, X is 'at' Dest in the next state [cite: 146, 147]
   [
     ["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],

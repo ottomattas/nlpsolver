@@ -72,8 +72,9 @@ def call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None, thi
 
   llm, version, max_tokens, think override module-level configuration when given.
   think=True enables medium reasoning mode (GPT: reasoning_effort=medium;
-  Claude: extended thinking with budget_tokens; Gemini: thinkingConfig medium
-  if the model supports it).
+  Claude: extended thinking with budget_tokens=8000; Gemini: thinkingConfig
+  if the model supports it).  think can also be an int, interpreted as the
+  thinking budget in tokens (Claude budget_tokens, Gemini thinkingBudget).
   Returns the result string on success, or None on error (error is printed).
 
   LLM responses are cached by default.  The cache key encodes the provider,
@@ -177,7 +178,8 @@ def call_gemini(version, sentences, sysprompt, max_tokens, think=False):
     "temperature": temperature
   }
   if think and _gemini_supports_thinking(version):
-    genconfig["thinkingConfig"] = {"thinkingMode": "enabled", "thinkingBudget": 8000}
+    budget = think if isinstance(think, int) else 8000
+    genconfig["thinkingConfig"] = {"thinkingBudget": budget}
   call = {
     "contents": [{"parts": [{"text": sentences}]}],
     "generationConfig": genconfig
@@ -267,7 +269,8 @@ def call_claude(version, sentences, sysprompt, max_tokens, think=False):
     "max_tokens": max_tokens
   }
   if think:
-    call["thinking"] = {"type": "enabled", "budget_tokens": 8000}
+    budget = think if isinstance(think, int) else 8000
+    call["thinking"] = {"type": "enabled", "budget_tokens": budget}
   if sysprompt:
     call["system"] = [{"type": "text", "text": sysprompt, "cache_control": {"type": "ephemeral"}}]
 

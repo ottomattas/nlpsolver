@@ -532,6 +532,11 @@ def build_population_facts(classes, has_props, deg_props):
       result.append({"@name": name, "@sourcetype": "populate",
                      "@logic": ["has degree property", prop, "$some_" + cn,
                                 "none", relclass]})
+      # Companion isa: $some_PROP_CLASS is by construction a member of CLASS.
+      # This allows rules whose body requires both isa(CLASS, X) and a degree
+      # property on X to fire on the population constant.
+      result.append({"@name": name, "@sourcetype": "populate",
+                     "@logic": ["isa", relclass, "$some_" + cn]})
     if not info["has_neg"]:
       result.append({"@name": name, "@sourcetype": "populate",
                      "@logic": ["-has degree property", prop, "$some_not_" + cn,

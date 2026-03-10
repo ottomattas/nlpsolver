@@ -126,6 +126,60 @@ Full solver data: http://logictools.org/data/nlpsolver_data.tar.gz
 
 - `tests/tests_core.py` — list of `[text, expected_answer]` pairs for the core pipeline
 
+## Debug Case Workflow
+
+When the user says **"Debug case N"** (where N is a case number in `testfixlog.txt`):
+
+1. **Run `python3 examine.py N`** — this looks up Case N in `testfixlog.txt`, runs all four
+   solvers (gemini, claude, gpt, udp) in parallel, and writes logs to `eN_gemini.txt`,
+   `eN_claude.txt`, `eN_gpt.txt`, `eN_udp.txt`.
+
+2. **Read `testfixlog.txt` entry for Case N** — note the `Input:` text and `Expected:` value.
+
+3. **Explore all four log files** — read them fully, comparing the answers and logic/proof
+   output across all LLM providers and the UDP pipeline.
+
+4. **Assess the Expected value** — form an independent opinion on whether the `Expected:`
+   value in testfixlog.txt is the correct answer under a normal interpretation of the input,
+   or whether it should be changed, or whether there are good alternatives.
+   Assume the UDP pipeline answer is correct in most (but not all) cases.
+
+5. **Analyze errors** — if any LLM pipeline log files give an incorrect or suboptimal answer,
+   analyze the root cause (stage-1 parse, stage-2 logic, logconvert, prover input, proof
+   post-processing, etc.).
+
+6. **Simplify if uncertain** — if the root cause is unclear, construct a simpler version of
+   the input text that isolates the suspected issue, run `python3 solver/solve.py ...` on it,
+   and examine the result. Repeat as needed.
+
+7. **Write analysis and fix plan** — summarize the root cause(s) of any errors and propose a
+   concrete plan for fixing. Do **not** write any code or modify any files at this stage.
+
+## Register Fix Workflow
+
+When the user says **"Register fix for case N"** — assuming the debug analysis was done,
+a fix was implemented, and it has been verified to work:
+
+1. **Read the Case N entry in `testfixlog.txt`** to see its current state.
+2. **Add brief `Conclusion:`, `Cause:`, and `Fixes:` fields** to the case entry, following
+   the style and brevity of existing entries in the file. Keep all text short — one or two
+   lines per field. If a comment would be long, shorten it to the essential point.
+3. **Do not rewrite or remove existing fields** — only add what is missing.
+
+## Work Process Rules
+
+- **Never use `-nollmcache`** unless explicitly requested by the user.
+- **Never run `test.py` with more than 5 examples** without explicit instruction from the user.
+  Use `-limit 5` or `-filter PATTERN` to restrict the run. For quick sanity checks, run
+  `python3 solver/solve.py ...` on individual examples instead of the full test suite.
+- **Run `python3 solver/solve.py ...`** directly without asking for consent.
+- **Grep and read-only bash commands** (grep, sed without -i, cat, head, tail, echo) inside the
+  llmpipe folder may be run without asking for consent, as long as no files are written,
+  modified, or deleted.
+- **Avoid compound read-only commands** joined with `;`, `&&`, or `|` — Claude Code cannot
+  auto-approve compound commands regardless of pattern rules. Instead, issue each read-only
+  command as a separate Bash tool call so each gets auto-approved individually.
+
 ### Other Top-Level Scripts
 
 - `nlpsimplecollect.py` — collect LLM parsing results for a test file

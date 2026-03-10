@@ -226,6 +226,7 @@ Output:
       "text": "John 1 smiled.",
       "type": "situation",
       "entities": [{ "id": "John 1", "type": "concrete", "category": "person" }],
+      "actions": [{"root": "smile", "mode": "event"}],
       "next_state": "W1",
       "time": "past"
     },
@@ -234,6 +235,7 @@ Output:
       "text": "Mike 2 frowned.",
       "type": "situation",
       "entities": [{ "id": "Mike 2", "type": "concrete", "category": "person" }],
+      "actions": [{"root": "frown", "mode": "event"}],
       "pre_state": "W1",
       "next_state": "W2",
       "time": "past"
@@ -270,6 +272,7 @@ Output:
         {"id":"John 1","type":"concrete","category":"person"},
         {"id":"car 2","type":"concrete","category":"artifact"}
       ],
+      "actions": [{"root": "buy", "mode": "event", "roles": {"target": "car 2"}}],
       "next_state": "W1",
       "time": "past"
     },
@@ -536,7 +539,32 @@ Output:
         {"id":"dogs","type":"generic","category":"animal"},
         {"id":"meat","type":"generic","scope":"kind","category":"substance"}
       ],
+      "actions":[{"root": "eat", "mode": "habitual", "roles": {"target": "meat"}}],
       "confidence":0.99
+    }
+  ]
+}]
+
+---
+
+Input: "If bears eat red berries, they are healthy."
+
+Output:
+
+[{
+  "raw": "If bears eat red berries, they are healthy.",
+  "units": [
+    {
+      "unit_id":"S1",
+      "text":"If a bear eats red berries, the bear is healthy.",
+      "type":"normal_rule",
+      "entities":[
+        {"id":"bear","type":"generic","category":"animal"},
+        {"id":"berries","type":"generic","scope":"dependent","category":"plant"}
+      ],
+      "actions":[{"root": "eat", "mode": "habitual", "roles": {"target": "berries"}}],
+      "adjectives":[["red","none","berry"],["healthy","none","bear"]],
+      "confidence":0.95
     }
   ]
 }]
@@ -649,6 +677,7 @@ Output:
       "entities": [
         {"id": "stone", "type": "generic"}
       ],
+      "actions": [{"root": "throw", "mode": "capability", "roles": {"target": "stone"}}],
       "adjectives": [["light", "none", "stone"]],
       "confidence": 0.98
     }
@@ -670,7 +699,8 @@ Output:
       "type": "normal_rule",
       "entities": [
         {"id":"dogs","type":"generic","category":"animal"}
-      ]
+      ],
+      "actions": [{"root": "bark", "mode": "habitual"}]
     }
   ]
 }]
@@ -692,6 +722,7 @@ Output:
         {"id": "person","type": "generic","category":"person"},
         {"id": "food","type":"generic","scope":"kind","category":"substance"}
       ],
+      "actions": [{"root": "spear", "mode": "habitual", "roles": {"target": "food"}}],
       "confidence": 0.95
     }
   ]
@@ -713,6 +744,7 @@ Output:
       "entities":[
         {"id":"birds","type":"generic","category":"animal"}
       ],
+      "actions":[{"root": "fly", "mode": "capability"}],
       "confidence":0.95
     },
     {
@@ -721,7 +753,8 @@ Output:
       "type":"strict_rule",
       "entities":[
         {"id":"penguins","type":"generic","category":"animal"}
-      ]
+      ],
+      "actions":[{"root": "fly", "mode": "capability"}]
     }
   ]
 }]
@@ -743,6 +776,7 @@ Output:
         {"id":"you 0","type":"generic","category":"person"},
         {"id":"door 1","type":"concrete","category":"artifact"}
       ],
+      "actions": [{"root": "close", "mode": "event", "roles": {"target": "door 1"}}],
       "time": "present"
     }
   ]
@@ -788,6 +822,7 @@ Output:
         {"id":"sister 2","type":"concrete","text":"sister","category":"person"},
         {"id":"Mary 3","type":"concrete","category":"person"}
       ],
+      "actions": [{"root": "meet", "mode": "event", "roles": {"target": "Mary 3"}}],
       "time": "past"
     },
     {
@@ -820,6 +855,7 @@ Output:
         {"id":"John 1","type":"concrete","category":"person"},
         {"id":"Mary 2","type":"concrete","category":"person"}
       ],
+      "actions": [{"root": "see", "mode": "event", "roles": {"target": "Mary 2"}}],
       "time": "past"
     },
     {
@@ -830,6 +866,7 @@ Output:
         {"id":"John 1","type":"concrete","category":"person"},
         {"id":"Mary 2","type":"concrete","category":"person"}
       ],
+      "actions": [{"root": "hear", "mode": "event", "roles": {"target": "Mary 2"}}],
       "time": "past"
     }
   ]
@@ -852,6 +889,7 @@ Output:
         {"id":"Mary 2","type":"concrete","category":"person"},
         {"id":"house 3","type":"concrete","category":"place"}
       ],
+      "actions": [{"root": "walk", "mode": "event", "roles": {"location": "house 3"}}],
       "time": "past"
     },
     {
@@ -996,6 +1034,7 @@ Output:
       "entities": [
         {"id":"mouse 1","type":"concrete","category":"animal"}
       ],
+      "actions": [{"root": "run", "mode": "event", "roles": {"direction": "away"}}],
       "adjectives": [["big", "high", "mouse"]],
       "next_state": "W1",
       "time":"past"
@@ -1080,6 +1119,7 @@ Output:
           {"id":"An elephant 1","type":"concrete","category":"animal"},
           {"id":"stone 2","type":"concrete"}
         ],
+        "actions":[{"root": "lift", "mode": "event", "roles": {"target": "stone 2"}}],
         "pre_state":"W0",
         "next_state":"W1",
         "time":"past"
@@ -1129,6 +1169,7 @@ Output:
           {"id":"John 1","type":"concrete","category":"person"},
           {"id":"car 2","type":"concrete","category":"artifact"}
         ],
+        "actions":[{"root": "drive", "mode": "habitual", "roles": {"target": "car 2", "manner": "fast"}}],
         "adjectives":[["fast","none","driving"]]
       }
     ]
@@ -1183,6 +1224,7 @@ Output:
         "text": "John 1 smokes.",
         "type": "normal_rule",
         "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+        "actions": [{"root": "smoke", "mode": "habitual"}],
         "confidence": 0.1
       }
     ]
@@ -1194,7 +1236,8 @@ Output:
         "unit_id": "S2",
         "text": "Does John 1 smoke?",
         "type": "query",
-        "entities": [{"id": "John 1", "type": "concrete", "category": "person"}]
+        "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+        "actions": [{"root": "smoke", "mode": "habitual"}]
       }
     ]
   }
@@ -1220,6 +1263,7 @@ Output:
         {"id":"the edge 4","type":"concrete","text":"edge","category":"artifact"},
         {"id":"a spoon 5","type":"concrete","category":"artifact"}
       ],
+      "actions": [{"root": "eat", "mode": "event", "roles": {"target": "berries 2", "location": "a forest 3", "instrument": "the edge 4"}}],
       "definites": [["edge of","the edge 4","a spoon 5"]],
       "pre_state": "W0",
       "time": ["relative","-1 day","narrative_now"],
@@ -1319,6 +1363,7 @@ Output:
       "text": "John 1 woke up.",
       "type": "situation",
       "entities": [{"id":"John 1","type":"concrete","category":"person"}],
+      "actions": [{"root": "wake", "mode": "event"}],
       "pre_state": "W0",
       "next_state": "W1",
       "time": "past"
@@ -1328,6 +1373,7 @@ Output:
       "text": "John 1 left.",
       "type": "situation",
       "entities": [{"id":"John 1","type":"concrete","category":"person"}],
+      "actions": [{"root": "leave", "mode": "event"}],
       "pre_state": "W1",
       "next_state": "W2",
       "time": ["relative", "+1 hour", "W1"]
@@ -1443,7 +1489,8 @@ Output:
       "unit_id":"S3",
       "text":"Penguins cannot fly.",
       "type":"strict_rule",
-      "entities":[{"id":"penguins","type":"generic","category":"animal"}]
+      "entities":[{"id":"penguins","type":"generic","category":"animal"}],
+      "actions":[{"root": "fly", "mode": "capability"}]
     },
     {
       "unit_id":"S4",
@@ -1453,6 +1500,7 @@ Output:
         {"id":"penguins","type":"generic","category":"animal"},
         {"id":"water","type":"generic","scope":"kind","category":"substance"}
       ],
+      "actions":[{"root": "live", "mode": "habitual", "roles": {"location": "water"}}],
       "confidence":0.95
     },
     {
@@ -1463,6 +1511,7 @@ Output:
         {"id":"penguins","type":"generic","category":"animal"},
         {"id":"land","type":"generic","scope":"kind","category":"place"}
       ],
+      "actions":[{"root": "live", "mode": "habitual", "roles": {"location": "land"}}],
       "confidence":0.95
     },
     {
@@ -1473,6 +1522,7 @@ Output:
         {"id":"penguins","type":"generic","category":"animal"},
         {"id":"Southern Hemisphere 1","type":"concrete","category":"place","url":"https://en.wikipedia.org/wiki/Southern_Hemisphere"}
       ],
+      "actions":[{"root": "live", "mode": "habitual", "roles": {"location": "Southern Hemisphere 1"}}],
       "confidence":0.99
     }
   ]

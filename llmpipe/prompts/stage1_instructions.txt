@@ -225,8 +225,47 @@ If a sentence ascribes a habitual, dispositional, or characteristic property to 
 (e.g., "John smokes", "Mary likes cats", "Bill is tall"), classify as real, not situation.
 Reserve situation for specific, one-time or temporally-bounded events ("John smoked a cigar", "Mary ran to the store").
 
+== 5. ACTION ANNOTATIONS (MANDATORY) ==
 
-== 5. RELATIONAL NOUN EXPANSION (MANDATORY) ==
+5.1. The "actions" Key
+
+Use for anything an entity physically does or can do.
+Include: physical acts (run, eat, spear), biological capabilities
+(can fly, swim), and specific events (smiled, arrived).
+
+Exclude:
+  - Copula/state: "is", "are" (use entities/adjectives)
+  - Possession: "has", "owns" (use entities)
+  - Mental: "knows", "believes" (use mental_holder/mental_attitude)
+  - Attitude: "loves", "hates", "likes", "prefers", "fears", "enjoys",
+    "respects", "trusts" (binary relations, not events)
+    
+5.2. Action Object Structure
+
+"actions": [ACTION, ...]
+
+Each ACTION is an object:
+  {
+    "root": "eat",
+    "mode": "habitual",
+    "roles": {"target": "meat"}
+  }
+
+Fields:
+  root   -- base verb (infinitive form: "eat" not "ate", "fly" not "flew")
+  mode   -- one of:
+    habitual    -- regular tendency or class behavior ("Birds fly", "Dogs eat meat")
+    capability  -- ability or potential ("He can sing", "It can be thrown")
+    event       -- specific bounded occurrence ("John ate a fish", "A bear ran")
+  roles  -- optional dict mapping role names to entity IDs.
+    Omit when the action has no object or modifiers.
+    Keys: target, location, instrument, direction, manner, recipient.
+    Values: entity IDs or lists of IDs.
+
+When a concrete sentence echoes a verb from a rule in the same input,
+use the same mode as the rule.
+
+== 6. RELATIONAL NOUN EXPANSION (MANDATORY) ==
 
 If simplified_text contains a possessive or "of" phrase
 with a relational noun (e.g., sister, owner, handle, roof, boss):
@@ -248,7 +287,7 @@ When expanding relational nouns (e.g., "The price of the car is 5k"), the entity
 - S2: The price 1 is the price of the car 2.
 
 
-== 6. COREFERENCE RESOLUTION (MANDATORY) ==
+== 7. COREFERENCE RESOLUTION (MANDATORY) ==
 
 - Replace all pronouns with explicit entity IDs.
 - Replace hypernyms ("the animal") with the correct entity.
@@ -260,7 +299,7 @@ Resolve pronouns to the most recent compatible entity
 unless the sentence explicitly indicates otherwise.
 
 
-== 7. ENTITY IDENTIFICATION (MANDATORY) ==
+== 8. ENTITY IDENTIFICATION (MANDATORY) ==
 
 Create an entity for every noun phrase in simplified_text except:
 
@@ -268,7 +307,7 @@ Create an entity for every noun phrase in simplified_text except:
 - Predicate nouns used only as type labels
   (e.g., "John is a doctor" -> no doctor entity)
 
---- 7.1 Entity Types ---
+--- 8.1 Entity Types ---
 
 "concrete" -> specific instance
 "generic" -> class/kind/material
@@ -293,7 +332,7 @@ indefinite objects are usually generic unless clearly specific.
 In "does not have/there is no" patterns, the missing object is generic 
 unless a specific named object is mentioned.
 
---- 7.2 Entity IDs ---
+--- 8.2 Entity IDs ---
 
 - Famous names: "Name 1" + url
 - Other concrete: numbered (e.g., "car 2")
@@ -311,7 +350,7 @@ Rules:
   or increment IDs for the same individual when moving to a new sentence package.
 - Real-world locations in rules MUST use the same URL grounding as in situation facts.
 
---- 7.3 ENTITY.text USAGE RULE (IMPORTANT) ---
+--- 8.3 ENTITY.text USAGE RULE (IMPORTANT) ---
 
 "Entity.text" is OPTIONAL. Include it only when needed.
 
@@ -337,7 +376,7 @@ Examples (text may be omitted):
 {"id":"dogs","type":"generic"}
 
 
---- 7.4 Compound Entities ---
+--- 8.4 Compound Entities ---
 
 Mark subtype "compound" only if fixed conventional name:
 - garbage can
@@ -349,7 +388,7 @@ Not:
 - small elephant
 
 
-== 8. SCOPE HINTS (GENERIC ONLY) ==
+== 9. SCOPE HINTS (GENERIC ONLY) ==
 
 Optional scope:
 
@@ -360,7 +399,7 @@ Optional scope:
 Do not assign scope to concrete entities.
 
 
-== 9. STATE TRACKING ==
+==  10. STATE TRACKING ==
 
 - Initial state = W0.
 - If explicit change of possession, location, or physical state:
@@ -377,7 +416,7 @@ If an ASU generates next_state: W_k, the subsequent related ASU
 must explicitly define pre_state: W_k.
 
 
-== 10. CONTEXT META-DATA ==
+== 11. CONTEXT META-DATA ==
 
 Extract only when explicit.
 
@@ -420,7 +459,7 @@ Use ONLY when the specific quantifier word is present in the source text. Values
 
 * "Some" / "A" / "An" -> 0.99 (CRITICAL: This represents a certain existential fact. Do NOT use 0.3 here.) 
 * "Most" -> 0.80 
-* "Many" -> 0.60
+* "Many" -> 0.70
 * "A few" -> 0.30
 
 Quantifier Handling Summary Table:
@@ -429,7 +468,7 @@ Quantifier Handling Summary Table:
 | "Some" / "A" / "An"    | 0.99       | Exists (Certain Fact)   |
 | "Normally" / "Usually" | 0.95       | Universal Default       |
 | "Most"                 | 0.80       | Universal Default       |
-| "Many"                 | 0.60       | Universal Default       |
+| "Many"                 | 0.70       | Universal Default       |
 | "A few"                | 0.30       | Universal Default       |
 
 --- time ---
@@ -456,7 +495,7 @@ Do NOT add "time" to a bare present-tense question ("Is John nice?","Does he run
 Must reference an entity ID.
 
 
-== 11. MENTAL ATTITUDES (PROPOSITIONAL ONLY) ==
+== 12. MENTAL ATTITUDES (PROPOSITIONAL ONLY) ==
 
 Add only for propositional attitudes:
 - knows that
@@ -475,7 +514,7 @@ Rules:
 - If non_factive -> do NOT assert embedded proposition as true.
 
 
-== 12. ADJECTIVES ==
+== 13. ADJECTIVES ==
 
 Add "adjectives" for ALL adjective/property appearances in ALL ASU types
 (situation, strict_rule, normal_rule, query). The downstream system uses
@@ -510,7 +549,7 @@ Follow this priority for selecting the relative_class:
   always use the relative_class from the rule for that individual's properties
   If the rule uses ["nice", "none", "entity"], John's property must also be ["nice", "none", "entity"], not "person".
 
---- 12.1. PREDICATE NOUN PRESERVATION (MANDATORY) ---
+--- 13.1. PREDICATE NOUN PRESERVATION (MANDATORY) ---
 
 You MUST distinguish between true adjectives and predicate nouns:
 - If a word represents a category or class membership (e.g., "animal", "bird"), treat it as an ENTITY, not an adjective.
@@ -565,7 +604,7 @@ ENTITY_OBJ:
   "scope": "dependent" | "global" | "kind",  (optional; generic only)
   "subtype": "compound"  (optional)  
   "category": "person" | "animal" | "plant" | "place" | "organization" |
-              "artifact" | "substance" | "event" | "abstract",  (optional; see section 16)
+              "artifact" | "substance" | "event" | "abstract",  (optional; see section 15)
 }
 
 Optional ASU fields (omit if not applicable):
@@ -580,12 +619,13 @@ Optional ASU fields (omit if not applicable):
 - "mental_attitude"
 - "epistemic_force"
 - "attitude_target"
+- "actions"
 
 If "confidence" is omitted, assume confidence = 1.0.
 
 Omit optional fields entirely when empty (do not use null).
 
- == 16. ENTITY CATEGORY ==                                                                                                                                                                                        
+ == 15. ENTITY CATEGORY ==                                                                                                                                                                                        
                                                                                                                                                                                                                    
 Add "category" to an entity when its ontological type is known.
 Omit if the category is unclear or not relevant to the sentence.
@@ -622,9 +662,10 @@ Rules:
 - Do NOT assign category to placeholder/WH entities (wh_placeholder: true).
 - "organism" is the common supertype of person, animal, plant -- do not use it
   as a category label; use the more specific term.
+- If a sentence explicitly categorizes a concrete entity (e.g., "John is a bear"), 
+  the category for that entity must align with the mentioned class in your taxonomy.
 
-
-== 15. CRITICAL RULES ==
+== 16. CRITICAL RULES ==
 
 1. "raw" must contain the entire source sentence.
 2. No logic or quantifiers.

@@ -51,6 +51,7 @@ Optional ASU fields:
 - "epistemic_force": "factive" | "non_factive" | "counterfactual"
 - "attitude_target": string
 - "definites": list of [REL, VALUE, ARG]
+- "actions": list of action objects (see Action Compilation Rules)
 
 Entity ids and relation phrases are opaque. Never normalize.
 
@@ -264,31 +265,107 @@ Wrap rule body in ["normally", BODY]
 
 Case B -- Habitual activity / action:
 
-Track 1 (simple form) -- use when the activity has NO object and NO event modifiers
-(no location, instrument, manner, target, direction):
+ACTION COMPILATION RULES: When an ASU contains an "actions" list, use it to
+determine the logic track and modal form for each action verb. Do not re-analyze
+the text to decide between Track 1 and Track 2 — the actions structure (mode +
+roles) determines this mechanically.
 
+For all other aspects of the ASU (negation, quantifiers, disjunction, entities,
+adjectives, time, etc.), continue interpreting the text and other JSON fields
+as usual.
+
+-- Track Selection --
+
+For each action object {root, mode, roles}:
+
+  Track 1 (Atomic Predicate): roles is absent or empty AND mode is NOT event.
+  Track 2 (Davidsonian Event): roles contains any key OR mode is event.
+
+-- Track 1: Atomic Compilation --
+
+Wrap the actor and verb root in a modal predicate based on mode:
+
+  habitual   -> ["typically", ACTOR, ROOT]
+  capability -> ["can", ACTOR, ROOT]
+
+Sentence-type wrapping for Track 1:
+
+  Generic rule:
   ["forall","X",
     ["implies",
       ANTE,
-      ["normally", ["typically","X",VERB]]
+      ["normally", ["typically","X",ROOT]]
     ]
   ]
 
-Track 2 (Davidsonian form) -- use when the activity HAS an object or ANY event modifier:
+  Concrete situation:
+  ["holds","W0",["typically",ACTOR,ROOT]]
 
+  Negation:
+  ["holds","W0",["not",["can",ACTOR,ROOT]]]
+
+  Query:
+  ["question",["typically",ACTOR,ROOT]]
+
+-- Track 2: Davidsonian Compilation --
+
+When roles are present or mode is event, reify the action into an event variable E.
+
+Step A — core predicates (always present):
+  ["isa","activity","E"]
+  ["has type","E",ROOT]
+  ["has actor","E",ACTOR]
+
+Step B — role predicates (one per role key-value):
+  For each key/value in roles: ["has KEY","E",VALUE]
+  If a value is a list, emit one predicate per item.
+
+Step C — modal treatment based on mode:
+
+  event:      No modal predicate added. The existential block stands alone.
+  habitual:   Wrap the entire existential block in ["normally",...].
+  capability: Add ["can",ACTOR,"E"] as a predicate inside the "and" block.
+
+  Event example:
+  ["exists","E",["and",
+    ["isa","activity","E"],
+    ["has type","E","smile"],
+    ["has actor","E","John 1"]
+  ]]
+
+  Habitual with roles example:
+  ["normally",
+    ["exists","E",["and",
+      ["isa","activity","E"],
+      ["has type","E","eat"],
+      ["has actor","E","X"],
+      ["has target","E","meat"]
+    ]]
+  ]
+
+  Capability with roles example:
+  ["exists","E",["and",
+    ["can","X","E"],
+    ["isa","activity","E"],
+    ["has type","E","eat"],
+    ["has actor","E","X"],
+    ["has target","E","fish"]
+  ]]
+
+Step D — sentence-type wrapping for Track 2:
+
+  Generic rule (habitual):
   ["forall","X",
     ["implies",
       ANTE,
       ["normally",
-        ["exists","E",
-          ["and",
-            ["isa","activity","E"],
-            ["has type","E",VERB],
-            ["has actor","E","X"],
-            ...optional modifiers (has target, has location, etc.)...,
-            ["typical","E"]
-          ]
-        ]
+        ["exists","E",["and",
+          ["isa","activity","E"],
+          ["has type","E",ROOT],
+          ["has actor","E","X"],
+          ...role predicates...,
+          ["typical","E"]
+        ]]
       ]
     ]
   ]
@@ -296,11 +373,39 @@ Track 2 (Davidsonian form) -- use when the activity HAS an object or ANY event m
   CRITICAL: ["typical","E"] MUST always be the LAST conjunct in the event "and".
   It is the defeasible anchor; the $block is placed on it.
 
-Questions about an activity stated as a normal_rule:
-- Track 1 question: ["question", ["typically", ENTITY, VERB]]
-- Track 2 question: include ["typical","E"] as the LAST conjunct in the "and".
+  Concrete situation:
+  ["holds","W0",["exists","E",["and",...]]]
+
+  Negation:
+  ["holds","W0",["not",["exists","E",["and",...]]]]
+
+  Query:
+  ["question",["exists","E",["and",...,["typical","E"]]]]
   WITHOUT ["typical","E"] in the question, defeasibility is bypassed and the
   proof uses strict resolution, ignoring any overrides.
+
+  TARGET ADJECTIVES: When the target entity has adjectives (matched by RELCLASS),
+  introduce a variable Y for the target and apply the adjective to Y -- never to E:
+    ["exists","Y",["and",["isa",TARGET_TYPE,"Y"],
+                         ["has degree property",ADJ,"Y",DEGREE,RELCLASS],
+                         ["has target","E","Y"]]]
+  Keep ["typical","E"] as the last conjunct of the outer "and".
+
+-- Action Constraints --
+
+  Actions override text for verbs: Use the actions structure, not the text,
+  to select the track and modal form. If a modifier appears in the text but
+  not in roles, do not add it as a role predicate.
+
+  ID Consistency: The ACTOR is the primary entity identified as the subject
+  of the ASU.
+
+  Root Form: The root is always an infinitive ("eat" not "ate", "run" not
+  "ran"). Use it as-is.
+
+  Mode Echoing: When a concrete sentence echoes a verb from a rule in the
+  same input, Stage 1 assigns the same mode. Stage 2 must honour this —
+  it guarantees the rule and the concrete sentence produce unifiable predicates.
 
 Case C -- Two-entity interaction rule (subject acts on object from independent class):
 When a normal_rule has TWO generic entities and the object entity is an independently-
@@ -325,6 +430,9 @@ Case D -- Copula (Is/Are) Rule (Categorization):
 If a rule uses a copula (e.g., "A are B", "A are good B"), it is a categorization or subset claim, 
 NOT a relation between separate individuals.
 
+When a rule uses adjectival quantifiers like "many," "most" or "often" 
+you must still follow the universal pattern (forall) for categorization. 
+
 - Use a single forall over the subject variable X.
 - Apply all properties to that same variable: forall X (A) -> [normally] (and(isa(B, X), has degree property(..., X, ...))).
 - Never use Case C (nested forall or exists) for "is" or "are" sentences.
@@ -342,10 +450,6 @@ query
   Use the universal pattern: ["question", ["forall", "X", ["implies", ["isa", CLASS, "X"], PROPERTY_OF_X]]].
 - Negation Handling: If the question is negative (e.g., "Are birds not blue?"), wrap the property in a not operator; 
   never include "not" in the property string itself: ["not", ["isa", "animal", "X"]].
-
-Questions about an activity:
-- Track 1: ["question", ["typically", ENTITY, VERB]]
-- Track 2: Include ["typical","E"] as the LAST conjunct in the "and". 
 
 === 4.1. PREDICATE NOUN RULE (MANDATORY) ===
 
@@ -435,8 +539,9 @@ Do NOT invent new predicates.
 --- Logical Connectives ---
 
 ["and", ...]
-["or", ...]  -- inclusive or (A or B or both); use for plain "or"
-["xor", ...] -- exclusive or; use, for example, when text says "either A or B" or "one of A or B" or A or B are obviously mutually exclusive
+["or", ...]  -- inclusive or (A or B or both); use for plain "or" or lists where multiple items can be true simultaneously.
+["xor", ...] -- exclusive or; use when the text includes explicit exclusion markers "either... or," "but not both", etc, 
+                or if the options are physically or logically mutually exclusive.
 ["not", A]
 ["implies", A, B]
 ["forall", "X", A]

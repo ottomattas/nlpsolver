@@ -1077,6 +1077,10 @@ def _atom_to_english_negated(atom):
     if len(args) >= 4:
       prop = e(0); ent = e(1)
       adv, art_type = _degree_parts(e(2))
+      relcls_raw = args[3] if len(args) > 3 else ""
+      if isinstance(relcls_raw, str) and relcls_raw.startswith("?:"):
+        # Unbound variable — omit class noun and article
+        return ent + " is not " + adv + prop
       relcls = e(3)
       art = "the" if art_type == "def" else _indef_article(adv if adv else prop)
       return ent + " is not " + art + " " + adv + prop + " " + relcls
