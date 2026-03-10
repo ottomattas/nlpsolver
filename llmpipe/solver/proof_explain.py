@@ -179,9 +179,10 @@ def _answer_label(val):
   if val is False: return "False"
   if isinstance(val, list) and val:
     atom = val[0]
-    if isinstance(atom, list) and len(atom) >= 3:
-      # Multi-arg $ans (e.g. where-query): bracket notation [arg1, arg2, ...]
+    if isinstance(atom, list) and len(atom) == 3:
+      # Where-query atom ["$ans", prep, entity]: bracket notation [prep, entity]
       return "[" + ", ".join(entity_name(a) for a in atom[1:]) + "]"
+    # Regular answer: use first arg only (ignores context args like W0, present, ...)
     return ans_atom_name(atom)
   return str(val)
 
@@ -191,9 +192,11 @@ def _answer_label(val):
 def ans_display_key(val, askvars=None):
   """Canonical dedup key for an answer value.
 
-  Covers all arguments of every $ans atom so that multi-arg where-query
-  answers like ["$ans","in","Estonia"] and ["$ans","in","Europe"] produce
-  distinct keys rather than both collapsing to ("in",).
+  Order-independent (frozenset) so that disjunctive residuals like
+  [[$ans,A,...],[$ans,B,...]] and [[$ans,B,...],[$ans,A,...]] are treated
+  as the same answer.  Context args (world state, time, ...) beyond the
+  primary entity are ignored for regular answers; where-query atoms
+  (exactly 3 elements: [$ans, prep, entity]) keep both args.
   """
   if val is True or val is False or val is None:
     return val
@@ -201,8 +204,10 @@ def ans_display_key(val, askvars=None):
     def _atom_key(atom):
       if not isinstance(atom, list) or len(atom) < 2:
         return str(atom)
-      return tuple(entity_name(a) for a in atom[1:])
-    return tuple(_atom_key(a) for a in val)
+      if len(atom) == 3:               # where-query: [$ans, prep, entity]
+        return tuple(entity_name(a) for a in atom[1:3])
+      return entity_name(atom[1])      # regular: ignore context args
+    return frozenset(_atom_key(a) for a in val)
   return str(val)
 
 

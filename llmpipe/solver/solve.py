@@ -133,8 +133,9 @@ def english_to_answer(text, options=None):
   if debug:
     print("Parsing:", text)
 
+  think_flag = globals.options.get("think_flag", False)
   s1_json, s2_json, parse_stats = llmparse.parse_text(
-    text, llm=llm, version=llm_version, tokens=max_tokens
+    text, llm=llm, version=llm_version, tokens=max_tokens, think=think_flag
   )
 
   if debug:
@@ -227,6 +228,8 @@ def _parse_cmd_line():
       opts["use_cache_flag"] = True
     elif el in ["-clearcache", "--clearcache"]:
       opts["clearcache_flag"] = True
+    elif el in ["-think", "--think"]:
+      opts["think_flag"] = True
     elif el in ["-nollmcache", "--nollmcache"]:
       # LLM response caching is ON by default; this disables it for this run
       opts["use_llm_cache_flag"] = False
@@ -366,6 +369,8 @@ semantic normalisation (ON by default):
 LLM selection:
  -llm NAME    : LLM provider: gpt, claude, or gemini (default: from llmcall.py config)
  -version VER : model version string, e.g. claude-sonnet-4-6, gpt-4o
+ -think       : enable medium reasoning/thinking mode (GPT: reasoning_effort=medium;
+                Claude: extended thinking; Gemini: requires 2.5+ model)
 
 controlling the prover:
  -seconds N    : give N seconds for proof search (default 2)

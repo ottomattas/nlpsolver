@@ -285,11 +285,11 @@ def get_proof_from_cache(ctxt,inparams):
 # parse_cache and proof_cache.
 
 
-def make_llm_cache_key(llm, version, temperature, seed, max_tokens, sysprompt, input_text):
+def make_llm_cache_key(llm, version, temperature, seed, max_tokens, think, sysprompt, input_text):
   """Return a deterministic SHA-256 hex digest that uniquely identifies an
   LLM call by all parameters that affect its output.
 
-  Any change in provider, version, temperature, seed, max_tokens,
+  Any change in provider, version, temperature, seed, max_tokens, think,
   sysprompt or input produces a different key, so stale results are
   never returned.
   """
@@ -300,6 +300,7 @@ def make_llm_cache_key(llm, version, temperature, seed, max_tokens, sysprompt, i
     "temperature": temperature,
     "seed":        seed,
     "max_tokens":  max_tokens  or 0,
+    "think":       bool(think),
     "sysprompt":   sysprompt   or "",
     "input":       input_text  or "",
   }

@@ -32,6 +32,12 @@ Entity:
 - "text": optional string
 - "url": optional string
 - "scope": optional "dependent" | "global" | "kind"
+- "category": optional string — ontological category of this entity
+  ("person" | "animal" | "plant" | "place" | "organization" |
+   "artifact" | "substance" | "event" | "abstract")
+  Use this to inform scope, predicate, and quantification decisions.
+  NOTE: isa(category, entity_id) facts for concrete categorised entities
+  are injected automatically by the pipeline — do NOT emit them yourself.
 
 Optional ASU fields:
 - "pre_state": string
@@ -372,6 +378,28 @@ When a rule has multiple conditions (e.g., class membership AND possession), you
         ["has degree property", "cute", "X", "none", "entity"]
      ]
 
+== 4.3 Negation and frequency or probability adverbs ==
+
+When representing frequency or probability adverbs (e.g., rarely, seldom, usually, hardly), you 
+MUST use a positive logical formula and express the frequency using the @p confidence tag.
+
+Do NOT use logical ["not", ...] to express "rarely" or "hardly."
+
+Correct: "Rarely have trunks" -> ["normally", ["exists", ...]] with ["@p", "Sx", 0.05]
+Incorrect: "Rarely have trunks" -> ["normally", ["not", ["exists", ...]]] with ["@p", "Sx", 0.05] 
+
+When a rule is described as "probably false," "rarely true," or "hardly ever," 
+do NOT use ["not", ["forall", ...]] or ["not", ["implies", ...]]:
+- Structure: Keep the logical implication positive: [implies, A, B].
+- Mapping: Use the @p confidence tag to express the low probability (e.g., 0.05 for "probably false").
+
+
+== 4.4 MINIMAL CONSTRAINT PRINCIPLE FOR RULES ==
+
+Do NOT add isa type constraints to a rule unless they are essential to the logic and explicitly supported by the facts.
+
+Relation-Only Rules: If a rule relates two entities (e.g., "If X is a grandfather of Y..."), 
+use only the relationship predicate (is rel2). Do NOT add categorical checks like isa(person, X) or isa(grandfather, X).
 
 == 5. CONCRETE OBJECT CATEGORIZATION ==
 

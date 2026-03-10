@@ -58,6 +58,10 @@ options={
   # before they are passed to the prover.  Set to True or pass -nosemnormal
   # to disable.
   "nosemnormal_flag": False,
+  # LLM reasoning/thinking mode: OFF by default.
+  # When True, enables medium reasoning effort (GPT: reasoning_effort=medium;
+  # Claude: extended thinking; Gemini: thinkingConfig, requires 2.5+ model).
+  "think_flag": False,
 }
 
 # cache

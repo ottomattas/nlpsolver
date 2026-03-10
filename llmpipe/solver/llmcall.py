@@ -67,14 +67,17 @@ calldebug = False
 
 # ======== main entry point ========
 
-def call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None):
+def call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None, think=False):
   """Call the configured LLM with a system prompt and input text.
 
-  llm, version, max_tokens override module-level configuration when given.
+  llm, version, max_tokens, think override module-level configuration when given.
+  think=True enables medium reasoning mode (GPT: reasoning_effort=medium;
+  Claude: extended thinking with budget_tokens; Gemini: thinkingConfig medium
+  if the model supports it).
   Returns the result string on success, or None on error (error is printed).
 
   LLM responses are cached by default.  The cache key encodes the provider,
-  version, temperature, seed, max_tokens, sysprompt and input text, so a
+  version, temperature, seed, max_tokens, think, sysprompt and input text, so a
   cached result is only reused when every one of these is identical.
   Caching is controlled by globals.options["use_llm_cache_flag"] (default
   True) and can be disabled per-run via -nollmcache in solve.py.
@@ -91,7 +94,7 @@ def call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None):
     ver = version or gptversion
 
   # --- check cache ---
-  cached = _get_llm_cached(llm, ver, max_tokens, sysprompt, input_text)
+  cached = _get_llm_cached(llm, ver, max_tokens, think, sysprompt, input_text)
   if cached is not None:
     if debug:
       print("cache hit (" + llm + " " + ver + ")")
@@ -102,39 +105,39 @@ def call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None):
     print("calling " + llm + " " + ver + " ...")
   try:
     if llm == "claude":
-      result = call_claude(ver, input_text, sysprompt, max_tokens)
+      result = call_claude(ver, input_text, sysprompt, max_tokens, think=think)
     elif llm == "gemini":
-      result = call_gemini(ver, input_text, sysprompt, max_tokens)
+      result = call_gemini(ver, input_text, sysprompt, max_tokens, think=think)
     else:
-      result = call_gpt(ver, input_text, sysprompt, max_tokens)
+      result = call_gpt(ver, input_text, sysprompt, max_tokens, think=think)
   except KeyboardInterrupt:
     raise
   except Exception as e:
     return llm_error("unexpected error calling LLM: " + str(e))
 
   # --- store to cache ---
-  _store_llm_cached(llm, ver, max_tokens, sysprompt, input_text, result)
+  _store_llm_cached(llm, ver, max_tokens, think, sysprompt, input_text, result)
 
   return result
 
 
-def _get_llm_cached(llm, ver, max_tokens, sysprompt, input_text):
+def _get_llm_cached(llm, ver, max_tokens, think, sysprompt, input_text):
   """Return a cached LLM result, or None if not cached / cache disabled."""
   if _cache is None:
     return None
   try:
-    key = _cache.make_llm_cache_key(llm, ver, temperature, seed, max_tokens, sysprompt, input_text)
+    key = _cache.make_llm_cache_key(llm, ver, temperature, seed, max_tokens, think, sysprompt, input_text)
     return _cache.get_llm_from_cache(key)
   except Exception:
     return None
 
 
-def _store_llm_cached(llm, ver, max_tokens, sysprompt, input_text, result):
+def _store_llm_cached(llm, ver, max_tokens, think, sysprompt, input_text, result):
   """Store result in the LLM cache (silently ignored on any error)."""
   if _cache is None or result is None:
     return
   try:
-    key = _cache.make_llm_cache_key(llm, ver, temperature, seed, max_tokens, sysprompt, input_text)
+    key = _cache.make_llm_cache_key(llm, ver, temperature, seed, max_tokens, think, sysprompt, input_text)
     _cache.add_llm_to_cache(key, result)
   except Exception:
     pass
@@ -160,7 +163,7 @@ def _gemini_supports_thinking(version):
     return True
   return False
 
-def call_gemini(version, sentences, sysprompt, max_tokens):
+def call_gemini(version, sentences, sysprompt, max_tokens, think=False):
   try:
     sf = open(gemini_secrets_file, "r")
     key = sf.read().strip()
@@ -173,8 +176,8 @@ def call_gemini(version, sentences, sysprompt, max_tokens):
     "maxOutputTokens": max_tokens,
     "temperature": temperature
   }
-  if _gemini_supports_thinking(version):
-    genconfig["thinkingConfig"] = {"thinkingLevel": "medium"}
+  if think and _gemini_supports_thinking(version):
+    genconfig["thinkingConfig"] = {"thinkingMode": "enabled", "thinkingBudget": 8000}
   call = {
     "contents": [{"parts": [{"text": sentences}]}],
     "generationConfig": genconfig
@@ -248,7 +251,7 @@ def call_gemini(version, sentences, sysprompt, max_tokens):
 
 # ======== claude ========
 
-def call_claude(version, sentences, sysprompt, max_tokens):
+def call_claude(version, sentences, sysprompt, max_tokens, think=False):
   try:
     sf = open(claude_secrets_file, "r")
     key = sf.read().strip()
@@ -260,9 +263,11 @@ def call_claude(version, sentences, sysprompt, max_tokens):
   call = {
     "model": version,
     "messages": messages,
-    "temperature": temperature,
+    "temperature": 1 if think else temperature,
     "max_tokens": max_tokens
   }
+  if think:
+    call["thinking"] = {"type": "enabled", "budget_tokens": 8000}
   if sysprompt:
     call["system"] = [{"type": "text", "text": sysprompt, "cache_control": {"type": "ephemeral"}}]
 
@@ -330,7 +335,7 @@ def call_claude(version, sentences, sysprompt, max_tokens):
 
 # ======== gpt ========
 
-def call_gpt(version, sentences, sysprompt, max_tokens):
+def call_gpt(version, sentences, sysprompt, max_tokens, think=False):
   try:
     sf = open(gpt_secrets_file, "r")
     txt = sf.read()
@@ -351,7 +356,7 @@ def call_gpt(version, sentences, sysprompt, max_tokens):
     if sysprompt:
       messages.append({"role": "system", "content": [{"type": "input_text", "text": sysprompt}]})
     messages.append({"role": "user", "content": [{"type": "input_text", "text": sentences}]})
-    effort = "none"
+    effort = "medium" if think else "none"
     call = {
       "model": version,
       "input": messages,

@@ -289,9 +289,9 @@ def _format_bool_answer(val, conf, has_conflict=False):
     True,  conf >= 0.10              -> "Possibly true (confidence X)"
     True,  conf <  0.10              -> "Unknown."
     False, conf >= 0.95              -> "False"
-    False, conf >= 0.85              -> "Likely false"  (e.g. "hardly")
-    False, conf >= 0.60              -> "Probably false" (e.g. "unlikely")
-    False, conf <  0.60              -> "Likely false"
+    False, conf >= 0.85              -> "Likely false (confidence X)"
+    False, conf >= 0.60              -> "Probably false (confidence X)"
+    False, conf <  0.60              -> "Probably false"
   """
   if conf >= 0.95:
     return "True" if val else "False"
@@ -305,10 +305,10 @@ def _format_bool_answer(val, conf, has_conflict=False):
     return "Unknown."
   else:  # val is False
     if conf >= 0.85:
-      return "Likely false"
+      return "Likely false (confidence " + _fmt_conf(conf) + ")"
     if conf >= 0.60:
-      return "Probably false"
-    return "Likely false"
+      return "Probably false (confidence " + _fmt_conf(conf) + ")"
+    return "Probably false"
 
 
 def _format_answers(answers, askvars=None):
@@ -331,7 +331,7 @@ def _format_answers(answers, askvars=None):
     if val is True or val is False:
       key = val
     elif isinstance(val, list) and val:
-      key = tuple(ans_atom_name(a) for a in val)
+      key = frozenset(ans_atom_name(a) for a in val)
     else:
       key = str(val)
     if key in seen_keys:

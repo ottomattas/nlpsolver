@@ -118,12 +118,49 @@ def _build_asu_index(s1_json):
   return index
 
 
+def _build_entity_category_clauses(s1_json):
+  """Build isa clauses for concrete entities that carry a category annotation.
+
+  For each unique concrete entity with a "category" field in any ASU, emits:
+    {"@name": "entity_S<N>", "@logic": ["isa", category, entity_id]}
+  where S<N> is the unit_id of the first ASU in which the entity appears.
+  Deduplicates by entity_id so each entity produces at most one clause.
+  """
+  if not s1_json or not isinstance(s1_json, list):
+    return []
+  seen = set()
+  clauses = []
+  for pkg in s1_json:
+    if not isinstance(pkg, dict):
+      continue
+    for asu in pkg.get("units", []):
+      if not isinstance(asu, dict):
+        continue
+      uid = asu.get("unit_id", "")
+      for ent in asu.get("entities", []):
+        if not isinstance(ent, dict):
+          continue
+        eid      = ent.get("id")
+        category = ent.get("category")
+        if not eid or not category:
+          continue
+        if ent.get("type") != "concrete":
+          continue
+        if eid in seen:
+          continue
+        seen.add(eid)
+        clauses.append({"@name": "entity_" + uid,
+                        "@logic": ["isa", category, eid]})
+  return clauses
+
+
 def rawlogic_convert(logic, s1_json=None):
   """Convert stage-2 LLM output to a GK-compatible clause list.
 
   Input:  stage-2 list ["and", ["@id","S1",PACKAGE], ...]
           s1_json -- Stage-1 JSON from llmparse.parse_text(), used for
-                     programmatic $ctxt injection (tense, world, location).
+                     programmatic $ctxt injection (tense, world, location)
+                     and entity category isa injection.
   Output: list of {"@name":..., "@logic":CLAUSE} / {"@name":..., "@question":F}
   Returns None on fatal error.
   """
@@ -146,6 +183,10 @@ def rawlogic_convert(logic, s1_json=None):
   # Build unit_id -> ASU index for programmatic $ctxt injection from Stage-1 data.
   asu_index = _build_asu_index(s1_json)
 
+  # Build entity category isa facts from Stage-1 entity annotations.
+  # These are prepended to the clause list so the prover sees them as given facts.
+  entity_cat_clauses = _build_entity_category_clauses(s1_json)
+
   # Build population facts by scanning the raw stage-2 input first.
   pop_facts = _populate_clauses(items)
 
@@ -162,6 +203,10 @@ def rawlogic_convert(logic, s1_json=None):
       objs = _convert_id_package(item, asu_index)
     if objs:
       result.extend(objs)
+
+  # Prepend entity category clauses at the start of the clause list so they
+  # are available as given facts throughout the proof.
+  result = entity_cat_clauses + result
 
   # Insert population facts immediately before the first @question entry
   # so they are available as background knowledge during proof search.
@@ -201,6 +246,85 @@ def rawlogic_convert(logic, s1_json=None):
       obj.pop("@sourcetype", None)
 
   return result
+
+
+# ======== pre-clausification polarity flip ========
+
+def _flip_polarity_atom(frm):
+  """Toggle the sign of a single literal (add/remove "-" prefix on predicate)."""
+  if not isinstance(frm, list) or not frm:
+    return frm
+  pred = frm[0]
+  if not isinstance(pred, str):
+    return frm
+  if pred.startswith("-"):
+    return [pred[1:]] + frm[1:]
+  return ["-" + pred] + frm[1:]
+
+
+def _negate_inner(frm):
+  """Negate the innermost content of a formula (used for consequent negation).
+
+  Strips outermost exists/and wrappers, then flips the atom or normally body.
+  Returns the negated form for use inside a normally wrapper.
+  """
+  if not isinstance(frm, list) or not frm:
+    return ["not", frm]
+  op = frm[0]
+  if op == "exists" and len(frm) >= 3:
+    # ¬∃Y.P  =  ∀Y.¬P  (De Morgan)
+    return ["forall", frm[1], ["not", frm[2]]]
+  if op == "and":
+    # and(A,B) → negate the last child (the action/conclusion)
+    if len(frm) >= 3:
+      return [op] + list(frm[1:-1]) + [_negate_inner(frm[-1])]
+    return frm
+  if op == "normally":
+    # normally(B) → normally(not(B)); clausify's _expand_normally will call
+    # _push_neg on "not(B)" to produce the negated body literals.
+    if len(frm) >= 2:
+      return [op, ["not", frm[1]]]
+    return frm
+  if op == "forall" and len(frm) >= 3:
+    # forall X. P → forall X. _negate_inner(P)
+    return [op, frm[1], _negate_inner(frm[2])]
+  if op == "implies" and len(frm) >= 3:
+    # implies(A, B) → implies(A, _negate_inner(B))
+    return [op, frm[1], _negate_inner(frm[2])]
+  if op == "not" and len(frm) >= 2:
+    # not(P) → P  (double negation elimination)
+    return frm[1]
+  # Plain atom — negate directly.
+  return _flip_polarity_atom(frm)
+
+
+def _negate_consequent(formula):
+  """Negate the consequent of a rule formula before clausification.
+
+  Handles:
+    ["implies", A, B]            → ["implies", A, _negate_inner(B)]
+    ["forall", X, F]             → ["forall", X, _negate_consequent(F)]
+    ["exists", X, F]             → ["forall", X, ["not", F]]   (De Morgan: ¬∃X.F = ∀X.¬F)
+    ["normally", B]              → ["normally", ["not", B]]
+    ["not", F]                   → F  (double negation elimination)
+    bare atom ["pred", ...]      → ["-pred", ...]
+  """
+  if not isinstance(formula, list) or not formula:
+    return formula
+  op = formula[0]
+  if op == "implies" and len(formula) >= 3:
+    return [op, formula[1], _negate_inner(formula[2])]
+  if op == "forall" and len(formula) >= 3:
+    return [op, formula[1], _negate_consequent(formula[2])]
+  if op == "exists" and len(formula) >= 3:
+    # ¬∃X.F  =  ∀X.¬F  (De Morgan) — clausify handles forall+not correctly
+    return ["forall", formula[1], ["not", formula[2]]]
+  if op == "normally" and len(formula) >= 2:
+    return [op, ["not", formula[1]]]
+  if op == "not" and len(formula) >= 2:
+    return formula[1]  # double negation elimination
+  # Bare atom.
+  return _flip_polarity_atom(formula)
 
 
 # ======== package extraction ========
@@ -298,21 +422,29 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None):
         formula = simplify_contradictory_and(formula)
         result = build_defq_question(name, None, formula)
   else:
+    # Pre-clausification polarity flip for low-confidence negative-leaning rules.
+    # Stage-1 probability p ∈ (0, 0.5) → negate the consequent BEFORE clausify
+    # so the negation is encoded in the formula structure (avoids Skolem companion
+    # clause split that the post-clausification approach suffered from).
+    if confidence is not None and 0 < confidence < 0.5:
+      formula = _negate_consequent(formula)
+      confidence = round(1.0 - 2.0 * confidence, 4)
+    elif confidence is not None and 0.5 < confidence < 1.0:
+      confidence = round(2.0 * confidence - 1.0, 4)
+    elif confidence == 0.5:
+      confidence = 0   # exactly 0.5 → abs(2*0.5-1)=0; prover filters it out → "no information"
     # Clausify the formula.
     clauses = clausify(formula)
     result = []
     for clause in clauses:
-      # Confidence 0.0 means the fact is certainly false.  GK rejects @confidence
-      # values of exactly 0, so we flip a single positive atom to its negation
-      # (certain) instead of asserting it with zero probability.
-      if (confidence == 0.0 and isinstance(clause, list) and clause
-          and isinstance(clause[0], str) and not clause[0].startswith("-")):
-        clause = ["-" + clause[0]] + clause[1:]
-        obj = {"@name": name, "@logic": clause}
-      else:
-        obj = {"@name": name, "@logic": clause}
-        if confidence is not None:
-          obj["@confidence"] = confidence
+      # Confidence 0.0 means 50% probability: abs(2*0.5-1)=0, no evidence either
+      # way.  GK rejects @confidence values of exactly 0, so skip the clause
+      # entirely — the prover will return "no information".
+      if confidence == 0.0:
+        continue
+      obj = {"@name": name, "@logic": clause}
+      if confidence is not None:
+        obj["@confidence"] = confidence
       result.append(obj)
 
   # Inject $ctxt into @logic entries (not @question entries).
@@ -519,7 +651,9 @@ def _inject_ctxt_atom(atom, ctxt):
     if isinstance(body, list) and len(body) >= 2 and body[0] == "$not":
       inner = _inject_ctxt_atom(body[1], ctxt)
       return [atom[0], atom[1], ["$not", inner]]
-    return atom
+    # Negative-head block: body is the positive exception target (no $not wrapper).
+    inner = _inject_ctxt_atom(body, ctxt)
+    return [atom[0], atom[1], inner]
 
   if base in _CTXT_ELIGIBLE:
     return list(atom) + [ctxt]

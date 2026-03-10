@@ -34,6 +34,34 @@ import json
 import re
 
 
+# ======== $ans context-arg filtering ========
+
+# Time tokens and world-state pattern that are pipeline residuals, not answer content.
+_ANS_TIME_TOKENS = frozenset({"present", "past", "future"})
+_ANS_WORLD_RE    = re.compile(r'^W\d+$')
+
+def _ans_display_args(ans_args):
+  """Strip context residuals from a $ans arg list, keeping only meaningful args.
+
+  Filtered out: world-state tokens (W0, W1, ...), time tokens (present/past/future),
+  and free-variable references (?:X, ?:X3, ...).
+  Kept: entity constants, prepositions (for where-queries), numeric values, etc.
+  """
+  kept = []
+  for a in ans_args:
+    if not isinstance(a, str):
+      kept.append(a)
+      continue
+    if a.startswith("?"):               # free variable: ?:X, ?:X3, ?:Y3, ...
+      continue
+    if _ANS_WORLD_RE.match(a):          # world state: W0, W1, ...
+      continue
+    if a in _ANS_TIME_TOKENS:           # time token
+      continue
+    kept.append(a)
+  return kept
+
+
 # ======== module-level state (reset per proof) ========
 
 # Entity display-name map built from stage-1 JSON.
@@ -612,10 +640,12 @@ def clause_to_str(clause):
       if bt:
         blocker_texts.append(bt)
     elif pred == "$ans":
-      ans_args = atom[1:]
-      if len(ans_args) >= 2:
-        bracket = "[" + ", ".join(entity_name(a, with_url=True) for a in ans_args) + "]"
+      meaningful = _ans_display_args(atom[1:])
+      if len(meaningful) >= 2:
+        bracket = "[" + ", ".join(entity_name(a, with_url=True) for a in meaningful) + "]"
         consequences.append(bracket + " is an answer")
+      elif meaningful:
+        consequences.append(entity_name(meaningful[0]) + " is an answer")
       else:
         consequences.append(ans_atom_name(atom) + " is an answer")
     elif pred.startswith("-"):
@@ -676,6 +706,10 @@ def _atom_to_english(atom):
     # ["isa", TYPE, ENTITY]
     if len(args) >= 2:
       typ = e(0)
+      # TYPE is a class name, not a specific instance — strip any "the " prefix
+      # that entity_map may have added for common-noun entity ids (e.g. "the city").
+      if typ.startswith("the "):
+        typ = typ[4:]
       ent = e(1)
       if typ == "activity":
         return ent + " is an activity"
@@ -1001,6 +1035,8 @@ def _atom_to_english_negated(atom):
   if pred == "isa":
     if len(args) >= 2:
       typ = e(0); ent = e(1)
+      if typ.startswith("the "):
+        typ = typ[4:]
       if typ == "activity": return ent + " is not an activity"
       if typ == "set":      return ent + " is not a set"
       return ent + " is not " + _indef_article(typ) + " " + typ

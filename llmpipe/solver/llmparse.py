@@ -48,6 +48,7 @@ examples_separator = "\n\nExamples:\n\n"
 use_llm   = None   # "gpt" | "claude" | "gemini" | None
 llm_version = None # model version string, or None for llmcall default
 max_tokens  = None # int, or None for llmcall default
+use_think   = False # True to enable medium reasoning/thinking mode
 
 # ======== debug / logging configuration ========
 
@@ -88,10 +89,10 @@ def _compose_prompt(instructions_file, examples_file, label):
 
 # ======== main entry point ========
 
-def parse_text(text, llm=None, version=None, tokens=None):
+def parse_text(text, llm=None, version=None, tokens=None, think=None):
   """Parse English text through stage 1 (ASUs) then stage 2 (logic).
 
-  Optional llm/version/tokens override the module-level defaults.
+  Optional llm/version/tokens/think override the module-level defaults.
 
   Returns (stage1_json, stage2_json, stats) where:
     - stage1_json is the parsed Stage-1 JSON object, or None on failure.
@@ -105,6 +106,7 @@ def parse_text(text, llm=None, version=None, tokens=None):
   eff_llm     = llm     or use_llm
   eff_version = version or llm_version
   eff_tokens  = tokens  or max_tokens
+  eff_think   = think if think is not None else use_think
 
   stats = _make_stats()
 
@@ -113,7 +115,7 @@ def parse_text(text, llm=None, version=None, tokens=None):
 
   # --- stage 1 ---
   s1_json, s1_raw, s1_err = _run_stage(1, text, _stage1_sysprompt,
-                                        eff_llm, eff_version, eff_tokens, stats)
+                                        eff_llm, eff_version, eff_tokens, eff_think, stats)
   if s1_err:
     _debug_write("STAGE 1 ERROR: " + s1_err)
   else:
@@ -125,7 +127,7 @@ def parse_text(text, llm=None, version=None, tokens=None):
   # --- stage 2 ---
   s2_input = json.dumps(s1_json)
   s2_json, s2_raw, s2_err = _run_stage(2, s2_input, _stage2_sysprompt,
-                                        eff_llm, eff_version, eff_tokens, stats)
+                                        eff_llm, eff_version, eff_tokens, eff_think, stats)
   if s2_err:
     _debug_write("STAGE 2 ERROR: " + s2_err)
   else:
@@ -136,7 +138,7 @@ def parse_text(text, llm=None, version=None, tokens=None):
 
 # ======== stage runner ========
 
-def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, stats):
+def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, think, stats):
   """Run one LLM stage with JSON checking, fixing, and one retry on bad JSON.
 
   Returns (parsed_json, raw_text, error_or_None).
@@ -147,7 +149,7 @@ def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, stats):
   _debug_write("\n--- Stage " + str(stage_nr) + " call ---")
   _debug_write_json("INPUT:", input_text)
 
-  raw = call_llm(sysprompt, input_text, llm=llm, version=version, max_tokens=tokens)
+  raw = call_llm(sysprompt, input_text, llm=llm, version=version, max_tokens=tokens, think=think)
 
   if raw is None:
     stats[key + "_llm_errors"] += 1
@@ -179,7 +181,7 @@ def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, stats):
   retry_input = _build_retry_prompt(input_text, raw)
   _debug_write("Retrying stage " + str(stage_nr) + " with error feedback...")
 
-  raw2 = call_llm(sysprompt, retry_input, llm=llm, version=version, max_tokens=tokens)
+  raw2 = call_llm(sysprompt, retry_input, llm=llm, version=version, max_tokens=tokens, think=think)
 
   if raw2 is None:
     stats[key + "_llm_errors"] += 1

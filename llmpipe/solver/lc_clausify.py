@@ -479,6 +479,14 @@ def _expand_normally(frm):
           else:
             # -normally with complex body: expand as certain (negated).
             regular_lits.append(_expand_normally(processed))
+        elif isinstance(processed, list) and processed and processed[0] == "forall":
+          # normally(not(exists Y. P)) → push_neg → forall Y. not(P).
+          # Expand ∀Y as free-variable literals; avoids Skolemization so all
+          # conditions end up in a single clause (no Skolem companion split).
+          if is_pos:
+            body_lits.extend(_forall_to_freevars(processed))
+          else:
+            body_lits.append(processed)
         elif isinstance(processed, list) and processed:
           body_lits.append(processed)
         # else: empty body — skip
@@ -515,10 +523,43 @@ def _expand_normally(frm):
                         isinstance(l[0], str) and l[0].startswith("-"))]
 
     if not pos_lits:
-      # No positive head found: cannot create a blocker; treat as certain.
-      if len(all_lits) == 1:
-        return all_lits[0]
-      return ["or"] + all_lits
+      # All literals are negative — this is a negative-head normally rule
+      # (produced by _negate_consequent before clausify).
+      # Create a $block pointing to the POSITIVE form of the head so the
+      # prover can restore it via an exception. No $not wrapper needed.
+      if _g_options.get("noexceptions_flag", False) or not body_lits:
+        if len(all_lits) == 1:
+          return all_lits[0]
+        return ["or"] + all_lits
+      neg_head = body_lits[-1]
+      if not (isinstance(neg_head, list) and neg_head
+              and isinstance(neg_head[0], str) and neg_head[0].startswith("-")):
+        # Not a clean negated literal; fall back to certain.
+        if len(all_lits) == 1:
+          return all_lits[0]
+        return ["or"] + all_lits
+      pos_form = [neg_head[0][1:]] + list(neg_head[1:])   # strip "-" prefix
+      cond_lits = regular_lits + pushed_lits + body_lits[:-1]
+      isa_conds   = [l for l in cond_lits
+                     if isinstance(l, list) and l and l[0] == "-isa"]
+      non_isa_neg = [l for l in cond_lits
+                     if not (isinstance(l, list) and l and l[0] == "-isa")]
+      priornr = len(non_isa_neg) + 1
+      # Prefer -isa from regular_lits (subject class) over existential constraints.
+      isa_from_regular = [l for l in regular_lits + pushed_lits
+                          if isinstance(l, list) and l and l[0] == "-isa"]
+      if isa_from_regular and len(isa_from_regular[-1]) >= 2:
+        cls = str(isa_from_regular[-1][1])
+      elif isa_conds and len(isa_conds[-1]) >= 2:
+        cls = str(isa_conds[-1][1])
+      else:
+        cls = "$generic"
+      priority = ["$", cls, priornr]
+      blocker  = ["$block", priority, pos_form]   # no "$not" wrapper
+      result_lits = cond_lits + [neg_head, blocker]
+      if len(result_lits) == 1:
+        return result_lits[0]
+      return ["or"] + result_lits
 
     # Use the last positive literal as the head (the conclusion to be blocked).
     head     = pos_lits[-1]

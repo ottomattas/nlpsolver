@@ -1161,6 +1161,96 @@ OUTPUT:
 -------------
 
 INPUT:
+
+[
+  {"raw": "It is probably false that if X1 is a parent of Y1, Y1 is not a child of X1.",
+   "units": [{"unit_id": "S1", "text": "If X1 is a parent of Y1, Y1 is not a child of X1.", "type": "strict_rule", "confidence": 0.2,
+              "entities": [{"id": "X1", "type": "generic"}, {"id": "Y1", "type": "generic"}]}]},
+  {"raw": "John is a parent of Mike.",
+   "units": [{"unit_id": "S2", "text": "John 1 is a parent of Mike 2.", "type": "situation",
+              "entities": [{"id": "John 1", "type": "concrete"}, {"id": "Mike 2", "type": "concrete"}]}]},
+  {"raw": "Mike is a child of John?",
+   "units": [{"unit_id": "S3", "text": "Is Mike 2 a child of John 1?", "type": "query",
+              "entities": [{"id": "Mike 2", "type": "concrete"}, {"id": "John 1", "type": "concrete"}]}]}
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies",
+              ["is rel2","parent of","X1","Y1"],
+              ["not",["is rel2","child of","Y1","X1"]]
+            ]
+          ]
+        ]
+      ],
+      ["@p","S1",0.2]
+    ]
+  ],
+  ["@id","S2",
+    ["holds","W0",
+      ["is rel2","parent of","John 1","Mike 2"]
+    ]
+  ],
+  ["@id","S3",
+    ["question",
+      ["is rel2","child of","Mike 2","John 1"]
+    ]
+  ]
+]
+
+--------
+
+INPUT:
+
+[
+  {
+    "raw": "John smokes with a probability 0.1.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "John 1 smokes.",
+        "type": "normal_rule",
+        "entities": [{"id": "John 1", "type": "concrete"}],
+        "confidence": 0.1
+      }
+    ]
+  },
+  {
+    "raw": "John smokes?",
+    "units": [
+      {
+        "unit_id": "S2",
+        "text": "Does John 1 smoke?",
+        "type": "query",
+        "entities": [{"id": "John 1", "type": "concrete"}]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id", "S1",
+    ["and",
+      ["holds", "W0", ["normally", ["typically", "John 1", "smoke"]]],
+      ["@p", "S1", 0.1]
+    ]
+  ],
+  ["@id", "S2",
+    ["question", ["typically", "John 1", "smoke"]]
+  ]
+]
+
+--------
+
+INPUT:
  
 [
   {

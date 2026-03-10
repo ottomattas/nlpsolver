@@ -36,6 +36,9 @@ Do not merge multiple sentences into one package.
 Do not split a single sentence into multiple packages.
 Preserve original sentence order.
 
+Every ASU must have a unique, sequential unit_id (S1, S2, S3, etc.). 
+Do NOT repeat IDs for different sentences.
+
 == 2. SPLITTING RULES ==
 
 --- 2.1 What to Split ---
@@ -218,6 +221,10 @@ Default or typical behavior (defeasible).
 query
 An inquiry.
 
+If a sentence ascribes a habitual, dispositional, or characteristic property to a specific named individual 
+(e.g., "John smokes", "Mary likes cats", "Bill is tall"), classify as real, not situation.
+Reserve situation for specific, one-time or temporally-bounded events ("John smoked a cigar", "Mary ran to the store").
+
 
 == 5. RELATIONAL NOUN EXPANSION (MANDATORY) ==
 
@@ -275,12 +282,17 @@ Rules:
 Treat as concrete only if the text refers to a particular identifiable instance; 
 otherwise use generic.
 
+Proper nouns (place names, person names, organisation names)
+are ALWAYS concrete, regardless of sentence type. If a sentence says
+'Cities in France are French', France is concrete (a specific country),
+while 'cities' is generic.
+
 In negation, rule conditions, and questions, 
 indefinite objects are usually generic unless clearly specific.
 
 In "does not have/there is no" patterns, the missing object is generic 
 unless a specific named object is mentioned.
-  
+
 --- 7.2 Entity IDs ---
 
 - Famous names: "Name 1" + url
@@ -297,7 +309,7 @@ Rules:
   If a specific entity (e.g., "John") appears in multiple sentences, it MUST carry the exact
   same ID (e.g., "John 1") in every sentence package where it occurs. Do not reset numbering
   or increment IDs for the same individual when moving to a new sentence package.
-
+- Real-world locations in rules MUST use the same URL grounding as in situation facts.
 
 --- 7.3 ENTITY.text USAGE RULE (IMPORTANT) ---
 
@@ -376,17 +388,33 @@ Confidence represents logical strength.
 Determine if a sentence is a non-quantified situation or a quantified rule and apply the corresponding value. 
 Include this field only when the value is NOT equal to 1.0.
 
-PART 1: Non-Quantified Situations & Frequency Adverbs:
+PART 1: Explicit Numeric Probability (HIGHEST PRIORITY):
+
+If the sentence contains an explicit numeric probability, copy that number
+directly as the confidence value. 
+
+Examples:
+  * "with a probability 0.1"          -> confidence: 0.1
+  * "with a probability of 20%"        -> confidence: 0.2
+  * "with a probability 30 percent"    -> confidence: 0.3
+  * "with a probability 0.8"           -> confidence: 0.8
+  * "there is a 5% chance that"        -> confidence: 0.05
+
+Convert percentages by dividing by 100. Use the exact stated number otherwise.
+This rule takes priority over all frequency-adverb and quantifier mappings below.
+
+PART 2: Non-Quantified Situations & Frequency Adverbs:
 
 Use individuals (e.g., "John is usually home") or bare plurals without explicit quantifier words (e.g., "Elephants have trunks").
 
 * Usually / Normally / Generally / Almost all -> 0.95 
-* Often -> 0.75
-* Sometimes -> 0.50
+* Often / Probably / Likely -> 0.8
+* Maybe / Possibly -> 0.6
+* Sometimes -> 0.5
 * Rarely -> 0.20
 * No adverb present (e.g., "John is a fox") -> Omit field (assumes 1.0) 
 
-PART 2: Quantified Statements (Explicit Quantifiers)
+PART 3: Quantified Statements (Explicit Quantifiers)
 
 Use ONLY when the specific quantifier word is present in the source text. Values indicate logical coverage:
 
@@ -408,8 +436,13 @@ Quantifier Handling Summary Table:
 
 Omit for strict_rule and real (unless time-bounded).
 
-For situation and real ASUs: include whenever grammatical tense or an explicit
-time expression is present (e.g. past tense -> "past", will/future -> "future").
+For situation and real ASUs: include only for non-default tenses or explicit
+time expressions:
+- Past tense or explicit past marker ("yesterday", "ago", "was/were") -> "past"
+- Future tense or explicit future marker ("will", "tomorrow", "later") -> "future"
+- Explicit present-time adverb ("now", "currently", "at this moment") -> "present"
+Do NOT add "time": "present" for bare present-tense sentences ("John smokes",
+"Mary is tall") -- present is the unmarked default.
 
 For query ASUs: add "time" only in these specific cases:
 - Past-tense grammatical form ("Was John nice?", "Did he run?") -> "past"
@@ -525,12 +558,14 @@ Required ASU fields:
 
 ENTITY_OBJ:
 {
-  "id": "...",
-  "text": "...", (optional; see section 7.3),
-  "type": "concrete" | "generic",
-  "url": "..." (optional),
-  "scope": "dependent" | "global" | "kind" (optional; generic only),
-  "subtype": "compound" (optional)
+  "id": "...",                                                                                                                                                                                                   
+  "text": "...", (optional; see section 7.3)
+  "type": "concrete" | "generic",  
+  "url": "...",      (optional)
+  "scope": "dependent" | "global" | "kind",  (optional; generic only)
+  "subtype": "compound"  (optional)  
+  "category": "person" | "animal" | "plant" | "place" | "organization" |
+              "artifact" | "substance" | "event" | "abstract",  (optional; see section 16)
 }
 
 Optional ASU fields (omit if not applicable):
@@ -549,6 +584,44 @@ Optional ASU fields (omit if not applicable):
 If "confidence" is omitted, assume confidence = 1.0.
 
 Omit optional fields entirely when empty (do not use null).
+
+ == 16. ENTITY CATEGORY ==                                                                                                                                                                                        
+                                                                                                                                                                                                                   
+Add "category" to an entity when its ontological type is known.
+Omit if the category is unclear or not relevant to the sentence.
+
+Categories and when to assign them:
+
+person: A human individual or human role/class. Examples: "John", "an aunt", "the professor".
+
+animal: A non-human animal. Examples: "elephant", "the dog Fido", "a bird", "sharks".
+
+plant: A plant or vegetation. Examples: "oak tree", "a rose", "wheat", "moss"
+
+place:   A spatial location, region, or geographical entity. Examples: "Paris", "the kitchen", "a forest".
+
+organization: A collective agent: company, institution, government, group. Examples: "Apple Inc.", "the university", "a club".
+
+artifact: A man-made physical object.  Examples: "a car", "the hammer", "a book", "the bridge"
+
+substance: A material or mass noun (no fixed count or boundary).  Examples: "water", "gold", "wood", "air", "sand"
+
+event: An occurrence or process with temporal extent. Examples: "the war", "a meeting", "the race", "a concert"
+
+abstract: 
+  No physical or spatial referent.  Examples: "justice", "democracy", "happiness", "the number 5", "redness"
+
+Rules:
+
+- Assign the most specific applicable category.
+- For entities that could be both place and organization (e.g. "France declared war"
+  vs "France is beautiful"), pick the role most relevant to the sentence.
+- For generic entities in rules, assign category based on the class being described:
+  "any person is mortal" -> person entity, category "person".
+- Omit "category" entirely for entities where it is unclear or irrelevant.
+- Do NOT assign category to placeholder/WH entities (wh_placeholder: true).
+- "organism" is the common supertype of person, animal, plant -- do not use it
+  as a category label; use the more specific term.
 
 
 == 15. CRITICAL RULES ==
