@@ -215,8 +215,7 @@ def rawlogic_convert(logic, s1_json=None):
   # the first @question entry so they are available as background knowledge.
   background = pop_facts + compound_subs
   first_q = next((i for i, o in enumerate(result) if "@question" in o), len(result))
-  for i, fact in enumerate(background):
-    result.insert(first_q + i, fact)
+  result[first_q:first_q] = background
 
   # Inject $ctxt into population and subsumption facts (free-variable rules).
   if not _g_options.get("nocontext_flag", False):
@@ -478,51 +477,6 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None):
   return result
 
 
-def _extract_package(package):
-  """Extract (is_question, formula, confidence) from a PACKAGE list."""
-  if not isinstance(package, list) or not package:
-    return False, None, None
-
-  op = package[0]
-
-  if op == "holds":
-    # ["holds", world, F]
-    if len(package) >= 3:
-      return False, package[2], None
-    return False, None, None
-
-  elif op == "question":
-    # ["question", F]
-    if len(package) >= 2:
-      return True, package[1], None
-    return True, None, None
-
-  elif op == "ask":
-    # ["ask", var, F]  — wh-question; return as-is so _convert_id_package can
-    # identify the answer variable before flattening.
-    if len(package) >= 3:
-      return True, package, None
-    return True, None, None
-
-  elif op == "and":
-    # ["and", PKG, ["@p","Sx",p], ...]  — compound package with metadata
-    main_pkg = None
-    confidence = None
-    for el in package[1:]:
-      if isinstance(el, list) and len(el) == 3 and el[0] == "@p":
-        confidence = el[2]
-      elif main_pkg is None:
-        main_pkg = el
-    if main_pkg is not None:
-      is_q, formula, _ = _extract_package(main_pkg)
-      return is_q, formula, confidence
-    return False, None, confidence
-
-  else:
-    # Unknown package type — treat as raw formula assertion.
-    return False, package, None
-
-
 def _extract_package_ctx(package):
   """Like _extract_package but also returns (world, location, knower, tense).
 
@@ -605,7 +559,7 @@ def _populate_clauses(items):
       continue
     name    = "sent_" + str(item[1])
     package = item[2]
-    _is_q, formula, _conf = _extract_package(package)
+    _is_q, formula, _conf, _, _, _, _ = _extract_package_ctx(package)
     if _is_q:
       continue   # never populate from the question sentence — circular by construction
     if formula is not None:
@@ -614,7 +568,7 @@ def _populate_clauses(items):
   return build_population_facts(classes, has_props, deg_props)
 
 
-# ======== compound type subsumption ========
+# ======== compound type rules ========
 
 def _scan_compound_types(items):
   """Scan all @id items for isa / -isa atoms with space-containing type names.
@@ -644,20 +598,34 @@ def _scan_compound_types(items):
 
 
 def _build_compound_subsumption(items):
-  """Build subsumption rules for compound type names.
+  """Build subsumption and composition rules for compound type names.
 
-  For each compound type like "baby bird", emits a clause:
-    [-isa, "baby bird", "?:X"], ["isa", "bird", "?:X"]
-  so the prover can derive isa(bird, X) from isa(baby bird, X).
-  The head noun is the last word of the compound.
+  For each compound type like "baby bird", emits:
+    Rule 1 (subsumption, strict):
+      [-isa, "baby bird", "?:X"], ["isa", "bird", "?:X"]
+    Rule 2 (composition, confidence 0.95, no blocker):
+      [-isa, "baby", "?:X"], [-isa, "bird", "?:X"], ["isa", "baby bird", "?:X"]
   """
   compounds = _scan_compound_types(items)
   result = []
   for ctype in sorted(compounds):
-    head = ctype.split()[-1]
+    parts = ctype.split()
+    head = parts[-1]
+    modifier = " ".join(parts[:-1])
+    # Rule 1: subsumption (strict) — baby bird -> bird
     result.append({
       "@name": "compound_sub",
       "@logic": [["-isa", ctype, "?:X"], ["isa", head, "?:X"]]
+    })
+    # Rule 2: composition (semi-strict) — baby + bird -> baby bird
+    result.append({
+      "@name": "compound_comp",
+      "@logic": [
+        ["-isa", modifier, "?:X"],
+        ["-isa", head, "?:X"],
+        ["isa", ctype, "?:X"]
+      ],
+      "@confidence": 0.95
     })
   return result
 

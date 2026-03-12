@@ -186,7 +186,7 @@ def english_to_answer(text, options=None):
     print(proof_result)
 
   # --- process_proof: post-process prover output into final answer (procproofs.py) ---
-  answer = process_proof(proof_result, text=text, s1_json=s1_json, logic=logic, options=options)
+  answer = process_proof(proof_result, text=text, s1_json=s1_json, s2_json=s2_json, logic=logic, options=options)
 
   return answer
 

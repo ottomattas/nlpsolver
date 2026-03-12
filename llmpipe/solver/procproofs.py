@@ -28,19 +28,20 @@ from proof_render import (
   compute_ambiguity, entity_name, ans_atom_name,
   set_entity_map, get_entity_display,
 )
-from proof_explain import format_explanation, build_sentence_map, ans_display_key
+from proof_explain import format_explanation, build_sentence_map
 from entity_map import build_entity_map
 
 
 # ======== main entry point ========
 
-def process_proof(proof_result, text=None, s1_json=None, logic=None, options=None):
+def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=None, options=None):
   """Post-process the raw prover result into a final answer string.
 
   Arguments:
     proof_result -- raw JSON string returned by prover.call_prover()
     text         -- the original English input (for context / fallback)
     s1_json      -- stage-1 ASU list; used to map clause names to raw sentences
+    s2_json      -- stage-2 logic JSON; used for adjective extraction in entity names
     logic        -- the logic list sent to the prover (unused for now)
     options      -- dict of option flags, e.g. {"prover_explain_flag": True,
                     "show_logic_flag": True}
@@ -72,10 +73,12 @@ def process_proof(proof_result, text=None, s1_json=None, logic=None, options=Non
   # (concrete > Skolem > population), preserving the goodness order within tier.
   answers = _filter_by_best_tier(answers)
   answers = _filter_tautological_population_answers(answers, logic)
+  if not answers:
+    return "Unknown."
 
   # Build entity display-name map from stage-1 output (user's original phrasing)
   # and install it in proof_render so that entity_name() uses it globally.
-  set_entity_map(build_entity_map(s1_json))
+  set_entity_map(build_entity_map(s1_json, s2_json))
 
   # Build sent_SN -> raw sentence text map from stage-1 output
   sentence_map = build_sentence_map(s1_json)
@@ -535,18 +538,18 @@ def _is_tautological_population_answer(ans, question_pop_key):
 
 
 def _filter_tautological_population_answers(answers, logic):
-  """Remove tautological population answers when non-tautological ones exist.
+  """Remove tautological population answers.
 
   A tautological answer is a $some_* constant proved solely via the
   population clause that asserts the very property/class being queried —
   i.e. the proof is circular: 'some big elephant is big because some big
-  elephant is big (by population)'. Such answers are filtered out when at
-  least one non-tautological answer also exists.
+  elephant is big (by population)'. Such answers are always filtered out,
+  even when no non-tautological alternatives exist (producing "Unknown").
   """
   question_pop_key = _extract_question_pop_key(logic)
   tautological = [a for a in answers
                   if _is_tautological_population_answer(a, question_pop_key)]
-  if not tautological or len(tautological) == len(answers):
+  if not tautological:
     return answers
   return [a for a in answers if a not in tautological]
 

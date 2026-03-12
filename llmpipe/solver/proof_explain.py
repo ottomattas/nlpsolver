@@ -189,7 +189,7 @@ def _answer_label(val):
 
 # ======== answer dedup helpers ========
 
-def ans_display_key(val, askvars=None):
+def ans_display_key(val):
   """Canonical dedup key for an answer value.
 
   Order-independent (frozenset) so that disjunctive residuals like

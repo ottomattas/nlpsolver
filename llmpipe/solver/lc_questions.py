@@ -18,7 +18,6 @@
 #   find_haslocation_prep(body, ask_var)
 #   build_defq_question(name, ask_var, body, where_prep)
 #   find_where_atom(body, ask_var)
-#   _is_where_body(body, ask_var)
 #   build_where_question(name, entity, ask_var, specific_prep)
 #   flatten_q_atoms(frm, varmap)
 #   scan_item_formula(frm, name, polarity, classes, has_props, deg_props)
@@ -281,11 +280,6 @@ def find_where_atom(body, ask_var):
   if body[0] in ("exists", "forall") and len(body) >= 3:
     return find_where_atom(body[2], ask_var)
   return None
-
-
-def _is_where_body(body, ask_var):
-  """Return True if body contains a 'Where is X?' pattern."""
-  return find_where_atom(body, ask_var) is not None
 
 
 def _s2var_to_gk(name_str):

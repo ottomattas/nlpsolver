@@ -53,6 +53,18 @@ _SKIP_WORDS = frozenset({
   "a", "an", "the", "this", "that", "these", "those",
 })
 
+# Words that stop qualifier collection (can't be adjective modifiers).
+_STOP_WORDS = frozenset({
+  "if", "when", "while", "unless", "because", "since", "although", "though",
+  "and", "or", "but", "nor", "so", "yet",
+  "is", "are", "was", "were", "be", "been", "being",
+  "has", "have", "had", "does", "do", "did",
+  "can", "could", "will", "would", "shall", "should", "may", "might", "must",
+  "in", "on", "at", "to", "from", "by", "with", "for", "of", "about",
+  "into", "onto", "upon", "over", "under", "between", "through",
+  "then", "than", "as", "not", "no",
+})
+
 
 # ======== id parsing ========
 
@@ -88,27 +100,38 @@ def _qualifier_words(text, base, suffix):
   if suffix is not None:
     for i in range(len(cleaned) - 1):
       if cleaned[i].lower() == base_lo and cleaned[i + 1] == suffix:
-        return _gather_backwards(cleaned, i)
+        return _gather_backwards(cleaned, i, words)
 
   # Fallback: match base alone (suffix may have been elided in the text)
   for i in range(len(cleaned)):
     if cleaned[i].lower() == base_lo:
-      return _gather_backwards(cleaned, i)
+      return _gather_backwards(cleaned, i, words)
 
   return []
 
 
-def _gather_backwards(words, pos):
+def _gather_backwards(words, pos, raw_words=None):
   """Collect qualifier words to the left of words[pos].
 
   Skips over leading _SKIP_WORDS, then collects non-skip words.
+  Stops at clause boundaries (words with trailing comma/semicolon in raw text).
   Returns them in left-to-right order (closest to base is last).
   """
+  def _at_boundary(idx):
+    """True if the raw word at idx ends with clause-boundary punctuation."""
+    if raw_words and idx < len(raw_words):
+      return raw_words[idx][-1:] in (",", ";")
+    return False
+
   j = pos - 1
   while j >= 0 and words[j].lower() in _SKIP_WORDS:
+    if _at_boundary(j):
+      return []
     j -= 1
   quals = []
   while j >= 0 and words[j].lower() not in _SKIP_WORDS:
+    if _at_boundary(j) or words[j].lower() in _STOP_WORDS:
+      break
     quals.insert(0, words[j])
     j -= 1
   return quals
@@ -121,12 +144,18 @@ def _display_name(base, qual_words):
 
   Proper nouns (uppercase first letter): no article added.
   Common nouns (lowercase first letter): 'the ' prefix.
+  Strips leading determiners from base to avoid "the the bear".
   """
+  # Strip leading determiner from base (LLMs may include "the" in concrete IDs).
+  b = base
+  first = b.split()[0].lower() if b else ""
+  if first in _SKIP_WORDS and " " in b:
+    b = b.split(" ", 1)[1]
   if qual_words:
-    return "the " + " ".join(qual_words) + " " + base
-  if base[:1].islower():
-    return "the " + base
-  return base
+    return "the " + " ".join(qual_words) + " " + b
+  if b[:1].islower():
+    return "the " + b
+  return b
 
 
 def _url_title(url):
@@ -141,21 +170,141 @@ def _url_title(url):
     return url
 
 
+# ======== adjective collection from stage-2 logic ========
+
+_MAX_QUALIFIERS = 2   # max adjectives in display name unless needed for disambiguation
+
+
+def _collect_adjectives_from_logic(s2_json):
+  """Walk the stage-2 logic tree and collect adjectives for concrete entities.
+
+  Finds ["has degree property", WORD, ENTITY, ...] and ["has property", WORD, ENTITY, ...]
+  atoms where ENTITY is a concrete constant (not a variable).
+  Returns {entity_id: [adjective_words]} with duplicates removed, order preserved.
+  """
+  result = defaultdict(list)
+  seen   = defaultdict(set)     # entity -> set of lowercase adj words already added
+
+  def _walk(node):
+    if not isinstance(node, list) or not node:
+      return
+    op = node[0]
+    if op in ("has degree property", "has property") and len(node) >= 3:
+      word   = node[1]
+      entity = node[2]
+      if isinstance(word, str) and isinstance(entity, str) and not entity.startswith("?:"):
+        w_lo = word.lower()
+        if w_lo not in seen[entity]:
+          seen[entity].add(w_lo)
+          result[entity].append(word)
+    for el in node:
+      if isinstance(el, list):
+        _walk(el)
+
+  if isinstance(s2_json, list):
+    _walk(s2_json)
+  return dict(result)
+
+
+def _collect_text_qualifiers(s1_json):
+  """Collect pre-nominal qualifier words for each entity across ALL ASU texts.
+
+  Scans both ASU ``text`` fields and paragraph ``raw`` fields so that
+  pre-nominal adjectives survive even when the LLM drops them from the
+  simplified ASU text (e.g. Gemini turning "The big bear is strong" into
+  "The bear 1 is strong").
+
+  Returns {entity_id: [qualifier_words]} — union of qualifiers from every
+  text that mentions the entity.
+  """
+  eid_texts = defaultdict(list)
+  eid_info  = {}
+  for para in s1_json:
+    if not isinstance(para, dict):
+      continue
+    raw = para.get("raw", "")
+    for unit in para.get("units", []):
+      if not isinstance(unit, dict):
+        continue
+      text = unit.get("text", "")
+      if not text:
+        continue
+      for ent in unit.get("entities", []):
+        if not isinstance(ent, dict):
+          continue
+        eid = ent.get("id", "")
+        if not eid:
+          continue
+        if eid not in eid_info:
+          eid_info[eid] = _base_and_suffix(eid)
+        eid_texts[eid].append(text)
+        if raw:
+          eid_texts[eid].append(raw)
+
+  result = {}
+  for eid, texts in eid_texts.items():
+    base, suffix = eid_info[eid]
+    seen_quals = []
+    seen_set   = set()
+    for text in texts:
+      quals = _qualifier_words(text, base, suffix)
+      for q in quals:
+        q_lo = q.lower()
+        if q_lo not in seen_set:
+          seen_set.add(q_lo)
+          seen_quals.append(q)
+    result[eid] = seen_quals
+  return result
+
+
+def _entity_quals(eid, text_quals, logic_adjs, base, suffix, need_disambig=False):
+  """Determine the qualifier words to use for an entity's display name.
+
+  text_quals  : qualifiers from pre-nominal position in ASU texts (across all ASUs)
+  logic_adjs  : adjectives from stage-2 logic (["has degree property",...] atoms)
+  need_disambig: True if multiple entities share the same base and we need to tell them apart
+
+  Returns a list of qualifier words.
+  Rules:
+    - Pre-nominal qualifiers (from text) are always preferred.
+    - Logic adjectives supplement when text has none (e.g., relative clause adjectives).
+    - Limit to _MAX_QUALIFIERS unless disambiguation requires more.
+  """
+  tq = text_quals.get(eid, [])
+  la = logic_adjs.get(eid, [])
+
+  if tq:
+    quals = list(tq)
+    if not need_disambig:
+      return quals[:_MAX_QUALIFIERS]
+    return quals
+  else:
+    # No pre-nominal qualifiers — use logic adjectives as qualifying adjectives.
+    # Since we can't distinguish qualifying from predicated adjectives in the
+    # logic, be conservative: take only the first one unless disambiguating.
+    if not need_disambig:
+      return la[:1]
+    return la[:_MAX_QUALIFIERS] if len(la) <= _MAX_QUALIFIERS else la
+
+
 # ======== disambiguation for multi-entity groups ========
 
-def _disambiguate_with_qualifiers(group, base):
+def _disambiguate_with_qualifiers(group, base, text_quals, logic_adjs):
   """Assign unique display names to a group of entities via qualifier words.
 
-  group  : list of (eid, url, text, suffix)
-  base   : original-case base string (e.g. "car")
+  group      : list of (eid, url, text, suffix)
+  base       : original-case base string (e.g. "car")
+  text_quals : {eid: [pre-nominal qualifier words]} from all ASU texts
+  logic_adjs : {eid: [adjective words]} from stage-2 logic
 
   Returns {eid: display_name}.  Falls back to raw id strings when no
   qualifier combination can make all names unique.
   """
-  # Collect qualifier word-lists for each entity
+  # Collect qualifier word-lists for each entity, combining text and logic sources
   qual_map = {}
   for eid, url, text, suffix in group:
-    qual_map[eid] = _qualifier_words(text, base, suffix)
+    quals = _entity_quals(eid, text_quals, logic_adjs, base, suffix, need_disambig=True)
+    qual_map[eid] = quals
 
   eids    = [g[0] for g in group]
   max_len = max((len(qual_map[e]) for e in eids), default=0)
@@ -183,15 +332,23 @@ def _disambiguate_with_qualifiers(group, base):
 
 # ======== main entry point ========
 
-def build_entity_map(s1_json):
+def build_entity_map(s1_json, s2_json=None):
   """Build {entity_id: display_name, url: display_name} from stage-1 JSON.
 
   Keys include both local id strings (e.g. "America 1") and URL strings
   (e.g. "https://en.wikipedia.org/wiki/United_States").  The display name
   uses the user's original phrasing (first occurrence) wherever possible.
+
+  If s2_json is provided, adjectives from the stage-2 logic are used to
+  supplement text-based qualifiers (handles relative-clause adjectives like
+  "the bear who is big").
   """
   if not s1_json or not isinstance(s1_json, list):
     return {}
+
+  # --- collect qualifiers from all ASU texts and from stage-2 logic ---
+  text_quals = _collect_text_qualifiers(s1_json)
+  logic_adjs = _collect_adjectives_from_logic(s2_json) if s2_json else {}
 
   # --- collect entities; first occurrence wins ---
   seen_ids = set()
@@ -232,32 +389,54 @@ def build_entity_map(s1_json):
     if len(group) == 1:
       # --- single entity ---
       eid, url, text, base, suffix = group[0]
-      display = _display_name(base_written, [])
+      quals = _entity_quals(eid, text_quals, logic_adjs, base, suffix)
+      display = _display_name(base_written, quals)
       result[eid] = display
       if url:
         result.setdefault(url, display)
 
     else:
       # --- multiple entities share the same base ---
-      urls = [g[1] for g in group]
-      all_have_url    = all(u is not None for u in urls)
-      distinct_urls   = len(set(u for u in urls if u)) == len(group)
+      # Separate bare class names (no suffix) from concrete instances (with suffix).
+      # Bare class names like "fox" don't conflict with concrete "fox 2".
+      concrete = [g for g in group if g[4] is not None]
+      bare     = [g for g in group if g[4] is None]
 
-      if all_have_url and distinct_urls:
-        # All entities have distinct URLs → use Wikipedia titles
-        for eid, url, text, base, suffix in group:
-          title = _url_title(url)
-          result[eid] = title
-          result.setdefault(url, title)
-      else:
-        # Use qualifier extraction
-        sub = [(eid, url, text, suffix) for eid, url, text, base, suffix in group]
-        names = _disambiguate_with_qualifiers(sub, base_written)
-        for eid, url, text, base, suffix in group:
-          display = names.get(eid, eid)
+      # Process bare class entities as individual entries
+      for eid, url, text, base, suffix in bare:
+        quals = _entity_quals(eid, text_quals, logic_adjs, base, suffix)
+        display = _display_name(base_written, quals)
+        result[eid] = display
+        if url:
+          result.setdefault(url, display)
+
+      # Process concrete entities as a group (may need disambiguation)
+      disambig = concrete if concrete else []
+      if len(disambig) <= 1:
+        for eid, url, text, base, suffix in disambig:
+          quals = _entity_quals(eid, text_quals, logic_adjs, base, suffix)
+          display = _display_name(base_written, quals)
           result[eid] = display
           if url:
             result.setdefault(url, display)
+      else:
+        urls = [g[1] for g in disambig]
+        all_have_url    = all(u is not None for u in urls)
+        distinct_urls   = len(set(u for u in urls if u)) == len(disambig)
+
+        if all_have_url and distinct_urls:
+          for eid, url, text, base, suffix in disambig:
+            title = _url_title(url)
+            result[eid] = title
+            result.setdefault(url, title)
+        else:
+          sub = [(eid, url, text, suffix) for eid, url, text, base, suffix in disambig]
+          names = _disambiguate_with_qualifiers(sub, base_written, text_quals, logic_adjs)
+          for eid, url, text, base, suffix in disambig:
+            display = names.get(eid, eid)
+            result[eid] = display
+            if url:
+              result.setdefault(url, display)
 
   return result
 

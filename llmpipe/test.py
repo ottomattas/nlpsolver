@@ -351,11 +351,15 @@ def _parse_phrase(phrase):
 
   prep is the leading spatial preposition (lowercase) or "".
   content is the remaining words, lowercased, articles removed, joined by space.
+  In non-strict confidence mode, leading confidence qualifiers (e.g. "likely")
+  are also stripped from individual phrases.
   """
   words = phrase.lower().replace(".", "").replace(",", "").split()
   prep = ""
   if words and words[0] in _SPATIAL_PREPS:
     prep = words[0]
+    words = words[1:]
+  if not strict_confidences and words and words[0] in _CONF_QUALIFIERS:
     words = words[1:]
   words = [w for w in words if w not in _ARTICLES]
   return prep, " ".join(words)

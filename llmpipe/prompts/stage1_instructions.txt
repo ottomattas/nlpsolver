@@ -36,6 +36,9 @@ Do not merge multiple sentences into one package.
 Do not split a single sentence into multiple packages.
 Preserve original sentence order.
 
+Keep adjectives in the adjectives list that appear before the entity noun
+in the simplified text ("The big bear is strong" -> "The big bear 1 is strong").
+
 Every ASU must have a unique, sequential unit_id (S1, S2, S3, etc.). 
 Do NOT repeat IDs for different sentences.
 
@@ -92,8 +95,7 @@ If a sentence asserts a property or rule about multiple distinct categories or s
 - Relative clauses:
   - Split only if they express an independent relation or event.
   - Otherwise keep attached.
-
-
+  
 --- 2.3 Numeric / Distributive Phrases ---
 
 Do NOT decompose:
@@ -176,9 +178,12 @@ You must determine if a question is asking about a category (Class-Level) or sea
    preserve the existential phrasing. Do NOT add "all".
    - "Are there red bears?" -> "Does there exist a red bear?"
 
-3. Strict Negation: 
+3. Strict Negation:
    For a negative question (e.g., "Are elephants not animals?"), produce exactly one query ASU containing that negation.
    - NEVER invent or append a positive alternative (e.g., "Are elephants animals and not animals?") unless the source text explicitly contains both branches.
+   - Preserve negation quantifiers ("no", "no one", "nothing", "none", "not any") in the rewritten text.
+     "John eats no berries?" -> "Does John 1 eat no berries?" (NOT "Does John 1 eat berries?")
+     "No bird can fly?" -> "Can no bird fly?"
 
 4. Ambiguity Resolution:
    In cases of high ambiguity, default to the Class-Level (Universal) interpretation if the subject is a bare plural (e.g., "Foxes are toys?"). 
@@ -224,6 +229,28 @@ An inquiry.
 If a sentence ascribes a habitual, dispositional, or characteristic property to a specific named individual 
 (e.g., "John smokes", "Mary likes cats", "Bill is tall"), classify as real, not situation.
 Reserve situation for specific, one-time or temporally-bounded events ("John smoked a cigar", "Mary ran to the store").
+
+--- 4.1 Situation vs Rule ---
+
+Do NOT combine type "situation" with action mode "habitual" or "capability". 
+If an action is habitual or capability, the ASU type must be a rule.
+
+Use context to determine whether a statement describes a rule
+or a concrete situation:
+
+Favor rule:
+- Standalone statement with no surrounding narrative context
+- Describes a general habit or tendency ("John does not eat carrots")
+- Generic/indefinite object ("a carrot", "carrots", "meat")
+
+Favor situation:
+- Surrounding sentences establish a concrete scene or narrative
+- Temporal markers present ("now", "today", "at the party", past tense)
+- Definite or specific object ("the carrot", "carrot 1")
+
+A single no-context statement like "John does not eat a carrot" is a rule:
+this example is a habitual normal_rule. In a narrative like "John is at the table.
+John does not eat a carrot." it may be a concrete event (situation, mode: event).
 
 == 5. ACTION ANNOTATIONS (MANDATORY) ==
 
@@ -313,6 +340,16 @@ When expanding relational nouns (e.g., "The price of the car is 5k"), the entity
 Resolve pronouns to the most recent compatible entity 
 unless the sentence explicitly indicates otherwise.
 
+Indefinite noun phrases ("a bear", "an elephant") in SEPARATE sentences
+introduce DISTINCT entities, even if the noun is the same. Each "a bear"
+is a new, different bear. Assign different numbered IDs:
+  "A bear was strong. A bear was nice." -> bear 1 (strong), bear 2 (nice)
+Only merge into the same entity when the second reference uses:
+  - a definite article ("the bear") referring back to a previously introduced bear
+  - a pronoun ("it", "he")
+  - the same proper name ("John")
+  "A bear was strong. The bear was nice." -> bear 1 (both sentences, same bear)
+
 
 == 8. ENTITY IDENTIFICATION (MANDATORY) ==
 
@@ -327,14 +364,28 @@ Create an entity for every noun phrase in simplified_text except:
 "concrete" -> specific instance
 "generic" -> class/kind/material
 
-Rules:
-- Generic in rules and questions.
+Default rules: 
+- Typically generic in rules and questions. 
 - Concrete in narrative unless clearly generic.
 - Indeterminate entities in rule conditions, negation, or questions
   are usually generic.
 
 Treat as concrete only if the text refers to a particular identifiable instance; 
 otherwise use generic.
+
+In normal_rule or strict_rule ASUs, indefinite noun phrases 
+(e.g., "a forest", "a spoon", "a box") must be marked as generic
+unless the text refers to a particular identifiable instance.
+
+Definite noun phrases ("the bear", "the fox") in rules are CONCRETE
+when they refer to a specific individual, not a class. This applies when:
+  - The rule uses "the X" (not "a X", not bare plural)
+  - No prior generic context establishes X as a class variable
+  "If the bear is strong, the fox is nice." -> bear 1 (concrete), fox 1 (concrete)
+  "If a bear is strong, a fox is nice."    -> bear (generic), fox (generic)
+  "If the bear is strong, foxes are nice." -> bear 1 (concrete), fox (generic)
+A definite NP in a rule creates a specific entity that can be matched by
+"the bear" in later sentences. It does NOT create a universal rule over all bears.
 
 Proper nouns (place names, person names, organisation names)
 are ALWAYS concrete, regardless of sentence type. If a sentence says
@@ -346,6 +397,11 @@ indefinite objects are usually generic unless clearly specific.
 
 In "does not have/there is no" patterns, the missing object is generic 
 unless a specific named object is mentioned.
+
+If a concept appears in a rule and a query/situation, the query/situation must "echo" the ID
+and Type used in the rule. If the rule uses {"id": "forest", "type": "generic"},
+the query cannot use a concrete ID like "a forest 1", and must also use
+{"id": "forest", "type": "generic"}:
 
 --- 8.2 Entity IDs ---
 
@@ -364,7 +420,9 @@ Rules:
   same ID (e.g., "John 1") in every sentence package where it occurs. Do not reset numbering
   or increment IDs for the same individual when moving to a new sentence package.
 - Real-world locations in rules MUST use the same URL grounding as in situation facts.
-
+- If there are no two different generics with the same noun in an ASU,
+  do not attach a number to this generic.
+  
 --- 8.3 ENTITY.text USAGE RULE (IMPORTANT) ---
 
 "Entity.text" is OPTIONAL. Include it only when needed.
@@ -407,11 +465,15 @@ Not:
 
 Optional scope:
 
-"dependent" -> existential per subject instance
-"global" -> single shared existential
-"kind" -> substance constant
+"dependent" -> existential per subject instance. Default for indefinite nouns ("a/an" or bare plural) in rules.                                                                                                  
+    Examples:   "a tail" in "Dogs have a tail" (each dog has its own tail),
+    "a forest" and "berries" in "Bears eat berries in a forest" (each bear has its own forest and berries),    
+"global" -> single shared existential. Use only when the text explicitly indicates one shared instance.
+    Examples: "a park" in "All children in the town play in a park" (one specific park).
+"kind" -> uncountable/mass substance only. Examples: "water", "gold", "air", "music".
 
-Do not assign scope to concrete entities.
+Do not assign scope to concrete entities. 
+If a scope is unclear, use "dependent".
 
 
 ==  10. STATE TRACKING ==

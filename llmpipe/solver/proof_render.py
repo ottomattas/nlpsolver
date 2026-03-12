@@ -217,9 +217,7 @@ def _extract_url_name(url):
     segments = [s for s in path.split("/") if s]
     # segments[0] is the scheme-less domain; name is the last path component
     # (index >= 2 means there is at least one path element after the domain)
-    if len(segments) >= 2:
-      name = segments[-1]
-    elif segments:
+    if segments:
       name = segments[-1]
     else:
       return url

@@ -6,6 +6,36 @@ Atomic Semantic Units (STAGE-1 ASUs) with semantic annotations.
 
 Your output will be consumed by a downstream logic system.
 
+== PLAN LOGICAL STRUCTURE BEFORE WRITING JSON ==
+
+Before writing logic, determine the global logical structure of the ASU.
+
+1. Identify the outermost operator:
+   holds, question, ask, forall, exists, implies, or not.
+
+2. Determine the top-level logical form
+   (for example: forall X (A -> B), exists X (...), question(...), ask X (...)).
+
+3. Identify the main variables and what each refers to.
+
+4. Decide where each variable is introduced and where its scope ends.
+
+Use these rules for variables:
+
+* Every variable must be introduced by a quantifier before it is used.
+* Generic subjects normally use `forall` and scope over the rule.
+* Events, objects, and role fillers normally use `exists`.
+* Introduce existential variables in the smallest structure that requires them:
+  prefer the narrowest valid scope for existential variables.
+* If an entity only exists as part of an event, introduce it inside the event block.
+* Do not introduce an existential variable before a universal variable if it depends on that universal.
+
+After deciding the structure, create a parenthesized scope skeleton to verify the quantifier nesting.
+
+The skeleton is only a temporary planning step and must NOT appear in the final output.
+
+After the structure is correct, generate the final logic in JSON.
+The final output must always be JSON.
 
 == INPUT: STAGE-1 ASU SCHEMA ==
 
@@ -282,7 +312,9 @@ as usual.
 For each action object {root, mode, roles}:
 
   Track 1 (Atomic Predicate): roles is absent or empty AND mode is NOT event.
-  Track 2 (Davidsonian Event): roles contains any key OR mode is event.
+  Track 2 (Davidsonian Event): for two cases:
+     - roles contains any key OR mode is event.
+     - action occurs in a query ASU
 
 -- Track 1: Atomic Compilation --
 
@@ -322,12 +354,38 @@ Step A — core predicates (always present):
 Step B — role predicates (one per role key-value):
   For each key/value in roles: ["has KEY","E",VALUE]
   If a value is a list, emit one predicate per item.
+  
+  If a role entity has adjectives, do NOT use the ID as a constant. 
+  Instead, introduce a nested ["exists", VAR, ["and", ...]] block
+  like ["exists","Y",["and",["isa","berry","Y"], ...]].
+
+  Modified Roles (no adjectives):
+  - Concrete entity: use ["has KEY", E, ID] directly.
+  - Generic with scope "kind" (mass nouns like "meat", "water"): use ["has KEY", E, ID] directly.
+  - Generic without scope "kind" (e.g., "a carrot", "a berry"): introduce a nested
+    ["exists", VAR, ["and", ["isa", ID, VAR], ["has KEY", E, VAR]]]
+    inside the event block.
+
+  Modified Roles (with adjectives, e.g., "red berries", "deep forest"):
+  Introduce a nested existential inside the event block:
+    ["exists","Y",
+      ["and",
+        ["isa","berry","Y"],
+        ["has degree property","red","Y","none","berry"],
+        ["has target","E","Y"]
+      ]
+    ]
 
 Step C — modal treatment based on mode:
 
   event:      No modal predicate added. The existential block stands alone.
   habitual:   Wrap the entire existential block in ["normally",...].
   capability: Add ["can",ACTOR,"E"] as a predicate inside the "and" block.
+
+  Never use ["can", ACTOR, E] for habitual or event modes, even in negations or strict_rules.
+  NEVER use ["can", ACTOR, COMPLEX_TERM] where COMPLEX_TERM is an
+  ["exists",...] or ["and",...] block. ["can",ACTOR,"E"] takes only
+  an event variable or a constant.
 
   Event example:
   ["exists","E",["and",
@@ -336,13 +394,23 @@ Step C — modal treatment based on mode:
     ["has actor","E","John 1"]
   ]]
 
-  Habitual with roles example:
+  Habitual with kind target (meat = scope "kind", bare constant):
   ["normally",
     ["exists","E",["and",
       ["isa","activity","E"],
       ["has type","E","eat"],
       ["has actor","E","X"],
       ["has target","E","meat"]
+    ]]
+  ]
+
+  Habitual with non-kind generic target ("a carrot" = generic, existential):
+  ["normally",
+    ["exists","E",["and",
+      ["isa","activity","E"],
+      ["has type","E","eat"],
+      ["has actor","E","John 1"],
+      ["exists","Y",["and",["isa","carrot","Y"],["has target","E","Y"]]]
     ]]
   ]
 
@@ -367,7 +435,7 @@ Step D — sentence-type wrapping for Track 2:
           ["has type","E",ROOT],
           ["has actor","E","X"],
           ...role predicates...,
-          ["typical","E"]
+          ["can","X","E"]
         ]]
       ]
     ]
@@ -381,18 +449,52 @@ Step D — sentence-type wrapping for Track 2:
 
   Negation:
   ["holds","W0",["not",["exists","E",["and",...]]]]
-
+  
+  
+  Strict negation of events: When type is strict_rule, the negation block
+  ["not",["exists","E",["and",...]]] must contain ONLY core event predicates:
+  ["isa","activity","E"], ["has type","E",ROOT], ["has actor","E",ACTOR],
+  and role predicates. Do NOT include ["can",ACTOR,"E"] or ["typical","E"]
+  in the negated event block.
+ 
   Query:
-  ["question",["exists","E",["and",...,["typical","E"]]]]
-  WITHOUT ["typical","E"] in the question, defeasibility is bypassed and the
-  proof uses strict resolution, ignoring any overrides.
+  
+  For habitual queries, include ["typical","E"] as the last conjunct:
+    ["question",["exists","E",["and",...,["typical","E"]]]]
 
-  TARGET ADJECTIVES: When the target entity has adjectives (matched by RELCLASS),
-  introduce a variable Y for the target and apply the adjective to Y -- never to E:
-    ["exists","Y",["and",["isa",TARGET_TYPE,"Y"],
-                         ["has degree property",ADJ,"Y",DEGREE,RELCLASS],
-                         ["has target","E","Y"]]]
+  For capability queries, include ["can",ACTOR,"E"] instead of ["typical","E"].
+
+  For plain yes/no queries where the mode is unclear or mixed
+  (e.g., "Do bears eat berries?"), default to including  ["can",ACTOR,"E"].
+
+  ROLE ADJECTIVES: When any role entity (target, location, instrument,                                                                                                                                           
+  recipient, etc.) has adjectives, introduce a variable for that entity                                                                                                                                          
+  INSIDE the event ["exists","E",...] block. Apply the adjective to the                                                                                                                                          
+  variable, never to the type name or to E.                                                                                                                                                                      
+                                                                                                                                                                                                               
+  Example — "Bears eat red berries in a deep forest":
+    ["exists","E",
+      ["and",
+        ["isa","activity","E"],
+        ["has type","E","eat"],
+        ["has actor","E","X"],
+        ["exists","Y",["and",["isa","berry","Y"],
+                              ["has degree property","red","Y","none","berry"],
+                              ["has target","E","Y"]]],
+        ["exists","Z",["and",["isa","forest","Z"],
+                              ["has degree property","deep","Z","none","forest"],
+                              ["has location","E","Z"]]]
+      ]]
+
+  NEVER place adjective predicates outside the ["exists","E",...] block.
+  NEVER apply adjectives to the type name string (e.g.,
+  ["has degree property","deep","forest",...] is WRONG).
+
   Keep ["typical","E"] as the last conjunct of the outer "and".
+  
+  For plain Yes/No queries (e.g., "Do bears eat?"), default to ["can", ACTOR, "E"] as the modal conjunct.
+
+  If a role-entity in a query has adjectives, follow the Modified Roles nesting pattern above.
 
 -- Action Constraints --
 
@@ -456,6 +558,40 @@ query
   Use the universal pattern: ["question", ["forall", "X", ["implies", ["isa", CLASS, "X"], PROPERTY_OF_X]]].
 - Negation Handling: If the question is negative (e.g., "Are birds not blue?"), wrap the property in a not operator; 
   never include "not" in the property string itself: ["not", ["isa", "animal", "X"]].
+- If a Yes/No query negates a generic event rule (e.g., "Bears do not eat berries in forest?"), use the
+  same forall/implies structure as the corresponding rule, with "not" wrapping the event block:
+    ["question", ["forall","X", ["implies", ANTE,
+      ["not", ["exists","E",["and", ...event predicates..., ]]]]]]
+    Do NOT use ["question", ["exists","X", ["and", ..., ["not",...]]]]
+    for these queries.
+
+== 4.0 GENERIC CLAUSES IN CONDITIONALS ==
+
+When a conditional rule contains generic plural entities, each generic side
+must keep its own forall+implies as a self-contained sub-formula. Concrete
+sides stay as flat predicates. Do NOT flatten into a single shared forall.
+
+Generic side:  ["forall","X", ["implies", ["isa",CLASS,"X"], PROPERTY_OF_X]]
+Concrete side: predicate with entity constant directly.
+
+"If bears are strong, foxes are nice" (both generic):
+  ["normally", ["implies",
+    ["forall","X", ["implies", ["isa","bear","X"],
+        ["has degree property","strong","X","none","bear",["$ctxt","present","W0"]]]],
+    ["forall","Y", ["implies", ["isa","fox","Y"],
+        ["has degree property","nice","Y","none","fox",["$ctxt","present","W0"]]]]
+  ]]
+
+"If bears are strong, John is nice" (generic antecedent, concrete consequent):
+  ["normally", ["implies",
+    ["forall","X", ["implies", ["isa","bear","X"],
+        ["has degree property","strong","X","none","bear",["$ctxt","present","W0"]]]],
+    ["has degree property","nice","John 1","none","person",["$ctxt","present","W0"]]
+  ]]
+
+Does NOT apply when a single generic subject appears on both sides
+(e.g., "If a bear is strong, it is nice" — one subject, one forall over
+the whole implies).
 
 === 4.1. PREDICATE NOUN RULE (MANDATORY) ===
 
@@ -487,6 +623,12 @@ When a rule has multiple conditions (e.g., class membership AND possession), you
         ["and", ["isa", "bird", "X"], ["exists", "Y", ["and", ["isa", "tail", "Y"], ["have", "X", "Y"]]]],
         ["has degree property", "cute", "X", "none", "entity"]
      ]
+
+If a rule describes an action leading to a state (e.g., "If X eats, X is hungry"), move the event reification into the antecedent:
+- Quantification: Use ["forall","X",["forall","E",["implies", ANTECEDENT, CONSEQUENT]]].
+- Antecedent: Include the actor's type, the event type, actor link, and all role/manner predicates: 
+  ["and", ["isa",TYPE,X], ["isa","activity",E], ["has type",E,ROOT], ["has actor",E,X], ...]
+- Consequent: Include the property or state: ["normally", ["has degree property", ...]]     
 
 == 4.3 Negation and frequency or probability adverbs ==
 

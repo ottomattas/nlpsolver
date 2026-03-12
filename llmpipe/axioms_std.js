@@ -79,15 +79,24 @@
 
   // == 5. ACTIVITY & MOVEMENT (BAbI TASK LOGIC) ==
   // Davidsonian Activity Reification: activity + has type + has actor [cite: 334, 335, 354]
+  
+   
   [
     ["-typical", "?:E", "?:Ctxt"],
     ["-has type", "?:E", "?:V", "?:Ctxt"],
     ["-has actor", "?:E", "?:X", "?:Ctxt"],
     ["typically", "?:X", "?:V", "?:Ctxt"]
   ],
-  // Capability: If one typically does V, one can do V [cite: 354]
-  [["-typically", "?:X", "?:V", "?:Ctxt"], ["can", "?:X", "?:V", "?:Ctxt"]],
+  
+  // If E is typical and X is the actor, then X can E.
+  [
+    ["-typical", "?:E", "?:Ctxt"],
+    ["-has actor", "?:E", "?:X", "?:Ctxt"],
+    ["can", "?:X", "?:E", "?:Ctxt"]
+  ],
 
+  // Capability: If one typically does V, one can do V [cite: 354]
+  [["-typically", "?:X", "?:V", "?:Ctxt"], ["can", "?:X", "?:V", "?:Ctxt"]],  
 
   [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
    ["isa", "activity", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"]]],
@@ -106,6 +115,42 @@
 
   [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
    ["typical", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"]]],
+   
+   // == 8. ACTION MODAL BRIDGES ==
+
+  // Axiom 1: Track-2 Habitual -> Capability (DEFEASIBLE)
+  // "If E is a typical event for X, then X can E, unless blocked."
+  [
+    ["-typical", "?:E", "?:Ctxt"],
+    ["-has actor", "?:E", "?:X", "?:Ctxt"],
+    ["can", "?:X", "?:E", "?:Ctxt"],
+    ["$block", ["bridge_typical", "?:E"], ["$not", ["can", "?:X", "?:E", "?:Ctxt"]]]
+  ],
+
+  // Axiom 2: Track-2 Event -> Capability (STRICT)
+  // "If an event occurred, the actor must have been able to do it."
+  [
+    ["-isa", "activity", "?:E", "?:Ctxt"],
+    ["-has actor", "?:E", "?:X", "?:Ctxt"],
+    ["can", "?:X", "?:E", "?:Ctxt"]
+  ],
+
+  // Axiom 3: Track-1 Habitual -> Capability (DEFEASIBLE)
+  // "If X typically does V, then X can do V, unless blocked."
+  [
+    ["-typically", "?:X", "?:V", "?:Ctxt"],
+    ["can", "?:X", "?:V", "?:Ctxt"],
+    ["$block", ["bridge_typically", "?:V"], ["$not", ["can", "?:X", "?:V", "?:Ctxt"]]]
+  ],
+
+  // Axiom 4: Davidsonian to Atomic Bridge (STRICT)
+  // "If X can do specific event E of type V, then X can do V."
+  [
+    ["-can", "?:X", "?:E", "?:Ctxt"],
+    ["-has type", "?:E", "?:V", "?:Ctxt"],
+    ["can", "?:X", "?:V", "?:Ctxt"]
+  ],
+  
 
   // Movement Results: If X 'go'es to Dest, X is 'at' Dest in the next state [cite: 146, 147]
   [

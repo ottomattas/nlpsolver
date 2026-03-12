@@ -139,20 +139,26 @@ When the user says **"Debug case N"** (where N is a case number in `testfixlog.t
 3. **Explore all four log files** — read them fully, comparing the answers and logic/proof
    output across all LLM providers and the UDP pipeline.
 
-4. **Assess the Expected value** — form an independent opinion on whether the `Expected:`
+4. **Examine Stage 1 and Stage 2 outputs** — a correct final answer is not sufficient.
+   Compare the Stage 1 and Stage 2 raw outputs across all LLMs. Minor stylistic differences
+   between LLMs are OK, but report any major conceptual differences (e.g., wrong entity
+   types, missing isa guards, flat vs nested quantifier structure, dropped conditions).
+   Both stages must be correct, not just the final answer.
+
+5. **Assess the Expected value** — form an independent opinion on whether the `Expected:`
    value in testfixlog.txt is the correct answer under a normal interpretation of the input,
    or whether it should be changed, or whether there are good alternatives.
    Assume the UDP pipeline answer is correct in most (but not all) cases.
 
-5. **Analyze errors** — if any LLM pipeline log files give an incorrect or suboptimal answer,
+6. **Analyze errors** — if any LLM pipeline log files give an incorrect or suboptimal answer,
    analyze the root cause (stage-1 parse, stage-2 logic, logconvert, prover input, proof
    post-processing, etc.).
 
-6. **Simplify if uncertain** — if the root cause is unclear, construct a simpler version of
+7. **Simplify if uncertain** — if the root cause is unclear, construct a simpler version of
    the input text that isolates the suspected issue, run `python3 solver/solve.py ...` on it,
    and examine the result. Repeat as needed.
 
-7. **Write analysis and fix plan** — summarize the root cause(s) of any errors and propose a
+8. **Write analysis and fix plan** — summarize the root cause(s) of any errors and propose a
    concrete plan for fixing. Do **not** write any code or modify any files at this stage.
 
 ## Register Fix Workflow
@@ -169,6 +175,8 @@ a fix was implemented, and it has been verified to work:
 ## Work Process Rules
 
 - **Never use `-nollmcache`** unless explicitly requested by the user.
+- **Always trust the LLM cache.** The user may run the solver independently, so cache
+  entries may be newer than what you last saw. Always use cache and trust its results.
 - **Never run `test.py` with more than 5 examples** without explicit instruction from the user.
   Use `-limit 5` or `-filter PATTERN` to restrict the run. For quick sanity checks, run
   `python3 solver/solve.py ...` on individual examples instead of the full test suite.

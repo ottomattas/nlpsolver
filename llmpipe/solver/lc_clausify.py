@@ -231,7 +231,8 @@ def clausify(formula):
   # Pass 1: push normally(...) inside exists/and until it wraps a single atom.
   f3 = _expand_normally(f2)
   f4 = _skolemize(f3, [], {})
-  f5 = _distribute(f4)
+  f4b = _strip_forall(f4)
+  f5 = _distribute(f4b)
   # Pass 2: expand normally(atom) -> $block now that clauses are flat and
   # Skolem terms have replaced existential variables.
   f6 = _expand_normally(f5)
@@ -341,8 +342,8 @@ def _forall_to_freevars(frm):
   """Expand ["forall", var, body] into a flat list of GK literals.
 
   Treats var as a free (implicitly universally quantified) GK variable "?:var".
-  body is expected to be an atom or ["or", lit, ...] (NNF, no nested quantifiers).
-  Used to flatten xor exclusivity constraints: ∀Y f(Y) ∨ ∀Z g(Z) ≡ ∀Y∀Z(f(Y)∨g(Z)).
+  Recursively flattens nested foralls (from negated nested existentials in
+  antecedents): ∀E(∀Y f(E,Y) ∨ g(E)) becomes [f(?:E,?:Y), g(?:E)].
   """
   if not (isinstance(frm, list) and len(frm) == 3 and frm[0] == "forall"):
     return [frm]
@@ -352,15 +353,47 @@ def _forall_to_freevars(frm):
   # Substitute var -> gk_var throughout body
   body_renamed = apply_varmap(body, {var: gk_var})
   if isinstance(body_renamed, list) and body_renamed and body_renamed[0] == "or":
-    return list(body_renamed[1:])
-  return [body_renamed]
+    lits = list(body_renamed[1:])
+  else:
+    lits = [body_renamed]
+  # Recursively flatten any nested forall children.
+  result = []
+  for lit in lits:
+    if isinstance(lit, list) and lit and lit[0] == "forall":
+      result.extend(_forall_to_freevars(lit))
+    else:
+      result.append(lit)
+  return result
 
 
-def _push_normally_inside(frm):
-  """Push normally inward through exists/and until it wraps a single atom.
+def _extract_subject_class(frm):
+  """Extract the subject class from a rule antecedent.
+
+  Looks for the first isa(CLASS, VAR) atom in the formula tree,
+  searching through and/exists wrappers.  Returns the class name
+  string, or None if not found.
+  """
+  if not isinstance(frm, list) or not frm:
+    return None
+  op = frm[0]
+  if op == "isa" and len(frm) >= 3:
+    return str(frm[1])
+  if op == "and":
+    for el in frm[1:]:
+      cls = _extract_subject_class(el)
+      if cls:
+        return cls
+  if op == "exists" and len(frm) >= 3:
+    return _extract_subject_class(frm[2])
+  return None
+
+
+def _push_normally_inside(frm, blocker_class=None):
+  """Push normally inward through implies/exists/and until it wraps a single atom.
 
   Called from _expand_normally (pass 1) when normally wraps a complex body.
 
+    normally(implies(A, B))    -> implies(A, _push_normally_inside(B))
     normally(exists var, body) -> exists var, _push_normally_inside(body)
     normally(and(A1,...,An))   -> and(A1,...,An-1, normally(An))
     normally(atom)             -> normally(atom)  [base case]
@@ -368,21 +401,35 @@ def _push_normally_inside(frm):
   The result is passed to _skolemize, which eliminates the exists and
   substitutes Skolem terms.  The remaining normally(atom) wrappers are
   then expanded into $block clauses by _expand_normally pass 2.
+
+  blocker_class: if provided, tags the resulting normally(atom, CLASS) so
+  that pass 2 can use the correct subject class in the $block priority
+  instead of relying on the last -isa heuristic.
   """
   if not isinstance(frm, list) or not frm:
-    return ["normally", frm]
+    tag = ["normally", frm, blocker_class] if blocker_class else ["normally", frm]
+    return tag
   op = frm[0]
+  if op == "implies":
+    # normally(A -> B) -> A -> normally(B)  (recursively into consequent)
+    # Extract subject class from the antecedent before pushing deeper.
+    if blocker_class is None:
+      blocker_class = _extract_subject_class(frm[1])
+    return ["implies", frm[1], _push_normally_inside(frm[2], blocker_class)]
   if op == "exists":
-    return ["exists", frm[1], _push_normally_inside(frm[2])]
+    return ["exists", frm[1], _push_normally_inside(frm[2], blocker_class)]
+  if op == "forall":
+    return ["forall", frm[1], _push_normally_inside(frm[2], blocker_class)]
   if op == "and":
     if len(frm) > 2:
-      # and(A1,...,An) -> and(A1,...,An-1, normally(An))
-      return ["and"] + list(frm[1:-1]) + [["normally", frm[-1]]]
+      # and(A1,...,An) -> and(A1,...,An-1, push_normally(An))
+      return ["and"] + list(frm[1:-1]) + [_push_normally_inside(frm[-1], blocker_class)]
     if len(frm) == 2:
-      # and(A1) -> normally(A1)
-      return ["normally", frm[1]]
-  # Atom or other: wrap with normally
-  return ["normally", frm]
+      # and(A1) -> push_normally(A1)
+      return _push_normally_inside(frm[1], blocker_class)
+  # Atom or other: wrap with normally (and optional class tag)
+  tag = ["normally", frm, blocker_class] if blocker_class else ["normally", frm]
+  return tag
 
 
 def _expand_normally(frm):
@@ -438,6 +485,7 @@ def _expand_normally(frm):
     pushed_lits  = []  # from _push_normally_inside; must NOT be re-expanded here
     body_lits    = []  # literals extracted from normally-body formulas
     normally_disjunctive = False  # True when normally body was an "or"
+    blocker_class_tag = None      # subject class from _push_normally_inside tag
 
     for el in elements:
       if isinstance(el, list) and el and el[0] in _opaque_wrappers:
@@ -445,6 +493,23 @@ def _expand_normally(frm):
         if body is None:
           continue
         is_pos = not el[0].startswith("-")
+        # Tagged blocker class from _push_normally_inside (pass 1).
+        if len(el) >= 3 and isinstance(el[2], str) and blocker_class_tag is None:
+          blocker_class_tag = el[2]
+        # Push normally inside the raw body BEFORE implies-to-or / NNF.
+        # This rewrites normally(implies(A,B)) → implies(A, normally(B)),
+        # normally(exists(V, B)) → exists(V, ...), normally(and(...)) → and(...),
+        # recursively until normally wraps only atoms.  The result no longer has
+        # normally around any complex structure, so _implies_to_or / _push_neg
+        # can then safely transform the antecedent (preserving exists, etc.).
+        # The result goes into pushed_lits (not regular_lits) so it is NOT
+        # re-expanded in pass 1.  The remaining normally(atom) wrappers will be
+        # expanded into $block clauses by pass 2 after Skolemization.
+        if is_pos and isinstance(body, list) and body and body[0] in ("implies", "exists", "and"):
+          pushed = _push_normally_inside(body)
+          converted = _push_neg(_implies_to_or(pushed), True)
+          pushed_lits.append(converted)
+          continue
         # Check whether the raw body is a genuine disjunction (not an implies
         # that will become an or after conversion).  Only a raw "or" body means
         # the normally wrapped a true disjunction — skip $block for those.
@@ -512,6 +577,18 @@ def _expand_normally(frm):
     # Recurse into regular literals (may contain nested normally, and/or, …).
     # pushed_lits are intentionally excluded from this recursion.
     regular_lits = [_expand_normally(el) for el in regular_lits]
+
+    # Flatten forall elements in regular_lits into free-variable literals.
+    # These arise from negated existentials in implies-antecedents
+    # (not(exists(E,...)) → forall(E,...)) and must be flat for $block
+    # classification to correctly identify them as negative conditions.
+    flat_regular = []
+    for lit in regular_lits:
+      if isinstance(lit, list) and lit and lit[0] == "forall":
+        flat_regular.extend(_forall_to_freevars(lit))
+      else:
+        flat_regular.append(lit)
+    regular_lits = flat_regular
 
     all_lits = regular_lits + pushed_lits + body_lits
     if not all_lits:
@@ -590,19 +667,23 @@ def _expand_normally(frm):
     head     = pos_lits[-1]
 
     # Compute priority: [$, CLASS, N]
-    #   CLASS = class from the last -isa condition, or "$generic" if none.
+    #   CLASS = subject class from tagged normally (if available), else from
+    #   the last -isa condition, else "$generic".
     #   N     = (number of non-isa negative conditions) + 1.
     isa_conds   = [l for l in neg_lits if l[0] == "-isa"]
     non_isa_neg = [l for l in neg_lits if l[0] != "-isa"]
     priornr = len(non_isa_neg) + 1
-    if isa_conds and len(isa_conds[-1]) >= 2:
+    if blocker_class_tag:
+      cls = blocker_class_tag
+    elif isa_conds and len(isa_conds[-1]) >= 2:
       cls = str(isa_conds[-1][1])
     else:
       cls = "$generic"
     priority = ["$", cls, priornr]
     blocker  = ["$block", priority, ["$not", head]]
 
-    result_lits = neg_lits + [head, blocker]
+    other_pos = [l for l in pos_lits if l is not head]
+    result_lits = neg_lits + other_pos + [head, blocker]
     if len(result_lits) == 1:
       return result_lits[0]
     return ["or"] + result_lits
@@ -673,6 +754,24 @@ def apply_varmap(frm, varmap):
   if not isinstance(frm, list):
     return frm
   return [apply_varmap(el, varmap) for el in frm]
+
+
+# ======== forall stripping ========
+
+def _strip_forall(frm):
+  """Convert remaining forall(X, body) to body with X→?:X, recursively.
+
+  After _skolemize removes existentials, any remaining forall nodes
+  (from generic-class conditionals) are expanded to free variables.
+  """
+  if not isinstance(frm, list) or not frm:
+    return frm
+  if frm[0] == "forall" and len(frm) == 3:
+    var = frm[1]
+    body = frm[2]
+    body = apply_varmap(body, {var: "?:" + var})
+    return _strip_forall(body)
+  return [_strip_forall(el) for el in frm]
 
 
 # ======== CNF distribution ========
