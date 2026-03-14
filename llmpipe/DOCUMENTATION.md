@@ -66,6 +66,10 @@ python3 solver/solve.py -llm claude -version claude-sonnet-4-6 "..."
 # Parse to logic only, do not call the prover
 python3 solver/solve.py -nosolve "..."
 
+# Call an LLM directly (no pipeline)
+python3 ask.py "What is the capital of France?"
+python3 ask.py -llm claude -p prompt.txt -f input.txt
+
 # Run the test suite
 python3 test.py
 python3 test.py tests/tests_core.py -llm claude
@@ -118,7 +122,7 @@ llmpipe/
 ├── solver/              Core pipeline modules
 │   ├── solve.py         CLI entry point; english_to_answer() library function
 │   ├── llmparse.py      Two-stage LLM parser
-│   ├── llmcall.py       LLM API wrapper (GPT / Claude / Gemini, no SDK)
+│   ├── llmcall.py       LLM API wrapper (GPT / Claude / Gemini / DeepSeek, no SDK)
 │   ├── logconvert.py    Stage-2 JSON → GK clause list (main driver)
 │   ├── lc_clausify.py   FOL → CNF clausification
 │   ├── lc_questions.py  Wh-question encoding and population facts
@@ -150,6 +154,7 @@ llmpipe/
 ├── axioms_std.js        Default background-knowledge axioms for gk
 ├── cache.db             SQLite cache (auto-created; not committed)
 │
+├── ask.py               Direct LLM call tool (uses solver/llmcall.py)
 ├── test.py              Test runner
 ├── checkprompt.py       Validate JSON in prompt example files
 └── DOCUMENTATION.md     Full developer documentation
@@ -459,16 +464,18 @@ instructions + `"\n\nExamples:\n\n"` + examples into a single system prompt stri
 
 **Role:** Low-level LLM API wrapper.
 
-**Key function:** `call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None) -> str | None`
+**Key function:** `call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None, think=False) -> str | None`
 
 Dispatches to `call_gemini`, `call_claude`, `call_gpt`, or `call_deepseek` based on the
-`use_llm` setting.  Each provider-specific function makes the HTTP call directly (no SDK)
-with retries and a sleep between retries.
+`use_llm` setting.  Two shared helpers keep the provider functions concise:
+- `_read_api_key(filepath, provider)` — reads a plain-text API key file
+- `_post_with_retry(host, url, body, headers, provider)` — HTTPS POST with retry loop,
+  error handling, and JSON response parsing
 
 **Caching:** Before calling the LLM, `call_llm` checks the SQLite cache in `cache.db`.  The
-cache key encodes: provider, version, temperature, seed, max_tokens, sysprompt, input_text.  If
-a match is found, the cached response is returned immediately.  The result of every new LLM call
-is stored in the cache before returning.  Caching is controlled by
+cache key encodes: provider, version, temperature, seed, max_tokens, think, sysprompt, input_text.
+If a match is found, the cached response is returned immediately.  The result of every new LLM
+call is stored in the cache before returning.  Caching is controlled by
 `globals.options["use_llm_cache_flag"]` (default `True`).
 
 **Debug output:** Uses `utils.debug_print` with module-level `debug` and `calldebug` flags:

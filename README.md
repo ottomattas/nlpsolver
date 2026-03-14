@@ -5,14 +5,14 @@ Nlpsolver is an experimental system for automated reasoning in natural language,
 capable of performing both natural language inference (NLI) and question answering.
 It contains two independent pipelines:
 
-* **udppipe** — the original Stanza/UD-based semantic parser pipeline, described in the paper
-  [An Experimental Pipeline for Automated Reasoning in Natural Language](https://link.springer.com/chapter/10.1007/978-3-031-38499-8_29).
-  Does not use LLMs. See the `udppipe/` folder and its README.
-
 * **llmpipe** — the newer LLM-based pipeline (GPT, Claude, Gemini) that replaces the Stanza
   parser with a two-stage LLM semantic parser. See the `llmpipe/` folder and its README.
 
-Both pipelines share the same `gk` theorem prover backend and the same core logic representation.
+* **udppipe** — the older Stanza/UD-based semantic parser pipeline, described in the paper
+  [An Experimental Pipeline for Automated Reasoning in Natural Language](https://link.springer.com/chapter/10.1007/978-3-031-38499-8_29).
+  Does not use LLMs. See the `udppipe/` folder and its README.
+
+Both pipelines share the same `gk` theorem prover backend and have a similar core logic representation.
 
 Each pipeline contains:
 * A semantic parser from English to extended first order logic.
@@ -30,6 +30,17 @@ symbolic reasoning, (b) using automated reasoner as an interface
 between natural language and external tools like database systems and scientific
 calculations.
 
+Subfolders
+------------
+
+* llmpipe: the llm-based pipeline, needs secrets and gk folders.
+* udppipe: the Stanza/UD-based pipeline, needs the gk folder.
+* secrets: empty folder for files with LLM api secrets.
+* gk: the gk commonsense reasoner used in both pipelines
+* exparchive: archive of data from experiments
+* amr: standalone experimental amr-based parser
+
+
 Installation
 ------------
 
@@ -43,7 +54,7 @@ The system requires Linux and has been developed using Python 3.8 and later.
 
 **For llmpipe**, the only external dependency beyond Python is:
 * The reasoner binary `gk` and its data files (same tarball as above).
-* An API key for at least one LLM provider (GPT, Claude, or Gemini).
+* An API key for at least one LLM provider (GPT, Claude, Gemini or Deepseek) in `secrets`
 
 The subfolders `gui` and `amr` contain experimental code in development, and
 are not currently used by either pipeline.

@@ -37,7 +37,9 @@ llmpipe/
 ├── solver/       Core pipeline modules (solve.py, logconvert.py, llmparse.py, …)
 ├── prompts/      LLM system prompts for Stage 1 and Stage 2
 ├── tests/        Test cases ([text, expected_answer] pairs)
-└── mkdata/       Synonym/antonym data builder (standalone, own venv)
+├── mkdata/       Synonym/antonym data builder (standalone, own venv)
+├── ask.py        Direct LLM call tool (uses solver/llmcall.py)
+└── test.py       Test runner
 ```
 
 ## Running
@@ -45,6 +47,10 @@ llmpipe/
 ```bash
 # Basic usage
 python3 solver/solve.py "TEXT"
+
+# Call an LLM directly (no pipeline)
+python3 ask.py "What is the capital of France?"
+python3 ask.py -llm claude -p prompt.txt "input text"
 
 # Useful flags
 -llm claude|gpt|gemini|deepseek  LLM provider (default set in llmcall.py)

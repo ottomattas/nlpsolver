@@ -1,7 +1,5 @@
 # AMR parsing for nlpsolver
 
-`nlpgui` provides browser environment for running the nlpsolver.
-
 ## Installation and running
 
 ### Installing Python dependencies
