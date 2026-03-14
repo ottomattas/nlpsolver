@@ -43,6 +43,7 @@ representation so that a developer or LLM can quickly start extending or modifyi
    - 7.4 [Context injection ($ctxt)](#74-context-injection-ctxt)
    - 7.5 [Gradable property normalisation](#75-gradable-property-normalisation)
    - 7.6 [Population facts](#76-population-facts)
+   - 7.7 [Stage-2 rewrites and modifications](#77-stage-2-rewrites-and-modifications)
 8. [Configuration and options](#8-configuration-and-options)
 9. [The mkdata toolkit](#9-the-mkdata-toolkit)
 10. [Extending and modifying the pipeline](#10-extending-and-modifying-the-pipeline)
@@ -151,7 +152,8 @@ llmpipe/
 ├── mkdata/              Synonym/antonym data builder (standalone, own venv)
 │   └── README.md        Full documentation for mkdata
 │
-├── axioms_std.js        Default background-knowledge axioms for gk
+├── axioms_std.js        Default background-knowledge axioms for gk (persistence,
+│                        event-to-relation bridges, transitivity, degree entailments)
 ├── cache.db             SQLite cache (auto-created; not committed)
 │
 ├── ask.py               Direct LLM call tool (uses solver/llmcall.py)
@@ -417,13 +419,23 @@ returns a string starting with `"Error:"` rather than raising.
 
 **CLI flags** (all optional):
 
+Output level (hierarchy — each level includes all previous levels):
+
 ```
+-explain           Show English proof explanation
+-logic             + simplified ASU text, sentences-to-clauses, logic in proof steps
+-details           + stage-1/2 JSON, prover input/output JSON
+-debug             + raw LLM responses, prover params, full pipeline trace
+```
+
+Output format and other flags:
+
+```
+-json              Show logic as raw JSON instead of traditional pred(arg,...) syntax
+-jsonlogic         Shortcut for -logic -json
+-gkin FILE         Save GK prover input to FILE (with the GK command as a comment)
 -llm NAME          LLM provider: gpt, claude, gemini, deepseek
 -version VER       Model version string
--debug             Print full pipeline detail
--logic             Print parsed logic (prover input)
--prover            Print raw prover input/output
--explain           Print step-by-step proof explanation
 -nosolve           Parse only; do not call the prover
 -nollmcache        Disable LLM response caching for this run
 -clearcache        Clear all caches and exit
@@ -966,6 +978,37 @@ use it.
 
 Population facts are tagged with `"@sourcetype": "populate"` internally (stripped before the
 prover sees them) so that `_coerce_relclass` can treat them differently from question clauses.
+
+### 7.7 Stage-2 rewrites and modifications
+
+The pipeline applies several transformations to the raw Stage-2 LLM output before and after
+clausification.  These compensate for LLM inconsistencies, enforce pipeline conventions, and
+bridge representation gaps.
+
+**Pre-clausification rewrites** (on the raw Stage-2 JSON formula, before `clausify`):
+
+| Rewrite | Where | Example | What it does |
+|---------|-------|---------|-------------|
+| Degree presupposition injection | `logconvert._inject_degree_presuppositions` | "John is not very big" → adds "John is big" (unmarked degree) alongside the negated "very big" | `["not",["has degree property",P,E,"high",C]]` → `["and",["has degree property",P,E,"none",C],["not",...]]` |
+| Stative event rewriting | `semnormalize.rewrite_stative_events` | "John had a car" encoded as an event → rewritten to direct `have(john,car)` | Replaces Davidsonian event encoding of stative verbs (have, own, like, love, etc.) with direct predicates.  Safety: only rewrites when the event variable has no extra properties (has_location, etc.) |
+| `@time` stripping | `logconvert._strip_time_wrappers` | "John was tall" — the past-tense `@time` wrapper becomes a `$tense` sentinel controlling the tense slot in `$ctxt` | Converts `["@time","past",ATOM]` wrappers into `$tense` sentinels on the atom |
+| Entity category injection | `logconvert._build_entity_category_clauses` | "John is an elephant" — Stage-1 says John's category is "person", so `isa(person, John 1)` is added even though Stage-2 only emits `isa(elephant, John 1)` | Adds `isa(CATEGORY, ENTITY)` facts from Stage-1 entity annotations when not already present in Stage-2 |
+| Entity base-word isa | `logconvert._build_entity_category_clauses` | "A man had a car" — entity `man 1` has category "person", but the base word "man" is also a type; adds `isa(man, man 1)` alongside `isa(person, man 1)` | For concrete entities with a lowercase base word different from the category, injects `isa(BASE, ENTITY)` so queries using the descriptive type word can match |
+| Compound subsumption | `logconvert._build_compound_subsumption` | "Baby birds do not fly" — adds a rule that baby birds are birds, so general bird rules can apply to them | Adds `isa(BASE, X) :- isa(COMPOUND, X)` rules for compound types |
+
+**Post-clausification modifications** (on the GK clause list):
+
+| Modification | Where | Example | What it does |
+|-------------|-------|---------|-------------|
+| `$ctxt` injection | `logconvert._inject_ctxt_into_objs` / `_inject_ctxt_question` | "John was tall" → atom gets `$ctxt(past,W0,?,?)` anchoring it to the past in world W0 | Appends `["$ctxt",T,W,L,K]` to eligible predicate atoms.  Rules: all-free-var.  Assertions: concrete world/tense.  Questions: see next row (§7.4) |
+| Descriptive/stative/dynamic split | `logconvert._inject_ctxt_question` | "Did the man have the red car which a woman bought?" — `bought` events and `red` property each get independent free-var worlds; stative `have` also gets free-var world; only dynamic event predicates (if matrix) keep the query's world | Three-way $ctxt world dispatch in `$defq` questions: (1) **descriptive** atoms (isa, event atoms, properties when a main relation is present) each get an independent free-var world; (2) **stative matrix** predicates (have, can, has part) get free-var world — persistent states don't need concrete world anchoring; (3) **dynamic matrix** predicates (is_rel2, properties when no main relation) keep the query's world.  `_question_has_main_relation` detects whether properties are restrictive modifiers.  Each descriptive/stative atom gets its OWN fresh world variable to avoid forced co-unification across different world states |
+| Gradable normalisation | `logconvert._normalize_gradable_predicates` | "John is big" — LLM used `has property(big,...)` but "big" is in the gradable whitelist → upgraded to `has degree property` | Whitelist-based `has property` ↔ `has degree property` conversion; replaces `"entity"` and `"none"` relclass with free variables (§7.5) |
+| `isa entity` stripping | `logconvert._strip_isa_entity` | "Every entity that is big is strong" — `isa(entity,X)` is always true, so the clause is a tautology → removed | Removes tautological `isa(entity,X)` literals (§7.5) |
+| RELCLASS coercion | `logconvert._coerce_relclass` | "Is John big?" — query uses relclass "person" (John's category) but the rule uses "bear" → relclass replaced with free variable so they unify | Fixes relclass mismatches in question degree-predicate atoms |
+| Possessive `have` inference | `logconvert._add_possessive_have` | "The handle of the fork" — `is_rel2(handle of, fork, handle)` + `isa(handle, handle)` → `have(fork, handle)` | Infers `have(Y,E)` from possessive `is_rel2` patterns |
+| Degree stripping | `logconvert._strip_degree_predicates` | With `-simpleproperties`: `has_degree_property(big,X,none,animal)` → `has_property(big,X)` | (Only with `-simpleproperties`) Replaces degree predicates with simple property predicates |
+| Semantic normalisation | `semnormalize.sem_normalize_clauses` | "The ball is outside the box" → `outside` is antonym of `inside` → flips polarity and substitutes: `-is_rel2(inside,ball,box)` | Antonym resolution (flip polarity + swap word) and canonical substitution (synonym → canonical form) |
+| `@sourcetype` stripping | Serialisation (`clause_list_to_json`) | Population facts carry `@sourcetype:"populate"` internally for processing — stripped before the prover sees them | Internal `@sourcetype` tags are excluded from prover input |
 
 ---
 

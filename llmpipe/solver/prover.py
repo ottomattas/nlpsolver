@@ -99,6 +99,18 @@ def call_prover(logic, s1_json=None):
     print("\n=== prover params ===\n")
     print(" ".join(params))
 
+  # -gkin FILENAME: save the GK input to a file for standalone experimentation.
+  gkin_file = options.get("gkin_file")
+  if gkin_file:
+    try:
+      # Build the command line with the user's filename instead of the temp file.
+      cmd_params = [p if p != infilename else gkin_file for p in params]
+      with open(gkin_file, "w") as f:
+        f.write("// " + " ".join(cmd_params) + "\n")
+        f.write(instr)
+    except Exception as e:
+      print("Warning: could not write GK input file " + gkin_file + ": " + str(e))
+
   sres=get_proof_from_cache(None,params)
   if not sres:
     try:
@@ -107,8 +119,14 @@ def call_prover(logic, s1_json=None):
       raise  
     except:
       return "Error: prover gk is not available or crashed: check nlpgobals.py for gk path."  
-    sres=calc.decode('ascii') 
-    add_proof_to_cache(params,sres)  
+    sres=calc.decode('ascii')
+    # High printlevel produces debug output before the result JSON.
+    # The final result is preceded by "= showing final result =".
+    marker = "= showing final result ="
+    idx = sres.find(marker)
+    if idx >= 0:
+      sres = sres[idx + len(marker):].lstrip("\n\r")
+    add_proof_to_cache(params,sres)
   os.remove(infilename)
   # Prover result is displayed by solve.py (with -details+), not here,
   # to avoid duplicate output.

@@ -52,15 +52,20 @@ python3 solver/solve.py "TEXT"
 python3 ask.py "What is the capital of France?"
 python3 ask.py -llm claude -p prompt.txt "input text"
 
+# Output level (hierarchy: each includes previous levels)
+-explain                          Show English proof
+-logic                            + simplified text, clauses, logic in proofs
+-details                          + stage-1/2 JSON, prover input/output
+-debug                            + raw LLM responses, full trace
+
 # Useful flags
--llm claude|gpt|gemini|deepseek  LLM provider (default set in llmcall.py)
--version MODEL            Model version string
--debug                    Show full pipeline detail
--logic                    Show parsed logic (prover input)
--explain                  Show step-by-step proof
--nosolve                  Parse to logic only, skip prover
--nollmcache               Disable LLM cache for this run
--seconds N                Prover time limit (default 2)
+-llm claude|gpt|gemini|deepseek   LLM provider (default set in llmcall.py)
+-version MODEL                    Model version string
+-json                             Show logic as raw JSON instead of traditional syntax
+-gkin FILE                        Save GK prover input to FILE
+-nosolve                          Parse to logic only, skip prover
+-nollmcache                       Disable LLM cache for this run
+-seconds N                        Prover time limit (default 2)
 
 # Run tests
 python3 test.py

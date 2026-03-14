@@ -243,7 +243,8 @@
   [["-has type", "?:E", "move", "?:Ctxt"], ["has type", "?:E", "go", "?:Ctxt"]],
 
   // == 6. PERSISTENCE (FRAME PROBLEM) ==
-  // Default persistence of relations from W0 to W1 unless blocked [cite: 36, 148, 166]
+  // Default persistence of "is rel2" relations across world states
+  // W0 -> W1
   {
     "@confidence": 0.99,
     "@logic": [
@@ -252,7 +253,27 @@
       ["$block", 0, ["$not", ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
     ]
   },
-  // Persistence of "have" (possession) from W0 to W1 [cite: 36, 148]
+  // W1 -> W2
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
+      ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W2", "?:L", "?:K"]]]]
+    ]
+  },
+  // W2 -> W3
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
+      ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W3", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W3", "?:L", "?:K"]]]]
+    ]
+  },
+
+  // Default persistence of "have" (possession) across world states
+  // W0 -> W1
   {
     "@confidence": 0.99,
     "@logic": [
@@ -261,14 +282,138 @@
       ["$block", 0, ["$not", ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
     ]
   },
-  
-   // Persistence of "have" (possession) from W1  to W2 [cite: 36, 148]
+  // W1 -> W2
   {
     "@confidence": 0.99,
     "@logic": [
       ["-have", "?:Y", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
       ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
       ["$block", 0, ["$not", ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W2", "?:L", "?:K"]]]]
+    ]
+  },
+  // W2 -> W3
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-have", "?:Y", "?:X", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
+      ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W3", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W3", "?:L", "?:K"]]]]
+    ]
+  },
+
+  // Default persistence of "has property" across world states
+  // W0 -> W1
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-has property", "?:P", "?:X", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
+      ["has property", "?:P", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has property", "?:P", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
+    ]
+  },
+  // W1 -> W2
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-has property", "?:P", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
+      ["has property", "?:P", "?:X", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has property", "?:P", "?:X", ["$ctxt", "?:T", "W2", "?:L", "?:K"]]]]
+    ]
+  },
+  // W2 -> W3
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-has property", "?:P", "?:X", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
+      ["has property", "?:P", "?:X", ["$ctxt", "?:T", "W3", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has property", "?:P", "?:X", ["$ctxt", "?:T", "W3", "?:L", "?:K"]]]]
+    ]
+  },
+
+  // Default persistence of "has degree property" across world states
+  // W0 -> W1
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
+      ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
+    ]
+  },
+  // W1 -> W2
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
+      ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W2", "?:L", "?:K"]]]]
+    ]
+  },
+  // W2 -> W3
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
+      ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W3", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W3", "?:L", "?:K"]]]]
+    ]
+  },
+
+  // Default persistence of "can" across world states
+  // W0 -> W1
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-can", "?:X", "?:A", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
+      ["can", "?:X", "?:A", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["can", "?:X", "?:A", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
+    ]
+  },
+  // W1 -> W2
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-can", "?:X", "?:A", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
+      ["can", "?:X", "?:A", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["can", "?:X", "?:A", ["$ctxt", "?:T", "W2", "?:L", "?:K"]]]]
+    ]
+  },
+  // W2 -> W3
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-can", "?:X", "?:A", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
+      ["can", "?:X", "?:A", ["$ctxt", "?:T", "W3", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["can", "?:X", "?:A", ["$ctxt", "?:T", "W3", "?:L", "?:K"]]]]
+    ]
+  },
+
+  // Default persistence of "has part" across world states
+  // W0 -> W1
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-has part", "?:X", "?:Y", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
+      ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
+    ]
+  },
+  // W1 -> W2
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-has part", "?:X", "?:Y", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
+      ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "W2", "?:L", "?:K"]]]]
+    ]
+  },
+  // W2 -> W3
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-has part", "?:X", "?:Y", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
+      ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "W3", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "W3", "?:L", "?:K"]]]]
     ]
   },
 

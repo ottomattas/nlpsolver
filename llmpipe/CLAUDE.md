@@ -25,12 +25,20 @@ python3 run_pretty_check.py > logconvert_check.txt
 ### solve.py flags
 
 ```
+Output level (hierarchy — each includes previous levels):
+-explain         Show English proof explanation
+-logic           + simplified text, sentences-to-clauses, logic in proof steps
+-details         + stage-1/2 JSON, prover input/output JSON
+-debug           + raw LLM responses, prover params, full trace
+
+Output format:
+-json            Show logic as raw JSON instead of traditional syntax
+-jsonlogic       Shortcut for -logic -json
+-gkin FILE       Save GK prover input to FILE (with GK command as comment)
+
+Other:
 -llm NAME        LLM provider: gpt, claude, gemini, or deepseek
 -version VER     Model version string, e.g. claude-sonnet-4-6
--debug           Show full pipeline details
--logic           Show parsed logic clauses
--explain         Show English proof explanation
--prover          Show raw prover input/output
 -nollmcache      Disable LLM response caching for this run
 -cache           Enable GK prover result caching (off by default)
 -nosolve         Parse to logic only, do not run the prover
@@ -134,8 +142,9 @@ Full solver data: http://logictools.org/data/nlpsolver_data.tar.gz
 When the user says **"Debug case N"** (where N is a case number in `testfixlog.txt`):
 
 1. **Run `python3 examine.py N`** — this looks up Case N in `testfixlog.txt`, runs all five
-   solvers (gemini, claude, gpt, deepseek, udp) in parallel, and writes logs to `eN_gemini.txt`,
-   `eN_claude.txt`, `eN_gpt.txt`, `eN_deepseek.txt`, `eN_udp.txt`.
+   solvers (gemini, claude, gpt, deepseek, udp) in parallel with `-debug -json`, and writes
+   logs to `eN_gemini.txt`, `eN_claude.txt`, `eN_gpt.txt`, `eN_deepseek.txt`, `eN_udp.txt`.
+   The `-json` flag ensures logic is shown in raw JSON for cross-referencing with prover I/O.
 
 2. **Read `testfixlog.txt` entry for Case N** — note the `Input:` text and `Expected:` value.
 

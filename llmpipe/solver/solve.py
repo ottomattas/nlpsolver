@@ -202,8 +202,9 @@ def english_to_answer(text, options=None):
   if options and options.get("prover_rawresult_flag"):
     return proof_result
 
-  # -details+: show prover result JSON (once — prover.py no longer prints it)
-  if show_details:
+  # -details+ or -prover: show prover result JSON
+  show_prover = options and options.get("show_prover_flag")
+  if show_details or show_prover:
     print("\n=== prover result (JSON) ===\n")
     print(proof_result)
 
@@ -262,6 +263,7 @@ def _parse_cmd_line():
       opts["show_details_flag"] = True
       opts["show_logic_flag"] = True
       opts["prover_explain_flag"] = True
+      opts["json_flag"] = True
       llmparse.debug = True
       llmcall.debug = True
     elif el in ["-details", "--details"]:
@@ -355,6 +357,12 @@ def _parse_cmd_line():
         sys.exit(0)
       opts["prover_print"] = n
       skippos = 1
+    elif el in ["-gkin", "--gkin"]:
+      if elpos + 1 >= len(params):
+        print("-gkin takes a file name as a parameter")
+        sys.exit(0)
+      opts["gkin_file"] = params[elpos + 1]
+      skippos = 1
     elif el in ["-strategy", "--strategy"]:
       if elpos + 1 >= len(params):
         print("-strategy takes a file name as a parameter")
@@ -405,13 +413,21 @@ helptext = """call solve.py with a natural language text like
 "Elephants are big. John is an elephant. Who is big?"
 and/or a filename as an argument, with optional keys:
 
-basic keys:
- -explain   : give an English explanation/proof of the answer
- -logic     : show the parsed logic
- -debug     : show the details of the whole process
- -cache     : cache GK prover results (prover cache is OFF by default)
- -nosolve   : parse to logic, show prover input, but do not run the prover
+output level (hierarchy — each level includes everything from previous levels):
+ -explain   : show English proof explanation
+ -logic     : show simplified ASU texts, sentences-mapped-to-clauses, logic under proof steps
+ -details   : show stage-1/2 JSON, prover input/output JSON
+ -debug     : show raw LLM responses, prover params, full pipeline trace
+
+output format:
+ -json      : show all logic in raw JSON instead of traditional pred(arg,...) syntax
+ -jsonlogic : shortcut for -logic -json
+ -gkin FILE : save the GK prover input to FILE (with the GK command as a comment)
+
+other:
+ -nosolve   : parse to logic only, do not run the prover
  -rawresult : output only the raw JSON result from the prover
+ -cache     : cache GK prover results (prover cache is OFF by default)
  -help      : output this helptext
 
 LLM caching (ON by default — cached per provider, version, all parameters and input):
@@ -423,22 +439,21 @@ semantic normalisation (ON by default):
 
 LLM selection:
  -llm NAME    : LLM provider: gpt, claude, gemini, or deepseek (default: from llmcall.py config)
- -version VER : model version string, e.g. claude-sonnet-4-6, gpt-4o
+ -version VER : model version string, e.g. claude-sonnet-4-6, gpt-5.1
  -think       : enable medium reasoning/thinking mode (GPT: reasoning_effort=medium;
                 Claude: extended thinking; Gemini: requires 2.5+ model;
                 DeepSeek: switches to deepseek-reasoner)
 
 controlling the prover:
  -seconds N    : give N seconds for proof search (default 2)
- -prover       : show prover JSON input/output
- -rawresult    : output only the raw JSON result from the prover
+ -prover       : show prover params (also included in -debug)
  -axioms file1.js ... fileN.js : use these files as axioms instead of axioms_std.js
  -strategy file.js : use the given JSON strategy file instead of the default
  -printlevel N : use N>10 to see more of the search process (10 is default, try 12)
  -usekb        : use background knowledge in a shared-memory KB
  -nokb         : do not use a shared memory knowledge base
 
-logic representation options (for future use):
+logic representation options:
  -simple          : simplified representation: no context, no exceptions, simple properties
     -nocontext       : no context (time, situation) information in logic
     -noexceptions    : no exception (blocker) information in logic

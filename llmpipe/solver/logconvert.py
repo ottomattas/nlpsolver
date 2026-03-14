@@ -95,6 +95,39 @@ _CTXT_ELIGIBLE = frozenset({
   "typical", "typically",
 })
 
+# Descriptive predicates in questions: these identify/describe the referent
+# (relative clauses, type identification, event descriptions) and should use
+# free-variable world in $ctxt so they can match assertions in any world state.
+_DESC_PREDS = frozenset({
+  "isa",
+  "has type", "has actor", "has target", "has time",
+  "has location", "has instrument", "has manner", "has direction",
+  "typical", "typically",
+})
+
+# Extended set: also treat property predicates as descriptive when the question
+# has a main relational predicate (have, can, is rel2, etc.).  In that case
+# properties like "red" in "the red car" are restrictive noun modifiers, not
+# the matrix predication.
+_DESC_PREDS_WITH_PROPS = _DESC_PREDS | frozenset({
+  "has property", "has degree property",
+})
+
+# Stative predicates: describe persistent states rather than momentary events.
+# In $defq questions, stative matrix predicates get free-var world because the
+# question asks "does this state hold in some past world?" — not "does it hold
+# specifically in W1?".  Dynamic event predicates keep the query's world.
+_STATIVE_MATRIX_PREDS = frozenset({
+  "have", "has part", "can",
+})
+
+# Predicates that signal a "main relation" in a question formula.  When any of
+# these appears as a top-level conjunct, property predicates are demoted to
+# descriptive (they identify the referent, not the queried predication).
+_MAIN_RELATION_PREDS = frozenset({
+  "have", "can", "has part", "is rel2", "has degree rel2",
+})
+
 
 # ======== degree presupposition injection ========
 
@@ -126,6 +159,10 @@ def _inject_degree_presuppositions(tree):
     positive[3] = "none"     # ["has degree property", P, E, "none", C]
     return ["and", positive, tree]
   return tree
+
+
+# Stative event rewriting is in semnormalize.py; import the entry point.
+from semnormalize import rewrite_stative_events as _rewrite_stative_events
 
 
 # ======== main entry point ========
@@ -176,7 +213,13 @@ def _build_entity_category_clauses(s1_json, skip_entities=frozenset()):
   For each unique concrete entity with a "category" field in any ASU, emits:
     {"@name": "entity_S<N>", "@logic": ["isa", category, entity_id]}
   where S<N> is the unit_id of the first ASU in which the entity appears.
-  Deduplicates by entity_id so each entity produces at most one clause.
+
+  Additionally, when the entity id has a lowercase base word that differs from
+  the category, also emits isa(base, entity_id).  For example, "man 1" with
+  category "person" produces both isa(person, man 1) and isa(man, man 1).
+  This ensures the descriptive type word is available for query matching.
+
+  Deduplicates by entity_id so each entity produces at most one set of clauses.
   Entities in *skip_entities* are skipped (they already have an isa in
   the Stage-2 logic).
   """
@@ -203,10 +246,19 @@ def _build_entity_category_clauses(s1_json, skip_entities=frozenset()):
         if eid in seen:
           continue
         seen.add(eid)
-        if eid in skip_entities:
-          continue
-        clauses.append({"@name": "entity_" + uid,
-                        "@logic": ["isa", category, eid]})
+        name = "entity_" + uid
+        # Category isa (e.g. isa(person, man 1)) — skip if Stage-2 already has it.
+        if eid not in skip_entities:
+          clauses.append({"@name": name, "@logic": ["isa", category, eid]})
+        # Base-word isa (e.g. isa(man, man 1)) — always add when the base
+        # is a lowercase type word different from the category, even if
+        # skip_entities contains the entity (Stage-2 may have isa(person,...)
+        # but not isa(man,...)).
+        parts = eid.rsplit(" ", 1)
+        if len(parts) == 2 and parts[1].isdigit():
+          base = parts[0]
+          if base[:1].islower() and base.lower() != category.lower():
+            clauses.append({"@name": name, "@logic": ["isa", base, eid]})
   return clauses
 
 
@@ -233,6 +285,11 @@ def rawlogic_convert(logic, s1_json=None):
   # "not very X" presupposes "X", so expand ["not",["has degree property",P,E,"high",C]]
   # into ["and", ["has degree property",P,E,"none",C], ["not",["has degree property",P,E,"high",C]]]
   logic = _inject_degree_presuppositions(logic)
+
+  # Rewrite event-reified stative verbs (have, like, own, ...) to direct
+  # predicates.  LLMs sometimes use Davidsonian event encoding for statives;
+  # the prover needs the direct predicate form.
+  logic = _rewrite_stative_events(logic)
 
   if logic[0] == "@id":
     items = [logic]
@@ -395,6 +452,42 @@ def _negate_consequent(formula):
 # ======== package extraction ========
 
 
+def _question_has_main_relation(formula):
+  """Return True if the question formula contains a main relational predicate.
+
+  Scans top-level conjuncts (not inside exists) for have, can, is_rel2, etc.
+  When True, property predicates (has_property, has_degree_property) in the
+  question are restrictive modifiers (descriptive), not the matrix predication.
+  """
+  # Unwrap question/ask wrappers to get the body.
+  body = formula
+  if isinstance(body, list) and body:
+    if body[0] == "question" and len(body) >= 2:
+      body = body[1]
+    elif body[0] == "ask" and len(body) >= 3:
+      body = body[2]
+  if not isinstance(body, list) or not body:
+    return False
+  # Collect top-level conjuncts.
+  if body[0] == "and":
+    conjuncts = body[1:]
+  else:
+    conjuncts = [body]
+  for c in conjuncts:
+    if not isinstance(c, list) or not c or not isinstance(c[0], str):
+      continue
+    pred = c[0]
+    base = pred[1:] if pred.startswith("-") else pred
+    # Direct main relation predicate (have, can, is_rel2, etc.)
+    if base in _MAIN_RELATION_PREDS:
+      return True
+    # Event-based predication: an exists block indicates a reified event
+    # (e.g. "bought", "ate") which is a main predication, not just a modifier.
+    if base == "exists" and len(c) >= 3:
+      return True
+  return False
+
+
 def _process_question(formula, name):
   """Handle question formulas (ask / yes-no) → (result_list, is_where_question).
 
@@ -539,27 +632,41 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None):
 
   # Inject $ctxt into @logic entries (not @question entries).
   if not _g_options.get("nocontext_flag", False):
+    loc_term = location if location is not None else _fresh_fv()
+    kn_term  = knower  if knower  is not None else _fresh_fv()
     if _is_rule_formula(formula):
       situation  = _fresh_fv()
       tense_term = _fresh_fv()   # rules are tense-independent
+      ctxt_template = ["$ctxt", None, situation, loc_term, kn_term]
+      _inject_ctxt_into_objs(result, ctxt_template, tense_term)
     elif is_question:
       if is_where_question:
         # Where-query biconditionals must be world-agnostic: location facts
         # may come from any world state (e.g. W0 travel facts vs W2 query).
         situation  = _fresh_fv()
         tense_term = _fresh_fv()
+        ctxt_template = ["$ctxt", None, situation, loc_term, kn_term]
+        _inject_ctxt_into_objs(result, ctxt_template, tense_term)
       else:
-        # For questions: world from Stage-1 pre_state (or free var); tense from Stage-1 time.
-        situation  = world if world is not None else _fresh_fv()
-        tense_term = tense if tense is not None else _fresh_fv()
+        # Non-where questions: matrix predicates use the query's world;
+        # descriptive predicates (isa, event atoms from relative clauses)
+        # use free-var world so they can match assertions in any world state.
+        # When a main relation (have, can, is_rel2) is present, property
+        # predicates are also descriptive (restrictive noun modifiers).
+        matrix_world = world if world is not None else _fresh_fv()
+        desc_world   = _fresh_fv()
+        tense_term   = tense if tense is not None else _fresh_fv()
+        ctxt_matrix = ["$ctxt", None, matrix_world, loc_term, kn_term]
+        ctxt_desc   = ["$ctxt", None, desc_world,   loc_term, kn_term]
+        props_desc = _question_has_main_relation(formula)
+        _inject_ctxt_question(result, ctxt_matrix, ctxt_desc, tense_term,
+                              props_are_desc=props_desc)
     else:
       # Situational facts: world from ["holds",W,F]; tense from Stage-1 time field.
       situation  = world if world is not None else _fresh_fv()
       tense_term = tense if tense is not None else "present"
-    loc_term = location if location is not None else _fresh_fv()
-    kn_term  = knower  if knower  is not None else _fresh_fv()
-    ctxt_template = ["$ctxt", None, situation, loc_term, kn_term]
-    _inject_ctxt_into_objs(result, ctxt_template, tense_term)
+      ctxt_template = ["$ctxt", None, situation, loc_term, kn_term]
+      _inject_ctxt_into_objs(result, ctxt_template, tense_term)
 
   return result
 
@@ -851,6 +958,75 @@ def _inject_ctxt_into_objs(objs, ctxt_template, default_tense):
           obj["@logic"] = _inject_ctxt_atom(clause, ctxt_template, default_tense)
     if "@question" in obj:
       obj["@question"] = _inject_ctxt_atom(obj["@question"], ctxt_template, default_tense)
+
+
+def _is_desc_pred(atom, desc_set):
+  """True if atom's predicate is in the given descriptive set."""
+  if not isinstance(atom, list) or not atom:
+    return False
+  pred = atom[0]
+  if not isinstance(pred, str):
+    return False
+  base = pred[1:] if pred.startswith("-") else pred
+  return base in desc_set
+
+
+def _is_stative_matrix(atom):
+  """True if atom's predicate is a stative matrix predicate (have, can, has part).
+
+  Stative matrix predicates describe persistent states, so in $defq questions
+  they should use free-var world rather than the query's concrete world.
+  """
+  if not isinstance(atom, list) or not atom:
+    return False
+  pred = atom[0]
+  if not isinstance(pred, str):
+    return False
+  base = pred[1:] if pred.startswith("-") else pred
+  return base in _STATIVE_MATRIX_PREDS
+
+
+def _inject_ctxt_question(objs, ctxt_matrix, ctxt_desc, default_tense,
+                          props_are_desc=False):
+  """Inject $ctxt into question clause dicts with three-way world dispatch.
+
+  Three categories of atoms in $defq questions:
+    1. Descriptive (isa, event atoms, properties when main relation present):
+       each gets its own independent fresh free-var world.
+    2. Stative matrix (have, can, has part): free-var world — persistent states
+       don't need concrete world anchoring.
+    3. Dynamic matrix (is_rel2, has_degree_rel2, or properties when no main
+       relation): keep the query's concrete world.
+
+  @question entries always get ctxt_matrix.
+  """
+  desc_set = _DESC_PREDS_WITH_PROPS if props_are_desc else _DESC_PREDS
+  def _fresh_world_tmpl():
+    """Fresh ctxt template with independent world var."""
+    return ["$ctxt", ctxt_desc[1], _fresh_fv(), ctxt_desc[3], ctxt_desc[4]]
+  def _pick_tmpl(atom):
+    if _is_desc_pred(atom, desc_set):
+      return _fresh_world_tmpl()
+    if _is_stative_matrix(atom):
+      return _fresh_world_tmpl()
+    return ctxt_matrix
+  for obj in objs:
+    if not isinstance(obj, dict):
+      continue
+    if "@logic" in obj:
+      clause = obj["@logic"]
+      if isinstance(clause, list) and clause:
+        if isinstance(clause[0], list):
+          # Disjunctive clause: per-atom dispatch
+          obj["@logic"] = [
+            _inject_ctxt_atom(atom, _pick_tmpl(atom), default_tense)
+            for atom in clause
+          ]
+        else:
+          # Single atom
+          obj["@logic"] = _inject_ctxt_atom(clause, _pick_tmpl(clause), default_tense)
+    if "@question" in obj:
+      obj["@question"] = _inject_ctxt_atom(obj["@question"], ctxt_matrix, default_tense)
 
 
 # ======== RELCLASS coercion ========

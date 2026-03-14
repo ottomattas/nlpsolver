@@ -123,4 +123,25 @@ def looks_like_verb(rel):
   return w in VERB_RELS
 
 
+# Stative verbs that should use direct predicates, not Davidsonian events.
+# Maps verb -> (predicate_name, relation_name_or_None).
+#   ("have", None)       → ["have", ACTOR, TARGET]
+#   ("is rel2", "like")  → ["is rel2", "like", ACTOR, TARGET]
+STATIVE_TO_PRED = {
+  "have":    ("have", None),
+  "own":     ("have", None),
+  "like":    ("is rel2", "like"),
+  "love":    ("is rel2", "love"),
+  "hate":    ("is rel2", "hate"),
+  "fear":    ("is rel2", "fear"),
+  "trust":   ("is rel2", "trust"),
+  "need":    ("is rel2", "need"),
+  "want":    ("is rel2", "want"),
+  "prefer":  ("is rel2", "prefer"),
+  "admire":  ("is rel2", "admire"),
+  "envy":    ("is rel2", "envy"),
+  "respect": ("is rel2", "respect"),
+}
+
+
 # =========== the end ==========
