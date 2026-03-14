@@ -96,6 +96,38 @@ _CTXT_ELIGIBLE = frozenset({
 })
 
 
+# ======== degree presupposition injection ========
+
+def _inject_degree_presuppositions(tree):
+  """Expand negated high-degree properties to include a presupposed positive assertion.
+
+  Recursively walks *tree* (the raw Stage-2 JSON) and replaces every occurrence of
+    ["not", ["has degree property", P, E, "high", C]]
+  with
+    ["and", ["has degree property", P, E, "none", C],
+            ["not", ["has degree property", P, E, "high", C]]]
+
+  "John is not very big" presupposes that John IS big (at the unmarked/none degree).
+  The LLM pipelines only emit the negation; this adds the implicit positive assertion.
+  """
+  if not isinstance(tree, list) or len(tree) == 0:
+    return tree
+  # Recurse into children first (bottom-up).
+  tree = [_inject_degree_presuppositions(child) for child in tree]
+  # Check for the target pattern.
+  if (len(tree) == 2
+      and tree[0] == "not"
+      and isinstance(tree[1], list)
+      and len(tree[1]) >= 4
+      and tree[1][0] == "has degree property"
+      and tree[1][3] == "high"):
+    inner = tree[1]          # ["has degree property", P, E, "high", C]
+    positive = list(inner)
+    positive[3] = "none"     # ["has degree property", P, E, "none", C]
+    return ["and", positive, tree]
+  return tree
+
+
 # ======== main entry point ========
 
 def _build_asu_index(s1_json):
@@ -118,13 +150,35 @@ def _build_asu_index(s1_json):
   return index
 
 
-def _build_entity_category_clauses(s1_json):
+def _collect_isa_entities(tree):
+  """Return the set of entity IDs that appear in ["isa", class, entity_id] in *tree*.
+
+  Recursively walks the raw Stage-2 JSON to find all positive isa atoms.
+  Used to avoid emitting redundant entity category clauses when the Stage-2
+  logic already contains an isa for the same entity.
+  """
+  found = set()
+  if not isinstance(tree, list) or len(tree) == 0:
+    return found
+  if (len(tree) == 3
+      and tree[0] == "isa"
+      and isinstance(tree[2], str)):
+    found.add(tree[2])
+  for child in tree:
+    if isinstance(child, list):
+      found |= _collect_isa_entities(child)
+  return found
+
+
+def _build_entity_category_clauses(s1_json, skip_entities=frozenset()):
   """Build isa clauses for concrete entities that carry a category annotation.
 
   For each unique concrete entity with a "category" field in any ASU, emits:
     {"@name": "entity_S<N>", "@logic": ["isa", category, entity_id]}
   where S<N> is the unit_id of the first ASU in which the entity appears.
   Deduplicates by entity_id so each entity produces at most one clause.
+  Entities in *skip_entities* are skipped (they already have an isa in
+  the Stage-2 logic).
   """
   if not s1_json or not isinstance(s1_json, list):
     return []
@@ -149,6 +203,8 @@ def _build_entity_category_clauses(s1_json):
         if eid in seen:
           continue
         seen.add(eid)
+        if eid in skip_entities:
+          continue
         clauses.append({"@name": "entity_" + uid,
                         "@logic": ["isa", category, eid]})
   return clauses
@@ -173,6 +229,11 @@ def rawlogic_convert(logic, s1_json=None):
   if not logic or not isinstance(logic, list):
     return None
 
+  # Inject degree presuppositions before any other processing:
+  # "not very X" presupposes "X", so expand ["not",["has degree property",P,E,"high",C]]
+  # into ["and", ["has degree property",P,E,"none",C], ["not",["has degree property",P,E,"high",C]]]
+  logic = _inject_degree_presuppositions(logic)
+
   if logic[0] == "@id":
     items = [logic]
   elif logic[0] == "and":
@@ -184,8 +245,10 @@ def rawlogic_convert(logic, s1_json=None):
   asu_index = _build_asu_index(s1_json)
 
   # Build entity category isa facts from Stage-1 entity annotations.
-  # These are prepended to the clause list so the prover sees them as given facts.
-  entity_cat_clauses = _build_entity_category_clauses(s1_json)
+  # Skip entities that already have an isa in the Stage-2 logic to avoid
+  # redundant or potentially conflicting category assertions.
+  s2_isa_entities = _collect_isa_entities(logic)
+  entity_cat_clauses = _build_entity_category_clauses(s1_json, skip_entities=s2_isa_entities)
 
   # Build population facts by scanning the raw stage-2 input first.
   pop_facts = _populate_clauses(items)
@@ -220,8 +283,8 @@ def rawlogic_convert(logic, s1_json=None):
   # Inject $ctxt into population and subsumption facts (free-variable rules).
   if not _g_options.get("nocontext_flag", False):
     for fact in background:
-      ctxt = ["$ctxt", _fresh_fv(), _fresh_fv(), _fresh_fv(), _fresh_fv()]
-      _inject_ctxt_into_objs([fact], ctxt)
+      ctxt_template = ["$ctxt", None, _fresh_fv(), _fresh_fv(), _fresh_fv()]
+      _inject_ctxt_into_objs([fact], ctxt_template, _fresh_fv())
 
   # Infer have(Y,E,CT) from possessive is_rel2(T+" of",E,Y,CT) + isa(T,E) pairs.
   _add_possessive_have(result)
@@ -332,6 +395,104 @@ def _negate_consequent(formula):
 
 # ======== package extraction ========
 
+
+def _process_question(formula, name):
+  """Handle question formulas (ask / yes-no) → (result_list, is_where_question).
+
+  Returns (None, False) when the formula produces no output (caller should return []).
+  """
+  is_where_question = False
+  # Distinguish wh-questions (["ask", var, body]) from yes/no questions.
+  if isinstance(formula, list) and len(formula) >= 3 and formula[0] == "ask":
+    ask_var = str(formula[1])
+    body    = formula[2]
+    # "Where is X?" pattern: body contains ["is rel2", <meta-pred>, entity, ask_var]
+    where_atom = find_where_atom(body, ask_var)
+    if where_atom is not None:
+      entity = where_atom[2]
+      atom_pred = where_atom[1]
+      # Use specific prep when query uses a concrete spatial preposition;
+      # use all preps for meta-predicates like "located in".
+      specific_prep = atom_pred if atom_pred in WHERE_SPATIAL_PREPS else None
+      # When the entity is a stage-2 variable (e.g. "E" from an event),
+      # build_where_question would generate an over-broad biconditional
+      # matching ANY event's location.  Instead, use build_defq_question
+      # which preserves all constraints from the original body.
+      entity_is_s2var = isinstance(entity, str) and bool(S2_VAR_RE.match(entity))
+      if specific_prep and entity_is_s2var:
+        result = build_defq_question(name, ask_var, body, where_prep=specific_prep)
+      else:
+        result = build_where_question(name, entity, ask_var, specific_prep=specific_prep)
+      is_where_question = True
+    elif is_simple_question_formula(body):
+      # Single atom with ≤1 variable: direct @question, no $defq wrapper.
+      free_vars_in_body = sorted(collect_body_free_vars(body))
+      varmap = {ask_var: "?:" + ask_var}
+      varmap.update({v: "?:" + v for v in free_vars_in_body})
+      flat = flatten_q_atoms(body, varmap)
+      if not flat:
+        return None, False
+      q_formula = flat[0] if len(flat) == 1 else [["and"] + flat]
+      result = [{"@name": name, "@question": q_formula, "@askvars": 1}]
+    else:
+      # Complex case: wrap in $defq biconditional.
+      # Detect has_location(E, ask_var) → encode "in" as the preposition.
+      where_prep = find_haslocation_prep(body, ask_var)
+      result = build_defq_question(name, ask_var, body, where_prep=where_prep)
+      if where_prep:
+        is_where_question = True
+  else:
+    # Yes/no question.
+    # When $ctxt is active, always use $defq so the @question atom is the
+    # machinery literal ["$defq0"] (no free variables → GK returns plain
+    # `true` rather than `$ans(W0,…)` which confuses answer extraction).
+    if is_simple_question_formula(formula) and _g_options.get("nocontext_flag", False):
+      # Direct @question only when $ctxt is disabled.
+      free_vars_in_formula = sorted(collect_body_free_vars(formula))
+      varmap = {v: "?:" + v for v in free_vars_in_formula}
+      flat = flatten_q_atoms(formula, varmap)
+      if not flat:
+        return None, False
+      q_formula = flat[0] if len(flat) == 1 else [["and"] + flat]
+      result = [{"@name": name, "@question": q_formula}]
+    else:
+      # Complex formula, or: simple but $ctxt active → $defq biconditional.
+      # Fix contradictory ["and", ["not", A], A] that LLM generates for
+      # "No X is Y?" questions — simplify to just ["not", A].
+      formula = simplify_contradictory_and(formula)
+      result = build_defq_question(name, None, formula)
+  return result, is_where_question
+
+
+def _process_assertion(formula, name, confidence):
+  """Handle assertion formulas → list of GK clause dicts."""
+  # Pre-clausification polarity flip for low-confidence negative-leaning rules.
+  # Stage-1 probability p ∈ (0, 0.5) → negate the consequent BEFORE clausify
+  # so the negation is encoded in the formula structure (avoids Skolem companion
+  # clause split that the post-clausification approach suffered from).
+  if confidence is not None and 0 < confidence < 0.5:
+    formula = _negate_consequent(formula)
+    confidence = round(1.0 - 2.0 * confidence, 4)
+  elif confidence is not None and 0.5 < confidence < 1.0:
+    confidence = round(2.0 * confidence - 1.0, 4)
+  elif confidence == 0.5:
+    confidence = 0   # exactly 0.5 → abs(2*0.5-1)=0; prover filters it out → "no information"
+  # Clausify the formula.
+  clauses = clausify(formula)
+  result = []
+  for clause in clauses:
+    # Confidence 0.0 means 50% probability: abs(2*0.5-1)=0, no evidence either
+    # way.  GK rejects @confidence values of exactly 0, so skip the clause
+    # entirely — the prover will return "no information".
+    if confidence == 0.0:
+      continue
+    obj = {"@name": name, "@logic": clause}
+    if confidence is not None:
+      obj["@confidence"] = confidence
+    result.append(obj)
+  return result
+
+
 def _convert_id_package(item, asu_index=None, uid_suffix=None):
   """Process ["@id", sid, PACKAGE] → list of GK clause dicts."""
   if not isinstance(item, list) or len(item) < 3 or item[0] != "@id":
@@ -363,92 +524,19 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None):
       if s1_loc is not None:
         location = s1_loc
 
+  # Strip @time wrappers and annotate leaf atoms with $tense sentinels.
+  # Pass the ASU-level tense as the default; atoms inside @time wrappers
+  # will get their specific tense instead.
+  if not _g_options.get("nocontext_flag", False):
+    formula = _strip_time_wrappers(formula, tense)
+
   is_where_question = False
   if is_question:
-    # Distinguish wh-questions (["ask", var, body]) from yes/no questions.
-    if isinstance(formula, list) and len(formula) >= 3 and formula[0] == "ask":
-      ask_var = str(formula[1])
-      body    = formula[2]
-      # "Where is X?" pattern: body contains ["is rel2", <meta-pred>, entity, ask_var]
-      where_atom = find_where_atom(body, ask_var)
-      if where_atom is not None:
-        entity = where_atom[2]
-        atom_pred = where_atom[1]
-        # Use specific prep when query uses a concrete spatial preposition;
-        # use all preps for meta-predicates like "located in".
-        specific_prep = atom_pred if atom_pred in WHERE_SPATIAL_PREPS else None
-        # When the entity is a stage-2 variable (e.g. "E" from an event),
-        # build_where_question would generate an over-broad biconditional
-        # matching ANY event's location.  Instead, use build_defq_question
-        # which preserves all constraints from the original body.
-        entity_is_s2var = isinstance(entity, str) and bool(S2_VAR_RE.match(entity))
-        if specific_prep and entity_is_s2var:
-          result = build_defq_question(name, ask_var, body, where_prep=specific_prep)
-        else:
-          result = build_where_question(name, entity, ask_var, specific_prep=specific_prep)
-        is_where_question = True
-      elif is_simple_question_formula(body):
-        # Single atom with ≤1 variable: direct @question, no $defq wrapper.
-        free_vars_in_body = sorted(collect_body_free_vars(body))
-        varmap = {ask_var: "?:" + ask_var}
-        varmap.update({v: "?:" + v for v in free_vars_in_body})
-        flat = flatten_q_atoms(body, varmap)
-        if not flat:
-          return []
-        q_formula = flat[0] if len(flat) == 1 else [["and"] + flat]
-        result = [{"@name": name, "@question": q_formula, "@askvars": 1}]
-      else:
-        # Complex case: wrap in $defq biconditional.
-        # Detect has_location(E, ask_var) → encode "in" as the preposition.
-        where_prep = find_haslocation_prep(body, ask_var)
-        result = build_defq_question(name, ask_var, body, where_prep=where_prep)
-        if where_prep:
-          is_where_question = True
-    else:
-      # Yes/no question.
-      # When $ctxt is active, always use $defq so the @question atom is the
-      # machinery literal ["$defq0"] (no free variables → GK returns plain
-      # `true` rather than `$ans(W0,…)` which confuses answer extraction).
-      if is_simple_question_formula(formula) and _g_options.get("nocontext_flag", False):
-        # Direct @question only when $ctxt is disabled.
-        free_vars_in_formula = sorted(collect_body_free_vars(formula))
-        varmap = {v: "?:" + v for v in free_vars_in_formula}
-        flat = flatten_q_atoms(formula, varmap)
-        if not flat:
-          return []
-        q_formula = flat[0] if len(flat) == 1 else [["and"] + flat]
-        result = [{"@name": name, "@question": q_formula}]
-      else:
-        # Complex formula, or: simple but $ctxt active → $defq biconditional.
-        # Fix contradictory ["and", ["not", A], A] that LLM generates for
-        # "No X is Y?" questions — simplify to just ["not", A].
-        formula = simplify_contradictory_and(formula)
-        result = build_defq_question(name, None, formula)
+    result, is_where_question = _process_question(formula, name)
+    if result is None:
+      return []
   else:
-    # Pre-clausification polarity flip for low-confidence negative-leaning rules.
-    # Stage-1 probability p ∈ (0, 0.5) → negate the consequent BEFORE clausify
-    # so the negation is encoded in the formula structure (avoids Skolem companion
-    # clause split that the post-clausification approach suffered from).
-    if confidence is not None and 0 < confidence < 0.5:
-      formula = _negate_consequent(formula)
-      confidence = round(1.0 - 2.0 * confidence, 4)
-    elif confidence is not None and 0.5 < confidence < 1.0:
-      confidence = round(2.0 * confidence - 1.0, 4)
-    elif confidence == 0.5:
-      confidence = 0   # exactly 0.5 → abs(2*0.5-1)=0; prover filters it out → "no information"
-    # Clausify the formula.
-    clauses = clausify(formula)
-    result = []
-    for clause in clauses:
-      # Confidence 0.0 means 50% probability: abs(2*0.5-1)=0, no evidence either
-      # way.  GK rejects @confidence values of exactly 0, so skip the clause
-      # entirely — the prover will return "no information".
-      if confidence == 0.0:
-        continue
-      obj = {"@name": name, "@logic": clause}
-      if confidence is not None:
-        obj["@confidence"] = confidence
-      result.append(obj)
+    result = _process_assertion(formula, name, confidence)
 
   # Inject $ctxt into @logic entries (not @question entries).
   if not _g_options.get("nocontext_flag", False):
@@ -471,8 +559,8 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None):
       tense_term = tense if tense is not None else "present"
     loc_term = location if location is not None else _fresh_fv()
     kn_term  = knower  if knower  is not None else _fresh_fv()
-    ctxt = ["$ctxt", tense_term, situation, loc_term, kn_term]
-    _inject_ctxt_into_objs(result, ctxt)
+    ctxt_template = ["$ctxt", None, situation, loc_term, kn_term]
+    _inject_ctxt_into_objs(result, ctxt_template, tense_term)
 
   return result
 
@@ -630,6 +718,55 @@ def _build_compound_subsumption(items):
   return result
 
 
+# ======== @time annotation stripping ========
+
+# Connectives that _strip_time_wrappers recurses into (passing tense down).
+_TIME_RECURSE_OPS = frozenset({
+  "and", "or", "not", "implies", "equivalent", "xor", "normally", "-normally",
+})
+
+def _strip_time_wrappers(frm, current_tense):
+  """Strip @time wrappers and annotate leaf predicates with $tense sentinels.
+
+  Recursively walks the formula tree:
+    - ["@time", T, body] -> recurse into body with current_tense = T
+    - Connectives/quantifiers -> recurse into children passing current_tense
+    - Leaf atom with base predicate in _CTXT_ELIGIBLE -> append ["$tense", current_tense]
+    - Everything else -> return unchanged
+
+  current_tense: the active tense at this point in the tree (from @time wrapper
+    or the ASU-level default).  May be a string ("past", "present", "future",
+    "timeless") or None (meaning no tense annotation — will use default at
+    injection time).
+  """
+  if not isinstance(frm, list) or not frm:
+    return frm
+  op = frm[0]
+  if not isinstance(op, str):
+    return frm
+
+  # @time wrapper: extract tense and recurse into body
+  if op == "@time" and len(frm) == 3:
+    tense_val = frm[1]
+    body = frm[2]
+    return _strip_time_wrappers(body, tense_val)
+
+  # Quantifiers: recurse into body (frm[2])
+  if op in ("forall", "exists") and len(frm) == 3:
+    return [op, frm[1], _strip_time_wrappers(frm[2], current_tense)]
+
+  # Connectives: recurse into all children
+  if op in _TIME_RECURSE_OPS:
+    return [op] + [_strip_time_wrappers(child, current_tense) for child in frm[1:]]
+
+  # Leaf atom: tag with $tense sentinel if eligible and tense is known
+  base = op[1:] if op.startswith("-") else op
+  if base in _CTXT_ELIGIBLE and current_tense is not None:
+    return list(frm) + [["$tense", current_tense]]
+
+  return frm
+
+
 # ======== context injection ========
 
 def _fresh_fv():
@@ -648,8 +785,12 @@ def _is_rule_formula(frm):
   return any(_is_rule_formula(el) for el in frm[1:])
 
 
-def _inject_ctxt_atom(atom, ctxt):
-  """Append ctxt as the last argument of an eligible GK atom.
+def _inject_ctxt_atom(atom, ctxt_template, default_tense):
+  """Append a $ctxt term as the last argument of an eligible GK atom.
+
+  Uses per-predicate tense from $tense sentinel if present, otherwise
+  uses default_tense.  ctxt_template is ["$ctxt", None, situation, loc, kn]
+  with tense slot as placeholder.
 
   Handles:
     - ["$block", priority, ["$not", INNER]] — recurses into INNER
@@ -664,35 +805,32 @@ def _inject_ctxt_atom(atom, ctxt):
   base = pred[1:] if pred.startswith("-") else pred
 
   if base == "or":
-    return ["or"] + [_inject_ctxt_atom(sub, ctxt) for sub in atom[1:]]
+    return ["or"] + [_inject_ctxt_atom(sub, ctxt_template, default_tense) for sub in atom[1:]]
 
   if base == "$block" and len(atom) >= 3:
     body = atom[2]
     if isinstance(body, list) and len(body) >= 2 and body[0] == "$not":
-      inner = _inject_ctxt_atom(body[1], ctxt)
+      inner = _inject_ctxt_atom(body[1], ctxt_template, default_tense)
       return [atom[0], atom[1], ["$not", inner]]
     # Negative-head block: body is the positive exception target (no $not wrapper).
-    inner = _inject_ctxt_atom(body, ctxt)
+    inner = _inject_ctxt_atom(body, ctxt_template, default_tense)
     return [atom[0], atom[1], inner]
 
   if base in _CTXT_ELIGIBLE:
-    return list(atom) + [ctxt]
+    # Check for $tense sentinel as last argument
+    args = list(atom)
+    tense = default_tense
+    if (len(args) >= 2 and isinstance(args[-1], list)
+        and len(args[-1]) == 2 and args[-1][0] == "$tense"):
+      tense = args[-1][1]
+      args = args[:-1]  # strip sentinel
+    ctxt = [ctxt_template[0], tense, ctxt_template[2], ctxt_template[3], ctxt_template[4]]
+    return args + [ctxt]
 
   return atom
 
 
-def _inject_ctxt_clause(clause, ctxt):
-  """Inject ctxt into a GK clause (single atom or disjunction of atoms)."""
-  if not isinstance(clause, list) or not clause:
-    return clause
-  if isinstance(clause[0], list):
-    # Disjunctive clause: list of atom-lists
-    return [_inject_ctxt_atom(atom, ctxt) for atom in clause]
-  # Single atom
-  return _inject_ctxt_atom(clause, ctxt)
-
-
-def _inject_ctxt_into_objs(objs, ctxt):
+def _inject_ctxt_into_objs(objs, ctxt_template, default_tense):
   """Inject ctxt into @logic and @question entries of clause dicts (in place).
 
   For @logic: handles single atoms and disjunctive clauses.
@@ -704,9 +842,16 @@ def _inject_ctxt_into_objs(objs, ctxt):
     if not isinstance(obj, dict):
       continue
     if "@logic" in obj:
-      obj["@logic"] = _inject_ctxt_clause(obj["@logic"], ctxt)
+      clause = obj["@logic"]
+      if isinstance(clause, list) and clause:
+        if isinstance(clause[0], list):
+          # Disjunctive clause: list of atom-lists
+          obj["@logic"] = [_inject_ctxt_atom(atom, ctxt_template, default_tense) for atom in clause]
+        else:
+          # Single atom
+          obj["@logic"] = _inject_ctxt_atom(clause, ctxt_template, default_tense)
     if "@question" in obj:
-      obj["@question"] = _inject_ctxt_atom(obj["@question"], ctxt)
+      obj["@question"] = _inject_ctxt_atom(obj["@question"], ctxt_template, default_tense)
 
 
 # ======== RELCLASS coercion ========
@@ -936,10 +1081,10 @@ def _norm_grad_frm(frm):
       if len(frm) >= 6:
         new_atom.append(frm[5])
       return new_atom
-    # Keep as degree property; replace "entity" relclass with a free variable
-    # since "entity" is universally true and carries no useful constraint.
+    # Keep as degree property; replace "entity"/"none" relclass with a free variable
+    # since both mean "no specific comparison class" and carry no useful constraint.
     relclass = frm[4]
-    if relclass == "entity":
+    if relclass in ("entity", "none"):
       new_atom = [frm[0], frm[1], frm[2], frm[3], _fresh_fv()]
       if len(frm) >= 6:
         new_atom.append(frm[5])

@@ -475,23 +475,46 @@ Optional scope:
 Do not assign scope to concrete entities. 
 If a scope is unclear, use "dependent".
 
+== 10. STATE TRACKING ==
 
-==  10. STATE TRACKING ==
+World states represent changes over time.
 
 - Initial state = W0.
-- If explicit change of possession, location, or physical state:
-  - assign next_state (W1, W2, ...)
-- Next ASU inherits pre_state.
-- Do not invent state changes.
+- All ASUs start in W0 unless a state change occurs.
+- Worlds form a single linear timeline: W0, W1, W2, ...
+- Do NOT create branches or parallel worlds.
 
-Create next_state only for explicit change events 
-(buy, give, move, arrive, leave, break, start/stop, become etc).
+Each ASU either:
+- stays in the current world state, or
+- creates the next world state (W1, W2, ...).
 
-Explicit State Inheritance:
+Create next_state ONLY when the text clearly describes a change of state.
 
-If an ASU generates next_state: W_k, the subsequent related ASU 
-must explicitly define pre_state: W_k.
+Typical state changes:
+- possession change (give, take, buy)
+- location change (go, arrive, leave, move)
+- physical change (break, open, close, start, stop, become)
+- narrative events that must occur in sequence
 
+Otherwise keep the same world state.
+
+Do NOT create a new world state for descriptive information about the same entity,
+including:
+- adjectives ("the car is red")
+- relative clauses ("the car which Mike bought")
+- noun modifiers or descriptive expansions.
+
+Examples of SAME world state:
+- "John had a red car which Mike bought."
+- "The car is red and expensive."
+
+Examples of NEW world states:
+- "John had an apple. John gave the apple to Mike. Mike ate the apple."
+- "John arrived, then opened the door."
+
+State inheritance:
+If an ASU creates next_state W_k, the next related ASU uses pre_state W_k.
+Do not invent state changes.
 
 == 11. CONTEXT META-DATA ==
 
@@ -568,6 +591,12 @@ For query ASUs: add "time" only in these specific cases:
 
 Do NOT add "time" to a bare present-tense question ("Is John nice?","Does he run?") 
 
+For query ASUs: apply the same time rules as for situation/real ASUs above,                                                                                                                                      
+with one additional constraint: only add "time" when ALL verbs and predicates
+in the query share the same tense. If the query mixes tenses                                                                                                                                                     
+(e.g., "Is John a strong man whom Eve liked?" combines present "is" with
+past "liked"), omit "time" entirely.
+
 --- location ---
 Must reference an entity ID.
 
@@ -611,6 +640,10 @@ Intensity:
 
 Use "none" when no comparative or superlative is expressed.
 
+When an adjective with high/low intensity is under sentence-level negation ("not very big", "not slightly warm"), 
+keep the original intensity unchanged and keep the negation intact.
+Example: "John is not very big" -> intensity "high" (not "low").   
+
 For relative_class, use the entity type the property is measured relative
 to (e.g. "tall" for a person -> "person"; "fast" for a car -> "car").
 If no specific class is known from context, use "entity" as default.
@@ -621,10 +654,13 @@ Follow this priority for selecting the relative_class:
   "Small animals are nice" -> relative_class "animal".  
 - General "entity" default: if the property is qualitative and applies to multiple different classes in the same context, 
   or if the specific class is uncertain/very general.
-  "If animal or bird is nice..." -> relative_class "entity" ( applies to both animal and bird).
+  "If animal or bird is nice..." -> relative_class "entity" ( applies to both animal and bird).  
 - Rule/Fact Synchronization: when a concrete individual (e.g., John 1) is mentioned in a rule-based context,
   always use the relative_class from the rule for that individual's properties
   If the rule uses ["nice", "none", "entity"], John's property must also be ["nice", "none", "entity"], not "person".
+- When earlier sentences establish that an individual belongs to a class (e.g., "John is a bear. John is very big.") 
+  then any subsequent mention of the same property for that individual must use the same relative_class("bear", not "person"
+  in the last example).  
 
 --- 13.1. PREDICATE NOUN PRESERVATION (MANDATORY) ---
 

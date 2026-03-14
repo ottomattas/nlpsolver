@@ -211,6 +211,19 @@ def _normalize_quantifiers(frm):
 
 # ======== main clausification entry point ========
 
+def _strip_time_defensively(frm):
+  """Strip any @time wrappers that survived into clausification (safety net).
+
+  Normally @time is stripped by logconvert before clausification.  If any
+  leak through, discard the wrapper and keep the body.
+  """
+  if not isinstance(frm, list) or not frm:
+    return frm
+  if frm[0] == "@time" and len(frm) == 3:
+    return _strip_time_defensively(frm[2])
+  return [_strip_time_defensively(el) for el in frm]
+
+
 def clausify(formula):
   """Convert a formula to a list of GK clauses (CNF).
 
@@ -218,6 +231,8 @@ def clausify(formula):
     - a single atom: ["pred", arg, ...]
     - a list of atoms (disjunction): [["pred1",...], ["pred2",...], ...]
   """
+  # Defensive: strip any @time wrappers that survived to clausification.
+  formula = _strip_time_defensively(formula)
   # Normalise type-name casing in isa/−isa atoms (LLM may capitalise inconsistently).
   fn = _normalize_type_case(formula)
   # Strip typical() from implies-antecedents (LLM adds it even in conditionals
@@ -432,6 +447,62 @@ def _push_normally_inside(frm, blocker_class=None):
   return tag
 
 
+# ---- helpers shared by _expand_normally and _distribute ----
+
+def _flatten_or_elements(elements):
+  """Flatten nested 'or' wrappers in a list of formula elements."""
+  flat = []
+  for el in elements:
+    if isinstance(el, list) and el and el[0] == "or":
+      flat.extend(el[1:])
+    else:
+      flat.append(el)
+  return flat
+
+
+def _classify_literals(lits):
+  """Split literals into (neg_lits, pos_lits) by predicate polarity."""
+  neg = [l for l in lits
+         if isinstance(l, list) and l and
+         isinstance(l[0], str) and l[0].startswith("-")]
+  pos = [l for l in lits
+         if not (isinstance(l, list) and l and
+                 isinstance(l[0], str) and l[0].startswith("-"))]
+  return neg, pos
+
+
+def _extract_isa_priority(neg_lits, blocker_class_tag, extra_neg=None):
+  """Compute $block priority from negative literals and optional class tag.
+
+  Returns (cls, priority) where:
+    cls      = class string for the $block priority
+    priority = ["$", cls, N] with N = (non-isa negative conditions) + 1
+
+  extra_neg: optional additional negative literals to search for -isa
+             (e.g. regular_lits + pushed_lits for negative-head rules).
+  """
+  isa_conds   = [l for l in neg_lits if isinstance(l, list) and l and l[0] == "-isa"]
+  non_isa_neg = [l for l in neg_lits if not (isinstance(l, list) and l and l[0] == "-isa")]
+  priornr = len(non_isa_neg) + 1
+  if blocker_class_tag:
+    cls = blocker_class_tag
+  elif extra_neg is not None:
+    # Prefer -isa from extra_neg (subject class) over existential constraints.
+    isa_from_extra = [l for l in extra_neg
+                      if isinstance(l, list) and l and l[0] == "-isa"]
+    if isa_from_extra and len(isa_from_extra[-1]) >= 2:
+      cls = str(isa_from_extra[-1][1])
+    elif isa_conds and len(isa_conds[-1]) >= 2:
+      cls = str(isa_conds[-1][1])
+    else:
+      cls = "$generic"
+  elif isa_conds and len(isa_conds[-1]) >= 2:
+    cls = str(isa_conds[-1][1])
+  else:
+    cls = "$generic"
+  return cls, ["$", cls, priornr]
+
+
 def _expand_normally(frm):
   """Expand normally(...) wrappers into defeasible clauses with $block atoms.
 
@@ -469,16 +540,7 @@ def _expand_normally(frm):
   if op in _opaque_wrappers or op == "or":
     # Normalise: a lone normally(...) is treated as a one-element disjunction.
     elements_raw = [frm] if op in _opaque_wrappers else frm[1:]
-    # Flatten nested "or" elements that arise from De Morgan expansion of
-    # not(and(A,B)) → or(-A,-B) in _push_neg.  Without this, or(-A,-B) lands
-    # in pos_lits (its op is "or", not "-…") and sends the formula down the
-    # positive-head branch instead of the correct negative-head branch.
-    elements = []
-    for _el in elements_raw:
-      if isinstance(_el, list) and _el and _el[0] == "or":
-        elements.extend(_el[1:])
-      else:
-        elements.append(_el)
+    elements = _flatten_or_elements(elements_raw)
 
     # Separate normally-wrappers from regular literals.
     regular_lits = []
@@ -608,12 +670,7 @@ def _expand_normally(frm):
       return ["or"] + all_lits
 
     # Classify literals: negative conditions vs positive heads.
-    neg_lits = [l for l in all_lits
-                if isinstance(l, list) and l and
-                isinstance(l[0], str) and l[0].startswith("-")]
-    pos_lits = [l for l in all_lits
-                if not (isinstance(l, list) and l and
-                        isinstance(l[0], str) and l[0].startswith("-"))]
+    neg_lits, pos_lits = _classify_literals(all_lits)
 
     if not pos_lits:
       # All literals are negative — this is a negative-head normally rule
@@ -633,21 +690,8 @@ def _expand_normally(frm):
         return ["or"] + all_lits
       pos_form = [neg_head[0][1:]] + list(neg_head[1:])   # strip "-" prefix
       cond_lits = regular_lits + pushed_lits + body_lits[:-1]
-      isa_conds   = [l for l in cond_lits
-                     if isinstance(l, list) and l and l[0] == "-isa"]
-      non_isa_neg = [l for l in cond_lits
-                     if not (isinstance(l, list) and l and l[0] == "-isa")]
-      priornr = len(non_isa_neg) + 1
-      # Prefer -isa from regular_lits (subject class) over existential constraints.
-      isa_from_regular = [l for l in regular_lits + pushed_lits
-                          if isinstance(l, list) and l and l[0] == "-isa"]
-      if isa_from_regular and len(isa_from_regular[-1]) >= 2:
-        cls = str(isa_from_regular[-1][1])
-      elif isa_conds and len(isa_conds[-1]) >= 2:
-        cls = str(isa_conds[-1][1])
-      else:
-        cls = "$generic"
-      priority = ["$", cls, priornr]
+      cls, priority = _extract_isa_priority(
+          cond_lits, None, extra_neg=regular_lits + pushed_lits)
       blocker  = ["$block", priority, pos_form]   # no "$not" wrapper
       result_lits = cond_lits + [neg_head, blocker]
       if len(result_lits) == 1:
@@ -670,16 +714,7 @@ def _expand_normally(frm):
     #   CLASS = subject class from tagged normally (if available), else from
     #   the last -isa condition, else "$generic".
     #   N     = (number of non-isa negative conditions) + 1.
-    isa_conds   = [l for l in neg_lits if l[0] == "-isa"]
-    non_isa_neg = [l for l in neg_lits if l[0] != "-isa"]
-    priornr = len(non_isa_neg) + 1
-    if blocker_class_tag:
-      cls = blocker_class_tag
-    elif isa_conds and len(isa_conds[-1]) >= 2:
-      cls = str(isa_conds[-1][1])
-    else:
-      cls = "$generic"
-    priority = ["$", cls, priornr]
+    cls, priority = _extract_isa_priority(neg_lits, blocker_class_tag)
     blocker  = ["$block", priority, ["$not", head]]
 
     other_pos = [l for l in pos_lits if l is not head]
@@ -804,12 +839,7 @@ def _distribute(frm):
     parts = [_distribute(el) for el in frm[1:]]
 
     # Flatten nested "or"s into a single disjunction
-    flat = []
-    for p in parts:
-      if isinstance(p, list) and p and p[0] == "or":
-        flat.extend(p[1:])
-      else:
-        flat.append(p)
+    flat = _flatten_or_elements(parts)
 
     # Check if any element is an "and" (requires distribution)
     has_and = any(isinstance(p, list) and p and p[0] == "and" for p in flat)

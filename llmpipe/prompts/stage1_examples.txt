@@ -226,8 +226,7 @@ Output:
       "text": "John 1 smiled.",
       "type": "situation",
       "entities": [{ "id": "John 1", "type": "concrete", "category": "person" }],
-      "actions": [{"root": "smile", "mode": "event"}],
-      "next_state": "W1",
+      "actions": [{"root": "smile", "mode": "event"}],      
       "time": "past"
     },
     {
@@ -236,8 +235,6 @@ Output:
       "type": "situation",
       "entities": [{ "id": "Mike 2", "type": "concrete", "category": "person" }],
       "actions": [{"root": "frown", "mode": "event"}],
-      "pre_state": "W1",
-      "next_state": "W2",
       "time": "past"
     },
     {
@@ -249,7 +246,6 @@ Output:
         { "id":"Mike 2","type": "concrete", "category": "person" }
       ],
       "adjectives": [["happy", "none", "person"]],
-      "pre_state": "W2",
       "time": "past"
     }
   ]
@@ -258,8 +254,6 @@ Output:
 ---
 
 Input: "John bought a red car. Does he have a car now?"
-
-Output:
 
 [{
   "raw": "John bought a red car.",
@@ -272,34 +266,37 @@ Output:
         {"id":"John 1","type":"concrete","category":"person"},
         {"id":"car 2","type":"concrete","category":"artifact"}
       ],
-      "actions": [{"root": "buy", "mode": "event", "roles": {"target": "car 2"}}],
-      "next_state": "W1",
-      "time": "past"
+      "actions":[{"root":"buy","mode":"event","roles":{"agent":"John 1","target":"car 2"}}],
+      "pre_state":"W0",
+      "next_state":"W1",
+      "time":"past"
     },
     {
       "unit_id": "S2",
       "text": "The car 2 is red.",
       "type": "situation",
-      "entities": [
+      "entities":[{"id":"car 2","type":"concrete","category":"artifact"}],
+      "adjectives":[["red","none","none"]],
+      "pre_state":"W1",
+      "time":"past"
+    }
+  ]
+},
+{
+  "raw": "Does he have the car now?",
+  "units":[
+    {
+      "unit_id":"S3",
+      "text":"Does John 1 have the car 2 now?",
+      "type":"query",
+      "entities":[
+        {"id":"John 1","type":"concrete","category":"person"},
         {"id":"car 2","type":"concrete","category":"artifact"}
       ],
-      "adjectives": [["red","none","none"]],
-      "pre_state": "W1",
-      "time": "past"
+      "pre_state":"W1",
+      "time":"present"
     }
-  ]},
-  {
-  "raw": "Does he have the car now?",
-  "units": [{
-    "unit_id": "S3",
-    "text": "Does John 1 have the car 2 now?",
-    "type": "query",
-    "entities": [
-      {"id": "John 1", "type": "concrete", "category": "person"},
-      {"id": "car 2", "type": "concrete", "category": "artifact"}
-    ],
-    "time": "present"
-  }]
+  ]
 }]
 
 ---

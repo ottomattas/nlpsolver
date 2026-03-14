@@ -45,7 +45,7 @@ examples_separator = "\n\nExamples:\n\n"
 # ======== LLM configuration ========
 
 # These are passed through to llmcall.call_llm; None means use llmcall defaults
-use_llm   = None   # "gpt" | "claude" | "gemini" | None
+use_llm   = None   # "gpt" | "claude" | "gemini" | "deepseek" | None
 llm_version = None # model version string, or None for llmcall default
 max_tokens  = None # int, or None for llmcall default
 use_think   = False # True to enable medium reasoning/thinking mode
@@ -222,6 +222,19 @@ def fix_json(s):
   """
   s = s.strip()
   applied = []
+
+  # 0. Strip preamble text before JSON (e.g. LLM planning/reasoning output)
+  if not s.startswith(("```", "[", "{")):
+    fence = re.search(r'^```(?:json)?\s*$', s, re.MULTILINE)
+    if fence:
+      s = s[fence.start():]
+      applied.append("stripped preamble before fence")
+    else:
+      m = re.search(r'^[\[{]', s, re.MULTILINE)
+      if m:
+        s = s[m.start():]
+        applied.append("stripped preamble before JSON")
+  if _ok(s): return (s, applied or None)
 
   # 1. Strip markdown code fences (```json...``` or ```...```)
   if s.startswith("```"):

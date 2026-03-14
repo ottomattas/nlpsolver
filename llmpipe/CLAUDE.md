@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-`llmpipe` is an experimental pipeline for semantic parsing of natural language into first-order predicate logic using LLMs (OpenAI GPT, Anthropic Claude, Google Gemini). It is part of the larger `nlpsolver` repository. Parsed logic is passed to the `gk` binary theorem prover which returns answers.
+`llmpipe` is an experimental pipeline for semantic parsing of natural language into first-order predicate logic using LLMs (OpenAI GPT, Anthropic Claude, Google Gemini, DeepSeek). It is part of the larger `nlpsolver` repository. Parsed logic is passed to the `gk` binary theorem prover which returns answers.
 
 ## Running the Pipeline
 
@@ -25,7 +25,7 @@ python3 run_pretty_check.py > logconvert_check.txt
 ### solve.py flags
 
 ```
--llm NAME        LLM provider: gpt, claude, or gemini
+-llm NAME        LLM provider: gpt, claude, gemini, or deepseek
 -version VER     Model version string, e.g. claude-sonnet-4-6
 -debug           Show full pipeline details
 -logic           Show parsed logic clauses
@@ -54,13 +54,14 @@ English text
 
 - `solve.py` — CLI entry point and `english_to_answer(text, options)` function
 - `llmparse.py` — two-stage LLM parser; `parse_text(text)` → `(s1_json, s2_json, stats)`
-- `llmcall.py` — LLM API wrapper (GPT/Claude/Gemini) with retries and SQLite caching; `call_llm(sysprompt, input_text)`
+- `llmcall.py` — LLM API wrapper (GPT/Claude/Gemini/DeepSeek) with retries and SQLite caching; `call_llm(sysprompt, input_text)`
 - `logconvert.py` — main driver for stage-2 JSON → GK clause list; `rawlogic_convert(logic)`; handles package extraction, context injection, post-processing passes
 - `lc_clausify.py` — FOL-to-CNF compiler used by logconvert: implies/xor/equivalent elimination, NNF push, normally expansion, Skolemization, distribution, clause extraction
 - `lc_questions.py` — question wrapping (`ask`/`question` → `@question`/`@askvars`) and population fact injection
 - `procproofs.py` — post-processes prover output; formats answers (bool, who, where), confidence labels, proof explanation dispatch
 - `proof_explain.py` — generates English proof explanations from prover proof steps
-- `proof_render.py` — renders proof atoms and steps as human-readable strings
+- `proof_render.py` — renders proof atoms and steps as human-readable strings (table-driven via `_PRED_TABLE`)
+- `linguistics.py` — pure English heuristics (articles, verb conjugation, comparatives, gerunds); used by proof_render.py
 - `prover.py` — invokes the `gk` binary subprocess; `call_prover(logic)`
 - `cache.py` — SQLite-backed cache for LLM responses and prover results
 - `globals.py` — global `options` dict and file paths (uses `os.path` for absolute paths)
@@ -96,18 +97,20 @@ prompts/stage2_examples.txt       -- Stage 2 few-shot examples
 ### LLM Configuration (`solver/llmcall.py`)
 
 ```python
-use_llm       = "claude"              # "gpt" | "claude" | "gemini"
-claudeversion = "claude-sonnet-4-6"
-gptversion    = "gpt-5.1"
-geminiversion = "gemini-2.0-flash"
-temperature   = 0
-default_max_tokens = 4000
+use_llm          = "gemini"              # "gpt" | "claude" | "gemini" | "deepseek"
+claudeversion    = "claude-sonnet-4-6"
+gptversion       = "gpt-5.1"
+geminiversion    = "gemini-2.0-flash"
+deepseekversion  = "deepseek-chat"       # V3.2; "deepseek-reasoner" for thinking
+temperature      = 0
+default_max_tokens = 8000
 ```
 
 API keys are read from JSON files at:
 - `../gpt/gpt_secrets.js`
 - `../gpt/claude_secrets.js`
 - `../gpt/gemini_secrets.js`
+- `../gpt/deepseek_secrets.txt`
 
 LLM responses are cached by default in `cache.db` (SQLite), keyed on provider, version, temperature, max_tokens, sysprompt and input. Use `-nollmcache` to disable.
 
@@ -130,13 +133,13 @@ Full solver data: http://logictools.org/data/nlpsolver_data.tar.gz
 
 When the user says **"Debug case N"** (where N is a case number in `testfixlog.txt`):
 
-1. **Run `python3 examine.py N`** — this looks up Case N in `testfixlog.txt`, runs all four
-   solvers (gemini, claude, gpt, udp) in parallel, and writes logs to `eN_gemini.txt`,
-   `eN_claude.txt`, `eN_gpt.txt`, `eN_udp.txt`.
+1. **Run `python3 examine.py N`** — this looks up Case N in `testfixlog.txt`, runs all five
+   solvers (gemini, claude, gpt, deepseek, udp) in parallel, and writes logs to `eN_gemini.txt`,
+   `eN_claude.txt`, `eN_gpt.txt`, `eN_deepseek.txt`, `eN_udp.txt`.
 
 2. **Read `testfixlog.txt` entry for Case N** — note the `Input:` text and `Expected:` value.
 
-3. **Explore all four log files** — read them fully, comparing the answers and logic/proof
+3. **Explore all five log files** — read them fully, comparing the answers and logic/proof
    output across all LLM providers and the UDP pipeline.
 
 4. **Examine Stage 1 and Stage 2 outputs** — a correct final answer is not sufficient.
@@ -174,7 +177,10 @@ a fix was implemented, and it has been verified to work:
 
 ## Work Process Rules
 
-- **Never use `-nollmcache`** unless explicitly requested by the user.
+- **NEVER pass `-nollmcache` or `--nollmcache` to any command.** This flag bypasses the LLM
+  cache and wastes API credits. There are NO exceptions — even if the user asks you to
+  "recheck" or "rerun", always use the cache. If the user has changed prompts, they will
+  run the solver themselves or explicitly tell you to disable the cache.
 - **Always trust the LLM cache.** The user may run the solver independently, so cache
   entries may be newer than what you last saw. Always use cache and trust its results.
 - **Never run `test.py` with more than 5 examples** without explicit instruction from the user.

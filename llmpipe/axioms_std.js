@@ -36,6 +36,48 @@
     ["-has degree rel2","in","?:R", "?:X", "?:Y", "high", "?:Rel", "?:Ctxt"]
   ],
   */
+  
+  // == 9. DEGREE INTENSITY AXIOMS ==
+
+  // --- Property Intensity Bridges ---
+
+  // If a property is high intensity, it satisfies the plain property (high -> none)
+  [
+    ["-has degree property", "?:W", "?:X", "high", "?:RC", "?:Ctxt"],
+    ["has degree property", "?:W", "?:X", "none", "?:RC", "?:Ctxt"]
+  ],
+
+  // If a property is low intensity, it satisfies the plain property (low -> none)
+  [
+    ["-has degree property", "?:W", "?:X", "low", "?:RC", "?:Ctxt"],
+    ["has degree property", "?:W", "?:X", "none", "?:RC", "?:Ctxt"]
+  ],
+
+  // A property cannot be both high and low intensity (Contradiction)
+  [
+    ["-has degree property", "?:W", "?:X", "high", "?:RC", "?:Ctxt"],
+    ["-has degree property", "?:W", "?:X", "low", "?:RC", "?:Ctxt"]
+  ],
+
+  // --- Relation Intensity Bridges ---
+
+  // If a relation is high intensity, it satisfies the plain relation (high -> none)
+  [
+    ["-has degree rel2", "?:W", "?:X", "?:Y", "high", "?:RC", "?:Ctxt"],
+    ["has degree rel2", "?:W", "?:X", "?:Y", "none", "?:RC", "?:Ctxt"]
+  ],
+
+  // If a relation is low intensity, it satisfies the plain relation (low -> none)
+  [
+    ["-has degree rel2", "?:W", "?:X", "?:Y", "low", "?:RC", "?:Ctxt"],
+    ["has degree rel2", "?:W", "?:X", "?:Y", "none", "?:RC", "?:Ctxt"]
+  ],
+
+  // A relation cannot be both high and low intensity (Contradiction)
+  [
+    ["-has degree rel2", "?:W", "?:X", "?:Y", "high", "?:RC", "?:Ctxt"],
+    ["-has degree rel2", "?:W", "?:X", "?:Y", "low", "?:RC", "?:Ctxt"]
+  ],
 
   // == 3. GRADABLE RELATIONS (TRANSITIVITY & LOGIC) ==
   // Transitivity for TRUE comparative relations only (degree=high/more/less).
@@ -61,7 +103,36 @@
     ["-has degree rel2", "?:R", "?:X", "?:Y", "?:Deg", "?:Rel", "?:Ctxt"],
     ["has degree property", "?:R", "?:X", "none", "?:Rel", "?:Ctxt"]
   ],
+  
+  // event -> "is rel2" bridge for "like"
+  /*
+  [
+    ["isa","activity","?:E"],
+    ["-has type", "?:E", "like", "?:Ctxt"],
+    ["-has actor", "?:E", "?:X", "?:Ctxt"],
+    ["-has target", "?:E", "?:Y", "?:Ctxt"],
+    ["is rel2", "like", "?:X", "?:Y", "?:Ctxt"]
+  ],
+  */
+   [
+    ["-isa","activity","?:E"],
+    ["-has type", "?:E", "like", ["$ctxt","?:T1","?:W","?:Fv3","?:Fv4"]],
+    ["-has actor", "?:E", "?:X", ["$ctxt","?:T1","?:W","?:Fv3","?:Fv4"]],
+    ["-has target", "?:E", "?:Y", ["$ctxt","?:T1","?:W","?:Fv3","?:Fv4"]],
+    ["-has time", "?:E", "?:T2", ["$ctxt","?:T3","?:W","?:Fv3","?:Fv4"]],
+    ["is rel2", "like", "?:X", "?:Y", ["$ctxt","?:T2","?:W","?:Fv3","?:Fv4"]]
+  ],
 
+  /*  
+  [
+    ["isa","activity","?:E"],
+    ["-has type", "?:E", "like", "?:Ctxt"],
+    ["-has actor", "?:E", "?:X", "?:Ctxt"],
+    ["-has target", "?:E", "?:Y", "?:Ctxt"],
+    ["has degree rel2", "like", "?:X", "?:Y", "none", "?:Cl", "?:Ctxt"] 
+  ],
+  */
+  
   // == 4. SPATIAL & CATEGORICAL TRANSITIVITY ==
   // Transitivity for non-gradable "is rel2" relations [cite: 352, 353]
   [["-is rel2", "in", "?:X", "?:Y", "?:Ctxt"], ["-is rel2", "in", "?:Y", "?:Z", "?:Ctxt"], ["is rel2", "in", "?:X", "?:Z", "?:Ctxt"]],
@@ -188,6 +259,16 @@
       ["-have", "?:Y", "?:X", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
       ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
       ["$block", 0, ["$not", ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
+    ]
+  },
+  
+   // Persistence of "have" (possession) from W1  to W2 [cite: 36, 148]
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-have", "?:Y", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
+      ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W2", "?:L", "?:K"]]]]
     ]
   },
 

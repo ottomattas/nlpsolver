@@ -89,6 +89,32 @@ If "confidence" is omitted, assume confidence = 1.0.
 
 Process every ASU in every sentence package. Flatten all ASUs into one conjunction.
 
+== PREDICATE TIME ANNOTATION ==
+
+Each ASU has a default time given by the "time" field from Stage-1.
+
+By default, all predicates inherit the ASU time.
+
+Only add a time annotation when a specific predicate has a different time
+than the ASU default.
+
+Use the wrapper form:
+
+["@time","past", ATOM]
+
+Examples:
+["@time","past", ["is rel2","like","Eve 2","John 1"]]
+["@time","future", ["have","John 1","car 2"]]
+
+Time annotation wraps the whole atom and does not change predicate arity.
+
+Allowed time values:
+past | present | future | timeless
+
+Do not nest @time wrappers.
+
+Predicate time annotations do NOT replace ["state time", W, TIME].
+State time describes the world state; @time describes the time of a specific predicate.
 
 == ENTITY.text USAGE RULE (IMPORTANT) ==
 
@@ -447,9 +473,20 @@ Step D — sentence-type wrapping for Track 2:
   Concrete situation:
   ["holds","W0",["exists","E",["and",...]]]
 
-  Negation:
-  ["holds","W0",["not",["exists","E",["and",...]]]]
-  
+  Negated actions:
+
+  If the ASU text contains a negated action ("did not buy", "does not eat",
+  "never saw", etc.), the negation MUST be preserved in the logic by
+  negating the existential event block like this:
+
+  ["not",
+    ["exists","E",["and",
+      ["isa","activity","E"],
+      ["has type","E","buy"],
+      ["has actor","E","Mike 3"],
+      ["has target","E","car 2"]
+    ]]
+  ]
   
   Strict negation of events: When type is strict_rule, the negation block
   ["not",["exists","E",["and",...]]] must contain ONLY core event predicates:
@@ -655,9 +692,30 @@ use only the relationship predicate (is rel2). Do NOT add categorical checks lik
 
 == 5. CONCRETE OBJECT CATEGORIZATION ==
 
-When a situation introduces a concrete ID for an object (e.g., "tail 2", "trunk 1"), you MUST explicitly declare its 
-category using an 'isa' predicate in the same ASU. Example:
+When a situation introduces a concrete entity (e.g., "tail 2", "car 2"),
+explicitly state its category with an 'isa' predicate in the same ASU.
+
+Example:
 ["and", ["have", "John 1", "tail 2"], ["isa", "tail", "tail 2"]]
+
+Rule:
+Every entity appearing in the ASU must have its semantic type preserved
+in the logic (e.g., ["isa","car","car 2"], ["isa","dog","dog 1"],
+["isa","person","John 1"]) unless that type is already present.
+
+Event-role predicates such as "has target", "has actor", or "have"
+do NOT replace the entity's 'isa' predicate.
+
+ISA type selection when generating the ISA predicate for an entity:
+
+1. Look at the ASU text where the entity appears (e.g., "car 2", "dog 1").
+2. Extract the noun used with the entity ID, if available,
+   always use that noun as the ISA type.
+3. Only if the noun is not available (say, entity is a proper name) use the category.
+
+Example:
+ASU text: "John 1 bought a car 2"
+Correct: ["isa","car","car 2"] and ["isa","person","John 1"].
 
 == 6. SEMANTIC PREDICATE MAPPING / GENERIC SEMANTIC ANCHORING (MANDATORY) ==
 
@@ -760,6 +818,10 @@ Never emit both ["is rel2"] and ["has degree rel2"] for the same word.
 --- Defeasible Wrapper ---
 
 ["normally", FORMULA]
+
+--- Time wrapper ---
+
+["@time", TIME, FORMULA]
 
 --- Traceability Predicates ---
 

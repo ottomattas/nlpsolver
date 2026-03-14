@@ -1,4 +1,4 @@
-# LLM API call functions for the nlpsolver: GPT, Claude, Gemini.
+# LLM API call functions for the nlpsolver: GPT, Claude, Gemini, DeepSeek.
 #
 # Primary entry point: call_llm(sysprompt, input_text)
 # Returns the result string on success, or None on error (error is printed).
@@ -39,7 +39,7 @@ import utils
 
 # ======== configuration ========
 
-# Which LLM to use: "gpt", "claude", or "gemini"
+# Which LLM to use: "gpt", "claude", "gemini", or "deepseek"
 use_llm = "claude"
 use_llm = "gemini"
 
@@ -47,11 +47,13 @@ use_llm = "gemini"
 gptversion = "gpt-5.1"
 claudeversion = "claude-sonnet-4-6"
 geminiversion = "gemini-2.0-flash"
+deepseekversion = "deepseek-chat"          # V3.2; use "deepseek-reasoner" for thinking
 
 # API key files (absolute paths relative to llmpipe/)
 gpt_secrets_file = os.path.join(_root, "../gpt/gpt_secrets.js")
 claude_secrets_file = os.path.join(_root, "../gpt/claude_secrets.js")
 gemini_secrets_file = os.path.join(_root, "../gpt/gemini_secrets.js")
+deepseek_secrets_file = os.path.join(_root, "../gpt/deepseek_secrets.txt")
 
 # Call parameters
 temperature = 0
@@ -91,6 +93,8 @@ def call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None, thi
     ver = version or claudeversion
   elif llm == "gemini":
     ver = version or geminiversion
+  elif llm == "deepseek":
+    ver = version or deepseekversion
   else:
     ver = version or gptversion
 
@@ -109,6 +113,8 @@ def call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None, thi
       result = call_claude(ver, input_text, sysprompt, max_tokens, think=think)
     elif llm == "gemini":
       result = call_gemini(ver, input_text, sysprompt, max_tokens, think=think)
+    elif llm == "deepseek":
+      result = call_deepseek(ver, input_text, sysprompt, max_tokens, think=think)
     else:
       result = call_gpt(ver, input_text, sysprompt, max_tokens, think=think)
   except KeyboardInterrupt:
@@ -458,6 +464,101 @@ def call_gpt(version, sentences, sysprompt, max_tokens, think=False):
         if res: res += "\n"
         res += el["text"].strip()
     return res
+
+
+# ======== deepseek ========
+
+# https://api-docs.deepseek.com/
+# DeepSeek uses an OpenAI-compatible chat completions API.
+
+def call_deepseek(version, sentences, sysprompt, max_tokens, think=False):
+  try:
+    sf = open(deepseek_secrets_file, "r")
+    key = sf.read().strip()
+    sf.close()
+  except:
+    return llm_error("Could not read DeepSeek API key file: " + str(deepseek_secrets_file))
+
+  # Switch to reasoning model when think is requested.
+  if think and version == "deepseek-chat":
+    version = "deepseek-reasoner"
+
+  messages = []
+  if sysprompt:
+    messages.append({"role": "system", "content": sysprompt})
+  messages.append({"role": "user", "content": sentences})
+  call = {
+    "model": version,
+    "messages": messages,
+    "stream": False
+  }
+  # deepseek-reasoner does not support temperature or max_tokens.
+  if version != "deepseek-reasoner":
+    call["temperature"] = temperature
+    if max_tokens:
+      call["max_tokens"] = max_tokens
+
+  utils.debug_print("deepseek call", call, flag=calldebug)
+  calltxt = json.dumps(call)
+
+  trycount = 0
+  while True:
+    host = "api.deepseek.com"
+    conn = http.client.HTTPSConnection(host, timeout=timeout)
+    try:
+      conn.request("POST", "/v1/chat/completions", calltxt,
+                   headers={
+                     "Content-Type": "application/json",
+                     "Authorization": "Bearer " + key
+                   })
+      response = conn.getresponse()
+    except KeyboardInterrupt:
+      raise
+    except:
+      trycount += 1
+      if conn: conn.close()
+      if trycount > max_retries:
+        return llm_error("DeepSeek connection failed after " + str(max_retries) + " retries")
+      print("DeepSeek connection failure, retrying...")
+      time.sleep(sleepseconds * trycount)
+      continue
+    if response.status != 200 or response.reason != "OK":
+      message = ""
+      try:
+        data = json.loads(response.read())
+        if "error" in data and "message" in data["error"]:
+          message = ": " + data["error"]["message"]
+      except:
+        pass
+      trycount += 1
+      if conn: conn.close()
+      if trycount > max_retries:
+        return llm_error("DeepSeek API error " + str(response.status) + " " + str(response.reason) + message)
+      print("DeepSeek API failure, retrying:", str(response.status), str(response.reason) + message)
+      time.sleep(sleepseconds * trycount)
+    else:
+      break
+
+  rawdata = response.read()
+  conn.close()
+  try:
+    data = json.loads(rawdata)
+  except KeyboardInterrupt:
+    raise
+  except:
+    return llm_error("DeepSeek response is not valid JSON: " + str(rawdata))
+
+  utils.debug_print("deepseek response:", data, flag=debug)
+
+  if "choices" not in data:
+    return llm_error("DeepSeek response has no 'choices': " + str(rawdata))
+  res = ""
+  for el in data["choices"]:
+    if "message" in el:
+      msg = el["message"]
+      if "content" in msg and msg["content"]:
+        res += msg["content"]
+  return res
 
 
 # ======== utilities ========

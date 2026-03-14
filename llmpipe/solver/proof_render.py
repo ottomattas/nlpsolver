@@ -33,6 +33,13 @@
 import json
 import re
 
+from linguistics import (
+  indef_article  as _indef_article,
+  conjugate_verb as _conjugate_verb,
+  make_comparative as _make_comparative,
+  to_gerund      as _to_gerund,
+)
+
 
 # ======== $ans context-arg filtering ========
 
@@ -62,65 +69,85 @@ def _ans_display_args(ans_args):
   return kept
 
 
-# ======== module-level state (reset per proof) ========
+# ======== render context (all per-proof state) ========
 
-# Entity display-name map built from stage-1 JSON.
-# Maps entity id strings and URL strings to human-readable display names
-# derived from the user's original phrasing (e.g. "America 1" -> "America",
-# "https://.../United_States" -> "America", "car 1" -> "the red car").
-# Set once per proof by set_entity_map(); consulted first in entity_name().
-_entity_map = {}
+class RenderContext:
+  """Bundles all per-proof mutable state into one object.
+
+  Avoids fragile module-level globals that can leak between proofs if a
+  caller forgets to call one of the reset functions.
+  """
+  __slots__ = (
+    "entity_map",          # entity id -> display name (from stage-1 JSON)
+    "ambiguous_bases",     # set of proper-name bases with 2+ distinct numbers
+    "ambiguous_url_names", # set of URL display names mapping to 2+ URLs
+    "skolem_types",        # skN -> type string from isa(TYPE,skN)
+    "skolem_fn_verbs",     # str(fn_term) -> verb string
+    "skolem_fn_actors",    # str(fn_term) -> actor string
+    "skolem_fn_targets",   # str(fn_term) -> target string
+    "skolem_fn_types",     # sk_name -> object type from isa(TYPE,[sk_name,...])
+  )
+  def __init__(self):
+    self.entity_map          = {}
+    self.ambiguous_bases     = set()
+    self.ambiguous_url_names = set()
+    self.skolem_types        = {}
+    self.skolem_fn_verbs     = {}
+    self.skolem_fn_actors    = {}
+    self.skolem_fn_targets   = {}
+    self.skolem_fn_types     = {}
+
+
+# Module-level context instance, reset per proof.
+_ctx = RenderContext()
+
+
+# ======== public API (backward-compatible thin wrappers) ========
 
 def set_entity_map(emap):
   """Install a new entity display-name map for the current proof."""
-  global _entity_map
-  _entity_map = emap if isinstance(emap, dict) else {}
+  _ctx.entity_map = emap if isinstance(emap, dict) else {}
 
 def get_entity_display(val):
   """Return the entity_map display name for val, or None if not mapped."""
-  return _entity_map.get(val)
-
-# Proper-name bases that appear with more than one distinct number in the
-# current proof (e.g. "John" when both "John 1" and "John 3" are present).
-# Set once by compute_ambiguity() before any rendering begins.
-_ambiguous_bases = set()
-
-# URL display names (last path segment) that map to two or more different URLs.
-# When a name is in this set, the full URL is appended even in the answer line.
-_ambiguous_url_names = set()
-
-# Map from Skolem constant name (e.g. "sk0") to its type string (e.g. "animal"),
-# derived by scanning proof steps for isa(TYPE, skN) atoms.
-# Reset per proof by compute_skolem_types().
-_skolem_types = {}
-
-# Maps from str(skolem_function_term) to verb/actor/target strings,
-# derived by scanning proof steps for has_type/has_actor/has_target atoms
-# whose subject is a Skolem function (a list starting with sk\d+).
-# Reset per proof by compute_skolem_types().
-_skolem_fn_verbs   = {}   # str(term) -> verb string  (e.g. "eat")
-_skolem_fn_actors  = {}   # str(term) -> actor string (e.g. "Greg 2")
-_skolem_fn_targets = {}   # str(term) -> target string (e.g. "Mike 1")
-_skolem_fn_types   = {}   # sk_name -> object type from isa(TYPE,[sk_name,...]) (e.g. "roof")
-
-
-# ======== ambiguity detection ========
+  return _ctx.entity_map.get(val)
 
 def compute_ambiguity(obj):
-  """Scan obj and set _ambiguous_bases and _ambiguous_url_names.
-
-  _ambiguous_bases: proper-name bases appearing with 2+ distinct numbers
-    (e.g. "John" when both "John 1" and "John 3" are present).
-  _ambiguous_url_names: URL display names that resolve to 2+ different URLs
-    (e.g. "Paris" if two different Paris URLs appear).
-  """
-  global _ambiguous_bases, _ambiguous_url_names
-  base_numbers = {}   # base -> set of ints
-  url_names    = {}   # display_name -> set of URLs
+  """Scan obj and populate ambiguous-name sets in the current context."""
+  base_numbers = {}
+  url_names    = {}
   _scan_constants(obj, base_numbers, url_names)
-  _ambiguous_bases     = {b for b, nums in base_numbers.items() if len(nums) > 1}
-  _ambiguous_url_names = {n for n, urls in url_names.items()    if len(urls)  > 1}
+  _ctx.ambiguous_bases     = {b for b, nums in base_numbers.items() if len(nums) > 1}
+  _ctx.ambiguous_url_names = {n for n, urls in url_names.items()    if len(urls)  > 1}
 
+def compute_skolem_types(proof):
+  """Scan proof steps and populate Skolem lookup tables in the current context."""
+  _ctx.skolem_types      = {}
+  _ctx.skolem_fn_verbs   = {}
+  _ctx.skolem_fn_actors  = {}
+  _ctx.skolem_fn_targets = {}
+  _ctx.skolem_fn_types   = {}
+  for step in proof:
+    clause = step[2] if len(step) > 2 else []
+    if not isinstance(clause, list):
+      continue
+    for atom in clause:
+      if not isinstance(atom, list) or len(atom) < 3:
+        continue
+      pred = atom[0]
+      if pred == "isa" and isinstance(atom[2], str) and re.match(r'^sk\d+$', atom[2]):
+        _ctx.skolem_types.setdefault(atom[2], str(atom[1]))
+      elif pred == "isa" and _is_skolem_fn(atom[2]):
+        _ctx.skolem_fn_types.setdefault(atom[2][0], str(atom[1]))
+      elif pred == "has type" and _is_skolem_fn(atom[1]):
+        _ctx.skolem_fn_verbs.setdefault(str(atom[1]), str(atom[2]))
+      elif pred == "has actor" and _is_skolem_fn(atom[1]):
+        _ctx.skolem_fn_actors.setdefault(str(atom[1]), str(atom[2]))
+      elif pred == "has target" and _is_skolem_fn(atom[1]):
+        _ctx.skolem_fn_targets.setdefault(str(atom[1]), str(atom[2]))
+
+
+# ======== ambiguity scanning ========
 
 def _scan_constants(obj, base_numbers, url_names):
   """Recursively scan obj for proper-name constants and URL constants."""
@@ -144,58 +171,13 @@ def _scan_constants(obj, base_numbers, url_names):
       _scan_constants(v, base_numbers, url_names)
 
 
-# ======== Skolem type tables ========
+# ======== Skolem helpers ========
 
 def _is_skolem_fn(val):
   """Return True if val is a Skolem function term: a list whose first element
   matches sk\\d+ (e.g. ["sk0", "Greg 2", "Mike 1"])."""
   return (isinstance(val, list) and val and
           isinstance(val[0], str) and re.match(r'^sk\d+$', val[0]))
-
-
-def compute_skolem_types(proof):
-  """Scan proof steps and populate Skolem lookup tables.
-
-  _skolem_types      : skN (string constant) -> type string from isa(TYPE,skN)
-  _skolem_fn_verbs   : str(fn_term) -> verb   from has_type(fn_term, VERB)
-  _skolem_fn_actors  : str(fn_term) -> actor  from has_actor(fn_term, ACTOR)
-  _skolem_fn_targets : str(fn_term) -> target from has_target(fn_term, TARGET)
-
-  Called once per proof before rendering.  Only the first fact for each key
-  is kept.
-  """
-  global _skolem_types, _skolem_fn_verbs, _skolem_fn_actors, _skolem_fn_targets
-  global _skolem_fn_types
-  _skolem_types      = {}
-  _skolem_fn_verbs   = {}
-  _skolem_fn_actors  = {}
-  _skolem_fn_targets = {}
-  _skolem_fn_types   = {}   # sk_name (e.g. "sk0") -> object type from isa(TYPE, [sk_name,...])
-  for step in proof:
-    clause = step[2] if len(step) > 2 else []
-    if not isinstance(clause, list):
-      continue
-    for atom in clause:
-      if not isinstance(atom, list) or len(atom) < 3:
-        continue
-      pred = atom[0]
-      # isa(TYPE, skN) — for simple Skolem constants
-      if pred == "isa" and isinstance(atom[2], str) and re.match(r'^sk\d+$', atom[2]):
-        _skolem_types.setdefault(atom[2], str(atom[1]))
-      # isa(TYPE, [skN, ...]) — Skolem function used as an object (e.g. a roof witness)
-      elif pred == "isa" and _is_skolem_fn(atom[2]):
-        fn_name = atom[2][0]
-        _skolem_fn_types.setdefault(fn_name, str(atom[1]))
-      # has_type / has_actor / has_target where subject is a Skolem function
-      elif pred == "has type" and _is_skolem_fn(atom[1]):
-        key = str(atom[1])
-        _skolem_fn_verbs.setdefault(key, str(atom[2]))
-      elif pred == "has actor" and _is_skolem_fn(atom[1]):
-        key = str(atom[1])
-        _skolem_fn_actors.setdefault(key, str(atom[2]))
-      elif pred == "has target" and _is_skolem_fn(atom[1]):
-        key = str(atom[1])
-        _skolem_fn_targets.setdefault(key, str(atom[2]))
 
 
 # ======== URL helpers ========
@@ -261,73 +243,9 @@ _DEGREE_TABLE = {
 }
 
 
-# ======== linguistic helpers ========
-
-def _indef_article(word):
-  """'an' before vowel sounds, 'a' otherwise."""
-  return "an" if word[:1].lower() in "aeiou" else "a"
-
-
-def _conjugate_verb(v):
-  """Third-person singular present tense of a bare verb (simple heuristic)."""
-  if v.endswith(("s", "sh", "ch", "x", "z")):
-    return v + "es"
-  if v.endswith("y") and len(v) > 1 and v[-2] not in "aeiou":
-    return v[:-1] + "ies"
-  return v + "s"
-
-
-def _make_comparative(adj):
-  """Return the comparative form of an adjective (e.g. 'nice' -> 'nicer').
-
-  Uses '-er' for short adjectives, 'more ADJ' for longer ones.
-  """
-  if not adj or " " in adj:
-    return "more " + adj
-  v = "aeiou"
-  # ends in silent e: nice -> nicer, large -> larger
-  if adj.endswith("e") and len(adj) > 2 and adj[-2] not in v:
-    return adj + "r"
-  # CVC doubling: big -> bigger, sad -> sadder
-  if (len(adj) >= 3 and adj[-1] not in v + "wxhy"
-      and adj[-2] in v and adj[-3] not in v):
-    return adj + adj[-1] + "er"
-  # ends in consonant-y: happy -> happier
-  if adj.endswith("y") and len(adj) > 2 and adj[-2] not in v:
-    return adj[:-1] + "ier"
-  # short adjective (≤ 6 chars): append -er
-  if len(adj) <= 6:
-    return adj + "er"
-  return "more " + adj
-
-
 def _is_var_display(s):
   """Return True if s looks like a prover variable display name (e.g. 'X', 'V2006', 'R')."""
   return bool(re.match(r'^(V\d+|[A-Z]\d*)$', s))
-
-
-def _to_gerund(verb):
-  """Return the gerund (-ing) form of a bare verb (simple heuristic).
-
-  eat->eating, bark->barking, run->running, bite->biting, study->studying.
-  """
-  if not verb:
-    return verb + "ing"
-  # lie/die -> lying/dying
-  if verb.endswith("ie"):
-    return verb[:-2] + "ying"
-  # bake/bite/save -> baking/biting/saving  (drop silent e, but not ee/oe)
-  if (verb.endswith("e") and len(verb) > 2
-      and verb[-2] not in "aeiou" and not verb.endswith("ee")):
-    return verb[:-1] + "ing"
-  # run/sit/get -> running/sitting/getting  (CVC, double final consonant)
-  vowels = "aeiou"
-  if (len(verb) >= 3
-      and verb[-1] not in vowels + "wxyhz"
-      and verb[-2] in vowels
-      and verb[-3] not in vowels):
-    return verb + verb[-1] + "ing"
-  return verb + "ing"
 
 
 def _degree_parts(degree):
@@ -352,9 +270,9 @@ def _degree_parts(degree):
 def _skolem_fn_to_name(term):
   """Render a Skolem function term ["sk0", arg1, arg2, ...] as English.
 
-  Uses _skolem_fn_verbs / _skolem_fn_actors / _skolem_fn_targets (populated by
-  compute_skolem_types) to describe the reified event.  Falls back to
-  _skolem_fn_types (keyed by function name) for non-event Skolem objects.
+  Uses _ctx.skolem_fn_verbs / _ctx.skolem_fn_actors / _ctx.skolem_fn_targets
+  (populated by compute_skolem_types) to describe the reified event.  Falls
+  back to _ctx.skolem_fn_types (keyed by function name) for non-event objects.
 
   Examples (event Skolem):
     ["sk0","Greg 2","Mike 1"]  -> "the eating by Greg of Mike"
@@ -366,11 +284,11 @@ def _skolem_fn_to_name(term):
     (no type found)            -> "the event"
   """
   key  = str(term)
-  verb = _skolem_fn_verbs.get(key)
+  verb = _ctx.skolem_fn_verbs.get(key)
   if not verb:
     # Not a reified event — try object-type lookup keyed by function name.
     fn_name = term[0] if isinstance(term, list) and term else ""
-    obj_type = _skolem_fn_types.get(fn_name)
+    obj_type = _ctx.skolem_fn_types.get(fn_name)
     if obj_type:
       arg = term[1] if len(term) > 1 else None
       if arg is None or (isinstance(arg, str) and arg.startswith("?:")):
@@ -379,8 +297,8 @@ def _skolem_fn_to_name(term):
     return "the event"
   gerund = _to_gerund(verb)
 
-  actor_raw  = _skolem_fn_actors.get(key, "")
-  target_raw = _skolem_fn_targets.get(key, "")
+  actor_raw  = _ctx.skolem_fn_actors.get(key, "")
+  target_raw = _ctx.skolem_fn_targets.get(key, "")
 
   # Only use ground (non-variable) actor/target in the description
   actor  = actor_raw  if actor_raw  and not actor_raw.startswith("?:") else ""
@@ -402,9 +320,9 @@ def entity_name(val, with_url=False):
   - Variables (?:X)           -> strip prefix -> "X"
   - URL constants             -> extract last path segment ->
                                    "Paris" or "Paris (https://...)" depending
-                                   on with_url and _ambiguous_url_names
+                                   on with_url and _ctx.ambiguous_url_names
   - Proper-name constants     -> strip trailing number -> "John 1" -> "John"
-                                 (keeps number when base is in _ambiguous_bases)
+                                 (keeps number when base is in _ctx.ambiguous_bases)
   - Noun-phrase constants     -> replace number with safe letter ->
                                  "car 2" -> "car B",  "dog 1" -> "dog A"
 
@@ -419,8 +337,8 @@ def entity_name(val, with_url=False):
     return str(val)
   # Check entity map first: prefer the user's original phrasing over the
   # default URL-basename or id-suffix logic below.
-  if val in _entity_map:
-    name = _entity_map[val]
+  if val in _ctx.entity_map:
+    name = _ctx.entity_map[val]
     if with_url and (val.startswith("http://") or val.startswith("https://")):
       return name + " (" + val + ")"
     return name
@@ -438,14 +356,14 @@ def entity_name(val, with_url=False):
     return _indef_article(noun) + " " + noun
   # Skolem constants: sk0, sk1, ... -> "some TYPE skN" using proof context
   if re.match(r'^sk\d+$', val):
-    typ = _skolem_types.get(val)
+    typ = _ctx.skolem_types.get(val)
     if typ:
       return "some " + typ + " " + val
     return val
   # URL constant
   if val.startswith("http://") or val.startswith("https://"):
     name = _extract_url_name(val)
-    if with_url or name in _ambiguous_url_names:
+    if with_url or name in _ctx.ambiguous_url_names:
       return name + " (" + val + ")"
     return name
   m = re.match(r'^(.*\S)\s+(\d+)$', val)
@@ -456,7 +374,7 @@ def entity_name(val, with_url=False):
   if base[:1].isupper():
     # Proper name — keep the number when multiple entities share the same base
     # (e.g. "John 1" vs "John 3"); drop it when there is only one "John".
-    if base in _ambiguous_bases:
+    if base in _ctx.ambiguous_bases:
       return base + " " + str(n)
     return base
   # Noun-phrase constant — replace number with a safe letter
@@ -679,316 +597,228 @@ def clause_to_str(clause):
 
 
 # ======== atom-to-English converters ========
+#
+# Table-driven dispatch: each predicate has a (min_args, pos_fn, neg_fn) entry.
+# pos_fn(e, args) returns the positive English string.
+# neg_fn(e, args) returns the negated English string.
+# Complex predicates use dedicated helpers; simple ones use inline lambdas.
 
-def _atom_to_english(atom):
-  """Convert a single logic atom to readable English.
+def _isa_pos(e, args):
+  typ = e(0)
+  if typ.startswith("the "):
+    typ = typ[4:]
+  ent = e(1)
+  if typ == "activity": return ent + " is an activity"
+  if typ == "set":      return ent + " is a set"
+  return ent + " is " + _indef_article(typ) + " " + typ
 
-  Handles every predicate in the stage-2 whitelist.  Falls back to
-  pred(arg1, arg2, ...) notation for anything unrecognised.
+def _isa_neg(e, args):
+  typ = e(0)
+  if typ.startswith("the "):
+    typ = typ[4:]
+  ent = e(1)
+  if typ == "activity": return ent + " is not an activity"
+  if typ == "set":      return ent + " is not a set"
+  return ent + " is not " + _indef_article(typ) + " " + typ
+
+def _is_rel2_pos(e, args):
+  rel = e(0)
+  last = rel.split()[-1].lower() if rel else ""
+  if rel.lower() in _PREPOSITIONS or last in _PREPOSITIONS or last == "of":
+    return e(1) + " is " + rel + " " + e(2)
+  return e(1) + " is " + rel + " of " + e(2)
+
+def _is_rel2_neg(e, args):
+  rel = e(0)
+  last = rel.split()[-1].lower() if rel else ""
+  if rel.lower() in _PREPOSITIONS or last in _PREPOSITIONS or last == "of":
+    return e(1) + " is not " + rel + " " + e(2)
+  return e(1) + " is not " + rel + " of " + e(2)
+
+def _has_degree_property_render(e, args, neg=False):
+  prop = e(0); ent = e(1)
+  adv, art_type = _degree_parts(e(2))
+  relcls_raw = args[3] if len(args) > 3 else ""
+  cop = " is not " if neg else " is "
+  if isinstance(relcls_raw, str) and relcls_raw.startswith("?:"):
+    return ent + cop + adv + prop
+  relcls = e(3)
+  art = "the" if art_type == "def" else _indef_article(adv if adv else prop)
+  return ent + cop + art + " " + adv + prop + " " + relcls
+
+def _has_degree_rel2_render(e, args, neg=False):
+  rel = e(0); ent1 = e(1); ent2 = e(2)
+  degree_raw = str(args[3]).lower() if len(args) > 3 else "none"
+  last = rel.split()[-1].lower() if rel else ""
+  cop = " is not " if neg else " is "
+  if last in _PREPOSITIONS or last == "of":
+    return ent1 + cop + rel + " " + ent2
+  if _is_var_display(rel):
+    if neg: return ent1 + " does not have a " + rel + "-relation with " + ent2
+    return ent1 + " has a " + rel + "-relation with " + ent2
+  if degree_raw in ("high", "more"):
+    return ent1 + cop + _make_comparative(rel) + " than " + ent2
+  if degree_raw == "most":
+    return ent1 + cop.rstrip() + " the most " + rel + " of all compared to " + ent2
+  if degree_raw in ("low", "less"):
+    return ent1 + cop + "less " + rel + " than " + ent2
+  if degree_raw == "least":
+    return ent1 + cop.rstrip() + " the least " + rel + " of all compared to " + ent2
+  return ent1 + cop + rel + " of " + ent2
+
+# Predicate dispatch table: pred -> (min_args, pos_fn, neg_fn)
+# pos_fn / neg_fn signature: (e, args) -> str
+_PRED_TABLE = {
+  # core predicates
+  "has property":       (2, lambda e,a: e(1)+" is "+e(0),
+                            lambda e,a: e(1)+" is not "+e(0)),
+  "have":               (2, lambda e,a: e(0)+" has "+e(1),
+                            lambda e,a: e(0)+" does not have "+e(1)),
+  "has part":           (2, lambda e,a: e(0)+" has "+e(1)+" as a part",
+                            lambda e,a: e(0)+" does not have "+e(1)+" as a part"),
+  "can":                (2, lambda e,a: e(0)+" can "+e(1),
+                            lambda e,a: e(0)+" cannot "+e(1)),
+  # predicates with complex logic
+  "isa":                (2, _isa_pos, _isa_neg),
+  "is rel2":            (3, _is_rel2_pos, _is_rel2_neg),
+  "has degree property":(4, lambda e,a: _has_degree_property_render(e, a, neg=False),
+                            lambda e,a: _has_degree_property_render(e, a, neg=True)),
+  "has degree rel2":    (4, lambda e,a: _has_degree_rel2_render(e, a, neg=False),
+                            lambda e,a: _has_degree_rel2_render(e, a, neg=True)),
+  # event reification predicates
+  "has type":           (2, lambda e,a: e(0)+" is a "+e(1)+" event",
+                            lambda e,a: e(0)+" is not a "+e(1)+" event"),
+  "has actor":          (2, lambda e,a: e(1)+" performs "+e(0),
+                            lambda e,a: e(1)+" does not perform "+e(0)),
+  "has target":         (2, lambda e,a: e(0)+" targets "+e(1),
+                            lambda e,a: e(0)+" does not target "+e(1)),
+  "has location":       (2, lambda e,a: e(0)+" takes place at "+e(1),
+                            lambda e,a: e(0)+" does not take place at "+e(1)),
+  "has instrument":     (2, lambda e,a: e(0)+" uses "+e(1),
+                            lambda e,a: e(0)+" does not use "+e(1)),
+  "has manner":         (2, lambda e,a: e(0)+" happens in a "+e(1)+" manner",
+                            lambda e,a: e(0)+" does not happen in a "+e(1)+" manner"),
+  "has direction":      (2, lambda e,a: e(0)+" goes towards "+e(1),
+                            lambda e,a: e(0)+" does not go towards "+e(1)),
+  "has time":           (2, lambda e,a: e(0)+" happens at "+e(1),
+                            lambda e,a: e(0)+" does not happen at "+e(1)),
+  # state / world predicates
+  "state time":         (2, lambda e,a: "at time "+e(1),         None),
+  "state location":     (2, lambda e,a: "at location "+e(1),     None),
+  # set predicates
+  "is set of":          (2, lambda e,a: e(1)+" is a set of "+e(0),
+                            lambda e,a: e(1)+" is not a set of "+e(0)),
+  "member":             (2, lambda e,a: e(0)+" is a member of "+e(1),
+                            lambda e,a: e(0)+" is not a member of "+e(1)),
+  "member has property":(2, lambda e,a: "members of "+e(1)+" are "+e(0),
+                            lambda e,a: "members of "+e(1)+" are not "+e(0)),
+  "is subset of":       (2, lambda e,a: e(0)+" is a subset of "+e(1),
+                            lambda e,a: e(0)+" is not a subset of "+e(1)),
+  "set union":          (3, lambda e,a: e(2)+" is the union of "+e(0)+" and "+e(1),
+                            None),
+  "$count":             (1, lambda e,a: "count of "+e(0),        None),
+  # comparison predicates
+  "=":                  (2, lambda e,a: e(0)+" equals "+e(1),
+                            lambda e,a: e(0)+" does not equal "+e(1)),
+  "<":                  (2, lambda e,a: e(0)+" is less than "+e(1),
+                            lambda e,a: e(0)+" is not less than "+e(1)),
+  ">":                  (2, lambda e,a: e(0)+" is greater than "+e(1),
+                            lambda e,a: e(0)+" is not greater than "+e(1)),
+  # mental predicates
+  "kb":                 (3, lambda e,a: e(1)+" "+e(2)+" that ...", None),
+  "kb force":           (0, None,                                  None),
+}
+
+
+def _render_atom(atom, negated=False):
+  """Unified atom-to-English renderer.  Dispatches via _PRED_TABLE for most
+  predicates; handles special cases (holds, normally, $defq*, etc.) inline.
+
+  negated=False: positive form ("X is Y")
+  negated=True:  natural negated form ("X is not Y")
   """
   if not isinstance(atom, list) or not atom:
-    return str(atom)
+    return ("not: " + str(atom)) if negated else str(atom)
 
   pred = str(atom[0])
   args = atom[1:]
 
   def e(i):
     """Display name of args[i] — always with URL appended for URL constants."""
-    if i >= len(args):
-      return "?"
+    if i >= len(args): return "?"
     return entity_name(args[i], with_url=True)
 
-  # ---- core predicates ----
-
-  if pred == "isa":
-    # ["isa", TYPE, ENTITY]
-    if len(args) >= 2:
-      typ = e(0)
-      # TYPE is a class name, not a specific instance — strip any "the " prefix
-      # that entity_map may have added for common-noun entity ids (e.g. "the city").
-      if typ.startswith("the "):
-        typ = typ[4:]
-      ent = e(1)
-      if typ == "activity":
-        return ent + " is an activity"
-      if typ == "set":
-        return ent + " is a set"
-      art = _indef_article(typ)
-      return ent + " is " + art + " " + typ
+  # ---- table-driven dispatch ----
+  entry = _PRED_TABLE.get(pred)
+  if entry is not None:
+    min_args, pos_fn, neg_fn = entry
+    if len(args) < min_args:
+      return ("not: " if negated else "") + _atom_fallback(atom)
+    if negated:
+      if neg_fn is not None:
+        return neg_fn(e, args)
+      return "not: " + (pos_fn(e, args) if pos_fn else _atom_fallback(atom))
+    if pos_fn is not None:
+      return pos_fn(e, args)
     return _atom_fallback(atom)
 
-  if pred == "has property":
-    # ["has property", PROPERTY, ENTITY]
-    if len(args) >= 2:
-      return e(1) + " is " + e(0)
-    return _atom_fallback(atom)
-
-  if pred == "have":
-    # ["have", OWNER, OWNED]
-    if len(args) >= 2:
-      return e(0) + " has " + e(1)
-    return _atom_fallback(atom)
-
-  if pred == "has part":
-    # ["has part", WHOLE, PART]
-    if len(args) >= 2:
-      return e(0) + " has " + e(1) + " as a part"
-    return _atom_fallback(atom)
-
-  if pred == "is rel2":
-    # ["is rel2", RELATION, ENTITY1, ENTITY2]
-    if len(args) >= 3:
-      rel = e(0)
-      last = rel.split()[-1].lower() if rel else ""
-      if rel.lower() in _PREPOSITIONS or last in _PREPOSITIONS or last == "of":
-        return e(1) + " is " + rel + " " + e(2)
-      return e(1) + " is " + rel + " of " + e(2)
-    return _atom_fallback(atom)
-
-  if pred == "can":
-    # ["can", ENTITY, ACTION]
-    if len(args) >= 2:
-      return e(0) + " can " + e(1)
-    return _atom_fallback(atom)
-
-  # ---- gradable predicates ----
-
-  if pred == "has degree property":
-    # ["has degree property", PROPERTY, ENTITY, DEGREE, RELCLASS]
-    if len(args) >= 4:
-      prop    = e(0)
-      ent     = e(1)
-      adv, art_type = _degree_parts(e(2))
-      relcls_raw = args[3] if len(args) > 3 else ""
-      if isinstance(relcls_raw, str) and relcls_raw.startswith("?:"):
-        # Unbound variable — omit class noun and article
-        return ent + " is " + adv + prop
-      relcls  = e(3)
-      if art_type == "def":
-        art = "the"
-      else:
-        art = _indef_article(adv if adv else prop)
-      return ent + " is " + art + " " + adv + prop + " " + relcls
-    return _atom_fallback(atom)
-
-  if pred == "has degree rel2":
-    # ["has degree rel2", RELATION, ENTITY1, ENTITY2, DEGREE, RELCLASS]
-    if len(args) >= 4:
-      rel        = e(0)
-      ent1       = e(1)
-      ent2       = e(2)
-      degree_raw = str(args[3]).lower() if len(args) > 3 else "none"
-      last = rel.split()[-1].lower() if rel else ""
-      # Preposition relations: "ahead of X", "next to Y"
-      if last in _PREPOSITIONS or last == "of":
-        return ent1 + " is " + rel + " " + ent2
-      # Generic variable as relation (from axiom clauses): use readable template
-      if _is_var_display(rel):
-        return ent1 + " has a " + rel + "-relation with " + ent2
-      # True comparative degrees: render as "X is ADJer than Y"
-      if degree_raw in ("high", "more"):
-        return ent1 + " is " + _make_comparative(rel) + " than " + ent2
-      if degree_raw == "most":
-        return ent1 + " is the most " + rel + " of all compared to " + ent2
-      if degree_raw in ("low", "less"):
-        return ent1 + " is less " + rel + " than " + ent2
-      if degree_raw == "least":
-        return ent1 + " is the least " + rel + " of all compared to " + ent2
-      # degree="none" or other: binary relation — "X is REL of Y"
-      return ent1 + " is " + rel + " of " + ent2
-    return _atom_fallback(atom)
-
-  # ---- event reification predicates ----
-
-  if pred == "has type":
-    # ["has type", EVENT, VERB]
-    if len(args) >= 2:
-      return e(0) + " is a " + e(1) + " event"
-    return _atom_fallback(atom)
-
-  if pred == "has actor":
-    # ["has actor", EVENT, ENTITY]
-    if len(args) >= 2:
-      return e(1) + " performs " + e(0)
-    return _atom_fallback(atom)
-
-  if pred == "has target":
-    # ["has target", EVENT, ENTITY]
-    if len(args) >= 2:
-      return e(0) + " targets " + e(1)
-    return _atom_fallback(atom)
-
-  if pred == "has location":
-    # ["has location", EVENT, LOCATION]
-    if len(args) >= 2:
-      return e(0) + " takes place at " + e(1)
-    return _atom_fallback(atom)
-
-  if pred == "has instrument":
-    # ["has instrument", EVENT, INSTRUMENT]
-    if len(args) >= 2:
-      return e(0) + " uses " + e(1)
-    return _atom_fallback(atom)
-
-  if pred == "has manner":
-    # ["has manner", EVENT, MANNER]
-    if len(args) >= 2:
-      return e(0) + " happens in a " + e(1) + " manner"
-    return _atom_fallback(atom)
-
-  if pred == "has direction":
-    # ["has direction", EVENT, DIRECTION]
-    if len(args) >= 2:
-      return e(0) + " goes towards " + e(1)
-    return _atom_fallback(atom)
-
-  if pred == "has time":
-    # ["has time", EVENT, TIME]
-    if len(args) >= 2:
-      return e(0) + " happens at " + e(1)
-    return _atom_fallback(atom)
+  # ---- special predicates requiring recursive dispatch or custom logic ----
 
   if pred == "typical":
-    # ["typical", EVENT]
     if len(args) >= 1:
-      return e(0) + " is typical"
-    return "typically"
+      return (e(0) + " is not typical") if negated else (e(0) + " is typical")
+    return "not typical" if negated else "typically"
 
   if pred == "typically":
-    # ["typically", ENTITY, VERB]
     if len(args) >= 2:
+      if negated:
+        return e(0) + " does not typically " + str(args[1])
       return e(0) + " typically " + _conjugate_verb(str(args[1]))
-    return "typically"
-
-  # ---- state / world predicates ----
+    return "not typically" if negated else "typically"
 
   if pred == "holds":
-    # ["holds", W, FORMULA] — skip the world, render the inner formula
     if len(args) >= 2 and isinstance(args[1], list):
-      return _atom_to_english(args[1])
-    return _atom_fallback(atom)
-
-  if pred == "state time":
-    # ["state time", W, TIME]
-    if len(args) >= 2:
-      return "at time " + e(1)
-    return _atom_fallback(atom)
-
-  if pred == "state location":
-    # ["state location", W, LOCATION]
-    if len(args) >= 2:
-      return "at location " + e(1)
-    return _atom_fallback(atom)
-
-  if pred == "next":
-    # state transition — not meaningful to display
-    return ""
-
-  # ---- defeasible wrapper ----
+      return _render_atom(args[1], negated=negated)
+    return ("not: " if negated else "") + _atom_fallback(atom)
 
   if pred == "normally":
-    # ["normally", FORMULA]
     if len(args) >= 1 and isinstance(args[0], list):
-      return "normally, " + _atom_to_english(args[0])
+      return "normally, " + _render_atom(args[0], negated=negated)
     return "normally"
 
-  # ---- set predicates ----
-
-  if pred == "is set of":
-    # ["is set of", TYPE, SET]
-    if len(args) >= 2:
-      return e(1) + " is a set of " + e(0)
-    return _atom_fallback(atom)
-
-  if pred == "member":
-    # ["member", ENTITY, SET]
-    if len(args) >= 2:
-      return e(0) + " is a member of " + e(1)
-    return _atom_fallback(atom)
-
-  if pred == "member has property":
-    # ["member has property", PROPERTY, SET]
-    if len(args) >= 2:
-      return "members of " + e(1) + " are " + e(0)
-    return _atom_fallback(atom)
-
-  if pred == "is subset of":
-    # ["is subset of", SET1, SET2]
-    if len(args) >= 2:
-      return e(0) + " is a subset of " + e(1)
-    return _atom_fallback(atom)
-
-  if pred == "set union":
-    # ["set union", SET1, SET2, RESULT]
-    if len(args) >= 3:
-      return e(2) + " is the union of " + e(0) + " and " + e(1)
-    return _atom_fallback(atom)
-
-  if pred == "$count":
-    # ["$count", SET]
-    if len(args) >= 1:
-      return "count of " + e(0)
-    return "$count"
-
-  # ---- comparison predicates ----
-
-  if pred == "=":
-    if len(args) >= 2:
-      return e(0) + " equals " + e(1)
-    return _atom_fallback(atom)
-
-  if pred == "<":
-    if len(args) >= 2:
-      return e(0) + " is less than " + e(1)
-    return _atom_fallback(atom)
-
-  if pred == ">":
-    if len(args) >= 2:
-      return e(0) + " is greater than " + e(1)
-    return _atom_fallback(atom)
-
-  # ---- mental predicates ----
-
-  if pred == "kb":
-    # ["kb", K, HOLDER, ATTITUDE, W]
-    if len(args) >= 3:
-      return e(1) + " " + e(2) + " that ..."
-    return _atom_fallback(atom)
-
   if pred == "kb holds":
-    # ["kb holds", K, FORMULA]
     if len(args) >= 2 and isinstance(args[1], list):
-      return _atom_to_english(args[1])
-    return _atom_fallback(atom)
+      return _render_atom(args[1], negated=negated)
+    return ("not: " if negated else "") + _atom_fallback(atom)
 
   if pred == "kb says":
-    # ["kb says", K1, K2, FORMULA]
     if len(args) >= 3 and isinstance(args[2], list):
-      return e(1) + " says that " + _atom_to_english(args[2])
-    return _atom_fallback(atom)
+      if negated:
+        return "not: " + e(1) + " says that " + _render_atom(args[2])
+      return e(1) + " says that " + _render_atom(args[2])
+    return ("not: " if negated else "") + _atom_fallback(atom)
 
-  if pred == "kb force":
-    return _atom_fallback(atom)
-
-  # ---- $defq* question-definition atoms ----
-
-  if pred.startswith("$defq"):
-    if not args:
-      return "answer holds"
-    if len(args) == 1:
-      return e(0) + " is the answer"
-    bracket = "[" + ", ".join(entity_name(a, with_url=True) for a in args) + "]"
-    return bracket + " is the answer"
-
-  # ---- traceability (skip in English) ----
-
-  if pred in ("@id", "@p", "@definite"):
-    if pred == "@id" and len(args) >= 2 and isinstance(args[1], list):
-      return _atom_to_english(args[1])
+  if pred == "next":
     return ""
 
-  # ---- fallback: pred(arg1, arg2, ...) ----
+  # ---- $defq* question-definition atoms ----
+  if pred.startswith("$defq"):
+    if not args:
+      return "the answer does not hold" if negated else "answer holds"
+    if len(args) == 1:
+      return (e(0) + " is not the answer") if negated else (e(0) + " is the answer")
+    bracket = "[" + ", ".join(entity_name(a, with_url=True) for a in args) + "]"
+    return (bracket + " is not the answer") if negated else (bracket + " is the answer")
 
+  # ---- traceability (skip in English) ----
+  if pred in ("@id", "@p", "@definite"):
+    if pred == "@id" and len(args) >= 2 and isinstance(args[1], list):
+      return _render_atom(args[1], negated=negated)
+    return ""
+
+  # ---- fallback ----
+  if negated:
+    return "not: " + _render_atom(atom)
   return _atom_fallback(atom)
 
 
@@ -1002,215 +832,23 @@ def _atom_fallback(atom):
     if isinstance(a, str):
       parts.append(entity_name(a, with_url=True))
     elif isinstance(a, list):
-      parts.append(_atom_to_english(a))
+      parts.append(_render_atom(a))
     else:
       parts.append(str(a))
   return pred + "(" + ", ".join(parts) + ")" if parts else pred
 
 
+def _atom_to_english(atom):
+  """Convert a single logic atom to readable English."""
+  return _render_atom(atom, negated=False)
+
+
 def _atom_to_english_negated(atom):
   """Render a single atom in its natural negated English form.
 
-  Used for pure-negative clauses (all atoms negated, no positive atoms) so
-  that "X is not Y" / "X does not have Y" is produced instead of the
-  awkward "not: X is Y".  Falls back to "not: " + positive form for any
-  predicate not explicitly listed here.
-
   The atom argument is the BASE atom (predicate name WITHOUT the leading "-").
   """
-  if not isinstance(atom, list) or not atom:
-    return "not: " + str(atom)
-
-  pred = str(atom[0])
-  args = atom[1:]
-
-  def e(i):
-    if i >= len(args): return "?"
-    return entity_name(args[i], with_url=True)
-
-  # ---- core predicates ----
-
-  if pred == "isa":
-    if len(args) >= 2:
-      typ = e(0); ent = e(1)
-      if typ.startswith("the "):
-        typ = typ[4:]
-      if typ == "activity": return ent + " is not an activity"
-      if typ == "set":      return ent + " is not a set"
-      return ent + " is not " + _indef_article(typ) + " " + typ
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "has property":
-    if len(args) >= 2:
-      return e(1) + " is not " + e(0)
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "have":
-    if len(args) >= 2:
-      return e(0) + " does not have " + e(1)
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "has part":
-    if len(args) >= 2:
-      return e(0) + " does not have " + e(1) + " as a part"
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "is rel2":
-    if len(args) >= 3:
-      rel = e(0)
-      last = rel.split()[-1].lower() if rel else ""
-      if rel.lower() in _PREPOSITIONS or last in _PREPOSITIONS or last == "of":
-        return e(1) + " is not " + rel + " " + e(2)
-      return e(1) + " is not " + rel + " of " + e(2)
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "can":
-    if len(args) >= 2:
-      return e(0) + " cannot " + e(1)
-    return "not: " + _atom_fallback(atom)
-
-  # ---- gradable predicates ----
-
-  if pred == "has degree property":
-    if len(args) >= 4:
-      prop = e(0); ent = e(1)
-      adv, art_type = _degree_parts(e(2))
-      relcls_raw = args[3] if len(args) > 3 else ""
-      if isinstance(relcls_raw, str) and relcls_raw.startswith("?:"):
-        # Unbound variable — omit class noun and article
-        return ent + " is not " + adv + prop
-      relcls = e(3)
-      art = "the" if art_type == "def" else _indef_article(adv if adv else prop)
-      return ent + " is not " + art + " " + adv + prop + " " + relcls
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "has degree rel2":
-    if len(args) >= 4:
-      rel        = e(0)
-      ent1       = e(1)
-      ent2       = e(2)
-      degree_raw = str(args[3]).lower() if len(args) > 3 else "none"
-      last = rel.split()[-1].lower() if rel else ""
-      if last in _PREPOSITIONS or last == "of":
-        return ent1 + " is not " + rel + " " + ent2
-      if _is_var_display(rel):
-        return ent1 + " does not have a " + rel + "-relation with " + ent2
-      if degree_raw in ("high", "more"):
-        return ent1 + " is not " + _make_comparative(rel) + " than " + ent2
-      if degree_raw in ("low", "less"):
-        return ent1 + " is not less " + rel + " than " + ent2
-      return ent1 + " is not " + rel + " of " + ent2
-    return "not: " + _atom_fallback(atom)
-
-  # ---- event reification predicates ----
-
-  if pred == "has type":
-    if len(args) >= 2:
-      return e(0) + " is not a " + e(1) + " event"
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "has actor":
-    if len(args) >= 2:
-      return e(1) + " does not perform " + e(0)
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "has target":
-    if len(args) >= 2:
-      return e(0) + " does not target " + e(1)
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "has location":
-    if len(args) >= 2:
-      return e(0) + " does not take place at " + e(1)
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "has instrument":
-    if len(args) >= 2:
-      return e(0) + " does not use " + e(1)
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "has manner":
-    if len(args) >= 2:
-      return e(0) + " does not happen in a " + e(1) + " manner"
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "has direction":
-    if len(args) >= 2:
-      return e(0) + " does not go towards " + e(1)
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "has time":
-    if len(args) >= 2:
-      return e(0) + " does not happen at " + e(1)
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "typical":
-    if len(args) >= 1:
-      return e(0) + " is not typical"
-    return "not typical"
-
-  if pred == "typically":
-    if len(args) >= 2:
-      return e(0) + " does not typically " + str(args[1])
-    return "not typically"
-
-  # ---- state / world predicates ----
-
-  if pred == "holds":
-    if len(args) >= 2 and isinstance(args[1], list):
-      return _atom_to_english_negated(args[1])
-    return "not: " + _atom_fallback(atom)
-
-  # ---- set predicates ----
-
-  if pred == "is set of":
-    if len(args) >= 2:
-      return e(1) + " is not a set of " + e(0)
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "member":
-    if len(args) >= 2:
-      return e(0) + " is not a member of " + e(1)
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "member has property":
-    if len(args) >= 2:
-      return "members of " + e(1) + " are not " + e(0)
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "is subset of":
-    if len(args) >= 2:
-      return e(0) + " is not a subset of " + e(1)
-    return "not: " + _atom_fallback(atom)
-
-  # ---- comparison predicates ----
-
-  if pred == "=":
-    if len(args) >= 2:
-      return e(0) + " does not equal " + e(1)
-    return "not: " + _atom_fallback(atom)
-
-  if pred == "<":
-    if len(args) >= 2:
-      return e(0) + " is not less than " + e(1)
-    return "not: " + _atom_fallback(atom)
-
-  if pred == ">":
-    if len(args) >= 2:
-      return e(0) + " is not greater than " + e(1)
-    return "not: " + _atom_fallback(atom)
-
-  # ---- $defq* ----
-
-  if pred.startswith("$defq"):
-    if not args:       return "the answer does not hold"
-    if len(args) == 1: return e(0) + " is not the answer"
-    bracket = "[" + ", ".join(entity_name(a, with_url=True) for a in args) + "]"
-    return bracket + " is not the answer"
-
-  # ---- fallback ----
-
-  return "not: " + _atom_to_english(atom)
+  return _render_atom(atom, negated=True)
 
 
 # =========== the end ==========

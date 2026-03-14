@@ -387,6 +387,17 @@ def is_ground_term(term):
   return isinstance(term, str) and not looks_like_var(term)
 
 
+def _record_polarity(registry, key, name, entity, atom_pol):
+  """Register a positive or negative ground occurrence in a scan registry."""
+  if key not in registry:
+    registry[key] = {"name": name, "has_pos": False, "has_neg": False}
+  if is_ground_term(entity):
+    if atom_pol:
+      registry[key]["has_pos"] = True
+    else:
+      registry[key]["has_neg"] = True
+
+
 def scan_item_formula(frm, name, polarity, classes, has_props, deg_props):
   """Recursively scan a formula for isa / has-property / has-degree-property atoms.
 
@@ -453,41 +464,16 @@ def scan_item_formula(frm, name, polarity, classes, has_props, deg_props):
   args = frm[1:]
 
   if actual_pred == "isa" and len(args) >= 2:
-    cls    = str(args[0])
-    entity = args[1]
-    if cls not in classes:
-      classes[cls] = {"name": name, "has_pos": False, "has_neg": False}
-    if is_ground_term(entity):
-      if atom_pol:
-        classes[cls]["has_pos"] = True
-      else:
-        classes[cls]["has_neg"] = True
+    _record_polarity(classes, str(args[0]), name, args[1], atom_pol)
 
   elif actual_pred == "has property" and len(args) >= 2:
-    prop   = str(args[0])
-    entity = args[1]
-    if prop not in has_props:
-      has_props[prop] = {"name": name, "has_pos": False, "has_neg": False}
-    if is_ground_term(entity):
-      if atom_pol:
-        has_props[prop]["has_pos"] = True
-      else:
-        has_props[prop]["has_neg"] = True
+    _record_polarity(has_props, str(args[0]), name, args[1], atom_pol)
 
   elif actual_pred == "has degree property" and len(args) >= 4:
-    prop     = str(args[0])
-    entity   = args[1]
     relclass = args[3]
     # Only include when RELCLASS is a constant (not a variable).
     if isinstance(relclass, str) and not looks_like_var(relclass):
-      key = (prop, relclass)
-      if key not in deg_props:
-        deg_props[key] = {"name": name, "has_pos": False, "has_neg": False}
-      if is_ground_term(entity):
-        if atom_pol:
-          deg_props[key]["has_pos"] = True
-        else:
-          deg_props[key]["has_neg"] = True
+      _record_polarity(deg_props, (str(args[0]), relclass), name, args[1], atom_pol)
 
 
 def build_population_facts(classes, has_props, deg_props):

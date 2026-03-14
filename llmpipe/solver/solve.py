@@ -69,7 +69,7 @@ debug = False
 
 # LLM provider / version overrides passed through to llmparse / llmcall.
 # None means use the defaults configured in llmparse.py / llmcall.py.
-llm         = None   # "gpt" | "claude" | "gemini" | None
+llm         = None   # "gpt" | "claude" | "gemini" | "deepseek" | None
 llm_version = None   # model version string, or None for default
 max_tokens  = None   # int, or None for default
 
@@ -262,7 +262,7 @@ def _parse_cmd_line():
       opts["noexceptions_flag"] = True
     elif el in ["-llm", "--llm"]:
       if elpos + 1 >= len(params):
-        print("-llm requires a provider name: gpt, claude, or gemini")
+        print("-llm requires a provider name: gpt, claude, gemini, or deepseek")
         sys.exit(0)
       llm = params[elpos + 1]
       skippos = 1
@@ -367,10 +367,11 @@ semantic normalisation (ON by default):
  -nosemnormal : disable antonym folding and canonical word substitution
 
 LLM selection:
- -llm NAME    : LLM provider: gpt, claude, or gemini (default: from llmcall.py config)
+ -llm NAME    : LLM provider: gpt, claude, gemini, or deepseek (default: from llmcall.py config)
  -version VER : model version string, e.g. claude-sonnet-4-6, gpt-4o
  -think       : enable medium reasoning/thinking mode (GPT: reasoning_effort=medium;
-                Claude: extended thinking; Gemini: requires 2.5+ model)
+                Claude: extended thinking; Gemini: requires 2.5+ model;
+                DeepSeek: switches to deepseek-reasoner)
 
 controlling the prover:
  -seconds N    : give N seconds for proof search (default 2)

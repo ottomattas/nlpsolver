@@ -34,6 +34,7 @@ representation so that a developer or LLM can quickly start extending or modifyi
    - 5.12 [cache.py](#512-cachepy)
    - 5.13 [globals.py](#513-globalspy)
    - 5.14 [utils.py](#514-utilspy)
+   - 5.15 [linguistics.py](#515-linguisticspy)
 6. [Prompt files](#6-prompt-files)
 7. [Key algorithms in logconvert.py and lc_clausify.py](#7-key-algorithms-in-logconvertpy-and-lc_clausifypy)
    - 7.1 [Package extraction](#71-package-extraction)
@@ -122,8 +123,9 @@ llmpipe/
 │   ├── lc_clausify.py   FOL → CNF clausification
 │   ├── lc_questions.py  Wh-question encoding and population facts
 │   ├── procproofs.py    Prover output → answer string
-│   ├── proof_render.py  Atom/clause rendering helpers
+│   ├── proof_render.py  Atom/clause rendering (table-driven)
 │   ├── proof_explain.py Step-by-step proof explanation formatter
+│   ├── linguistics.py   Pure English heuristics (articles, conjugation, gerunds)
 │   ├── prover.py        gk binary interface
 │   ├── pretty.py        JSON pretty-printer (Style B)
 │   ├── cache.py         SQLite cache for LLM responses and prover results
@@ -337,8 +339,9 @@ Each entry is `[word, intensity, relclass]`:
 - **word** — the adjective or relational phrase (e.g. `"close to"`)
 - **intensity** — `"none"` (plain), `"low"` (slightly/a bit), `"high"` (very/extremely)
 - **relclass** — the comparison class; use `"none"` for non-gradable adjectives (colours,
-  categorical) and `"entity"` when no specific class is known; the system replaces `"entity"`
-  with a fresh free variable during `logconvert`
+  categorical) and `"entity"` when no specific class is known; the system replaces both
+  `"entity"` and `"none"` with a fresh free variable during `logconvert` (since neither
+  carries a useful comparison-class constraint)
 
 Stage 2 then uses this field to decide which predicate to emit (`has degree property` vs
 `has property`; `has degree rel2` vs `is rel2`).  `logconvert` additionally normalises based on
@@ -410,7 +413,7 @@ returns a string starting with `"Error:"` rather than raising.
 **CLI flags** (all optional):
 
 ```
--llm NAME          LLM provider: gpt, claude, gemini
+-llm NAME          LLM provider: gpt, claude, gemini, deepseek
 -version VER       Model version string
 -debug             Print full pipeline detail
 -logic             Print parsed logic (prover input)
@@ -458,9 +461,9 @@ instructions + `"\n\nExamples:\n\n"` + examples into a single system prompt stri
 
 **Key function:** `call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None) -> str | None`
 
-Dispatches to `call_gemini`, `call_claude`, or `call_gpt` based on the `use_llm` setting.
-Each provider-specific function makes the HTTP call directly (no SDK) with retries and a sleep
-between retries.
+Dispatches to `call_gemini`, `call_claude`, `call_gpt`, or `call_deepseek` based on the
+`use_llm` setting.  Each provider-specific function makes the HTTP call directly (no SDK)
+with retries and a sleep between retries.
 
 **Caching:** Before calling the LLM, `call_llm` checks the SQLite cache in `cache.db`.  The
 cache key encodes: provider, version, temperature, seed, max_tokens, sysprompt, input_text.  If
@@ -475,17 +478,18 @@ is stored in the cache before returning.  Caching is controlled by
 **Configuration** (edit at the top of `llmcall.py`):
 
 ```python
-use_llm        = "claude"            # "gpt" | "claude" | "gemini"
-claudeversion  = "claude-sonnet-4-6"
-gptversion     = "gpt-5.1"
-geminiversion  = "gemini-2.0-flash"
-temperature    = 0
+use_llm          = "gemini"            # "gpt" | "claude" | "gemini" | "deepseek"
+claudeversion    = "claude-sonnet-4-6"
+gptversion       = "gpt-5.1"
+geminiversion    = "gemini-2.0-flash"
+deepseekversion  = "deepseek-chat"     # V3.2; "deepseek-reasoner" for thinking
+temperature      = 0
 default_max_tokens = 8000
-max_retries    = 3
+max_retries      = 3
 ```
 
 API keys are read from JSON files: `../gpt/gpt_secrets.js`, `../gpt/claude_secrets.js`,
-`../gpt/gemini_secrets.js` (relative to `llmpipe/`).
+`../gpt/gemini_secrets.js`, `../gpt/deepseek_secrets.txt` (relative to `llmpipe/`).
 
 ### 5.4 logconvert.py
 
@@ -508,8 +512,8 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
     │    _convert_id_package(item, asu_index)
     │        _extract_package_ctx()        unpack PACKAGE: formula, world, tense, etc.
     │        override with Stage-1 ASU data (tense, world, location)
-    │        clausify(formula) if assertion  [→ lc_clausify.py]
-    │        build_defq_question() if wh-question  [→ lc_questions.py]
+    │        _process_question()           wh-/yes-no question dispatch  [→ lc_questions.py]
+    │        _process_assertion()          clausify + confidence  [→ lc_clausify.py]
     │        inject $ctxt into result
     │
     ├─ insert population facts before first @question
@@ -561,6 +565,13 @@ _expand_normally (pass 2)      normally(atom) → $block clause
 _extract_clauses               collect flat clause list
 ```
 
+**Internal helpers** (extracted from `_expand_normally` and `_distribute`):
+
+- `_flatten_or_elements(elements)` — flatten nested `or` wrappers in a list of formula elements
+- `_classify_literals(lits)` — split literals into `(neg_lits, pos_lits)` by predicate polarity
+- `_extract_isa_priority(neg_lits, blocker_class_tag, extra_neg)` — compute `$block` priority
+  from negative literals and optional class tag
+
 **Module-level counters** (reset externally by `rawlogic_convert`):
 
 - `_skolem_nr` — next Skolem constant/function index
@@ -572,19 +583,22 @@ _extract_clauses               collect flat clause list
 
 **Public API used by `logconvert.py`:**
 
-- `build_defq_question(formula, askvars, fresh_fv_fn) -> list` — encode a wh-question as a set
-  of GK clauses using `$defq` predicates
-- `find_where_atom(formula) -> atom | None` — find the location atom in a where-question body
-- `build_where_question(formula, fresh_fv_fn) -> list` — encode a where-question
-- `flatten_q_atoms(formula) -> list` — flatten an `ask` formula into a list of atoms
-- `scan_item_formula(formula, entity_types) -> list` — scan a formula for population facts
-- `build_population_facts(entity_types, mentioned) -> list` — build `isa TYPE ENTITY` fact clauses
+- `build_defq_question(name, ask_var, body, where_prep=None) -> list` — encode a wh- or yes/no
+  question as `$defq` biconditional GK clauses
+- `find_where_atom(body, ask_var) -> atom | None` — find the location atom in a where-question body
+- `build_where_question(name, entity, ask_var, specific_prep=None) -> list` — encode a where-question
+- `flatten_q_atoms(frm, varmap) -> list` — flatten an `ask` formula into a list of atoms
+- `scan_item_formula(frm, name, polarity, classes, has_props, deg_props)` — scan a formula for
+  isa / has-property / has-degree-property atoms, recording polarity in the provided dicts
+- `build_population_facts(classes, has_props, deg_props) -> list` — build positive/negative
+  synthetic population clauses from collected scan data
 - `is_ground_term(t) -> bool` — true if `t` contains no variables
 - `is_simple_question_formula(f) -> bool` — true if `f` is a single atom (not compound)
-- `collect_body_free_vars(formula) -> set` — free variables in a formula
-- `find_haslocation_prep(formula) -> str | None` — extract spatial preposition from a location atom
-- `simplify_contradictory_and(formula) -> formula` — remove trivially-false conjuncts
-- `S2_VAR_RE` — regex matching Stage-2 variable names (`?:X`, `?:E`, etc.)
+- `collect_body_free_vars(frm, bound=None) -> set` — free variables in a formula
+- `find_haslocation_prep(body, ask_var) -> str | None` — return `"in"` if body contains
+  `has_location` with the ask variable
+- `simplify_contradictory_and(frm) -> formula` — simplify `["and", ["not", A], A]` to `["not", A]`
+- `S2_VAR_RE` — regex matching Stage-2 variable names (uppercase-initial identifiers)
 - `WHERE_SPATIAL_PREPS` — set of spatial prepositions handled as where-questions
 
 ### 5.7 procproofs.py
@@ -605,6 +619,11 @@ _extract_clauses               collect flat clause list
 6. Optionally renders a step-by-step proof explanation (via `proof_explain.format_explanation`)
    when `-explain` is used.
 
+**Internal helpers:**
+
+- `_join_and_finish(parts)` — join a list of answer strings with "and", capitalise, add period;
+  shared by `_format_where_answers` and `_format_answers`
+
 **Ambiguity handling:** Before formatting, `compute_ambiguity` (from `proof_render.py`) scans
 the full logic list to find entity names that appear with more than one number (e.g. `"John 1"`
 and `"John 3"`).  Such names keep their distinguishing number in output.
@@ -616,12 +635,25 @@ and `"John 3"`).  Such names keep their distinguishing number in output.
 
 **Role:** Low-level rendering of proof atoms and clauses as English strings.
 
+**Architecture:** Atom-to-English rendering is table-driven via `_PRED_TABLE`, a dict mapping
+predicate names to `(arity, pos_renderer, neg_renderer)` tuples.  The unified `_render_atom(atom,
+negated=False)` function dispatches through the table, with fallback handlers for special cases
+(`holds`, `normally`, `$defq*`, etc.).
+
+Per-proof mutable state (entity map, ambiguous names, Skolem type annotations) is bundled in a
+`RenderContext` class (`_ctx` module-level instance), replacing former module-level globals.
+
+**Imports from linguistics.py:** `indef_article`, `conjugate_verb`, `make_comparative`,
+`to_gerund` — pure English heuristic helpers with no dependency on proof state.
+
 **Public API:**
 
 - `compute_ambiguity(logic) -> (set, set)` — returns `(ambiguous_names, ambiguous_urls)` by
   scanning the full clause list for multiply-numbered entities
 - `compute_skolem_types(proof)` — annotate each Skolem constant in a proof with the type inferred
   from `isa` literals in the proof steps (mutates step dicts in-place)
+- `set_entity_map(entity_map)` — set the entity display map in the render context
+- `get_entity_display(key)` — look up an entity's display name
 - `entity_name(atom_arg, ambiguous, ambig_urls) -> str` — format one entity argument for display
 - `ans_atom_name(atom) -> str` — format the answer atom of a proof step
 - `clause_to_str(clause) -> str` — convert a raw clause list to a readable string
@@ -747,6 +779,16 @@ the parsed CLI flags.
 - `clause_list_to_json(logic) -> str` — converts the Python GK clause list to a JSON string
   suitable for passing to the `gk` binary.  Uses `json.dumps` with compact separators.
 
+### 5.15 linguistics.py
+
+**Role:** Pure English linguistic heuristics used by `proof_render.py` for human-readable output.
+No dependency on proof state or any other pipeline module.
+
+- `indef_article(word) -> str` — returns `"an"` before vowel sounds, `"a"` otherwise
+- `conjugate_verb(v) -> str` — third-person singular present tense (`fly` → `flies`)
+- `make_comparative(adj) -> str` — comparative form (`nice` → `nicer`, `beautiful` → `more beautiful`)
+- `to_gerund(verb) -> str` — gerund form (`run` → `running`, `bite` → `biting`)
+
 ---
 
 ## 6. Prompt files
@@ -798,7 +840,9 @@ The PACKAGE shapes it handles:
 
 After extraction, `_convert_id_package` overrides `tense`, `world`, and `location` with data
 from the matching Stage-1 ASU (when `asu_index` is available).  Stage-1 data is authoritative
-because it is produced closer to the English source.
+because it is produced closer to the English source.  The actual question/assertion logic is
+delegated to `_process_question` (wh-/yes-no dispatch) and `_process_assertion` (confidence
+handling + clausification).
 
 ### 7.2 FOL to CNF clausification
 
@@ -891,9 +935,10 @@ applies `_norm_grad_frm` to every predicate atom:
 - `has property PROP ...` where PROP **is** in `_GRADABLE_PROPS`
   → convert to `has degree property PROP ENTITY "none" RELCLASS` (add degree/relclass;
   RELCLASS = fresh free variable)
-- `has degree property ... RELCLASS` where RELCLASS == `"entity"`
-  → replace `"entity"` with a fresh free variable (since every entity is an entity, this
-  constant would block unification against meaningful relclasses like `"person"`)
+- `has degree property ... RELCLASS` where RELCLASS is `"entity"` or `"none"`
+  → replace with a fresh free variable (neither carries a useful comparison-class constraint,
+  and leaving them as constants would block unification against meaningful relclasses like
+  `"person"`)
 
 The same logic applies to `has degree rel2` vs `is rel2`.
 
@@ -920,8 +965,10 @@ prover sees them) so that `_coerce_relclass` can treat them differently from que
 
 **To change the default LLM provider or model**, edit `solver/llmcall.py`:
 ```python
-use_llm       = "claude"              # "gpt" | "claude" | "gemini"
-claudeversion = "claude-sonnet-4-6"
+use_llm          = "gemini"            # "gpt" | "claude" | "gemini" | "deepseek"
+geminiversion    = "gemini-2.0-flash"
+claudeversion    = "claude-sonnet-4-6"
+deepseekversion  = "deepseek-chat"
 ```
 
 **To change the gradable property whitelist**, edit `solver/gradables.txt`.  One lowercase
@@ -988,8 +1035,8 @@ and instructions for rebuilding cluster files from scratch (~30–90 min, requir
    `== 5. PREDICATE INVENTORY ==`).
 2. Add examples to `prompts/stage2_examples.txt` showing the new predicate in context.
 3. If the predicate should receive `$ctxt`, add it to `_CTXT_ELIGIBLE` in `logconvert.py`.
-4. If `procproofs.py` needs to render the predicate in an explanation, add a rendering rule in
-   `proof_render.py`.
+4. If `procproofs.py` needs to render the predicate in an explanation, add an entry to
+   `_PRED_TABLE` in `proof_render.py` (or a special-case handler in `_render_atom`).
 
 ### Modifying Stage-1 parsing behaviour
 
@@ -1009,8 +1056,8 @@ sections are:
 ### Adding a new LLM provider
 
 In `llmcall.py`, add a `call_newprovider(sysprompt, input_text, version, max_tokens)` function
-following the pattern of `call_claude` or `call_gpt`, then dispatch from `call_llm` when
-`llm == "newprovider"`.
+following the pattern of `call_claude`, `call_gpt`, or `call_deepseek`, then dispatch from
+`call_llm` when `llm == "newprovider"`.
 
 ### Improving proof post-processing
 

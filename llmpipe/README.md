@@ -27,8 +27,8 @@ English text
   → Answer string
 ```
 
-The pipeline supports GPT, Claude, and Gemini as the parsing LLM.  LLM responses are cached in
-`cache.db` (SQLite) so repeated queries are free.
+The pipeline supports GPT, Claude, Gemini, and DeepSeek as the parsing LLM.  LLM responses are
+cached in `cache.db` (SQLite) so repeated queries are free.
 
 ## Repository layout
 
@@ -47,7 +47,7 @@ llmpipe/
 python3 solver/solve.py "TEXT"
 
 # Useful flags
--llm claude|gpt|gemini    LLM provider (default set in llmcall.py)
+-llm claude|gpt|gemini|deepseek  LLM provider (default set in llmcall.py)
 -version MODEL            Model version string
 -debug                    Show full pipeline detail
 -logic                    Show parsed logic (prover input)
@@ -65,11 +65,13 @@ python3 test.py tests/tests_core.py -llm claude
 
 **LLM provider and model:** edit `solver/llmcall.py`:
 ```python
-use_llm       = "claude"            # "gpt" | "claude" | "gemini"
+use_llm       = "gemini"            # "gpt" | "claude" | "gemini" | "deepseek"
 claudeversion = "claude-sonnet-4-6"
+geminiversion = "gemini-2.0-flash"
 ```
 
-**API keys:** JSON files in `../gpt/` (`gpt_secrets.js`, `claude_secrets.js`, `gemini_secrets.js`).
+**API keys:** JSON files in `../gpt/` (`gpt_secrets.js`, `claude_secrets.js`, `gemini_secrets.js`,
+`deepseek_secrets.txt`).
 
 **Required external data** (not in this repo):
 ```

@@ -1562,6 +1562,41 @@ INPUT:
 
 [
   {
+    "raw": "A not very big mouse is nice.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "A not very big mouse 1 is nice.",
+        "type": "situation",
+        "entities": [
+          {"id": "mouse 1", "type": "concrete"}
+        ],
+        "adjectives": [["big", "high", "mouse"], ["nice", "none", "mouse"]]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["holds","W0",
+      ["and",
+        ["isa","mouse","mouse 1"],
+        ["not", ["has degree property","big","mouse 1","high","mouse"]],
+        ["has degree property","nice","mouse 1","none","mouse"]
+      ]
+    ]
+  ]
+]
+
+-------
+
+INPUT:
+
+[
+  {
     "raw": "The house is slightly warm.",
     "units": [
       {
@@ -1882,6 +1917,54 @@ OUTPUT:
     ]
   ]
 
+]
+
+
+-----------
+
+INPUT:
+
+[{
+  "raw": "Mike did not buy the car.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Mike 3 did not buy the car 2.",
+      "type": "situation",
+      "entities": [
+        {"id":"Mike 3","type":"concrete","category":"person"},
+        {"id":"car 2","type":"concrete","category":"artifact"}
+      ],
+      "actions": [
+        {"root":"buy","mode":"event","roles":{"target":"car 2"}}
+      ],
+      "pre_state":"W0",
+      "time":"past"
+    }
+  ]
+}]
+
+OUTPUT:
+
+[
+  ["@id","S1",
+    ["holds","W0",
+      ["and",
+        ["isa","person","Mike 3"],
+        ["isa","car","car 2"],
+        ["not",
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","buy"],
+              ["has actor","E","Mike 3"],
+              ["has target","E","car 2"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
 ]
 
 -----------
@@ -2516,4 +2599,103 @@ OUTPUT:
     ]]],
     ["@p","S6",0.99]
   ]]
+]
+
+---
+
+INPUT:
+
+[
+  {
+    "raw": "John is a strong man whom Eve liked?",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "Is John 1 a strong man whom Eve 2 liked?",
+        "type": "query",
+        "entities": [
+          {"id": "John 1", "type": "concrete", "category": "person"},
+          {"id": "Eve 2", "type": "concrete", "category": "person"}
+        ],
+        "adjectives": [["strong", "none", "person"]]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["question",
+      ["and",
+        ["isa","man","John 1"],
+        ["has degree property","strong","John 1","none","person"],
+        ["@time","past",
+          ["is rel2","like","Eve 2","John 1"]
+        ]
+      ]
+    ]
+  ]
+]
+
+---
+
+INPUT:
+
+[
+  {
+    "raw": "If a person had a car and now does not have the car, the person sold the car.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "If a person had a car and now does not have the car, the person sold the car.",
+        "type": "normal_rule",
+        "entities": [
+          {"id": "person", "type": "generic", "category": "person"},
+          {"id": "car", "type": "generic", "category": "artifact"}
+        ],
+        "actions": [
+          {"root": "sell", "mode": "event", "roles": {"target": "car"}}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","person","X"],
+            ["forall","Y",
+              ["implies",
+                ["and",
+                  ["isa","car","Y"],
+                  ["@time","past", ["have","X","Y"]],
+                  ["not", ["@time","present", ["have","X","Y"]]]
+                ],
+                ["normally",
+                  ["exists","E",
+                    ["and",
+                      ["isa","activity","E"],
+                      ["has type","E","sell"],
+                      ["has actor","E","X"],
+                      ["has target","E","Y"],
+                      ["has time","E","past"]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      ["@p","S1",0.9]
+    ]
+  ]
 ]

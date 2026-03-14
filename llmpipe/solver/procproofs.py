@@ -28,7 +28,7 @@ from proof_render import (
   compute_ambiguity, entity_name, ans_atom_name,
   set_entity_map, get_entity_display,
 )
-from proof_explain import format_explanation, build_sentence_map
+from proof_explain import format_explanation, build_sentence_map, ans_display_key
 from entity_map import build_entity_map
 
 
@@ -110,6 +110,23 @@ def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=Non
       answer_str = answer_str + "\n\n" + explanation
 
   return answer_str
+
+
+# ======== formatting helpers ========
+
+def _join_and_finish(parts):
+  """Join parts with commas/and, capitalize first letter, ensure trailing period."""
+  if len(parts) == 1:
+    res = parts[0]
+  elif len(parts) == 2:
+    res = parts[0] + " and " + parts[1]
+  else:
+    res = ", ".join(parts[:-1]) + " and " + parts[-1]
+  if res and res[0].islower():
+    res = res[0].upper() + res[1:]
+  if not res.endswith("."):
+    res += "."
+  return res
 
 
 # ======== answer formatting ========
@@ -260,22 +277,9 @@ def _format_where_answers(answers, logic=None):
   if prefix is None:
     return "Unknown."
 
-  if len(parts) == 1:
-    loc = parts[0]
-  elif len(parts) == 2:
-    loc = parts[0] + " and " + parts[1]
-  else:
-    loc = ", ".join(parts[:-1]) + " and " + parts[-1]
-
   if prefix:
-    res = prefix + " " + loc
-  else:
-    res = loc
-
-  res = res[0].upper() + res[1:]
-  if not res.endswith("."):
-    res += "."
-  return res
+    parts[0] = prefix + " " + parts[0]
+  return _join_and_finish(parts)
 
 
 def _format_bool_answer(val, conf, has_conflict=False):
@@ -295,6 +299,12 @@ def _format_bool_answer(val, conf, has_conflict=False):
     False, conf >= 0.85              -> "Likely false (confidence X)"
     False, conf >= 0.60              -> "Probably false (confidence X)"
     False, conf <  0.60              -> "Probably false"
+
+  The asymmetry is intentional: True uses finer graduation because positive
+  proofs carry varying chain strength, and very low confidence (<0.10) is
+  indistinguishable from noise (→ "Unknown.").  False is proved by
+  contradiction, so even weak negative evidence is informative — low-confidence
+  False still reports "Probably false" rather than falling back to "Unknown.".
   """
   if conf >= 0.95:
     return "True" if val else "False"
@@ -322,21 +332,12 @@ def _format_answers(answers, askvars=None):
   The detailed proof explanation is unaffected.
   """
   parts     = []
-  seen_keys = set()   # deduplicate by display-name tuple, not raw val
+  seen_keys = set()
   for ans in answers:
     val  = ans.get("answer")
     conf = ans.get("confidence", 1)
 
-    # Build a dedup key from the display names of the answer atoms.
-    # This ignores auxiliary world-state arguments (W0 vs W1 etc.) so that
-    # the same entity is not listed twice just because it was found at
-    # different world states.
-    if val is True or val is False:
-      key = val
-    elif isinstance(val, list) and val:
-      key = frozenset(ans_atom_name(a) for a in val)
-    else:
-      key = str(val)
+    key = ans_display_key(val)
     if key in seen_keys:
       continue
     seen_keys.add(key)
@@ -371,19 +372,7 @@ def _format_answers(answers, askvars=None):
 
   if not parts:
     return "Could not find an answer."
-
-  if len(parts) == 1:
-    res = parts[0]
-  elif len(parts) == 2:
-    res = parts[0] + " and " + parts[1]
-  else:
-    res = ", ".join(parts[:-1]) + " and " + parts[-1]
-
-  if res and res[0].islower():
-    res = res[0].upper() + res[1:]
-  if not res.endswith("."):
-    res += "."
-  return res
+  return _join_and_finish(parts)
 
 
 def _fmt_conf(conf):
