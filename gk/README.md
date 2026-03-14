@@ -88,7 +88,6 @@ These datasets GK uses for taxonomy reasoning are built from the hypernym and hy
 
 * gk_name_number.txt : a mapping of Wordnet synsets to class numbers
 * gk_taxonomy_packed.txt : packed topologically sorted class taxonomies 
-* gk_taxonomy_packed.txt : packed topologically sorted class taxonomies 
 
 Using defaults
 --------------
