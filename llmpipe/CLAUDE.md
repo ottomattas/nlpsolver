@@ -107,10 +107,10 @@ default_max_tokens = 8000
 ```
 
 API keys are read from JSON files at:
-- `../gpt/gpt_secrets.js`
-- `../gpt/claude_secrets.js`
-- `../gpt/gemini_secrets.js`
-- `../gpt/deepseek_secrets.txt`
+- `../secrets/gpt_secrets.txt`
+- `../secrets/claude_secrets.txt`
+- `../secrets/gemini_secrets.txt`
+- `../secrets/deepseek_secrets.txt`
 
 LLM responses are cached by default in `cache.db` (SQLite), keyed on provider, version, temperature, max_tokens, sysprompt and input. Use `-nollmcache` to disable.
 

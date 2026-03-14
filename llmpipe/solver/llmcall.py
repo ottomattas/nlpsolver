@@ -50,10 +50,11 @@ geminiversion = "gemini-2.0-flash"
 deepseekversion = "deepseek-chat"          # V3.2; use "deepseek-reasoner" for thinking
 
 # API key files (absolute paths relative to llmpipe/)
-gpt_secrets_file = os.path.join(_root, "../gpt/gpt_secrets.js")
-claude_secrets_file = os.path.join(_root, "../gpt/claude_secrets.js")
-gemini_secrets_file = os.path.join(_root, "../gpt/gemini_secrets.js")
-deepseek_secrets_file = os.path.join(_root, "../gpt/deepseek_secrets.txt")
+_secrets_dir = os.path.join(_root, "../secrets")
+gpt_secrets_file = os.path.join(_secrets_dir, "gpt_secrets.txt")
+claude_secrets_file = os.path.join(_secrets_dir, "claude_secrets.txt")
+gemini_secrets_file = os.path.join(_secrets_dir, "gemini_secrets.txt")
+deepseek_secrets_file = os.path.join(_secrets_dir, "deepseek_secrets.txt")
 
 # Call parameters
 temperature = 0
@@ -351,13 +352,7 @@ def call_gpt(version, sentences, sysprompt, max_tokens, think=False):
     sf.close()
   except:
     return llm_error("Could not read GPT API key file: " + str(gpt_secrets_file))
-  try:
-    data = json.loads(txt)
-  except:
-    return llm_error("Could not parse JSON in GPT API key file: " + str(gpt_secrets_file))
-  if "gpt_key" not in data or not data["gpt_key"]:
-    return llm_error("Could not find 'gpt_key' in: " + str(gpt_secrets_file))
-  key = data["gpt_key"]
+  key = txt.strip()
 
   if version.startswith("gpt-5"):
     baseurl = "/v1/responses"

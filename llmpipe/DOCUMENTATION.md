@@ -488,8 +488,9 @@ default_max_tokens = 8000
 max_retries      = 3
 ```
 
-API keys are read from JSON files: `../gpt/gpt_secrets.js`, `../gpt/claude_secrets.js`,
-`../gpt/gemini_secrets.js`, `../gpt/deepseek_secrets.txt` (relative to `llmpipe/`).
+API keys are read from plain-text files in `../secrets/` (relative to `llmpipe/`):
+`gpt_secrets.txt`, `claude_secrets.txt`, `gemini_secrets.txt`, `deepseek_secrets.txt`.
+The directory path is set once via `_secrets_dir` in `llmcall.py`.
 
 ### 5.4 logconvert.py
 

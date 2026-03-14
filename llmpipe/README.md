@@ -70,7 +70,7 @@ claudeversion = "claude-sonnet-4-6"
 geminiversion = "gemini-2.0-flash"
 ```
 
-**API keys:** JSON files in `../gpt/` (`gpt_secrets.js`, `claude_secrets.js`, `gemini_secrets.js`,
+**API keys:** plain-text files in `../secrets/` (`gpt_secrets.txt`, `claude_secrets.txt`, `gemini_secrets.txt`,
 `deepseek_secrets.txt`).
 
 **Required external data** (not in this repo):
