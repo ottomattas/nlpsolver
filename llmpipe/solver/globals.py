@@ -62,6 +62,8 @@ options={
   # When True, enables medium reasoning effort (GPT: reasoning_effort=medium;
   # Claude: extended thinking; Gemini: thinkingConfig, requires 2.5+ model).
   "think_flag": False,
+  "json_flag": False,   # if True, show logic in raw JSON; if False, use traditional syntax
+  "show_details_flag": False, # if True, show stage-1/2 JSON and prover input/output
 }
 
 # cache

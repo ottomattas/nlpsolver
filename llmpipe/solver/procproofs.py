@@ -445,19 +445,25 @@ def _filter_by_best_tier(answers):
           if isinstance(a.get("answer"), bool) or t == best]
 
 
-def _extract_question_pop_key(logic):
-  """Extract (pred, prop_or_class) identifying the question's population predicate.
+def _extract_question_pop_keys(logic):
+  """Extract a list of (pred, prop_or_class) tuples identifying predicates queried.
 
-  Returns a tuple used by _is_tautological_population_answer to detect circular
-  population-constant proofs. Returns None if no matching question found.
+  Used by _is_tautological_population_answer to detect circular population proofs.
+  Returns a list of tuples (may be empty).
 
-  Supported patterns:
-    ["isa", CLASS, ?:var]               -> ("isa", CLASS)
-    ["has degree property", PROP, ...]  -> ("has degree property", PROP)
-    ["has property", PROP, ...]         -> ("has property", PROP)
+  For direct questions like ["isa", CLASS, ?:var]:
+    -> [("isa", CLASS)]
+
+  For $defq-wrapped questions like ["$defq0", ?:X]:
+    Scans the biconditional @logic clauses for negative conditions and extracts
+    the population-relevant predicates from them.  E.g. the clause
+      [["-isa","car","?:X"], ["-has degree property","nice","?:X",...], ["$defq0","?:X"]]
+    yields [("isa", "car"), ("has degree property", "nice")].
   """
+  _POP_PREDS = {"isa", "has degree property", "has property"}
   if not logic or not isinstance(logic, list):
-    return None
+    return []
+  keys = []
   for obj in logic:
     if not isinstance(obj, dict) or "@question" not in obj:
       continue
@@ -465,21 +471,48 @@ def _extract_question_pop_key(logic):
     if not isinstance(q, list) or len(q) < 2:
       continue
     pred = q[0]
-    if pred in ("isa", "has degree property", "has property"):
-      return (pred, str(q[1]))
-  return None
+    if pred in _POP_PREDS:
+      keys.append((pred, str(q[1])))
+      return keys
+    # $defq question: scan the biconditional clauses for query predicates.
+    if pred.startswith("$defq"):
+      for obj2 in logic:
+        if not isinstance(obj2, dict) or "@logic" not in obj2:
+          continue
+        clause = obj2["@logic"]
+        if not isinstance(clause, list) or not clause:
+          continue
+        # Look for multi-atom clause containing ["$defqN", ...] as positive literal.
+        if not isinstance(clause[0], list):
+          continue  # single atom, not the biconditional clause
+        has_defq = any(isinstance(a, list) and a and isinstance(a[0], str)
+                       and a[0].startswith("$defq") for a in clause)
+        if not has_defq:
+          continue
+        # Extract (pred, arg1) from negative literals in this clause.
+        # Skip "isa" — isa population facts are legitimate type witnesses,
+        # not circular.  Only property predicates indicate circularity.
+        for atom in clause:
+          if (isinstance(atom, list) and atom and isinstance(atom[0], str)
+              and atom[0].startswith("-") and len(atom) >= 3):
+            base_pred = atom[0][1:]
+            if base_pred in _POP_PREDS and base_pred != "isa":
+              key = (base_pred, str(atom[1]))
+              if key not in keys:
+                keys.append(key)
+      return keys
+  return keys
 
 
-def _is_tautological_population_answer(ans, question_pop_key):
+def _is_tautological_population_answer(ans, question_pop_keys):
   """Return True if ans is a $some_* constant proved directly via the
   population clause that asserts the very property/class being queried.
 
   Two checks:
-    1. For direct questions (question_pop_key known): $some_* constant proved
-       via a single-atom population clause [PRED, PROP, answer_const, ...]
-       where PRED/PROP match the question.
-    2. For $defq-wrapped questions (question_pop_key is None): $some_not_*
-       constant proved via its own negative population clause
+    1. question_pop_keys non-empty: $some_* constant proved via a single-atom
+       population clause [PRED, PROP, answer_const, ...] where PRED/PROP
+       match any of the question's population keys.
+    2. $some_not_* constant proved via its own negative population clause
        ["-PRED", ..., answer_const, ...] — always circular regardless of
        what the question predicate is.
   """
@@ -509,15 +542,14 @@ def _is_tautological_population_answer(ans, question_pop_key):
       inner_clause = clause[0]
     if not (isinstance(inner_clause, list) and len(inner_clause) >= 3):
       continue
-    # Check 1: matches question predicate/property (direct, non-$defq questions).
-    if (question_pop_key is not None
-        and inner_clause[0] == question_pop_key[0]
-        and str(inner_clause[1]) == question_pop_key[1]
-        and inner_clause[2] == answer_const):
-      return True
+    # Check 1: matches any question predicate/property.
+    if question_pop_keys:
+      for qkey in question_pop_keys:
+        if (inner_clause[0] == qkey[0]
+            and str(inner_clause[1]) == qkey[1]
+            and inner_clause[2] == answer_const):
+          return True
     # Check 2: $some_not_* proved from its own negative population clause.
-    # Predicate-agnostic: any single negated atom naming the answer constant
-    # at position 2 is the negative population clause that defines it.
     if (answer_const.startswith("$some_not_")
         and isinstance(inner_clause[0], str)
         and inner_clause[0].startswith("-")
@@ -535,9 +567,9 @@ def _filter_tautological_population_answers(answers, logic):
   elephant is big (by population)'. Such answers are always filtered out,
   even when no non-tautological alternatives exist (producing "Unknown").
   """
-  question_pop_key = _extract_question_pop_key(logic)
+  question_pop_keys = _extract_question_pop_keys(logic)
   tautological = [a for a in answers
-                  if _is_tautological_population_answer(a, question_pop_key)]
+                  if _is_tautological_population_answer(a, question_pop_keys)]
   if not tautological:
     return answers
   return [a for a in answers if a not in tautological]

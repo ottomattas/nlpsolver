@@ -305,11 +305,10 @@ def rawlogic_convert(logic, s1_json=None):
   if _g_options.get("noproptypes_flag", False):
     _strip_degree_predicates(result)
 
-  # Strip @sourcetype before handing the clause list to the prover;
-  # it is an internal annotation only needed during logconvert processing.
-  for obj in result:
-    if isinstance(obj, dict):
-      obj.pop("@sourcetype", None)
+  # @sourcetype is kept in the clause list so that downstream display code
+  # (format_sentences_to_clauses) can distinguish population facts from
+  # ASU-derived clauses.  It is stripped in clause_list_to_json_commented
+  # before serialization for the prover.
 
   return result
 

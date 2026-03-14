@@ -110,8 +110,7 @@ def parse_text(text, llm=None, version=None, tokens=None, think=None):
 
   stats = _make_stats()
 
-  _debug_write("\n"+"="*30 + " llmparse " + "="*30+"\n")
-  _debug_write("INPUT: " + text)
+  # Input text is already shown by solve.py; no need to repeat here.
 
   # --- stage 1 ---
   s1_json, s1_raw, s1_err = _run_stage(1, text, _stage1_sysprompt,
@@ -146,7 +145,9 @@ def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, think, sta
   key = "s" + str(stage_nr)
   stats[key + "_calls"] += 1
 
-  _debug_write("\n--- Stage " + str(stage_nr) + " call ---")
+  import llmcall as _llmcall
+  actual_llm = llm or use_llm or _llmcall.use_llm
+  _debug_write("\n=== stage " + str(stage_nr) + " LLM call (" + actual_llm + ") ===\n")
   _debug_write_json("INPUT:", input_text)
 
   raw = call_llm(sysprompt, input_text, llm=llm, version=version, max_tokens=tokens, think=think)

@@ -48,24 +48,14 @@ Example logic argument:
 ]
 """
 
-def call_prover(logic):       
+def call_prover(logic, s1_json=None):
 
-  if (options["prover_print_flag"] or options["show_prover_flag"]) and not options["prover_nosolve_flag"]:
-    print("\n=== prover input: === \n")
-    pretty.pp_logic(logic)
-  elif options["show_logic_flag"]:
-    print("prover input: \n")
-    pretty.pp_logic(logic)
-    print("\n")
-
-  #js=json.dumps(question,indent=2)
-  #print("js:",js)  
-  #pp = pprint.pformat(logic,width=80,indent=2,sort_dicts=False)   
-  #instr=pp.replace("'","\"")
-  instr=clause_list_to_json(logic)
-  if globals.options["debug_print_flag"]: 
-    print("\nprover instr:\n")  
-    print(instr)        
+  # Build GK input JSON with // comment lines between ASU groups.
+  instr=clause_list_to_json_commented(logic, s1_json=s1_json)
+  show_details = options.get("show_details_flag") or options["debug_print_flag"] or options["show_prover_flag"]
+  if show_details:
+    print("\n=== prover input (JSON) ===\n")
+    print(instr)
   if options["prover_nosolve_flag"]:
     return(instr)    
   try:  
@@ -106,7 +96,8 @@ def call_prover(logic):
   else: params=params+globals.prover_params
   params=params+["--datafolder",prover_datafolder]
   if options["prover_print_flag"] or options["show_prover_flag"]:
-    print("\n=== prover params: === \n\n"," ".join(params))
+    print("\n=== prover params ===\n")
+    print(" ".join(params))
 
   sres=get_proof_from_cache(None,params)
   if not sres:
@@ -119,9 +110,8 @@ def call_prover(logic):
     sres=calc.decode('ascii') 
     add_proof_to_cache(params,sres)  
   os.remove(infilename)
-  if options["prover_print_flag"] or options["show_prover_flag"]:  
-    print("\n=== prover output: === \n\n",sres)
-    print("\n=== end of prover output === \n\n")   
+  # Prover result is displayed by solve.py (with -details+), not here,
+  # to avoid duplicate output.
   return sres
 
 

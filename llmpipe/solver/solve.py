@@ -105,8 +105,8 @@ def main():
     print("No text given.\n" + helptext)
     sys.exit(0)
   result = english_to_answer(text, opts)
-  if opts.get("prover_explain_flag"):
-    print("Result:")
+  if opts.get("show_logic_flag"):
+    print("\n=== result ===\n")
   print(result)
 
 
@@ -128,10 +128,15 @@ def english_to_answer(text, options=None):
   if options:
     globals.set_global_options(options)
 
-  # --- stage 1 & 2: parse English to logic via two-stage LLM ---
-  # (LLM results are cached automatically; see llmcall.py and cache.py)
-  if debug:
-    print("Parsing:", text)
+  show_details = options and options.get("show_details_flag")
+  show_logic   = options and options.get("show_logic_flag")
+
+  # Resolve which LLM is being used (for display in headers).
+  actual_llm = llm or llmcall.use_llm
+
+  # -logic+: show input text at the top
+  if show_logic:
+    print(text)
 
   think_flag = globals.options.get("think_flag", False)
   s1_json, s2_json, parse_stats = llmparse.parse_text(
@@ -139,21 +144,40 @@ def english_to_answer(text, options=None):
   )
 
   if debug:
-    print("Parse complete.")
     llmparse.print_stats(parse_stats)
+
+  # -details (not -debug): show parsed stage-1 and stage-2 JSON.
+  # -debug already shows these via llmparse._debug_write.
+  if show_details and not debug:
+    import pretty as _pretty
+    if s1_json is not None:
+      print("\n=== stage 1 (ASU JSON, " + actual_llm + ") ===\n")
+      _pretty.pp_stage1(s1_json)
+    if s2_json is not None:
+      print("\n=== stage 2 (logic JSON, " + actual_llm + ") ===\n")
+      _pretty.pp_stage2(s2_json)
 
   if s2_json is None:
     return "Error: LLM parsing failed (stage 2 produced no output)."
 
-  # --- rawlogic_convert: improve / adjust the parsed logic (logconvert.py) ---
+  # -logic+: show "simplified to" block if ASU texts differ from input
+  if show_logic and s1_json:
+    _show_simplified_to(text, s1_json)
 
-  if debug:
-    print("\n============= rawlogic_convert ===============\n")
+  # --- rawlogic_convert: improve / adjust the parsed logic (logconvert.py) ---
 
   logic = rawlogic_convert(s2_json, s1_json)
 
   if logic is None:
     return "Error: rawlogic_convert returned None."
+
+  # --- show "sentences mapped to clauses" block ---
+  if show_logic or debug:
+    from proof_render import compute_ambiguity as _compute_ambiguity
+    _compute_ambiguity(logic)   # populate ambiguous_bases before rendering
+    from utils import format_sentences_to_clauses
+    json_mode = options.get("json_flag", False) if options else False
+    print("\n" + format_sentences_to_clauses(logic, s1_json, json_mode=json_mode) + "\n")
 
   # --- semantic normalisation: antonym folding + canonical substitution ---
   if not globals.options.get("nosemnormal_flag"):
@@ -161,7 +185,7 @@ def english_to_answer(text, options=None):
 
   # --- call the theorem prover ---
   try:
-    proof_result = prover.call_prover(logic)
+    proof_result = prover.call_prover(logic, s1_json=s1_json)
   except KeyboardInterrupt:
     raise
   except Exception as e:
@@ -169,9 +193,6 @@ def english_to_answer(text, options=None):
 
   if proof_result is None:
     return "Error: prover returned None."
-
-  if debug:
-    print("Proof result:", proof_result)
 
   # -nosolve: prover was not run; logic JSON was already shown by prover.py
   if options and options.get("prover_nosolve_flag"):
@@ -181,14 +202,34 @@ def english_to_answer(text, options=None):
   if options and options.get("prover_rawresult_flag"):
     return proof_result
 
-  if options and options.get("show_logic_flag"):
-    print("prover output:")
+  # -details+: show prover result JSON (once — prover.py no longer prints it)
+  if show_details:
+    print("\n=== prover result (JSON) ===\n")
     print(proof_result)
 
   # --- process_proof: post-process prover output into final answer (procproofs.py) ---
   answer = process_proof(proof_result, text=text, s1_json=s1_json, s2_json=s2_json, logic=logic, options=options)
 
   return answer
+
+
+def _show_simplified_to(text, s1_json):
+  """Show the 'simplified to' block if ASU texts differ from the input."""
+  asu_texts = []
+  for pkg in s1_json:
+    if not isinstance(pkg, dict):
+      continue
+    for unit in pkg.get("units", []):
+      if isinstance(unit, dict) and unit.get("text"):
+        asu_texts.append(unit["text"])
+  if not asu_texts:
+    return
+  simplified = "\n".join(asu_texts)
+  if simplified.strip() == text.strip():
+    return
+  print("\n=== simplified to ===\n")
+  for t in asu_texts:
+    print(t)
 
 
 # ======== command-line interface ========
@@ -218,12 +259,26 @@ def _parse_cmd_line():
       debug = True
       opts["debug_print_flag"] = True
       opts["prover_print_flag"] = True
+      opts["show_details_flag"] = True
+      opts["show_logic_flag"] = True
+      opts["prover_explain_flag"] = True
       llmparse.debug = True
       llmcall.debug = True
-    elif el in ["-explain", "--explain"]:
+    elif el in ["-details", "--details"]:
+      opts["show_details_flag"] = True
+      opts["show_logic_flag"] = True
       opts["prover_explain_flag"] = True
     elif el in ["-logic", "--logic"]:
       opts["show_logic_flag"] = True
+      opts["prover_explain_flag"] = True
+    elif el in ["-explain", "--explain"]:
+      opts["prover_explain_flag"] = True
+    elif el in ["-json", "--json"]:
+      opts["json_flag"] = True
+    elif el in ["-jsonlogic", "--jsonlogic"]:
+      opts["show_logic_flag"] = True
+      opts["prover_explain_flag"] = True
+      opts["json_flag"] = True
     elif el in ["-cache", "--cache"]:
       opts["use_cache_flag"] = True
     elif el in ["-clearcache", "--clearcache"]:

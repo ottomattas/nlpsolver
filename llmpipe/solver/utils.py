@@ -78,7 +78,7 @@ def clause_list_to_json(clauselist):
     if "@logic" in clause: clauserep.append("\"@logic\": " + logicstr)
     if "@question" in clause: clauserep.append("\"@question\": " + logicstr)
     for key in clause:
-      if not (key in ["@logic", "@question", "@askvars", "@where_query"]):
+      if not (key in ["@logic", "@question", "@askvars", "@where_query", "@sourcetype"]):
         clauserep.append(",\n " + json.dumps(key) + ": " + json.dumps(clause[key]))
         count += 1
     clauserep.append("}")
@@ -86,6 +86,167 @@ def clause_list_to_json(clauselist):
     reslst.append(clausestr)
   res = "[\n" + ",\n".join(reslst) + "\n]"
   return res
+
+
+def build_asu_text_map(s1_json):
+  """Build a map from @name base → ASU text for clause grouping.
+
+  Returns {"sent_S1": "John 1 is a man.", "sent_S2": "Eve 2 liked John 1.", ...}.
+  Also includes "entity_S1" entries (entity category clauses share the ASU's text).
+  Uses the ASU 'text' field (normalized), falling back to 'raw' if no text.
+  """
+  result = {}
+  if not s1_json or not isinstance(s1_json, list):
+    return result
+  uid_count = {}
+  for pkg in s1_json:
+    if not isinstance(pkg, dict):
+      continue
+    raw = pkg.get("raw", "")
+    for unit in pkg.get("units", []):
+      if not isinstance(unit, dict):
+        continue
+      uid = unit.get("unit_id", "")
+      if not uid:
+        continue
+      text = unit.get("text", "") or raw
+      uid_count[uid] = uid_count.get(uid, 0) + 1
+      key = "sent_" + uid
+      if uid_count[uid] > 1:
+        key = key + "_" + str(uid_count[uid])
+      result[key] = text
+      # Entity category clauses use "entity_SN" naming
+      entity_key = "entity_" + uid
+      if entity_key not in result:
+        result[entity_key] = text
+  return result
+
+
+def _name_base(name):
+  """Extract the grouping key from a clause @name.
+
+  Strips trailing _N suffixes and normalizes entity_ to sent_ so entity
+  category clauses group with their ASU's main clauses.
+  'sent_S1_2' -> 'sent_S1', 'entity_S1' -> 'sent_S1', 'sent_S3' -> 'sent_S3'.
+  """
+  import re
+  m = re.match(r'^(?:sent|entity)_(S\d+)(?:_\d+)?$', name)
+  return "sent_" + m.group(1) if m else name
+
+
+def format_sentences_to_clauses(logic, s1_json, json_mode=False):
+  """Format the 'sentences mapped to clauses' display block.
+
+  Groups clauses by their ASU source and shows each ASU's text as a header
+  followed by the clauses derived from it, in traditional or JSON syntax.
+  Population facts (@sourcetype:"populate") are grouped separately at the end.
+  """
+  asu_map = build_asu_text_map(s1_json)
+
+  # Separate population facts from ASU-derived clauses, then group by @name base.
+  from collections import OrderedDict
+  groups = OrderedDict()
+  pop_clauses = []
+  for obj in logic:
+    if not isinstance(obj, dict):
+      continue
+    if obj.get("@sourcetype") == "populate":
+      pop_clauses.append(obj)
+      continue
+    name = obj.get("@name", "")
+    base = _name_base(name)
+    if base not in groups:
+      groups[base] = []
+    groups[base].append(obj)
+
+  lines = ["=== sentences mapped to clauses: ===", ""]
+
+  for base, clauses in groups.items():
+    # Determine header text
+    if base in asu_map:
+      header = asu_map[base]
+    else:
+      header = "[generated: " + base + "]"
+    lines.append(header)
+    _append_clause_lines(lines, clauses, json_mode)
+
+  if pop_clauses:
+    lines.append("[generated: population facts]")
+    _append_clause_lines(lines, pop_clauses, json_mode)
+
+  return "\n".join(lines)
+
+
+def _append_clause_lines(lines, clauses, json_mode):
+  """Append formatted clause lines to the output list."""
+  for obj in clauses:
+    clause = obj.get("@logic") or obj.get("@question")
+    if clause is None:
+      continue
+    is_question = "@question" in obj
+    conf = obj.get("@confidence")
+    if json_mode:
+      # Strip @sourcetype from the display copy
+      display = {k: v for k, v in obj.items() if k != "@sourcetype"}
+      clause_str = json.dumps(display, separators=(',', ':'), ensure_ascii=False)
+    else:
+      from proof_render import format_clause_traditional
+      if is_question:
+        clause_str = "question: " + format_clause_traditional(clause)
+      else:
+        c = conf if conf is not None and conf < 0.9999 else None
+        clause_str = format_clause_traditional(clause, confidence=c)
+      # Re-indent continuation lines
+      clause_str = clause_str.replace("\n", "\n    ")
+    lines.append("  " + clause_str)
+
+
+def clause_list_to_json_commented(clauselist, s1_json=None):
+  """Like clause_list_to_json but inserts // comment lines between ASU groups."""
+  asu_map = build_asu_text_map(s1_json) if s1_json else {}
+
+  reslst = []
+  prev_base = None
+  prev_is_pop = None
+  for clause in clauselist:
+    name = clause.get("@name", "") if isinstance(clause, dict) else ""
+    is_pop = (isinstance(clause, dict) and clause.get("@sourcetype") == "populate")
+    base = _name_base(name)
+
+    # Insert comment when the group or population status changes
+    if base != prev_base or is_pop != prev_is_pop:
+      if is_pop and not prev_is_pop:
+        reslst.append("// [population facts]")
+      elif base in asu_map:
+        reslst.append("// " + asu_map[base])
+      elif base:
+        reslst.append("// [generated: " + base + "]")
+      prev_base = base
+      prev_is_pop = is_pop
+
+    # Build the clause JSON (same logic as clause_list_to_json)
+    logic = None
+    if "@logic" in clause: logic = clause["@logic"]
+    if "@question" in clause: logic = clause["@question"]
+    if not logic: continue
+    if isinstance(logic, list) and logic and isinstance(logic[0], list):
+      newlogic = [json.dumps(atom, separators=(',', ':')) for atom in logic]
+      if len(logic) > 3:
+        logicstr = "[" + ",\n    ".join(newlogic) + "]"
+      else:
+        logicstr = "[" + ", ".join(newlogic) + "]"
+    else:
+      logicstr = json.dumps(logic, separators=(',', ':'))
+    clauserep = ["{"]
+    if "@logic" in clause: clauserep.append("\"@logic\": " + logicstr)
+    if "@question" in clause: clauserep.append("\"@question\": " + logicstr)
+    for key in clause:
+      if key not in ("@logic", "@question", "@askvars", "@where_query", "@sourcetype"):
+        clauserep.append(",\n " + json.dumps(key) + ": " + json.dumps(clause[key]))
+    clauserep.append("}")
+    reslst.append("".join(clauserep))
+
+  return "[\n" + ",\n".join(reslst) + "\n]"
 
 
 # =========== the end ==========

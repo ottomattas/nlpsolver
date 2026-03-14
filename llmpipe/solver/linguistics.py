@@ -81,4 +81,46 @@ def to_gerund(verb):
   return verb + "ing"
 
 
+# ======== word sets ========
+
+PREPOSITIONS = frozenset({
+  "in", "at", "on", "near", "by", "beside", "under", "above", "below",
+  "over", "inside", "outside", "between", "through", "around", "across",
+  "before", "after", "within", "from", "to", "into", "onto", "upon",
+  "behind", "beyond", "along", "among", "toward", "towards",
+  "with", "without", "during", "since", "until", "till", "off", "up", "down",
+  "next to", "close to", "far from",
+})
+
+# Common verbs used as relation names in stage-2 "is rel2" atoms.
+VERB_RELS = frozenset({
+  "like", "love", "hate", "fear", "know", "see", "hear", "want",
+  "need", "trust", "follow", "lead", "help", "hurt", "own",
+  "eat", "drink", "drive", "buy", "sell", "read", "write",
+  "teach", "kill", "chase", "visit", "meet", "admire", "envy",
+})
+
+# Common irregular past-tense verb forms (not caught by the -ed heuristic).
+IRREGULAR_PAST_VERBS = frozenset({
+  "drove", "bought", "saw", "met", "told", "gave", "made", "took",
+  "found", "said", "got", "went", "came", "put", "left", "ate", "ran",
+  "knew", "grew", "flew", "drew", "threw", "wrote", "rode", "broke",
+  "spoke", "chose", "wore", "bore", "tore", "swore", "froze", "woke",
+  "stole", "bit", "hit", "cut", "let", "set", "shut", "hurt", "read",
+  "sat", "stood", "fell", "held", "kept", "slept", "felt", "sent", "spent",
+  "built", "lent", "meant", "thought", "brought", "caught", "taught",
+  "fought", "sought", "sold", "lost", "shot", "fed", "led", "bled", "hid",
+  "dug", "hung", "spun", "swam", "sang", "sank", "rang", "drank",
+  "began", "won", "shone", "struck", "wove",
+})
+
+
+def looks_like_verb(rel):
+  """True if the relation word looks like a verb (not a noun or adjective)."""
+  w = rel.split()[-1].lower() if rel else ""
+  if w.endswith(("ed", "ing")):
+    return True
+  return w in VERB_RELS
+
+
 # =========== the end ==========

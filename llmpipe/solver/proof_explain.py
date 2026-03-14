@@ -32,8 +32,10 @@ from proof_render import (
   entity_name,
   clause_to_str,
   format_clause_logic,
+  format_clause_traditional,
   block_to_english,
 )
+import globals as g
 
 
 # ======== formatting helpers ========
@@ -152,7 +154,7 @@ def _format_why(reason, sent_nr, clause=None):
       elif isinstance(el, list) and el and isinstance(el[0], int):
         step_refs.append(str(el[0]))
     if step_refs:
-      return kind + " from steps " + ", ".join(step_refs)
+      return "from steps " + ", ".join(step_refs)
     return kind
 
 
@@ -169,7 +171,15 @@ def _format_step(step, sent_nr, show_logic=False):
     why_str = why_str + ", confidence " + _fmt_pct(conf)
   line = "  (" + str(nr) + ") " + clause_str + "  [" + why_str + "]"
   if show_logic:
-    line += "\n        " + format_clause_logic(clause)
+    if g.options.get("json_flag"):
+      line += "\n        " + format_clause_logic(clause)
+    else:
+      conf = _extract_step_conf(reason)
+      c = conf if conf < 0.9999 else None
+      logic_str = format_clause_traditional(clause, confidence=c)
+      # Re-indent continuation lines to align with the 8-space proof prefix.
+      logic_str = logic_str.replace("\n", "\n        ")
+      line += "\n        " + logic_str
   return line
 
 
@@ -276,7 +286,12 @@ def format_explanation(answers, sentence_map, show_logic=False):
         bk_seen[cstr] = True
         bk_lines.append("  " + cstr + ". Why: assumed basic knowledge.")
         if show_logic:
-          bk_lines.append("    " + format_clause_logic(clause))
+          if g.options.get("json_flag"):
+            bk_lines.append("    " + format_clause_logic(clause))
+          else:
+            logic_str = format_clause_traditional(clause)
+            logic_str = logic_str.replace("\n", "\n    ")
+            bk_lines.append("    " + logic_str)
 
     # Proof step list — use "by contradiction" header when proof ends in Contradiction.
     is_contradiction = any(len(s) > 2 and s[2] is False for s in proof)

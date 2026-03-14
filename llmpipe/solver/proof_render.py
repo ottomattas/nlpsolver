@@ -38,6 +38,8 @@ from linguistics import (
   conjugate_verb as _conjugate_verb,
   make_comparative as _make_comparative,
   to_gerund      as _to_gerund,
+  looks_like_verb as _looks_like_verb,
+  PREPOSITIONS   as _PREPOSITIONS,
 )
 
 
@@ -86,6 +88,9 @@ class RenderContext:
     "skolem_fn_actors",    # str(fn_term) -> actor string
     "skolem_fn_targets",   # str(fn_term) -> target string
     "skolem_fn_types",     # sk_name -> object type from isa(TYPE,[sk_name,...])
+    "skolem_introduced",   # set of skN names already shown with "some TYPE" prefix
+    "skolem_display",      # skN -> short display name like "act1"
+    "var_display",         # raw var "?:2006" -> short display name "E1"
   )
   def __init__(self):
     self.entity_map          = {}
@@ -96,6 +101,9 @@ class RenderContext:
     self.skolem_fn_actors    = {}
     self.skolem_fn_targets   = {}
     self.skolem_fn_types     = {}
+    self.skolem_introduced   = set()
+    self.skolem_display      = {}
+    self.var_display          = {}
 
 
 # Module-level context instance, reset per proof.
@@ -117,16 +125,23 @@ def compute_ambiguity(obj):
   base_numbers = {}
   url_names    = {}
   _scan_constants(obj, base_numbers, url_names)
-  _ctx.ambiguous_bases     = {b for b, nums in base_numbers.items() if len(nums) > 1}
+  _ctx.ambiguous_bases     = {b.lower() for b, nums in base_numbers.items() if len(nums) > 1}
   _ctx.ambiguous_url_names = {n for n, urls in url_names.items()    if len(urls)  > 1}
 
 def compute_skolem_types(proof):
-  """Scan proof steps and populate Skolem lookup tables in the current context."""
+  """Scan proof steps and populate Skolem lookup tables in the current context.
+
+  Also builds display-name maps for Skolem constants (sk0 → act1) and
+  long/numeric prover variables (?:2006 → E1).
+  """
   _ctx.skolem_types      = {}
   _ctx.skolem_fn_verbs   = {}
   _ctx.skolem_fn_actors  = {}
   _ctx.skolem_fn_targets = {}
   _ctx.skolem_fn_types   = {}
+  _ctx.skolem_introduced = set()
+  _ctx.skolem_display    = {}
+  _ctx.var_display       = {}
   for step in proof:
     clause = step[2] if len(step) > 2 else []
     if not isinstance(clause, list):
@@ -146,6 +161,52 @@ def compute_skolem_types(proof):
       elif pred == "has target" and _is_skolem_fn(atom[1]):
         _ctx.skolem_fn_targets.setdefault(str(atom[1]), str(atom[2]))
 
+  # Build Skolem display names: sk0 → act1 (for activity), evt1 (for event), etc.
+  _TYPE_ABBREV = {"activity": "act", "event": "event", "set": "set"}
+  type_counters = {}
+  for sk in sorted(_ctx.skolem_types.keys(), key=lambda s: int(s[2:])):
+    typ = _ctx.skolem_types[sk]
+    abbrev = _TYPE_ABBREV.get(typ.lower(), typ.lower()[:3])
+    n = type_counters.get(abbrev, 0) + 1
+    type_counters[abbrev] = n
+    _ctx.skolem_display[sk] = abbrev + str(n)
+
+  # Build variable display names for long/numeric prover variables.
+  # Collect all variables across the proof, rename ugly ones.
+  all_vars = set()
+  for step in proof:
+    clause = step[2] if len(step) > 2 else []
+    if isinstance(clause, list):
+      _collect_vars(clause, all_vars)
+  # Only rename variables that are long (>2 chars after ?:) or purely numeric.
+  _SHORT_VARS = {"X", "Y", "Z", "W", "U", "V", "E", "N", "S", "K"}
+  var_counter = {}
+  for v in sorted(all_vars):
+    bare = v[2:]  # strip "?:"
+    if bare in _SHORT_VARS or (len(bare) <= 2 and bare[0].isalpha()):
+      continue  # already short enough
+    # Pick a letter based on variable role heuristics.
+    if bare.isdigit():
+      letter = "E"  # numeric vars are typically event-related
+    elif bare[0].isalpha():
+      letter = bare[0].upper()  # keep the first letter
+    else:
+      letter = "V"
+    n = var_counter.get(letter, 0) + 1
+    var_counter[letter] = n
+    display = letter + str(n) if n > 1 or letter in var_counter else letter + str(n)
+    _ctx.var_display[v] = display
+
+
+def _collect_vars(obj, result):
+  """Recursively collect all ?:-prefixed variable strings from a clause."""
+  if isinstance(obj, str):
+    if obj.startswith("?:"):
+      result.add(obj)
+  elif isinstance(obj, list):
+    for el in obj:
+      _collect_vars(el, result)
+
 
 # ======== ambiguity scanning ========
 
@@ -161,8 +222,8 @@ def _scan_constants(obj, base_numbers, url_names):
     m = re.match(r'^(.*\S)\s+(\d+)$', obj)
     if m:
       base = m.group(1)
-      if base[:1].isupper():
-        base_numbers.setdefault(base, set()).add(int(m.group(2)))
+      # Track both proper-name and common-noun bases for ambiguity detection.
+      base_numbers.setdefault(base, set()).add(int(m.group(2)))
   elif isinstance(obj, list):
     for el in obj:
       _scan_constants(el, base_numbers, url_names)
@@ -221,15 +282,6 @@ _SAFE_LETTERS = "ABCDFGHIJLMPQRTUW"   # 17 slots; enough for any realistic proof
 # These render as "E1 is RELATION E2" (no "of").
 # Anything else (relational nouns: parent, part, member, …) renders as
 # "E1 is RELATION of E2".
-_PREPOSITIONS = {
-  "in", "at", "on", "near", "by", "beside", "under", "above", "below",
-  "over", "inside", "outside", "between", "through", "around", "across",
-  "before", "after", "within", "from", "to", "into", "onto", "upon",
-  "behind", "beyond", "along", "among", "toward", "towards",
-  "with", "without", "during", "since", "until", "till", "off", "up", "down",
-  "next to", "close to", "far from",
-}
-
 _DEGREE_TABLE = {
   "none":    ("",           "indef"),   # "a nice person"
   "":        ("",           "indef"),
@@ -313,7 +365,7 @@ def _skolem_fn_to_name(term):
   return "the " + gerund + " event"
 
 
-def entity_name(val, with_url=False):
+def entity_name(val, with_url=False, proof_mode=False):
   """Display name for a logic constant or variable.
 
   - Skolem functions (lists)  -> "the eating by Greg of Mike" etc.
@@ -326,23 +378,52 @@ def entity_name(val, with_url=False):
   - Noun-phrase constants     -> replace number with safe letter ->
                                  "car 2" -> "car B",  "dog 1" -> "dog A"
 
-  with_url=True  : append full URL in parentheses for URL constants
-                   (used in proof steps for traceability)
-  with_url=False : omit URL unless the display name is ambiguous
-                   (used in answer line for readability)
+  with_url=True   : append full URL in parentheses for URL constants
+                    (used in proof steps for traceability)
+  with_url=False  : omit URL unless the display name is ambiguous
+                    (used in answer line for readability)
+  proof_mode=True : skip entity_map for single common-noun entities to avoid
+                    qualifier-predicate redundancy in proof steps (e.g.
+                    "the very big mouse is very big" instead of
+                    "the very big mouse is a very big mouse")
   """
+  # Raw mode (json_flag): use raw logic IDs so English matches JSON output.
+  # Variables strip ?:, everything else shown as-is.
+  import globals as _g
+  if _g.options.get("json_flag") and proof_mode:
+    if _is_skolem_fn(val):
+      return str(val)
+    if not isinstance(val, str):
+      return str(val)
+    if val.startswith("?:"):
+      bare = val[2:]
+      return ("V" + bare) if bare.isdigit() else bare
+    return val
+
   if _is_skolem_fn(val):
     return _skolem_fn_to_name(val)
   if not isinstance(val, str):
     return str(val)
-  # Check entity map first: prefer the user's original phrasing over the
-  # default URL-basename or id-suffix logic below.
+  # Check entity map: prefer the user's original phrasing for answer display.
+  # In proof_mode, skip entity_map for single (non-ambiguous) common-noun
+  # entities — their qualifier adjectives often duplicate predicate content.
   if val in _ctx.entity_map:
-    name = _ctx.entity_map[val]
-    if with_url and (val.startswith("http://") or val.startswith("https://")):
-      return name + " (" + val + ")"
-    return name
+    if proof_mode:
+      m = re.match(r'^(.*\S)\s+(\d+)$', val)
+      if m and m.group(1)[:1].islower() and m.group(1).lower() not in _ctx.ambiguous_bases:
+        pass  # fall through to default "the NOUN" rendering below
+      else:
+        return _ctx.entity_map[val]
+    else:
+      name = _ctx.entity_map[val]
+      if with_url and (val.startswith("http://") or val.startswith("https://")):
+        return name + " (" + val + ")"
+      return name
   if val.startswith("?:"):
+    # Use the short display name if one was computed for this variable.
+    orig = val
+    if orig in _ctx.var_display:
+      return _ctx.var_display[orig]
     val = val[2:]
     # Purely numeric names are prover-generated fresh variables — prefix with "V"
     if val.isdigit():
@@ -354,12 +435,17 @@ def entity_name(val, with_url=False):
   if val.startswith("$some_"):
     noun = val[len("$some_"):].replace("_", " ")
     return _indef_article(noun) + " " + noun
-  # Skolem constants: sk0, sk1, ... -> "some TYPE skN" using proof context
+  # Skolem constants: sk0, sk1, ... -> "some TYPE act1" on first mention,
+  # then just "act1" on subsequent mentions within the same proof.
   if re.match(r'^sk\d+$', val):
+    display = _ctx.skolem_display.get(val, val)
     typ = _ctx.skolem_types.get(val)
     if typ:
-      return "some " + typ + " " + val
-    return val
+      if val in _ctx.skolem_introduced:
+        return display
+      _ctx.skolem_introduced.add(val)
+      return "some " + typ + " " + display
+    return display
   # URL constant
   if val.startswith("http://") or val.startswith("https://"):
     name = _extract_url_name(val)
@@ -374,7 +460,7 @@ def entity_name(val, with_url=False):
   if base[:1].isupper():
     # Proper name — keep the number when multiple entities share the same base
     # (e.g. "John 1" vs "John 3"); drop it when there is only one "John".
-    if base in _ctx.ambiguous_bases:
+    if base.lower() in _ctx.ambiguous_bases:
       return base + " " + str(n)
     return base
   # Noun-phrase constant — replace number with a safe letter
@@ -492,6 +578,364 @@ def format_clause_logic(clause):
   ) + "]"
 
 
+# ======== traditional logic syntax renderer ========
+#
+# Renders formulas and clauses in pred(arg1,arg2) notation.
+# Constants are lowercased, variables are uppercase, spaces become underscores.
+# Clauses with negative atoms are rendered as implications.
+
+def _logic_name(val):
+  """Convert a raw value to traditional logic notation.
+
+  Variables (?:X) -> uppercase: X
+  Constants (John 1, car 2) -> lowercase with underscores: john_1, car_2
+  Skolem functions ([sk0,?:X]) -> sk0(X)
+  Lists (non-Skolem) -> recursive
+  """
+  if isinstance(val, list):
+    if not val:
+      return "[]"
+    # $ctxt term: render as $ctxt(args)
+    if val[0] == "$ctxt":
+      args = ",".join(_logic_name(a) for a in val[1:])
+      return "$ctxt(" + args + ")"
+    # Skolem function or other function term
+    if isinstance(val[0], str):
+      fname = val[0].replace(" ", "_")
+      if not fname.startswith(("?:", "$")):
+        fname = _lc_first(fname)
+      elif fname.startswith("?:"):
+        fname = fname[2:]
+      args = ",".join(_logic_name(a) for a in val[1:])
+      return fname + "(" + args + ")" if args else fname + "()"
+    # List of atoms (clause): shouldn't reach here normally
+    return "[" + ",".join(_logic_name(a) for a in val) + "]"
+  if isinstance(val, bool):
+    return "true" if val else "false"
+  if not isinstance(val, str):
+    return str(val)
+  # Variable
+  if val.startswith("?:"):
+    bare = val[2:]
+    # Use var_display map if available
+    if val in _ctx.var_display:
+      return _ctx.var_display[val]
+    if bare.isdigit():
+      return "V" + bare
+    return bare
+  # Skolem constants: use display name (act1 for sk0, etc.)
+  if re.match(r'^sk\d+$', val):
+    return _ctx.skolem_display.get(val, val)
+  # $-prefixed special constants: keep as-is
+  if val.startswith("$"):
+    return val.replace(" ", "_")
+  # Regular constants: delegate to entity_name for the display name, then
+  # adapt to logic notation (lowercase, underscores, strip articles).
+  # This ensures logic and English use the same naming decisions.
+  display = entity_name(val, proof_mode=True)
+  # Strip leading "the " (English article, not needed in logic)
+  if display.startswith("the "):
+    display = display[4:]
+  return _lc_first(display.replace(" ", "_"))
+
+
+def _lc_first(s):
+  """Lowercase the first character of a string."""
+  if not s:
+    return s
+  return s[0].lower() + s[1:]
+
+
+def _atom_to_logic(atom, negated=False):
+  """Render one atom in traditional logic notation: pred(arg1,arg2,...).
+
+  negated=True prepends ~.
+  $ctxt arguments are included (use _compress_ctxt_clause to strip first).
+  """
+  if not isinstance(atom, list) or not atom:
+    return ("-" + str(atom)) if negated else str(atom)
+  pred = str(atom[0])
+  # Handle negation prefix in the predicate name
+  if pred.startswith("-"):
+    return _atom_to_logic([pred[1:]] + list(atom[1:]), negated=not negated)
+  prefix = "-" if negated else ""
+  pred_name = _lc_first(pred.replace(" ", "_"))
+  args = atom[1:]
+  if not args:
+    return prefix + pred_name
+  args_str = ",".join(_logic_name(a) for a in args)
+  return prefix + pred_name + "(" + args_str + ")"
+
+
+def _compress_ctxt_clause(clause):
+  """Strip free-variable-only $ctxt arguments from a clause.
+
+  A variable is 'free in context' if it appears ONLY inside $ctxt terms
+  and nowhere else in the clause. Such variables are uninformative and
+  can be omitted for readability.
+
+  Returns a new clause with $ctxt terms compressed or removed.
+  """
+  if not isinstance(clause, list):
+    return clause
+
+  # Detect single-atom clause (flat list, first element is a string predicate)
+  # vs multi-atom clause (list of lists).
+  is_single = clause and not isinstance(clause[0], list)
+
+  if is_single:
+    # Wrap in a list to use the same compression logic, then unwrap.
+    outside_vars = set()
+    _collect_outside_ctxt_vars(clause, outside_vars)
+    return _compress_atom_ctxt(clause, outside_vars)
+
+  # Multi-atom clause: collect vars outside $ctxt across all atoms.
+  outside_vars = set()
+  for atom in clause:
+    if isinstance(atom, list) and atom:
+      _collect_outside_ctxt_vars(atom, outside_vars)
+
+  # Compress $ctxt in each atom.
+  result = []
+  for atom in clause:
+    if isinstance(atom, list) and atom:
+      result.append(_compress_atom_ctxt(atom, outside_vars))
+    else:
+      result.append(atom)
+  return result
+
+
+def _collect_outside_ctxt_vars(atom, result):
+  """Collect variables from atom, skipping $ctxt sub-terms."""
+  if isinstance(atom, str):
+    if atom.startswith("?:"):
+      result.add(atom)
+    return
+  if not isinstance(atom, list):
+    return
+  if atom and atom[0] == "$ctxt":
+    return  # skip entire $ctxt
+  for el in atom:
+    _collect_outside_ctxt_vars(el, result)
+
+
+def _compress_atom_ctxt(atom, outside_vars):
+  """Replace $ctxt in an atom with a compressed version. Recurses into
+  $block/$not wrappers to reach nested $ctxt terms."""
+  if not isinstance(atom, list) or len(atom) < 2:
+    return atom
+  pred = atom[0] if isinstance(atom[0], str) else None
+  # Recurse into $block and $not to compress nested $ctxt
+  if pred == "$block" and len(atom) >= 3:
+    return [atom[0], atom[1], _compress_atom_ctxt(atom[2], outside_vars)]
+  if pred == "$not" and len(atom) >= 2:
+    return [atom[0], _compress_atom_ctxt(atom[1], outside_vars)]
+  # Find the $ctxt argument (always last positional argument).
+  last = atom[-1]
+  if not (isinstance(last, list) and last and last[0] == "$ctxt"):
+    # No $ctxt — recurse into sub-atoms (for multi-atom clauses).
+    if isinstance(atom[0], list):
+      return [_compress_atom_ctxt(a, outside_vars) for a in atom]
+    return atom
+  # Compress the $ctxt: keep only non-free prefix components.
+  ctxt_args = last[1:]  # [tense, world, location, knower]
+  kept = []
+  for component in ctxt_args:
+    if isinstance(component, str) and component.startswith("?:"):
+      if component not in outside_vars:
+        break  # free in context — stop here, strip this and rest
+    kept.append(component)
+  if not kept:
+    return atom[:-1]  # remove $ctxt entirely
+  new_ctxt = ["$ctxt"] + kept
+  return atom[:-1] + [new_ctxt]
+
+
+def format_clause_traditional(clause, max_len=100, confidence=None):
+  """Format a proof clause in traditional logic notation.
+
+  Clauses with negative atoms are rendered as implications:
+    ~isa(bird,X) | can(X,fly)  =>  isa(bird,X) => can(X,fly)
+
+  $block atoms are rendered as annotation suffixes.
+  $ctxt terms are compressed (free-variable components stripped).
+  """
+  if clause is False or clause is None:
+    return "false"
+  if not isinstance(clause, list):
+    return str(clause)
+
+  # Compress $ctxt terms
+  clause = _compress_ctxt_clause(clause)
+
+  # Single atom (not wrapped in a list-of-lists)
+  if clause and not isinstance(clause[0], list):
+    s = _atom_to_logic(clause)
+    if confidence is not None and confidence < 0.9999:
+      s += "  @" + str(round(confidence, 2))
+    return s
+
+  # Multi-atom clause: separate into conditions, conclusions, blockers
+  neg_atoms = []
+  pos_atoms = []
+  block_texts = []
+  for atom in clause:
+    if not isinstance(atom, list) or not atom:
+      continue
+    pred = str(atom[0])
+    if pred == "$block":
+      block_texts.append(_block_to_logic(atom))
+    elif pred.startswith("-"):
+      neg_atoms.append(atom)
+    else:
+      pos_atoms.append(atom)
+
+  # Build implication or disjunction
+  if neg_atoms and pos_atoms:
+    # Implication: conditions => conclusions
+    conds = " & ".join(_atom_to_logic([a[0][1:]] + list(a[1:]))
+                       for a in neg_atoms)
+    concls = " | ".join(_atom_to_logic(a) for a in pos_atoms)
+    s = conds + " => " + concls
+  elif neg_atoms:
+    # All negative — implication to negated last
+    if len(neg_atoms) == 1:
+      s = _atom_to_logic(neg_atoms[0])
+    else:
+      conds = " & ".join(_atom_to_logic([a[0][1:]] + list(a[1:]))
+                         for a in neg_atoms[:-1])
+      last = neg_atoms[-1]
+      s = conds + " => " + _atom_to_logic([last[0][1:]] + list(last[1:]),
+                                           negated=True)
+  elif pos_atoms:
+    s = " | ".join(_atom_to_logic(a) for a in pos_atoms)
+  elif block_texts:
+    # Purely $block clause — show the blocks directly
+    s = ", ".join(block_texts)
+    block_texts = []  # already rendered
+  else:
+    s = "(empty)"
+
+  if block_texts:
+    s += "  [" + ", ".join(block_texts) + "]"
+  if confidence is not None and confidence < 0.9999:
+    s += "  @" + str(round(confidence, 2))
+
+  # Pretty-print if too long
+  if len(s) > max_len:
+    s = _break_logic_line(s, max_len)
+
+  return s
+
+
+def _block_to_logic(block_atom):
+  """Render a $block atom in logic notation."""
+  if not isinstance(block_atom, list) or len(block_atom) < 3:
+    return ""
+  inner = block_atom[2]
+  if isinstance(inner, list) and inner and inner[0] == "$not" and len(inner) > 1:
+    return "block(-" + _atom_to_logic(inner[1]) + ")"
+  return "block(" + _logic_name(inner) + ")"
+
+
+def _break_logic_line(s, max_len):
+  """Break a long logic line at => or & boundaries."""
+  # Try breaking at " => " — put conclusion on next line indented
+  if " => " in s and len(s) > max_len:
+    idx = s.index(" => ")
+    lhs = s[:idx]
+    rhs = s[idx + 4:]
+    # Also break the lhs at & if needed
+    if len(lhs) > max_len:
+      lhs = _break_at_and(lhs, max_len)
+    return lhs + " =>\n    " + rhs
+  # Break at " & " boundaries
+  if " & " in s and len(s) > max_len:
+    return _break_at_and(s, max_len)
+  return s
+
+
+def _break_at_and(s, max_len):
+  """Break a string at ' & ' boundaries when it exceeds max_len."""
+  pieces = s.split(" & ")
+  lines = []
+  current = pieces[0]
+  for p in pieces[1:]:
+    if len(current) + len(p) + 3 > max_len:
+      lines.append(current + " &")
+      current = "    " + p
+    else:
+      current += " & " + p
+  lines.append(current)
+  return "\n".join(lines)
+
+
+def formula_to_logic(formula, max_len=100):
+  """Render a stage-2 FOL formula in traditional logic notation.
+
+  Handles quantifiers, connectives, and nested structures:
+    forall(X,implies(isa(bird,X),normally(can(X,fly))))
+  """
+  if formula is None:
+    return "null"
+  if isinstance(formula, bool):
+    return "true" if formula else "false"
+  if isinstance(formula, (int, float)):
+    return str(formula)
+  if isinstance(formula, str):
+    return _logic_name(formula)
+  if not isinstance(formula, list) or not formula:
+    return str(formula)
+
+  op = formula[0]
+  if not isinstance(op, str):
+    # List of atoms (clause-level) — shouldn't normally reach here
+    return "[" + ", ".join(formula_to_logic(el) for el in formula) + "]"
+
+  # Connectives rendered as infix operators
+  _INFIX = {"and": " & ", "or": " | ", "implies": " => ",
+            "equivalent": " <=> ", "xor": " xor "}
+  if op in _INFIX and len(formula) >= 3:
+    sep = _INFIX[op]
+    parts = [formula_to_logic(a) for a in formula[1:]]
+    inner = sep.join(parts)
+    s = "(" + inner + ")"
+    if len(s) > max_len:
+      s = "(" + ("\n  " + sep.strip() + " ").join(parts) + ")"
+    return s
+
+  # Quantifiers: forall(X,body), exists(X,body)
+  if op in ("forall", "exists") and len(formula) >= 3:
+    var = _logic_name(formula[1])
+    body = formula_to_logic(formula[2], max_len=max_len)
+    return op + "(" + var + "," + body + ")"
+
+  # Negation
+  if op == "not" and len(formula) >= 2:
+    return "-" + formula_to_logic(formula[1], max_len=max_len)
+
+  # Structural wrappers: @id, holds, question, ask, normally, etc.
+  if op == "@id" and len(formula) >= 3:
+    sid = str(formula[1])
+    body = formula_to_logic(formula[2], max_len=max_len)
+    return "@id(" + sid + "," + body + ")"
+  if op == "holds" and len(formula) >= 3:
+    w = _logic_name(formula[1])
+    body = formula_to_logic(formula[2], max_len=max_len)
+    return "holds(" + w + "," + body + ")"
+  if op == "question" and len(formula) >= 2:
+    return "question(" + formula_to_logic(formula[1], max_len=max_len) + ")"
+  if op == "ask" and len(formula) >= 3:
+    var = _logic_name(formula[1])
+    body = formula_to_logic(formula[2], max_len=max_len)
+    return "ask(" + var + "," + body + ")"
+  if op == "normally" and len(formula) >= 2:
+    return "normally(" + formula_to_logic(formula[1], max_len=max_len) + ")"
+
+  # Default: predicate/function application
+  return _atom_to_logic(formula)
+
+
 def _defq_ans_bridge(clause):
   """Detect the $defq/$ans bridge pattern in a 2-atom clause.
 
@@ -544,37 +988,72 @@ def clause_to_str(clause):
 
   conditions    = []   # positively-rendered negated atoms -> "if ..."
   neg_atoms     = []   # base atoms (pred without "-") for pure-negative rendering
-  consequences  = []   # positively-rendered positive atoms -> "then ..."
-  blocker_texts = []   # "except when ..." rendered from $block atoms
+  consequences  = []   # (english_str, is_normally) pairs for positive atoms
+  raw_pos_atoms = []   # raw positive atoms (for $block matching)
+  block_atoms   = []   # raw $block atoms
+  blocker_texts = []   # "except when ..." rendered from unmatched $block atoms
 
   for atom in clause:
     if not isinstance(atom, list) or not atom:
       continue
     pred = str(atom[0])
     if pred == "$block":
-      bt = block_to_english(atom)
-      if bt:
-        blocker_texts.append(bt)
+      block_atoms.append(atom)
     elif pred == "$ans":
       meaningful = _ans_display_args(atom[1:])
       if len(meaningful) >= 2:
         bracket = "[" + ", ".join(entity_name(a, with_url=True) for a in meaningful) + "]"
-        consequences.append(bracket + " is an answer")
+        consequences.append((bracket + " is an answer", False))
       elif meaningful:
-        consequences.append(entity_name(meaningful[0]) + " is an answer")
+        consequences.append((entity_name(meaningful[0]) + " is an answer", False))
       else:
-        consequences.append(ans_atom_name(atom) + " is an answer")
+        consequences.append((ans_atom_name(atom) + " is an answer", False))
+      raw_pos_atoms.append(atom)
     elif pred.startswith("-"):
       base = [pred[1:]] + list(atom[1:])
       conditions.append(_atom_to_english(base))
       neg_atoms.append(base)
     else:
-      consequences.append(_atom_to_english(atom))
+      consequences.append((_atom_to_english(atom), False))
+      raw_pos_atoms.append(atom)
 
-  if conditions and consequences:
-    result = "if " + " and ".join(conditions) + " then " + " or ".join(consequences)
-  elif consequences:
-    result = " or ".join(consequences)
+  # Detect standard defeasible pattern: $block body matches a positive conclusion.
+  # When matched, render the conclusion with "normally" instead of appending
+  # "except when ..." (which redundantly restates the conclusion's negation).
+  matched_blocks = set()
+  for bi, block in enumerate(block_atoms):
+    if (isinstance(block, list) and len(block) >= 3
+        and isinstance(block[2], list) and block[2] and block[2][0] == "$not"
+        and len(block[2]) > 1):
+      body = block[2][1]
+      for ci, raw_atom in enumerate(raw_pos_atoms):
+        if raw_atom == body:
+          # Mark this consequence as defeasible and this $block as matched.
+          text, _ = consequences[ci]
+          consequences[ci] = (text, True)
+          matched_blocks.add(bi)
+          break
+
+  # Unmatched $blocks get rendered as "except when ..." (post-resolution cases).
+  for bi, block in enumerate(block_atoms):
+    if bi not in matched_blocks:
+      bt = block_to_english(block)
+      if bt:
+        blocker_texts.append(bt)
+
+  # Deduplicate identical condition strings (e.g. isa(man,X) and
+  # has_degree_property(strong,X,none,man) may both render as "X is a man").
+  conditions = list(dict.fromkeys(conditions))
+
+  # Build consequence text, prepending "normally" to defeasible conclusions.
+  cons_parts = []
+  for text, is_normally in consequences:
+    cons_parts.append("normally " + text if is_normally else text)
+
+  if conditions and cons_parts:
+    result = "if " + " and ".join(conditions) + " then " + " or ".join(cons_parts)
+  elif cons_parts:
+    result = " or ".join(cons_parts)
   elif conditions:
     if len(conditions) == 1:
       # Single negated atom: render in natural negated form.
@@ -604,18 +1083,15 @@ def clause_to_str(clause):
 # Complex predicates use dedicated helpers; simple ones use inline lambdas.
 
 def _isa_pos(e, args):
-  typ = e(0)
-  if typ.startswith("the "):
-    typ = typ[4:]
+  # Use raw type string to avoid entity_map turning "man" into "the strong man".
+  typ = str(args[0]) if args else e(0)
   ent = e(1)
   if typ == "activity": return ent + " is an activity"
   if typ == "set":      return ent + " is a set"
   return ent + " is " + _indef_article(typ) + " " + typ
 
 def _isa_neg(e, args):
-  typ = e(0)
-  if typ.startswith("the "):
-    typ = typ[4:]
+  typ = str(args[0]) if args else e(0)
   ent = e(1)
   if typ == "activity": return ent + " is not an activity"
   if typ == "set":      return ent + " is not a set"
@@ -626,6 +1102,8 @@ def _is_rel2_pos(e, args):
   last = rel.split()[-1].lower() if rel else ""
   if rel.lower() in _PREPOSITIONS or last in _PREPOSITIONS or last == "of":
     return e(1) + " is " + rel + " " + e(2)
+  if _looks_like_verb(rel):
+    return e(1) + " " + _conjugate_verb(rel) + " " + e(2)
   return e(1) + " is " + rel + " of " + e(2)
 
 def _is_rel2_neg(e, args):
@@ -633,6 +1111,8 @@ def _is_rel2_neg(e, args):
   last = rel.split()[-1].lower() if rel else ""
   if rel.lower() in _PREPOSITIONS or last in _PREPOSITIONS or last == "of":
     return e(1) + " is not " + rel + " " + e(2)
+  if _looks_like_verb(rel):
+    return e(1) + " does not " + rel + " " + e(2)
   return e(1) + " is not " + rel + " of " + e(2)
 
 def _has_degree_property_render(e, args, neg=False):
@@ -640,9 +1120,21 @@ def _has_degree_property_render(e, args, neg=False):
   adv, art_type = _degree_parts(e(2))
   relcls_raw = args[3] if len(args) > 3 else ""
   cop = " is not " if neg else " is "
-  if isinstance(relcls_raw, str) and relcls_raw.startswith("?:"):
+  # Omit relclass when it's a variable, "none", or "entity" — these carry no
+  # useful comparison-class info and produce ugly English like "a big none".
+  if isinstance(relcls_raw, str) and (relcls_raw.startswith("?:")
+      or relcls_raw in ("none", "entity")):
     return ent + cop + adv + prop
-  relcls = e(3)
+  # Omit relclass when it matches the entity's base noun — avoids redundancy
+  # like "the mouse is a very big mouse" → "the mouse is very big".
+  ent_raw = args[1] if len(args) > 1 else ""
+  if isinstance(ent_raw, str) and isinstance(relcls_raw, str):
+    ent_base = re.match(r'^(.*\S)\s+\d+$', ent_raw)
+    if ent_base and ent_base.group(1).lower() == relcls_raw.lower():
+      return ent + cop + adv + prop
+  # Use the raw relclass string (not entity_name) to avoid entity_map lookup
+  # turning class names like "man" into "the strong man".
+  relcls = str(relcls_raw)
   art = "the" if art_type == "def" else _indef_article(adv if adv else prop)
   return ent + cop + art + " " + adv + prop + " " + relcls
 
@@ -665,6 +1157,10 @@ def _has_degree_rel2_render(e, args, neg=False):
   if degree_raw == "least":
     return ent1 + cop.rstrip() + " the least " + rel + " of all compared to " + ent2
   return ent1 + cop + rel + " of " + ent2
+
+def _is_var_raw(args, i):
+  """True if args[i] is a raw variable string (starts with '?:')."""
+  return (len(args) > i and isinstance(args[i], str) and args[i].startswith("?:"))
 
 # Predicate dispatch table: pred -> (min_args, pos_fn, neg_fn)
 # pos_fn / neg_fn signature: (e, args) -> str
@@ -700,8 +1196,8 @@ _PRED_TABLE = {
                             lambda e,a: e(0)+" does not happen in a "+e(1)+" manner"),
   "has direction":      (2, lambda e,a: e(0)+" goes towards "+e(1),
                             lambda e,a: e(0)+" does not go towards "+e(1)),
-  "has time":           (2, lambda e,a: e(0)+" happens at "+e(1),
-                            lambda e,a: e(0)+" does not happen at "+e(1)),
+  "has time":           (2, lambda e,a: e(0)+" happens at "+("time " if _is_var_raw(a,1) else "")+e(1),
+                            lambda e,a: e(0)+" does not happen at "+("time " if _is_var_raw(a,1) else "")+e(1)),
   # state / world predicates
   "state time":         (2, lambda e,a: "at time "+e(1),         None),
   "state location":     (2, lambda e,a: "at location "+e(1),     None),
@@ -744,9 +1240,9 @@ def _render_atom(atom, negated=False):
   args = atom[1:]
 
   def e(i):
-    """Display name of args[i] — always with URL appended for URL constants."""
+    """Display name of args[i] — proof_mode for simpler common-noun names."""
     if i >= len(args): return "?"
-    return entity_name(args[i], with_url=True)
+    return entity_name(args[i], with_url=True, proof_mode=True)
 
   # ---- table-driven dispatch ----
   entry = _PRED_TABLE.get(pred)

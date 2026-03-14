@@ -140,10 +140,10 @@ def sem_normalize_clauses(clauses):
     total += _normalize_clause(clause)
 
   if total > 0 and debug:
-    print("\n=== sem_normalize_clauses: {:d} substitution(s) ===".format(total))
-    print("--- before ---")
+    print("\n=== semantic normalization: {:d} substitution(s) ===\n".format(total))
+    print("before:")
     print(before_str)
-    print("--- after ---")
+    print("\nafter:")
     print(pretty.pp_str(clauses))
 
   return clauses

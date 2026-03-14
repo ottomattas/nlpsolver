@@ -46,6 +46,7 @@
 #-------------------------------------------------------------------
 
 from collections import defaultdict
+from linguistics import IRREGULAR_PAST_VERBS
 
 
 # Words that are skipped when scanning backwards for qualifier words.
@@ -63,7 +64,9 @@ _STOP_WORDS = frozenset({
   "in", "on", "at", "to", "from", "by", "with", "for", "of", "about",
   "into", "onto", "upon", "over", "under", "between", "through",
   "then", "than", "as", "not", "no",
-})
+  # Relative pronouns / wh-words (prevent "whom Eve" or "which car" as qualifiers)
+  "who", "whom", "whose", "which", "where", "what",
+}) | IRREGULAR_PAST_VERBS
 
 
 # ======== id parsing ========
@@ -85,12 +88,13 @@ def _base_and_suffix(eid):
 
 # ======== qualifier extraction ========
 
-def _qualifier_words(text, base, suffix):
+def _qualifier_words(text, base, suffix, extra_stops=None):
   """Return the list of qualifier words immediately before 'base [suffix]' in text.
 
   Strips trailing punctuation from each token before matching.
   Scans backwards from the entity position, skipping _SKIP_WORDS, then
   collecting non-skip words until another skip word or start of string.
+  extra_stops: set of lowercase words to treat as stop words (entity base names).
   """
   words   = text.split()
   cleaned = [w.rstrip(".,;:!?\"'") for w in words]
@@ -100,27 +104,43 @@ def _qualifier_words(text, base, suffix):
   if suffix is not None:
     for i in range(len(cleaned) - 1):
       if cleaned[i].lower() == base_lo and cleaned[i + 1] == suffix:
-        return _gather_backwards(cleaned, i, words)
+        return _gather_backwards(cleaned, i, words, extra_stops=extra_stops)
 
   # Fallback: match base alone (suffix may have been elided in the text)
   for i in range(len(cleaned)):
     if cleaned[i].lower() == base_lo:
-      return _gather_backwards(cleaned, i, words)
+      return _gather_backwards(cleaned, i, words, extra_stops=extra_stops)
 
   return []
 
 
-def _gather_backwards(words, pos, raw_words=None):
+def _gather_backwards(words, pos, raw_words=None, extra_stops=None):
   """Collect qualifier words to the left of words[pos].
 
   Skips over leading _SKIP_WORDS, then collects non-skip words.
-  Stops at clause boundaries (words with trailing comma/semicolon in raw text).
+  Stops at clause boundaries (words with trailing comma/semicolon in raw text),
+  at _STOP_WORDS, at extra_stops (entity base names), and at purely numeric
+  tokens (entity ID suffixes).
   Returns them in left-to-right order (closest to base is last).
   """
   def _at_boundary(idx):
     """True if the raw word at idx ends with clause-boundary punctuation."""
     if raw_words and idx < len(raw_words):
       return raw_words[idx][-1:] in (",", ";")
+    return False
+
+  def _is_stop(w):
+    wl = w.lower()
+    if wl in _STOP_WORDS:
+      return True
+    if extra_stops and wl in extra_stops:
+      return True
+    if w.isdigit():
+      return True
+    # Past-tense verbs (ending in -ed) are not adjective qualifiers.
+    # Exception: common participial adjectives like "named", "called".
+    if wl.endswith("ed") and len(wl) > 3 and wl not in ("red", "named", "called"):
+      return True
     return False
 
   j = pos - 1
@@ -130,7 +150,7 @@ def _gather_backwards(words, pos, raw_words=None):
     j -= 1
   quals = []
   while j >= 0 and words[j].lower() not in _SKIP_WORDS:
-    if _at_boundary(j) or words[j].lower() in _STOP_WORDS:
+    if _at_boundary(j) or _is_stop(words[j]):
       break
     quals.insert(0, words[j])
     j -= 1
@@ -206,13 +226,52 @@ def _collect_adjectives_from_logic(s2_json):
   return dict(result)
 
 
-def _collect_text_qualifiers(s1_json):
+def _collect_action_verbs(s1_json, s2_json=None):
+  """Collect action root verbs from stage-1 JSON and relation names from stage-2.
+
+  Returns a set of lowercase verb strings that should not be used as qualifiers.
+  """
+  verbs = set()
+  for para in s1_json:
+    if not isinstance(para, dict):
+      continue
+    for unit in para.get("units", []):
+      if not isinstance(unit, dict):
+        continue
+      for action in unit.get("actions", []):
+        if isinstance(action, dict):
+          root = action.get("root", "")
+          if root:
+            verbs.add(root.lower())
+  # Also collect relation names from stage-2 "is rel2" atoms — these are
+  # verbs/relations (e.g. "like", "fear") that should never be qualifiers.
+  if s2_json:
+    _collect_rel2_verbs(s2_json, verbs)
+  return verbs
+
+
+def _collect_rel2_verbs(node, verbs):
+  """Recursively scan stage-2 JSON for ["is rel2", REL, ...] and collect REL."""
+  if not isinstance(node, list) or not node:
+    return
+  if (node[0] in ("is rel2", "-is rel2") and len(node) >= 2
+      and isinstance(node[1], str) and not node[1].startswith("?:")):
+    verbs.add(node[1].lower())
+  for el in node:
+    if isinstance(el, list):
+      _collect_rel2_verbs(el, verbs)
+
+
+def _collect_text_qualifiers(s1_json, action_verbs=None):
   """Collect pre-nominal qualifier words for each entity across ALL ASU texts.
 
   Scans both ASU ``text`` fields and paragraph ``raw`` fields so that
   pre-nominal adjectives survive even when the LLM drops them from the
   simplified ASU text (e.g. Gemini turning "The big bear is strong" into
   "The bear 1 is strong").
+
+  action_verbs: set of lowercase verb roots from stage-1 actions, treated as
+  extra stop words to prevent "drove" or "buy" from being picked up as qualifiers.
 
   Returns {entity_id: [qualifier_words]} — union of qualifiers from every
   text that mentions the entity.
@@ -241,13 +300,20 @@ def _collect_text_qualifiers(s1_json):
         if raw:
           eid_texts[eid].append(raw)
 
+  # Build extra stop words: entity base names + action verbs.
+  # Prevents "John" in "John 1 drove a car 2" from becoming a qualifier for
+  # "car 2", and "drive"/"buy" from becoming qualifiers.
+  entity_bases = {info[0].lower() for info in eid_info.values()}
+  if action_verbs:
+    entity_bases = entity_bases | action_verbs
+
   result = {}
   for eid, texts in eid_texts.items():
     base, suffix = eid_info[eid]
     seen_quals = []
     seen_set   = set()
     for text in texts:
-      quals = _qualifier_words(text, base, suffix)
+      quals = _qualifier_words(text, base, suffix, extra_stops=entity_bases)
       for q in quals:
         q_lo = q.lower()
         if q_lo not in seen_set:
@@ -280,9 +346,11 @@ def _entity_quals(eid, text_quals, logic_adjs, base, suffix, need_disambig=False
     return quals
   else:
     # No pre-nominal qualifiers — use logic adjectives as qualifying adjectives.
-    # Since we can't distinguish qualifying from predicated adjectives in the
-    # logic, be conservative: take only the first one unless disambiguating.
+    # For proper nouns (uppercase base) that are unique, skip logic adjectives
+    # entirely: "John" is better than "the strong John" when there's only one John.
     if not need_disambig:
+      if base[:1].isupper():
+        return []
       return la[:1]
     return la[:_MAX_QUALIFIERS] if len(la) <= _MAX_QUALIFIERS else la
 
@@ -347,7 +415,8 @@ def build_entity_map(s1_json, s2_json=None):
     return {}
 
   # --- collect qualifiers from all ASU texts and from stage-2 logic ---
-  text_quals = _collect_text_qualifiers(s1_json)
+  action_verbs = _collect_action_verbs(s1_json, s2_json=s2_json)
+  text_quals = _collect_text_qualifiers(s1_json, action_verbs=action_verbs)
   logic_adjs = _collect_adjectives_from_logic(s2_json) if s2_json else {}
 
   # --- collect entities; first occurrence wins ---
