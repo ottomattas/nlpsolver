@@ -151,6 +151,63 @@ def _store_llm_cached(llm, ver, max_tokens, think, sysprompt, input_text, result
     pass
 
 
+# ======== shared helpers ========
+
+def _read_api_key(filepath, provider):
+  """Read an API key from a plain-text file. Returns the key or None on error."""
+  try:
+    with open(filepath, "r") as f:
+      return f.read().strip()
+  except:
+    llm_error("Could not read " + provider + " API key file: " + str(filepath))
+    return None
+
+
+def _post_with_retry(host, url, body, headers, provider):
+  """POST JSON body to host/url with retries. Returns parsed response dict or None."""
+  trycount = 0
+  while True:
+    conn = http.client.HTTPSConnection(host, timeout=timeout)
+    try:
+      conn.request("POST", url, body, headers=headers)
+      response = conn.getresponse()
+    except KeyboardInterrupt:
+      raise
+    except:
+      trycount += 1
+      if conn: conn.close()
+      if trycount > max_retries:
+        return llm_error(provider + " connection failed after " + str(max_retries) + " retries")
+      print(provider + " connection failure, retrying...")
+      time.sleep(sleepseconds * trycount)
+      continue
+    if response.status != 200 or response.reason != "OK":
+      message = ""
+      try:
+        data = json.loads(response.read())
+        if "error" in data and "message" in data["error"]:
+          message = ": " + data["error"]["message"]
+      except:
+        pass
+      trycount += 1
+      if conn: conn.close()
+      if trycount > max_retries:
+        return llm_error(provider + " API error " + str(response.status) + " " + str(response.reason) + message)
+      print(provider + " API failure, retrying:", str(response.status), str(response.reason) + message)
+      time.sleep(sleepseconds * trycount)
+    else:
+      break
+
+  rawdata = response.read()
+  conn.close()
+  try:
+    return json.loads(rawdata)
+  except KeyboardInterrupt:
+    raise
+  except:
+    return llm_error(provider + " response is not valid JSON: " + str(rawdata))
+
+
 # ======== gemini ========
 
 # https://ai.google.dev/gemini-api/docs/text-generation
@@ -172,14 +229,9 @@ def _gemini_supports_thinking(version):
   return False
 
 def call_gemini(version, sentences, sysprompt, max_tokens, think=False):
-  try:
-    sf = open(gemini_secrets_file, "r")
-    key = sf.read().strip()
-    sf.close()
-  except:
-    return llm_error("Could not read Gemini API key file: " + str(gemini_secrets_file))
+  key = _read_api_key(gemini_secrets_file, "Gemini")
+  if key is None: return None
 
-  baseurl = "/v1beta/models/" + version + ":generateContent"
   genconfig = {
     "maxOutputTokens": max_tokens,
     "temperature": temperature
@@ -195,64 +247,24 @@ def call_gemini(version, sentences, sysprompt, max_tokens, think=False):
     call["system_instruction"] = {"parts": [{"text": sysprompt}]}
 
   utils.debug_print("gemini call", call, flag=calldebug)
-  calltxt = json.dumps(call)
-
-  trycount = 0
-  while True:
-    host = "generativelanguage.googleapis.com"
-    conn = http.client.HTTPSConnection(host, timeout=timeout)
-    try:
-      conn.request("POST", baseurl, calltxt,
-                   headers={"content-Type": "application/json", "x-goog-api-key": key})
-      response = conn.getresponse()
-    except KeyboardInterrupt:
-      raise
-    except:
-      trycount += 1
-      if conn: conn.close()
-      if trycount > max_retries:
-        return llm_error("Gemini connection failed after " + str(max_retries) + " retries")
-      print("Gemini connection failure, retrying...")
-      time.sleep(sleepseconds * trycount)
-      continue
-    if response.status != 200 or response.reason != "OK":
-      message = ""
-      try:
-        data = json.loads(response.read())
-        if "error" in data and "message" in data["error"]:
-          message = ": " + data["error"]["message"]
-      except:
-        pass
-      trycount += 1
-      if conn: conn.close()
-      if trycount > max_retries:
-        return llm_error("Gemini API error " + str(response.status) + " " + str(response.reason) + message)
-      print("Gemini API failure, retrying:", str(response.status), str(response.reason) + message)
-      time.sleep(sleepseconds * trycount)
-    else:
-      break
-
-  rawdata = response.read()
-  conn.close()
-  try:
-    data = json.loads(rawdata)
-  except KeyboardInterrupt:
-    raise
-  except:
-    return llm_error("Gemini response is not valid JSON: " + str(rawdata))
+  url = "/v1beta/models/" + version + ":generateContent"
+  data = _post_with_retry("generativelanguage.googleapis.com", url,
+                          json.dumps(call),
+                          {"content-Type": "application/json", "x-goog-api-key": key},
+                          "Gemini")
+  if data is None: return None
 
   if "candidates" not in data:
-    return llm_error("Gemini response has no candidates: " + str(rawdata))
-  data = data["candidates"][0]
-  if "content" not in data:
-    return llm_error("Gemini response has no content: " + str(data))
-  data = data["content"]
-  if "parts" not in data:
-    return llm_error("Gemini response has no parts: " + str(data))
+    return llm_error("Gemini response has no candidates: " + str(data))
+  cand = data["candidates"][0]
+  if "content" not in cand:
+    return llm_error("Gemini response has no content: " + str(cand))
+  if "parts" not in cand["content"]:
+    return llm_error("Gemini response has no parts: " + str(cand))
 
   utils.debug_print("gemini response:", data, flag=debug)
   res = ""
-  for el in data["parts"]:
+  for el in cand["content"]["parts"]:
     if "text" in el:
       res += el["text"].strip()
   return res
@@ -261,12 +273,8 @@ def call_gemini(version, sentences, sysprompt, max_tokens, think=False):
 # ======== claude ========
 
 def call_claude(version, sentences, sysprompt, max_tokens, think=False):
-  try:
-    sf = open(claude_secrets_file, "r")
-    key = sf.read().strip()
-    sf.close()
-  except:
-    return llm_error("Could not read Claude API key file: " + str(claude_secrets_file))
+  key = _read_api_key(claude_secrets_file, "Claude")
+  if key is None: return None
 
   messages = [{"role": "user", "content": sentences}]
   call = {
@@ -282,58 +290,16 @@ def call_claude(version, sentences, sysprompt, max_tokens, think=False):
     call["system"] = [{"type": "text", "text": sysprompt, "cache_control": {"type": "ephemeral"}}]
 
   utils.debug_print("claude call", call, flag=calldebug)
-  calltxt = json.dumps(call)
-
-  trycount = 0
-  while True:
-    host = "api.anthropic.com"
-    conn = http.client.HTTPSConnection(host, timeout=timeout)
-    try:
-      conn.request("POST", "/v1/messages", calltxt,
-                   headers={
-                     "content-Type": "application/json",
-                     "anthropic-version": "2023-06-01",
-                     "x-api-key": key
-                   })
-      response = conn.getresponse()
-    except KeyboardInterrupt:
-      raise
-    except:
-      trycount += 1
-      if conn: conn.close()
-      if trycount > max_retries:
-        return llm_error("Claude connection failed after " + str(max_retries) + " retries")
-      print("Claude connection failure, retrying...")
-      time.sleep(sleepseconds * trycount)
-      continue
-    if response.status != 200 or response.reason != "OK":
-      message = ""
-      try:
-        data = json.loads(response.read())
-        if "error" in data and "message" in data["error"]:
-          message = ": " + data["error"]["message"]
-      except:
-        pass
-      trycount += 1
-      if conn: conn.close()
-      if trycount > max_retries:
-        return llm_error("Claude API error " + str(response.status) + " " + str(response.reason) + message)
-      print("Claude API failure, retrying:", str(response.status), str(response.reason) + message)
-      time.sleep(sleepseconds * trycount)
-    else:
-      break
-
-  rawdata = response.read()
-  conn.close()
-  try:
-    data = json.loads(rawdata)
-  except KeyboardInterrupt:
-    raise
-  except:
-    return llm_error("Claude response is not valid JSON: " + str(rawdata))
+  data = _post_with_retry("api.anthropic.com", "/v1/messages",
+                          json.dumps(call),
+                          {"content-Type": "application/json",
+                           "anthropic-version": "2023-06-01",
+                           "x-api-key": key},
+                          "Claude")
+  if data is None: return None
 
   if "content" not in data:
-    return llm_error("Claude response has no content: " + str(rawdata))
+    return llm_error("Claude response has no content: " + str(data))
 
   utils.debug_print("claude response:", data, flag=debug)
   res = ""
@@ -346,16 +312,11 @@ def call_claude(version, sentences, sysprompt, max_tokens, think=False):
 # ======== gpt ========
 
 def call_gpt(version, sentences, sysprompt, max_tokens, think=False):
-  try:
-    sf = open(gpt_secrets_file, "r")
-    txt = sf.read()
-    sf.close()
-  except:
-    return llm_error("Could not read GPT API key file: " + str(gpt_secrets_file))
-  key = txt.strip()
+  key = _read_api_key(gpt_secrets_file, "GPT")
+  if key is None: return None
 
   if version.startswith("gpt-5"):
-    baseurl = "/v1/responses"
+    url = "/v1/responses"
     messages = []
     if sysprompt:
       messages.append({"role": "system", "content": [{"type": "input_text", "text": sysprompt}]})
@@ -370,7 +331,7 @@ def call_gpt(version, sentences, sysprompt, max_tokens, think=False):
     if max_tokens:
       call["max_output_tokens"] = max_tokens
   else:
-    baseurl = "/v1/chat/completions"
+    url = "/v1/chat/completions"
     messages = []
     if sysprompt:
       messages.append({"role": "system", "content": sysprompt})
@@ -385,55 +346,12 @@ def call_gpt(version, sentences, sysprompt, max_tokens, think=False):
       call["max_tokens"] = max_tokens
 
   utils.debug_print("gpt call", call, flag=calldebug)
-  calltxt = json.dumps(call)
-
-  trycount = 0
-  while True:
-    host = "api.openai.com"
-    conn = http.client.HTTPSConnection(host, timeout=timeout)
-    try:
-      conn.request("POST", baseurl, calltxt,
-                   headers={
-                     "Host": host,
-                     "Content-Type": "application/json",
-                     "Authorization": "Bearer " + key
-                   })
-      response = conn.getresponse()
-    except KeyboardInterrupt:
-      raise
-    except:
-      trycount += 1
-      if conn: conn.close()
-      if trycount > max_retries:
-        return llm_error("GPT connection failed after " + str(max_retries) + " retries")
-      print("GPT connection failure, retrying...")
-      time.sleep(sleepseconds * trycount)
-      continue
-    if response.status != 200 or response.reason != "OK":
-      message = ""
-      try:
-        data = json.loads(response.read())
-        if "error" in data and "message" in data["error"]:
-          message = ": " + data["error"]["message"]
-      except:
-        pass
-      trycount += 1
-      if conn: conn.close()
-      if trycount > max_retries:
-        return llm_error("GPT API error " + str(response.status) + " " + str(response.reason) + message)
-      print("GPT API failure, retrying:", str(response.status), str(response.reason) + message)
-      time.sleep(sleepseconds * trycount)
-    else:
-      break
-
-  rawdata = response.read()
-  conn.close()
-  try:
-    data = json.loads(rawdata)
-  except KeyboardInterrupt:
-    raise
-  except:
-    return llm_error("GPT response is not valid JSON: " + str(rawdata))
+  host = "api.openai.com"
+  data = _post_with_retry(host, url, json.dumps(call),
+                          {"Host": host, "Content-Type": "application/json",
+                           "Authorization": "Bearer " + key},
+                          "GPT")
+  if data is None: return None
 
   utils.debug_print("gpt response:", data, flag=debug)
 
@@ -467,12 +385,8 @@ def call_gpt(version, sentences, sysprompt, max_tokens, think=False):
 # DeepSeek uses an OpenAI-compatible chat completions API.
 
 def call_deepseek(version, sentences, sysprompt, max_tokens, think=False):
-  try:
-    sf = open(deepseek_secrets_file, "r")
-    key = sf.read().strip()
-    sf.close()
-  except:
-    return llm_error("Could not read DeepSeek API key file: " + str(deepseek_secrets_file))
+  key = _read_api_key(deepseek_secrets_file, "DeepSeek")
+  if key is None: return None
 
   # Switch to reasoning model when think is requested.
   if think and version == "deepseek-chat":
@@ -494,59 +408,17 @@ def call_deepseek(version, sentences, sysprompt, max_tokens, think=False):
       call["max_tokens"] = max_tokens
 
   utils.debug_print("deepseek call", call, flag=calldebug)
-  calltxt = json.dumps(call)
-
-  trycount = 0
-  while True:
-    host = "api.deepseek.com"
-    conn = http.client.HTTPSConnection(host, timeout=timeout)
-    try:
-      conn.request("POST", "/v1/chat/completions", calltxt,
-                   headers={
-                     "Content-Type": "application/json",
-                     "Authorization": "Bearer " + key
-                   })
-      response = conn.getresponse()
-    except KeyboardInterrupt:
-      raise
-    except:
-      trycount += 1
-      if conn: conn.close()
-      if trycount > max_retries:
-        return llm_error("DeepSeek connection failed after " + str(max_retries) + " retries")
-      print("DeepSeek connection failure, retrying...")
-      time.sleep(sleepseconds * trycount)
-      continue
-    if response.status != 200 or response.reason != "OK":
-      message = ""
-      try:
-        data = json.loads(response.read())
-        if "error" in data and "message" in data["error"]:
-          message = ": " + data["error"]["message"]
-      except:
-        pass
-      trycount += 1
-      if conn: conn.close()
-      if trycount > max_retries:
-        return llm_error("DeepSeek API error " + str(response.status) + " " + str(response.reason) + message)
-      print("DeepSeek API failure, retrying:", str(response.status), str(response.reason) + message)
-      time.sleep(sleepseconds * trycount)
-    else:
-      break
-
-  rawdata = response.read()
-  conn.close()
-  try:
-    data = json.loads(rawdata)
-  except KeyboardInterrupt:
-    raise
-  except:
-    return llm_error("DeepSeek response is not valid JSON: " + str(rawdata))
+  data = _post_with_retry("api.deepseek.com", "/v1/chat/completions",
+                          json.dumps(call),
+                          {"Content-Type": "application/json",
+                           "Authorization": "Bearer " + key},
+                          "DeepSeek")
+  if data is None: return None
 
   utils.debug_print("deepseek response:", data, flag=debug)
 
   if "choices" not in data:
-    return llm_error("DeepSeek response has no 'choices': " + str(rawdata))
+    return llm_error("DeepSeek response has no 'choices': " + str(data))
   res = ""
   for el in data["choices"]:
     if "message" in el:
