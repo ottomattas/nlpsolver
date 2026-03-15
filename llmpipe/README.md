@@ -94,8 +94,11 @@ Full solver data: http://logictools.org/data/nlpsolver_data.tar.gz
 
 ## Documentation
 
+See `ENCODINGS.md` for the three data representations (Stage-1, Stage-2, GK input) with examples.
+
+See `PROOF_RENDERING.md` for how proofs are rendered as English explanations.
+
 See `DOCUMENTATION.md` for a full developer guide covering:
-- All three JSON representations (Stage-1 ASU, Stage-2 logic, GK clause list)
 - Every source file with its public API
 - Key algorithms: FOL→CNF clausification, defeasible reasoning, context injection,
   gradable property normalisation, wh-question encoding

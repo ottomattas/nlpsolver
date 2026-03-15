@@ -167,7 +167,7 @@ llmpipe/
 ## 4. Representation overview
 
 The pipeline uses three successive JSON representations.  Understanding all three is essential for
-any work on the system.
+any work on the system.  See `ENCODINGS.md` for a detailed encoding reference with examples.
 
 ### 4.1 Stage-1 ASU JSON
 
@@ -662,6 +662,9 @@ negated=False)` function dispatches through the table, with fallback handlers fo
 
 Per-proof mutable state (entity map, ambiguous names, Skolem type annotations) is bundled in a
 `RenderContext` class (`_ctx` module-level instance), replacing former module-level globals.
+
+See `PROOF_RENDERING.md` for a detailed description of the rendering principles,
+entity naming rules, clause rendering, and proof explanation structure with examples.
 
 **Imports from linguistics.py:** `indef_article`, `conjugate_verb`, `make_comparative`,
 `to_gerund` — pure English heuristic helpers with no dependency on proof state.
