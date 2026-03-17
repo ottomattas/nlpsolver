@@ -2699,3 +2699,70 @@ OUTPUT:
     ]
   ]
 ]
+
+
+Input:
+[{"raw": "The set 1 of two red elephants drank.",
+  "units": [{"unit_id": "S1",
+    "text": "The set 1 of two red elephants drank.",
+    "type": "situation",
+    "entities": [
+      {"id": "set 1", "type": "set", "category": "elephant"}],
+    "actions": [{"root": "drink", "mode": "event"}],
+    "adjectives": [["red", "none", "none"]],
+    "time": "past"}]}]
+
+Output:
+["and",
+  ["@id", "S1",
+    ["holds", "W0",
+      ["and",
+        ["=", 2, ["$count", ["$setof", "?:X", "set 1",
+          ["and", ["isa", "elephant", "?:X"], ["prop", "red", "?:X"]]]]],
+        ["forall", "?:M",
+          ["implies",
+            ["member", "?:M", ["$setof", "?:X", "set 1",
+              ["and", ["isa", "elephant", "?:X"], ["prop", "red", "?:X"]]]],
+            ["exists", "E",
+              ["and",
+                ["isa", "activity", "E"],
+                ["has type", "E", "drink"],
+                ["has actor", "E", "?:M"],
+                ["has time", "E", "past"]
+              ]]]]
+      ]]]]
+
+
+Input:
+[{"raw": "John has three red cars.",
+  "units": [{"unit_id": "S1",
+    "text": "John 1 has three red cars.",
+    "type": "situation",
+    "entities": [
+      {"id": "John 1", "type": "concrete", "category": "person"},
+      {"id": "cars", "type": "generic", "category": "artifact"}],
+    "adjectives": [["red", "none", "none"]]}]},
+ {"raw": "John has three red cars?",
+  "units": [{"unit_id": "S2",
+    "text": "Does John 1 have three red cars?",
+    "type": "query",
+    "entities": [
+      {"id": "John 1", "type": "concrete", "category": "person"},
+      {"id": "cars", "type": "generic", "category": "artifact"}],
+    "adjectives": [["red", "none", "none"]]}]}]
+
+Output:
+["and",
+  ["@id", "S1",
+    ["holds", "W0",
+      ["and",
+        ["isa", "person", "John 1"],
+        ["=", 3, ["$count", ["$setof", "?:X",
+          ["and", ["isa", "car", "?:X"], ["prop", "red", "?:X"],
+                  ["have", "John 1", "?:X"]]]]]
+      ]]],
+  ["@id", "S2",
+    ["question",
+      ["=", 3, ["$count", ["$setof", "?:X",
+        ["and", ["isa", "car", "?:X"], ["prop", "red", "?:X"],
+                ["have", "John 1", "?:X"]]]]]]]]

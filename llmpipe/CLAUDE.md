@@ -66,6 +66,7 @@ English text
 - `logconvert.py` — main driver for stage-2 JSON → GK clause list; `rawlogic_convert(logic)`; handles package extraction, context injection, post-processing passes
 - `lc_clausify.py` — FOL-to-CNF compiler used by logconvert: implies/xor/equivalent elimination, NNF push, normally expansion, Skolemization, distribution, clause extraction
 - `lc_questions.py` — question wrapping (`ask`/`question` → `@question`/`@askvars`) and population fact injection
+- `lc_sets.py` — set/counting: `$setof` rewriting to canonical form, membership axiom generation, element instantiation
 - `procproofs.py` — post-processes prover output; formats answers (bool, who, where), confidence labels, proof explanation dispatch
 - `proof_explain.py` — generates English proof explanations from prover proof steps
 - `proof_render.py` — renders proof atoms and steps as human-readable strings (table-driven via `_PRED_TABLE`)

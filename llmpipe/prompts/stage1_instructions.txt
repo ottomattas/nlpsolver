@@ -345,6 +345,10 @@ the most recent (nearest) compatible entity in the text unless the sentence expl
 otherwise: In "A gray elephant was nice. A white elephant was nice. The elephant was cool" the
 last "The elephant" refers to the white elephant.
 
+Non-living entities are not compatible and should not match "she/he/we". 
+Male/female first names are not compatible with the opposite gender pronoun (she/he).
+Male/female categories (father/mother) are not compatible with the opposite gender pronoun (she/he).
+
 Indefinite noun phrases ("a bear", "an elephant") in SEPARATE sentences
 introduce DISTINCT entities, even if the noun is the same. Each "a bear"
 is a new, different bear. Assign different numbered IDs:
@@ -407,6 +411,28 @@ If a concept appears in a rule and a query/situation, the query/situation must "
 and Type used in the rule. If the rule uses {"id": "forest", "type": "generic"},
 the query cannot use a concrete ID like "a forest 1", and must also use
 {"id": "forest", "type": "generic"}:
+
+--- 8.1b Set Entities ---
+
+When a noun phrase describes a counted group of entities (e.g., "two red
+elephants", "three cars"), and the group is NOT owned by or related to
+a specific subject, create a set entity:
+
+  {"id": "set 1", "type": "set", "category": "elephant"}
+
+The set id uses the "set N" naming pattern. The category describes the
+member type.
+
+Do NOT split counted groups into individual entities. "Three cars" is
+one set entity, not three separate car entities.
+
+When the same set is referenced again (e.g., "the elephants", "they"),
+resolve to the same set id ("set 1").
+
+When the set IS owned by a subject (e.g., "John has three cars"), the
+set does not need a "set N" id — the ownership relation makes it unique.
+Use a generic entity for the counted noun:
+  {"id": "cars", "type": "generic", "category": "artifact"}
 
 --- 8.2 Entity IDs ---
 

@@ -870,6 +870,54 @@ If ASU.next_state exists:
 ["next",W,Wnew]
 
 
+== 13. SETS AND COUNTING ==
+
+Use $setof to encode sets of entities described by shared properties.
+
+$setof has two formats depending on whether a stative relation anchors
+the set to a subject:
+
+Anchored (set owned/related to a subject):
+  ["$setof", VAR, ["and", COND_1, ..., [PRED, SUBJECT, VAR]]]
+  Example: "John has three red cars"
+  ["$setof", "?:X", ["and", ["isa","car","?:X"], ["prop","red","?:X"], ["have","John 1","?:X"]]]
+
+Conditions-only (set defined by properties alone, no subject):
+  ["$setof", VAR, SET_ID, ["and", COND_1, COND_2, ...]]
+  Example: "The set 1 of two red elephants drank"
+  ["$setof", "?:X", "set 1", ["and", ["isa","elephant","?:X"], ["prop","red","?:X"]]]
+
+SET_ID comes from the Stage-1 entity id for the set (e.g. "set 1").
+
+VAR is a fresh variable (?:X). The conditions list ALL properties that
+define set membership, using VAR as the member placeholder:
+  ["isa", TYPE, VAR]              — entity type
+  ["prop", WORD, VAR]             — property
+  ["have", OWNER, VAR]            — possession (anchored)
+  ["is rel2", REL, SUBJ, VAR]    — relation (anchored)
+
+Count assertion:
+  ["=", N, ["$count", SETOF_TERM]]
+
+When members perform an action, distribute it with forall/implies:
+  ["forall", "?:M",
+    ["implies",
+      ["member", "?:M", SETOF_TERM],
+      EVENT_BODY_USING_?:M]]
+
+The SETOF_TERM must be identical wherever it appears (in $count and
+in member conditions within the same formula).
+
+Stative relations (have, is rel2, can) go INSIDE the $setof conditions.
+Event/action relations go OUTSIDE as a distributive forall/implies block.
+
+When the same set is referenced again (e.g. "Did the set 1 of red
+elephants swim?"), use the same $setof term with the same SET_ID.
+
+Queries about the same set use the same $setof structure.
+Queries without a count ("Does John have a car?") use normal existentials.
+
+
 == 17. FINAL CHECKLIST ==
 
 - Exactly one top-level ["and",...]

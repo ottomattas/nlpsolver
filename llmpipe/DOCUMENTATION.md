@@ -26,8 +26,10 @@ representation so that a developer or LLM can quickly start extending or modifyi
    - 5.4 [logconvert.py](#54-logconvertpy)
    - 5.5 [lc_clausify.py](#55-lc_clausifypy)
    - 5.6 [lc_questions.py](#56-lc_questionspy)
-   - 5.7 [procproofs.py](#57-procproofspy)
-   - 5.8 [proof_render.py](#58-proof_renderpy)
+   - 5.7 [lc_sets.py](#57-lc_setspy)
+   - 5.8 [procproofs.py](#58-procproofspy)
+   - 5.9 [proof_render.py](#59-proof_renderpy)
+   - 5.10 [proof_explain.py](#510-proof_explainpy)
    - 5.9 [proof_explain.py](#59-proof_explainpy)
    - 5.10 [prover.py](#510-proverpy)
    - 5.11 [pretty.py](#511-prettypy)
@@ -127,6 +129,7 @@ llmpipe/
 │   ├── logconvert.py    Stage-2 JSON → GK clause list (main driver)
 │   ├── lc_clausify.py   FOL → CNF clausification
 │   ├── lc_questions.py  Wh-question encoding and population facts
+│   ├── lc_sets.py       Set/counting: $setof rewriting, membership axioms, element instantiation
 │   ├── procproofs.py    Prover output → answer string
 │   ├── proof_render.py  Atom/clause rendering (table-driven)
 │   ├── proof_explain.py Step-by-step proof explanation formatter
@@ -271,7 +274,7 @@ Each `PACKAGE` is one of:
 | World | `holds W F`, `next W1 W2`, `before W1 W2` (axiom-derived), `state time W T`, `state location W L` |
 | Defeasible | `normally FORMULA` |
 | Mental | `kb K HOLDER ATTITUDE W`, `kb force K FORCE`, `kb holds K FORMULA`, `kb says K1 K2 FORMULA` |
-| Sets | `isa "set" S`, `is set of TYPE S`, `member has property PROP S`, `member ENTITY S`, `is subset of S1 S2`, `set union S1 S2 S3`, `$count S` |
+| Sets | `$setof VAR [and CONDITIONS]`, `$setof VAR SET_ID [and CONDITIONS]`, `$count SETOF_TERM`, `member ENTITY SETOF_TERM`, `isa "set" S`, `is set of TYPE S` |
 | Traceability | `@id "Sx" FORMULA`, `@p "Sx" P`, `@definite "Sx" W REL ARG VALUE` |
 | Questions | `question F`, `ask VAR F` |
 
@@ -516,7 +519,9 @@ The directory path is set once via `_secrets_dir` in `llmcall.py`.
 **Role:** Main driver for logic conversion — orchestrates the full Stage-2 JSON → GK clause
 list pipeline.  The heavy computation is split across three files: `logconvert.py` handles
 package extraction, context injection, and post-processing passes; `lc_clausify.py` does FOL→CNF
-compilation; `lc_questions.py` handles question encoding and population facts.
+compilation; `lc_questions.py` handles question encoding and population facts;
+`lc_sets.py` handles set/counting: `$setof` rewriting, membership axioms, and element
+instantiation.
 
 **Key function:** `rawlogic_convert(logic, s1_json=None) -> list | None`
 
@@ -621,7 +626,55 @@ _extract_clauses               collect flat clause list
 - `S2_VAR_RE` — regex matching Stage-2 variable names (uppercase-initial identifiers)
 - `WHERE_SPATIAL_PREPS` — set of spatial prepositions handled as where-questions
 
-### 5.7 procproofs.py
+### 5.7 lc_sets.py
+
+**Role:** Programmatic conversion of Stage-2 `$setof` terms into canonical form,
+generation of membership axioms, and element instantiation.
+
+**Entry point:** `process_sets(formula)` — called before clausification.  Returns
+`(rewritten_formula, axioms, element_clauses)`.
+
+**Two $setof forms:**
+
+| LLM output | Canonical form | When |
+|------------|---------------|------|
+| `["$setof","?:X",["and",...conds with have...]]` | `["$setof","have","John 1",["$and",...$-prefixed...]]` | Stative anchor found (have, is_rel2, can) |
+| `["$setof","?:X","set 1",["and",...conds...]]` | `["$setof","id","set 1",["$and",...conds...]]` | No anchor, set_id from Stage-1 |
+
+**Conversion steps** (inside-out for nested $setof):
+1. Detect anchor predicate in conditions; extract it
+2. Replace bound variable with `$arg1` (`$arg2` for nested)
+3. `$`-prefix predicates in anchored form; no prefix for conditions-only
+4. Sort `$and` entries: `$isa`/`isa` first, rest alphabetically
+5. Mutate the $setof node in place
+
+**Membership axiom generation:** For each unique $setof pattern, a
+`forall/biconditional` axiom is generated:
+```
+member(?:M, $setof(have, ?:S, [$and, $isa(?:C,$arg1), $prop(?:P,$arg1)]))
+  <=> isa(?:C, ?:M) & prop(?:P, ?:M) & have(?:S, ?:M)
+```
+Concrete values in conditions are generalized to forall variables.
+
+**Element instantiation:** For each positive `["=", N, ["$count", $setof_term]]`
+in an assertion context (inside `holds`, not in queries), creates
+`min(N, set_element_limit)` concrete element constants (`$setK_elI`) with:
+- All set properties (un-prefixed predicates)
+- Anchor predicate (if anchored)
+- `member` assertions
+- Pairwise distinctness (`["-=", el1, el2]`)
+
+Configurable via `globals.options["set_element_limit"]` (default 3).
+
+**Key functions:**
+- `_classify_setof(conditions, var)` — detect anchor predicate
+- `_rewrite_setof(node, depth)` — rewrite one $setof to canonical form
+- `_build_membership_axiom(info)` — generate the forall/biconditional
+- `_instantiate_elements(info, source_name, count)` — create element clauses
+- `_instantiate_distributive_events(formula, setof_term, elements, source_name)` —
+  create per-element event instances from forall/implies/member blocks
+
+### 5.8 procproofs.py
 
 **Role:** Post-processing of raw prover output into a human-readable answer.
 
@@ -651,7 +704,7 @@ and `"John 3"`).  Such names keep their distinguishing number in output.
 **Imports from proof_render.py:** `compute_ambiguity`, `entity_name`, `ans_atom_name`
 **Imports from proof_explain.py:** `format_explanation`, `build_sentence_map`, `ans_display_key`
 
-### 5.8 proof_render.py
+### 5.9 proof_render.py
 
 **Role:** Low-level rendering of proof atoms and clauses as English strings.
 
@@ -683,7 +736,7 @@ entity naming rules, clause rendering, and proof explanation structure with exam
 - `format_clause_logic(clause) -> str` — format clause as FOL-style logic notation
 - `block_to_english(blocker) -> str` — convert a `$block` literal to a readable exception string
 
-### 5.9 proof_explain.py
+### 5.10 proof_explain.py
 
 **Role:** Builds the full step-by-step proof explanation presented to the user.
 
