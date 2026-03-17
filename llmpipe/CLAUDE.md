@@ -166,11 +166,15 @@ When the user says **"Debug case N"** (where N is a case number in `testfixlog.t
    analyze the root cause (stage-1 parse, stage-2 logic, logconvert, prover input, proof
    post-processing, etc.).
 
-7. **Simplify if uncertain** — if the root cause is unclear, construct a simpler version of
+7. **Test with -nocontext if $ctxt suspected** — if the failure looks like a world/tense
+   mismatch in $ctxt, run `python3 solver/solve.py -nocontext "..."` on the same input.
+   If it succeeds without context but fails with, the issue is $ctxt injection, not logic.
+
+8. **Simplify if uncertain** — if the root cause is unclear, construct a simpler version of
    the input text that isolates the suspected issue, run `python3 solver/solve.py ...` on it,
    and examine the result. Repeat as needed.
 
-8. **Write analysis and fix plan** — summarize the root cause(s) of any errors and propose a
+9. **Write analysis and fix plan** — summarize the root cause(s) of any errors and propose a
    concrete plan for fixing. Do **not** write any code or modify any files at this stage.
 
 ## Register Fix Workflow

@@ -1199,6 +1199,10 @@ _PRED_TABLE = {
   "has time":           (2, lambda e,a: e(0)+" happens at "+("time " if _is_var_raw(a,1) else "")+e(1),
                             lambda e,a: e(0)+" does not happen at "+("time " if _is_var_raw(a,1) else "")+e(1)),
   # state / world predicates
+  "next":               (2, lambda e,a: e(0)+" is followed by "+e(1),
+                            lambda e,a: e(0)+" is not followed by "+e(1)),
+  "before":             (2, lambda e,a: e(0)+" is before "+e(1),
+                            lambda e,a: e(0)+" is not before "+e(1)),
   "state time":         (2, lambda e,a: "at time "+e(1),         None),
   "state location":     (2, lambda e,a: "at location "+e(1),     None),
   # set predicates

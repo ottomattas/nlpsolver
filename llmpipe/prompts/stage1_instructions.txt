@@ -340,8 +340,10 @@ When expanding relational nouns (e.g., "The price of the car is 5k"), the entity
   - Expand "they" -> "John 1 and Mike 2"
   - Do NOT introduce a set entity.
 
-Resolve pronouns to the most recent compatible entity 
-unless the sentence explicitly indicates otherwise.
+Resolve pronouns and naked/adjectival nouns ("the elephant","the white elephant", etc) to 
+the most recent (nearest) compatible entity in the text unless the sentence explicitly indicates
+otherwise: In "A gray elephant was nice. A white elephant was nice. The elephant was cool" the
+last "The elephant" refers to the white elephant.
 
 Indefinite noun phrases ("a bear", "an elephant") in SEPARATE sentences
 introduce DISTINCT entities, even if the noun is the same. Each "a bear"
@@ -478,7 +480,18 @@ Optional scope:
 Do not assign scope to concrete entities. 
 If a scope is unclear, use "dependent".
 
-== 10. STATE TRACKING ==
+== 10. WORLD STATE TRACKING AND TENSE ==
+
+Top-level narrative assertions are normally encoded as present at their own pre_state; 
+past and future should be reserved for temporal shift before or after that state, 
+especially in queries and subordinate clauses.
+
+* WORLD STATE = discourse/model state
+* TENSE = temporal relation to that state:
+    present = at state
+    past = some predecessor of state
+    future = some successor of state
+    timeless = independent of world state progression
 
 World states represent changes over time.
 
@@ -505,6 +518,7 @@ Do NOT create a new world state for descriptive information about the same entit
 including:
 - adjectives ("the car is red")
 - relative clauses ("the car which Mike bought")
+- stative verbs (like, love, hate, fear, know, etc)
 - noun modifiers or descriptive expansions.
 
 Examples of SAME world state:
@@ -626,8 +640,7 @@ Rules:
 == 13. ADJECTIVES ==
 
 Add "adjectives" for ALL adjective/property appearances in ALL ASU types
-(situation, strict_rule, normal_rule, query). The downstream system uses
-this field to choose the correct predicate, so always include it for any
+(situation, strict_rule, normal_rule, query). Include it for any
 property that could be an adjective — do not omit it from query ASUs.
 
 Entry format:

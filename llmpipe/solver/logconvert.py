@@ -488,6 +488,40 @@ def _question_has_main_relation(formula):
   return False
 
 
+def _fix_missing_ask(formula, asu_index, sid):
+  """Wrap formula as ["ask", VAR, BODY] when Stage-1 has wh_placeholder.
+
+  Some LLMs produce ["question", BODY] instead of ["ask", VAR, BODY] for
+  wh-questions.  After _extract_package_ctx, ["question", BODY] becomes just
+  BODY (unwrapped), while ["ask", VAR, BODY] stays as-is.  So we detect the
+  missing "ask" by checking: is_question is True, formula doesn't start with
+  "ask", and Stage-1 has wh_placeholder.  Then find the free variable and wrap.
+  """
+  if not isinstance(formula, list) or not formula:
+    return formula
+  # Already correct: ["ask", VAR, BODY] survived extraction.
+  if formula[0] == "ask":
+    return formula
+  # Check Stage-1 for wh_placeholder.
+  if not asu_index:
+    return formula
+  asu = asu_index.get(sid)
+  if asu is None:
+    return formula
+  has_wh = False
+  for ent in asu.get("entities", []):
+    if isinstance(ent, dict) and ent.get("wh_placeholder"):
+      has_wh = True
+      break
+  if not has_wh:
+    return formula
+  # Find free variables in the question body.
+  free_vars = sorted(collect_body_free_vars(formula))
+  if len(free_vars) == 1:
+    return ["ask", free_vars[0], formula]
+  return formula
+
+
 def _process_question(formula, name):
   """Handle question formulas (ask / yes-no) → (result_list, is_where_question).
 
@@ -624,6 +658,9 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None):
 
   is_where_question = False
   if is_question:
+    # Safety net: if Stage-1 has wh_placeholder but Stage-2 used ["question",...]
+    # instead of ["ask",VAR,...], detect the free variable and convert.
+    formula = _fix_missing_ask(formula, asu_index, sid)
     result, is_where_question = _process_question(formula, name)
     if result is None:
       return []
@@ -1001,15 +1038,22 @@ def _inject_ctxt_question(objs, ctxt_matrix, ctxt_desc, default_tense,
   @question entries always get ctxt_matrix.
   """
   desc_set = _DESC_PREDS_WITH_PROPS if props_are_desc else _DESC_PREDS
-  def _fresh_world_tmpl():
-    """Fresh ctxt template with independent world var."""
-    return ["$ctxt", ctxt_desc[1], _fresh_fv(), ctxt_desc[3], ctxt_desc[4]]
-  def _pick_tmpl(atom):
+  def _pick_tmpl_and_tense(atom):
+    """Return (ctxt_template, tense) for this atom.
+
+    Descriptive atoms: independent free-var world AND tense (they reference
+    facts in any world/tense context — relative clauses, type guards).
+    Stative matrix atoms: free-var world (persistent across worlds) but keep
+    the query's tense (present vs past matters for the main predication).
+    Dynamic matrix atoms: keep the query's world and tense.
+    """
     if _is_desc_pred(atom, desc_set):
-      return _fresh_world_tmpl()
+      tmpl = ["$ctxt", None, _fresh_fv(), ctxt_desc[3], ctxt_desc[4]]
+      return tmpl, _fresh_fv()
     if _is_stative_matrix(atom):
-      return _fresh_world_tmpl()
-    return ctxt_matrix
+      tmpl = ["$ctxt", None, _fresh_fv(), ctxt_desc[3], ctxt_desc[4]]
+      return tmpl, default_tense
+    return ctxt_matrix, default_tense
   for obj in objs:
     if not isinstance(obj, dict):
       continue
@@ -1019,12 +1063,13 @@ def _inject_ctxt_question(objs, ctxt_matrix, ctxt_desc, default_tense,
         if isinstance(clause[0], list):
           # Disjunctive clause: per-atom dispatch
           obj["@logic"] = [
-            _inject_ctxt_atom(atom, _pick_tmpl(atom), default_tense)
+            _inject_ctxt_atom(atom, *_pick_tmpl_and_tense(atom))
             for atom in clause
           ]
         else:
           # Single atom
-          obj["@logic"] = _inject_ctxt_atom(clause, _pick_tmpl(clause), default_tense)
+          tmpl, tense = _pick_tmpl_and_tense(clause)
+          obj["@logic"] = _inject_ctxt_atom(clause, tmpl, tense)
     if "@question" in obj:
       obj["@question"] = _inject_ctxt_atom(obj["@question"], ctxt_matrix, default_tense)
 
@@ -1274,6 +1319,33 @@ def _norm_grad_frm(frm):
       new_atom = [pfx + "has degree property", frm[1], frm[2], "none", _fresh_fv()]
       if len(frm) >= 4:
         new_atom.append(frm[3])
+      return new_atom
+
+  elif base == "has degree rel2" and len(frm) >= 6:
+    # ["has degree rel2", REL, E1, E2, DEGREE, RELCLASS, optional_$ctxt]
+    rel = frm[1]
+    if isinstance(rel, str) and rel.lower() not in _GRADABLE_PROPS:
+      # Non-gradable relation: strip to is rel2; preserve $ctxt if present.
+      new_atom = [pfx + "is rel2", frm[1], frm[2], frm[3]]
+      if len(frm) >= 7:
+        new_atom.append(frm[6])
+      return new_atom
+    # Gradable: replace "entity"/"none" relclass with a free variable.
+    relclass = frm[5]
+    if relclass in ("entity", "none"):
+      new_atom = [frm[0], frm[1], frm[2], frm[3], frm[4], _fresh_fv()]
+      if len(frm) >= 7:
+        new_atom.append(frm[6])
+      return new_atom
+
+  elif base == "is rel2" and len(frm) >= 4:
+    # ["is rel2", REL, E1, E2, optional_$ctxt]
+    rel = frm[1]
+    if isinstance(rel, str) and rel.lower() in _GRADABLE_PROPS:
+      # Gradable relation: upgrade to has degree rel2 with free relclass.
+      new_atom = [pfx + "has degree rel2", frm[1], frm[2], frm[3], "none", _fresh_fv()]
+      if len(frm) >= 5:
+        new_atom.append(frm[4])
       return new_atom
 
   # Logical connectives / quantifiers: recurse into sub-formulas.

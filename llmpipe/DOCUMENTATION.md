@@ -268,7 +268,7 @@ Each `PACKAGE` is one of:
 | Core | `isa TYPE ENTITY`, `has property PROP ENTITY`, `have OWNER OWNED`, `has part WHOLE PART`, `is rel2 REL E1 E2`, `can ENTITY ACTION` |
 | Gradable | `has degree property PROP ENTITY DEGREE RELCLASS`, `has degree rel2 REL E1 E2 DEGREE RELCLASS` |
 | Events | `isa "activity" E`, `has type E VERB`, `has actor E ENTITY`, `has target E ENTITY`, `has location E ENTITY`, `has instrument E ENTITY`, `has manner E MANNER`, `has direction E DIR`, `has time E TIME`, `typical E`, `typically ENTITY VERB` |
-| World | `holds W F`, `next W1 W2`, `state time W T`, `state location W L` |
+| World | `holds W F`, `next W1 W2`, `before W1 W2` (axiom-derived), `state time W T`, `state location W L` |
 | Defeasible | `normally FORMULA` |
 | Mental | `kb K HOLDER ATTITUDE W`, `kb force K FORCE`, `kb holds K FORMULA`, `kb says K1 K2 FORMULA` |
 | Sets | `isa "set" S`, `is set of TYPE S`, `member has property PROP S`, `member ENTITY S`, `is subset of S1 S2`, `set union S1 S2 S3`, `$count S` |

@@ -84,22 +84,17 @@ geminiversion = "gemini-2.0-flash"
 **API keys:** plain-text files in `../secrets/` (`gpt_secrets.txt`, `claude_secrets.txt`, `gemini_secrets.txt`,
 `deepseek_secrets.txt`).
 
-**Required external data** (not in this repo):
-```
-../gk/gk                    gk prover binary
-../gk/gk_name_number.txt    gk data file
-../gk/gk_taxonomy_packed.txt
-```
-Full solver data: http://logictools.org/data/nlpsolver_data.tar.gz
 
 ## Documentation
 
 See `ENCODINGS.md` for the three data representations (Stage-1, Stage-2, GK input) with examples.
-
-See `PROOF_RENDERING.md` for how proofs are rendered as English explanations.
 
 See `DOCUMENTATION.md` for a full developer guide covering:
 - Every source file with its public API
 - Key algorithms: FOL→CNF clausification, defeasible reasoning, context injection,
   gradable property normalisation, wh-question encoding
 - How to extend the pipeline (new predicates, new LLM providers, improved prompts)
+
+See `PROOF_RENDERING.md` for how proofs are rendered as English explanations.
+
+See `DEBUGGING.md` for the debugging workflow, failure taxonomy, and world/tense system.

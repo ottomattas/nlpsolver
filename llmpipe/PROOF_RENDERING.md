@@ -100,6 +100,8 @@ Each predicate maps to `(min_args, pos_renderer, neg_renderer)`.
 | `has target` | `act1 targets car B` | `act1 does not target car B` |
 | `has location` | `act1 takes place at park A` | `...does not take place...` |
 | `has time` | `act1 happens at past` / `act1 happens at time Z` | `...does not happen...` |
+| `next` | `W0 is followed by W1` | `W0 is not followed by W1` |
+| `before` | `W0 is before W1` | `W0 is not before W1` |
 
 For `has time`, the word "time" is prepended when the argument is a variable
 (`"happens at time Z"`) but omitted for constants (`"happens at past"`).

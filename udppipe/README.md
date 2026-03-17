@@ -4,7 +4,8 @@ udppipe
 udppipe is an udp/stanza-based experimental pipeline for automated reasoning in natural language,
 capable of performing both natural language inference (NLI) and question answering.
 
-udppipe does not use LLMs. See the llmpipe folder for the LLM-based natural language reasoning pipeline.
+udppipe is not based on LLMs, although it has optional experimental support for LLMs. 
+See the llmpipe folder for the purely LLM-based natural language reasoning pipeline.
 
 The udp pipeline is described in the paper 
 [An Experimental Pipeline for Automated Reasoning in Natural Language](https://link.springer.com/chapter/10.1007/978-3-031-38499-8_29).
@@ -23,8 +24,24 @@ Nlpsolver is developed with a goal to be (a) a backbone of our research in
 combining machine learning and large language models with logic-based
 symbolic reasoning, (b) using automated reasoner as an interface
 between natural language and external tools like database systems and scientific 
-calculations. The current version of udppipe does not contain or use large language models
+calculations. The current version of udppipe does not depend on large language models
 or nontrivial machine learning, except for the components used internally by Stanza.
+
+Further documentation
+---------------------
+
+* [ENCODINGS.md](ENCODINGS.md) -- Detailed reference for the logic encoding: predicates
+  (`isa`, `prop`, `rel2`, `act1/act2`, etc.), constants, variables, confidence, context
+  terms, defeasible reasoning (`$block`), and question encoding.
+* [DOCUMENTATION.md](DOCUMENTATION.md) -- Code documentation: file structure, module
+  responsibilities, data flow through the pipeline, and configuration reference.
+* `paper/` -- Draft paper on representing concepts for automated reasoning.
+* `examples/` -- Debug output traces for selected test cases (run with `-debug -explain`).
+
+The logic produced by the pipeline is encoded in
+[JSON-LD Logic](https://github.com/tammet/json-ld-logic)
+([specification](https://logictools.org/json.html)), a JSON encoding of first-order
+logic clauses.
 
 Installation
 ------------

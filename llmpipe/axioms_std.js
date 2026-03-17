@@ -445,5 +445,116 @@
   [
     ["-has degree property", "red", "?:X", "none", "?:Rel", "?:Ctxt"],
     ["is rel2", "color of", "red", "?:X", "?:Ctxt"]
-  ]
+  ],
+  
+  // == 11. WORLD GRAPH GEOMETRY ==
+
+// Axiom 1: Direct succession implies "before"
+
+[["next", "W0", "W1"]],
+
+[
+  ["-next", "?:W_prev", "?:W_curr"],
+  ["before", "?:W_prev", "?:W_curr"]
+],
+
+// Axiom 2: Transitivity of "before" (W0 < W1, W1 < W2 => W0 < W2)
+[
+  ["-before", "?:W1", "?:W2"],
+  ["-before", "?:W2", "?:W3"],
+  ["before", "?:W1", "?:W3"]
+],
+
+  // == 12. TENSE MIGRATION BRIDGES ==
+/*
+[
+  ["-has degree rel2","?:R","?:X","?:Y","?:Z","?:U",["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+  ["has degree rel2","?:R","?:X","?:Y","?:Z","?:U",["$ctxt","past","W1","?:Fv1","?:Fv2"]]
+],
+*/
+// --- Flat Predicates ---
+
+// has property
+[
+  ["-has property", "?:P", "?:X", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
+  ["-before", "?:W_old", "?:W_new"],
+  ["has property", "?:P", "?:X", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]]
+],
+
+// have
+[
+  ["-have", "?:O", "?:X", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
+  ["-before", "?:W_old", "?:W_new"],
+  ["have", "?:O", "?:X", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]]
+],
+
+// has part
+[
+  ["-has part", "?:W", "?:P", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
+  ["-before", "?:W_old", "?:W_new"],
+  ["has part", "?:W", "?:P", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]]
+],
+
+// is rel2
+[
+  ["-is rel2", "?:R", "?:E1", "?:E2", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
+  ["-before", "?:W_old", "?:W_new"],
+  ["is rel2", "?:R", "?:E1", "?:E2", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]]
+],
+
+// can (capability)
+[
+  ["-can", "?:X", "?:Act", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
+  ["-before", "?:W_old", "?:W_new"],
+  ["can", "?:X", "?:Act", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]]
+],
+
+// --- Gradable Predicates ---
+
+// has degree property
+[
+  ["-has degree property", "?:P", "?:X", "?:D", "?:RC", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
+  ["-before", "?:W_old", "?:W_new"],
+  ["has degree property", "?:P", "?:X", "?:D", "?:RC", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]]
+],
+
+// has degree rel2
+[
+  ["-has degree rel2", "?:R", "?:E1", "?:E2", "?:D", "?:RC", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
+  ["-before", "?:W_old", "?:W_new"],
+  ["has degree rel2", "?:R", "?:E1", "?:E2", "?:D", "?:RC", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]]
+],
+
+// --- Davidsonian Roles (Track 2) ---
+
+// isa, has type, has actor, has target
+// These propagate the context change to ensure the whole event structure matches.
+[
+  ["-isa", "?:Type", "?:E", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
+  ["-before", "?:W_old", "?:W_new"],
+  ["isa", "?:Type", "?:E", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]]
+],
+[
+  ["-has type", "?:E", "?:T", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
+  ["-before", "?:W_old", "?:W_new"],
+  ["has type", "?:E", "?:T", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]]
+],
+[
+  ["-has actor", "?:E", "?:A", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
+  ["-before", "?:W_old", "?:W_new"],
+  ["has actor", "?:E", "?:A", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]]
+],
+[
+  ["-has target", "?:E", "?:T", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
+  ["-before", "?:W_old", "?:W_new"],
+  ["has target", "?:E", "?:T", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]]
+],
+
+// Special: has time (Explicit Davidsonian Tense Role)
+// If E was 'present' in W_old, it is 'past' in the context of W_new.
+[
+  ["-has time", "?:E", "present", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
+  ["-before", "?:W_old", "?:W_new"],
+  ["has time", "?:E", "past", ["$ctxt", "present", "?:W_new", "?:L", "?:K"]]
+]
 ]

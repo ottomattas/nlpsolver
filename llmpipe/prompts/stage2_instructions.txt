@@ -96,7 +96,8 @@ Each ASU has a default time given by the "time" field from Stage-1.
 By default, all predicates inherit the ASU time.
 
 Only add a time annotation when a specific predicate has a different time
-than the ASU default.
+than the ASU default. This annotation changes the time of one predicate relative
+to the ASU default. It does not create a new world state.
 
 Use the wrapper form:
 
@@ -201,14 +202,14 @@ A. scope == "kind"
 
 B. entity.wh_placeholder == true
 
-1. Introduce exactly one fresh variable.
-2. Use that variable as the WH variable in the query.
-3. Do NOT generate any constraint of the form:
+1. The final ASU output must use ["ask", VAR, BODY] and not ["question", ...].
+2. Introduce exactly one fresh variable.
+3. Use that variable as the WH variable in the query.
+4. Do NOT generate any constraint of the form:
      ["isa", entity.id, VAR]
-4. Ignore entity.id entirely during compilation.
-5. Do NOT treat entity.id as an ontology class.
-6. Do NOT introduce additional quantifiers beyond those required by the query type.
-7. The final ASU output must use ["ask", VAR, BODY] and not ["question", ...]
+5. Ignore entity.id entirely during compilation.
+6. Do NOT treat entity.id as an ontology class.
+7. Do NOT introduce additional quantifiers beyond those required by the query type.
 8. The entity.id of a wh_placeholder must never appear in the compiled logic.
 
 C. All other generic entities
@@ -777,9 +778,14 @@ Do NOT invent new predicates.
 
 For each property word in the ASU text:
 - If the word appears in ASU.adjectives:
-    Use ["has degree property", WORD, ENTITY, DEGREE, RELCLASS]
-    where DEGREE and RELCLASS come from the matching adjectives entry.
+    Use 
+    * ["has degree property", WORD, ENTITY, DEGREE, RELCLASS] for properties of entities,
+    * ["has degree rel2", WORD, ENTITY1, ENTITY2, DEGREE, RELCLASS] WORD, ENTITY, DEGREE, RELCLASS] 
+      when the adjective word denotes a relation between two entities
+    
+    DEGREE and RELCLASS come from the matching adjectives entry.
     Do NOT also emit ["has property"] for the same word.
+     
 - If the word does NOT appear in ASU.adjectives (or adjectives is absent):
     Use ["has property", WORD, ENTITY]
     Do NOT use ["has degree property"] for this word.
