@@ -23,7 +23,7 @@ Simplest way to run:
 
 Example:
 
-    ./gk dstudy/d1.js
+    ./gk birdspenguins.js
 
 GK can parse and prepare a large axiom file into a shared memory database to perform quick
 independent queries upon this pre-built base. Several shared memory databases may be present

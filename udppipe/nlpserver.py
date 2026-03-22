@@ -49,7 +49,7 @@ python -c 'import stanza; stanza.download("en")'""")
 
 host_name="localhost"
 server_port=8080
-gk_path="./gk"
+gk_path="../gk/gk"
 logfile="/dev/null" # here server logs the requests
 axiomfiles=None # "wnet_10k.js cnet_50k.js quasi_50k.js" # set to None to read no axioms
 
@@ -122,14 +122,11 @@ if __name__ == "__main__":
   print("Server started http://%s:%s" % (host_name, server_port))
   try:
     print("Starting to read gk solver shared memory database.")
-    gkcommand=gk_path+" "+"dummy.js -readkb -defaults -relatedwords -similarities -mbsize 3000"
-    #gkcommand=gk_path+" "+"dummy.js -readkb -defaults -relatedwords -similarities -mbsize 3000 cnet_50k.js quasi_50k.js wnet_10k.js"
-    #gkcommand=gk_path+" "+"wnet_10k.js -readkb -defaults -relatedwords -similarities -mbsize 3000 "
     if axiomfiles:
-      gkcommand=gk_path+" "+axiomfiles+" -readkb -defaults -relatedwords -mbsize 3000"
+      gkcommand=gk_path+" "+axiomfiles+" -readkb -defaults -mbsize 3000 --datafolder ../gk"
       print("Reading axiom files "+axiomfiles+".")
     else:
-      gkcommand=gk_path+" "+"dummy.js -readkb -defaults -relatedwords -similarities -mbsize 3000"  
+      gkcommand=gk_path+" ../gk/dummy.js -readkb -defaults -mbsize 3000 --datafolder ../gk"
       print("No axiomfiles are read.")
     os.system(gkcommand)
     print("gk solver shared memory database ready.")   

@@ -51,7 +51,6 @@ The external dependencies are:
   converting English to a [UD](https://universaldependencies.org/) parse tree.
   Tested with Stanza versions 1.3 through 1.11.
 * **gk** -- the reasoner binary, included in the system.
-* **Data files** -- download from http://logictools.org/data/nlpsolver_data.tar.gz
 
 Install Stanza (venv recommended):
 
@@ -60,19 +59,8 @@ Install Stanza (venv recommended):
     source my-venv/bin/activate
     python3 -c 'import stanza; stanza.download("en")'
 
-Download and unpack the data files (ca 200 MB compressed, 600 MB unpacked) into the
-`nlpsolver` parent folder:
-
-    cd /path/to/nlpsolver
-    wget http://logictools.org/data/nlpsolver_data.tar.gz
-    gunzip nlpsolver_data.tar.gz
-    tar -xf nlpsolver_data.tar
-
-If the data files are missing, the server will report:
-
-    {"error": "Failed to read taxonomy size  "}
-
-The `gk` reasoner binary is included. It is based on
+The `gk` reasoner binary along with taxonomy data files is included in the ../gk folder. 
+It is based on
 [gkc](https://github.com/tammet/gkc)
 ([paper](https://link.springer.com/chapter/10.1007%2F978-3-030-29436-6_32)),
 extended with probabilistic and defeasible reasoning

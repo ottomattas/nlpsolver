@@ -26,8 +26,7 @@ English text
 ```
 
 The system runs as two processes:
-1. **nlpserver.py** -- a persistent HTTP server that wraps Stanza and manages shared memory
-   for gk data files. Must be started first.
+1. **nlpserver.py** -- a persistent HTTP server that wraps Stanza and loads gk data files into shared memory. Must be started first.
 2. **nlpsolver.py** -- the command-line driver that sends text to the server, converts the
    UD parse to logic, calls the gk reasoner, and produces the answer.
 
@@ -75,8 +74,8 @@ File Structure
 | `axioms_std.js` | Default axiom file: small world model with rules for type hierarchy, persistence, spatial reasoning, verb connections, etc. Loaded by gk alongside the problem clauses. |
 | `gk_axiomfile.js` | Same as `axioms_std.js` (alternative name used in some configurations). |
 | `replacements.txt` | Text rewriting rules applied before parsing. Format: `pattern ==> replacement`. |
-| `gk` | The gk reasoner binary (Linux ELF). Based on gkc, extended with confidence and defeasible reasoning. |
-| `data/` | Large data files (downloaded separately). WordNet taxonomy, similarity scores, etc. Used by gk via shared memory. |
+| `gk` | The gk reasoner binary (Linux ELF), located in `../gk/`. Based on gkc, extended with confidence and defeasible reasoning. |
+| `../gk/gk_taxonomy_packed.txt`, `../gk/gk_name_number.*` | Taxonomy and name data files loaded into shared memory by `nlpserver.py` at startup. |
 
 ### Test Files
 
