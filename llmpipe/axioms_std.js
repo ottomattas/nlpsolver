@@ -436,6 +436,105 @@
   // Set Type Constraint
   [["-member", "?:X", "?:S", "?:Ctxt"], ["-is set of", "?:Type", "?:S", "?:Ctxt"], ["isa", "?:Type", "?:X"]],
 
+  /*
+  
+  // these two look like failed attempts of the superset counting rule
+[
+  ["-=", "?:N", ["$count", ["$setof", "?:Var", "?:ID", ["and", "?:P1", "?:P2"]]]],
+  ["$greatereq", ["$count", ["$setof", "?:Var", "?:ID", ["and", "?:P1"]]], "?:N"]
+],
+[
+  ["-=", "?:N", ["$count", ["$setof", "?:Var", "?:ID", ["and", "?:P1", "?:P2", "?:P3"]]]],
+  ["$greatereq", ["$count", ["$setof", "?:Var", "?:ID", ["and", "?:P1", "?:P2"]]], "?:N"]
+],
+  
+  */
+  
+  // the size of a superset of some set S is not less than the size of the set S.
+  
+  [ ["-=","?:X",["$count",["$setof","?:H","?:J",["$and","?:A","?:B"]]]],  ["$greatereq",["$count",["$setof","?:H","?:J",["$and","?:A"]]],"?:X"] ],
+  
+  [ ["-=","?:X",["$count",["$setof","?:H","?:J",["$and","?:A","?:B","?:C"]]]],  ["$greatereq",["$count",["$setof","?:H","?:J",["$and","?:A","?:B"]]],"?:X"] ],
+  
+  [ ["-=","?:X",["$count",["$setof","?:H","?:J",["$and","?:A","?:B","?:C"]]]],  ["$greatereq",["$count",["$setof","?:H","?:J",["$and","?:A","?:C"]]],"?:X"] ],
+  
+  [ ["-=","?:X",["$count",["$setof","?:H","?:J",["$and","?:A","?:B","?:C"]]]],  ["$greatereq",["$count",["$setof","?:H","?:J",["$and","?:A"]]],"?:X"] ],
+   
+   
+/*
+
+[
+[["=",2,["$count",["$setof",["isa","car","$arg1"],"c1_John"]]]],
+
+[["-=","?:X",["$count",["$setof",["and","?:Y","?:Z"],"?:U"]]],          ["$greatereq",["$count",["$setof","?:Y","?:U"]],"?:X"]],
+
+[["=",3,["$count",["$setof",["and",["isa","car","$arg1"],["prop","nice","$arg1","$generic","$generic",["$ctxt","Pres",1]]],"c1_John"]]]]
+]
+
+John 1 has three nice cars.
+  {"@name":"sent_S1","@logic":["isa","person","John 1"]}
+  {"@name":"sent_S1","@logic":["=",3,["$count",["$setof","have","John 1",["$and",["$isa","car","$arg1"],["$has_degree_property","nice","$arg1","none","car"]]]]]}
+Does John 1 have two cars?
+  {"@name":"sent_S2","@logic":[["-$defq0"],["=",2,["$count",["$setof","have","John 1",["$and",["$isa","car","$arg1"]]]]]]}
+  {"@name":"sent_S2","@logic":[["-=",2,["$count",["$setof","have","John 1",["$and",["$isa","car","$arg1"]]]]],["$defq0"]]}
+  {"@name":"sent_S2","@question":["$defq0"]}
+
+[
+
+["=",3,["$count",["$setof","h","j",["$and","a","b"]]]],
+["-=",2,["$count",["$setof","h","j",["$and","a"]]]],
+
+[  ["-=",3,["$count",["$setof","h","j",["$and","a","b"]]]],
+   ["$greatereq",["$count",["$setof","h","j",["$and","a"]]],3] ]
+
+]
+
+
+[
+ [["=",2,"b"]],
+
+ [  ["-=",3,"a"], ["$greatereq","b",3] ],
+   
+ [["=",3,"a"]]   
+]
+
+[
+ [["=",2,["$count",["$setof","cc","ee"]]]],
+
+ [["-=","?:X",["$count",["$setof",["and","?:Y","?:Z"],"?:U"]]], ["$greatereq",["$count",["$setof","?:Y","?:U"]],"?:X"]],
+
+ [["=",3,["$count",["$setof",["and","cc","dd"],"ee"]]]]
+]
+
+
+[
+ [["=",2,["$count","s2"]]],
+
+ [["-=","?:X",["$count","s1"]], ["$greatereq",["$count","s2"],"?:X"]],
+
+ [["=",3,["$count","s1"]]]
+]
+
+[
+ ["=",2,["$count",["$setof","h","j",["$and","a"]]]],
+ 
+ [ ["-=","?:X",["$count",["$setof","h","j",["$and","a","b"]]]],  ["$greatereq",["$count",["$setof","h","j",["$and","a"]]],"?:X"] ],
+   
+ ["=",3,["$count",["$setof","h","j",["$and","a","b"]]]]
+ 
+]
+
+[
+ [["=",2,["$count",["$setof","have","John 1",["$and",["$isa","car","$arg1"]]]]]],
+ 
+ [ ["-=","?:X",["$count",["$setof","?:H","?:J",["$and","?:A","?:B"]]]],  ["$greatereq",["$count",["$setof","?:H","?:J",["$and","?:A"]]],"?:X"] ],
+
+ ["=",3,["$count",["$setof","have","John 1",["$and",["$isa","car","$arg1"],["$has_degree_property","nice","$arg1","none","car"]]]]]
+]
+
+*/
+
+
   // == 8. MEASUREMENTS & ATTRIBUTES ==
   // Value Holders [cite: 306, 307]
   [["isa", "weight", ["$theof1", "weight", "?:O", "?:Ctxt"]]],

@@ -1162,6 +1162,92 @@ def _is_var_raw(args, i):
   """True if args[i] is a raw variable string (starts with '?:')."""
   return (len(args) > i and isinstance(args[i], str) and args[i].startswith("?:"))
 
+def _render_setof_english(term):
+  """Render a $setof or $count term as English.
+
+  $count($setof(have, John 1, [$and, $isa(car,$arg1)])) -> "the number of cars John has"
+  $count($setof(id, set 1, [$and, isa(elephant,$arg1)])) -> "the number of elephants in set 1"
+  $setof(have, John 1, [$and, ...]) -> "the set of cars John has"
+  """
+  if not isinstance(term, list) or not term:
+    return str(term)
+
+  if term[0] == "$count" and len(term) >= 2:
+    inner = _render_setof_english(term[1])
+    return "the number of " + inner
+  if term[0] == "$greatereq" and len(term) >= 2:
+    inner = _render_setof_english(term[1])
+    return inner + " or more"
+
+  if term[0] != "$setof" or len(term) < 3:
+    return str(term)
+
+  # Parse canonical $setof form
+  if term[1] == "id":
+    # Conditions-only: ["$setof", "id", SET_ID, ["$and", ...]]
+    set_id = term[2]
+    conds = term[3] if len(term) > 3 else []
+    type_name = _extract_type_from_conds(conds)
+    return type_name + " in " + str(set_id)
+  else:
+    # Anchored: ["$setof", PRED, SUBJ, ["$and", ...]]
+    pred = term[1]
+    subj = term[2] if len(term) > 2 else "?"
+    conds = term[3] if len(term) > 3 else term[2]
+    type_name = _extract_type_from_conds(conds)
+    subj_name = entity_name(subj, proof_mode=True)
+    if pred == "have":
+      return type_name + " " + subj_name + " has"
+    elif pred == "can":
+      return type_name + " that can " + str(conds)
+    else:
+      return type_name + " " + pred + " " + subj_name
+
+
+def _extract_type_from_conds(conds):
+  """Extract the type name from a $and conditions list."""
+  if not isinstance(conds, list) or not conds:
+    return "things"
+  items = conds[1:] if conds[0] in ("$and", "and") else [conds]
+  for item in items:
+    if isinstance(item, list) and len(item) >= 2:
+      pred = item[0]
+      if pred in ("$isa", "isa") and isinstance(item[1], str):
+        return item[1] + "s"
+  return "things"
+
+
+def _render_member(e, args, negated):
+  """Render member atom, with special handling for $setof set terms."""
+  if len(args) >= 2 and isinstance(args[1], list) and args[1] and args[1][0] == "$setof":
+    set_desc = _render_setof_english(args[1])
+    ent = e(0)
+    if negated:
+      return ent + " is not among " + set_desc
+    return ent + " is among " + set_desc
+  if negated:
+    return e(0) + " is not a member of " + e(1)
+  return e(0) + " is a member of " + e(1)
+
+
+def _render_equals(e, args, negated):
+  """Render an = atom, with special handling for $count terms."""
+  # Check if either argument is a $count term
+  for i in (0, 1):
+    val = args[i]
+    other = args[1 - i]
+    if isinstance(val, list) and val and val[0] == "$count":
+      set_desc = _render_setof_english(val)
+      other_name = entity_name(other, proof_mode=True)
+      if negated:
+        return set_desc + " is not " + other_name
+      return set_desc + " is " + other_name
+  # Default: plain equals
+  if negated:
+    return e(0) + " does not equal " + e(1)
+  return e(0) + " equals " + e(1)
+
+
 # Predicate dispatch table: pred -> (min_args, pos_fn, neg_fn)
 # pos_fn / neg_fn signature: (e, args) -> str
 _PRED_TABLE = {
@@ -1208,8 +1294,8 @@ _PRED_TABLE = {
   # set predicates
   "is set of":          (2, lambda e,a: e(1)+" is a set of "+e(0),
                             lambda e,a: e(1)+" is not a set of "+e(0)),
-  "member":             (2, lambda e,a: e(0)+" is a member of "+e(1),
-                            lambda e,a: e(0)+" is not a member of "+e(1)),
+  "member":             (2, lambda e,a: _render_member(e, a, False),
+                            lambda e,a: _render_member(e, a, True)),
   "member has property":(2, lambda e,a: "members of "+e(1)+" are "+e(0),
                             lambda e,a: "members of "+e(1)+" are not "+e(0)),
   "is subset of":       (2, lambda e,a: e(0)+" is a subset of "+e(1),
@@ -1218,8 +1304,8 @@ _PRED_TABLE = {
                             None),
   "$count":             (1, lambda e,a: "count of "+e(0),        None),
   # comparison predicates
-  "=":                  (2, lambda e,a: e(0)+" equals "+e(1),
-                            lambda e,a: e(0)+" does not equal "+e(1)),
+  "=":                  (2, lambda e,a: _render_equals(e, a, False),
+                            lambda e,a: _render_equals(e, a, True)),
   "<":                  (2, lambda e,a: e(0)+" is less than "+e(1),
                             lambda e,a: e(0)+" is not less than "+e(1)),
   ">":                  (2, lambda e,a: e(0)+" is greater than "+e(1),

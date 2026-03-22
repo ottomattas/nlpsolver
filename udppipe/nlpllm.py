@@ -19,6 +19,9 @@
 # ==== standard libraries ====
 
 import sys
+import os
+import time
+import json
 import http.client
 
 # ==== import other source files ====
@@ -50,21 +53,29 @@ from nlpprover import *
 
 # ======= llm configuration ===
 
-secrets_file="secrets.js"  # only needed for reading llm keys, if llm used
+# Which LLM to use: "gpt", "claude", "gemini", or "deepseek"
+use_llm = "gpt"
 
-gpt2="davinci-002"         # text-davinci-002 code-davinci-002 babbage-002 
-gpt3="gpt-3.5-turbo-0125"  # 
-gpt4="gpt-4-0125-preview"  # gpt-4  gpt-4-32k 
-gpt4="gpt-4o-2024-05-13"
-gpt3_instruct="gpt-3.5-turbo-instruct-0914"  # "gpt-3.5-turbo-instruct" 
+# Model versions
+gptversion = "gpt-5.1"
+claudeversion = "claude-sonnet-4-6"
+geminiversion = "gemini-2.5-flash-lite"
+deepseekversion = "deepseek-chat"
 
+# API key files (plain text, one key per file)
+_secrets_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "secrets")
+gpt_secrets_file = os.path.join(_secrets_dir, "gpt_secrets.txt")
+claude_secrets_file = os.path.join(_secrets_dir, "claude_secrets.txt")
+gemini_secrets_file = os.path.join(_secrets_dir, "gemini_secrets.txt")
+deepseek_secrets_file = os.path.join(_secrets_dir, "deepseek_secrets.txt")
 
-gpt_model=gpt3 # default
-#gpt_model=gpt4 
-
-temperature=0
-seed=1234
-max_tokens=4000
+# Call parameters
+temperature = 0
+seed = 1234
+default_max_tokens = 4000
+sleepseconds = 2
+llm_timeout = 60
+max_retries = 3
 
 # ======= other configuration globals ===
 
@@ -143,7 +154,6 @@ Base your answer only on these assumptions: %assumptions%
 
 
 
-temperature=0
 min_simplification_length = 6
 
 # ======= globals used and changed during work ===
@@ -172,7 +182,7 @@ def llm_simplify(text):
       debug_print("not simplified",sentencetext)  
     else:         
       debug_print("original sentence",sentencetext)
-      newtext=call_gpt(sentencetext,gpt_simplify_prompt)
+      newtext=call_llm(gpt_simplify_prompt,sentencetext)
       sentlist.append([sentencetext,newtext])
       debug_print("simplified sentence",newtext)  
   res=""
@@ -204,7 +214,7 @@ def old_llm_solve(text):
   #print("sysprompt:",sysprompt)
   #print("text:",text)
   #exit(0)
-  result=call_gpt(gpt_model,text,sysprompt,max_tokens)
+  result=call_llm(sysprompt,text)
   return result
 
 def llm_solve(text):
@@ -257,10 +267,9 @@ def llm_solve(text):
   #print("sysprompt:",sysprompt)
   #print("newtext:",newtext)
   #exit(0)
-  result=call_gpt(gpt_model,newtext,sysprompt,max_tokens)
+  result=call_llm(sysprompt,newtext)
   return result
 
- 
 
 def llm_parse_solve(text):
   origtext=text
@@ -269,7 +278,7 @@ def llm_parse_solve(text):
   #debug_print("sysprompt:",sysprompt)
   #debug_print("text:",text)
   #exit(0)
-  result=call_gpt(gpt_model,text,sysprompt,max_tokens)
+  result=call_llm(sysprompt,text)
   debug_print("result:",result)
   try:
     jresult=json.loads(result)
@@ -469,203 +478,287 @@ def collect_replace_llm_logic_freevars(logic,boundvars,freevars):
     
 
 
-def call_gpt(gptversion,sentences,sysprompt,max_tokens):
-  try:
-    sf=open(secrets_file,"r")
-    txt=sf.read()
-  except:
-    return gpt_error("Could not read file containing gpt api key: "+str(secrets_file))
-  try:  
-    data=json.loads(txt)
-  except:
-    return gpt_error("Could not parse json text containing gpt api key in: "+str(secrets_file))  
-  if "gpt_key" not in data or not (data["gpt_key"]):
-    return gpt_error("Could not find gpt api key in: "+str(secrets_file))
-
-  else:    
-    key=data["gpt_key"]
-  # key found ok    
-  #sentences="A fork is a tool you use in the kitchen or when you eat."
-  messages=[]
-  if sysprompt:
-    message1={"role": "system", "content": sysprompt}
-    messages.append(message1)   
-  message2={"role": "user", "content": sentences}
-  messages.append(message2)  
-
-  if gptversion in [gpt3_instruct, gpt2]:
-    prompt=""
-    if sysprompt: 
-      prompt+=sysprompt+"\nInput sentences: "+sentences
-    if sentences: 
-      prompt+=sentences
-    baseurl="/v1/completions"  
-    call={
-     "model": gptversion,
-     "prompt": prompt,
-     #"seed": seed,
-     #"logprobs": True,
-     "temperature": temperature
-    }
-  else:  
-    baseurl="/v1/chat/completions"
-    call={
-       "model": gptversion,
-       "messages": messages,
-       "seed": seed,
-       "logprobs": True,
-       "temperature": temperature
-    }
-  if max_tokens:
-    call["max_tokens"]=max_tokens
-
-  debug_print("gpt call",call)
-  calltxt=json.dumps(call) 
-  debug_print("gpt call:",calltxt)
-
-  host = "api.openai.com"
-  conn = http.client.HTTPSConnection(host)
-  conn.request("POST", baseurl, calltxt,
-               headers={
-    "Host": host, "Content-Type": "application/json", "Authorization": "Bearer "+key 
-  })
-  
-  response = conn.getresponse()
-  if response.status!=200 or response.reason!="OK":
-    try:
-      data=json.loads(response.read())    
-      if "error" in data and "message" in data["error"]:
-        message=": "+data["error"]["message"]
-    except:
-      message=""      
-    return gpt_error("gpt responded with error "+str(response.status)+" "+str(response.reason)+message)
-  rawdata = response.read()
-  try:
-    data=json.loads(rawdata)
-  except KeyboardInterrupt:
-    raise  
-  except:
-    return gpt_error("gpt response is not a correct json: "+  str(rawdata))
-  if "choices" not in data:
-    return gpt_error("gpt response does not contain choices")
-
-  # OK answer received  
-  debug_print("gpt response:",data)  
-  part=data["choices"]  
-  res=""
-  for el in part:
-    if "message" in el:
-      msg=el["message"]
-      if "content" in msg:
-        tmp=msg["content"]
-        if len(tmp)>2 and tmp[0] in ["\"","'"] and tmp[-1] in ["\"","'"]:
-          tmp=tmp[1:-1]
-        tmp2=tmp.split("\n")
-        if len(tmp2)>1:
-          tmp3=""
-          for line in tmp2:
-            if len(line)>3 and (line[0].isnumeric() or line[0] in ["*","-"]) and line[1] in [".",":"," "]:
-              tmp3+=line[2:]+" "
-            else:
-              tmp3+=line+" "  
-          tmp=tmp3    
-        res+=tmp
-    elif "text" in el:
-      if res: res+="\n"
-      res+=el["text"].strip()      
-              
-  conn.close()
-  #debug_print("res",res)  
-  return res
-
-
-def old_call_gpt(sentences,prompt):
-  try:
-    sf=open(secrets_file,"r")
-    txt=sf.read()
-  except:
-    return "Could not read file containing gpt api key: "+str(secrets_file)
-  try:  
-    data=json.loads(txt)
-  except:
-    return "Could not parse json text containing gpt api key in: "+str(secrets_file)  
-  if "gpt_key" not in data or not (data["gpt_key"]):
-    return "Could not find gpt api key in: "+str(secrets_file)
-  else:    
-    key=data["gpt_key"]
-  # key found ok    
-  #sentences="A fork is a tool you use in the kitchen or when you eat."
-  #message1={"role": "system", "content": "You are a helpful assistant. Answer as concisely as possible."}
-  message2={"role": "user", "content": prompt+"""'"""+sentences+"""'"""}
-  call={
-     "model": gpt_model,
-     "messages": [message2], #[message1,message2],
-     "temperature": temperature
-  }
-  debug_print("gpt call",call)
-  calltxt=json.dumps(call) 
-  host = "api.openai.com"
-  conn = http.client.HTTPSConnection(host)
-  conn.request("POST", "/v1/chat/completions", calltxt,
-               headers={
-    "Host": host, "Content-Type": "application/json", "Authorization": "Bearer "+key 
-  })
-  response = conn.getresponse()
-  if response.status!=200 or response.reason!="OK":
-    show_error("gpt responded with error "+str(response.status)+" "+str(response.reason))
-    sys.exit(0)
-  rawdata = response.read()
-  try:
-    data=json.loads(rawdata)
-  except KeyboardInterrupt:
-    raise  
-  except:
-    show_error("gpt response is not a correct json: "+  str(rawdata))
-    sys.exit(0)
-  if "choices" not in data:
-    show_error("gpt response does not contain choices")
-    sys.exit(0)
-  debug_print("gpt response",data)  
-  part=data["choices"]  
-  res=""
-  for el in part:
-    if "message" in el:
-      msg=el["message"]
-      if "content" in msg:
-        tmp=msg["content"]
-        if len(tmp)>2 and tmp[0] in ["\"","'"] and tmp[-1] in ["\"","'"]:
-          tmp=tmp[1:-1]
-        tmp2=tmp.split("\n")
-        if len(tmp2)>1:
-          tmp3=""
-          for line in tmp2:
-            if len(line)>3 and (line[0].isnumeric() or line[0] in ["*","-"]) and line[1] in [".",":"," "]:
-              tmp3+=line[2:]+" "
-            else:
-              tmp3+=line+" "  
-          tmp=tmp3    
-        res+=tmp
-  conn.close()
-  #debug_print("res",res)  
-  return res
-
 # ======= solving pre-parsed text (assumed to be parsed by llm) ====
 
 def solve_parsed(logic):
   debug_print("input logic",logic)
   result=llm_parsed_solve(logic)
-  #newlogic=make_clause_list_from_llm(logic)
-  #print("newlogic",newlogic)
   return result
 
-# ======= debugging and errors ===========
+# ======== multi-provider LLM calling ========
 
-def llm_debug_print(a,b=""):
-  if debug:
-    print(a,b)
-  
-def gpt_error(msg):
-  print("Error:",msg)
+def call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None):
+  """Call the configured LLM with a system prompt and input text.
+  Returns the result string on success, or None on error (error is printed)."""
+  llm = llm or use_llm
+  max_tokens = max_tokens or default_max_tokens
+  if llm == "claude":
+    ver = version or claudeversion
+  elif llm == "gemini":
+    ver = version or geminiversion
+  elif llm == "deepseek":
+    ver = version or deepseekversion
+  else:
+    ver = version or gptversion
+  debug_print("calling " + llm + " " + ver + " ...")
+  try:
+    if llm == "claude":
+      result = call_claude(ver, input_text, sysprompt, max_tokens)
+    elif llm == "gemini":
+      result = call_gemini(ver, input_text, sysprompt, max_tokens)
+    elif llm == "deepseek":
+      result = call_deepseek(ver, input_text, sysprompt, max_tokens)
+    else:
+      result = call_gpt(ver, input_text, sysprompt, max_tokens)
+  except KeyboardInterrupt:
+    raise
+  except Exception as e:
+    return llm_error("unexpected error calling LLM: " + str(e))
+  return result
+
+
+# ======== shared helpers ========
+
+def _read_api_key(filepath, provider):
+  """Read an API key from a plain-text file. Returns the key or None on error."""
+  try:
+    with open(filepath, "r") as f:
+      return f.read().strip()
+  except:
+    llm_error("Could not read " + provider + " API key file: " + str(filepath))
+    return None
+
+
+def _post_with_retry(host, url, body, headers, provider):
+  """POST JSON body to host/url with retries. Returns parsed response dict or None."""
+  trycount = 0
+  while True:
+    conn = http.client.HTTPSConnection(host, timeout=llm_timeout)
+    try:
+      conn.request("POST", url, body, headers=headers)
+      response = conn.getresponse()
+    except KeyboardInterrupt:
+      raise
+    except:
+      trycount += 1
+      if conn: conn.close()
+      if trycount > max_retries:
+        return llm_error(provider + " connection failed after " + str(max_retries) + " retries")
+      print(provider + " connection failure, retrying...")
+      time.sleep(sleepseconds * trycount)
+      continue
+    if response.status != 200 or response.reason != "OK":
+      message = ""
+      try:
+        data = json.loads(response.read())
+        if "error" in data and "message" in data["error"]:
+          message = ": " + data["error"]["message"]
+      except:
+        pass
+      conn.close()
+      # Don't retry on client errors (4xx) — these won't succeed on retry
+      if 400 <= response.status < 500:
+        return llm_error(provider + " API error " + str(response.status) + " " + str(response.reason) + message)
+      trycount += 1
+      if trycount > max_retries:
+        return llm_error(provider + " API error " + str(response.status) + " " + str(response.reason) + message)
+      print(provider + " API failure, retrying:", str(response.status), str(response.reason) + message)
+      time.sleep(sleepseconds * trycount)
+    else:
+      break
+  rawdata = response.read()
+  conn.close()
+  try:
+    return json.loads(rawdata)
+  except KeyboardInterrupt:
+    raise
+  except:
+    return llm_error(provider + " response is not valid JSON: " + str(rawdata))
+
+
+# ======== gpt ========
+
+def call_gpt(version, sentences, sysprompt, max_tokens):
+  key = _read_api_key(gpt_secrets_file, "GPT")
+  if key is None: return None
+
+  if version.startswith("gpt-5"):
+    url = "/v1/responses"
+    messages = []
+    if sysprompt:
+      messages.append({"role": "system", "content": [{"type": "input_text", "text": sysprompt}]})
+    messages.append({"role": "user", "content": [{"type": "input_text", "text": sentences}]})
+    call = {
+      "model": version,
+      "input": messages,
+      "text": {"verbosity": "low", "format": {"type": "text"}},
+      "reasoning": {"effort": "none"}
+    }
+    if max_tokens:
+      call["max_output_tokens"] = max_tokens
+  else:
+    url = "/v1/chat/completions"
+    messages = []
+    if sysprompt:
+      messages.append({"role": "system", "content": sysprompt})
+    messages.append({"role": "user", "content": sentences})
+    call = {
+      "model": version,
+      "messages": messages,
+      "seed": seed,
+      "temperature": temperature
+    }
+    if max_tokens:
+      call["max_tokens"] = max_tokens
+
+  debug_print("gpt call", call)
+  host = "api.openai.com"
+  data = _post_with_retry(host, url, json.dumps(call),
+                          {"Host": host, "Content-Type": "application/json",
+                           "Authorization": "Bearer " + key},
+                          "GPT")
+  if data is None: return None
+  debug_print("gpt response:", data)
+
+  if version.startswith("gpt-5"):
+    if "output" not in data:
+      return llm_error("GPT response has no 'output'")
+    for el in data["output"]:
+      if "content" in el and el.get("type") == "message":
+        for cel in el["content"]:
+          if "text" in cel and cel.get("type") == "output_text":
+            return cel["text"]
+    return llm_error("GPT response structure not understood: " + str(data))
+  else:
+    if "choices" not in data:
+      return llm_error("GPT response has no 'choices'")
+    res = ""
+    for el in data["choices"]:
+      if "message" in el:
+        msg = el["message"]
+        if "content" in msg:
+          res += msg["content"]
+      elif "text" in el:
+        if res: res += "\n"
+        res += el["text"].strip()
+    return res
+
+
+# ======== claude ========
+
+def call_claude(version, sentences, sysprompt, max_tokens):
+  key = _read_api_key(claude_secrets_file, "Claude")
+  if key is None: return None
+
+  messages = [{"role": "user", "content": sentences}]
+  call = {
+    "model": version,
+    "messages": messages,
+    "temperature": temperature,
+    "max_tokens": max_tokens
+  }
+  if sysprompt:
+    call["system"] = [{"type": "text", "text": sysprompt}]
+
+  debug_print("claude call", call)
+  data = _post_with_retry("api.anthropic.com", "/v1/messages",
+                          json.dumps(call),
+                          {"content-Type": "application/json",
+                           "anthropic-version": "2023-06-01",
+                           "x-api-key": key},
+                          "Claude")
+  if data is None: return None
+  if "content" not in data:
+    return llm_error("Claude response has no content: " + str(data))
+  debug_print("claude response:", data)
+  res = ""
+  for el in data["content"]:
+    if "text" in el:
+      res += el["text"].strip()
+  return res
+
+
+# ======== gemini ========
+
+def call_gemini(version, sentences, sysprompt, max_tokens):
+  key = _read_api_key(gemini_secrets_file, "Gemini")
+  if key is None: return None
+
+  genconfig = {
+    "maxOutputTokens": max_tokens,
+    "temperature": temperature
+  }
+  call = {
+    "contents": [{"parts": [{"text": sentences}]}],
+    "generationConfig": genconfig
+  }
+  if sysprompt:
+    call["system_instruction"] = {"parts": [{"text": sysprompt}]}
+
+  debug_print("gemini call", call)
+  url = "/v1beta/models/" + version + ":generateContent"
+  data = _post_with_retry("generativelanguage.googleapis.com", url,
+                          json.dumps(call),
+                          {"content-Type": "application/json", "x-goog-api-key": key},
+                          "Gemini")
+  if data is None: return None
+  if "candidates" not in data:
+    return llm_error("Gemini response has no candidates: " + str(data))
+  cand = data["candidates"][0]
+  if "content" not in cand:
+    return llm_error("Gemini response has no content: " + str(cand))
+  if "parts" not in cand["content"]:
+    return llm_error("Gemini response has no parts: " + str(cand))
+  debug_print("gemini response:", data)
+  res = ""
+  for el in cand["content"]["parts"]:
+    if "text" in el:
+      res += el["text"].strip()
+  return res
+
+
+# ======== deepseek ========
+
+def call_deepseek(version, sentences, sysprompt, max_tokens):
+  key = _read_api_key(deepseek_secrets_file, "DeepSeek")
+  if key is None: return None
+
+  messages = []
+  if sysprompt:
+    messages.append({"role": "system", "content": sysprompt})
+  messages.append({"role": "user", "content": sentences})
+  call = {
+    "model": version,
+    "messages": messages,
+    "stream": False,
+    "temperature": temperature
+  }
+  if max_tokens:
+    call["max_tokens"] = max_tokens
+
+  debug_print("deepseek call", call)
+  data = _post_with_retry("api.deepseek.com", "/v1/chat/completions",
+                          json.dumps(call),
+                          {"Content-Type": "application/json",
+                           "Authorization": "Bearer " + key},
+                          "DeepSeek")
+  if data is None: return None
+  debug_print("deepseek response:", data)
+  if "choices" not in data:
+    return llm_error("DeepSeek response has no 'choices': " + str(data))
+  res = ""
+  for el in data["choices"]:
+    if "message" in el:
+      msg = el["message"]
+      if "content" in msg and msg["content"]:
+        res += msg["content"]
+  return res
+
+
+# ======== llm error reporting ========
+
+def llm_error(msg):
+  print("LLM error:", msg)
   return None
 
 # ========== big prompt ============

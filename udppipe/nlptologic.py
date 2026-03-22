@@ -1270,15 +1270,15 @@ def build_subsentence_logic(ctxt,sentence,root,parentsubj=None,prefer_parentsubj
   #debug_print("cp2 subsentences",subsentences)
   """
 
-  if obj and obj["upos"] in ["ADJ"]:
+  if obj and type(obj)==dict and obj["upos"] in ["ADJ"]:
     argtmp=obl_case_child(ctxt,sentence,obj,["than"])
-    if argtmp: 
+    if argtmp:
       # John is stronger than Mike.
-      obj["be"]=verb                             
+      obj["be"]=verb
       obj["relation"]="than"
-      verb=root        
-      obj=argtmp   
-  elif (obj and obj["upos"] in ["NOUN","PROPN"] and
+      verb=root
+      obj=argtmp
+  elif (obj and type(obj)==dict and obj["upos"] in ["NOUN","PROPN"] and
         (obj["deprel"] in ["obl"]) and
         word_has_child_in_deprel_upos(ctxt,sentence,obj,"case","ADP") and
         #word_has_child_in_deprel_upos(ctxt,sentence,obj,"case","ADP")!="by"
@@ -1295,7 +1295,7 @@ def build_subsentence_logic(ctxt,sentence,root,parentsubj=None,prefer_parentsubj
       #debug_print("cp2 subj verb obj",[subj,verb,obj])
       #debug_print("argtmp",argtmp)
       #debug_print("beverb",beverb)
-  elif (obj and obj["upos"] in ["NOUN","PROPN"] and
+  elif (obj and type(obj)==dict and obj["upos"] in ["NOUN","PROPN"] and
         (obj["deprel"] in ["obl"]) and
         word_has_child_in_deprel_upos(ctxt,sentence,obj,"case","ADP") and
         #word_has_child_in_deprel_upos(ctxt,sentence,obj,"case","ADP")!="by"
@@ -1328,18 +1328,18 @@ def build_subsentence_logic(ctxt,sentence,root,parentsubj=None,prefer_parentsubj
       verb["relation"]="in" 
       obj=nmodtmp 
 
-  if obj and obj["upos"] in ["NOUN","PROPN"]:
-    argtmp=nmod_case_child(ctxt,sentence,obj,["'s"],True)        
+  if obj and type(obj)==dict and obj["upos"] in ["NOUN","PROPN"]:
+    argtmp=nmod_case_child(ctxt,sentence,obj,["'s"],True)
     if argtmp:
-      obj["argument"]=argtmp 
-      argtmp["preposition"]="'s" 
+      obj["argument"]=argtmp
+      argtmp["preposition"]="'s"
     else:
-      argtmp=nmod_case_child(ctxt,sentence,obj,["of"],False)    
+      argtmp=nmod_case_child(ctxt,sentence,obj,["of"],False)
       if argtmp:
         obj["argument"]=argtmp
-        argtmp["preposition"]="of"   
+        argtmp["preposition"]="of"
       elif not obj:
-        argtmp=obl_case_child(ctxt,sentence,verb,["by"]) 
+        argtmp=obl_case_child(ctxt,sentence,verb,["by"])
         if argtmp:
           #debug_print("CPreverse")
           # reverse obj and obj

@@ -383,7 +383,7 @@ def make_obj_logic(ctxt,sentence,var,subjpart,verbpart,objpart,
               if el[0]==subjrepr:
                 subjthing=el[1]
                 break
-          if (subjthing["upos"] in ["NOUN"] and (not thing["upos"] in ["NOUN"]) and
+          if (subjthing["upos"] in ["NOUN"] and thing and type(thing)==dict and (not thing["upos"] in ["NOUN"]) and
               (not word_has_feat(subjthing,"Number","Plur"))):
             propclass=subjthing          
       thingatom=nlpproperlogic.make_qualified_atom_1(ctxt,sentence,verbpart,thing,positive,thisvar,

@@ -291,6 +291,13 @@ def rawlogic_convert(logic, s1_json=None):
   # the prover needs the direct predicate form.
   logic = _rewrite_stative_events(logic)
 
+  # Rewrite $setof terms to canonical form (replaces ?:X with $arg1,
+  # extracts anchors, $-prefixes internal predicates, generates membership
+  # axioms and element instantiation clauses).
+  import lc_sets as _lc_sets
+  _lc_sets._set_counter = 0
+  logic, set_axioms, set_element_clauses = _lc_sets.process_sets(logic)
+
   if logic[0] == "@id":
     items = [logic]
   elif logic[0] == "and":
@@ -326,6 +333,13 @@ def rawlogic_convert(logic, s1_json=None):
       objs = _convert_id_package(item, asu_index)
     if objs:
       result.extend(objs)
+
+  # Add set membership axioms (pre-clausified by lc_sets).
+  for ax_clause in set_axioms:
+    result.append({"@name": "frm_set", "@logic": ax_clause})
+
+  # Add set element instantiation clauses (already ground).
+  result.extend(set_element_clauses)
 
   # Prepend entity category clauses at the start of the clause list so they
   # are available as given facts throughout the proof.

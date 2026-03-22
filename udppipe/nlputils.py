@@ -64,10 +64,24 @@ def server_parse(text):
   try:
     data=json.loads(rawdata)
   except KeyboardInterrupt:
-    raise  
+    raise
   except:
     show_error("nlpserver response is not a correct json: "+  str(rawdata))
     sys.exit(0)
+  # Filter out multi-word token (MWT) entries from newer Stanza versions:
+  # MWT entries have id as a list like [1,2] and lack "head", "lemma", "upos" etc.
+  # Before removing, propagate NER tags from MWT entries to their sub-words.
+  if "doc" in data:
+    for sentence in data["doc"]:
+      mwt_ner = {}
+      for w in sentence:
+        if type(w.get("id")) == list and "ner" in w:
+          for subid in range(w["id"][0], w["id"][1] + 1):
+            mwt_ner[subid] = w["ner"]
+      for w in sentence:
+        if type(w.get("id")) == int and "ner" not in w and w["id"] in mwt_ner:
+          w["ner"] = mwt_ner[w["id"]]
+      sentence[:] = [w for w in sentence if type(w.get("id")) == int]
   nlpcache.add_parse_to_cache(None,text,data)
   return data
 

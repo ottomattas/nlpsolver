@@ -83,19 +83,18 @@ basic keys:
  -help      : output this helptext 
 
 optional parsing helpers:
- -llm       : use a large language model (llm) to simplify the sentences
- -amr       : use an amr parser to gain additional information for words/sentences 
+ -llm <provider> : select LLM provider: gpt, claude, gemini, or deepseek (default: gpt)
+ -llmsimplify : use a large language model (llm) to simplify the sentences
+ -amr       : use an amr parser to gain additional information for words/sentences
 
 special behaviour options for llm experiments:
  -llmsolve   : solve directly with the use of llm, do not use logic or parsing
  -llmparseall : parse input with llm, do not solve
  -solveparsed : input is a text in json logic, solve directly with a prover, without further parsing
- # to be implemented: -llmsimplify : simplify input with llm  
- # to be implemented: -llmparsesequential: parse separate sentences with llm, then connect and solve
   
 
 controlling the prover:
- -seconds N : give N seconds for proof search (default 1)
+ -seconds N : give N seconds for proof search (default 2)
  -prover    : show prover json input/output
  -rawresult : output only the json result from the prover
  -axioms file1.js ... fileN.js   : use these files as axioms instead of the axioms_std.js
@@ -119,8 +118,11 @@ def main():
 
 def answer_question(text,newoptions=None):
   debug_print("answer_question text",text)    
-  if newoptions: set_global_options(newoptions) 
-  # - - - if pure llm solving do that and stop - - - 
+  if newoptions: set_global_options(newoptions)
+  if options["llm_provider"]:
+    import nlpllm
+    nlpllm.use_llm = options["llm_provider"]
+  # - - - if pure llm solving do that and stop - - -
   if options["solveparsed_flag"]:
     result=solve_parsed(text)
     return result  
@@ -192,6 +194,8 @@ def answer_question(text,newoptions=None):
     #print("No question given.")
     #sys.exit(0)
   if "result" not in logic_objects:
+    if not logic:
+      return "Unknown."
     rawresult=nlpprover.call_prover(logic)
   elif logic_objects["result"]: 
     if options["prover_explain_flag"]:
@@ -272,7 +276,17 @@ def parse_cmd_line(helptext):
       options["backward_flag"]=True    
     elif el in ["-nokb","--nokb"]: 
       options["nokb_flag"]=True   
-    elif el in ["-llmsimplify","--llmsimplify"]: 
+    elif el in ["-llm","--llm"]:
+      if elpos+1 >= len(params):
+        print("-llm takes a provider name: gpt, claude, gemini, or deepseek")
+        sys.exit(0)
+      provider=params[1+elpos].lower()
+      if provider not in ["gpt","claude","gemini","deepseek"]:
+        print("-llm provider must be one of: gpt, claude, gemini, deepseek")
+        sys.exit(0)
+      options["llm_provider"]=provider
+      skippos=1
+    elif el in ["-llmsimplify","--llmsimplify"]:
       options["llm_simplify_flag"]=True   
     elif el in ["-llmsolve","--llmsolve"]: 
       options["llm_solve_flag"]=True  

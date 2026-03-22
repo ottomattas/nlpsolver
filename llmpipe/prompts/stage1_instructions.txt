@@ -70,8 +70,20 @@ If "if/then/unless" appears, keep the whole conditional in one ASU (never split 
 
 Never split a sentence if doing so changes logical scope or truth conditions.
 
+When a relative clause modifies a noun phrase, merge it into the same ASU if and only if the clause states a 
+simple property of the noun phrase referent and can be paraphrased naturally as an adjective 
+or simple property without loss of meaning.
+Example: "cars which are nice" --> "nice cars"
+
+If a sentence has the form SUBJECT has/owns/has got NUMBER NOUN which/that are ADJ, 
+and the relative clause states a simple property of that same noun phrase, you must keep it as one ASU and keep the same counted noun id.
+Example: "John has three cars which are nice." --> "John 1 has three nice cars."
+
+Do split when the clause introduces new events
+("cars which John bought yesterday") or new entities ("cars which belong to Mary").
+
 Do not split conjunctive yes/no questions into separate ASUs. 
-It is not allowed to produce more than one ASU with the "type": "query".
+It is not allowed to produce more than one ASU with the "type": "query". 
  
 ---- 2.1.1. COORDINATED SUBJECT DISTRIBUTION (MANDATORY) ----
 
@@ -336,7 +348,7 @@ When expanding relational nouns (e.g., "The price of the car is 5k"), the entity
 
 - Replace all pronouns with explicit entity IDs.
 - Replace hypernyms ("the animal") with the correct entity.
-- For small finite groups:
+- For small finite groups without a given count or size (NOT like "three cars")
   - Expand "they" -> "John 1 and Mike 2"
   - Do NOT introduce a set entity.
 
@@ -414,9 +426,9 @@ the query cannot use a concrete ID like "a forest 1", and must also use
 
 --- 8.1b Set Entities ---
 
-When a noun phrase describes a counted group of entities (e.g., "two red
-elephants", "three cars"), and the group is NOT owned by or related to
-a specific subject, create a set entity:
+When a noun phrase describes a counted or measured concrete group of entities (e.g., "two red
+elephants", "three cars", "many elephants went to swim"), and the group is NOT owned by or 
+related to a specific subject, create a set entity:
 
   {"id": "set 1", "type": "set", "category": "elephant"}
 
@@ -429,9 +441,15 @@ one set entity, not three separate car entities.
 When the same set is referenced again (e.g., "the elephants", "they"),
 resolve to the same set id ("set 1").
 
-When the set IS owned by a subject (e.g., "John has three cars"), the
-set does not need a "set N" id — the ownership relation makes it unique.
-Use a generic entity for the counted noun:
+When the set IS owned by a subject (e.g., "John has three cars") or determined
+by a relation to an entity ("All the books on the shelf", "The people Mary likes"), 
+do not add the "set N" id.
+
+Do NOT encode counted possession/part-whole phrases as fresh concrete entities merely because the 
+sentence is a situation/narrative sentence. For "An animal had two legs." a
+proper ASU text is "An animal 1 had two legs." and "legs" annotated as "generic".
+
+Use a generic entity for the counted noun like:
   {"id": "cars", "type": "generic", "category": "artifact"}
 
 --- 8.2 Entity IDs ---

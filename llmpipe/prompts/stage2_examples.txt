@@ -1411,30 +1411,30 @@ OUTPUT:
 --------
 
 INPUT:
- 
+
 [
   {
-    "raw":"John has two red and three green apples.",
-    "units":[
+    "raw": "John has two red and three green apples.",
+    "units": [
       {
-        "unit_id":"S1",
-        "text":"John 1 has two red apples 2.",
-        "type":"situation",
-        "entities":[
-          {"id":"John 1","type":"concrete"},
-          {"id":"apples 2","type":"concrete"}
+        "unit_id": "S1",
+        "text": "John 1 has two red apples.",
+        "type": "situation",
+        "entities": [
+          {"id": "John 1", "type": "concrete", "category": "person"},
+          {"id": "apples", "type": "generic", "category": "artifact"}
         ],
-        "adjectives":[["red","none","none"]]
+        "adjectives": [["red", "none", "apple"]]
       },
       {
-        "unit_id":"S2",
-        "text":"John 1 has three green apples 3.",
-        "type":"situation",
-        "entities":[
-          {"id":"John 1","type":"concrete"},
-          {"id":"apples 3","type":"concrete"}
+        "unit_id": "S2",
+        "text": "John 1 has three green apples.",
+        "type": "situation",
+        "entities": [
+          {"id": "John 1", "type": "concrete", "category": "person"},
+          {"id": "apples", "type": "generic", "category": "artifact"}
         ],
-        "adjectives":[["green","none","none"]]
+        "adjectives": [["green", "none", "apple"]]
       }
     ]
   }
@@ -1443,33 +1443,24 @@ INPUT:
 OUTPUT:
 
 ["and",
-  ["@id","S1",
-    ["and",
-      ["holds","W0",
-        ["and",
-          ["exists","S1",
-            ["and",
-              ["isa","set","S1"],
-              ["is set of","apple","S1"],
-              ["member has property","red","S1"],
-              ["=",2,["$count","S1"]],
-              ["have","John 1","S1"]
-            ]
-          ],
-          ["exists","S2",
-            ["and",
-              ["isa","set","S2"],
-              ["is set of","apple","S2"],
-              ["member has property","green","S2"],
-              ["=",3,["$count","S2"]],
-              ["have","John 1","S2"]
-            ]
-          ]
-        ]
-      ]
+  ["@id", "S1",
+    ["holds", "W0",
+      ["=", 2, ["$count", ["$setof", "?:X", 
+        ["and", ["isa", "apple", "?:X"], 
+                ["has degree property", "red", "?:X", "none", "apple"], 
+                ["have", "John 1", "?:X"]]]]]
+    ]
+  ],
+  ["@id", "S2",
+    ["holds", "W0",
+      ["=", 3, ["$count", ["$setof", "?:X", 
+        ["and", ["isa", "apple", "?:X"], 
+                ["has degree property", "green", "?:X", "none", "apple"], 
+                ["have", "John 1", "?:X"]]]]]
     ]
   ]
 ]
+
 
 -------
 
@@ -1495,16 +1486,10 @@ INPUT:
 Output:
 
 ["and",
-  ["@id","S1",
+  ["@id", "S1",
     ["question",
-      ["exists","S",
-        ["and",
-          ["isa","set","S"],
-          ["is set of","apple","S"],
-          ["have","John 1","S"],
-          [">",["$count","S"],2]
-        ]
-      ]
+      [">", ["$count", ["$setof", "?:X", 
+        ["and", ["isa", "apple", "?:X"], ["have", "John 1", "?:X"]]]], 2]
     ]
   ]
 ]
@@ -2493,8 +2478,88 @@ OUTPUT:
   ]
 ]
 
+---
 
---------
+INPUT:
+
+[{"raw": "Two red elephants drank.",
+  "units": [{"unit_id": "S1",
+    "text": "Two red elephants [set 1] drank.",
+    "type": "situation",
+    "entities": [
+      {"id": "set 1", "type": "set", "category": "elephant"}],
+    "actions": [{"root": "drink", "mode": "event"}],
+    "adjectives": [["red", "none", "none"]],
+    "time": "past"}]}]
+
+OUTPUT:
+
+["and",
+  ["@id", "S1",
+    ["holds", "W0",
+      ["and",
+        ["=", 2, ["$count", ["$setof", "?:X", "set 1",
+          ["and", ["isa", "elephant", "?:X"], ["has property", "red", "?:X"]]]]],
+        ["forall", "?:M",
+          ["implies",
+            ["member", "?:M", ["$setof", "?:X", "set 1",
+              ["and", ["isa", "elephant", "?:X"], ["has property", "red", "?:X"]]]],
+            ["exists", "E",
+              ["and",
+                ["isa", "activity", "E"],
+                ["has type", "E", "drink"],
+                ["has actor", "E", "?:M"],
+                ["has time", "E", "past"]
+              ]]]]
+      ]]]]
+
+---
+
+INPUT:
+
+[{"raw": "John has three red cars.",
+  "units": [{"unit_id": "S1",
+    "text": "John 1 has three red cars.",
+    "type": "situation",
+    "entities": [
+      {"id": "John 1", "type": "concrete", "category": "person"},
+      {"id": "cars", "type": "generic", "category": "artifact"}],
+    "adjectives": [["red", "none", "none"]]}]},
+ {"raw": "John has three red cars?",
+  "units": [{"unit_id": "S2",
+    "text": "Does John 1 have three red cars?",
+    "type": "query",
+    "entities": [
+      {"id": "John 1", "type": "concrete", "category": "person"},
+      {"id": "cars", "type": "generic", "category": "artifact"}],
+    "adjectives": [["red", "none", "none"]]}]}]
+
+OUTPUT:
+
+["and",
+  ["@id", "S1",
+    ["holds", "W0",
+      ["and",
+        ["isa", "person", "John 1"],
+        ["=", 3, ["$count", ["$setof", "?:X",
+          ["and", ["isa", "car", "?:X"], 
+                  ["has degree property", "red", "?:X", "none", "none"],
+                  ["have", "John 1", "?:X"]]]]]
+      ]
+    ]
+  ],
+  ["@id", "S2",
+    ["question",
+      ["=", 3, ["$count", ["$setof", "?:X",
+        ["and", ["isa", "car", "?:X"], 
+                ["has degree property", "red", "?:X", "none", "none"],
+                ["have", "John 1", "?:X"]]]]]
+    ]
+  ]
+]
+
+
+------
 
 INPUT:
 
@@ -2699,70 +2764,3 @@ OUTPUT:
     ]
   ]
 ]
-
-
-Input:
-[{"raw": "The set 1 of two red elephants drank.",
-  "units": [{"unit_id": "S1",
-    "text": "The set 1 of two red elephants drank.",
-    "type": "situation",
-    "entities": [
-      {"id": "set 1", "type": "set", "category": "elephant"}],
-    "actions": [{"root": "drink", "mode": "event"}],
-    "adjectives": [["red", "none", "none"]],
-    "time": "past"}]}]
-
-Output:
-["and",
-  ["@id", "S1",
-    ["holds", "W0",
-      ["and",
-        ["=", 2, ["$count", ["$setof", "?:X", "set 1",
-          ["and", ["isa", "elephant", "?:X"], ["prop", "red", "?:X"]]]]],
-        ["forall", "?:M",
-          ["implies",
-            ["member", "?:M", ["$setof", "?:X", "set 1",
-              ["and", ["isa", "elephant", "?:X"], ["prop", "red", "?:X"]]]],
-            ["exists", "E",
-              ["and",
-                ["isa", "activity", "E"],
-                ["has type", "E", "drink"],
-                ["has actor", "E", "?:M"],
-                ["has time", "E", "past"]
-              ]]]]
-      ]]]]
-
-
-Input:
-[{"raw": "John has three red cars.",
-  "units": [{"unit_id": "S1",
-    "text": "John 1 has three red cars.",
-    "type": "situation",
-    "entities": [
-      {"id": "John 1", "type": "concrete", "category": "person"},
-      {"id": "cars", "type": "generic", "category": "artifact"}],
-    "adjectives": [["red", "none", "none"]]}]},
- {"raw": "John has three red cars?",
-  "units": [{"unit_id": "S2",
-    "text": "Does John 1 have three red cars?",
-    "type": "query",
-    "entities": [
-      {"id": "John 1", "type": "concrete", "category": "person"},
-      {"id": "cars", "type": "generic", "category": "artifact"}],
-    "adjectives": [["red", "none", "none"]]}]}]
-
-Output:
-["and",
-  ["@id", "S1",
-    ["holds", "W0",
-      ["and",
-        ["isa", "person", "John 1"],
-        ["=", 3, ["$count", ["$setof", "?:X",
-          ["and", ["isa", "car", "?:X"], ["prop", "red", "?:X"],
-                  ["have", "John 1", "?:X"]]]]]
-      ]]],
-  ["@id", "S2",
-    ["question",
-      ["=", 3, ["$count", ["$setof", "?:X",
-        ["and", ["isa", "car", "?:X"], ["prop", "red", "?:X"],
-                ["have", "John 1", "?:X"]]]]]]]]

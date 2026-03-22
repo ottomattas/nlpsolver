@@ -101,7 +101,7 @@ def call_prover(logic):
       raise  
     except:
       return "Error: prover gk is not available or crashed: check nlpgobals.py for gk path."  
-    sres=calc.decode('ascii') 
+    sres=calc.decode('utf-8')
     add_proof_to_cache(params,sres)  
   os.remove(infilename)
   if options["prover_print_flag"] or options["show_prover_flag"]:  
@@ -131,7 +131,7 @@ def get_relatedness(ctxt,lemma1,lemma2):
     #return "Error: prover gk is not available or crashed: check nlpgobals.py for gk path."  
     return 0    
   try:  
-    sres=calc.decode('ascii') 
+    sres=calc.decode('utf-8')
     parts=sres.split(" ")
     res=float(parts[0].strip())  
   except:
@@ -170,7 +170,7 @@ def is_subclass(ctxt,lemma1,lemma2):
     #return "Error: prover gk is not available or crashed: check nlpgobals.py for gk path."  
     return 0    
   try:  
-    sres=calc.decode('ascii') 
+    sres=calc.decode('utf-8')
     searchstr=lemma1+" is more general than "+lemma2
     if searchstr in sres:
       res=True

@@ -47,6 +47,7 @@ options={
   "prover_print":False,  # if not False, use the argument integer for gk printout level, instead of the default
   "prover_strategy":False,  # if not False, use the argument as a gk strategy file, instead of the default
   "prover_seconds":2,  # give the prover this many seconds, instead of the default 1
+  "llm_provider": None, # LLM provider: "gpt", "claude", "gemini", "deepseek" (None = use default from nlpllm)
   "llm_simplify_flag": False, # perform LLM simplifications
   "llm_solve_flag": False, # do pure LLM solving
   "llm_parse_stepwise_flag": False, # do LLM parsing stepwise

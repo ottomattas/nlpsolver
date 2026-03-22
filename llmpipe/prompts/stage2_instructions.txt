@@ -615,6 +615,11 @@ When a conditional rule contains generic plural entities, each generic side
 must keep its own forall+implies as a self-contained sub-formula. Concrete
 sides stay as flat predicates. Do NOT flatten into a single shared forall.
 
+Do NOT use the Set Term ($setof) or counting logic for standard generic or universal claims 
+(e.g., "Elephants are big," "Birds fly"). 
+* Follow the standard forall and exists patterns below.
+* Use $setof ONLY if the sentence meets the specific "Trigger Conditions" in Section 8.2 (counts, measures, set IDs).
+
 Generic side:  ["forall","X", ["implies", ["isa",CLASS,"X"], PROPERTY_OF_X]]
 Concrete side: predicate with entity constant directly.
 
@@ -744,7 +749,79 @@ Every ASU must be wrapped in EXACTLY ONE ["@id", "Sx", ...] structure.
    - CORRECT: ["@id", "S5", ["question", ...]]
    - INCORRECT: ["@id", "S5", ["@id", "S5", ["question", ...]]]
 
-== 8. PREDICATE INVENTORY (Closed Whitelist) ==
+== 8. SETS AND COUNTING ==
+
+Only use the Set Term ($setof) when the sentence involves explicit counting, measurements,
+or set-specific relations (subsets/unions).
+
+8.1 When NOT to use Set Terms
+
+Do NOT use $setof for standard generic or existential claims where no specific count or measurement is involved. 
+
+Follow standard quantifier rules (Section 4) for:
+- Universal Generics: "Elephants are animals" ---> Use forall.
+- Simple Existentials: "Some elephants are big" or "John has a car" ---> Use exists.
+- Conditional Rules: "If elephants swim, they are wet" --->  Use forall/implies
+
+8.2 When to use Set Terms (Trigger Conditions)
+
+Use a Set Term ONLY in the following cases:
+
+- Specified Counts: When the text includes a number or quantity (e.g., "three red cars," "two elephants," "several apples").
+- Vague Measures: When using quantifiers that imply a measured group (e.g., "A large number of elephants," "Many of the boxes").
+- Explicitly marked Sets: when input identifies an entity with type: "set".
+- Set Operations: When expressing "subset of" or "union" relationships.
+
+8.3 Defining the Set Term
+
+A Set Term is a functional handle used for counting, measures and set operations.
+
+Use one of these two structures:
+
+- Anchored: use when the set is defined by a relationship to a subject (e.g., "John has...", "In Paris...").
+  ["$setof", "?:X", ["and", ["isa", TYPE, "?:X"], ["has property", ADJ, "?:X"], [REL, SUBJ, "?:X"]]].
+  Use ["has degree property", ADJ, "?:X", DEGREE, RELCLASS] instead of ["has property", ...] when the
+  adjective appears in ASU.adjectives (same rule as outside $setof).
+
+- Identified: use when stage 1 input provides a specific set_id (e.g., "set 1").
+  ["$setof", "?:X", SET_ID, ["and", ["isa", TYPE, "?:X"], ["has property", ADJ, "?:X"]]].
+
+The SETOF_TERM must be identical wherever it appears (in $count and
+in member conditions within the same formula).
+
+Stative relations (have, is rel2, can) go INSIDE the $setof conditions.
+Event/action relations go OUTSIDE as a distributive forall/implies block.
+
+When the same set is referenced again (e.g. "Did the set 1 of red
+elephants swim?"), use the same $setof term with the same SET_ID.
+
+Queries about the same set use the same $setof structure.
+Queries without a count ("Does John have a car?") use normal existentials.
+
+8.4 Counting and Distributive Actions
+
+- Counting: Assert size using ["=", N, ["$count", SET_TERM]].
+
+- Distributive Actions: If individuals in the counted set perform an action (e.g., "Two elephants drank"), 
+  use a forall loop:
+  1. Use ["member", "?:M", SET_TERM] to pick individuals.
+  2. Literal Copy: The SET_TERM inside member must be an exact, character-for-character copy of the SET_TERM used 
+    in the counting rule.
+  3. Apply action predicates directly to the member variable "?:M".
+  Typical structure:
+  ["forall", "?:M",
+    ["implies",
+      ["member", "?:M", SETOF_TERM],
+      EVENT_BODY_USING_?:M]]
+
+
+== 9. STATE TRANSITIONS ==
+
+If ASU.next_state exists:
+["next",W,Wnew]
+
+
+== 10. PREDICATE INVENTORY (Closed Whitelist) ==
 
 Use ONLY the following JSON forms.
 Do NOT invent new predicates.
@@ -853,72 +930,18 @@ Never emit both ["is rel2"] and ["has degree rel2"] for the same word.
 ["has degree property", PROPERTY, ENTITY, DEGREE, RELCLASS]
 ["has degree rel2", RELATION, ENTITY1, ENTITY2, DEGREE, RELCLASS]
 
---- Set & Counting Predicates ---
+--- Set Predicates ---
 
-["isa", "set", S]
-["is set of", TYPE, S]
-["member has property", PROPERTY, S]
-["member", ENTITY, S]
-["is subset of", S1, S2]
-["set union", S1, S2, S3]
-["$count", S]
+["member", ENTITY, SET_TERM]: Asserts that an entity belongs to the collection defined by the Set Term.
+["is subset of", SET_TERM_1, SET_TERM_2]: Asserts that all members of one Set Term are also members of another.
 
+--- Functions ---
 
-== 12. STATE TRANSITIONS ==
+["$setof", "?:X", ["and", ...]]: Creates an anchored Set Term.
+["$setof", "?:X", SET_ID, ["and", ...]]: Creates an identified Set Term.
+["$count", SET_TERM]: Evaluates to the integer cardinality of the specified Set Term.
 
-If ASU.next_state exists:
-["next",W,Wnew]
-
-
-== 13. SETS AND COUNTING ==
-
-Use $setof to encode sets of entities described by shared properties.
-
-$setof has two formats depending on whether a stative relation anchors
-the set to a subject:
-
-Anchored (set owned/related to a subject):
-  ["$setof", VAR, ["and", COND_1, ..., [PRED, SUBJECT, VAR]]]
-  Example: "John has three red cars"
-  ["$setof", "?:X", ["and", ["isa","car","?:X"], ["prop","red","?:X"], ["have","John 1","?:X"]]]
-
-Conditions-only (set defined by properties alone, no subject):
-  ["$setof", VAR, SET_ID, ["and", COND_1, COND_2, ...]]
-  Example: "The set 1 of two red elephants drank"
-  ["$setof", "?:X", "set 1", ["and", ["isa","elephant","?:X"], ["prop","red","?:X"]]]
-
-SET_ID comes from the Stage-1 entity id for the set (e.g. "set 1").
-
-VAR is a fresh variable (?:X). The conditions list ALL properties that
-define set membership, using VAR as the member placeholder:
-  ["isa", TYPE, VAR]              — entity type
-  ["prop", WORD, VAR]             — property
-  ["have", OWNER, VAR]            — possession (anchored)
-  ["is rel2", REL, SUBJ, VAR]    — relation (anchored)
-
-Count assertion:
-  ["=", N, ["$count", SETOF_TERM]]
-
-When members perform an action, distribute it with forall/implies:
-  ["forall", "?:M",
-    ["implies",
-      ["member", "?:M", SETOF_TERM],
-      EVENT_BODY_USING_?:M]]
-
-The SETOF_TERM must be identical wherever it appears (in $count and
-in member conditions within the same formula).
-
-Stative relations (have, is rel2, can) go INSIDE the $setof conditions.
-Event/action relations go OUTSIDE as a distributive forall/implies block.
-
-When the same set is referenced again (e.g. "Did the set 1 of red
-elephants swim?"), use the same $setof term with the same SET_ID.
-
-Queries about the same set use the same $setof structure.
-Queries without a count ("Does John have a car?") use normal existentials.
-
-
-== 17. FINAL CHECKLIST ==
+== 11. FINAL CHECKLIST ==
 
 - Exactly one top-level ["and",...]
 - One ["@id","Sx",...] per ASU

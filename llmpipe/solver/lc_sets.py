@@ -43,6 +43,7 @@ _set_counter = 0
 # Anchor predicates: maps predicate name to the index where VAR appears.
 _ANCHOR_PREDS = {
   "have":               2,   # ["have", SUBJ, VAR]
+  "has part":           2,   # ["has part", SUBJ, VAR]
   "is rel2":            3,   # ["is rel2", REL, SUBJ, VAR]
   "has degree rel2":    3,   # ["has degree rel2", REL, SUBJ, VAR, ...]
   "can":                1,   # ["can", VAR, WHAT]
@@ -83,13 +84,13 @@ def process_sets(formula):
   for node, parent, index, depth, bound_var in hits:
     info = _rewrite_setof(node, depth)
 
-    # Build membership axiom (deduplicate by generalized pattern)
-    ax = _build_membership_axiom(info)
-    if ax:
-      ax_sig = json.dumps(ax, sort_keys=True)
+    # Build membership axiom clauses (deduplicate by generalized pattern)
+    ax_clauses = _build_membership_axiom(info)
+    if ax_clauses:
+      ax_sig = json.dumps(ax_clauses, sort_keys=True)
       if ax_sig not in seen_axiom_sigs:
         seen_axiom_sigs[ax_sig] = True
-        axioms.append(ax)
+        axioms.extend(ax_clauses)
 
     # Replace in parent
     if parent is not None:
@@ -192,7 +193,7 @@ def _classify_setof(conditions, var):
         # Subject: for "can" there is no separate subject
         if pred == "can":
           anchor_subject = None
-        elif pred == "have":
+        elif pred in ("have", "has part"):
           anchor_subject = cond[1]
         elif pred in ("is rel2", "has degree rel2"):
           anchor_subject = cond[2]
@@ -202,6 +203,19 @@ def _classify_setof(conditions, var):
   if anchor_pred:
     return anchor_pred, anchor_subject, remaining
   return None, None, cond_list
+
+
+def _strip_time_wrappers(frm):
+  """Strip @time wrappers from a formula, replacing ["@time", T, body] with body.
+
+  Applied to $setof bodies before set rewriting so that LLM-generated @time
+  annotations inside $setof don't crash the membership axiom builder.
+  """
+  if not isinstance(frm, list) or not frm:
+    return frm
+  if isinstance(frm[0], str) and frm[0] == "@time" and len(frm) == 3:
+    return _strip_time_wrappers(frm[2])
+  return [_strip_time_wrappers(child) for child in frm]
 
 
 def _rewrite_setof(node, depth):
@@ -233,6 +247,8 @@ def _rewrite_setof(node, depth):
     # 3-element: ["$setof", VAR, CONDITIONS]
     explicit_set_id = None
     conditions = node[2] if len(node) >= 3 else node[1]
+
+  conditions = _strip_time_wrappers(conditions)
 
   anchor, subject, remaining = _classify_setof(conditions, var)
 
@@ -316,6 +332,33 @@ def _unprefix_pred(pred_name):
   return pred_name[1:].replace("_", " ")
 
 
+def _negate_atom(atom):
+  """Negate an atom by toggling the - prefix on the predicate."""
+  if not isinstance(atom, list) or not atom:
+    return atom
+  pred = atom[0]
+  if isinstance(pred, str) and pred.startswith("-"):
+    return [pred[1:]] + atom[1:]
+  elif isinstance(pred, str):
+    return ["-" + pred] + atom[1:]
+  return atom
+
+
+def _prefix_vars_in_atom(atom, var_map):
+  """Add ?: prefix to forall variable values in an atom for GK format."""
+  bare_vars = set(var_map.values()) | {"M", "S"}
+  return _prefix_vars_deep(atom, bare_vars)
+
+
+def _prefix_vars_deep(term, bare_vars):
+  """Add ?: prefix to all bare variable names in a term."""
+  if not isinstance(term, list):
+    if isinstance(term, str) and term in bare_vars:
+      return "?:" + term
+    return term
+  return [_prefix_vars_deep(el, bare_vars) for el in term]
+
+
 def _replace_var(formula, old_var, new_var):
   """Replace all occurrences of old_var with new_var in formula (deep copy)."""
   if formula == old_var:
@@ -360,7 +403,8 @@ def _build_membership_axiom(setof_info):
   var_names_used = set()
 
   def _fresh_var():
-    """Generate fresh forall variable names: ?:C, ?:D, ?:E, ... skipping ?:M, ?:S."""
+    """Generate fresh forall variable names: C, D, E, ... skipping M, S.
+    Uses bare names (no ?: prefix) — the clausifier adds ?: during clausification."""
     skip = {"M", "S"}
     letters = "CDEFGHIJKLNOPQRTUVWXYZ"
     idx = var_counter[0]
@@ -369,7 +413,7 @@ def _build_membership_axiom(setof_info):
       ch = letters[idx]
     else:
       ch = "V" + str(idx)
-    return "?:" + ch
+    return ch
 
   # Generalize each condition: replace non-$arg arguments with forall variables
   gen_conds = []
@@ -388,8 +432,8 @@ def _build_membership_axiom(setof_info):
       if arg == arg_name:
         # In generalized pattern, keep $arg1
         gen_cond.append(arg_name)
-        # In rhs, replace with ?:M
-        rhs_atom.append("?:M")
+        # In rhs, replace with M (bare — clausifier adds ?:)
+        rhs_atom.append("M")
       else:
         # Generalize to a forall variable
         if arg not in arg_to_var:
@@ -407,67 +451,62 @@ def _build_membership_axiom(setof_info):
       # subject -> forall var
       subj = setof_info.subject
       if subj not in arg_to_var:
-        arg_to_var[subj] = "?:S"
+        arg_to_var[subj] = "S"
       subj_var = arg_to_var[subj]
-      rhs_atoms.append([anchor_pred, subj_var, "?:M"])
+      rhs_atoms.append([anchor_pred, subj_var, "M"])
     else:
       # anchor like "can" with no subject
-      rhs_atoms.append([anchor_pred, "?:M"])
+      rhs_atoms.append([anchor_pred, "M"])
 
-  # Build generalized $and term
-  if len(gen_conds) > 1:
-    gen_and = [gen_conds[0][0].startswith("$") and "$and" or "and"] if False else None
-    # Use same and-marker as the original conditions
-    and_marker = "$and" if setof_info.anchored else "$and"
-    # Actually check what the original conditions use
-    if isinstance(setof_info.conditions, list) and setof_info.conditions[0] in ("$and", "and"):
-      and_marker = setof_info.conditions[0]
-    gen_and_term = [and_marker] + gen_conds
-  else:
-    gen_and_term = gen_conds[0] if gen_conds else []
+  # Build generalized $and term — always wrap in $and to match canonical form
+  and_marker = "$and"
+  if isinstance(setof_info.conditions, list) and setof_info.conditions[0] in ("$and", "and"):
+    and_marker = setof_info.conditions[0]
+  gen_and_term = [and_marker] + gen_conds
 
   # Build generalized $setof term
   if setof_info.anchored:
     subj = setof_info.subject
-    subj_var = arg_to_var.get(subj, "?:S")
+    subj_var = arg_to_var.get(subj, "S")
     if setof_info.subject is not None:
       gen_setof = ["$setof", setof_info.anchor, subj_var, gen_and_term]
     else:
       gen_setof = ["$setof", setof_info.anchor, gen_and_term]
   else:
-    # For conditions-only: set_id -> forall var ?:S
-    gen_setof = ["$setof", "id", "?:S", gen_and_term]
+    # For conditions-only: set_id -> forall var S
+    gen_setof = ["$setof", "id", "S", gen_and_term]
 
   # Build member atom
-  member_atom = ["member", "?:M", gen_setof]
+  # Use ?:-prefixed variables for GK clause format.
+  # Build a var_set including M and S for the prefix function.
+  all_bare_vars = set(arg_to_var.values()) | {"M", "S"}
+  gen_setof_prefixed = _prefix_vars_deep(gen_setof, all_bare_vars)
+  member_atom = ["member", "?:M", gen_setof_prefixed]
+  rhs_atoms_prefixed = []
+  for atom in rhs_atoms:
+    rhs_atoms_prefixed.append(_prefix_vars_in_atom(atom, arg_to_var))
 
-  # Build rhs
-  if len(rhs_atoms) > 1:
-    rhs = ["and"] + rhs_atoms
-  elif len(rhs_atoms) == 1:
-    rhs = rhs_atoms[0]
-  else:
+  if not rhs_atoms_prefixed:
     return None
 
-  # Build biconditional
-  biconditional = [member_atom, "<=>", rhs]
+  # Build pre-clausified clauses directly (biconditional A <=> B1 & B2 & ...).
+  # Forward: [-B1, -B2, ..., A] (conditions => member)
+  # Backward: [-A, Bi] for each condition (member => each condition)
+  clauses = []
 
-  # Wrap in forall for all variables: ?:M first, then ?:S, then rest
-  all_vars = ["?:M"]
-  # Add ?:S for the subject/set_id generalization
-  if "?:S" not in all_vars:
-    all_vars.append("?:S")
-  # Add remaining forall vars in order they were created
-  for v in arg_to_var.values():
-    if v not in all_vars:
-      all_vars.append(v)
+  # Forward clause: negate all rhs atoms, add member
+  forward = []
+  for atom in rhs_atoms_prefixed:
+    forward.append(_negate_atom(atom))
+  forward.append(member_atom)
+  clauses.append(forward)
 
-  # Nest foralls from outside in
-  result = biconditional
-  for v in reversed(all_vars):
-    result = ["forall", v, result]
+  # Backward clauses: negate member, add each rhs atom
+  neg_member = _negate_atom(member_atom)
+  for atom in rhs_atoms_prefixed:
+    clauses.append([neg_member, atom])
 
-  return result
+  return clauses
 
 
 def _walk_for_count(formula, seen_sigs, clauses, source_name="S0", in_assertion=False):
@@ -553,6 +592,13 @@ def _instantiate_elements(setof_info, source_name, count, tense=None, world=None
 
   Returns list of clause dicts with @name and @logic.
   """
+  # Skip instantiation if subject is a variable (rule context, not concrete set).
+  # Variables may appear as "?:X" (pre-clausification) or bare "X" (post-clausification).
+  if setof_info.subject is not None and isinstance(setof_info.subject, str):
+    s = setof_info.subject
+    if s.startswith("?:") or (len(s) <= 2 and s[0].isupper()):
+      return []
+
   limit = _g_options.get("set_element_limit", 3)
   n = min(count, limit)
   if n <= 0:

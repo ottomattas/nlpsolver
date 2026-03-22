@@ -207,7 +207,7 @@ Output:
       {"id": "elephants", "type": "generic", "category": "animal"},
       {"id": "trunks", "type": "generic", "scope": "dependent"}
     ],
-    "adjectives": [["long", "none", "trunk"], ["red", "none", "trunk"]],
+    "adjectives": [["long", "none", "trunk"], ["red", "none", "none"]],
     "confidence": 0.99
   }]
 }]
@@ -600,7 +600,7 @@ Output:
         {"id":"berries","type":"generic","scope":"dependent","category":"plant"}
       ],
       "actions":[{"root": "eat", "mode": "habitual", "roles": {"target": "berries"}}],
-      "adjectives":[["red","none","berry"],["healthy","none","bear"]],
+      "adjectives":[["red","none","none"],["healthy","none","bear"]],
       "confidence":0.95
     }
   ]
@@ -1032,51 +1032,72 @@ Output:
 
 ---
 
+Input: "Two red elephants drank."
+
+Output:
+
+[{
+  "raw": "Two red elephants drank.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Two red elephants [set 1] drank.",
+      "type": "situation",
+      "entities": [
+        {"id": "set 1", "type": "set", "category": "elephant"}
+      ],
+      "actions": [{"root": "drink", "mode": "event"}],
+      "adjectives": [["red", "none", "none"]],
+      "time": "past"
+    }
+  ]
+}]
+
+---
+
 Input: "John has two red and three green apples. Does John have several apples?"
 
 Output:
 
-[
-  {
-    "raw": "John has two red and three green apples.",
-    "units": [
-      {
-        "unit_id": "S1",
-        "text": "John 1 has two red apples 2.",
-        "type": "situation",
-        "entities": [
-          {"id":"John 1","type":"concrete","category":"person"},
-          {"id":"apples 2","type":"concrete"}
-        ],
-        "adjectives": [["red","none","none"]]
-      },
-      {
-        "unit_id": "S2",
-        "text": "John 1 has three green apples 3.",
-        "type": "situation",
-        "entities": [
-          {"id":"John 1","type":"concrete","category":"person"},
-          {"id":"apples 3","type":"concrete"}
-        ],
-        "adjectives": [["green","none","none"]]
-      }
-    ]
-  },
-  {
-    "raw": "Does John have several apples?",
-    "units": [
-      {
-        "unit_id":"S3",
-        "text":"Does John 1 have more than 2 apples?",
-        "type":"query",
-        "entities":[
-          {"id":"John 1","type":"concrete","category":"person"},
-          {"id":"apples","type":"generic"}
-        ]
-      }
-    ]
-  }
-]
+[{
+  "raw": "John has two red and three green apples.",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "John 1 has two red apples.",
+      "type": "situation",
+      "entities": [
+        {"id":"John 1","type":"concrete","category":"person"},
+        {"id":"apples","type":"generic","category":"plant"}
+      ],
+      "adjectives": [["red","none","apple"]]
+    },
+    {
+      "unit_id": "S2",
+      "text": "John 1 has three green apples.",
+      "type": "situation",
+      "entities": [
+        {"id":"John 1","type":"concrete","category":"person"},
+        {"id":"apples","type":"generic","category":"plant"}
+      ],
+      "adjectives": [["green","none","apple"]]
+    }
+  ]
+},
+{
+  "raw": "Does John have several apples?",
+  "units": [
+    {
+      "unit_id":"S3",
+      "text":"Does John 1 have more than 2 apples?",
+      "type":"query",
+      "entities":[
+        {"id":"John 1","type":"concrete","category":"person"},
+        {"id":"apples","type":"generic","category":"plant"}
+      ]
+    }
+  ]
+}]
 
 ---
 
