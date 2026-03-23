@@ -535,6 +535,13 @@ Does John 1 have two cars?
 */
 
 
+  // == 7b. DEFINITE FUNCTION TERMS ($theof1) ==
+  // Generic possession bridge: John has $theof1("father", John, CT)
+  [["have", "?:S", ["$theof1", "?:R", "?:S", "?:C"], "?:C"]],
+  // Note: isa bridge is generated per-relation in logconvert to avoid
+  // spurious answers (a generic isa bridge would make $theof1(R,S,C) an R
+  // for any R and S, creating infinite witnesses for wh-queries).
+
   // == 8. MEASUREMENTS & ATTRIBUTES ==
   // Value Holders [cite: 306, 307]
   [["isa", "weight", ["$theof1", "weight", "?:O", "?:Ctxt"]]],

@@ -340,15 +340,18 @@ def rawlogic_convert(logic, s1_json=None):
   # Track how many times each unit_id has been seen so we can generate
   # globally unique clause names (sent_S1, sent_S1_2, sent_S1_3, ...).
   uid_count = {}
+  theof_relations = set()  # collect (REL, TYPE) pairs for bridge axiom generation
   result = []
   for item in items:
     if isinstance(item, list) and len(item) >= 2 and item[0] == "@id":
       sid = str(item[1])
       uid_count[sid] = uid_count.get(sid, 0) + 1
       objs = _convert_id_package(item, asu_index, uid_suffix=uid_count[sid],
-                                 set_el_by_sid=set_el_by_sid)
+                                 set_el_by_sid=set_el_by_sid,
+                                 theof_relations=theof_relations)
     else:
-      objs = _convert_id_package(item, asu_index, set_el_by_sid=set_el_by_sid)
+      objs = _convert_id_package(item, asu_index, set_el_by_sid=set_el_by_sid,
+                                 theof_relations=theof_relations)
     if objs:
       result.extend(objs)
 
@@ -362,6 +365,17 @@ def rawlogic_convert(logic, s1_json=None):
   # Add set membership axioms (pre-clausified by lc_sets).
   for ax_clause in set_axioms:
     result.append({"@name": "frm_set", "@logic": ax_clause})
+
+  # Add per-relation $theof1 bridge axioms.
+  for rel_name, type_base in theof_relations:
+    # is_rel2("father of", $theof1("father", ?:S, ?:C), ?:S, ?:C)
+    bridge_rel = ["is rel2", rel_name,
+                  ["$theof1", type_base, "?:S", "?:C"], "?:S", "?:C"]
+    result.append({"@name": "frm_theof", "@logic": bridge_rel})
+    # isa("father", $theof1("father", ?:S, ?:C))
+    bridge_isa = ["isa", type_base,
+                  ["$theof1", type_base, "?:S", "?:C"]]
+    result.append({"@name": "frm_theof", "@logic": bridge_isa})
 
   # Prepend entity category clauses at the start of the clause list so they
   # are available as given facts throughout the proof.
@@ -655,7 +669,8 @@ def _process_assertion(formula, name, confidence):
   return result
 
 
-def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=None):
+def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=None,
+                        theof_relations=None):
   """Process ["@id", sid, PACKAGE] → list of GK clause dicts."""
   if not isinstance(item, list) or len(item) < 3 or item[0] != "@id":
     return []
@@ -742,6 +757,10 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
       tense_term = tense if tense is not None else "present"
       ctxt_template = ["$ctxt", None, situation, loc_term, kn_term]
       _inject_ctxt_into_objs(result, ctxt_template, tense_term)
+
+  # Rewrite definite functional descriptions to $theof1 terms.
+  if theof_relations is not None:
+    _rewrite_definites(result, asu_index, str(sid), theof_relations)
 
   # Inject $ctxt into set element instantiation clauses for this ASU.
   # Element clauses inherit the same world/tense as the ASU's own clauses.
@@ -1450,6 +1469,178 @@ def _strip_isa_entity(result):
     keep.append(obj)
   result[:] = keep
   return result
+
+
+# ======== $theof1 definite function terms ========
+
+def _deep_replace(obj, old_val, new_val):
+  """Recursively replace old_val with new_val throughout a nested list structure.
+
+  old_val can be a string or a list (Skolem function).  Comparison is by
+  equality (== operator, which does deep structural comparison for lists).
+  """
+  if obj == old_val:
+    return new_val
+  if isinstance(obj, list):
+    return [_deep_replace(el, old_val, new_val) for el in obj]
+  return obj
+
+
+def _find_is_rel2_match(result, rel_name):
+  """Find an is_rel2 atom in the clause list matching the given relation name.
+
+  Scans all @logic entries for an atom of the form:
+    ["is rel2", rel_name, VALUE_TERM, ARG_TERM, CTXT]
+  or inside a disjunction (multi-literal clause):
+    [... ["is rel2", rel_name, VALUE_TERM, ARG_TERM, CTXT] ...]
+
+  Returns (clause_index, VALUE_TERM, ARG_TERM, CTXT) or None.
+  """
+  for i, obj in enumerate(result):
+    if not isinstance(obj, dict) or "@logic" not in obj:
+      continue
+    clause = obj["@logic"]
+    atoms = _clause_atoms(clause)
+    for atom in atoms:
+      if (isinstance(atom, list) and len(atom) >= 4
+          and atom[0] == "is rel2" and atom[1] == rel_name):
+        value_term = atom[2]
+        arg_term = atom[3]
+        ctxt = atom[4] if len(atom) > 4 else None
+        return (i, value_term, arg_term, ctxt)
+  return None
+
+
+def _find_have_isa_match(result, type_base):
+  """Fallback: find have + isa pair matching a definite type.
+
+  Looks for clauses containing:
+    ["isa", type_base, VALUE_TERM]
+  and:
+    ["have", ARG_TERM, VALUE_TERM, CTXT]
+  where VALUE_TERM is the same in both.
+
+  Returns (VALUE_TERM, ARG_TERM, CTXT) or None.
+  """
+  # Collect all (VALUE_TERM -> True) from isa atoms matching type_base
+  isa_values = set()
+  for obj in result:
+    if not isinstance(obj, dict) or "@logic" not in obj:
+      continue
+    for atom in _clause_atoms(obj["@logic"]):
+      if (isinstance(atom, list) and len(atom) >= 3
+          and atom[0] == "isa" and atom[1] == type_base):
+        val = atom[2]
+        # Hashable key: use str() for lists (Skolem functions)
+        isa_values.add(str(val) if isinstance(val, list) else val)
+
+  # Find have atom whose VALUE_TERM is in isa_values
+  for obj in result:
+    if not isinstance(obj, dict) or "@logic" not in obj:
+      continue
+    for atom in _clause_atoms(obj["@logic"]):
+      if (isinstance(atom, list) and len(atom) >= 3
+          and atom[0] == "have"):
+        arg_term = atom[1]
+        value_term = atom[2]
+        ctxt = atom[3] if len(atom) > 3 else None
+        key = str(value_term) if isinstance(value_term, list) else value_term
+        if key in isa_values:
+          return (value_term, arg_term, ctxt)
+  return None
+
+
+def _clause_atoms(clause):
+  """Extract individual atoms from a clause (which may be a single atom or
+  a multi-literal disjunction [lit1, lit2, ...] where each lit is a list)."""
+  if not isinstance(clause, list) or not clause:
+    return []
+  # Multi-literal clause: list of lists (each element is an atom/literal)
+  if isinstance(clause[0], list):
+    return clause
+  # Single-literal clause: the clause itself is the atom
+  if isinstance(clause[0], str):
+    return [clause]
+  return []
+
+
+def _rewrite_definites(result, asu_index, sid, theof_relations):
+  """Rewrite definite functional descriptions to $theof1 terms.
+
+  For each definite in the ASU's Stage-1 data, find the corresponding
+  is_rel2 (or have+isa fallback) in the clausified result, construct a
+  $theof1 function term, and replace the entity throughout all clauses.
+
+  theof_relations: set to collect (REL, TYPE) pairs for bridge axiom generation.
+  """
+  if not asu_index:
+    return
+  asu = asu_index.get(sid)
+  if not asu:
+    return
+  definites = asu.get("definites")
+  if not definites or not isinstance(definites, list):
+    return
+
+  for defn in definites:
+    if not isinstance(defn, list) or len(defn) < 3:
+      continue
+    rel_name = defn[0]    # e.g., "father of", "head of"
+    value_id = defn[1]    # e.g., "the father 2", "the head 1"
+    # arg_id = defn[2]    # e.g., "John 1", "elephant 2" — may not appear in clauses
+
+    # Compute base type: strip trailing " of" from relation name
+    if rel_name.endswith(" of"):
+      type_base = rel_name[:-3]
+    else:
+      type_base = rel_name
+
+    # Primary: find is_rel2 match
+    match = _find_is_rel2_match(result, rel_name)
+    remove_clause_idx = None
+    if match:
+      clause_idx, value_term, arg_term, ctxt = match
+      remove_clause_idx = clause_idx
+    else:
+      # Fallback: find have + isa match
+      have_match = _find_have_isa_match(result, type_base)
+      if have_match:
+        value_term, arg_term, ctxt = have_match
+      else:
+        continue  # No matching pattern found — skip this definite
+
+    # Construct $theof1 function term
+    if ctxt is not None:
+      fn_term = ["$theof1", type_base, arg_term, ctxt]
+    else:
+      fn_term = ["$theof1", type_base, arg_term]
+
+    # Deep-replace value_term with fn_term throughout all clauses
+    for obj in result:
+      if "@logic" in obj:
+        obj["@logic"] = _deep_replace(obj["@logic"], value_term, fn_term)
+      if "@question" in obj:
+        obj["@question"] = _deep_replace(obj["@question"], value_term, fn_term)
+
+    # Remove the is_rel2 clause (now derivable from bridge axioms)
+    if remove_clause_idx is not None:
+      # Re-find it since indices may have shifted — match by content
+      for i, obj in enumerate(result):
+        if not isinstance(obj, dict) or "@logic" not in obj:
+          continue
+        clause = obj["@logic"]
+        atoms = _clause_atoms(clause)
+        has_is_rel2 = any(
+          isinstance(a, list) and len(a) >= 4
+          and a[0] == "is rel2" and a[1] == rel_name
+          for a in atoms
+        )
+        if has_is_rel2:
+          result.pop(i)
+          break
+
+    # Record for bridge axiom generation
+    theof_relations.add((rel_name, type_base))
 
 
 # ======== possessive have inference ========

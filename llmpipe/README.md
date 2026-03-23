@@ -1,10 +1,12 @@
-# llmpipe
+llmpipe
+=======
 
 `llmpipe` is a natural-language question-answering pipeline built on LLMs and a first-order
 theorem prover.  It converts English text into predicate logic using a two-stage LLM parser,
 then passes the logic to the [`gk`](../gk/) binary prover to produce answers.
 
-## Quick start
+Quick start
+-----------
 
 ```bash
 # Run from the llmpipe/ directory
@@ -15,7 +17,8 @@ python3 solver/solve.py "Mary is taller than John. Who is tall?" -explain
 # → Mary. (with step-by-step proof)
 ```
 
-## How it works
+How it works
+------------
 
 ```
 English text
@@ -30,7 +33,8 @@ English text
 The pipeline supports GPT, Claude, Gemini, and DeepSeek as the parsing LLM.  LLM responses are
 cached in `cache.db` (SQLite) so repeated queries are free.
 
-## Repository layout
+Repository layout
+-----------------
 
 ```
 llmpipe/
@@ -42,7 +46,8 @@ llmpipe/
 └── test.py       Test runner
 ```
 
-## Running
+Running
+-------
 
 ```bash
 # Basic usage
@@ -72,7 +77,8 @@ python3 test.py
 python3 test.py tests/tests_core.py -llm claude
 ```
 
-## Configuration
+Configuration
+-------------
 
 **LLM provider and model:** edit `solver/llmcall.py`:
 ```python
@@ -85,7 +91,8 @@ geminiversion = "gemini-2.0-flash"
 `deepseek_secrets.txt`).
 
 
-## Documentation
+Documentation
+-------------
 
 See `ENCODINGS.md` for the three data representations (Stage-1, Stage-2, GK input) with examples.
 

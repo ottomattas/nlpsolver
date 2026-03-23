@@ -254,7 +254,7 @@ def make_question_beword(sp,index,candidates):
 def sentence_is_name(ctxt,sentence):
   for el in sentence:
     if el["upos"] in ["PUNCT"]: continue
-    if el["ner"] in ["O"]: return False
+    if el.get("ner","O") in ["O"]: return False
   return True
 
 

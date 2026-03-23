@@ -484,6 +484,8 @@ def ans_atom_name(atom):
   if not isinstance(atom, list) or len(atom) < 2:
     return str(atom)
   val = atom[1]
+  if isinstance(val, list) and val:
+    return _render_term_english(val)
   if not isinstance(val, str):
     return str(val)
   # with_url=False: only append URL when the name is ambiguous
@@ -1177,6 +1179,12 @@ def _render_term_english(term):
     return str(term)
 
   op = term[0]
+
+  # $theof1 -> "the TYPE of SUBJECT"
+  if op == "$theof1" and len(term) >= 3:
+    type_name = term[1] if isinstance(term[1], str) else str(term[1])
+    subj = entity_name(term[2], proof_mode=True)
+    return "the " + type_name + " of " + subj
 
   # $count -> "the number of ..."
   if op == "$count" and len(term) >= 2:

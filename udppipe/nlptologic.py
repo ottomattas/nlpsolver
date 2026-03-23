@@ -571,7 +571,7 @@ def parse_sentence(ctxt,sentence,question_dummy_name=None):
   if (first_word and first_word["upos"] in ["PROPN","NOUN"] and 
       not first_word["text"].startswith(dummy_name) and
       (not is_question_sentence(sentence) or first_word["lemma"] not in question_words) and
-      first_word["ner"] in ["O","0",0] and
+      first_word.get("ner","O") in ["O","0",0] and
       first_word["text"][0].isupper()):
     if (not(first_word["text"] in first_names) and 
         (not(len(first_word["text"])>2 and first_word["text"][-2:]=="'s"))):  
@@ -584,7 +584,7 @@ def parse_sentence(ctxt,sentence,question_dummy_name=None):
   # Fix PROPN for first names
   for word in sentence: 
     #debug_print("word",word)
-    if word["upos"] in ["NOUN","PROPN"] and word["text"][0].isupper() and word["ner"] in ["O","0",0]:
+    if word["upos"] in ["NOUN","PROPN"] and word["text"][0].isupper() and word.get("ner","O") in ["O","0",0]:
       if word["text"] in first_names:
         word["upos"]="PROPN" 
         word["ner"]="S-PERSON"   
