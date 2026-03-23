@@ -305,6 +305,23 @@ def rawlogic_convert(logic, s1_json=None):
   else:
     return None
 
+  # Group set element clauses by source SID so each ASU can inject its own
+  # $ctxt (world, tense) into its element facts.  @name format is
+  # "sent_S1_el1", "sent_S1_dist", etc. — extract SID as the part between
+  # "sent_" and the last "_el" or "_dist" suffix.
+  set_el_by_sid = {}
+  for cl in set_element_clauses:
+    nm = cl.get("@name", "")
+    if nm.startswith("sent_"):
+      core = nm[5:]  # strip "sent_"
+      # Find the SID: everything before "_el" or "_dist"
+      for sep in ("_el", "_dist"):
+        idx = core.find(sep)
+        if idx >= 0:
+          sid = core[:idx]
+          set_el_by_sid.setdefault(sid, []).append(cl)
+          break
+
   # Build unit_id -> ASU index for programmatic $ctxt injection from Stage-1 data.
   asu_index = _build_asu_index(s1_json)
 
@@ -328,18 +345,23 @@ def rawlogic_convert(logic, s1_json=None):
     if isinstance(item, list) and len(item) >= 2 and item[0] == "@id":
       sid = str(item[1])
       uid_count[sid] = uid_count.get(sid, 0) + 1
-      objs = _convert_id_package(item, asu_index, uid_suffix=uid_count[sid])
+      objs = _convert_id_package(item, asu_index, uid_suffix=uid_count[sid],
+                                 set_el_by_sid=set_el_by_sid)
     else:
-      objs = _convert_id_package(item, asu_index)
+      objs = _convert_id_package(item, asu_index, set_el_by_sid=set_el_by_sid)
     if objs:
       result.extend(objs)
+
+  # Emit any orphan element clauses (SIDs not matched) with free-variable $ctxt.
+  for sid, el_clauses in set_el_by_sid.items():
+    if not _g_options.get("nocontext_flag", False):
+      ctxt_template = ["$ctxt", None, _fresh_fv(), _fresh_fv(), _fresh_fv()]
+      _inject_ctxt_into_objs(el_clauses, ctxt_template, _fresh_fv())
+    result.extend(el_clauses)
 
   # Add set membership axioms (pre-clausified by lc_sets).
   for ax_clause in set_axioms:
     result.append({"@name": "frm_set", "@logic": ax_clause})
-
-  # Add set element instantiation clauses (already ground).
-  result.extend(set_element_clauses)
 
   # Prepend entity category clauses at the start of the clause list so they
   # are available as given facts throughout the proof.
@@ -633,7 +655,7 @@ def _process_assertion(formula, name, confidence):
   return result
 
 
-def _convert_id_package(item, asu_index=None, uid_suffix=None):
+def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=None):
   """Process ["@id", sid, PACKAGE] → list of GK clause dicts."""
   if not isinstance(item, list) or len(item) < 3 or item[0] != "@id":
     return []
@@ -682,6 +704,8 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None):
     result = _process_assertion(formula, name, confidence)
 
   # Inject $ctxt into @logic entries (not @question entries).
+  ctxt_template = None
+  tense_term = None
   if not _g_options.get("nocontext_flag", False):
     loc_term = location if location is not None else _fresh_fv()
     kn_term  = knower  if knower  is not None else _fresh_fv()
@@ -718,6 +742,15 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None):
       tense_term = tense if tense is not None else "present"
       ctxt_template = ["$ctxt", None, situation, loc_term, kn_term]
       _inject_ctxt_into_objs(result, ctxt_template, tense_term)
+
+  # Inject $ctxt into set element instantiation clauses for this ASU.
+  # Element clauses inherit the same world/tense as the ASU's own clauses.
+  sid_key = str(sid)
+  if set_el_by_sid and sid_key in set_el_by_sid:
+    el_clauses = set_el_by_sid.pop(sid_key)
+    if ctxt_template is not None and not is_question:
+      _inject_ctxt_into_objs(el_clauses, ctxt_template, tense_term)
+    result.extend(el_clauses)
 
   return result
 

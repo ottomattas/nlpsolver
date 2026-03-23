@@ -387,23 +387,54 @@ def entity_name(val, with_url=False, proof_mode=False):
                     "the very big mouse is very big" instead of
                     "the very big mouse is a very big mouse")
   """
-  # Raw mode (json_flag): use raw logic IDs so English matches JSON output.
-  # Variables strip ?:, everything else shown as-is.
+  # --- Shared handling for non-string types (both JSON and non-JSON modes) ---
   import globals as _g
-  if _g.options.get("json_flag") and proof_mode:
-    if _is_skolem_fn(val):
-      return str(val)
-    if not isinstance(val, str):
-      return str(val)
-    if val.startswith("?:"):
-      bare = val[2:]
-      return ("V" + bare) if bare.isdigit() else bare
-    return val
+  json_mode = _g.options.get("json_flag") and proof_mode
 
+  # Skolem functions: ["sk0", "Greg 2", ...] -> English event description
   if _is_skolem_fn(val):
     return _skolem_fn_to_name(val)
+  # Complex list terms: $count, $setof, arithmetic
+  if isinstance(val, list) and val:
+    return _render_term_english(val)
   if not isinstance(val, str):
     return str(val)
+
+  # --- Variables: use display map, then fallback ---
+  if val.startswith("?:"):
+    orig = val
+    if orig in _ctx.var_display:
+      return _ctx.var_display[orig]
+    bare = val[2:]
+    if bare.isdigit():
+      return "V" + bare
+    return bare
+
+  # --- Population constants: $some_not_* / $some_* ---
+  if val.startswith("$some_not_"):
+    noun = val[len("$some_not_"):].replace("_", " ")
+    return _indef_article(noun) + " non-" + noun
+  if val.startswith("$some_"):
+    noun = val[len("$some_"):].replace("_", " ")
+    return _indef_article(noun) + " " + noun
+
+  # --- Skolem constants: sk0, sk1, ... ---
+  if re.match(r'^sk\d+$', val):
+    display = _ctx.skolem_display.get(val, val)
+    typ = _ctx.skolem_types.get(val)
+    if typ:
+      if val in _ctx.skolem_introduced:
+        return display
+      _ctx.skolem_introduced.add(val)
+      return "some " + typ + " " + display
+    return display
+
+  # --- JSON mode: keep raw entity IDs (e.g. "John 1") for traceability ---
+  if json_mode:
+    return val
+
+  # --- Non-JSON mode: cosmetic entity name rendering ---
+
   # Check entity map: prefer the user's original phrasing for answer display.
   # In proof_mode, skip entity_map for single (non-ambiguous) common-noun
   # entities — their qualifier adjectives often duplicate predicate content.
@@ -419,33 +450,6 @@ def entity_name(val, with_url=False, proof_mode=False):
       if with_url and (val.startswith("http://") or val.startswith("https://")):
         return name + " (" + val + ")"
       return name
-  if val.startswith("?:"):
-    # Use the short display name if one was computed for this variable.
-    orig = val
-    if orig in _ctx.var_display:
-      return _ctx.var_display[orig]
-    val = val[2:]
-    # Purely numeric names are prover-generated fresh variables — prefix with "V"
-    if val.isdigit():
-      val = "V" + val
-  # Population constants: $some_not_* -> "a non-*",  $some_* -> "a/an *"
-  if val.startswith("$some_not_"):
-    noun = val[len("$some_not_"):].replace("_", " ")
-    return _indef_article(noun) + " non-" + noun
-  if val.startswith("$some_"):
-    noun = val[len("$some_"):].replace("_", " ")
-    return _indef_article(noun) + " " + noun
-  # Skolem constants: sk0, sk1, ... -> "some TYPE act1" on first mention,
-  # then just "act1" on subsequent mentions within the same proof.
-  if re.match(r'^sk\d+$', val):
-    display = _ctx.skolem_display.get(val, val)
-    typ = _ctx.skolem_types.get(val)
-    if typ:
-      if val in _ctx.skolem_introduced:
-        return display
-      _ctx.skolem_introduced.add(val)
-      return "some " + typ + " " + display
-    return display
   # URL constant
   if val.startswith("http://") or val.startswith("https://"):
     name = _extract_url_name(val)
@@ -1162,24 +1166,69 @@ def _is_var_raw(args, i):
   """True if args[i] is a raw variable string (starts with '?:')."""
   return (len(args) > i and isinstance(args[i], str) and args[i].startswith("?:"))
 
-def _render_setof_english(term):
-  """Render a $setof or $count term as English.
+def _render_term_english(term):
+  """Render a complex list term (nested function/predicate) as English.
 
-  $count($setof(have, John 1, [$and, $isa(car,$arg1)])) -> "the number of cars John has"
-  $count($setof(id, set 1, [$and, isa(elephant,$arg1)])) -> "the number of elephants in set 1"
-  $setof(have, John 1, [$and, ...]) -> "the set of cars John has"
+  Handles $count, $setof, TPTP arithmetic ($sum, $difference, $product,
+  $quotient), and infix arithmetic (+, -, *, /).
+  Falls back to str() for unrecognized terms.
   """
   if not isinstance(term, list) or not term:
     return str(term)
 
-  if term[0] == "$count" and len(term) >= 2:
+  op = term[0]
+
+  # $count -> "the number of ..."
+  if op == "$count" and len(term) >= 2:
     inner = _render_setof_english(term[1])
     return "the number of " + inner
-  if term[0] == "$greatereq" and len(term) >= 2:
-    inner = _render_setof_english(term[1])
-    return inner + " or more"
 
-  if term[0] != "$setof" or len(term) < 3:
+  # $setof -> delegate
+  if op == "$setof":
+    return _render_setof_english(term)
+
+  # TPTP prefix arithmetic functions
+  _ARITH_PREFIX = {
+    "$sum": "+", "$difference": "-", "$product": "*", "$quotient": "/",
+    "$quotient_e": "/", "$remainder_e": "mod", "$remainder_t": "mod",
+    "$remainder_f": "mod", "$uminus": "-",
+    "$floor": "floor", "$ceiling": "ceiling",
+    "$truncate": "truncate", "$round": "round",
+    "$to_int": "int", "$to_real": "real",
+  }
+  if op in _ARITH_PREFIX and len(term) >= 2:
+    if op == "$uminus":
+      return "-" + entity_name(term[1], proof_mode=True)
+    if len(term) == 2:
+      # Unary: $floor(X) etc
+      return _ARITH_PREFIX[op] + "(" + entity_name(term[1], proof_mode=True) + ")"
+    a = entity_name(term[1], proof_mode=True)
+    b = entity_name(term[2], proof_mode=True)
+    return a + " " + _ARITH_PREFIX[op] + " " + b
+
+  # Infix arithmetic: [A, "+", B] etc
+  if len(term) == 3 and isinstance(term[1], str) and term[1] in ("+", "-", "*", "/"):
+    a = entity_name(term[0], proof_mode=True)
+    b = entity_name(term[2], proof_mode=True)
+    return a + " " + term[1] + " " + b
+
+  return str(term)
+
+
+def _render_setof_english(term):
+  """Render a $setof term as English.
+
+  Fully concrete (anchor + subject + $isa in conditions):
+    $setof(have, John 1, [$and, $isa(car,$arg1)]) -> "cars John has"
+    $setof(have, John 1, [$and, $isa(car,$arg1), $has_degree_property(nice,...)]) -> "nice cars John has"
+
+  Partially concrete (anchor + subject concrete, some variable conditions):
+    $setof(have, John 1, [$and, $isa(car,$arg1), ?:Y]) -> "cars John has that satisfy Y"
+
+  All variables (generic axiom):
+    $setof(?:Y, ?:Z, [$and, ?:U, ?:V]) -> "a set of things satisfying conditions U and V"
+  """
+  if not isinstance(term, list) or not term or term[0] != "$setof" or len(term) < 3:
     return str(term)
 
   # Parse canonical $setof form
@@ -1189,32 +1238,109 @@ def _render_setof_english(term):
     conds = term[3] if len(term) > 3 else []
     type_name = _extract_type_from_conds(conds)
     return type_name + " in " + str(set_id)
+
+  # Anchored: ["$setof", PRED, SUBJ, ["$and", ...]]
+  pred = term[1]
+  subj = term[2] if len(term) > 2 else "?"
+  conds = term[3] if len(term) > 3 else term[2]
+
+  pred_is_var = isinstance(pred, str) and pred.startswith("?:")
+  subj_is_var = isinstance(subj, str) and subj.startswith("?:")
+
+  # All variables -> generic description
+  if pred_is_var and subj_is_var:
+    cond_str = _render_and_conditions(conds)
+    return "a set of things satisfying " + cond_str
+
+  # Concrete anchor/subject -> try to produce natural English
+  type_name, props, extra_vars = _extract_type_and_props(conds)
+  subj_name = entity_name(subj, proof_mode=True)
+
+  # Build the base: "nice cars John has"
+  if props:
+    desc = " ".join(props) + " " + type_name
   else:
-    # Anchored: ["$setof", PRED, SUBJ, ["$and", ...]]
-    pred = term[1]
-    subj = term[2] if len(term) > 2 else "?"
-    conds = term[3] if len(term) > 3 else term[2]
-    type_name = _extract_type_from_conds(conds)
-    subj_name = entity_name(subj, proof_mode=True)
-    if pred == "have":
-      return type_name + " " + subj_name + " has"
-    elif pred == "can":
-      return type_name + " that can " + str(conds)
+    desc = type_name
+
+  if pred == "have":
+    base = desc + " " + subj_name + " has"
+  elif pred == "can":
+    base = desc + " that can " + str(conds)
+  else:
+    base = desc + " " + pred + " " + subj_name
+
+  # Append unresolved variable conditions
+  if extra_vars:
+    var_str = " and ".join(entity_name(v, proof_mode=True) for v in extra_vars)
+    base += " that satisfy " + var_str
+
+  return base
+
+
+def _extract_type_and_props(conds):
+  """Extract type name, property adjectives, and unresolved variable conditions.
+
+  Returns (type_name, props_list, extra_vars_list).
+  """
+  if not isinstance(conds, list) or not conds:
+    return "things", [], []
+  items = conds[1:] if conds[0] in ("$and", "and") else [conds]
+
+  type_name = "things"
+  props = []
+  extra_vars = []
+
+  for item in items:
+    if isinstance(item, str) and item.startswith("?:"):
+      extra_vars.append(item)
+      continue
+    if not isinstance(item, list) or len(item) < 2:
+      continue
+    pred = item[0]
+    if pred in ("$isa", "isa") and isinstance(item[1], str):
+      type_name = item[1] + "s"
+    elif pred in ("$has_degree_property", "has degree property") and len(item) >= 3:
+      # Extract the adjective name
+      adj = item[1] if isinstance(item[1], str) and not item[1].startswith("?:") else None
+      if adj:
+        props.append(adj)
+      else:
+        extra_vars.append(item)
     else:
-      return type_name + " " + pred + " " + subj_name
+      # Skip $arg1-only predicates (like $have which duplicates the anchor)
+      pass
+
+  return type_name, props, extra_vars
+
+
+def _render_and_conditions(conds):
+  """Render $and conditions as a readable string.
+
+  Variable conditions: "conditions U and V"
+  Mixed: "conditions $isa(car, ...) and V"
+  """
+  if not isinstance(conds, list) or not conds:
+    return "conditions " + str(conds)
+  items = conds[1:] if conds[0] in ("$and", "and") else [conds]
+
+  parts = []
+  for item in items:
+    if isinstance(item, str) and item.startswith("?:"):
+      parts.append(entity_name(item, proof_mode=True))
+    elif isinstance(item, str):
+      parts.append(item)
+    else:
+      parts.append(str(item))
+
+  if len(parts) == 1:
+    return "condition " + parts[0]
+  return "conditions " + " and ".join(parts)
 
 
 def _extract_type_from_conds(conds):
   """Extract the type name from a $and conditions list."""
-  if not isinstance(conds, list) or not conds:
-    return "things"
-  items = conds[1:] if conds[0] in ("$and", "and") else [conds]
-  for item in items:
-    if isinstance(item, list) and len(item) >= 2:
-      pred = item[0]
-      if pred in ("$isa", "isa") and isinstance(item[1], str):
-        return item[1] + "s"
-  return "things"
+  type_name, _, _ = _extract_type_and_props(conds)
+  return type_name
 
 
 def _render_member(e, args, negated):
@@ -1237,7 +1363,7 @@ def _render_equals(e, args, negated):
     val = args[i]
     other = args[1 - i]
     if isinstance(val, list) and val and val[0] == "$count":
-      set_desc = _render_setof_english(val)
+      set_desc = _render_term_english(val)
       other_name = entity_name(other, proof_mode=True)
       if negated:
         return set_desc + " is not " + other_name
@@ -1310,6 +1436,14 @@ _PRED_TABLE = {
                             lambda e,a: e(0)+" is not less than "+e(1)),
   ">":                  (2, lambda e,a: e(0)+" is greater than "+e(1),
                             lambda e,a: e(0)+" is not greater than "+e(1)),
+  "$less":              (2, lambda e,a: e(0)+" is less than "+e(1),
+                            lambda e,a: e(0)+" is not less than "+e(1)),
+  "$lesseq":            (2, lambda e,a: e(0)+" is at most "+e(1),
+                            lambda e,a: e(0)+" is not at most "+e(1)),
+  "$greater":           (2, lambda e,a: e(0)+" is greater than "+e(1),
+                            lambda e,a: e(0)+" is not greater than "+e(1)),
+  "$greatereq":         (2, lambda e,a: e(0)+" is at least "+e(1),
+                            lambda e,a: e(0)+" is not at least "+e(1)),
   # mental predicates
   "kb":                 (3, lambda e,a: e(1)+" "+e(2)+" that ...", None),
   "kb force":           (0, None,                                  None),
