@@ -51,7 +51,7 @@ The system requires Linux and has been developed using Python 3.8 and later.
     converting English to a [UD](https://universaldependencies.org/) graph.
 * The reasoner binary `gk`, included in the system.
 
-**For llmpipe**, the only external dependency beyond Python is:
+**For llmpipe**, the external dependencies are:
 * An API key for at least one LLM provider (GPT, Claude, Gemini or Deepseek) in `secrets`
 * The reasoner binary `gk`, included in the system.
 
