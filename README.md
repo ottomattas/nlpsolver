@@ -10,7 +10,7 @@ It contains two independent pipelines:
 
 * **udppipe** — the older Stanza/UD-based semantic parser pipeline, described in the paper
   [An Experimental Pipeline for Automated Reasoning in Natural Language](https://link.springer.com/chapter/10.1007/978-3-031-38499-8_29).
-  Does not use LLMs. See the `udppipe/` folder and its README.
+  Does not require LLMs. See the `udppipe/` folder and its README.
 
 Both pipelines share the same `gk` theorem prover backend and have a similar core logic representation.
 
@@ -50,11 +50,10 @@ The system requires Linux and has been developed using Python 3.8 and later.
 * The Stanford Stanza NLP package https://stanfordnlp.github.io/stanza/
     converting English to a [UD](https://universaldependencies.org/) graph.
 * The reasoner binary `gk`, included in the system.
-* Data files from the tarball http://logictools.org/data/nlpsolver_data.tar.gz
 
 **For llmpipe**, the only external dependency beyond Python is:
-* The reasoner binary `gk` and its data files (same tarball as above).
 * An API key for at least one LLM provider (GPT, Claude, Gemini or Deepseek) in `secrets`
+* The reasoner binary `gk`, included in the system.
 
 The subfolders `gui` and `amr` contain experimental code in development, and
 are not currently used by either pipeline.
