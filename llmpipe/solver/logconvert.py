@@ -1677,69 +1677,108 @@ def _add_possessive_have(result):
   def _is_ground_str(v):
     return isinstance(v, str) and not v.startswith("?:")
 
-  # Pass 1a: collect isa(T, E) facts for ground T and E.
-  isa_types = {}          # entity_str -> set of type_str
+  def _is_entity_term(v):
+    """True if v is a valid entity: ground string, Skolem function, or $theof1 term."""
+    if _is_ground_str(v):
+      return True
+    if isinstance(v, list) and len(v) >= 2 and isinstance(v[0], str):
+      return v[0].startswith("sk") or v[0] == "$theof1"
+    return False
+
+  def _entity_key(v):
+    """Hashable key for an entity (string or list term)."""
+    return str(v) if isinstance(v, list) else v
+
+  def _extract_atoms(clause):
+    """Return list of atoms from a clause (single-atom or multi-literal)."""
+    if not isinstance(clause, list) or not clause:
+      return []
+    if isinstance(clause[0], list):
+      return clause  # multi-literal: each element is an atom
+    if isinstance(clause[0], str):
+      return [clause]  # single atom
+    return []
+
+  def _extract_guard(clause):
+    """Return the guard literals (negative atoms) from a multi-literal clause.
+    For single-atom clauses, returns []."""
+    if not isinstance(clause, list) or not clause or not isinstance(clause[0], list):
+      return []
+    return [atom for atom in clause
+            if isinstance(atom, list) and atom
+            and isinstance(atom[0], str) and atom[0].startswith("-")]
+
+  # Pass 1a: collect isa(T, E) facts for ground and function-term entities.
+  # key: _entity_key(E) -> set of type strings
+  isa_types = {}
   for obj in result:
     if not isinstance(obj, dict) or "@logic" not in obj:
       continue
-    clause = obj["@logic"]
-    if not (isinstance(clause, list) and clause
-            and isinstance(clause[0], str) and clause[0] == "isa"
-            and len(clause) >= 3):
-      continue
-    typ, ent = clause[1], clause[2]
-    if _is_ground_str(typ) and _is_ground_str(ent):
-      isa_types.setdefault(ent, set()).add(typ)
+    for atom in _extract_atoms(obj["@logic"]):
+      if (isinstance(atom, list) and len(atom) >= 3
+          and isinstance(atom[0], str) and atom[0] == "isa"
+          and isinstance(atom[1], str) and _is_entity_term(atom[2])):
+        typ, ent = atom[1], atom[2]
+        isa_types.setdefault(_entity_key(ent), set()).add(typ)
 
   # Pass 1b: collect CT of the first activity-role fact mentioning each entity.
   # has_target(act, E, CT) / has_actor(act, E, CT) / has_instrument(act, E, CT) …
   # E is always at argument position 2 (index 2) for these predicates.
-  entity_event_ct = {}    # entity_str -> CT from containing activity
+  entity_event_ct = {}    # entity_key -> CT from containing activity
   for obj in result:
     if not isinstance(obj, dict) or "@logic" not in obj:
       continue
-    clause = obj["@logic"]
-    if not (isinstance(clause, list) and clause
-            and isinstance(clause[0], str)
-            and clause[0] in _ACTIVITY_ROLE_PREDS
-            and len(clause) >= 4):
-      continue
-    ent = clause[2]
-    ct  = clause[3] if len(clause) > 3 else None
-    if _is_ground_str(ent) and ent not in entity_event_ct and ct is not None:
-      entity_event_ct[ent] = ct
+    for atom in _extract_atoms(obj["@logic"]):
+      if (isinstance(atom, list) and len(atom) >= 4
+          and isinstance(atom[0], str)
+          and atom[0] in _ACTIVITY_ROLE_PREDS
+          and _is_entity_term(atom[2])):
+        ent = atom[2]
+        ct  = atom[3] if len(atom) > 3 else None
+        ekey = _entity_key(ent)
+        if ekey not in entity_event_ct and ct is not None:
+          entity_event_ct[ekey] = ct
 
   # Pass 2: find is_rel2(R, E, Y, CT_possessive) where R ends in " of" and
   # isa(T, E) exists with T+" of" == R.  Emit have(Y, E, CT_chosen).
+  # For rule clauses with guard literals, emit a conditional have with the same guard.
   new_facts = []
   seen = set()
   for obj in result:
     if not isinstance(obj, dict) or "@logic" not in obj:
       continue
     clause = obj["@logic"]
-    if not (isinstance(clause, list) and clause
-            and isinstance(clause[0], str) and clause[0] == "is rel2"
-            and len(clause) >= 4):
-      continue
-    rel, ent, owner = clause[1], clause[2], clause[3]
-    ct_possessive = clause[4] if len(clause) > 4 else None
-    if not (isinstance(rel, str) and rel.endswith(" of")):
-      continue
-    if not (_is_ground_str(ent) and _is_ground_str(owner)):
-      continue
-    expected_type = rel[:-3]    # strip trailing " of"
-    if ent not in isa_types or expected_type not in isa_types[ent]:
-      continue
-    # Prefer the activity-event CT (correct tense) over the possessive CT.
-    ct = entity_event_ct.get(ent, ct_possessive)
-    have_clause = ["have", owner, ent]
-    if ct is not None:
-      have_clause.append(list(ct) if isinstance(ct, list) else ct)
-    key = (owner, ent)
-    if key in seen:
-      continue
-    seen.add(key)
-    new_facts.append({"@name": obj.get("@name", "sent_?"), "@logic": have_clause})
+    for atom in _extract_atoms(clause):
+      if not (isinstance(atom, list) and len(atom) >= 4
+              and isinstance(atom[0], str) and atom[0] == "is rel2"):
+        continue
+      rel, ent, owner = atom[1], atom[2], atom[3]
+      ct_possessive = atom[4] if len(atom) > 4 else None
+      if not (isinstance(rel, str) and rel.endswith(" of")):
+        continue
+      if not (_is_entity_term(ent) and (_is_ground_str(owner) or
+              (isinstance(owner, str) and owner.startswith("?:")))):
+        continue
+      expected_type = rel[:-3]    # strip trailing " of"
+      ekey = _entity_key(ent)
+      if ekey not in isa_types or expected_type not in isa_types[ekey]:
+        continue
+      # Prefer the activity-event CT (correct tense) over the possessive CT.
+      ct = entity_event_ct.get(ekey, ct_possessive)
+      have_atom = ["have", owner, ent]
+      if ct is not None:
+        have_atom.append(list(ct) if isinstance(ct, list) else ct)
+      # For rule clauses with guard literals, emit conditional have
+      guard = _extract_guard(clause)
+      if guard:
+        have_clause = guard + [have_atom]
+      else:
+        have_clause = have_atom
+      key = (str(owner), ekey)
+      if key in seen:
+        continue
+      seen.add(key)
+      new_facts.append({"@name": obj.get("@name", "sent_?"), "@logic": have_clause})
 
   if not new_facts:
     return
