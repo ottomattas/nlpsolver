@@ -546,10 +546,48 @@ def _walk_for_count(formula, seen_sigs, clauses, source_name="S0", in_assertion=
         clauses.extend(el_clauses)
         # Also instantiate distributive events
         # (need to search in parent formula for forall/member blocks)
+  # Check for forall/implies/member pattern in assertion context:
+  # ["forall", VAR, ["implies", ["member", VAR, SETOF_TERM], CONSEQUENT]]
+  # Generate a single existence fact: member("$some_TYPE", SETOF_TERM)
+  if (in_assertion and len(formula) == 3 and formula[0] == "forall"
+      and isinstance(formula[2], list) and len(formula[2]) == 3
+      and formula[2][0] == "implies"):
+    antecedent = formula[2][1]
+    if (isinstance(antecedent, list) and len(antecedent) >= 3
+        and antecedent[0] == "member"
+        and isinstance(antecedent[2], list) and len(antecedent[2]) >= 3
+        and antecedent[2][0] == "$setof"):
+      setof_term = antecedent[2]
+      sig = json.dumps(setof_term, sort_keys=True)
+      if sig not in seen_sigs:
+        seen_sigs.add(sig)
+        # Extract type from conditions for naming
+        type_name = _extract_type_from_setof(setof_term)
+        el_name = "$some_" + type_name if type_name else "$some_set_member"
+        member_fact = ["member", el_name, setof_term]
+        clauses.append({"@name": "sent_" + str(source_name) + "_exist",
+                        "@logic": member_fact})
+
   # Recurse
   for child in formula:
     if isinstance(child, list):
       _walk_for_count(child, seen_sigs, clauses, source_name, in_assertion)
+
+
+def _extract_type_from_setof(setof_term):
+  """Extract the primary type name from a $setof term's conditions.
+  E.g. ["$setof","id","set 1",["$and",["isa","bear","$arg1"]]] -> "bear"
+  """
+  conds = setof_term[-1] if len(setof_term) >= 3 else None
+  if not isinstance(conds, list):
+    return None
+  cond_list = conds[1:] if conds[0] in ("$and", "and") else [conds]
+  for cond in cond_list:
+    if (isinstance(cond, list) and len(cond) >= 3
+        and isinstance(cond[0], str) and cond[0] in ("isa", "$isa")
+        and isinstance(cond[1], str)):
+      return cond[1]
+  return None
 
 
 def _info_from_canonical(setof_term):

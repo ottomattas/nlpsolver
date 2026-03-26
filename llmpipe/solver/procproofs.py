@@ -96,8 +96,11 @@ def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=Non
   compute_ambiguity(logic if logic is not None else answers)
 
   # Format the answer value(s)
-  if _is_where_query(logic):
-    answer_str = _format_where_answers(answers, logic=logic)
+  who_surviving = None
+  if _is_prep_query(logic):
+    answer_str = _format_prep_answers(answers, logic=logic)
+  elif _is_who_query(logic):
+    answer_str, who_surviving = _format_who_answers(answers, logic=logic)
   else:
     answer_str = _format_answers(answers, askvars=askvars)
 
@@ -105,7 +108,15 @@ def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=Non
   explain     = options.get("prover_explain_flag", False)
   show_logic  = options.get("show_logic_flag", False)
   if explain:
-    explanation = format_explanation(answers, sentence_map, show_logic=show_logic)
+    # For who/what queries, only explain answers that survived filtering
+    explain_answers = answers
+    if who_surviving is not None:
+      explain_answers = [a for a in answers
+                         if isinstance(a.get("answer"), list)
+                         and any(isinstance(atom, list) and len(atom) >= 2
+                                 and atom[0] == "$ans" and atom[1] in who_surviving
+                                 for atom in a["answer"])]
+    explanation = format_explanation(explain_answers, sentence_map, show_logic=show_logic)
     if explanation:
       answer_str = answer_str + "\n\n" + explanation
 
@@ -144,14 +155,168 @@ def _extract_askvars(logic):
   return None
 
 
-def _is_where_query(logic):
-  """Return True if logic contains a @where_query marker (set by logconvert)."""
+def _is_prep_query(logic):
+  """Return True if logic contains a @where_query or @when_query marker."""
   if not logic or not isinstance(logic, list):
     return False
   for obj in logic:
-    if isinstance(obj, dict) and obj.get("@where_query"):
+    if isinstance(obj, dict) and (obj.get("@where_query") or obj.get("@when_query")):
       return True
   return False
+
+
+def _is_who_query(logic):
+  """Return True if logic contains a @who_query marker."""
+  if not logic or not isinstance(logic, list):
+    return False
+  for obj in logic:
+    if isinstance(obj, dict) and obj.get("@who_query"):
+      return True
+  return False
+
+
+def _get_who_entity(logic):
+  """Return the @who_entity value from logic, or None."""
+  if not logic or not isinstance(logic, list):
+    return None
+  for obj in logic:
+    if isinstance(obj, dict) and "@who_entity" in obj:
+      return obj["@who_entity"]
+  return None
+
+
+def _get_who_kind(logic):
+  """Return the @who_kind value from logic ("who" or "what"), default "who"."""
+  if not logic or not isinstance(logic, list):
+    return "who"
+  for obj in logic:
+    if isinstance(obj, dict) and "@who_kind" in obj:
+      return obj["@who_kind"]
+  return "who"
+
+
+def _classify_who_answers(logic, who_entity):
+  """Scan assertion clauses to build sets of known types and properties for who_entity.
+
+  Returns (isa_types, property_names) where both are sets of strings.
+  """
+  isa_types = set()
+  prop_names = set()
+  if not logic or not isinstance(logic, list):
+    return isa_types, prop_names
+  for obj in logic:
+    if not isinstance(obj, dict) or "@logic" not in obj:
+      continue
+    nm = obj.get("@name", "")
+    # Skip question-derived and population clauses
+    if obj.get("@sourcetype") == "question":
+      continue
+    clause = obj["@logic"]
+    if not isinstance(clause, list) or not clause:
+      continue
+    # Single-atom clauses only (not rules)
+    if isinstance(clause[0], list):
+      continue
+    pred = clause[0]
+    if pred == "isa" and len(clause) >= 3 and clause[2] == who_entity:
+      isa_types.add(clause[1])
+    if pred in ("has degree property", "has property") and len(clause) >= 3 and clause[2] == who_entity:
+      prop_names.add(clause[1])
+  return isa_types, prop_names
+
+
+def _format_who_answers(answers, logic=None):
+  """Format who/what-query answers as type, property, or identity descriptions.
+
+  Each answer has val = [["$ans", TYPE_OR_ENTITY_OR_PROP], ...].
+  Filters out $-prefixed constants (population/metadata).
+  Self-referential answers (entity = queried entity) are kept only if no
+  other answers exist.
+  Ranking:
+    Who:  equality > isa types > properties
+    What: isa types > properties > equality
+  Returns (answer_string, surviving_values_set).
+  """
+  who_entity = _get_who_entity(logic)
+  who_kind = _get_who_kind(logic)
+  isa_types, prop_names = _classify_who_answers(logic, who_entity)
+
+  # Collect all valid answer values
+  all_vals = []  # (value, is_self_ref)
+  seen = set()
+
+  for ans in answers:
+    val = ans.get("answer")
+    if not isinstance(val, list):
+      continue
+    conf = ans.get("confidence", 1)
+    if conf < 0.60:
+      continue
+    for atom in val:
+      if not isinstance(atom, list) or len(atom) < 2 or atom[0] != "$ans":
+        continue
+      v = atom[1]
+      if not isinstance(v, str):
+        continue
+      # Filter $-prefixed constants (population, metadata)
+      if v.startswith("$"):
+        continue
+      if v in seen:
+        continue
+      seen.add(v)
+      is_self = (who_entity and v == who_entity)
+      all_vals.append((v, is_self))
+
+  # Separate self-referential from non-self
+  non_self = [(v, s) for v, s in all_vals if not s]
+  self_only = [(v, s) for v, s in all_vals if s]
+
+  # Use non-self answers if available; fall back to self-referential
+  use_vals = non_self if non_self else self_only
+  surviving_values = set(v for v, _ in use_vals)
+
+  # Classify into categories
+  equalities = []
+  types = []
+  properties = []
+  for v, _ in use_vals:
+    if v in isa_types:
+      types.append(v)
+    elif v in prop_names:
+      properties.append(v)
+    else:
+      base = v.split()[0] if " " in v else v
+      if base and base[0].islower() and not any(c.isdigit() for c in v):
+        types.append(v)
+      else:
+        equalities.append(v)
+
+  # Rank by who_kind
+  if who_kind == "what":
+    ranked = types + properties + equalities
+  else:
+    ranked = equalities + types + properties
+
+  if not ranked:
+    return "Unknown.", set()
+
+  # Format each value
+  parts = []
+  for v in ranked:
+    if v in prop_names:
+      parts.append(v)  # bare adjective: "nice", "big"
+    else:
+      base = v.split()[0] if " " in v else v
+      if base and base[0].islower() and not any(c.isdigit() for c in v):
+        article = "an" if base[0] in "aeiou" else "a"
+        parts.append(article + " " + v)
+      else:
+        parts.append(entity_name(v, with_url=False))
+
+  result = parts[0]
+  if len(parts) > 1:
+    result = ", ".join(parts[:-1]) + " and " + parts[-1]
+  return result[0].upper() + result[1:] + ".", surviving_values
 
 
 def _location_entity_name(val, entity_props=None):
@@ -236,11 +401,11 @@ def _build_entity_props(logic):
   return props
 
 
-def _format_where_answers(answers, logic=None):
-  """Format where-query answers as location strings.
+def _format_prep_answers(answers, logic=None):
+  """Format where/when-query answers as preposition + entity strings.
 
   Each answer has val = [["$ans", prep, entity], ...].
-  Returns e.g. "In the house." or "In the house and in the city."
+  Returns e.g. "In the house.", "On Monday.", "In the house and in the city."
   Applies confidence prefix ("Probably", "Likely") when confidence < 0.95.
   Returns "Unknown." when all answers are below the 0.60 confidence threshold.
   If logic is provided, adjectives for location entities are reconstructed.

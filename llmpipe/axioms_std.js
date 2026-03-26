@@ -663,4 +663,20 @@ Does John 1 have two cars?
   ["-before", "?:W_old", "?:W_new"],
   ["has time", "?:E", "past", ["$ctxt", "present", "?:W_new", "?:L", "?:K"]]
 ]
+
+// experimental
+/*
+ [["-isa","head","?:Y"],
+  ["-has part","?:X","?:Y","?:C"],
+  ["is rel2","head of","?:Y","?:X","?:C"]
+ ],
+ 
+ [["-isa","head","?:Y"],
+  ["-is rel2","head of","?:Y","?:X","?:C"]
+ ],
+ 
+ [["has part","?:X","?:Y","?:C"],
+  ["-is rel2","head of","?:Y","?:X","?:C"]
+ ]
+*/
 ]

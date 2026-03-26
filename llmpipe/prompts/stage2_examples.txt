@@ -361,7 +361,7 @@ OUTPUT:
       ["forall", "X", ["implies", ["isa", "elephant", "X"], 
         ["normally", ["exists", "Y", 
           ["and", 
-            ["isa", "trunk", "Y"], ["have", "X", "Y"], 
+            ["isa", "trunk", "Y"], ["has part", "X", "Y"], 
             ["has degree property", "long", "Y", "none", "trunk"], 
             ["not", ["has degree property", "red", "Y", "none", "trunk"]], 
             ["typical", "E"]]]]
@@ -650,7 +650,7 @@ OUTPUT:
             ["isa","dog","X"],
             ["normally",
               ["exists","Y",
-                ["and", ["isa","tail","Y"], ["have","X","Y"]]
+                ["and", ["isa","tail","Y"], ["has part","X","Y"]]
               ]
             ]
           ]
@@ -692,7 +692,7 @@ OUTPUT:
           ["isa","dog","X"],
           ["not",
             ["exists","Y",
-              ["and",["isa","tail","Y"],["have","X","Y"]]
+              ["and",["isa","tail","Y"],["has part","X","Y"]]
             ]
           ]
         ]
@@ -1225,7 +1225,7 @@ OUTPUT:
       ["holds","W0",
         ["and",
           ["isa","car","car 2"],
-          ["is rel2","car of","car 2","John 1"]
+          ["have","John 1","car 2"]
         ]
       ],
       ["@definite","S1","W0","car of","John 1","car 2"]
@@ -1239,6 +1239,57 @@ OUTPUT:
       ]
     ]
   ]
+]
+
+-----------
+
+INPUT:
+
+[
+  {
+    "raw":"An ear of the elephant is green.",
+    "units":[
+      {
+        "unit_id":"S1",
+        "text":"An ear 1 of elephant 2 is green.",
+        "type":"situation",
+        "entities":[
+          {"id":"ear 1","type":"concrete","text":"ear"},
+          {"id":"elephant 2","type":"concrete","category":"animal"}
+        ],
+        "adjectives":[["green","none","ear"]]
+      },
+      {
+        "unit_id":"S2",
+        "text":"Ear 1 is an ear of elephant 2.",
+        "type":"situation",
+        "entities":[
+          {"id":"ear 1","type":"concrete","text":"ear"},
+          {"id":"elephant 2","type":"concrete","category":"animal"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["holds","W0",
+      ["and",
+        ["isa","ear","ear 1"],
+        ["isa","elephant","elephant 2"],
+        ["has part","elephant 2","ear 1"],
+        ["has degree property","green","ear 1","none","ear"]
+      ]]],
+  ["@id","S2",
+    ["holds","W0",
+      ["and",
+        ["isa","ear","ear 1"],
+        ["isa","elephant","elephant 2"],
+        ["has part","elephant 2","ear 1"]
+      ]]]
 ]
 
 ------------
@@ -2280,7 +2331,7 @@ OUTPUT:
             ["implies",
               ["and",
                 ["or", ["isa", "animal", "X"], ["isa", "bird", "X"]],
-                ["exists", "Y", ["and", ["isa", "tail", "Y"], ["have", "X", "Y"]]]
+                ["exists", "Y", ["and", ["isa", "tail", "Y"], ["has part", "X", "Y"]]]
               ],
               ["has degree property", "cute", "X", "none", "entity"]
             ]
@@ -2356,11 +2407,11 @@ INPUT:
         "text": "The weight 2 of the box 1 exceeds 10 kilograms.",
         "type": "real",
         "entities": [
-          {"id":"the box 1","type":"concrete"},
-          {"id":"the weight 2","type":"concrete","text":"weight"},
+          {"id":"box 1","type":"concrete"},
+          {"id":"weight 2","type":"concrete","text":"weight"},
           {"id":"10 kilograms","type":"concrete"}
         ],
-        "definites": [["weight of","the weight 2","the box 1"]]
+        "definites": [["weight of","weight 2","box 1"]]
       }
     ]
   }
@@ -2373,13 +2424,13 @@ OUTPUT:
     ["and",
       ["holds","W0",
         ["and",
-          ["isa","weight","the weight 2"],
-          ["isa","box","the box 1"],
-          ["is rel2","weight of","the weight 2","the box 1"],
-          [">","the weight 2","10 kilograms"]
+          ["isa","weight","weight 2"],
+          ["isa","box","box 1"],
+          ["is rel2","weight of","weight 2","box 1"],
+          [">","weight 2","10 kilograms"]
         ]
       ],
-      ["@definite","S1","W0","weight of","the box 1","the weight 2"]
+      ["@definite","S1","W0","weight of","box 1","weight 2"]
     ]
   ]
 ]

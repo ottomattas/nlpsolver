@@ -65,6 +65,16 @@ _WHERE_META_PREDS = frozenset({"located in", "located at", "located on",
 
 WHERE_SPATIAL_PREPS = frozenset(_SPATIAL_PREPS)
 
+# Temporal prepositions handled by "When is X?" queries.
+_TEMPORAL_PREPS = ["in", "at", "on", "during", "before", "after"]
+
+# Stage-2 meta-predicates that indicate a "When is X?" temporal query.
+_WHEN_META_PREDS = frozenset({"scheduled for", "happens in", "occurs at",
+                               "takes place in", "happens at", "occurs in",
+                               "scheduled at"})
+
+WHEN_TEMPORAL_PREPS = frozenset(_TEMPORAL_PREPS)
+
 # Stage-2 variable pattern: uppercase-initial identifier (X, Y, Entity, ...).
 S2_VAR_RE = re.compile(r'^[A-Z][A-Za-z0-9]*$')
 
@@ -159,31 +169,38 @@ def collect_body_free_vars(frm, bound=None):
 
 # ======== has-location prep detection ========
 
-def find_haslocation_prep(body, ask_var):
-  """Return "in" if body contains ["has location", event_var, ask_var], else None.
+def _find_has_event_role(body, ask_var, role_pred, default_prep):
+  """Return default_prep if body contains [role_pred, event_var, ask_var], else None.
 
   Searches recursively through "and"/"exists"/"forall" wrappers.
-  Used to detect activity-location queries like "Where did John eat candy?"
-  where stage-2 encodes the location as has_location(E, X) with X as the
-  ask variable.  The implied preposition is always "in".
+  Parameterized: role_pred is "has location" or "has time", etc.
   """
   if not isinstance(body, list) or not body:
     return None
-  if body[0] == "has location" and len(body) == 3 and body[2] == ask_var:
-    return "in"
+  if body[0] == role_pred and len(body) == 3 and body[2] == ask_var:
+    return default_prep
   if body[0] == "and":
     for item in body[1:]:
-      found = find_haslocation_prep(item, ask_var)
+      found = _find_has_event_role(item, ask_var, role_pred, default_prep)
       if found is not None:
         return found
   if body[0] in ("exists", "forall") and len(body) >= 3:
-    return find_haslocation_prep(body[2], ask_var)
+    return _find_has_event_role(body[2], ask_var, role_pred, default_prep)
   return None
+
+def find_haslocation_prep(body, ask_var):
+  """Return "in" if body contains ["has location", event_var, ask_var], else None."""
+  return _find_has_event_role(body, ask_var, "has location", "in")
+
+def find_hastime_prep(body, ask_var):
+  """Return "in" if body contains ["has time", event_var, ask_var], else None."""
+  return _find_has_event_role(body, ask_var, "has time", "in")
 
 
 # ======== $defq biconditional question builder ========
 
-def build_defq_question(name, ask_var, body, where_prep=None):
+def build_defq_question(name, ask_var, body, where_prep=None,
+                        wh_prep=None, wh_marker=None):
   """Build $defq biconditional @logic clauses and a @question entry.
 
   For a wh-question (ask_var is not None, e.g. "X"):
@@ -196,13 +213,19 @@ def build_defq_question(name, ask_var, body, where_prep=None):
     Emits:       @logic clauses (with @sourcetype:"question") from the CNF
                  @question: [$defq0]
 
-  where_prep: if set (e.g. "in"), the $defq atom becomes 2-arg [$defqN, prep, X]
-    so that the answer includes the preposition.  Sets @askvars:2 and
-    @where_query:True.  Used for has_location activity-location queries.
+  wh_prep/wh_marker: if wh_prep is set (e.g. "in"), the $defq atom becomes
+    2-arg [$defqN, prep, X] so that the answer includes the preposition.
+    Sets @askvars:2 and q_obj[wh_marker]=True.
+    wh_marker is "@where_query" or "@when_query".
+  where_prep: legacy alias for wh_prep with wh_marker="@where_query".
 
   Non-ask free variables in body are automatically wrapped in 'exists' so
   the clausification handles them correctly (Skolem functions of ask_var).
   """
+  # Legacy alias
+  if where_prep and not wh_prep:
+    wh_prep = where_prep
+    wh_marker = "@where_query"
   global _defq_nr
   defq_name = "$defq" + str(_defq_nr)
   _defq_nr += 1
@@ -216,9 +239,9 @@ def build_defq_question(name, ask_var, body, where_prep=None):
 
   # Build the biconditional formula.
   if ask_var:
-    if where_prep:
+    if wh_prep:
       # 2-arg $defq: [$defqN, "in", X] — encodes the preposition in the answer.
-      defq_atom = [defq_name, where_prep, ask_var]
+      defq_atom = [defq_name, wh_prep, ask_var]
       q_atom    = [defq_name, "?:Rel", "?:" + ask_var]
       askvars   = 2
     else:
@@ -244,22 +267,19 @@ def build_defq_question(name, ask_var, body, where_prep=None):
   q_obj = {"@name": name, "@question": q_atom}
   if askvars is not None:
     q_obj["@askvars"] = askvars
-  if where_prep:
-    q_obj["@where_query"] = True
+  if wh_marker:
+    q_obj[wh_marker] = True
   result.append(q_obj)
   return result
 
 
-# ======== "Where is X?" query builders ========
+# ======== "Where/When is X?" query builders ========
 
-def find_where_atom(body, ask_var):
-  """Find and return a where-query atom within body, or None.
+def _find_prep_query_atom(body, ask_var, pred_set):
+  """Find and return a preposition-query atom within body, or None.
 
-  Matches atoms of the form  ["is rel2", pred, entity, ask_var]  where:
-    - pred is a meta-predicate (e.g. "located in") in _WHERE_META_PREDS, OR
-    - pred is a concrete spatial preposition (e.g. "near") in WHERE_SPATIAL_PREPS
-  In either case the ask_var must appear as the LAST positional argument
-  (position 3), making it the location being queried.
+  Matches atoms of the form  ["is rel2", pred, entity, ask_var]  where
+  pred is in pred_set and ask_var appears as the LAST positional argument.
 
   Handles forms:
     Simple:      ["is rel2", pred, entity, ask_var]
@@ -270,16 +290,24 @@ def find_where_atom(body, ask_var):
   if not isinstance(body, list) or not body:
     return None
   if (body[0] == "is rel2" and len(body) == 4 and body[3] == ask_var
-      and body[1] in (_WHERE_META_PREDS | WHERE_SPATIAL_PREPS)):
+      and body[1] in pred_set):
     return body
   if body[0] == "and":
     for item in body[1:]:
-      found = find_where_atom(item, ask_var)
+      found = _find_prep_query_atom(item, ask_var, pred_set)
       if found is not None:
         return found
   if body[0] in ("exists", "forall") and len(body) >= 3:
-    return find_where_atom(body[2], ask_var)
+    return _find_prep_query_atom(body[2], ask_var, pred_set)
   return None
+
+def find_where_atom(body, ask_var):
+  """Find a where-query atom (spatial meta-pred or preposition) in body."""
+  return _find_prep_query_atom(body, ask_var, _WHERE_META_PREDS | WHERE_SPATIAL_PREPS)
+
+def find_when_atom(body, ask_var):
+  """Find a when-query atom (temporal meta-pred or preposition) in body."""
+  return _find_prep_query_atom(body, ask_var, _WHEN_META_PREDS | WHEN_TEMPORAL_PREPS)
 
 
 def _s2var_to_gk(name_str):
@@ -297,20 +325,22 @@ def _s2var_to_gk(name_str):
   return name_str
 
 
-def build_where_question(name, entity, ask_var, specific_prep=None):
-  """Build biconditional @logic clauses and @question entry for 'Where is X?'.
+def _build_prep_question(name, entity, ask_var, prep_list, query_marker,
+                         specific_prep=None):
+  """Build biconditional @logic clauses and @question entry for a preposition query.
 
   For each preposition p in the applicable set, generates two CNF clauses:
     Forward:  ["-is rel2", p, entity_gk, "?:Q1"], [$defqN, p, "?:Q1"]
     Backward: ["-" + defqN, p, "?:Q1"],            ["is rel2", p, entity_gk, "?:Q1"]
 
   entity may be a stage-2 variable name (e.g. "Y") — it is converted to a GK
-  variable ("?:Y") so the biconditional matches any entity's location.
+  variable ("?:Y") so the biconditional matches any entity's location/time.
 
   If specific_prep is given (e.g. "near"), only that preposition is used;
-  otherwise all _SPATIAL_PREPS are used (for meta-predicate queries like "located in").
+  otherwise all prep_list entries are used.
 
-  The @question is [$defqN, ?:Rel, ?:Q1] with @askvars=2 and @where_query=True.
+  query_marker is "@where_query" or "@when_query".
+  The @question is [$defqN, ?:Rel, ?:Q1] with @askvars=2.
   $ctxt is injected into "is rel2" atoms automatically by _inject_ctxt_into_objs.
   """
   global _defq_nr
@@ -318,7 +348,7 @@ def build_where_question(name, entity, ask_var, specific_prep=None):
   _defq_nr += 1
 
   entity_gk = _s2var_to_gk(entity)
-  preps = [specific_prep] if specific_prep else _SPATIAL_PREPS
+  preps = [specific_prep] if specific_prep else prep_list
 
   result = []
   for prep in preps:
@@ -330,7 +360,57 @@ def build_where_question(name, entity, ask_var, specific_prep=None):
     result.append({"@name": name, "@sourcetype": "question", "@logic": bwd})
 
   q_atom = [defq_name, "?:Rel", "?:Q1"]
-  q_obj = {"@name": name, "@question": q_atom, "@askvars": 2, "@where_query": True}
+  q_obj = {"@name": name, "@question": q_atom, "@askvars": 2, query_marker: True}
+  result.append(q_obj)
+  return result
+
+def build_where_question(name, entity, ask_var, specific_prep=None):
+  """Build where-query biconditional clauses (spatial prepositions)."""
+  return _build_prep_question(name, entity, ask_var, _SPATIAL_PREPS,
+                              "@where_query", specific_prep)
+
+def build_when_question(name, entity, ask_var, specific_prep=None):
+  """Build when-query biconditional clauses (temporal prepositions)."""
+  return _build_prep_question(name, entity, ask_var, _TEMPORAL_PREPS,
+                              "@when_query", specific_prep)
+
+
+def build_who_question(name, entity, ask_var, who_kind="who"):
+  """Build who/what-query biconditional clauses for 'Who is X?' / 'What is X?'.
+
+  Generates biconditional sets sharing one $defq:
+    Set 1 — isa: what types does ENTITY have?
+    Set 2 — equality: what equals ENTITY?
+    Set 3 — properties (has degree property): what properties does ENTITY have?
+  The prover returns all matching types, equal entities, and properties.
+  who_kind is "who" or "what" — controls answer ranking in procproofs.
+  """
+  global _defq_nr
+  defq_name = "$defq" + str(_defq_nr)
+  _defq_nr += 1
+
+  entity_gk = _s2var_to_gk(entity)
+
+  result = []
+
+  # Set 1: isa(?:X, entity) <=> $defqN(?:X)
+  fwd_isa = [["-isa", "?:X", entity_gk], [defq_name, "?:X"]]
+  result.append({"@name": name, "@sourcetype": "question", "@logic": fwd_isa})
+  bwd_isa = [["-" + defq_name, "?:X"], ["isa", "?:X", entity_gk]]
+  result.append({"@name": name, "@sourcetype": "question", "@logic": bwd_isa})
+
+  # Set 2: =(?:X, entity) <=> $defqN(?:X)
+  fwd_eq = [["-=", "?:X", entity_gk], [defq_name, "?:X"]]
+  result.append({"@name": name, "@sourcetype": "question", "@logic": fwd_eq})
+  bwd_eq = [["-" + defq_name, "?:X"], ["=", "?:X", entity_gk]]
+  result.append({"@name": name, "@sourcetype": "question", "@logic": bwd_eq})
+
+  # Property biconditionals are deferred to phase 2 — the search space expansion
+  # from has_degree_property with variable PROP causes prover performance issues.
+
+  q_obj = {"@name": name, "@question": [defq_name, "?:X"],
+           "@askvars": 1, "@who_query": True, "@who_entity": entity,
+           "@who_kind": who_kind}
   result.append(q_obj)
   return result
 

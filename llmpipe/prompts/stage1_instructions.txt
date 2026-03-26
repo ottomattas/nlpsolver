@@ -351,7 +351,7 @@ When expanding relational nouns (e.g., "The price of the car is 5k"), the entity
 - For small finite groups without a given count or size (NOT like "three cars")
   - Expand "they" -> "John 1 and Mike 2"
   - Do NOT introduce a set entity.
-
+  
 Resolve pronouns and naked/adjectival nouns ("the elephant","the white elephant", etc) to 
 the most recent (nearest) compatible entity in the text unless the sentence explicitly indicates
 otherwise: In "A gray elephant was nice. A white elephant was nice. The elephant was cool" the
@@ -371,6 +371,17 @@ Only merge into the same entity when the second reference uses:
   - the same proper name ("John")
   "A bear was strong. The bear was nice." -> bear 1 (both sentences, same bear)
 
+If the same name appears again (for example John, Mary, Paris), reuse the same id
+unless the text clearly says it is a different entity.
+In phrases like "the car of Mary" and later "a car of Mary", 
+but the named possessor "Mary" must keep the same id if it refers to the same person.
+
+Partial name resolution: If a sentence uses only a surname (e.g., "Sweeney")
+or only a first name, and only an earlier full-name entity matches (e.g., "John Sweeney 1"), 
+resolve to the closest (latest) such matching entity's ID.
+Example: "Who is Sweeney?" with prior "John Sweeney 1" -> use "John Sweeney 1".
+Also, if a sentence uses a full name ("John Sweeney") and only an earlier partial name ("John" or "Sweeney")
+matches, use the closest (latest) such matching entity's ID.
 
 == 8. ENTITY IDENTIFICATION (MANDATORY) ==
 
@@ -397,6 +408,11 @@ otherwise use generic.
 In normal_rule or strict_rule ASUs, indefinite noun phrases 
 (e.g., "a forest", "a spoon", "a box") must be marked as generic
 unless the text refers to a particular identifiable instance.
+
+In query ASUs, indefinite noun phrases ("a head", "a car", "an animal")                                                                                                                                          
+must be generic -- they represent existential variables ("does there exist                                                                                                                                        
+a head such that..."). Only definite references ("the head", "the car")                                                                                                                                            
+or proper names that co-refer to an earlier concrete entity should be concrete in queries. 
 
 Definite noun phrases ("the bear", "the fox") in rules are CONCRETE
 when they refer to a specific individual, not a class. This applies when:
@@ -441,7 +457,7 @@ one set entity, not three separate car entities.
 When the same set is referenced again (e.g., "the elephants", "they"),
 resolve to the same set id ("set 1").
 
-When the set IS owned by a subject (e.g., "John has three cars") or determined
+When the set IS owned by a subject (e.g., "John has three cars") or determinedthe
 by a relation to an entity ("All the books on the shelf", "The people Mary likes"), 
 do not add the "set N" id.
 
@@ -459,7 +475,7 @@ Use a generic entity for the counted noun like:
 - Generic: use surface phrase (no determiners)
 
 Rules:
-- Remove determiners (a, the, some, all, every) from generic IDs.
+- Remove determiners (a, the, some, all, every) from IDs.
 - Do NOT paraphrase generic IDs.
 - Reuse IDs consistently.
 - Determiners for concrete IDs must stay stable.
@@ -484,10 +500,10 @@ Mandatory:
 
 Examples (keep text):
 
-{"id":"the weight 2","type":"concrete","text":"weight"}
+{"id":"weight 2","type":"concrete","text":"weight"}
 {"id":"sister 2","type":"concrete","text":"sister"}
-{"id":"the handle 1","type":"concrete","text":"handle"}
-{"id":"the capital 2","type":"concrete","text":"capital"}
+{"id":"handle 1","type":"concrete","text":"handle"}
+{"id":"capital 2","type":"concrete","text":"capital"}
 
 Optional:
 - For other concrete entities when the id already contains the surface name.
@@ -495,7 +511,7 @@ Optional:
 
 Examples (text may be omitted):
 
-{"id":"the box 1","type":"concrete"}
+{"id":"box 1","type":"concrete"}
 {"id":"10 kilograms","type":"concrete"}
 {"id":"dogs","type":"generic"}
 

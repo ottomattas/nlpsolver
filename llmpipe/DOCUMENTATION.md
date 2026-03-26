@@ -1064,9 +1064,66 @@ bridge representation gaps.
 | RELCLASS coercion | `logconvert._coerce_relclass` | "Is John big?" — query uses relclass "person" (John's category) but the rule uses "bear" → relclass replaced with free variable so they unify | Fixes relclass mismatches in question degree-predicate atoms |
 | `$theof1` definite rewrite | `logconvert._rewrite_definites` | "The father of John is nice" — `"the father 2"` → `["$theof1","father","John 1",CTXT]` throughout all clauses; `is_rel2` clause removed; per-relation `isa`/`is_rel2` bridge axioms generated as `frm_theof` | Replaces flat entity IDs for definite functional descriptions with canonical function terms so that "the father of John", "John's father", and wh-queries all refer to the same term.  Triggered by Stage-1 `definites` field.  Primary: matches `is_rel2` clause.  Fallback: matches `have` + `isa` pair.  Generic `have` bridge in `axioms_std.js`. |
 | Possessive `have` inference | `logconvert._add_possessive_have` | "The handle of the fork" — `is_rel2(handle of, fork, handle)` + `isa(handle, handle)` → `have(fork, handle)` | Infers `have(Y,E,CT)` from possessive `is_rel2` patterns.  Handles ground entities, Skolem functions, and `$theof1` terms.  For rule clauses with guard literals (e.g., `[-isa,elephant,?:X]`), generates conditional `have` with the same guard. |
+| Misnested existential hoisting | `logconvert._hoist_misnested_exists` | `[exists E, [and, has_actor(E,X), [exists X, isa(bear,X)]]]` → `[exists E, [exists X, [and, has_actor(E,X), isa(bear,X)]]]` | Pre-clausification fix for assertion formulas.  Detects existential variables used free in sibling conjuncts before their `exists` binding, hoists the binding to wrap the entire conjunction.  Only applies in assertion contexts (from `holds`), with collision checks against enclosing bindings. |
+| Spurious `can` removal | `logconvert._strip_spurious_can` | "Did bears eat berries?" — removes `["can",X,E]` from event query when no modal language in ASU text | Pre-clausification pass on question formulas.  Fires when `can(X,E)` appears alongside `isa(activity,E)` and `has_actor(E,X)` in the same conjunction, both X and E are existentially quantified, and the ASU text contains no modal words (can, could, able, may, might, etc.). |
+| Copula/identity rewrite | `logconvert._rewrite_is_rel2_is` | `["is rel2","is",A,B]` → `["isa",A,B]`; `["is rel2","=",A,B]` → `["=",A,B]` | Pre-clausification rewrite.  LLMs (esp. Gemini) sometimes use `is_rel2("is",...)` or `is_rel2("=",...)` for copula/identity; these are not real relations and have no matching axioms.  Rewrites to the correct predicates. |
+| Set existence fact | `lc_sets._walk_for_count` | "Bears ate berries" with `forall/implies/member/$setof` in assertion context → `member("$some_bear", $setof(...))` | Generates a ground set membership fact for assertion-context `forall/member` patterns so the prover can bootstrap resolution through member-guarded clauses.  Skipped when the set already has element instantiation from a count assertion. |
 | Degree stripping | `logconvert._strip_degree_predicates` | With `-simpleproperties`: `has_degree_property(big,X,none,animal)` → `has_property(big,X)` | (Only with `-simpleproperties`) Replaces degree predicates with simple property predicates |
 | Semantic normalisation | `semnormalize.sem_normalize_clauses` | "The ball is outside the box" → `outside` is antonym of `inside` → flips polarity and substitutes: `-is_rel2(inside,ball,box)` | Antonym resolution (flip polarity + swap word) and canonical substitution (synonym → canonical form) |
 | `@sourcetype` stripping | Serialisation (`clause_list_to_json`) | Population facts carry `@sourcetype:"populate"` internally for processing — stripped before the prover sees them | Internal `@sourcetype` tags are excluded from prover input |
+
+---
+
+## 7.5. WH-question handling
+
+The pipeline handles four types of WH-questions through specialized detection and encoding in `logconvert._process_question` (routing) and `lc_questions` (clause generation), with answer formatting in `procproofs`.
+
+### Where questions ("Where is X?")
+
+Detection: `find_where_atom(body, ask_var)` matches `["is rel2", spatial_pred, entity, ask_var]` where `spatial_pred` is in `_SPATIAL_PREPS` (`in, on, at, near, above, under`) or `_WHERE_META_PREDS` (`located in, located at, ...`). Also detected via `find_haslocation_prep` matching `["has location", event_var, ask_var]` in activity-location queries.
+
+Encoding: `build_where_question` generates biconditional clauses for each spatial preposition — forward and backward — sharing a single `$defq` with 2-arg atoms `[$defq, prep, ?:Q1]`. Sets `@where_query: True` and `@askvars: 2`.
+
+Answer format: `_format_prep_answers` renders `["$ans", prep, entity]` as "In Paris.", "Near the house.", etc. with confidence prefixes.
+
+### When questions ("When is X?")
+
+Identical infrastructure to Where, parameterized via shared internal functions (`_find_prep_query_atom`, `_find_has_event_role`, `_build_prep_question`).
+
+Detection: `find_when_atom` matches `_WHEN_META_PREDS` (`scheduled for, happens in, occurs at, ...`) or `WHEN_TEMPORAL_PREPS` (`in, at, on, during, before, after`). Also via `find_hastime_prep` matching `["has time", event_var, ask_var]`.
+
+Encoding: `build_when_question` generates biconditionals over temporal prepositions. Sets `@when_query: True`.
+
+Answer format: Same `_format_prep_answers` — renders as "On Monday.", "During the summer.", etc.
+
+### Who/What questions ("Who is X?" / "What is X?")
+
+Detection: `_detect_who_query(body, ask_var)` matches:
+- `["=", ask_var, ENTITY]` or `["=", ENTITY, ask_var]` — identity
+- `["isa", ask_var, ENTITY]` — type query (ask_var in type position)
+- `["is rel2", "is", ENTITY, ask_var]` or `["is rel2", "is", ask_var, ENTITY]` — copula (rewritten to `isa` by `_rewrite_is_rel2_is` but also detected directly)
+
+Returns the concrete entity constant. The raw question text determines `who_kind` ("who" or "what") for answer ranking.
+
+Encoding: `build_who_question` generates two biconditional sets sharing one `$defq`:
+1. **isa types**: `isa(?:X, ENTITY) <=> $defq(?:X)` — what types does ENTITY belong to?
+2. **equality**: `=(?:X, ENTITY) <=> $defq(?:X)` — what equals ENTITY?
+
+Sets `@who_query: True`, `@who_entity: ENTITY`, `@who_kind: "who"|"what"`, `@askvars: 1`.
+
+Answer formatting: `_format_who_answers` collects all `$ans` values, filters self-referential answers (where answer = queried entity, kept only as fallback), filters `$`-prefixed constants. Classifies answers as types (from isa), properties, or equalities. Ranking differs by kind:
+- Who: equality > isa types > properties
+- What: isa types > properties > equality
+
+Formats types with article ("a car", "an animal"), properties bare ("nice"), equalities via `entity_name()`. Returns both the answer string and the set of surviving values (used to filter proof explanations to only show relevant proofs).
+
+### Other WH-questions ("Who is an animal?", "What did John eat?")
+
+WH-questions that don't match the who/what identity pattern or the where/when preposition pattern fall through to the general `build_defq_question` path, which wraps the full ask body in a `$defq` biconditional. These handle "Who is an animal?" (find entities of type animal), "What did John eat?" (find event targets), etc.
+
+### $ctxt injection for WH-questions
+
+Where and when queries get world-agnostic `$ctxt` (free-variable world and tense) because location/time facts may come from any world state.  Who/what queries and other WH-questions get the standard question `$ctxt` dispatch: descriptive atoms (isa, event atoms) get free-var world, matrix atoms keep the query's world.
 
 ---
 

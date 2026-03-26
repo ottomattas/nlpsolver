@@ -57,15 +57,20 @@ from lc_questions import (
   is_simple_question_formula,
   collect_body_free_vars,
   find_haslocation_prep,
+  find_hastime_prep,
   build_defq_question,
   find_where_atom,
+  find_when_atom,
   build_where_question,
+  build_when_question,
+  build_who_question,
   flatten_q_atoms,
   scan_item_formula,
   build_population_facts,
   is_ground_term,
   S2_VAR_RE,
   WHERE_SPATIAL_PREPS,
+  WHEN_TEMPORAL_PREPS,
 )
 
 
@@ -129,6 +134,30 @@ _MAIN_RELATION_PREDS = frozenset({
 })
 
 
+# ======== is_rel2("is",...) → isa rewrite ========
+
+def _rewrite_is_rel2_is(tree):
+  """Rewrite is_rel2 with copula/identity relations throughout the formula tree.
+
+  ["is rel2", "is", A, B] → ["isa", A, B]   (copula → type)
+  ["is rel2", "=",  A, B] → ["=", A, B]     (identity → equality)
+
+  LLMs sometimes produce these non-semantic is_rel2 forms for identity/type
+  questions.  Handles negated forms as well.
+  """
+  if not isinstance(tree, list) or not tree:
+    return tree
+  op = tree[0] if isinstance(tree[0], str) else None
+  if op in ("is rel2", "-is rel2") and len(tree) >= 4:
+    pfx = "-" if op.startswith("-") else ""
+    if tree[1] == "is":
+      return [pfx + "isa", tree[2], tree[3]]
+    if tree[1] == "=":
+      return [pfx + "=", tree[2], tree[3]]
+  return [_rewrite_is_rel2_is(child) if isinstance(child, list) else child
+          for child in tree]
+
+
 # ======== degree presupposition injection ========
 
 def _inject_degree_presuppositions(tree):
@@ -179,10 +208,12 @@ def _build_asu_index(s1_json):
   for pkg in s1_json:
     if not isinstance(pkg, dict):
       continue
+    raw = pkg.get("raw", "")
     for asu in pkg.get("units", []):
       if isinstance(asu, dict):
         uid = asu.get("unit_id")
         if uid:
+          asu["_raw"] = raw  # store parent raw text for who/what detection
           index[uid] = asu
   return index
 
@@ -291,6 +322,11 @@ def rawlogic_convert(logic, s1_json=None):
   # the prover needs the direct predicate form.
   logic = _rewrite_stative_events(logic)
 
+  # Rewrite is_rel2("is", A, B) → isa(A, B).  The copula "is" is not a real
+  # relation; LLMs (especially Gemini) sometimes produce it for identity/type
+  # questions.  Safe because is_rel2("is",...) has no valid semantic meaning.
+  logic = _rewrite_is_rel2_is(logic)
+
   # Rewrite $setof terms to canonical form (replaces ?:X with $arg1,
   # extracts anchors, $-prefixes internal predicates, generates membership
   # axioms and element instantiation clauses).
@@ -315,7 +351,7 @@ def rawlogic_convert(logic, s1_json=None):
     if nm.startswith("sent_"):
       core = nm[5:]  # strip "sent_"
       # Find the SID: everything before "_el" or "_dist"
-      for sep in ("_el", "_dist"):
+      for sep in ("_el", "_dist", "_exist"):
         idx = core.find(sep)
         if idx >= 0:
           sid = core[:idx]
@@ -572,12 +608,47 @@ def _fix_missing_ask(formula, asu_index, sid):
   return formula
 
 
-def _process_question(formula, name):
-  """Handle question formulas (ask / yes-no) → (result_list, is_where_question).
+def _detect_who_query(body, ask_var):
+  """Detect 'Who is X?' / 'What is X?' pattern and return the entity constant.
 
-  Returns (None, False) when the formula produces no output (caller should return []).
+  Matches:
+    ["=", ask_var, ENTITY] or ["=", ENTITY, ask_var]
+    ["isa", ask_var, ENTITY] or ["isa", ENTITY, ask_var]
+    ["is rel2", "is", ENTITY, ask_var]
+  where ENTITY is a ground constant (not a stage-2 variable).
+  Returns the entity string, or None if not matched.
   """
-  is_where_question = False
+  if not isinstance(body, list) or len(body) < 3:
+    return None
+  op = body[0]
+  if op == "=" and len(body) == 3:
+    a, b = body[1], body[2]
+    if a == ask_var and isinstance(b, str) and not S2_VAR_RE.match(b):
+      return b
+    if b == ask_var and isinstance(a, str) and not S2_VAR_RE.match(a):
+      return a
+  # ["isa", ask_var, ENTITY] — ask_var in type position: "What type is ENTITY?"
+  # Do NOT match ["isa", TYPE, ask_var] — that's "Which X is a TYPE?" (standard wh)
+  if op == "isa" and len(body) == 3:
+    if body[1] == ask_var and isinstance(body[2], str) and not S2_VAR_RE.match(body[2]):
+      return body[2]
+  # ["is rel2", "is", ENTITY, ask_var] or ["is rel2", "is", ask_var, ENTITY]
+  if op == "is rel2" and len(body) >= 4 and body[1] == "is":
+    a, b = body[2], body[3]
+    if b == ask_var and isinstance(a, str) and not S2_VAR_RE.match(a):
+      return a
+    if a == ask_var and isinstance(b, str) and not S2_VAR_RE.match(b):
+      return b
+  return None
+
+
+def _process_question(formula, name, raw_text=None):
+  """Handle question formulas (ask / yes-no) → (result_list, question_kind).
+
+  question_kind is None, "where", or "when".
+  Returns (None, None) when the formula produces no output (caller should return []).
+  """
+  question_kind = None
   # Distinguish wh-questions (["ask", var, body]) from yes/no questions.
   if isinstance(formula, list) and len(formula) >= 3 and formula[0] == "ask":
     ask_var = str(formula[1])
@@ -599,24 +670,55 @@ def _process_question(formula, name):
         result = build_defq_question(name, ask_var, body, where_prep=specific_prep)
       else:
         result = build_where_question(name, entity, ask_var, specific_prep=specific_prep)
-      is_where_question = True
-    elif is_simple_question_formula(body):
-      # Single atom with ≤1 variable: direct @question, no $defq wrapper.
-      free_vars_in_body = sorted(collect_body_free_vars(body))
-      varmap = {ask_var: "?:" + ask_var}
-      varmap.update({v: "?:" + v for v in free_vars_in_body})
-      flat = flatten_q_atoms(body, varmap)
-      if not flat:
-        return None, False
-      q_formula = flat[0] if len(flat) == 1 else [["and"] + flat]
-      result = [{"@name": name, "@question": q_formula, "@askvars": 1}]
+      question_kind = "where"
     else:
-      # Complex case: wrap in $defq biconditional.
-      # Detect has_location(E, ask_var) → encode "in" as the preposition.
-      where_prep = find_haslocation_prep(body, ask_var)
-      result = build_defq_question(name, ask_var, body, where_prep=where_prep)
-      if where_prep:
-        is_where_question = True
+      # "When is X?" pattern: body contains ["is rel2", <temporal-pred>, entity, ask_var]
+      when_atom = find_when_atom(body, ask_var)
+      if when_atom is not None:
+        entity = when_atom[2]
+        atom_pred = when_atom[1]
+        specific_prep = atom_pred if atom_pred in WHEN_TEMPORAL_PREPS else None
+        entity_is_s2var = isinstance(entity, str) and bool(S2_VAR_RE.match(entity))
+        if specific_prep and entity_is_s2var:
+          result = build_defq_question(name, ask_var, body,
+                                       wh_prep=specific_prep, wh_marker="@when_query")
+        else:
+          result = build_when_question(name, entity, ask_var, specific_prep=specific_prep)
+        question_kind = "when"
+      else:
+        # "Who is X?" / "What is X?" pattern: body is [=, var, entity] or [isa, ...]
+        who_entity = _detect_who_query(body, ask_var)
+        if who_entity is not None:
+          # Determine who vs what from raw question text
+          who_kind = "what" if raw_text and raw_text.lower().startswith("what") else "who"
+          result = build_who_question(name, who_entity, ask_var, who_kind=who_kind)
+          question_kind = "who"
+        elif is_simple_question_formula(body):
+          # Single atom with ≤1 variable: direct @question, no $defq wrapper.
+          free_vars_in_body = sorted(collect_body_free_vars(body))
+          varmap = {ask_var: "?:" + ask_var}
+          varmap.update({v: "?:" + v for v in free_vars_in_body})
+          flat = flatten_q_atoms(body, varmap)
+          if not flat:
+            return None, None
+          q_formula = flat[0] if len(flat) == 1 else [["and"] + flat]
+          result = [{"@name": name, "@question": q_formula, "@askvars": 1}]
+        else:
+          # Complex case: wrap in $defq biconditional.
+          # Detect has_location(E, ask_var) → encode "in" as the preposition.
+          where_prep = find_haslocation_prep(body, ask_var)
+          if where_prep:
+            result = build_defq_question(name, ask_var, body, where_prep=where_prep)
+            question_kind = "where"
+          else:
+            # Detect has_time(E, ask_var) → encode "in" as the temporal preposition.
+            when_prep = find_hastime_prep(body, ask_var)
+            if when_prep:
+              result = build_defq_question(name, ask_var, body,
+                                           wh_prep=when_prep, wh_marker="@when_query")
+              question_kind = "when"
+            else:
+              result = build_defq_question(name, ask_var, body)
   else:
     # Yes/no question.
     # When $ctxt is active, always use $defq so the @question atom is the
@@ -628,7 +730,7 @@ def _process_question(formula, name):
       varmap = {v: "?:" + v for v in free_vars_in_formula}
       flat = flatten_q_atoms(formula, varmap)
       if not flat:
-        return None, False
+        return None, None
       q_formula = flat[0] if len(flat) == 1 else [["and"] + flat]
       result = [{"@name": name, "@question": q_formula}]
     else:
@@ -637,7 +739,7 @@ def _process_question(formula, name):
       # "No X is Y?" questions — simplify to just ["not", A].
       formula = simplify_contradictory_and(formula)
       result = build_defq_question(name, None, formula)
-  return result, is_where_question
+  return result, question_kind
 
 
 def _process_assertion(formula, name, confidence):
@@ -707,15 +809,29 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
   if not _g_options.get("nocontext_flag", False):
     formula = _strip_time_wrappers(formula, tense)
 
-  is_where_question = False
+  question_kind = None
   if is_question:
+    # Remove spurious "can" from event queries with no modal language.
+    asu_text = ""
+    if asu_index:
+      asu = asu_index.get(sid)
+      if asu:
+        asu_text = asu.get("text", "")
+    formula = _strip_spurious_can(formula, asu_text)
     # Safety net: if Stage-1 has wh_placeholder but Stage-2 used ["question",...]
     # instead of ["ask",VAR,...], detect the free variable and convert.
     formula = _fix_missing_ask(formula, asu_index, sid)
-    result, is_where_question = _process_question(formula, name)
+    # Get raw question text for who/what detection
+    raw_q_text = ""
+    if asu_index:
+      asu_q = asu_index.get(sid)
+      if asu_q:
+        raw_q_text = asu_q.get("_raw", asu_q.get("text", ""))
+    result, question_kind = _process_question(formula, name, raw_text=raw_q_text)
     if result is None:
       return []
   else:
+    formula = _hoist_misnested_exists(formula)
     result = _process_assertion(formula, name, confidence)
 
   # Inject $ctxt into @logic entries (not @question entries).
@@ -730,9 +846,9 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
       ctxt_template = ["$ctxt", None, situation, loc_term, kn_term]
       _inject_ctxt_into_objs(result, ctxt_template, tense_term)
     elif is_question:
-      if is_where_question:
-        # Where-query biconditionals must be world-agnostic: location facts
-        # may come from any world state (e.g. W0 travel facts vs W2 query).
+      if question_kind in ("where", "when"):
+        # Where/when-query biconditionals must be world-agnostic: location/time
+        # facts may come from any world state (e.g. W0 travel facts vs W2 query).
         situation  = _fresh_fv()
         tense_term = _fresh_fv()
         ctxt_template = ["$ctxt", None, situation, loc_term, kn_term]
@@ -1641,6 +1757,196 @@ def _rewrite_definites(result, asu_index, sid, theof_relations):
 
     # Record for bridge axiom generation
     theof_relations.add((rel_name, type_base))
+
+
+# ======== hoist misnested existentials ========
+
+import re as _re
+_VAR_PAT = _re.compile(r'^[A-Z][A-Z0-9]?$')  # X, Y, Z, E, E1, X1, etc.
+
+def _is_stage2_var(s):
+  """True if s looks like a Stage-2 variable name (short uppercase)."""
+  return isinstance(s, str) and _VAR_PAT.match(s) is not None
+
+def _collect_free_vars(node, bound):
+  """Collect Stage-2 variable names used free (not in bound) in node."""
+  free = set()
+  if not isinstance(node, list) or not node:
+    return free
+  op = node[0]
+  if op in ("exists", "forall") and len(node) == 3:
+    return _collect_free_vars(node[2], bound | {node[1]})
+  if isinstance(op, str) and not isinstance(op, list):
+    # Atom: check arguments (skip predicate name at index 0)
+    for arg in node[1:]:
+      if _is_stage2_var(arg) and arg not in bound:
+        free.add(arg)
+      elif isinstance(arg, list):
+        free |= _collect_free_vars(arg, bound)
+  else:
+    for child in node:
+      if isinstance(child, list):
+        free |= _collect_free_vars(child, bound)
+  return free
+
+def _hoist_misnested_exists(formula, bound=None):
+  """Hoist existential quantifiers that bind variables used free in sibling conjuncts.
+
+  Only processes ["and",...] nodes. Recurses into sub-formulas first (bottom-up),
+  then checks the current and-node for misnested exists.
+  """
+  if bound is None:
+    bound = set()
+  if not isinstance(formula, list) or not formula:
+    return formula
+  op = formula[0]
+  if op in ("exists", "forall") and len(formula) == 3:
+    formula[2] = _hoist_misnested_exists(formula[2], bound | {formula[1]})
+    return formula
+  if op == "implies" and len(formula) == 3:
+    formula[1] = _hoist_misnested_exists(formula[1], bound)
+    formula[2] = _hoist_misnested_exists(formula[2], bound)
+    return formula
+  if op != "and":
+    # Recurse into children
+    for i in range(len(formula)):
+      if isinstance(formula[i], list):
+        formula[i] = _hoist_misnested_exists(formula[i], bound)
+    return formula
+
+  # op == "and": recurse into children first (bottom-up)
+  for i in range(1, len(formula)):
+    if isinstance(formula[i], list):
+      formula[i] = _hoist_misnested_exists(formula[i], bound)
+
+  # Now check for misnested exists in this and-node
+  changed = True
+  while changed:
+    changed = False
+    conjuncts = formula[1:]  # re-read after mutations
+    # Find exists conjuncts and free vars in non-exists conjuncts
+    for i, conj in enumerate(conjuncts):
+      if not (isinstance(conj, list) and len(conj) == 3
+              and conj[0] == "exists"):
+        continue
+      var = conj[1]
+      body = conj[2]
+      # Check if var appears free in any other conjunct
+      used_free = False
+      for j, other in enumerate(conjuncts):
+        if j == i:
+          continue
+        if var in _collect_free_vars(other, bound):
+          used_free = True
+          break
+      if not used_free:
+        continue
+      # Collision check: var must not be already bound by enclosing scope
+      if var in bound:
+        continue
+      # Hoist: remove the exists conjunct, merge body into and, wrap in exists
+      idx = i + 1  # offset for "and" at index 0
+      formula.pop(idx)
+      # Merge body conjuncts into the and list
+      if isinstance(body, list) and body and body[0] == "and":
+        for bc in body[1:]:
+          formula.append(bc)
+      else:
+        formula.append(body)
+      # Wrap in exists
+      formula = ["exists", var, formula]
+      # Update bound for next iteration
+      bound = bound | {var}
+      changed = True
+      break  # restart scan after mutation
+    if changed and isinstance(formula, list) and formula[0] == "exists":
+      # The and-node is now formula[2]; continue hoisting inside it
+      formula[2] = _hoist_misnested_exists(formula[2], bound)
+      break
+
+  return formula
+
+
+# ======== spurious "can" removal ========
+
+_MODAL_WORDS = frozenset({
+  "can", "could", "able", "capable", "possible", "allowed",
+  "permitted", "may", "might", "ability",
+})
+
+def _strip_spurious_can(formula, asu_text):
+  """Remove ["can", X, E] from event queries when no modal language is present.
+
+  Only fires when:
+  - The ASU text contains no modal words
+  - ["can", X, E] appears in an ["and",...] conjunction inside question/ask
+  - The same conjunction contains ["isa","activity",E] and ["has actor",E,X]
+  - Both X and E are existentially quantified
+  """
+  if not asu_text or not isinstance(formula, list) or len(formula) < 2:
+    return formula
+  # Check for modal language in ASU text
+  text_lower = asu_text.lower()
+  for mw in _MODAL_WORDS:
+    if mw in text_lower:
+      return formula
+  # Walk and strip
+  _strip_can_walk(formula, set())
+  return formula
+
+def _strip_can_walk(node, existential_vars):
+  """Recursively walk formula, collecting existential vars, stripping can."""
+  if not isinstance(node, list) or not node:
+    return
+  op = node[0]
+  if op == "exists" and len(node) == 3:
+    new_vars = existential_vars | {node[1]}
+    _strip_can_walk(node[2], new_vars)
+    return
+  if op in ("question", "ask"):
+    for child in node[1:]:
+      _strip_can_walk(child, existential_vars)
+    return
+  if op == "and":
+    _try_remove_can(node, existential_vars)
+    for child in node[1:]:
+      if isinstance(child, list):
+        _strip_can_walk(child, existential_vars)
+    return
+  for child in node:
+    if isinstance(child, list):
+      _strip_can_walk(child, existential_vars)
+
+def _try_remove_can(and_node, existential_vars):
+  """If and_node contains a spurious ["can",X,E], remove it."""
+  conjuncts = and_node[1:]
+  can_idx = None
+  can_x = None
+  can_e = None
+  for i, c in enumerate(conjuncts):
+    if (isinstance(c, list) and len(c) >= 3
+        and c[0] == "can" and isinstance(c[1], str) and isinstance(c[2], str)):
+      can_idx = i + 1  # offset by 1 for "and" at index 0
+      can_x = c[1]
+      can_e = c[2]
+      break
+  if can_idx is None:
+    return
+  # Check X and E are existentially quantified
+  if can_x not in existential_vars or can_e not in existential_vars:
+    return
+  # Check for isa("activity", E) and has_actor(E, X) in same conjunction
+  has_isa_activity = False
+  has_actor = False
+  for c in conjuncts:
+    if not isinstance(c, list):
+      continue
+    if (len(c) >= 3 and c[0] == "isa" and c[1] == "activity" and c[2] == can_e):
+      has_isa_activity = True
+    if (len(c) >= 3 and c[0] == "has actor" and c[1] == can_e and c[2] == can_x):
+      has_actor = True
+  if has_isa_activity and has_actor:
+    and_node.pop(can_idx)
 
 
 # ======== possessive have inference ========

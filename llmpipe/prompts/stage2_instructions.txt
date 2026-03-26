@@ -127,10 +127,10 @@ It is guaranteed to be present when:
 
 Examples (text present):
 
-{"id":"the weight 2","type":"concrete","text":"weight"}
+{"id":"weight 2","type":"concrete","text":"weight"}
 {"id":"sister 2","type":"concrete","text":"sister"}
-{"id":"the handle 1","type":"concrete","text":"handle"}
-{"id":"the capital 2","type":"concrete","text":"capital"}
+{"id":"handle 1","type":"concrete","text":"handle"}
+{"id":"capital 2","type":"concrete","text":"capital"}
 
 For other concrete entities, entity.text may be omitted if the id already contains the surface name.
 
@@ -240,6 +240,20 @@ Rules:
 - All variables must be bound.
 - Do NOT add quantifiers beyond those required by scope rules.
 
+Event participant binding:
+
+When a participant in an event comes from a Stage 1 generic entity (for example bears, berries, cars), 
+do not use that id directly in event-role predicates. Introduce a variable before the event,
+type it with isa and use the same variable inside the event.
+Example where "bears" was a generic actor in a situation:
+["exists","X",
+  ["and",
+    ["isa","bear","X"],
+    ["exists","E",
+      ["and",
+        ["isa","activity","E"],
+        ["has type","E","eat"],
+        ["has actor","E","X"]]]]]
 
 2.3 GENERIC SCOPE RULES
 
@@ -516,19 +530,24 @@ Step D — sentence-type wrapping for Track 2:
   INSIDE the event ["exists","E",...] block. Apply the adjective to the                                                                                                                                          
   variable, never to the type name or to E.                                                                                                                                                                      
                                                                                                                                                                                                                
-  Example — "Bears eat red berries in a deep forest":
-    ["exists","E",
-      ["and",
-        ["isa","activity","E"],
-        ["has type","E","eat"],
-        ["has actor","E","X"],
-        ["exists","Y",["and",["isa","berry","Y"],
-                              ["has degree property","red","Y","none","berry"],
-                              ["has target","E","Y"]]],
-        ["exists","Z",["and",["isa","forest","Z"],
-                              ["has degree property","deep","Z","none","forest"],
-                              ["has location","E","Z"]]]
-      ]]
+  Example: "Bears typically eat red berries in a deep forest":  
+
+  ["forall","X",
+      ["implies",
+        ["isa","bear","X"],
+        ["normally",
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","eat"],
+              ["has actor","E","X"],
+              ["exists","Y",["and",["isa","berry","Y"],
+                                    ["has degree property","red","Y","none","berry"],
+                                    ["has target","E","Y"]]],
+              ["exists","Z",["and",["isa","forest","Z"],
+                                    ["has degree property","deep","Z","none","forest"],
+                                    ["has location","E","Z"]]]
+            ]]]]]
 
   NEVER place adjective predicates outside the ["exists","E",...] block.
   NEVER apply adjectives to the type name string (e.g.,
@@ -654,7 +673,8 @@ When a sentence asserts that an entity belongs to a category with an adjective
    - "John is a good fox" -> ["and", ["isa", "fox", "John 1"],  ["has degree property", "good", "John 1", "none", "fox"]]
 
 3. Prohibited Forms: 
-   - NEVER use "is rel2" to link a subject to a category (e.g., ["is rel2", "is", "John 1", "fox"]).
+   - NEVER use ["is rel2", "is", ...] for any purpose. The copula "is" is not a relation.
+     Use ["isa", TYPE, ENTITY] for type/category, ["=", A, B] for identity.
    - NEVER use "exists" to create a second variable for the predicate noun (e.g., ["exists", "Y", ["and", ["isa", "fox", "Y"], ...]]).
 
 == 4.2. CONDITIONAL EXISTENTIAL SCOPE (MANDATORY) ==
@@ -716,7 +736,6 @@ in the logic (e.g., ["isa","car","car 2"], ["isa","dog","dog 1"],
 ["isa","person","John 1"]) unless that type is already present.
 
 Event-role predicates such as "has target" and "has actor" do NOT replace the entity's 'isa' predicate.
-
 
 ISA type selection when generating the ISA predicate for an entity:
 
@@ -851,13 +870,44 @@ Do NOT invent new predicates.
 ["is rel2", RELATION, ENTITY1, ENTITY2]
 ["can", ENTITY, ACTION]
 
+--- Gradable Predicates ---
+
+["has degree property", PROPERTY, ENTITY, DEGREE, RELCLASS]
+["has degree rel2", RELATION, ENTITY1, ENTITY2, DEGREE, RELCLASS]
+
+--- Predicate Choice Order (MANDATORY) ---
+
+Choose predicates in this order for relations:
+
+1) Ownership (car, house, pet): Use ["have", OWNER, OBJECT].
+   Examples: "John has a car", "John's car", "the car of John".
+2) Physical/Body Part (head, wing, wheel, handle, door): Use ["has part", WHOLE, PART].
+   Examples: "X's head", "the head of X", "a head of X", "the wheel of the car", "a bolt of the machine". 
+3) Abstract/Social Relation (parent, friend, location): Use ["is rel2", RELATION, E1, E2] or
+   ["has degree rel2", RELATION, ENTITY1, ENTITY2, DEGREE, RELCLASS]
+   Examples: 
+     "head of elephant 1" -> ["isa","head",HEAD] and ["has part","elephant 1",HEAD]
+     "wheel of car 1" -> ["isa","wheel",WHEEL] and ["has part","car 1",WHEEL]
+4) Property (color, size, speed): Use  ["has property", PROPERTY, ENTITY] or 
+   ["has degree property", PROPERTY, ENTITY, DEGREE, RELCLASS] (if in adjectives)
+   Examples: "friend of", "parent of", "near", "in", "on".
+
+Use only one main predicate family for the same meaning.
+Do not encode the same relation twice in different ways.
+
+Examples:
+"The car of John is red" --> ["have",...]
+"A leg of the elephant is green" --> ["has part",...]
+"Mike is a friend of Pete" --> ["is rel2",...]
+"The door is red" --> ["has property",...]
+
 --- Property and Relation Predicate Selection Rule (MANDATORY) ---
 
 For each property word in the ASU text:
 - If the word appears in ASU.adjectives:
     Use 
     * ["has degree property", WORD, ENTITY, DEGREE, RELCLASS] for properties of entities,
-    * ["has degree rel2", WORD, ENTITY1, ENTITY2, DEGREE, RELCLASS] WORD, ENTITY, DEGREE, RELCLASS] 
+    * ["has degree rel2", WORD, ENTITY1, ENTITY2, DEGREE, RELCLASS] 
       when the adjective word denotes a relation between two entities
     
     DEGREE and RELCLASS come from the matching adjectives entry.
@@ -925,10 +975,6 @@ Never emit both ["is rel2"] and ["has degree rel2"] for the same word.
 ["kb holds", K, FORMULA]
 ["kb says", K1, K2, FORMULA]
 
---- Gradable Predicates ---
-
-["has degree property", PROPERTY, ENTITY, DEGREE, RELCLASS]
-["has degree rel2", RELATION, ENTITY1, ENTITY2, DEGREE, RELCLASS]
 
 --- Set Predicates ---
 

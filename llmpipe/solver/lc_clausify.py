@@ -364,7 +364,7 @@ def _forall_to_freevars(frm):
     return [frm]
   var  = frm[1]
   body = frm[2]
-  gk_var = "?:" + var
+  gk_var = var if var.startswith("?:") else "?:" + var
   # Substitute var -> gk_var throughout body
   body_renamed = apply_varmap(body, {var: gk_var})
   if isinstance(body_renamed, list) and body_renamed and body_renamed[0] == "or":
@@ -750,7 +750,7 @@ def _skolemize(frm, freevars, varmap):
   if op == "forall":
     var = frm[1]
     body = frm[2]
-    gk_var = "?:" + var
+    gk_var = var if var.startswith("?:") else "?:" + var
     new_varmap = dict(varmap)
     new_varmap[var] = gk_var
     new_freevars = freevars + [gk_var]
@@ -804,7 +804,8 @@ def _strip_forall(frm):
   if frm[0] == "forall" and len(frm) == 3:
     var = frm[1]
     body = frm[2]
-    body = apply_varmap(body, {var: "?:" + var})
+    gk_var = var if var.startswith("?:") else "?:" + var
+    body = apply_varmap(body, {var: gk_var})
     return _strip_forall(body)
   return [_strip_forall(el) for el in frm]
 
