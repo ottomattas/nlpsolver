@@ -187,7 +187,7 @@ Float 0–1 representing logical strength.  Omitted when 1.0.
 - **`epistemic_force`**: `"factive"` (knows), `"non_factive"` (believes), `"counterfactual"` (imagines)
 - **`definites`**: for definite possessives — "John's sister" →
   `"definites": [["sister of", "sister 2", "John 1"]]`.
-  This triggers the `$theof1` rewrite in logconvert: the flat entity ID (`"sister 2"`)
+  This triggers the `$theof1` rewrite in lc_postprocess: the flat entity ID (`"sister 2"`)
   is replaced by a canonical function term `["$theof1", "sister", "John 1", CTXT]`
   so that all references to "John's sister" unify as the same object (see §3.7).
 - **`wh_placeholder`**: `true` on the entity introduced for who/what/where questions —
@@ -529,7 +529,7 @@ used within its scope.
 
 ## 3. GK Prover Input: Clause List
 
-**Produced by:** logconvert.rawlogic_convert() + post-processing
+**Produced by:** logconvert.rawlogic_convert() + lc_postprocess passes
 **Consumed by:** prover.call_prover() → gk binary
 
 The Stage-2 logic JSON is compiled into a flat list of clause dictionaries in
@@ -566,8 +566,9 @@ Any string starting with `?:` is a variable (`"?:X"`, `"?:Fv3"`).  All free
 variables in a clause are implicitly universally quantified.  Existential
 quantifiers from Stage 2 are eliminated by Skolemization:
 
-- No universal vars in scope → Skolem constant: `"sk0"`, `"sk1"`, ...
-- Universal vars in scope → Skolem function: `["sk0", "?:X"]`
+- No universal vars in scope → Skolem constant: `"sk0_house"`, `"sk1_car"`, ...
+  (type suffix from `isa` in the existential body; plain `"sk0"` if no type found)
+- Universal vars in scope → Skolem function: `["sk0", "?:X"]` (plain name, no type suffix)
 
 ### 3.4 The $ctxt Context Term
 
@@ -677,26 +678,37 @@ The pipeline applies several transformations between Stage-2 output and GK input
 - Stative event rewriting: event-encoded have/like/own → direct predicates
 - `@time` stripping: time wrappers → `$tense` sentinels
 - Entity category/base-word isa injection from Stage-1 metadata
+- Meta-predicate normalization (lc_rewrites.py): `is_rel2("is",A,B)` → `isa(A,B)`;
+  `is_rel2("=",A,B)` → `=(A,B)`;
+  `is_rel2("located in/at/on/near/above/under",A,B)` → `is_rel2("in/at/on/near/above/under",A,B)`
+- Misnested existential hoisting (lc_rewrites.py, assertion formulas only)
+- Spurious `can` removal (lc_rewrites.py, event queries without modal language)
 
 **During clausification** (lc_clausify.py):
 - Connective elimination (implies → or, equivalent → and)
 - Negation Normal Form (push negations inward)
 - Defeasible expansion (normally → $block)
-- Skolemization (exists → Skolem constants/functions)
+- Skolemization (exists → typed Skolem constants `sk0_house`, plain functions `["sk0","?:X"]`)
 - CNF distribution (or over and)
 
-**Post-clausification** (on the clause list):
-- $ctxt injection with world dispatch
-- `$theof1` definite function terms: when an ASU has a `definites` entry
+**Post-clausification** (lc_ctxt.py + lc_postprocess.py, on the clause list):
+- $ctxt injection with world dispatch (lc_ctxt.py)
+- `$theof1` definite function terms (lc_postprocess.py): when an ASU has a `definites` entry
   (e.g., `["father of", "the father 2", "John 1"]`), the flat entity ID is replaced
   by `["$theof1", "father", "John 1", CTXT]` throughout all clauses.  Bridge axioms
   (`isa`, `have`, `is rel2`) are generated per relation.  This makes "the father of
   John", "John's father", and wh-queries all refer to the same canonical term.
-- Gradable property normalization (whitelist-based has property ↔ has degree property)
-- isa(entity,X) stripping (tautological)
-- RELCLASS coercion for question atoms
-- Population fact generation (synthetic witnesses for rule variables)
-- Semantic normalization (antonym resolution, canonical substitution)
+- Gradable property normalization (lc_postprocess.py, whitelist-based has property ↔ has degree property)
+- isa(entity,X) stripping (lc_postprocess.py, tautological)
+- RELCLASS coercion for question atoms (lc_postprocess.py)
+- Population fact generation (lc_postprocess.py, synthetic witnesses for rule variables)
+- Set existence fact generation (lc_sets.py, assertion-context `forall/member` patterns)
+- Semantic normalization (semnormalize.py, antonym resolution, canonical substitution)
+
+**Post-prover** (procproofs.py):
+- Answer tier filtering (concrete > Skolem > population)
+- Tautological population answer filtering
+- Proof deduplication (eliminate shadow proofs with same answer + same content sources)
 
 ### 3.8 Entity ISA Injection
 
@@ -757,6 +769,27 @@ For wh-questions, `$defq` carries the answer variable:
 {"@name": "sent_S3", "@question": ["$defq0", "?:X"], "@askvars": 1}
 ```
 
+**Where/When queries** use 2-arg `$defq` atoms to encode the preposition in the answer:
+```json
+{"@logic": [["-is rel2","in","John 1","?:Q1",CTXT], ["$defq0","in","?:Q1"]]}
+{"@logic": [["-$defq0","in","?:Q1"], ["is rel2","in","John 1","?:Q1",CTXT]]}
+...biconditionals for each preposition (in, on, at, near, above, under)...
+{"@question": ["$defq0","?:Rel","?:Q1"], "@askvars": 2, "@where_query": true}
+```
+The prover returns `["$ans", "in", "Paris 1"]` → formatted as "In Paris."
+`@when_query` works identically with temporal prepositions.
+
+**Who/What queries** use isa + equality biconditionals sharing one `$defq`:
+```json
+{"@logic": [["-isa","?:X","John 1"], ["$defq0","?:X"]]}
+{"@logic": [["-$defq0","?:X"], ["isa","?:X","John 1"]]}
+{"@logic": [["-=","?:X","John 1"], ["$defq0","?:X"]]}
+{"@logic": [["-$defq0","?:X"], ["=","?:X","John 1"]]}
+{"@question": ["$defq0","?:X"], "@askvars": 1, "@who_query": true,
+ "@who_entity": "John 1", "@who_kind": "who"}
+```
+The prover returns types (`$ans("car")`) and equalities (`$ans("king 2")`).
+
 ### 3.11 GK Input File Format
 
 The clause list is serialized as JSON with `//` comment lines between ASU groups:
@@ -792,7 +825,7 @@ The prover also loads `axioms_std.js` containing background knowledge:
 - **Taxonomy**: subtype transitivity
 - **Part-whole & possession**: has part → have inference
 - **Definite function terms**: `$theof1` bridges — generic `have(?:S, $theof1(?:R, ?:S, ?:C), ?:C)`
-  plus per-relation `isa` and `is rel2` bridges (generated by logconvert)
+  plus per-relation `isa` and `is rel2` bridges (generated by lc_postprocess)
 - **Degree intensity**: high → none entailment, high/low contradiction
 - **Gradable transitivity**: comparative relation chaining
 - **Event bridges**: activity + has type + has actor → is rel2 / have

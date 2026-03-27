@@ -36,7 +36,9 @@ The rendering pipeline is split across three modules:
 
 | Module | Responsibility |
 |--------|---------------|
-| `proof_render.py` | Atom/clause → English; entity naming; table-driven predicate dispatch |
+| `proof_utils.py` | Entity naming; Skolem resolution; render context state |
+| `proof_english.py` | Atom/clause → English; table-driven predicate dispatch |
+| `proof_logic.py` | Traditional/JSON logic syntax rendering |
 | `proof_explain.py` | Proof structure: step numbering, sentence map, explanation assembly |
 | `entity_map.py` | Display names for entities from Stage-1 metadata |
 | `procproofs.py` | Answer extraction, formatting, confidence display |
@@ -45,7 +47,7 @@ The rendering pipeline is split across three modules:
 
 ## 2. Entity Naming
 
-Entity display names are computed by `entity_name()` in `proof_render.py`,
+Entity display names are computed by `entity_name()` in `proof_utils.py`,
 with display maps built by `entity_map.py`.
 
 ### 2.1 Naming Rules
@@ -56,21 +58,35 @@ with display maps built by `entity_map.py`.
 | Proper noun (ambiguous) | `"John 1"` / `"John 3"` | `John 1` / `John 3` | Keep number to disambiguate |
 | Common noun (unique) | `"car 2"` | `the car` or `car B` | `the NOUN` from entity_map, or safe-letter fallback in proofs |
 | Common noun (ambiguous) | `"car 1"` / `"car 2"` | `the red car` / `the black car` | Qualifier adjectives from ASU text to disambiguate |
-| Skolem constant | `"sk0"` | `some activity act1` (first), `act1` (after) | Type from `isa(TYPE,skN)` in proof; informative rename; "some TYPE" on first mention only |
-| Skolem function | `["sk0","?:X"]` | `the eating by X` | Verb + actor/target from event context |
+| Skolem constant (typed) | `"sk0_house"` | `the house` (first), `house1` (after) | Type extracted from name suffix; "some TYPE" on first mention only |
+| Skolem constant (untyped) | `"sk0"` | `some activity act1` (first), `act1` (after) | Type from `isa(TYPE,skN)` in clause list or proof; informative rename |
+| Skolem function | `["sk0","?:X"]` | `the eating by X` | Verb + actor/target from event context; object type from `isa(TYPE,[sk0,?:X])` in clause list |
 | Variable | `"?:X"` | `X` | Strip `?:` prefix; numeric vars like `?:2006` → `E1` (short rename) |
 | Population constant | `"$some_car"` | `a car` | Strip `$some_` prefix, add article |
 | Population negative | `"$some_not_car"` | `a non-car` | Strip `$some_not_`, add "non-" |
 
-### 2.2 Proof Mode
+### 2.2 Skolem Type Resolution
+
+Skolem constants and functions are rendered with their type (e.g., "the house" instead of "sk0").  Type information is resolved from three sources in priority order:
+
+1. **Name suffix** (typed constants only): `skolem_type_from_name("sk0_house")` → `"house"`.  Fast path, always available for constants generated from existentials with `isa` in the body.
+2. **Clause list scan**: `compute_skolem_types(proof, logic=logic)` scans all `@logic` clauses (not just proof steps) for `isa(TYPE, skolem)` atoms.  This catches types that appear in the clause list but are not used in the proof itself (e.g., `isa("house", ["sk0","?:X"])` in a rule clause).
+3. **Proof step scan**: Same function also scans proof steps.  This is the original fallback for old-format names (`sk0` without suffix) and for types derived during the proof.
+
+For Skolem functions, `_skolem_fn_to_name` renders event Skolems using verb/actor/target from the proof (e.g., "the eating by Greg of Mike"), and object Skolems using the type lookup (e.g., "a house" or "the house of X").  Falls back to "the event" when no type is found.
+
+In answer formatting for where/when queries, `_resolve_skolem_entity` in `procproofs.py` uses the same resolution chain to render Skolem answer entities (e.g., `$ans("in", "sk0_house")` → "In the house.").
+
+### 2.3 Proof Mode
 
 In proof rendering, `entity_name()` operates in `proof_mode=True`:
+
 - Single common-noun entities skip the entity_map (avoids qualifier-predicate
   redundancy like "the very big mouse is a very big mouse")
 - Multiple same-base entities still use entity_map for disambiguation
 - Proper nouns always use entity_map
 
-### 2.3 JSON Mode
+### 2.4 JSON Mode
 
 When `-json` is set, `entity_name()` returns raw logic IDs
 (`"car 2"`, `"sk0"`, `"John 1"`) so English directly mirrors the JSON output.
@@ -188,6 +204,11 @@ Technical `$defq`/`$ans` bridge clauses are rendered as:
 
 `format_explanation()` in `proof_explain.py` assembles the full explanation.
 
+Before explanation generation, two filtering steps reduce which proofs are explained:
+
+1. **Proof deduplication** (`_deduplicate_proofs`): eliminates redundant shadow proofs that reach the same answer via different world-navigation paths but use the same content sentences.  Only the simplest non-dominated proof per group survives.
+2. **Who/what answer filtering**: for who/what queries, `_format_who_answers` returns a set of surviving answer values.  Only proofs whose answers survived filtering (not self-referential, not `$`-prefixed) are passed to `format_explanation`.  This prevents the explanation from showing proofs for answers that were filtered from the displayed answer.
+
 ### 5.1 Sections
 
 ```
@@ -293,7 +314,7 @@ With `-json`, logic is shown as raw JSON arrays:
 [["-isa","bird","?:X"], ["can","?:X","fly"]]
 ```
 
-English uses raw IDs (`"John 1"`, `"sk0"`, `"car 2"`) to match.
+English uses raw IDs (`"John 1"`, `"sk0_house"`, `"car 2"`) to match.
 
 ### 6.4 Quantified Formulas
 

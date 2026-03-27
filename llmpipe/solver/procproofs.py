@@ -24,9 +24,11 @@
 import json
 import re
 
+from lc_clausify import is_skolem_const, is_skolem_fn, skolem_type_from_name
 from proof_render import (
-  compute_ambiguity, entity_name, ans_atom_name,
+  compute_ambiguity, compute_skolem_types, entity_name, ans_atom_name,
   set_entity_map, get_entity_display,
+  get_skolem_type, get_skolem_fn_type,
 )
 from proof_explain import format_explanation, build_sentence_map, ans_display_key
 from entity_map import build_entity_map
@@ -73,6 +75,7 @@ def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=Non
   # (concrete > Skolem > population), preserving the goodness order within tier.
   answers = _filter_by_best_tier(answers)
   answers = _filter_tautological_population_answers(answers, logic)
+  answers = _deduplicate_proofs(answers)
   if not answers:
     return "Unknown."
 
@@ -95,6 +98,16 @@ def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=Non
   # are still counted.  Fall back to scanning just the answers if logic is None.
   compute_ambiguity(logic if logic is not None else answers)
 
+  # Populate Skolem type tables from logic + proofs so that answer formatting
+  # can resolve Skolem constants/functions to human-readable names.
+  all_proofs = []
+  for ans in answers:
+    for key in ("positive proof", "negative proof"):
+      p = ans.get(key)
+      if isinstance(p, list):
+        all_proofs.extend(p)
+  compute_skolem_types(all_proofs, logic=logic)
+
   # Format the answer value(s)
   who_surviving = None
   if _is_prep_query(logic):
@@ -116,7 +129,7 @@ def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=Non
                          and any(isinstance(atom, list) and len(atom) >= 2
                                  and atom[0] == "$ans" and atom[1] in who_surviving
                                  for atom in a["answer"])]
-    explanation = format_explanation(explain_answers, sentence_map, show_logic=show_logic)
+    explanation = format_explanation(explain_answers, sentence_map, show_logic=show_logic, logic=logic)
     if explanation:
       answer_str = answer_str + "\n\n" + explanation
 
@@ -271,8 +284,10 @@ def _format_who_answers(answers, logic=None):
   non_self = [(v, s) for v, s in all_vals if not s]
   self_only = [(v, s) for v, s in all_vals if s]
 
-  # Use non-self answers if available; fall back to self-referential
-  use_vals = non_self if non_self else self_only
+  # Use non-self answers if available; fall back to self-referential only
+  # when no direct properties exist either (properties are injected below
+  # but we check prop_names here to suppress tautological self-ref fallback).
+  use_vals = non_self if (non_self or prop_names) else self_only
   surviving_values = set(v for v, _ in use_vals)
 
   # Classify into categories
@@ -291,27 +306,47 @@ def _format_who_answers(answers, logic=None):
       else:
         equalities.append(v)
 
-  # Rank by who_kind
-  if who_kind == "what":
-    ranked = types + properties + equalities
-  else:
-    ranked = equalities + types + properties
+  # Inject direct properties from clause scan (not via prover)
+  for p in prop_names:
+    if p not in seen:
+      seen.add(p)
+      properties.append(p)
+      surviving_values.add(p)
 
-  if not ranked:
+  if not types and not properties and not equalities:
     return "Unknown.", set()
 
-  # Format each value
+  # Build formatted parts.
+  # When types and properties coexist, compose noun phrases: "a bad red car".
+  # When only properties, list bare: "nice" or "nice and big".
+  # Equalities rendered separately.
   parts = []
-  for v in ranked:
-    if v in prop_names:
-      parts.append(v)  # bare adjective: "nice", "big"
-    else:
-      base = v.split()[0] if " " in v else v
-      if base and base[0].islower() and not any(c.isdigit() for c in v):
-        article = "an" if base[0] in "aeiou" else "a"
-        parts.append(article + " " + v)
-      else:
-        parts.append(entity_name(v, with_url=False))
+
+  # Compose type noun phrases with properties as adjectives
+  if types:
+    primary_type = types[0]
+    adj_str = " ".join(properties) if properties else ""
+    noun = adj_str + " " + primary_type if adj_str else primary_type
+    article = "an" if noun[0] in "aeiou" else "a"
+    parts.append(article + " " + noun)
+    # Additional types without adjectives
+    for t in types[1:]:
+      article = "an" if t[0] in "aeiou" else "a"
+      parts.append(article + " " + t)
+  elif properties:
+    # No types — list properties bare
+    parts.extend(properties)
+
+  # Equality answers
+  for v in equalities:
+    parts.append(entity_name(v, with_url=False))
+
+  # Rank: for "what", types+props already first; for "who", equalities first
+  if who_kind == "who" and equalities and (types or properties):
+    # Move equality parts to front
+    eq_parts = parts[len(types) + (1 if types else len(properties)):]
+    type_parts = parts[:len(types) + (1 if types else len(properties))]
+    parts = eq_parts + type_parts
 
   result = parts[0]
   if len(parts) > 1:
@@ -319,24 +354,55 @@ def _format_who_answers(answers, logic=None):
   return result[0].upper() + result[1:] + ".", surviving_values
 
 
+def _resolve_skolem_entity(val):
+  """Resolve a Skolem constant or function to a human-readable name.
+
+  For string Skolems like "sk0": looks up skolem_types → "the house".
+  For list Skolems like ["sk0","box 2"]: looks up skolem_fn_types → "the house".
+  Returns the resolved name string, or None if not a Skolem or no type found.
+  """
+  if is_skolem_const(val):
+    # Fast path: extract type from name (sk0_house → house)
+    typ = skolem_type_from_name(val)
+    # Fallback: clause-list scan
+    if not typ:
+      typ = get_skolem_type(val)
+    if typ:
+      return "the " + typ if typ[0].islower() else typ
+  if is_skolem_fn(val):
+    typ = get_skolem_fn_type(val[0])
+    if typ:
+      return "the " + typ if typ[0].islower() else typ
+  return None
+
+
 def _location_entity_name(val, entity_props=None):
   """Format a location entity constant for display in a 'where' answer.
 
   Checks the entity_map first (user's original phrasing, with qualifier and
-  article already incorporated).  Falls back to URL-name extraction and
-  common-noun article logic.
+  article already incorporated).  Falls back to Skolem resolution, URL-name
+  extraction and common-noun article logic.
 
   "house 2"             -> "the house"
   "house 3" (red)       -> "the red house"  (entity_map or entity_props lookup)
   "London 1"            -> "London"          (proper noun: no article)
   "https://.../Estonia" -> "Estonia"
+  "sk0"                 -> "the house"       (Skolem type lookup)
   """
   if not isinstance(val, str):
+    # List Skolem function like ["sk0", "box 2"]
+    resolved = _resolve_skolem_entity(val)
+    if resolved:
+      return resolved
     return str(val)
   # Entity map overrides everything — already has correct article and qualifier
   em = get_entity_display(val)
   if em is not None:
     return em
+  # String Skolem constants like "sk0"
+  resolved = _resolve_skolem_entity(val)
+  if resolved:
+    return resolved
   # URL constants: use entity_name which extracts the last path segment
   if val.startswith("http://") or val.startswith("https://"):
     return entity_name(val, with_url=False)
@@ -425,9 +491,11 @@ def _format_prep_answers(answers, logic=None):
       continue
     prep       = atom[1]
     entity_raw = atom[2]
-    if not isinstance(prep, str) or not isinstance(entity_raw, str):
+    if not isinstance(prep, str):
       continue
-    key = (prep, entity_raw)
+    if not isinstance(entity_raw, (str, list)):
+      continue
+    key = (prep, str(entity_raw))
     if key in seen:
       continue
     seen.add(key)
@@ -580,7 +648,7 @@ def _ans_object_tier(val):
       break
     if s.startswith("$some_"):
       tier = 2
-    elif re.match(r'^sk\d+$', s):
+    elif is_skolem_const(s):
       tier = 1
     else:
       tier = 0
@@ -738,6 +806,76 @@ def _filter_tautological_population_answers(answers, logic):
   if not tautological:
     return answers
   return [a for a in answers if a not in tautological]
+
+
+# ======== proof deduplication ========
+
+def _proof_content_sources(ans):
+  """Return frozenset of sent_* clause names used as axiom sources in the proof."""
+  sources = set()
+  for key in ("positive proof", "negative proof"):
+    proof = ans.get(key)
+    if not isinstance(proof, list):
+      continue
+    for step in proof:
+      reason = step[1] if len(step) > 1 else []
+      if (isinstance(reason, list) and len(reason) > 1
+          and reason[0] == "in" and isinstance(reason[1], str)
+          and reason[1].startswith("sent_")):
+        sources.add(reason[1])
+  return frozenset(sources)
+
+
+def _answer_key(ans):
+  """Hashable key for grouping answers by conclusion value."""
+  val = ans.get("answer")
+  return json.dumps(val, sort_keys=True)
+
+
+def _proof_step_count(ans):
+  """Total number of proof steps (positive + negative)."""
+  return (len(ans.get("positive proof", []))
+        + len(ans.get("negative proof", [])))
+
+
+def _deduplicate_proofs(answers, threshold=0.15):
+  """Remove redundant shadow proofs that differ only in navigation paths.
+
+  Two proofs are in the same group if they have the same answer value
+  and the same set of content (sent_*) sources.  Within each group,
+  shorter proofs with fewer blockers dominate longer ones when confidence
+  is within threshold.
+  """
+  groups = {}
+  for ans in answers:
+    key = (_answer_key(ans), _proof_content_sources(ans))
+    groups.setdefault(key, []).append(ans)
+
+  result = []
+  for key, group in groups.items():
+    if len(group) == 1:
+      result.append(group[0])
+      continue
+    # Sort: fewer blockers, fewer steps, higher confidence
+    group.sort(key=lambda a: (
+      len(a.get("blockers", [])),
+      _proof_step_count(a),
+      -a.get("confidence", 0)
+    ))
+    # Keep first (best); discard any dominated by it
+    kept = group[0]
+    result.append(kept)
+    kb = len(kept.get("blockers", []))
+    kc = kept.get("confidence", 0)
+    ks = _proof_step_count(kept)
+    for other in group[1:]:
+      ob = len(other.get("blockers", []))
+      oc = other.get("confidence", 0)
+      os = _proof_step_count(other)
+      dominated = (kb <= ob and kc >= oc - threshold and ks <= os)
+      if not dominated:
+        result.append(other)
+  return result
 
 
 # ======== JSON parsing ========

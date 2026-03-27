@@ -232,7 +232,7 @@ def _count_distinct_answers(answers):
 
 # ======== explanation formatter ========
 
-def format_explanation(answers, sentence_map, show_logic=False):
+def format_explanation(answers, sentence_map, show_logic=False, logic=None):
   """Build a step-by-step proof explanation for all (non-duplicate) answers."""
   blocks    = []
   seen_keys = set()
@@ -270,7 +270,7 @@ def format_explanation(answers, sentence_map, show_logic=False):
 
     # Collect background-knowledge steps (sourced from frm_* axioms) for a
     # separate "Knowledge used:" section, mirroring the old UDP-pipeline style.
-    compute_skolem_types(proof)
+    compute_skolem_types(proof, logic=logic)
     bk_seen  = {}   # clause_str -> already listed flag
     bk_lines = []
     for step in proof:

@@ -63,14 +63,20 @@ English text
 - `solve.py` — CLI entry point and `english_to_answer(text, options)` function
 - `llmparse.py` — two-stage LLM parser; `parse_text(text)` → `(s1_json, s2_json, stats)`
 - `llmcall.py` — LLM API wrapper (GPT/Claude/Gemini/DeepSeek) with retries and SQLite caching; `call_llm(sysprompt, input_text)`
-- `logconvert.py` — main driver for stage-2 JSON → GK clause list; `rawlogic_convert(logic)`; handles package extraction, context injection, post-processing passes
-- `lc_clausify.py` — FOL-to-CNF compiler used by logconvert: implies/xor/equivalent elimination, NNF push, normally expansion, Skolemization, distribution, clause extraction
-- `lc_questions.py` — question wrapping (`ask`/`question` → `@question`/`@askvars`) and population fact injection
-- `lc_sets.py` — set/counting: `$setof` rewriting to canonical form, membership axiom generation, element instantiation
-- `procproofs.py` — post-processes prover output; formats answers (bool, who, where), confidence labels, proof explanation dispatch
+- `logconvert.py` — main driver for stage-2 JSON → GK clause list; `rawlogic_convert(logic)`; orchestrates package extraction, question/assertion processing, and post-processing passes
+- `lc_rewrites.py` — pre-clausification formula rewrites: meta-predicate normalization, degree presuppositions, existential hoisting, spurious `can` removal, polarity flip
+- `lc_ctxt.py` — `$ctxt` context injection, time-wrapper stripping, fresh variable generation, predicate classification constants
+- `lc_postprocess.py` — post-clausification clause-list passes: gradable normalization, RELCLASS coercion, isa-entity stripping, `$theof1` definite rewrites, possessive `have` inference, population facts, degree stripping
+- `lc_clausify.py` — FOL-to-CNF compiler: implies/xor/equivalent elimination, NNF push, normally expansion, Skolemization, distribution, clause extraction.  Also provides Skolem identification helpers (`is_skolem_const`, `is_skolem_fn`, `skolem_type_from_name`) and typed Skolem constant naming (`sk0_house`)
+- `lc_questions.py` — question wrapping (`ask`/`question` → `@question`/`@askvars`), population fact injection, and WH-question builders: `build_where_question`/`build_when_question` (preposition expansion), `build_who_question` (isa + equality biconditionals), `build_defq_question` (general $defq)
+- `lc_sets.py` — set/counting: `$setof` rewriting to canonical form, membership axiom generation, element instantiation, set existence fact generation
+- `procproofs.py` — post-processes prover output; formats answers (bool, who/what, where/when), confidence labels, proof deduplication, Skolem resolution, proof explanation dispatch
 - `proof_explain.py` — generates English proof explanations from prover proof steps
-- `proof_render.py` — renders proof atoms and steps as human-readable strings (table-driven via `_PRED_TABLE`)
-- `linguistics.py` — pure English heuristics (articles, verb conjugation, comparatives, gerunds); used by proof_render.py
+- `proof_render.py` — facade module re-exporting from `proof_utils`, `proof_english`, `proof_logic`
+- `proof_utils.py` — entity naming, Skolem type resolution, render context state, ambiguity detection
+- `proof_english.py` — atom/clause → English rendering; table-driven predicate dispatch via `_PRED_TABLE`
+- `proof_logic.py` — traditional `pred(arg,...)` and JSON logic syntax rendering
+- `linguistics.py` — pure English heuristics (articles, verb conjugation, comparatives, gerunds); used by proof_english.py
 - `prover.py` — invokes the `gk` binary subprocess; `call_prover(logic)`
 - `cache.py` — SQLite-backed cache for LLM responses and prover results
 - `globals.py` — global `options` dict and file paths (uses `os.path` for absolute paths)

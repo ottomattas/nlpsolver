@@ -48,6 +48,31 @@ _GENERIC_OBJ_PREDS = frozenset({
 # Bare type name: all lowercase letters (no digits, no uppercase, no suffix number).
 _BARE_TYPE_RE = re.compile(r'^[a-z][a-z]*$')
 
+# Skolem name pattern: matches sk0 (old/untyped), sk0_house (typed constant),
+# sk0 in ["sk0", "?:X"] (function).
+_SKOLEM_RE = re.compile(r'^sk\d+(_\w+)?$')
+
+def is_skolem_const(val):
+  """True if val is a Skolem constant string like 'sk0' or 'sk0_house'."""
+  return isinstance(val, str) and _SKOLEM_RE.match(val) is not None
+
+def is_skolem_fn(val):
+  """True if val is a Skolem function term like ['sk0', '?:X']."""
+  return (isinstance(val, list) and val
+          and isinstance(val[0], str) and _SKOLEM_RE.match(val[0]) is not None)
+
+def skolem_type_from_name(name):
+  """Extract type from typed Skolem name. 'sk0_house' → 'house', 'sk0' → None."""
+  if not isinstance(name, str):
+    return None
+  m = _SKOLEM_RE.match(name)
+  if not m:
+    return None
+  suffix = m.group(1)  # '_house' or None
+  if suffix:
+    return suffix[1:]  # strip leading '_'
+  return None
+
 # Counter for Skolem function/constant names (reset per top-level call).
 _skolem_nr = 0
 
@@ -760,7 +785,8 @@ def _skolemize(frm, freevars, varmap):
   if op == "exists":
     var = frm[1]
     body = frm[2]
-    skolem = _make_skolem(freevars)
+    isa_type = _extract_skolem_type(body, var) if not freevars else None
+    skolem = _make_skolem(freevars, isa_type)
     new_varmap = dict(varmap)
     new_varmap[var] = skolem
     return _skolemize(body, freevars, new_varmap)
@@ -772,13 +798,34 @@ def _skolemize(frm, freevars, varmap):
   return apply_varmap(frm, varmap)
 
 
-def _make_skolem(freevars):
-  """Create a Skolem constant (no free vars) or function (with free vars)."""
+def _extract_skolem_type(body, var):
+  """Extract isa type for var from existential body, or None."""
+  if not isinstance(body, list) or not body:
+    return None
+  if body[0] == "isa" and len(body) >= 3 and body[2] == var and isinstance(body[1], str):
+    return body[1]
+  if body[0] == "and":
+    for item in body[1:]:
+      if (isinstance(item, list) and len(item) >= 3
+          and item[0] == "isa" and item[2] == var
+          and isinstance(item[1], str)):
+        return item[1]
+  return None
+
+
+def _make_skolem(freevars, isa_type=None):
+  """Create a Skolem constant (no free vars) or function (with free vars).
+
+  For constants, if isa_type is known, appends it: sk0_house.
+  Functions keep plain names: ["sk0", "?:X"].
+  """
   global _skolem_nr
   name = "sk" + str(_skolem_nr)
   _skolem_nr += 1
   if freevars:
     return [name] + freevars
+  if isa_type:
+    return name + "_" + isa_type
   return name
 
 

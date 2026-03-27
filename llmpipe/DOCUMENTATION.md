@@ -126,12 +126,18 @@ llmpipe/
 │   ├── solve.py         CLI entry point; english_to_answer() library function
 │   ├── llmparse.py      Two-stage LLM parser
 │   ├── llmcall.py       LLM API wrapper (GPT / Claude / Gemini / DeepSeek, no SDK)
-│   ├── logconvert.py    Stage-2 JSON → GK clause list (main driver)
+│   ├── logconvert.py    Stage-2 JSON → GK clause list (orchestration)
+│   ├── lc_rewrites.py   Pre-clausification formula rewrites
+│   ├── lc_ctxt.py       $ctxt injection, time handling, fresh variables
+│   ├── lc_postprocess.py Post-clausification clause-list passes
 │   ├── lc_clausify.py   FOL → CNF clausification
 │   ├── lc_questions.py  Wh-question encoding and population facts
 │   ├── lc_sets.py       Set/counting: $setof rewriting, membership axioms, element instantiation
 │   ├── procproofs.py    Prover output → answer string
-│   ├── proof_render.py  Atom/clause rendering (table-driven)
+│   ├── proof_render.py  Proof rendering facade (re-exports from proof_utils/english/logic)
+│   ├── proof_utils.py   Entity naming, Skolem resolution, render context
+│   ├── proof_english.py Atom/clause → English rendering (table-driven)
+│   ├── proof_logic.py   Traditional/JSON logic syntax rendering
 │   ├── proof_explain.py Step-by-step proof explanation formatter
 │   ├── linguistics.py   Pure English heuristics (articles, conjugation, gerunds)
 │   ├── prover.py        gk binary interface
@@ -378,7 +384,7 @@ The four `$ctxt` arguments are:
 | location | `ASU.location` from Stage 1, or a fresh free variable |
 | knower | holder of a mental attitude, or a fresh free variable |
 
-Eligible predicates (`_CTXT_ELIGIBLE` in `logconvert.py`): `has property`, `have`, `has part`,
+Eligible predicates (`CTXT_ELIGIBLE` in `lc_ctxt.py`): `has property`, `have`, `has part`,
 `can`, `is rel2`, `has degree property`, `has degree rel2`, plus all event predicates (`has type`,
 `has actor`, `has target`, …), `typical`, `typically`.  Structural predicates (`isa`, `holds`,
 `state *`, `next`, `kb *`, `@*`, `$*`, `=`, `<`, `>`) are NOT augmented.
@@ -515,14 +521,20 @@ API keys are read from plain-text files in `../secrets/` (relative to `llmpipe/`
 `gpt_secrets.txt`, `claude_secrets.txt`, `gemini_secrets.txt`, `deepseek_secrets.txt`.
 The directory path is set once via `_secrets_dir` in `llmcall.py`.
 
-### 5.4 logconvert.py
+### 5.4 logconvert.py and supporting modules
 
 **Role:** Main driver for logic conversion — orchestrates the full Stage-2 JSON → GK clause
-list pipeline.  The heavy computation is split across three files: `logconvert.py` handles
-package extraction, context injection, and post-processing passes; `lc_clausify.py` does FOL→CNF
-compilation; `lc_questions.py` handles question encoding and population facts;
-`lc_sets.py` handles set/counting: `$setof` rewriting, membership axioms, and element
-instantiation.
+list pipeline.  The computation is split across several files:
+
+| Module | Responsibility |
+|--------|---------------|
+| `logconvert.py` | Orchestration: package extraction, question/assertion dispatch |
+| `lc_rewrites.py` | Pre-clausification formula rewrites (meta-predicate normalization, existential hoisting, spurious `can` removal, polarity flip) |
+| `lc_ctxt.py` | `$ctxt` injection, time-wrapper stripping, fresh variable generation |
+| `lc_postprocess.py` | Post-clausification clause-list passes (gradable normalization, RELCLASS coercion, `$theof1`, possessive `have`, population facts, degree stripping) |
+| `lc_clausify.py` | FOL→CNF compilation |
+| `lc_questions.py` | Question encoding and population fact builders |
+| `lc_sets.py` | Set/counting: `$setof` rewriting, membership axioms, element instantiation |
 
 **Key function:** `rawlogic_convert(logic, s1_json=None) -> list | None`
 
@@ -532,35 +544,34 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
 ["and", ["@id","S1",PACKAGE], ...] (Stage-2 input)
     │
     ├─ _build_asu_index(s1_json)          build unit_id→ASU lookup from Stage 1
-    ├─ _populate_clauses(items)            collect "populate" background facts
+    ├─ rewrite_meta_predicates(logic)     [lc_rewrites] "located in"→"in", "is"→isa
+    ├─ inject_degree_presuppositions()    [lc_rewrites] "not very X" → X and not very X
+    ├─ populate_clauses(items)            [lc_postprocess] collect background facts
     │
     ├─ for each @id item:
     │    _convert_id_package(item, asu_index)
     │        _extract_package_ctx()        unpack PACKAGE: formula, world, tense, etc.
     │        override with Stage-1 ASU data (tense, world, location)
-    │        _process_question()           wh-/yes-no question dispatch  [→ lc_questions.py]
-    │        _process_assertion()          clausify + confidence  [→ lc_clausify.py]
-    │        inject $ctxt into result
+    │        strip_spurious_can()          [lc_rewrites] remove non-modal "can"
+    │        hoist_misnested_exists()      [lc_rewrites] fix variable scoping
+    │        _process_question()           wh-/yes-no question dispatch [→ lc_questions]
+    │        _process_assertion()          clausify + confidence [→ lc_clausify]
+    │        inject $ctxt into result      [lc_ctxt]
     │
     ├─ insert population facts before first @question
-    ├─ inject $ctxt into population facts
-    ├─ _normalize_gradable_predicates()   whitelist-based has property ↔ has degree property
-    ├─ _strip_isa_entity()                remove trivially-true/false isa entity literals
-    ├─ _coerce_relclass()                 fix RELCLASS mismatches in question atoms
-    ├─ _strip_degree_predicates()         (only if -simpleproperties flag)
+    ├─ inject $ctxt into population facts  [lc_ctxt]
+    ├─ normalize_gradable_predicates()    [lc_postprocess]
+    ├─ strip_isa_entity()                 [lc_postprocess]
+    ├─ coerce_relclass()                  [lc_postprocess]
+    ├─ strip_degree_predicates()          [lc_postprocess] (only if -simpleproperties)
     └─ strip @sourcetype                  remove internal annotation before prover
 ```
-
-**Module-level constants:**
-
-- `_GRADABLE_PROPS` — frozenset loaded from `solver/gradables.txt`; ~400 lowercase property names
-- `_CTXT_ELIGIBLE` — frozenset of predicates that receive a `$ctxt` argument
 
 **Counter globals** (reset at the start of each `rawlogic_convert` call):
 
 - `lc_clausify._skolem_nr`, `lc_clausify._gobj_nr` — Skolem and generic-object counters
-- `lc_questions._defq_nr` — `$defq` predicate name counter (for complex questions)
-- `_fv_nr` (in `logconvert`) — fresh free-variable counter (`?:Fv1`, `?:Fv2`, …)
+- `lc_questions._defq_nr` — `$defq` predicate name counter
+- `lc_ctxt._fv_nr` — fresh free-variable counter (`?:Fv1`, `?:Fv2`, …)
 
 See §7 for detailed discussion of the key algorithms.
 
@@ -705,37 +716,39 @@ and `"John 3"`).  Such names keep their distinguishing number in output.
 **Imports from proof_render.py:** `compute_ambiguity`, `entity_name`, `ans_atom_name`
 **Imports from proof_explain.py:** `format_explanation`, `build_sentence_map`, `ans_display_key`
 
-### 5.9 proof_render.py
+### 5.9 Proof rendering modules
 
-**Role:** Low-level rendering of proof atoms and clauses as English strings.
+Proof rendering is split across four files, with `proof_render.py` as a thin facade:
 
-**Architecture:** Atom-to-English rendering is table-driven via `_PRED_TABLE`, a dict mapping
-predicate names to `(arity, pos_renderer, neg_renderer)` tuples.  The unified `_render_atom(atom,
-negated=False)` function dispatches through the table, with fallback handlers for special cases
-(`holds`, `normally`, `$defq*`, etc.).
+| Module | Role |
+|--------|------|
+| `proof_render.py` | Facade — re-exports public API from the three implementation modules |
+| `proof_utils.py` | Entity naming, Skolem type resolution, render context state, ambiguity detection |
+| `proof_english.py` | Atom/clause → English rendering; table-driven via `_PRED_TABLE` |
+| `proof_logic.py` | Traditional `pred(arg,...)` and JSON logic syntax rendering |
 
 Per-proof mutable state (entity map, ambiguous names, Skolem type annotations) is bundled in a
-`RenderContext` class (`_ctx` module-level instance), replacing former module-level globals.
+`RenderContext` class (`_ctx` module-level instance) in `proof_utils.py`.
+
+Atom-to-English rendering in `proof_english.py` is table-driven via `_PRED_TABLE`, a dict mapping
+predicate names to `(arity, pos_renderer, neg_renderer)` tuples.
 
 See `PROOF_RENDERING.md` for a detailed description of the rendering principles,
 entity naming rules, clause rendering, and proof explanation structure with examples.
 
-**Imports from linguistics.py:** `indef_article`, `conjugate_verb`, `make_comparative`,
-`to_gerund` — pure English heuristic helpers with no dependency on proof state.
+**Public API** (all importable from `proof_render.py`):
 
-**Public API:**
-
-- `compute_ambiguity(logic) -> (set, set)` — returns `(ambiguous_names, ambiguous_urls)` by
-  scanning the full clause list for multiply-numbered entities
-- `compute_skolem_types(proof)` — annotate each Skolem constant in a proof with the type inferred
-  from `isa` literals in the proof steps (mutates step dicts in-place)
-- `set_entity_map(entity_map)` — set the entity display map in the render context
-- `get_entity_display(key)` — look up an entity's display name
-- `entity_name(atom_arg, ambiguous, ambig_urls) -> str` — format one entity argument for display
-- `ans_atom_name(atom) -> str` — format the answer atom of a proof step
-- `clause_to_str(clause) -> str` — convert a raw clause list to a readable string
-- `format_clause_logic(clause) -> str` — format clause as FOL-style logic notation
-- `block_to_english(blocker) -> str` — convert a `$block` literal to a readable exception string
+- `compute_ambiguity(logic)` — scan clause list for ambiguous entity names [`proof_utils`]
+- `compute_skolem_types(proof, logic=None)` — populate Skolem type tables from logic + proof [`proof_utils`]
+- `set_entity_map(entity_map)` — set entity display map [`proof_utils`]
+- `get_entity_display(key)` — look up display name [`proof_utils`]
+- `entity_name(val, with_url, proof_mode)` — format entity for display [`proof_utils`]
+- `ans_atom_name(atom)` — format answer atom [`proof_english`]
+- `clause_to_str(clause)` — clause → English string [`proof_english`]
+- `block_to_english(blocker)` — `$block` → English exception string [`proof_english`]
+- `format_clause_logic(clause)` — clause → compact JSON [`proof_logic`]
+- `format_clause_traditional(clause)` — clause → traditional logic syntax [`proof_logic`]
+- `formula_to_logic(formula)` — FOL formula → traditional syntax [`proof_logic`]
 
 ### 5.10 proof_explain.py
 
@@ -858,7 +871,7 @@ the parsed CLI flags.
 
 ### 5.15 linguistics.py
 
-**Role:** Pure English linguistic heuristics used by `proof_render.py` for human-readable output.
+**Role:** Pure English linguistic heuristics used by `proof_english.py` for human-readable output.
 No dependency on proof state or any other pipeline module.
 
 - `indef_article(word) -> str` — returns `"an"` before vowel sounds, `"a"` otherwise
@@ -1046,29 +1059,29 @@ bridge representation gaps.
 
 | Rewrite | Where | Example | What it does |
 |---------|-------|---------|-------------|
-| Degree presupposition injection | `logconvert._inject_degree_presuppositions` | "John is not very big" → adds "John is big" (unmarked degree) alongside the negated "very big" | `["not",["has degree property",P,E,"high",C]]` → `["and",["has degree property",P,E,"none",C],["not",...]]` |
+| Degree presupposition injection | `lc_rewrites.inject_degree_presuppositions` | "John is not very big" → adds "John is big" (unmarked degree) alongside the negated "very big" | `["not",["has degree property",P,E,"high",C]]` → `["and",["has degree property",P,E,"none",C],["not",...]]` |
 | Stative event rewriting | `semnormalize.rewrite_stative_events` | "John had a car" encoded as an event → rewritten to direct `have(john,car)` | Replaces Davidsonian event encoding of stative verbs (have, own, like, love, etc.) with direct predicates.  Safety: only rewrites when the event variable has no extra properties (has_location, etc.) |
-| `@time` stripping | `logconvert._strip_time_wrappers` | "John was tall" — the past-tense `@time` wrapper becomes a `$tense` sentinel controlling the tense slot in `$ctxt` | Converts `["@time","past",ATOM]` wrappers into `$tense` sentinels on the atom |
+| `@time` stripping | `lc_ctxt.strip_time_wrappers` | "John was tall" — the past-tense `@time` wrapper becomes a `$tense` sentinel controlling the tense slot in `$ctxt` | Converts `["@time","past",ATOM]` wrappers into `$tense` sentinels on the atom |
 | Entity category injection | `logconvert._build_entity_category_clauses` | "John is an elephant" — Stage-1 says John's category is "person", so `isa(person, John 1)` is added even though Stage-2 only emits `isa(elephant, John 1)` | Adds `isa(CATEGORY, ENTITY)` facts from Stage-1 entity annotations when not already present in Stage-2 |
 | Entity base-word isa | `logconvert._build_entity_category_clauses` | "A man had a car" — entity `man 1` has category "person", but the base word "man" is also a type; adds `isa(man, man 1)` alongside `isa(person, man 1)` | For concrete entities with a lowercase base word different from the category, injects `isa(BASE, ENTITY)` so queries using the descriptive type word can match |
-| Compound subsumption | `logconvert._build_compound_subsumption` | "Baby birds do not fly" — adds a rule that baby birds are birds, so general bird rules can apply to them | Adds `isa(BASE, X) :- isa(COMPOUND, X)` rules for compound types |
+| Compound subsumption | `lc_postprocess.build_compound_subsumption` | "Baby birds do not fly" — adds a rule that baby birds are birds, so general bird rules can apply to them | Adds `isa(BASE, X) :- isa(COMPOUND, X)` rules for compound types |
 
 **Post-clausification modifications** (on the GK clause list):
 
 | Modification | Where | Example | What it does |
 |-------------|-------|---------|-------------|
-| `$ctxt` injection | `logconvert._inject_ctxt_into_objs` / `_inject_ctxt_question` | "John was tall" → atom gets `$ctxt(past,W0,?,?)` anchoring it to the past in world W0 | Appends `["$ctxt",T,W,L,K]` to eligible predicate atoms.  Rules: all-free-var.  Assertions: concrete world/tense.  Questions: see next row (§7.4) |
-| Descriptive/stative/dynamic split | `logconvert._inject_ctxt_question` | "Did the man have the red car which a woman bought?" — `bought` events and `red` property each get independent free-var worlds; stative `have` also gets free-var world; only dynamic event predicates (if matrix) keep the query's world | Three-way $ctxt world dispatch in `$defq` questions: (1) **descriptive** atoms (isa, event atoms, properties when a main relation is present) each get an independent free-var world; (2) **stative matrix** predicates (have, can, has part) get free-var world — persistent states don't need concrete world anchoring; (3) **dynamic matrix** predicates (is_rel2, properties when no main relation) keep the query's world.  `_question_has_main_relation` detects whether properties are restrictive modifiers.  Each descriptive/stative atom gets its OWN fresh world variable to avoid forced co-unification across different world states |
-| Gradable normalisation | `logconvert._normalize_gradable_predicates` | "John is big" — LLM used `has property(big,...)` but "big" is in the gradable whitelist → upgraded to `has degree property` | Whitelist-based `has property` ↔ `has degree property` conversion; replaces `"entity"` and `"none"` relclass with free variables (§7.5) |
-| `isa entity` stripping | `logconvert._strip_isa_entity` | "Every entity that is big is strong" — `isa(entity,X)` is always true, so the clause is a tautology → removed | Removes tautological `isa(entity,X)` literals (§7.5) |
-| RELCLASS coercion | `logconvert._coerce_relclass` | "Is John big?" — query uses relclass "person" (John's category) but the rule uses "bear" → relclass replaced with free variable so they unify | Fixes relclass mismatches in question degree-predicate atoms |
-| `$theof1` definite rewrite | `logconvert._rewrite_definites` | "The father of John is nice" — `"the father 2"` → `["$theof1","father","John 1",CTXT]` throughout all clauses; `is_rel2` clause removed; per-relation `isa`/`is_rel2` bridge axioms generated as `frm_theof` | Replaces flat entity IDs for definite functional descriptions with canonical function terms so that "the father of John", "John's father", and wh-queries all refer to the same term.  Triggered by Stage-1 `definites` field.  Primary: matches `is_rel2` clause.  Fallback: matches `have` + `isa` pair.  Generic `have` bridge in `axioms_std.js`. |
-| Possessive `have` inference | `logconvert._add_possessive_have` | "The handle of the fork" — `is_rel2(handle of, fork, handle)` + `isa(handle, handle)` → `have(fork, handle)` | Infers `have(Y,E,CT)` from possessive `is_rel2` patterns.  Handles ground entities, Skolem functions, and `$theof1` terms.  For rule clauses with guard literals (e.g., `[-isa,elephant,?:X]`), generates conditional `have` with the same guard. |
-| Misnested existential hoisting | `logconvert._hoist_misnested_exists` | `[exists E, [and, has_actor(E,X), [exists X, isa(bear,X)]]]` → `[exists E, [exists X, [and, has_actor(E,X), isa(bear,X)]]]` | Pre-clausification fix for assertion formulas.  Detects existential variables used free in sibling conjuncts before their `exists` binding, hoists the binding to wrap the entire conjunction.  Only applies in assertion contexts (from `holds`), with collision checks against enclosing bindings. |
-| Spurious `can` removal | `logconvert._strip_spurious_can` | "Did bears eat berries?" — removes `["can",X,E]` from event query when no modal language in ASU text | Pre-clausification pass on question formulas.  Fires when `can(X,E)` appears alongside `isa(activity,E)` and `has_actor(E,X)` in the same conjunction, both X and E are existentially quantified, and the ASU text contains no modal words (can, could, able, may, might, etc.). |
-| Copula/identity rewrite | `logconvert._rewrite_is_rel2_is` | `["is rel2","is",A,B]` → `["isa",A,B]`; `["is rel2","=",A,B]` → `["=",A,B]` | Pre-clausification rewrite.  LLMs (esp. Gemini) sometimes use `is_rel2("is",...)` or `is_rel2("=",...)` for copula/identity; these are not real relations and have no matching axioms.  Rewrites to the correct predicates. |
+| `$ctxt` injection | `lc_ctxt.inject_ctxt_into_objs` / `inject_ctxt_question` | "John was tall" → atom gets `$ctxt(past,W0,?,?)` anchoring it to the past in world W0 | Appends `["$ctxt",T,W,L,K]` to eligible predicate atoms.  Rules: all-free-var.  Assertions: concrete world/tense.  Questions: see next row (§7.4) |
+| Descriptive/stative/dynamic split | `lc_ctxt.inject_ctxt_question` | "Did the man have the red car which a woman bought?" — `bought` events and `red` property each get independent free-var worlds; stative `have` also gets free-var world; only dynamic event predicates (if matrix) keep the query's world | Three-way $ctxt world dispatch in `$defq` questions: (1) **descriptive** atoms (isa, event atoms, properties when a main relation is present) each get an independent free-var world; (2) **stative matrix** predicates (have, can, has part) get free-var world — persistent states don't need concrete world anchoring; (3) **dynamic matrix** predicates (is_rel2, properties when no main relation) keep the query's world.  `_question_has_main_relation` detects whether properties are restrictive modifiers.  Each descriptive/stative atom gets its OWN fresh world variable to avoid forced co-unification across different world states |
+| Gradable normalisation | `lc_postprocess.normalize_gradable_predicates` | "John is big" — LLM used `has property(big,...)` but "big" is in the gradable whitelist → upgraded to `has degree property` | Whitelist-based `has property` ↔ `has degree property` conversion; replaces `"entity"` and `"none"` relclass with free variables (§7.5) |
+| `isa entity` stripping | `lc_postprocess.strip_isa_entity` | "Every entity that is big is strong" — `isa(entity,X)` is always true, so the clause is a tautology → removed | Removes tautological `isa(entity,X)` literals (§7.5) |
+| RELCLASS coercion | `lc_postprocess.coerce_relclass` | "Is John big?" — query uses relclass "person" (John's category) but the rule uses "bear" → relclass replaced with free variable so they unify | Fixes relclass mismatches in question degree-predicate atoms |
+| `$theof1` definite rewrite | `lc_postprocess.rewrite_definites` | "The father of John is nice" — `"the father 2"` → `["$theof1","father","John 1",CTXT]` throughout all clauses; `is_rel2` clause removed; per-relation `isa`/`is_rel2` bridge axioms generated as `frm_theof` | Replaces flat entity IDs for definite functional descriptions with canonical function terms so that "the father of John", "John's father", and wh-queries all refer to the same term.  Triggered by Stage-1 `definites` field.  Primary: matches `is_rel2` clause.  Fallback: matches `have` + `isa` pair.  Generic `have` bridge in `axioms_std.js`. |
+| Possessive `have` inference | `lc_postprocess.add_possessive_have` | "The handle of the fork" — `is_rel2(handle of, fork, handle)` + `isa(handle, handle)` → `have(fork, handle)` | Infers `have(Y,E,CT)` from possessive `is_rel2` patterns.  Handles ground entities, Skolem functions, and `$theof1` terms.  For rule clauses with guard literals (e.g., `[-isa,elephant,?:X]`), generates conditional `have` with the same guard. |
+| Misnested existential hoisting | `lc_rewrites.hoist_misnested_exists` | `[exists E, [and, has_actor(E,X), [exists X, isa(bear,X)]]]` → `[exists E, [exists X, [and, has_actor(E,X), isa(bear,X)]]]` | Pre-clausification fix for assertion formulas.  Detects existential variables used free in sibling conjuncts before their `exists` binding, hoists the binding to wrap the entire conjunction.  Only applies in assertion contexts (from `holds`), with collision checks against enclosing bindings. |
+| Spurious `can` removal | `lc_rewrites.strip_spurious_can` | "Did bears eat berries?" — removes `["can",X,E]` from event query when no modal language in ASU text | Pre-clausification pass on question formulas.  Fires when `can(X,E)` appears alongside `isa(activity,E)` and `has_actor(E,X)` in the same conjunction, both X and E are existentially quantified, and the ASU text contains no modal words (can, could, able, may, might, etc.). |
+| Meta-predicate normalization | `lc_rewrites.rewrite_meta_predicates` | `["is rel2","is",A,B]` → `["isa",A,B]`; `["is rel2","=",A,B]` → `["=",A,B]`; `["is rel2","located in",A,B]` → `["is rel2","in",A,B]` | Pre-clausification rewrite applied to all formulas.  Normalizes copula (`is` → `isa`), identity (`=`), and spatial meta-predicates (`located in/at/on/near/above/under` → bare preposition).  Ensures LLM-produced verbose predicates match the canonical forms used in facts and axioms. |
 | Set existence fact | `lc_sets._walk_for_count` | "Bears ate berries" with `forall/implies/member/$setof` in assertion context → `member("$some_bear", $setof(...))` | Generates a ground set membership fact for assertion-context `forall/member` patterns so the prover can bootstrap resolution through member-guarded clauses.  Skipped when the set already has element instantiation from a count assertion. |
-| Degree stripping | `logconvert._strip_degree_predicates` | With `-simpleproperties`: `has_degree_property(big,X,none,animal)` → `has_property(big,X)` | (Only with `-simpleproperties`) Replaces degree predicates with simple property predicates |
+| Degree stripping | `lc_postprocess.strip_degree_predicates` | With `-simpleproperties`: `has_degree_property(big,X,none,animal)` → `has_property(big,X)` | (Only with `-simpleproperties`) Replaces degree predicates with simple property predicates |
 | Semantic normalisation | `semnormalize.sem_normalize_clauses` | "The ball is outside the box" → `outside` is antonym of `inside` → flips polarity and substitutes: `-is_rel2(inside,ball,box)` | Antonym resolution (flip polarity + swap word) and canonical substitution (synonym → canonical form) |
 | `@sourcetype` stripping | Serialisation (`clause_list_to_json`) | Population facts carry `@sourcetype:"populate"` internally for processing — stripped before the prover sees them | Internal `@sourcetype` tags are excluded from prover input |
 
@@ -1080,11 +1093,15 @@ The pipeline handles four types of WH-questions through specialized detection an
 
 ### Where questions ("Where is X?")
 
-Detection: `find_where_atom(body, ask_var)` matches `["is rel2", spatial_pred, entity, ask_var]` where `spatial_pred` is in `_SPATIAL_PREPS` (`in, on, at, near, above, under`) or `_WHERE_META_PREDS` (`located in, located at, ...`). Also detected via `find_haslocation_prep` matching `["has location", event_var, ask_var]` in activity-location queries.
+Detection: `find_where_atom(body, ask_var)` matches `["is rel2", spatial_pred, entity, ask_var]` where `spatial_pred` is a spatial preposition after meta-predicate normalization (e.g., `"located in"` is rewritten to `"in"` by `_rewrite_meta_predicates` before detection).  Also detected via `find_haslocation_prep` matching `["has location", event_var, ask_var]` in activity-location queries.
 
-Encoding: `build_where_question` generates biconditional clauses for each spatial preposition — forward and backward — sharing a single `$defq` with 2-arg atoms `[$defq, prep, ?:Q1]`. Sets `@where_query: True` and `@askvars: 2`.
+Encoding depends on the entity and preposition:
+- **Concrete entity** (e.g., `"John 1"`): `build_where_question` generates biconditional clauses for each spatial preposition — forward and backward — sharing a single `$defq` with 2-arg atoms `[$defq, prep, ?:Q1]`.  Generic prepositions (`in, on, at`) trigger expansion over ALL spatial preps; specific prepositions (`near, above, under`) restrict to just that preposition.
+- **Variable entity** (e.g., `"Y"` for "a car"): uses `build_defq_question` which preserves all body constraints (e.g., `isa(car, Y)`) to avoid over-broad matching.
 
-Answer format: `_format_prep_answers` renders `["$ans", prep, entity]` as "In Paris.", "Near the house.", etc. with confidence prefixes.
+Sets `@where_query: True` and `@askvars: 2`.
+
+Answer format: `_format_prep_answers` renders `["$ans", prep, entity]` as "In Paris.", "Near the house.", etc. with confidence prefixes.  Skolem entities (constants like `"sk0_house"` or functions like `["sk0", "box 2"]`) are resolved to their type via `_resolve_skolem_entity` (e.g., "the house").
 
 ### When questions ("When is X?")
 
@@ -1111,11 +1128,17 @@ Encoding: `build_who_question` generates two biconditional sets sharing one `$de
 
 Sets `@who_query: True`, `@who_entity: ENTITY`, `@who_kind: "who"|"what"`, `@askvars: 1`.
 
-Answer formatting: `_format_who_answers` collects all `$ans` values, filters self-referential answers (where answer = queried entity, kept only as fallback), filters `$`-prefixed constants. Classifies answers as types (from isa), properties, or equalities. Ranking differs by kind:
+Answer formatting: `_format_who_answers` collects `$ans` values from the prover (isa types and equalities) and **injects properties directly** from a clause-list scan (`_classify_who_answers` finds `has_degree_property(PROP, ENTITY, ...)` and `has_property(PROP, ENTITY, ...)` ground facts).  Properties bypass the prover because property biconditionals with variable PROP cause search-space explosion.
+
+Filtering: self-referential answers (answer = queried entity) are kept only as fallback when no other answers exist.  `$`-prefixed constants (population/metadata) are always filtered.  When direct properties exist, the self-referential fallback is suppressed.
+
+Classification and ranking differs by kind:
 - Who: equality > isa types > properties
 - What: isa types > properties > equality
 
-Formats types with article ("a car", "an animal"), properties bare ("nice"), equalities via `entity_name()`. Returns both the answer string and the set of surviving values (used to filter proof explanations to only show relevant proofs).
+Noun phrase composition: when both types and properties exist, they are merged into a composed noun phrase — e.g., types=["car"], properties=["bad","red"] → "a bad red car".  The primary type gets all properties as adjectives; additional types are listed separately with articles.  Properties without a type are listed bare ("nice").  Equalities rendered via `entity_name()`.
+
+Returns both the answer string and the set of surviving values (used to filter proof explanations to only show relevant proofs).
 
 ### Other WH-questions ("Who is an animal?", "What did John eat?")
 
@@ -1124,6 +1147,44 @@ WH-questions that don't match the who/what identity pattern or the where/when pr
 ### $ctxt injection for WH-questions
 
 Where and when queries get world-agnostic `$ctxt` (free-variable world and tense) because location/time facts may come from any world state.  Who/what queries and other WH-questions get the standard question `$ctxt` dispatch: descriptive atoms (isa, event atoms) get free-var world, matrix atoms keep the query's world.
+
+---
+
+## 7.6. Proof deduplication
+
+The prover often returns multiple proofs for the same answer that differ only in temporal/world-navigation paths (e.g., 10 proofs for "in the house" using different world-state axiom routes W0→W1, W0→W1→W2, etc.).
+
+`_deduplicate_proofs(answers)` in `procproofs.py` eliminates redundant shadow proofs:
+
+1. **Group** answers by conclusion value (deep-equal) AND content fingerprint (frozenset of `sent_*` sources used in the proof).
+2. **Within each group** (same answer + same content sentences), proof A dominates proof B if ALL of:
+   - `len(A.blockers) <= len(B.blockers)`
+   - `A.confidence >= B.confidence - 0.15` (configurable threshold)
+   - `len(A.steps) <= len(B.steps)`
+3. **Remove dominated proofs**, keeping the simplest non-dominated proof per group.
+
+Runs after `_filter_by_best_tier` and `_filter_tautological_population_answers`, before answer formatting.
+
+---
+
+## 7.7. Typed Skolem constants
+
+Skolem constants generated during clausification embed their type in the name when the type is known from the existential body:
+
+- `["exists", "Y", ["and", ["isa","house","Y"], ...]]` → constant `"sk0_house"` (instead of `"sk0"`)
+- Unknown type: plain `"sk0"` (backward compatible)
+- Skolem functions (from rules with free variables) keep plain names: `["sk0", "?:X"]`
+
+Helper functions in `lc_clausify.py`:
+- `is_skolem_const(val)` — matches both `sk0` and `sk0_house` patterns
+- `is_skolem_fn(val)` — matches list Skolem functions
+- `skolem_type_from_name(name)` — extracts type: `"sk0_house"` → `"house"`, `"sk0"` → `None`
+
+Skolem type resolution for rendering (`procproofs._resolve_skolem_entity`):
+1. **Fast path**: extract type from name via `skolem_type_from_name`
+2. **Fallback**: look up type from `compute_skolem_types` clause-list scan (handles old-format names and Skolem functions)
+
+`compute_skolem_types(proof, logic=None)` in `proof_render.py` scans both the logic clause list (for types not used in the proof) and proof steps, populating `skolem_types` and `skolem_fn_types` tables.
 
 ---
 
@@ -1200,7 +1261,7 @@ and instructions for rebuilding cluster files from scratch (~30–90 min, requir
 1. Add the predicate to the whitelist table in `prompts/stage2_instructions.txt` (section
    `== 5. PREDICATE INVENTORY ==`).
 2. Add examples to `prompts/stage2_examples.txt` showing the new predicate in context.
-3. If the predicate should receive `$ctxt`, add it to `_CTXT_ELIGIBLE` in `logconvert.py`.
+3. If the predicate should receive `$ctxt`, add it to `CTXT_ELIGIBLE` in `lc_ctxt.py`.
 4. If `procproofs.py` needs to render the predicate in an explanation, add an entry to
    `_PRED_TABLE` in `proof_render.py` (or a special-case handler in `_render_atom`).
 
