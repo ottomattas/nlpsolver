@@ -103,6 +103,7 @@ from lc_ctxt import (
 # Pre-clausification formula rewrites (in lc_rewrites.py).
 from lc_rewrites import (
   rewrite_meta_predicates as _rewrite_meta_predicates,
+  strip_tense_has_time as _strip_tense_has_time,
   inject_degree_presuppositions as _inject_degree_presuppositions,
   hoist_misnested_exists as _hoist_misnested_exists,
   strip_spurious_can as _strip_spurious_can,
@@ -324,6 +325,10 @@ def rawlogic_convert(logic, s1_json=None):
   # relation; LLMs (especially Gemini) sometimes produce it for identity/type
   # questions.  Safe because is_rel2("is",...) has no valid semantic meaning.
   logic = _rewrite_meta_predicates(logic)
+
+  # Remove has_time atoms where the value is a grammatical tense ("past", etc.)
+  # LLMs sometimes put tense in has_time instead of leaving it to $ctxt.
+  logic = _strip_tense_has_time(logic)
 
   # Rewrite $setof terms to canonical form (replaces ?:X with $arg1,
   # extracts anchors, $-prefixes internal predicates, generates membership
@@ -724,6 +729,8 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
   if formula is None:
     return []
 
+  s1_time_value = None  # set below if Stage 1 has explicit time expression
+
   # Override $ctxt parameters with Stage-1 ASU data when available.
   # Stage-1 "time", "pre_state", "location" are more reliable than scanning
   # Stage-2 siblings; this is the programmatic $ctxt injection (option B).
@@ -731,8 +738,17 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
     asu = asu_index.get(sid)
     if asu is not None:
       s1_tense = asu.get("time")
+      s1_time_value = None  # explicit time expression (e.g., "1995")
+      s1_time_prep = asu.get("time_prep")  # temporal preposition (e.g., "during")
+      s1_state_tense = asu.get("state_tense")  # world tense when "time" has a value
       if s1_tense is not None:
-        tense = s1_tense
+        if s1_tense in ("past", "present", "future", "timeless"):
+          tense = s1_tense
+        else:
+          # Explicit time value — don't use as $ctxt tense.
+          # Facts are "present" at that time; "past" comes from axioms.
+          s1_time_value = s1_tense
+          # tense stays as-is (default present from package or None)
       if is_question:
         s1_world = asu.get("pre_state")
         if s1_world is not None:
@@ -824,6 +840,60 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
     if ctxt_template is not None and not is_question:
       _inject_ctxt_into_objs(el_clauses, ctxt_template, tense_term)
     result.extend(el_clauses)
+
+  # Generate $theof1/datetime time fact for explicit time values.
+  # "In 1995, ..." → ["=", ["$theof1","time","W1","?:C"], ["$datetime", 1995]]
+  # The $datetime value is numeric (integer) for $less comparison in axioms.
+  if s1_time_value is not None and world is not None:
+    # Convert to numeric if possible (years, dates as YYYYMMDD, etc.)
+    try:
+      dt_numeric = int(str(s1_time_value).replace("-", "").replace(":", "").replace("T", ""))
+    except (ValueError, TypeError):
+      dt_numeric = s1_time_value  # non-numeric time expressions stay as strings
+    time_fact = {"@name": name,
+                 "@logic": ["=", ["$theof1", "time", world, _fresh_fv()],
+                                 ["$datetime", dt_numeric]]}
+    result.append(time_fact)
+
+    # Repair: ensure event-level has_time clause exists.  Stage 2 sometimes
+    # omits it or puts a tense string ("past") instead of the real value.
+    # Only fires when ALL of these hold:
+    #   - Stage 1 explicitly provides time_prep (we don't guess the preposition)
+    #   - This is an assertion, not a question (questions build their own has_time)
+    #   - The ASU describes an event (has "actions" in Stage 1)
+    #   - A clausified activity Skolem exists but lacks has_time with the value
+    if (s1_time_prep and not is_question
+        and asu is not None and asu.get("actions")):
+      tv_str = str(s1_time_value)
+      activity_skolems = set()
+      hastime_by_subj = {}  # subject -> list of time-value strings
+      for cl in result:
+        logic = cl.get("@logic")
+        if not isinstance(logic, list) or not logic:
+          continue
+        op = logic[0] if isinstance(logic[0], str) else None
+        if op == "isa" and len(logic) >= 3 and logic[1] == "activity":
+          activity_skolems.add(logic[2])
+        elif op == "has time" and len(logic) >= 3:
+          subj = logic[1]
+          hastime_by_subj.setdefault(subj, []).append(str(logic[2]))
+      for ev in activity_skolems:
+        existing = hastime_by_subj.get(ev, [])
+        if tv_str in existing:
+          continue  # already present — nothing to do
+        ht_logic = ["has time", ev, s1_time_value, s1_time_prep]
+        if ctxt_template is not None:
+          t = tense if tense is not None else "present"
+          ht_logic.append([ctxt_template[0], t] + ctxt_template[2:])
+        result.append({"@name": name, "@logic": ht_logic})
+
+  # Generate is_past_world fact from state_tense.
+  # This handles non-numeric time values ("Monday") where the $less bridge
+  # cannot derive is_past_world.  For numeric years the bridge also works,
+  # so this is harmlessly redundant.
+  if s1_state_tense == "past" and world is not None:
+    result.append({"@name": name,
+                   "@logic": ["is_past_world", world]})
 
   return result
 

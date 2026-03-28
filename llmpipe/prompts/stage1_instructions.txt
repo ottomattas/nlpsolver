@@ -160,7 +160,8 @@ Default placeholders:
 - What  -> "Which entity"
 - Which -> keep the stated category if explicitly present (e.g., "Which person", "Which animal")
 - Where -> "Which entity"  (do not force Place/Location unless explicitly stated)
-- When  -> "Which entity"  (do not force Time unless explicitly stated)
+- When  -> keep "When" wording (e.g., "When did John jump?" → "When did John 1 jump?").
+           Do NOT rephrase to "Which entity" or "At which time".
 - How many -> keep numeric wording (e.g., "How many ...") and treat the WH variable as an entity/quantity placeholder
 
 Entity annotation rule for WH placeholders:
@@ -665,6 +666,13 @@ Omit for strict_rule and real (unless time-bounded).
 
 For situation and real ASUs: include only for non-default tenses or explicit
 time expressions:
+- Explicit time value (year, date, time of day) -> put the value directly:
+  "Before 1900, John jumped" -> "time": "1900", "time_prep": "before", "state_tense": "past"
+  "During 1800, John ran"    -> "time": "1800", "time_prep": "during", "state_tense": "past"
+  "On Monday, John left"     -> "time": "Monday", "time_prep": "on", "state_tense": "past"
+  NEVER convert an explicit time value to a grammatical tense.
+  "Before 1900" must produce "time": "1900", NOT "time": "past".
+  When "time" holds an explicit value, use "state_tense" for the tense (see below).
 - Past tense or explicit past marker ("yesterday", "ago", "was/were") -> "past"
 - Future tense or explicit future marker ("will", "tomorrow", "later") -> "future"
 - Explicit present-time adverb ("now", "currently", "at this moment") -> "present"
@@ -693,6 +701,19 @@ Include when the text uses a specific temporal preposition with a time expressio
   "before lunch"  -> "time": "lunch", "time_prep": "before"
   "after 5 PM"    -> "time": "5 PM", "time_prep": "after"
 Omit for simple tense values ("past", "present", "future") — these have no preposition.
+
+--- state_tense ---
+Set only when "time" contains an explicit time expression (year, day name,
+time of day) rather than a grammatical tense. Indicates whether the described
+world state is in the past, present, or future from the speaker's perspective.
+  "During 1800, John jumped"           -> "state_tense": "past"
+  "On Monday, John jumped"             -> "state_tense": "past"
+  "In 1995, Tallinn was the capital"   -> "state_tense": "past"
+  "Next Tuesday, John will jump"       -> "state_tense": "future"
+  "Today, the store is closed"         -> "state_tense": "present"
+Values: "past", "present", "future". Omit when "time" already holds a
+grammatical tense ("past", "present", "future") — the tense is already
+available. Omit when there is no explicit time expression.
 
 --- location ---
 Must reference an entity ID.

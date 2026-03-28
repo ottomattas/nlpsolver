@@ -411,6 +411,9 @@ def _location_entity_name(val, entity_props=None):
   base = m.group(1) if m else val
   if base[:1].isupper():
     return base       # proper noun — no article
+  # Numeric / temporal values: no article (years, times, counts)
+  if base[:1].isdigit():
+    return base
   # Strip leading "the " or "The " (entity names sometimes include the article)
   if base.lower().startswith("the "):
     base = base[4:]

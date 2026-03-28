@@ -166,6 +166,27 @@ predicates describe something that was true before W2 — possibly at W0 or W1.
 This relative interpretation is carried through to the `$ctxt` context term in
 the GK clause list (see §3.4).
 
+#### Explicit time values (dated world states)
+
+When the `"time"` field contains an explicit time value like `"1800"` or `"Monday"`
+(rather than a grammatical tense), the pipeline treats it as a **dated world state**:
+
+1. Stage 1 produces `"time": "1800"`, `"time_prep": "during"`, `"state_tense": "past"`.
+2. `logconvert.py` recognizes the non-grammatical value and:
+   - Keeps `$ctxt` tense as `"present"` (facts are current at that time)
+   - Generates a world-time equality: `["=", ["$theof1","time","W0","?:C"], ["$datetime", 1800]]`
+   - Preserves the event-level `has_time(E, 1800, "during", ...)` from Stage 2
+   - Generates `is_past_world(W0)` from `"state_tense": "past"`
+3. For numeric values, bridge axioms in `axioms_std.js` also derive `is_past_world(W0)`
+   via `$less(1800, 2026)` (redundant backup).  For non-numeric values like `"Monday"`,
+   `state_tense` is the only source.
+4. Tense normalization axioms promote `$ctxt(present, W0, ...)` to `$ctxt(past, W0, ...)`
+   for all predicates, allowing past-tense questions to match.
+
+The `"state_tense"` field carries the grammatical tense (past/present/future) that
+`"time"` cannot hold when it contains an explicit value.  It is only set when `"time"`
+is a value, never when `"time"` is already a grammatical tense.
+
 ### 1.9 Confidence
 
 Float 0–1 representing logical strength.  Omitted when 1.0.
@@ -337,7 +358,7 @@ Dynamic verbs are encoded as Davidsonian events:
 ["holds", W, F]                — anchor formula F to world state W
 ["next", W1, W2]               — W2 is the immediate successor of W1
 ["before", W1, W2]             — W1 is an earlier world state than W2
-["state time", W, T]           — time of world state
+["=", ["$theof1","time",W,C], ["$datetime",N]]  — world W anchored to time N (numeric)
 ["state location", W, L]       — location in world state
 ["normally", F]                — defeasible wrapper
 ["@time", TIME, ATOM]          — per-predicate time override

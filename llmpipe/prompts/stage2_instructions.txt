@@ -92,10 +92,13 @@ Process every ASU in every sentence package. Flatten all ASUs into one conjuncti
 == PREDICATE TIME ANNOTATION ==
 
 Each ASU has a default time given by the "time" field from Stage-1.
+The "time" field can be:
+  - A grammatical tense: "past", "present", "future", "timeless"
+  - An explicit time expression: "1995", "Monday", "noon", "1800"
 
 By default, all predicates inherit the ASU time.
 
-Only add a time annotation when a specific predicate has a different time
+Only add a @time annotation when a specific predicate has a different time
 than the ASU default. This annotation changes the time of one predicate relative
 to the ASU default. It does not create a new world state.
 
@@ -109,13 +112,25 @@ Examples:
 
 Time annotation wraps the whole atom and does not change predicate arity.
 
-Allowed time values:
+Allowed @time wrapper values (grammatical tenses only):
 past | present | future | timeless
 
 Do not nest @time wrappers.
 
-Predicate time annotations do NOT replace ["state time", W, TIME].
-State time describes the world state; @time describes the time of a specific predicate.
+has_time and explicit time expressions:
+When the ASU "time" field is an explicit time expression (e.g., "1800", "Monday"),
+use it as the value in has_time for event ASUs:
+  "time": "1800", "time_prep": "during"  →  ["has time", "E", "1800", "during"]
+  "time": "Monday", "time_prep": "on"    →  ["has time", "E", "Monday", "on"]
+Do NOT put explicit time expressions in @time wrappers — @time is only for
+grammatical tenses. The pipeline handles world-level temporal anchoring
+automatically from Stage-1 data.
+
+Do NOT put grammatical tenses ("past", "present", "future") as has_time values.
+has_time is only for explicit time expressions (years, dates, times of day).
+WRONG: ["has time", "E", "past", "in"]   — "past" is a tense, not a time value.
+RIGHT: ["has time", "E", "1800", "during"] — "1800" is an explicit time value.
+If an event has no explicit time expression, omit has_time entirely.
 
 == ENTITY.text USAGE RULE (IMPORTANT) ==
 
@@ -615,6 +630,20 @@ situation / real
 query
 - Yes/No: ["question", BODY]
 - Wh-: ["ask", "X", BODY]
+- When/Where event queries: "When did X verb?" and "Where did X verb?" are
+  wh-questions, NOT yes/no questions. Always use ["ask", "X", ...] with the
+  variable in has_time (for when) or has_location (for where):
+    "When did John jump?" ->
+      ["ask", "X", ["exists","E",["and",
+        ["isa","activity","E"],["has type","E","jump"],
+        ["has actor","E","John 1"],["has time","E","X","in"]]]]
+    "Where did John jump?" ->
+      ["ask", "X", ["exists","E",["and",
+        ["isa","activity","E"],["has type","E","jump"],
+        ["has actor","E","John 1"],["has location","E","X","in"]]]]
+  NEVER encode when/where questions as ["question", ["exists","E",...]] — that
+  produces a yes/no answer instead of the requested time or place.
+  NEVER use ["is rel2",...] for when-questions — always use ["has time",...].
 - Anchoring: No ["holds", W, f] anchoring for questions.
 - Plural Generic Queries (MANDATORY): If a Yes/No query involves a plural generic subject
   without an explicit quantifier (e.g., "Are elephants animals?"), treat it as a claim about the entire class.

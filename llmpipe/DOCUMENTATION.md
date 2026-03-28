@@ -237,6 +237,8 @@ Semantic Units* (ASUs).  Each ASU is one minimal proposition that can be true or
 | `adjectives` | List of `[word, intensity, relclass]` for every adjective in the ASU; `intensity` is `"none"`, `"low"` (slightly), or `"high"` (very/extremely); `relclass` is the comparison class (`"person"`, `"car"`, `"entity"` if generic, `"none"` if non-gradable) |
 | `pre_state` / `next_state` | World constants for state tracking (`"W0"`, `"W1"`, …) |
 | `time` | `"past"`, `"present"`, `"future"`, a year string, or a structured list `["relative", offset, anchor]` |
+| `time_prep` | Temporal preposition when `time` is an explicit value: `"during"`, `"on"`, `"before"`, etc. |
+| `state_tense` | `"past"`, `"present"`, `"future"` — grammatical tense when `time` holds an explicit value instead of a tense.  Generates `is_past_world(W)` for `"past"`. |
 | `location` | Entity id of the location |
 | `confidence` | Float 0–1 (omit for 1.0); affects `@p` metadata in Stage 2 |
 | `mental_holder` / `mental_attitude` / `epistemic_force` / `attitude_target` | For propositional attitudes (`knows that`, `believes that`) |
@@ -529,7 +531,7 @@ list pipeline.  The computation is split across several files:
 | Module | Responsibility |
 |--------|---------------|
 | `logconvert.py` | Orchestration: package extraction, question/assertion dispatch |
-| `lc_rewrites.py` | Pre-clausification formula rewrites (meta-predicate normalization, existential hoisting, spurious `can` removal, polarity flip) |
+| `lc_rewrites.py` | Pre-clausification formula rewrites (meta-predicate normalization incl. `"time of"`→`has_time`, tense-valued `has_time` stripping, existential hoisting, spurious `can` removal, polarity flip) |
 | `lc_ctxt.py` | `$ctxt` injection, time-wrapper stripping, fresh variable generation |
 | `lc_postprocess.py` | Post-clausification clause-list passes (gradable normalization, RELCLASS coercion, `$theof1`, possessive `have`, population facts, degree stripping) |
 | `lc_clausify.py` | FOL→CNF compilation |
@@ -544,7 +546,8 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
 ["and", ["@id","S1",PACKAGE], ...] (Stage-2 input)
     │
     ├─ _build_asu_index(s1_json)          build unit_id→ASU lookup from Stage 1
-    ├─ rewrite_meta_predicates(logic)     [lc_rewrites] "located in"→"in", "is"→isa
+    ├─ rewrite_meta_predicates(logic)     [lc_rewrites] "located in"→"in", "is"→isa, "time of"→has_time
+    ├─ strip_tense_has_time(logic)       [lc_rewrites] remove has_time(E,"past",...) bogus atoms
     ├─ inject_degree_presuppositions()    [lc_rewrites] "not very X" → X and not very X
     ├─ populate_clauses(items)            [lc_postprocess] collect background facts
     │
@@ -552,6 +555,9 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
     │    _convert_id_package(item, asu_index)
     │        _extract_package_ctx()        unpack PACKAGE: formula, world, tense, etc.
     │        override with Stage-1 ASU data (tense, world, location)
+    │        generate $theof1/$datetime fact for explicit time values
+    │        inject event has_time from Stage 1 if missing (repair for LLM omission)
+    │        generate is_past_world(W) from state_tense="past"
     │        strip_spurious_can()          [lc_rewrites] remove non-modal "can"
     │        hoist_misnested_exists()      [lc_rewrites] fix variable scoping
     │        _process_question()           wh-/yes-no question dispatch [→ lc_questions]

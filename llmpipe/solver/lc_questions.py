@@ -189,6 +189,9 @@ def _find_has_event_role(body, ask_var, role_pred, default_prep):
         return found
   if body[0] in ("exists", "forall") and len(body) >= 3:
     return _find_has_event_role(body[2], ask_var, role_pred, default_prep)
+  # Transparent wrappers: @time, normally, question, ask, holds
+  if body[0] in ("@time", "normally", "question", "ask", "holds"):
+    return _find_has_event_role(body[-1], ask_var, role_pred, default_prep)
   return None
 
 def find_haslocation_prep(body, ask_var):

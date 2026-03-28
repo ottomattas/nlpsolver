@@ -662,7 +662,7 @@ Does John 1 have two cars?
   ["-has time", "?:E", "present", "?:Prep_t", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
   ["-before", "?:W_old", "?:W_new"],
   ["has time", "?:E", "past", "?:Prep_t", ["$ctxt", "present", "?:W_new", "?:L", "?:K"]]
-]
+],
 
 // experimental
 /*
@@ -679,4 +679,82 @@ Does John 1 have two cars?
   ["-is rel2","head of","?:Y","?:X","?:C"]
  ]
 */
+
+
+// == 13. TEMPORAL-WORLD INTEGRATION & FUNCTIONAL EXTRACTORS ==
+
+// --- A. $get_world "Destructor" ---
+// This makes the function usable by allowing the prover to unify the 
+// second element of a context term with a variable.
+[ ["=", "?:W", ["$get_world", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]]] ],
+
+// --- B. $theof1/datetime Year to Semantic Tense Bridge ---
+// When a world's time (via $theof1) is a $datetime value less than current year,
+// infer the world is in the past.
+[
+  ["-=", ["$theof1", "time", "?:W", "?:C"], ["$datetime", "?:T"]],
+  ["-$less", "?:T", 2026],
+  ["is_past_world", "?:W"]
+],
+
+// --- D. Context Tense Normalization ---
+// If a world is determined to be in the past, any fact holds in that 
+// world also satisfies a context of "past".
+[
+  ["-is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+
+// Repeat D for other core predicates to ensure universal tense matching
+[
+  ["-has actor", "?:E", "?:A", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has actor", "?:E", "?:A", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has type", "?:E", "?:V", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has type", "?:E", "?:V", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has target", "?:E", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has target", "?:E", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has location", "?:E", "?:P", "?:Prep", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has location", "?:E", "?:P", "?:Prep", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has time", "?:E", "?:T2", "?:Prep", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has time", "?:E", "?:T2", "?:Prep", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has property", "?:P", "?:X", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has property", "?:P", "?:X", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has degree property", "?:P", "?:X", "?:D", "?:R", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has degree property", "?:P", "?:X", "?:D", "?:R", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-have", "?:X", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["have", "?:X", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has part", "?:X", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has part", "?:X", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-can", "?:X", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["can", "?:X", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+]
 ]

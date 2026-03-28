@@ -64,7 +64,7 @@ English text
 - `llmparse.py` — two-stage LLM parser; `parse_text(text)` → `(s1_json, s2_json, stats)`
 - `llmcall.py` — LLM API wrapper (GPT/Claude/Gemini/DeepSeek) with retries and SQLite caching; `call_llm(sysprompt, input_text)`
 - `logconvert.py` — main driver for stage-2 JSON → GK clause list; `rawlogic_convert(logic)`; orchestrates package extraction, question/assertion processing, and post-processing passes
-- `lc_rewrites.py` — pre-clausification formula rewrites: meta-predicate normalization, degree presuppositions, existential hoisting, spurious `can` removal, polarity flip
+- `lc_rewrites.py` — pre-clausification formula rewrites: meta-predicate normalization (incl. `is_rel2("time of")`→`has_time`), tense-valued `has_time` stripping, degree presuppositions, existential hoisting, spurious `can` removal, polarity flip
 - `lc_ctxt.py` — `$ctxt` context injection, time-wrapper stripping, fresh variable generation, predicate classification constants
 - `lc_postprocess.py` — post-clausification clause-list passes: gradable normalization, RELCLASS coercion, isa-entity stripping, `$theof1` definite rewrites, possessive `have` inference, population facts, degree stripping
 - `lc_clausify.py` — FOL-to-CNF compiler: implies/xor/equivalent elimination, NNF push, normally expansion, Skolemization, distribution, clause extraction.  Also provides Skolem identification helpers (`is_skolem_const`, `is_skolem_fn`, `skolem_type_from_name`) and typed Skolem constant naming (`sk0_house`)
@@ -210,9 +210,11 @@ a fix was implemented, and it has been verified to work:
 - **Grep and read-only bash commands** (grep, sed without -i, cat, head, tail, echo) inside the
   llmpipe folder may be run without asking for consent, as long as no files are written,
   modified, or deleted.
-- **Avoid compound read-only commands** joined with `;`, `&&`, or `|` — Claude Code cannot
-  auto-approve compound commands regardless of pattern rules. Instead, issue each read-only
-  command as a separate Bash tool call so each gets auto-approved individually.
+- **Prefer the built-in Grep/Read/Glob tools** to grep etc bash tools
+- **Compound read-only commands** using | with grep, head, tail, cat are allowed.
+- **Avoid using $() syntax** when other alternatives possible
+
+
 
 ### Other Top-Level Scripts
 
