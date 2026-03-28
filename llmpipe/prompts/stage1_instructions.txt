@@ -301,8 +301,14 @@ Fields:
     event       -- specific bounded occurrence ("John ate a fish", "A bear ran")
   roles  -- optional dict mapping role names to entity IDs.
     Omit when the action has no object or modifiers.
-    Keys: target, location, instrument, direction, manner, recipient.
+    Keys: target, location, location_prep, instrument, direction, manner, recipient.
     Values: entity IDs or lists of IDs.
+    location_prep -- the spatial preposition ("in", "at", "on", "near", etc.).
+      Include when the text uses a specific preposition with the location.
+      Default "in" if omitted. Examples:
+        "ate in a house"    -> "location": "house 3", "location_prep": "in"
+        "ate at a room"     -> "location": "room 5", "location_prep": "at"
+        "jumped near a park"-> "location": "park 2", "location_prep": "near"
 
 When a concrete sentence echoes a verb from a rule in the same input,
 use the same mode as the rule.
@@ -401,9 +407,12 @@ Default rules:
 - Concrete in narrative unless clearly generic.
 - Indeterminate entities in rule conditions, negation, or questions
   are usually generic.
-
+  
 Treat as concrete only if the text refers to a particular identifiable instance; 
 otherwise use generic.
+
+In negative and probability assertions under 0.5 (confidence < 0.5, e.g. "with probability 10%"),                                                                                  
+indefinite NPs ("a cave", "a dog") must be generic: no specific entity should be introduced.                       
 
 In normal_rule or strict_rule ASUs, indefinite noun phrases 
 (e.g., "a forest", "a spoon", "a box") must be marked as generic
@@ -675,6 +684,15 @@ with one additional constraint: only add "time" when ALL verbs and predicates
 in the query share the same tense. If the query mixes tenses                                                                                                                                                     
 (e.g., "Is John a strong man whom Eve liked?" combines present "is" with
 past "liked"), omit "time" entirely.
+
+--- time_prep ---
+Include when the text uses a specific temporal preposition with a time expression:
+  "during 1800"   -> "time": "1800", "time_prep": "during"
+  "on Monday"     -> "time": "Monday", "time_prep": "on"
+  "at noon"       -> "time": "noon", "time_prep": "at"
+  "before lunch"  -> "time": "lunch", "time_prep": "before"
+  "after 5 PM"    -> "time": "5 PM", "time_prep": "after"
+Omit for simple tense values ("past", "present", "future") — these have no preposition.
 
 --- location ---
 Must reference an entity ID.

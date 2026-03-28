@@ -114,13 +114,15 @@ Each predicate maps to `(min_args, pos_renderer, neg_renderer)`.
 | `has type` | `act1 is a drive event` | `act1 is not a drive event` |
 | `has actor` | `John performs act1` | `John does not perform act1` |
 | `has target` | `act1 targets car B` | `act1 does not target car B` |
-| `has location` | `act1 takes place at park A` | `...does not take place...` |
-| `has time` | `act1 happens at past` / `act1 happens at time Z` | `...does not happen...` |
+| `has location` | `act1 takes place in park A` | `...does not take place...` |
+| `has time` | `act1 happens during 1800` / `act1 happens in time Z` | `...does not happen...` |
 | `next` | `W0 is followed by W1` | `W0 is not followed by W1` |
 | `before` | `W0 is before W1` | `W0 is not before W1` |
 
-For `has time`, the word "time" is prepended when the argument is a variable
-(`"happens at time Z"`) but omitted for constants (`"happens at past"`).
+`has location` and `has time` have a PREP argument (3rd positional) that specifies the
+preposition: `["has location", E, PLACE, "at"]` renders as "E takes place at PLACE".
+For `has time`, the word "time" is prepended when the time argument is a variable
+(`"happens in time Z"`) but omitted for constants (`"happens during 1800"`).
 
 ### 3.2 Verb Detection for is_rel2
 

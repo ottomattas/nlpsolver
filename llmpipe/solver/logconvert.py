@@ -138,23 +138,102 @@ def _build_asu_index(s1_json):
   return index
 
 
-def _collect_isa_entities(tree):
-  """Return the set of entity IDs that appear in ["isa", class, entity_id] in *tree*.
+def _dedup_entity_clauses(result):
+  """Remove entity_S* clauses whose @logic duplicates a sent_S* clause.
 
-  Recursively walks the raw Stage-2 JSON to find all positive isa atoms.
-  Used to avoid emitting redundant entity category clauses when the Stage-2
-  logic already contains an isa for the same entity.
+  Modifies result in place.  When entity category injection produces an isa
+  fact that Stage-2 also produced, the entity_S* copy is removed so the
+  content-derived sent_S* version (with proper @name and @confidence) is kept.
+  """
+  import json as _json
+  sent_logics = set()
+  for obj in result:
+    if isinstance(obj, dict) and obj.get("@name", "").startswith("sent_"):
+      logic = obj.get("@logic")
+      if logic is not None:
+        sent_logics.add(_json.dumps(logic, sort_keys=True))
+  i = 0
+  while i < len(result):
+    obj = result[i]
+    if (isinstance(obj, dict) and obj.get("@name", "").startswith("entity_")
+        and obj.get("@logic") is not None
+        and _json.dumps(obj["@logic"], sort_keys=True) in sent_logics):
+      result.pop(i)
+    else:
+      i += 1
+
+
+def _collect_positive_isa_entities(tree, polarity=True):
+  """Return the set of entity IDs that appear in positive-polarity isa atoms.
+
+  Recursively walks the raw Stage-2 JSON, tracking polarity through
+  connectives, negation, implications, and low-confidence packages.
+  Only entities in genuinely positive isa atoms are returned — entities
+  in negated, antecedent, or low-confidence contexts are excluded so
+  that entity category injection is not skipped for them.
   """
   found = set()
   if not isinstance(tree, list) or len(tree) == 0:
     return found
-  if (len(tree) == 3
-      and tree[0] == "isa"
-      and isinstance(tree[2], str)):
+  op = tree[0]
+
+  # Leaf isa atom — record only if positive polarity
+  if (op == "isa" and len(tree) >= 3 and isinstance(tree[2], str)
+      and polarity):
     found.add(tree[2])
+    return found
+
+  if not isinstance(op, str):
+    for child in tree:
+      if isinstance(child, list):
+        found |= _collect_positive_isa_entities(child, polarity)
+    return found
+
+  # Connectives: children inherit polarity
+  if op in ("and", "or"):
+    # Check for low-confidence @p sibling: ["and", ["holds",...], ["@p","S1",0.1]]
+    # If confidence < 0.5, the formula will be negated — flip polarity for siblings.
+    child_polarity = polarity
+    for child in tree[1:]:
+      if (isinstance(child, list) and len(child) == 3
+          and child[0] == "@p" and isinstance(child[2], (int, float))
+          and child[2] < 0.5):
+        child_polarity = not polarity
+        break
+    for child in tree[1:]:
+      if isinstance(child, list):
+        found |= _collect_positive_isa_entities(child, child_polarity)
+    return found
+
+  if op == "not" and len(tree) >= 2:
+    found |= _collect_positive_isa_entities(tree[1], not polarity)
+    return found
+
+  if op == "implies" and len(tree) >= 3:
+    # Antecedent: flip polarity; consequent: keep polarity
+    found |= _collect_positive_isa_entities(tree[1], not polarity)
+    found |= _collect_positive_isa_entities(tree[2], polarity)
+    return found
+
+  if op in ("forall", "exists") and len(tree) >= 3:
+    found |= _collect_positive_isa_entities(tree[2], polarity)
+    return found
+
+  if op in ("normally", "holds", "question", "ask", "equivalent", "xor"):
+    for child in tree[1:]:
+      if isinstance(child, list):
+        found |= _collect_positive_isa_entities(child, polarity)
+    return found
+
+  # @id wrapper: recurse into package
+  if op == "@id" and len(tree) >= 3:
+    found |= _collect_positive_isa_entities(tree[2], polarity)
+    return found
+
+  # Default: recurse into children
   for child in tree:
     if isinstance(child, list):
-      found |= _collect_isa_entities(child)
+      found |= _collect_positive_isa_entities(child, polarity)
   return found
 
 
@@ -281,9 +360,11 @@ def rawlogic_convert(logic, s1_json=None):
   asu_index = _build_asu_index(s1_json)
 
   # Build entity category isa facts from Stage-1 entity annotations.
-  # Skip entities that already have an isa in the Stage-2 logic to avoid
-  # redundant or potentially conflicting category assertions.
-  s2_isa_entities = _collect_isa_entities(logic)
+  # Skip entities that already have a positive-polarity isa in Stage-2
+  # (avoids conflicting categories like isa(person,John) when text says "John is a car").
+  # Entities in negative polarity (negation, low-confidence, implies-antecedent)
+  # are NOT skipped — they need the injection for resolution.
+  s2_isa_entities = _collect_positive_isa_entities(logic)
   entity_cat_clauses = _build_entity_category_clauses(s1_json, skip_entities=s2_isa_entities)
 
   # Build population facts by scanning the raw stage-2 input first.
@@ -334,7 +415,10 @@ def rawlogic_convert(logic, s1_json=None):
 
   # Prepend entity category clauses at the start of the clause list so they
   # are available as given facts throughout the proof.
+  # Then remove entity_S* clauses that duplicate sent_S* clauses (prefer the
+  # content-derived ones which carry proper @name and may have @confidence).
   result = entity_cat_clauses + result
+  _dedup_entity_clauses(result)
 
   # Insert population facts and compound subsumption rules immediately before
   # the first @question entry so they are available as background knowledge.
@@ -560,14 +644,16 @@ def _process_question(formula, name, raw_text=None):
           # Detect has_location(E, ask_var) → encode "in" as the preposition.
           where_prep = find_haslocation_prep(body, ask_var)
           if where_prep:
-            result = build_defq_question(name, ask_var, body, where_prep=where_prep)
+            result = build_defq_question(name, ask_var, body, where_prep=where_prep,
+                                         wh_prep_pred="has location")
             question_kind = "where"
           else:
             # Detect has_time(E, ask_var) → encode "in" as the temporal preposition.
             when_prep = find_hastime_prep(body, ask_var)
             if when_prep:
               result = build_defq_question(name, ask_var, body,
-                                           wh_prep=when_prep, wh_marker="@when_query")
+                                           wh_prep=when_prep, wh_marker="@when_query",
+                                           wh_prep_pred="has time")
               question_kind = "when"
             else:
               result = build_defq_question(name, ask_var, body)

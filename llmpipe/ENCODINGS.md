@@ -313,7 +313,7 @@ Dynamic verbs are encoded as Davidsonian events:
   ["has type", "E", "eat"],
   ["has actor", "E", "John 1"],
   ["has target", "E", "berries"],
-  ["has time", "E", "past"]
+  ["has time", "E", "past", "in"]
 ]]
 ```
 
@@ -323,11 +323,11 @@ Dynamic verbs are encoded as Davidsonian events:
 | `has type E VERB` | Event type (verb root) |
 | `has actor E ENTITY` | Who performs the event |
 | `has target E ENTITY` | What the event acts on |
-| `has location E ENTITY` | Where the event occurs |
+| `has location E ENTITY PREP` | Where the event occurs; PREP is the spatial preposition (`"in"`, `"at"`, `"near"`, etc.) |
 | `has instrument E ENTITY` | What tool is used |
 | `has manner E MANNER` | How the event is done |
 | `has direction E DIR` | Direction of movement |
-| `has time E TIME` | When the event occurs |
+| `has time E TIME PREP` | When the event occurs; PREP is the temporal preposition (`"in"`, `"on"`, `"during"`, etc.) |
 | `typical E` | Marks the event as defeasible (for $block) |
 | `typically ENTITY VERB` | Atomic habitual predicate (Track 1) |
 
@@ -494,7 +494,7 @@ used within its scope.
                   ["has target","E","Y"]]],
                 ["exists","Z", ["and",
                   ["isa","forest","Z"],
-                  ["has location","E","Z"]]],
+                  ["has location","E","Z","in"]]],
                 ["typical","E"]]]]]]],
       ["@p","S1",0.95]]]]
 ```
@@ -716,8 +716,12 @@ The pipeline injects `isa` facts from Stage-1 metadata that Stage-2 may not
 have emitted:
 
 **Category isa:** For each concrete entity with a `"category"` field,
-`isa(CATEGORY, ENTITY)` is added unless Stage-2 already has an `isa` for
-that entity.  Example: `"John 1"` with `category: "person"` →
+`isa(CATEGORY, ENTITY)` is added unless Stage-2 already has a
+**positive-polarity** `isa` for that entity (polarity tracked through
+connectives, negation, implications, and low-confidence packages).
+Entities in negated or low-confidence contexts are not skipped — they
+need the injection.  Exact duplicates with content-derived clauses are
+removed.  Example: `"John 1"` with `category: "person"` →
 `["isa", "person", "John 1"]`.
 
 **Base-word isa:** When a concrete entity's ID has a lowercase base word

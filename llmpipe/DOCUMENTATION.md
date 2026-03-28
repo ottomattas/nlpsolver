@@ -276,7 +276,7 @@ Each `PACKAGE` is one of:
 | Logical | `and`, `or`, `xor`, `not`, `implies`, `forall`, `exists`, `=`, `<`, `>` |
 | Core | `isa TYPE ENTITY`, `has property PROP ENTITY`, `have OWNER OWNED`, `has part WHOLE PART`, `is rel2 REL E1 E2`, `can ENTITY ACTION` |
 | Gradable | `has degree property PROP ENTITY DEGREE RELCLASS`, `has degree rel2 REL E1 E2 DEGREE RELCLASS` |
-| Events | `isa "activity" E`, `has type E VERB`, `has actor E ENTITY`, `has target E ENTITY`, `has location E ENTITY`, `has instrument E ENTITY`, `has manner E MANNER`, `has direction E DIR`, `has time E TIME`, `typical E`, `typically ENTITY VERB` |
+| Events | `isa "activity" E`, `has type E VERB`, `has actor E ENTITY`, `has target E ENTITY`, `has location E ENTITY PREP`, `has instrument E ENTITY`, `has manner E MANNER`, `has direction E DIR`, `has time E TIME PREP`, `typical E`, `typically ENTITY VERB` |
 | World | `holds W F`, `next W1 W2`, `before W1 W2` (axiom-derived), `state time W T`, `state location W L` |
 | Defeasible | `normally FORMULA` |
 | Mental | `kb K HOLDER ATTITUDE W`, `kb force K FORCE`, `kb holds K FORMULA`, `kb says K1 K2 FORMULA` |
@@ -1062,7 +1062,7 @@ bridge representation gaps.
 | Degree presupposition injection | `lc_rewrites.inject_degree_presuppositions` | "John is not very big" → adds "John is big" (unmarked degree) alongside the negated "very big" | `["not",["has degree property",P,E,"high",C]]` → `["and",["has degree property",P,E,"none",C],["not",...]]` |
 | Stative event rewriting | `semnormalize.rewrite_stative_events` | "John had a car" encoded as an event → rewritten to direct `have(john,car)` | Replaces Davidsonian event encoding of stative verbs (have, own, like, love, etc.) with direct predicates.  Safety: only rewrites when the event variable has no extra properties (has_location, etc.) |
 | `@time` stripping | `lc_ctxt.strip_time_wrappers` | "John was tall" — the past-tense `@time` wrapper becomes a `$tense` sentinel controlling the tense slot in `$ctxt` | Converts `["@time","past",ATOM]` wrappers into `$tense` sentinels on the atom |
-| Entity category injection | `logconvert._build_entity_category_clauses` | "John is an elephant" — Stage-1 says John's category is "person", so `isa(person, John 1)` is added even though Stage-2 only emits `isa(elephant, John 1)` | Adds `isa(CATEGORY, ENTITY)` facts from Stage-1 entity annotations when not already present in Stage-2 |
+| Entity category injection | `logconvert._build_entity_category_clauses` | "John is an elephant" — Stage-1 says John's category is "person", so `isa(person, John 1)` is added even though Stage-2 only emits `isa(elephant, John 1)` | Adds `isa(CATEGORY, ENTITY)` facts from Stage-1 entity annotations.  Skipped when the entity already has a **positive-polarity** isa in Stage-2 (`_collect_positive_isa_entities` tracks polarity through connectives, negation, implications, and low-confidence packages).  Entities in negated or low-confidence contexts are NOT skipped — they need the injection.  Exact duplicates with `sent_S*` clauses are removed by `_dedup_entity_clauses`. |
 | Entity base-word isa | `logconvert._build_entity_category_clauses` | "A man had a car" — entity `man 1` has category "person", but the base word "man" is also a type; adds `isa(man, man 1)` alongside `isa(person, man 1)` | For concrete entities with a lowercase base word different from the category, injects `isa(BASE, ENTITY)` so queries using the descriptive type word can match |
 | Compound subsumption | `lc_postprocess.build_compound_subsumption` | "Baby birds do not fly" — adds a rule that baby birds are birds, so general bird rules can apply to them | Adds `isa(BASE, X) :- isa(COMPOUND, X)` rules for compound types |
 
@@ -1093,7 +1093,7 @@ The pipeline handles four types of WH-questions through specialized detection an
 
 ### Where questions ("Where is X?")
 
-Detection: `find_where_atom(body, ask_var)` matches `["is rel2", spatial_pred, entity, ask_var]` where `spatial_pred` is a spatial preposition after meta-predicate normalization (e.g., `"located in"` is rewritten to `"in"` by `_rewrite_meta_predicates` before detection).  Also detected via `find_haslocation_prep` matching `["has location", event_var, ask_var]` in activity-location queries.
+Detection: `find_where_atom(body, ask_var)` matches `["is rel2", spatial_pred, entity, ask_var]` where `spatial_pred` is a spatial preposition after meta-predicate normalization (e.g., `"located in"` is rewritten to `"in"` by `_rewrite_meta_predicates` before detection).  Also detected via `find_haslocation_prep` matching `["has location", event_var, ask_var, prep]` in activity-location queries (extracts the preposition for the answer).
 
 Encoding depends on the entity and preposition:
 - **Concrete entity** (e.g., `"John 1"`): `build_where_question` generates biconditional clauses for each spatial preposition — forward and backward — sharing a single `$defq` with 2-arg atoms `[$defq, prep, ?:Q1]`.  Generic prepositions (`in, on, at`) trigger expansion over ALL spatial preps; specific prepositions (`near, above, under`) restrict to just that preposition.
@@ -1107,7 +1107,7 @@ Answer format: `_format_prep_answers` renders `["$ans", prep, entity]` as "In Pa
 
 Identical infrastructure to Where, parameterized via shared internal functions (`_find_prep_query_atom`, `_find_has_event_role`, `_build_prep_question`).
 
-Detection: `find_when_atom` matches `_WHEN_META_PREDS` (`scheduled for, happens in, occurs at, ...`) or `WHEN_TEMPORAL_PREPS` (`in, at, on, during, before, after`). Also via `find_hastime_prep` matching `["has time", event_var, ask_var]`.
+Detection: `find_when_atom` matches `_WHEN_META_PREDS` (`scheduled for, happens in, occurs at, ...`) or `WHEN_TEMPORAL_PREPS` (`in, at, on, during, before, after`). Also via `find_hastime_prep` matching `["has time", event_var, ask_var, prep]`.
 
 Encoding: `build_when_question` generates biconditionals over temporal prepositions. Sets `@when_query: True`.
 

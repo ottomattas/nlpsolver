@@ -177,7 +177,10 @@ def _find_has_event_role(body, ask_var, role_pred, default_prep):
   """
   if not isinstance(body, list) or not body:
     return None
-  if body[0] == role_pred and len(body) == 3 and body[2] == ask_var:
+  if body[0] == role_pred and len(body) >= 3 and body[2] == ask_var:
+    # Extract preposition from index 3 if present (new 4-arg form)
+    if len(body) >= 4 and isinstance(body[3], str) and not body[3].startswith("?:"):
+      return body[3]
     return default_prep
   if body[0] == "and":
     for item in body[1:]:
@@ -199,8 +202,30 @@ def find_hastime_prep(body, ask_var):
 
 # ======== $defq biconditional question builder ========
 
+_WH_PREP_PREDS = frozenset({"has location", "has time"})
+
+def _replace_prep_with_var(body, concrete_prep, prep_var, target_pred=None):
+  """Replace concrete preposition in has_location/has_time atoms with a variable.
+
+  Walks the body recursively.  When an atom of the target predicate has
+  concrete_prep at index 3, replaces it with prep_var.
+  If target_pred is None, targets all predicates in _WH_PREP_PREDS.
+  Returns a modified copy (does not mutate the original).
+  """
+  if not isinstance(body, list) or not body:
+    return body
+  pred = body[0]
+  match_preds = {target_pred} if target_pred else _WH_PREP_PREDS
+  if (isinstance(pred, str) and pred in match_preds
+      and len(body) >= 4 and body[3] == concrete_prep):
+    return body[:3] + [prep_var] + body[4:]
+  return [_replace_prep_with_var(child, concrete_prep, prep_var, target_pred)
+          if isinstance(child, list) else child
+          for child in body]
+
+
 def build_defq_question(name, ask_var, body, where_prep=None,
-                        wh_prep=None, wh_marker=None):
+                        wh_prep=None, wh_marker=None, wh_prep_pred=None):
   """Build $defq biconditional @logic clauses and a @question entry.
 
   For a wh-question (ask_var is not None, e.g. "X"):
@@ -214,7 +239,9 @@ def build_defq_question(name, ask_var, body, where_prep=None,
                  @question: [$defq0]
 
   wh_prep/wh_marker: if wh_prep is set (e.g. "in"), the $defq atom becomes
-    2-arg [$defqN, prep, X] so that the answer includes the preposition.
+    2-arg [$defqN, Prep, X] so that the answer includes the preposition.
+    The concrete prep in has_location/has_time atoms is replaced with a
+    forall-bound variable so it matches any preposition.
     Sets @askvars:2 and q_obj[wh_marker]=True.
     wh_marker is "@where_query" or "@when_query".
   where_prep: legacy alias for wh_prep with wh_marker="@where_query".
@@ -230,8 +257,16 @@ def build_defq_question(name, ask_var, body, where_prep=None,
   defq_name = "$defq" + str(_defq_nr)
   _defq_nr += 1
 
+  # When wh_prep is set, replace the concrete preposition in the body with
+  # a variable so the biconditional matches any preposition.
+  prep_var = "_Prep"
+  if wh_prep and ask_var:
+    body = _replace_prep_with_var(body, wh_prep, prep_var, target_pred=wh_prep_pred)
+
   # Wrap body in 'exists' for every free variable that is not the ask variable.
   initial_bound = {ask_var} if ask_var else set()
+  if wh_prep:
+    initial_bound.add(prep_var)
   free_vars = sorted(collect_body_free_vars(body, bound=initial_bound))
   wrapped_body = body
   for fv in free_vars:
@@ -240,15 +275,17 @@ def build_defq_question(name, ask_var, body, where_prep=None,
   # Build the biconditional formula.
   if ask_var:
     if wh_prep:
-      # 2-arg $defq: [$defqN, "in", X] — encodes the preposition in the answer.
-      defq_atom = [defq_name, wh_prep, ask_var]
+      # 2-arg $defq: [$defqN, _Prep, X] — prep is a variable, matches any preposition.
+      defq_atom = [defq_name, prep_var, ask_var]
       q_atom    = [defq_name, "?:Rel", "?:" + ask_var]
       askvars   = 2
+      frm = ["forall", ask_var, ["forall", prep_var,
+              ["equivalent", defq_atom, wrapped_body]]]
     else:
       defq_atom = [defq_name, ask_var]
       q_atom    = [defq_name, "?:" + ask_var]
       askvars   = 1
-    frm = ["forall", ask_var, ["equivalent", defq_atom, wrapped_body]]
+      frm = ["forall", ask_var, ["equivalent", defq_atom, wrapped_body]]
   else:
     defq_atom = [defq_name]
     frm = ["equivalent", defq_atom, wrapped_body]
@@ -478,7 +515,8 @@ def _record_polarity(registry, key, name, entity, atom_pol):
       registry[key]["has_neg"] = True
 
 
-def scan_item_formula(frm, name, polarity, classes, has_props, deg_props):
+def scan_item_formula(frm, name, polarity, classes, has_props, deg_props,
+                      compound_witnesses=None):
   """Recursively scan a formula for isa / has-property / has-degree-property atoms.
 
   Works on both raw stage-2 formulas (connectives and/or/not/forall/exists/
@@ -492,45 +530,57 @@ def scan_item_formula(frm, name, polarity, classes, has_props, deg_props):
     classes   -- dict: CLASS -> {"name", "has_pos", "has_neg"}
     has_props -- dict: PROPERTY -> {"name", "has_pos", "has_neg"}
     deg_props -- dict: (PROPERTY, RELCLASS) -> {"name", "has_pos", "has_neg"}
+    compound_witnesses -- dict or None: accumulates compound antecedent patterns
   """
   if not isinstance(frm, list) or not frm:
     return
   first = frm[0]
 
+  _cw = compound_witnesses  # shorthand
+
   # Clausified disjunction: first element is itself a list (atom).
   if isinstance(first, list):
     for atom in frm:
-      scan_item_formula(atom, name, polarity, classes, has_props, deg_props)
+      scan_item_formula(atom, name, polarity, classes, has_props, deg_props, _cw)
     return
 
   pred = first
 
   # Structural connectives — recurse, tracking polarity.
-  if pred in ("and", "or", "implies", "equivalent", "xor"):
+  if pred in ("and", "or", "equivalent", "xor"):
     for el in frm[1:]:
-      scan_item_formula(el, name, polarity, classes, has_props, deg_props)
+      scan_item_formula(el, name, polarity, classes, has_props, deg_props, _cw)
+    return
+  if pred == "implies":
+    # Scan antecedent for compound witness patterns (in positive polarity,
+    # meaning the rule itself is asserted — the antecedent describes a class).
+    if len(frm) >= 3:
+      if polarity and _cw is not None:
+        _scan_compound_antecedent(frm[1], name, _cw)
+      scan_item_formula(frm[1], name, polarity, classes, has_props, deg_props, _cw)
+      scan_item_formula(frm[2], name, polarity, classes, has_props, deg_props, _cw)
     return
   if pred == "not":
     if len(frm) >= 2:
-      scan_item_formula(frm[1], name, not polarity, classes, has_props, deg_props)
+      scan_item_formula(frm[1], name, not polarity, classes, has_props, deg_props, _cw)
     return
   if pred in ("forall", "exists"):
     if len(frm) >= 3:
-      scan_item_formula(frm[2], name, polarity, classes, has_props, deg_props)
+      scan_item_formula(frm[2], name, polarity, classes, has_props, deg_props, _cw)
     return
   # ["ask", var, body] — scan the body.
   if pred == "ask":
     if len(frm) >= 3:
-      scan_item_formula(frm[2], name, polarity, classes, has_props, deg_props)
+      scan_item_formula(frm[2], name, polarity, classes, has_props, deg_props, _cw)
     return
   # Transparent wrappers — recurse into the formula argument.
   if pred == "normally" or pred == "question":
     if len(frm) >= 2:
-      scan_item_formula(frm[1], name, polarity, classes, has_props, deg_props)
+      scan_item_formula(frm[1], name, polarity, classes, has_props, deg_props, _cw)
     return
   if pred == "holds":
     if len(frm) >= 3:
-      scan_item_formula(frm[2], name, polarity, classes, has_props, deg_props)
+      scan_item_formula(frm[2], name, polarity, classes, has_props, deg_props, _cw)
     return
 
   # Atom (may carry a "-" negation prefix on the predicate name).
@@ -556,7 +606,76 @@ def scan_item_formula(frm, name, polarity, classes, has_props, deg_props):
       _record_polarity(deg_props, (str(args[0]), relclass), name, args[1], atom_pol)
 
 
-def build_population_facts(classes, has_props, deg_props):
+def _scan_compound_antecedent(ante, name, compound_witnesses):
+  """Scan a rule antecedent for compound patterns (type + spatial relation).
+
+  When the antecedent is ["and", ...] and contains both an isa(TYPE, VAR) atom
+  and a spatial is_rel2/has_degree_rel2 atom on the same variable with a ground
+  location target, record a compound witness pattern.
+  """
+  if not isinstance(ante, list) or not ante:
+    return
+  # Unwrap single-child and
+  if ante[0] != "and":
+    return
+  conjuncts = ante[1:]
+
+  # Collect conditions grouped by variable
+  var_isa = {}       # var -> list of (type_name,)
+  var_spatial = {}    # var -> list of (pred, prep, target, extra_args)
+
+  for conj in conjuncts:
+    if not isinstance(conj, list) or len(conj) < 3:
+      continue
+    pred = conj[0]
+    if not isinstance(pred, str):
+      continue
+
+    if pred == "isa" and len(conj) >= 3:
+      typ, entity = conj[1], conj[2]
+      if isinstance(typ, str) and isinstance(entity, str) and looks_like_var(entity):
+        var_isa.setdefault(entity, []).append(typ)
+
+    elif pred in ("is rel2", "has degree rel2") and len(conj) >= 4:
+      prep, entity, target = conj[1], conj[2], conj[3]
+      if (isinstance(entity, str) and looks_like_var(entity)
+          and isinstance(prep, str) and isinstance(target, str)
+          and not looks_like_var(target)):
+        extra = conj[4:] if len(conj) > 4 else []
+        var_spatial.setdefault(entity, []).append((pred, prep, target, extra))
+
+  # Generate compound witnesses for variables with both type and spatial
+  for var in var_isa:
+    if var not in var_spatial:
+      continue
+    for typ in var_isa[var]:
+      for pred, prep, target, extra in var_spatial[var]:
+        # Build key to dedup
+        key = (typ, pred, prep, target)
+        if key not in compound_witnesses:
+          compound_witnesses[key] = {
+            "name": name, "type": typ, "pred": pred,
+            "prep": prep, "target": target, "extra": extra,
+          }
+
+
+def _extract_location_name(target):
+  """Extract a short name from a location entity for witness naming.
+
+  'https://en.wikipedia.org/wiki/Tallinn' → 'Tallinn'
+  'Tallinn 1' → 'Tallinn'
+  'house 3' → 'house'
+  """
+  if target.startswith("http://") or target.startswith("https://"):
+    parts = target.rstrip("/").rsplit("/", 1)
+    return parts[-1] if len(parts) > 1 else target
+  # Strip trailing digits
+  import re
+  m = re.match(r'^(.*\S)\s+\d+$', target)
+  return m.group(1) if m else target
+
+
+def build_population_facts(classes, has_props, deg_props, compound_witnesses=None):
   """Build the list of @logic population entries from collected scan data.
 
   For each key, emits a positive and/or negative synthetic clause, skipping
@@ -593,14 +712,34 @@ def build_population_facts(classes, has_props, deg_props):
                      "@logic": ["has degree property", prop, "$some_" + cn,
                                 "none", relclass]})
       # Companion isa: $some_PROP_CLASS is by construction a member of CLASS.
-      # This allows rules whose body requires both isa(CLASS, X) and a degree
-      # property on X to fire on the population constant.
       result.append({"@name": name, "@sourcetype": "populate",
                      "@logic": ["isa", relclass, "$some_" + cn]})
     if not info["has_neg"]:
       result.append({"@name": name, "@sourcetype": "populate",
                      "@logic": ["-has degree property", prop, "$some_not_" + cn,
                                 "none", relclass]})
+
+  # Compound witnesses: type + spatial relation on same variable
+  if compound_witnesses:
+    for key, info in compound_witnesses.items():
+      typ = info["type"]
+      pred = info["pred"]
+      prep = info["prep"]
+      target = info["target"]
+      extra = info["extra"]
+      name = info["name"]
+      loc_name = _extract_location_name(target)
+      const = "$some_" + _norm_for_const(typ) + "_" + _norm_for_const(prep) + "_" + loc_name
+      # isa fact
+      result.append({"@name": name, "@sourcetype": "populate",
+                     "@logic": ["isa", typ, const]})
+      # spatial relation fact
+      rel_atom = [pred, prep, const, target]
+      # For has_degree_rel2, add degree and relclass from extra args
+      if pred == "has degree rel2" and extra:
+        rel_atom.extend(extra)
+      result.append({"@name": name, "@sourcetype": "populate",
+                     "@logic": rel_atom})
 
   return result
 

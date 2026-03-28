@@ -63,6 +63,8 @@ _STOP_WORDS = frozenset({
   "can", "could", "will", "would", "shall", "should", "may", "might", "must",
   "in", "on", "at", "to", "from", "by", "with", "for", "of", "about",
   "into", "onto", "upon", "over", "under", "between", "through",
+  "near", "above", "below", "beside", "behind", "before", "after",
+  "during", "around", "along", "across", "against", "among", "within",
   "then", "than", "as", "not", "no",
   # Relative pronouns / wh-words (prevent "whom Eve" or "which car" as qualifiers)
   "who", "whom", "whose", "which", "where", "what",

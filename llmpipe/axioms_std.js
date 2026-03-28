@@ -119,7 +119,7 @@
     ["-has type", "?:E", "like", ["$ctxt","?:T1","?:W","?:Fv3","?:Fv4"]],
     ["-has actor", "?:E", "?:X", ["$ctxt","?:T1","?:W","?:Fv3","?:Fv4"]],
     ["-has target", "?:E", "?:Y", ["$ctxt","?:T1","?:W","?:Fv3","?:Fv4"]],
-    ["-has time", "?:E", "?:T2", ["$ctxt","?:T3","?:W","?:Fv3","?:Fv4"]],
+    ["-has time", "?:E", "?:T2", "?:Prep_t", ["$ctxt","?:T3","?:W","?:Fv3","?:Fv4"]],
     ["is rel2", "like", "?:X", "?:Y", ["$ctxt","?:T2","?:W","?:Fv3","?:Fv4"]]
   ],
 
@@ -179,10 +179,10 @@
    ["has actor", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"], "?:X"]],
 
   [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
-   ["has time", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"], "?:Time"]],
+   ["has time", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"], "?:Time", "?:Prep_t"]],
 
-  [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
-   ["has location", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"], "?:Loc"]],
+  [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]],
+   ["has location", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"], "?:Loc", "?:Prep_l"]],
 
   [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
    ["typical", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"]]],
@@ -659,9 +659,9 @@ Does John 1 have two cars?
 // Special: has time (Explicit Davidsonian Tense Role)
 // If E was 'present' in W_old, it is 'past' in the context of W_new.
 [
-  ["-has time", "?:E", "present", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
+  ["-has time", "?:E", "present", "?:Prep_t", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
   ["-before", "?:W_old", "?:W_new"],
-  ["has time", "?:E", "past", ["$ctxt", "present", "?:W_new", "?:L", "?:K"]]
+  ["has time", "?:E", "past", "?:Prep_t", ["$ctxt", "present", "?:W_new", "?:L", "?:K"]]
 ]
 
 // experimental
