@@ -94,12 +94,17 @@ def parse_text(text):
     mwt_ner = {}
     for w in sentence:
       if type(w.get("id")) == list and "ner" in w:
-        for subid in range(w["id"][0], w["id"][1] + 1):
-          mwt_ner[subid] = w["ner"]
+        first_id = w["id"][0]
+        for subid in range(first_id, w["id"][1] + 1):
+          mwt_ner[subid] = w["ner"] if subid == first_id else "O"
     for w in sentence:
       if type(w.get("id")) == int and "ner" not in w and w["id"] in mwt_ner:
         w["ner"] = mwt_ner[w["id"]]
     sentence[:] = [w for w in sentence if type(w.get("id")) == int]
+    # Fix PROPN: MWT sub-words may get upos NOUN even when xpos is NNP (proper noun)
+    for w in sentence:
+      if w.get("upos") == "NOUN" and w.get("xpos") in ["NNP", "NNPS"]:
+        w["upos"] = "PROPN"
   entities=[]
   for el in doc.entities:
     entities.append(el.to_dict())

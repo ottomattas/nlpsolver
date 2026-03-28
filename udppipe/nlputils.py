@@ -33,10 +33,31 @@ import nlpcache
 
 # ========= calling the server ====
 
+def _fix_mwt_data(data):
+  """Fix MWT artifacts: filter span entries, propagate NER, correct PROPN from xpos."""
+  if "doc" not in data:
+    return data
+  for sentence in data["doc"]:
+    mwt_ner = {}
+    for w in sentence:
+      if type(w.get("id")) == list and "ner" in w:
+        first_id = w["id"][0]
+        for subid in range(first_id, w["id"][1] + 1):
+          mwt_ner[subid] = w["ner"] if subid == first_id else "O"
+    for w in sentence:
+      if type(w.get("id")) == int and "ner" not in w and w["id"] in mwt_ner:
+        w["ner"] = mwt_ner[w["id"]]
+    sentence[:] = [w for w in sentence if type(w.get("id")) == int]
+    # Fix PROPN: MWT sub-words may get upos NOUN even when xpos is NNP (proper noun)
+    for w in sentence:
+      if w.get("upos") == "NOUN" and w.get("xpos") in ["NNP", "NNPS"]:
+        w["upos"] = "PROPN"
+  return data
+
 def server_parse(text):
   cached=nlpcache.get_parse_from_cache(None,text)
   if cached:
-    return cached
+    return _fix_mwt_data(cached)
 
   conn = http.client.HTTPConnection(nlpglobals.server_name,nlpglobals.server_port,timeout=nlpglobals.server_timeout)
   encoded=urllib.parse.quote(text)
@@ -68,20 +89,7 @@ def server_parse(text):
   except:
     show_error("nlpserver response is not a correct json: "+  str(rawdata))
     sys.exit(0)
-  # Filter out multi-word token (MWT) entries from newer Stanza versions:
-  # MWT entries have id as a list like [1,2] and lack "head", "lemma", "upos" etc.
-  # Before removing, propagate NER tags from MWT entries to their sub-words.
-  if "doc" in data:
-    for sentence in data["doc"]:
-      mwt_ner = {}
-      for w in sentence:
-        if type(w.get("id")) == list and "ner" in w:
-          for subid in range(w["id"][0], w["id"][1] + 1):
-            mwt_ner[subid] = w["ner"]
-      for w in sentence:
-        if type(w.get("id")) == int and "ner" not in w and w["id"] in mwt_ner:
-          w["ner"] = mwt_ner[w["id"]]
-      sentence[:] = [w for w in sentence if type(w.get("id")) == int]
+  _fix_mwt_data(data)
   nlpcache.add_parse_to_cache(None,text,data)
   return data
 

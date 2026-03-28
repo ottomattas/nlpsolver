@@ -568,13 +568,14 @@ def parse_sentence(ctxt,sentence,question_dummy_name=None):
       min_id=word["id"]
       first_word=word
   
-  if (first_word and first_word["upos"] in ["PROPN","NOUN"] and 
+  if (first_word and first_word["upos"] in ["PROPN","NOUN"] and
+      first_word.get("xpos") not in ["NNP","NNPS"] and
       not first_word["text"].startswith(dummy_name) and
       (not is_question_sentence(sentence) or first_word["lemma"] not in question_words) and
       first_word.get("ner","O") in ["O","0",0] and
       first_word["text"][0].isupper()):
-    if (not(first_word["text"] in first_names) and 
-        (not(len(first_word["text"])>2 and first_word["text"][-2:]=="'s"))):  
+    if (not(first_word["text"] in first_names) and
+        (not(len(first_word["text"])>2 and first_word["text"][-2:]=="'s"))):
       first_word["upos"]="NOUN"
       first_word["lemma"]=first_word["lemma"][0].lower()+first_word["lemma"][1:]
     else:

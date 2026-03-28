@@ -76,7 +76,7 @@ def make_namified_replacement_wordlist(sentence):
   wordlist=[]
   for el in sentence:
     txt=el["text"]
-    if el["upos"]=="PROPN" and el.get("ner","O")!='O':
+    if el["upos"]=="PROPN" and (el.get("ner","O")!='O' or el.get("xpos") in ["NNP","NNPS"]):
       wordlist.append("#name#"+el["text"])
     elif ((el["upos"]=="PROPN" or word_has_feat(el,"PronType","Prs")) and
           el.get("ner","O")=='O' and
