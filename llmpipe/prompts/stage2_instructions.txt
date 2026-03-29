@@ -1016,6 +1016,35 @@ Never emit both ["is rel2"] and ["has degree rel2"] for the same word.
 ["member", ENTITY, SET_TERM]: Asserts that an entity belongs to the collection defined by the Set Term.
 ["is subset of", SET_TERM_1, SET_TERM_2]: Asserts that all members of one Set Term are also members of another.
 
+--- Measurement Encoding ---
+
+When an entity has a measurable attribute (length, weight, height, width, depth,
+distance, area, volume, speed, temperature, price, age, duration), encode as:
+
+  ["=", ["$measure_of", ATTR, ENTITY, WORLD], ["$measure", NUMBER, UNIT]]
+
+- ATTR: the attribute name ("length", "weight", etc.)
+- ENTITY: the entity (URL or id)
+- WORLD: the world constant ("W0", "W1", etc.)
+- NUMBER: the numeric value as a JSON number (integer or float)
+- UNIT: the unit as a string ("kilometer", "kilogram", "meter", etc.)
+
+Do NOT use the @definite + is_rel2 + entity-id pattern for measurements.
+Use $measure_of directly instead.
+
+Assertions use the world from their holds wrapper:
+  ["holds", "W0", ["=", ["$measure_of","length","Nile","W0"], ["$measure",80,"kilometer"]]]
+
+Boolean questions use the same world as the assertion:
+  ["question", ["=", ["$measure_of","length","Nile","W0"], ["$measure",90,"kilometer"]]]
+
+Wh-questions use the world from the narrative context:
+  ["ask", "X", ["=", ["$measure_of","length","X","W0"], ["$measure",20,"kilometer"]]]
+
+When a query combines a measurement equality ($measure_of) with an adjective
+(has_degree_property) for the same attribute (e.g., "long" + length measurement),
+omit the adjective.
+
 --- Functions ---
 
 ["$setof", "?:X", ["and", ...]]: Creates an anchored Set Term.

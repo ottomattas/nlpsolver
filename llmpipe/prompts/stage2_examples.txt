@@ -2409,7 +2409,7 @@ INPUT:
         "entities": [
           {"id":"box 1","type":"concrete"},
           {"id":"weight 2","type":"concrete","text":"weight"},
-          {"id":"10 kilograms","type":"concrete"}
+          {"id":"10 kilograms","type":"concrete","category":"measure"}
         ],
         "definites": [["weight of","weight 2","box 1"]]
       }
@@ -2421,19 +2421,11 @@ OUTPUT:
 
 ["and",
   ["@id","S1",
-    ["and",
-      ["holds","W0",
-        ["and",
-          ["isa","weight","weight 2"],
-          ["isa","box","box 1"],
-          ["is rel2","weight of","weight 2","box 1"],
-          [">","weight 2","10 kilograms"]
-        ]
-      ],
-      ["@definite","S1","W0","weight of","box 1","weight 2"]
-    ]
-  ]
-]
+    ["holds","W0",
+      ["and",
+        ["isa","box","box 1"],
+        [">",["$measure_of","weight","box 1","W0"],
+             ["$measure",10,"kilogram"]]]]]]
 
 -------
 
@@ -2815,3 +2807,73 @@ OUTPUT:
     ]
   ]
 ]
+
+-------
+
+INPUT:
+
+[
+  {
+    "raw": "Nile's length is 80 kilometers.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "Nile 1's length 2 is 80 kilometers.",
+        "type": "real",
+        "entities": [
+          {"id":"Nile 1","type":"concrete","category":"place","url":"https://en.wikipedia.org/wiki/Nile"},
+          {"id":"length 2","type":"concrete","text":"length"},
+          {"id":"80 kilometers","type":"concrete","category":"measure"}
+        ],
+        "definites": [["length of","length 2","Nile 1"]]
+      }
+    ]
+  },
+  {
+    "raw": "Amazon's length is 20 kilometers.",
+    "units": [
+      {
+        "unit_id": "S3",
+        "text": "Amazon 3's length 4 is 20 kilometers.",
+        "type": "real",
+        "entities": [
+          {"id":"Amazon 3","type":"concrete","category":"place","url":"https://en.wikipedia.org/wiki/Amazon_River"},
+          {"id":"length 4","type":"concrete","text":"length"},
+          {"id":"20 kilometers","type":"concrete","category":"measure"}
+        ],
+        "definites": [["length of","length 4","Amazon 3"]]
+      }
+    ]
+  },
+  {
+    "raw": "What has the length 20 kilometers?",
+    "units": [
+      {
+        "unit_id": "S5",
+        "text": "Which entity has the length 20 kilometers?",
+        "type": "query",
+        "entities": [
+          {"id":"entity","type":"generic","wh_placeholder":true},
+          {"id":"length 4","type":"concrete","text":"length"},
+          {"id":"20 kilometers","type":"concrete","category":"measure"}
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["holds","W0",
+      ["=",["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"],
+           ["$measure",80,"kilometer"]]]],
+  ["@id","S3",
+    ["holds","W0",
+      ["=",["$measure_of","length","https://en.wikipedia.org/wiki/Amazon_River","W0"],
+           ["$measure",20,"kilometer"]]]],
+  ["@id","S5",
+    ["ask","X",
+      ["=",["$measure_of","length","X","W0"],
+           ["$measure",20,"kilometer"]]]]]

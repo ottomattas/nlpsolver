@@ -83,6 +83,7 @@ from lc_postprocess import (
   normalize_gradable_predicates as _normalize_gradable_predicates,
   strip_isa_entity as _strip_isa_entity,
   rewrite_definites as _rewrite_definites,
+  rewrite_measure_terms as _rewrite_measure_terms,
   add_possessive_have as _add_possessive_have,
   strip_degree_predicates as _strip_degree_predicates,
 )
@@ -388,11 +389,9 @@ def rawlogic_convert(logic, s1_json=None):
       sid = str(item[1])
       uid_count[sid] = uid_count.get(sid, 0) + 1
       objs = _convert_id_package(item, asu_index, uid_suffix=uid_count[sid],
-                                 set_el_by_sid=set_el_by_sid,
-                                 theof_relations=theof_relations)
+                                 set_el_by_sid=set_el_by_sid)
     else:
-      objs = _convert_id_package(item, asu_index, set_el_by_sid=set_el_by_sid,
-                                 theof_relations=theof_relations)
+      objs = _convert_id_package(item, asu_index, set_el_by_sid=set_el_by_sid)
     if objs:
       result.extend(objs)
 
@@ -407,6 +406,13 @@ def rawlogic_convert(logic, s1_json=None):
   for ax_clause in set_axioms:
     result.append({"@name": "frm_set", "@logic": ax_clause})
 
+  # Rewrite definite functional descriptions to $theof1 terms (global pass).
+  # Runs after all packages are collected so question packages can find
+  # is_rel2/have+isa matches from assertion packages.
+  if asu_index:
+    for sid_key in asu_index:
+      _rewrite_definites(result, asu_index, sid_key, theof_relations)
+
   # Add per-relation $theof1 bridge axioms.
   for rel_name, type_base in theof_relations:
     # is_rel2("father of", $theof1("father", ?:S, ?:C), ?:S, ?:C)
@@ -417,6 +423,17 @@ def rawlogic_convert(logic, s1_json=None):
     bridge_isa = ["isa", type_base,
                   ["$theof1", type_base, "?:S", "?:C"]]
     result.append({"@name": "frm_theof", "@logic": bridge_isa})
+
+  # Convert $measure terms to canonical $list form and collect $measure_of attrs.
+  measure_attrs = _rewrite_measure_terms(result)
+  for attr in measure_attrs:
+    # have(?:S, $measure_of(ATTR, ?:S, ?:W), $ctxt(?:T, ?:W, ?:L, ?:K))
+    bridge_have = ["have", "?:S", ["$measure_of", attr, "?:S", "?:W"],
+                   ["$ctxt", "?:T", "?:W", "?:L", "?:K"]]
+    result.append({"@name": "frm_measure", "@logic": bridge_have})
+    # isa(ATTR, $measure_of(ATTR, ?:S, ?:W))
+    bridge_isa = ["isa", attr, ["$measure_of", attr, "?:S", "?:W"]]
+    result.append({"@name": "frm_measure", "@logic": bridge_isa})
 
   # Prepend entity category clauses at the start of the clause list so they
   # are available as given facts throughout the proof.
@@ -714,8 +731,7 @@ def _process_assertion(formula, name, confidence):
   return result
 
 
-def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=None,
-                        theof_relations=None):
+def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=None):
   """Process ["@id", sid, PACKAGE] → list of GK clause dicts."""
   if not isinstance(item, list) or len(item) < 3 or item[0] != "@id":
     return []
@@ -828,9 +844,8 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
       ctxt_template = ["$ctxt", None, situation, loc_term, kn_term]
       _inject_ctxt_into_objs(result, ctxt_template, tense_term)
 
-  # Rewrite definite functional descriptions to $theof1 terms.
-  if theof_relations is not None:
-    _rewrite_definites(result, asu_index, str(sid), theof_relations)
+  # NOTE: $theof1 definite rewrite moved to rawlogic_convert (global pass)
+  # so question packages can find is_rel2 matches from assertion packages.
 
   # Inject $ctxt into set element instantiation clauses for this ASU.
   # Element clauses inherit the same world/tense as the ASU's own clauses.

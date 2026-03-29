@@ -359,6 +359,7 @@ Dynamic verbs are encoded as Davidsonian events:
 ["next", W1, W2]               — W2 is the immediate successor of W1
 ["before", W1, W2]             — W1 is an earlier world state than W2
 ["=", ["$theof1","time",W,C], ["$datetime",N]]  — world W anchored to time N (numeric)
+["=", ["$measure_of",ATTR,OBJ,W], ["$measure",N,UNIT]]  — measurement (see §3.13)
 ["state location", W, L]       — location in world state
 ["normally", F]                — defeasible wrapper
 ["@time", TIME, ATOM]          — per-predicate time override
@@ -714,11 +715,8 @@ The pipeline applies several transformations between Stage-2 output and GK input
 
 **Post-clausification** (lc_ctxt.py + lc_postprocess.py, on the clause list):
 - $ctxt injection with world dispatch (lc_ctxt.py)
-- `$theof1` definite function terms (lc_postprocess.py): when an ASU has a `definites` entry
-  (e.g., `["father of", "the father 2", "John 1"]`), the flat entity ID is replaced
-  by `["$theof1", "father", "John 1", CTXT]` throughout all clauses.  Bridge axioms
-  (`isa`, `have`, `is rel2`) are generated per relation.  This makes "the father of
-  John", "John's father", and wh-queries all refer to the same canonical term.
+- `$theof1` definite function terms and `$measure_of` measurement encoding
+  (lc_postprocess.py) — see §3.13 for details.
 - Gradable property normalization (lc_postprocess.py, whitelist-based has property ↔ has degree property)
 - isa(entity,X) stripping (lc_postprocess.py, tautological)
 - RELCLASS coercion for question atoms (lc_postprocess.py)
@@ -858,6 +856,106 @@ The prover also loads `axioms_std.js` containing background knowledge:
 - **Persistence (frame problem)**: facts persist across world states unless blocked
   (defeasible for have, has property, has degree property, can, has part, is rel2;
   W0→W1→W2→W3)
+
+### 3.13 Definite Functions and Measurements
+
+#### `$theof1` — definite descriptions
+
+When a Stage-1 ASU has a `definites` entry like `["father of", "father 2", "John 1"]`,
+the pipeline replaces the flat entity ID (`"father 2"`) with a canonical function
+term throughout all clauses:
+
+```
+["$theof1", TYPE, SUBJECT, CTXT]
+```
+
+- `TYPE` — attribute name derived from the relation (strip trailing " of")
+- `SUBJECT` — the entity the attribute belongs to (e.g., `"John 1"` or a URL)
+- `CTXT` — the `$ctxt` term from the clause context (may contain free variables)
+
+Example: "The father of John" → `["$theof1", "father", "John 1", ["$ctxt", ...]]`
+
+Bridge axioms are generated per relation:
+```
+is_rel2("father of", $theof1("father", ?:S, ?:C), ?:S, ?:C)
+isa("father", $theof1("father", ?:S, ?:C))
+```
+
+The rewrite runs as a **global pass** (after all packages are collected) so that
+question packages can find `is_rel2` matches from assertion packages.
+
+#### `$measure_of` and `$measure` — measurement encoding
+
+Stage 2 encodes measurement attributes directly using `$measure_of` and `$measure`:
+
+```
+["=", ["$measure_of", ATTR, OBJ, WORLD], ["$measure", NUMBER, UNIT]]
+```
+
+- `ATTR` — measurement attribute: `"length"`, `"weight"`, `"height"`, etc.
+- `OBJ` — the entity (URL or id)
+- `WORLD` — world constant: `"W0"`, `"W1"` — ground, no `$ctxt` wrapper
+- `NUMBER` — the numeric value as a JSON number
+- `UNIT` — the unit as a string: `"kilometer"`, `"kilogram"`, etc.
+
+The pipeline converts `$measure` to canonical `$list` form for the prover:
+
+```
+["$measure", 80, "kilometer"]  →  ["$list", 80000, "#:meter"]
+```
+
+**Why `$measure_of` is ground**: The gk prover can decompose `$list` terms for
+equality contradiction only when the enclosing function term is fully ground.
+`$measure_of` uses the world constant directly (not a `$ctxt` list with free
+variables). World constants (`W0`, `W1`, ...) are recognized by `is_world_constant()`
+in `lc_clausify.py` and excluded from variable detection.
+
+**Why `$list` with `#:` prefix?**  In gk, integers have the unique name
+assumption (UNA): `80000 ≠ 90000`.  Distinct symbols (prefixed with `#:`)
+also have UNA: `"#:meter" ≠ "#:kilogram"`.  The `$list` wrapper combines both,
+so `["$list", 80000, "#:meter"] ≠ ["$list", 90000, "#:meter"]` (different number)
+and `["$list", 80000, "#:meter"] ≠ ["$list", 80000, "#:kilogram"]` (different unit).
+Plain strings like `"80 kilometers"` do NOT have UNA in gk.
+
+**Canonical unit conversion**: Values are converted to a base unit so that
+different surface forms compare correctly:
+
+| Dimension | Canonical unit | Example conversions |
+|-----------|---------------|---------------------|
+| Length | `#:meter` | km×1000, mile×1609, foot×0.3048 |
+| Mass | `#:kilogram` | g÷1000, pound×0.4536, ton×1000 |
+| Time | `#:second` | minute×60, hour×3600, day×86400 |
+| Volume | `#:liter` | ml÷1000, gallon×3.785 |
+| Temperature | `#:celsius` | fahrenheit→(F-32)×5/9 |
+
+Results are rounded to integer.
+
+**Example 1** — boolean: "Nile's length is 80 km. The length of Nile is 90 km?"
+
+```
+Stage 2 assertion: ["=", ["$measure_of","length","Nile","W0"], ["$measure",80,"kilometer"]]
+Stage 2 question:  ["question", ["=", ["$measure_of","length","Nile","W0"], ["$measure",90,"kilometer"]]]
+GK assertion:      ["=", ["$measure_of","length","Nile","W0"], ["$list",80000,"#:meter"]]
+GK question:       ["=", ["$measure_of","length","Nile","W0"], ["$list",90000,"#:meter"]]
+```
+
+The `$measure_of` terms unify (ground), `80000 ≠ 90000` → **False**.
+
+**Example 2** — wh-query: "What has the length 20 km?"
+
+```
+Stage 2: ["ask","X", ["=", ["$measure_of","length","X","W0"], ["$measure",20,"kilometer"]]]
+GK:      ["ask","X", ["=", ["$measure_of","length","X","W0"], ["$list",20000,"#:meter"]]]
+```
+
+Cross-unit comparison: "80 kilometers" and "80000 meters" both produce
+`["$list", 80000, "#:meter"]` → **True**.
+
+**Bridge axioms** for `$measure_of`:
+```
+have(?:S, $measure_of(ATTR, ?:S, ?:W), $ctxt(?:T, ?:W, ?:L, ?:K))
+isa(ATTR, $measure_of(ATTR, ?:S, ?:W))
+```
 
 ---
 

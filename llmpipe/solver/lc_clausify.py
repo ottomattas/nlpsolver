@@ -82,13 +82,19 @@ _gobj_nr = 0
 
 # ======== variable detection ========
 
+def is_world_constant(s):
+  """Return True if s is a world state constant (W0, W1, W2, ...)."""
+  return isinstance(s, str) and bool(re.match(r'^W\d+$', s))
+
+
 def looks_like_var(s):
   """Return True if s looks like a stage-2 variable name (e.g. X, Y, S1).
 
   Variables in stage-2 LLM output are a single uppercase letter optionally
-  followed by digits: X, Y, Z, E, S, W, S1, S2, X1, W0.  Strings starting
+  followed by digits: X, Y, Z, E, S, W, S1, S2, X1.  Strings starting
   with '?:' are already in GK format and also count as variables.
 
+  World state constants (W0, W1, ...) are NOT variables.
   Multi-letter capitalized words (English, French, German, Buddhist …) are
   proper-noun constants, not variables, and must NOT match.
   """
@@ -96,6 +102,8 @@ def looks_like_var(s):
     return False
   if s.startswith('?:'):
     return True
+  if is_world_constant(s):
+    return False
   return bool(re.match(r'^[A-Z][0-9]*$', s))
 
 
