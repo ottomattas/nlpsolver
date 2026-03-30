@@ -756,5 +756,32 @@ Does John 1 have two cars?
   ["-can", "?:X", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
   ["-is_past_world", "?:W"],
   ["can", "?:X", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+
+// experimentally defining the comparison between measures
+
+[
+  ["-=", "?:M1", ["$list", "?:N1", "?:U"]],
+  ["-=", "?:M2", ["$list", "?:N2", "?:U"]],
+  ["-$less", "?:N1", "?:N2"],
+  ["less_measure", "?:M1", "?:M2"]
+],
+
+[
+  ["-less_measure", "?:M1", "?:M2"],
+  ["-=", "?:M1", ["$list", "?:N1", "?:U"]],
+  ["-=", "?:M2", ["$list", "?:N2", "?:U"]],
+  ["$less", "?:N1", "?:N2"]
+],
+
+[
+  ["-$less", "?:N1", "?:N2"],
+  ["less_measure", ["$list", "?:N1", "?:U"], ["$list", "?:N2", "?:U"]]
+],
+
+[
+  ["-less_measure", ["$list", "?:N1", "?:U"], ["$list", "?:N2", "?:U"]],
+  ["$less", "?:N1", "?:N2"]
 ]
+
 ]

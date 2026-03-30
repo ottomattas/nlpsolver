@@ -174,7 +174,13 @@ def _display_name(base, qual_words):
   if first in _SKIP_WORDS and " " in b:
     b = b.split(" ", 1)[1]
   if qual_words:
-    return "the " + " ".join(qual_words) + " " + b
+    # Drop qualifier words already present as a prefix of the base
+    # (e.g., base "blue straw" with qualifier ["blue"] → skip "blue").
+    b_words = b.lower().split()
+    filtered = [q for q in qual_words if q.lower() not in b_words]
+    if filtered:
+      return "the " + " ".join(filtered) + " " + b
+    # All qualifiers already in base — fall through to default
   if b[:1].islower():
     return "the " + b
   return b

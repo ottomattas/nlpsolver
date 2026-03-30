@@ -123,6 +123,9 @@ def parse_text(text, llm=None, version=None, tokens=None, think=None):
   if s1_json is None:
     return (None, None, stats)
 
+  # Normalize entity IDs that differ only by sentence-start capitalization.
+  _normalize_entity_id_case(s1_json)
+
   # --- stage 2 ---
   s2_input = json.dumps(s1_json)
   s2_json, s2_raw, s2_err = _run_stage(2, s2_input, _stage2_sysprompt,
@@ -387,6 +390,85 @@ def _try_parse(s):
     return (json.loads(s), None)
   except Exception as e:
     return (None, str(e))
+
+
+# ======== entity ID case normalization ========
+
+import re as _re
+
+_ID_WITH_NUMBER_RE = _re.compile(r'^(.+)\s+(\d+)$')
+
+def _normalize_entity_id_case(s1_json):
+  """Normalize entity IDs that differ only by sentence-start capitalization.
+
+  When the same entity appears as "Car 1" (sentence start) and "car 1"
+  (mid-sentence), replace the capitalized form with the lowercase form.
+
+  Only fires when ALL conditions hold:
+    (a) Two IDs differ only in the first character's case, rest identical
+    (b) The ID contains a number suffix (e.g., "Car 1", not bare "Car")
+    (c) The capitalized form appears as the first word of a raw sentence
+
+  Modifies s1_json in place.
+  """
+  if not isinstance(s1_json, list):
+    return
+
+  # Collect all entity IDs and raw sentence texts.
+  all_ids = set()
+  raw_sentences = []
+  for pkg in s1_json:
+    if not isinstance(pkg, dict):
+      continue
+    raw = pkg.get("raw", "")
+    if raw:
+      raw_sentences.append(raw)
+    for unit in pkg.get("units", []):
+      for ent in unit.get("entities", []):
+        eid = ent.get("id")
+        if isinstance(eid, str):
+          all_ids.add(eid)
+
+  # Find pairs differing only by first-char case.
+  replacements = {}  # capitalized_id → lowercase_id
+  for eid in all_ids:
+    if not eid or not eid[0].isupper():
+      continue
+    m = _ID_WITH_NUMBER_RE.match(eid)
+    if not m:
+      continue  # condition (b): must have number
+    lower_form = eid[0].lower() + eid[1:]
+    if lower_form not in all_ids:
+      continue  # condition (a): lowercase form must exist
+    # condition (c): capitalized form must be first word of a raw sentence
+    first_word = eid.split()[0]  # e.g., "Car"
+    is_sentence_start = any(r.startswith(first_word + " ") or r.startswith(first_word + "'")
+                            for r in raw_sentences)
+    if is_sentence_start:
+      replacements[eid] = lower_form
+
+  if not replacements:
+    return
+
+  # Apply replacements throughout all entities, definites, actions, etc.
+  _replace_ids_in_s1(s1_json, replacements)
+
+
+def _replace_ids_in_s1(obj, replacements):
+  """Recursively replace entity ID strings in Stage 1 JSON."""
+  if isinstance(obj, dict):
+    for key in obj:
+      val = obj[key]
+      if isinstance(val, str) and val in replacements:
+        obj[key] = replacements[val]
+      elif isinstance(val, (dict, list)):
+        _replace_ids_in_s1(val, replacements)
+  elif isinstance(obj, list):
+    for i, val in enumerate(obj):
+      if isinstance(val, str) and val in replacements:
+        obj[i] = replacements[val]
+      elif isinstance(val, (dict, list)):
+        _replace_ids_in_s1(val, replacements)
 
 
 # ======== retry prompt ========

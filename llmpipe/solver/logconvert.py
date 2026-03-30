@@ -116,6 +116,92 @@ from lc_rewrites import (
 from semnormalize import rewrite_stative_events as _rewrite_stative_events
 
 
+# ======== structural repair ========
+
+def _hoist_nested_ids(logic):
+  """Hoist @id blocks nested inside other @id blocks to the top level.
+
+  LLM JSON errors sometimes drop a closing bracket, causing the auto-fixer
+  to nest one @id inside another.  Since @id blocks are never legitimately
+  nested, any inner @id is extracted and placed as a sibling.
+
+  Only operates on the top-level ["and", ...] structure.
+  """
+  if not isinstance(logic, list) or not logic:
+    return logic
+  op = logic[0]
+  if op == "@id":
+    items = [logic]
+  elif op == "and":
+    items = logic[1:]
+  else:
+    return logic
+
+  changed = False
+  new_items = []
+  for item in items:
+    if not isinstance(item, list) or len(item) < 2 or item[0] != "@id":
+      new_items.append(item)
+      continue
+    # Scan this @id's children (positions 2+) for nested @id blocks.
+    hoisted = []
+    kept = [item[0], item[1]]  # "@id", SID
+    for child in item[2:]:
+      if isinstance(child, list) and len(child) >= 2 and child[0] == "@id":
+        hoisted.append(child)
+      else:
+        kept.append(child)
+    if hoisted:
+      changed = True
+      if len(kept) > 2:
+        new_items.append(kept)
+      new_items.extend(hoisted)
+    else:
+      new_items.append(item)
+
+  if not changed:
+    return logic
+  # Recurse: hoisted items may themselves contain nested @ids.
+  final_items = []
+  for item in new_items:
+    sub = _hoist_nested_ids(["and", item])
+    if isinstance(sub, list) and sub and sub[0] == "and":
+      final_items.extend(sub[1:])
+    else:
+      final_items.append(sub)
+  if len(final_items) == 1:
+    return final_items[0]
+  return ["and"] + final_items
+
+
+# ======== @definite tag stripping ========
+
+def _strip_definite_tags(tree):
+  """Remove @definite atoms from the logic tree.
+
+  Strips ["@definite", ...] from "and" conjunctions.  These are metadata
+  annotations not consumed by the pipeline.
+  """
+  if not isinstance(tree, list) or not tree:
+    return tree
+  op = tree[0] if isinstance(tree[0], str) else None
+  if op == "@definite":
+    return None  # sentinel: remove this conjunct
+  if op == "and":
+    children = []
+    for child in tree[1:]:
+      result = _strip_definite_tags(child)
+      if result is not None:
+        children.append(result)
+    if not children:
+      return None
+    if len(children) == 1:
+      return children[0]
+    return ["and"] + children
+  return [_strip_definite_tags(child) if isinstance(child, list) else child
+          for child in tree]
+
+
 # ======== main entry point ========
 
 def _build_asu_index(s1_json):
@@ -312,6 +398,11 @@ def rawlogic_convert(logic, s1_json=None):
   if not logic or not isinstance(logic, list):
     return None
 
+  # Hoist nested @id blocks to top level.  LLM JSON errors sometimes cause
+  # a closing bracket to be dropped, nesting one @id inside another after
+  # auto-fix.  @id blocks are never legitimately nested.
+  logic = _hoist_nested_ids(logic)
+
   # Inject degree presuppositions before any other processing:
   # "not very X" presupposes "X", so expand ["not",["has degree property",P,E,"high",C]]
   # into ["and", ["has degree property",P,E,"none",C], ["not",["has degree property",P,E,"high",C]]]
@@ -330,6 +421,12 @@ def rawlogic_convert(logic, s1_json=None):
   # Remove has_time atoms where the value is a grammatical tense ("past", etc.)
   # LLMs sometimes put tense in has_time instead of leaving it to $ctxt.
   logic = _strip_tense_has_time(logic)
+
+  # Strip @definite tags from the logic tree.  These are metadata annotations
+  # produced by Stage 2 but not consumed by the pipeline (definite info comes
+  # from Stage 1).  Leaving them in can cause _extract_package_ctx to mistake
+  # them for the main formula.
+  logic = _strip_definite_tags(logic)
 
   # Rewrite $setof terms to canonical form (replaces ?:X with $arg1,
   # extracts anchors, $-prefixes internal predicates, generates membership
@@ -962,14 +1059,37 @@ def _extract_package_ctx(package):
         tense = el[2]
       elif elop == "kb" and len(el) >= 3:
         knower = el[2]   # ["kb", K, HOLDER, ATTITUDE, W]
-      elif main_pkg is None:
-        main_pkg = el
+      else:
+        # Collect all main children (holds, question, ask, etc.)
+        if main_pkg is None:
+          main_pkg = el
+          other_pkgs = []
+        else:
+          other_pkgs.append(el)
     if main_pkg is not None:
       is_q, formula, _, world, loc2, kn2, _ = _extract_package_ctx(main_pkg)
       if location is None:
         location = loc2
       if knower is None:
         knower = kn2
+      # If there are additional siblings (e.g. holds + question in same and),
+      # merge them: extract each and combine formulas.
+      for other in other_pkgs:
+        is_q2, formula2, _, world2, loc3, kn3, _ = _extract_package_ctx(other)
+        if is_q2:
+          # question/ask takes priority as the main result
+          if formula is not None and formula2 is not None:
+            formula2 = ["and", formula, formula2] if formula2[0] != "and" else ["and", formula] + formula2[1:]
+          is_q = True
+          formula = formula2
+        elif formula2 is not None:
+          # holds provides extra facts — merge into existing formula
+          if formula is not None:
+            formula = ["and", formula, formula2] if formula[0] != "and" else formula + [formula2]
+          else:
+            formula = formula2
+        if world is None and world2 is not None:
+          world = world2
       return is_q, formula, confidence, world, location, knower, tense
     return False, None, confidence, None, location, knower, tense
 

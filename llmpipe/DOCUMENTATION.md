@@ -464,8 +464,12 @@ Output format and other flags:
 The function:
 1. Loads prompts from `prompts/` on first call (lazy, cached in module-level globals).
 2. Calls `_run_stage(1, text, ...)` to produce Stage-1 ASU JSON.
-3. Serialises Stage-1 output as JSON string; passes it as input to `_run_stage(2, ...)`.
-4. Returns both parsed objects plus a stats dict.
+3. Normalises entity IDs via `_normalize_entity_id_case`: merges IDs that differ only
+   by first-character capitalisation (e.g., `"Car 1"` at sentence start vs `"car 1"`
+   mid-sentence) when the ID has a number suffix and the capitalised form appears at
+   sentence start.
+4. Serialises Stage-1 output as JSON string; passes it as input to `_run_stage(2, ...)`.
+5. Returns both parsed objects plus a stats dict.
 
 **`_run_stage`** handles robustness:
 - Calls `llmcall.call_llm`.
@@ -545,6 +549,7 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
 ```
 ["and", ["@id","S1",PACKAGE], ...] (Stage-2 input)
     │
+    ├─ _hoist_nested_ids(logic)           extract @id blocks nested by LLM bracket errors
     ├─ _build_asu_index(s1_json)          build unit_id→ASU lookup from Stage 1
     ├─ rewrite_meta_predicates(logic)     [lc_rewrites] "located in"→"in", "is"→isa, "time of"→has_time
     ├─ strip_tense_has_time(logic)       [lc_rewrites] remove has_time(E,"past",...) bogus atoms
@@ -565,7 +570,7 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
     │        inject $ctxt into result      [lc_ctxt]
     │
     ├─ rewrite_definites() (global)        [lc_postprocess] $theof1 for all ASU definites
-    ├─ rewrite_measure_terms()            [lc_postprocess] $measure→$list canonical conversion
+    ├─ rewrite_measure_terms()            [lc_postprocess] $measure→$list, less_measure rewrite, $theof1 unwrap in $measure_of
     ├─ insert population facts before first @question
     ├─ inject $ctxt into population facts  [lc_ctxt]
     ├─ normalize_gradable_predicates()    [lc_postprocess]
@@ -590,7 +595,8 @@ See §7 for detailed discussion of the key algorithms.
 **Public API used by `logconvert.py`:**
 
 - `clausify(formula) -> list` — converts a first-order formula to a list of CNF clauses
-- `looks_like_var(s) -> bool` — true if `s` starts with `?:` (GK variable convention)
+- `looks_like_var(s) -> bool` — true if `s` matches Stage-2 variable pattern (`?:`-prefixed or single uppercase letter + digits) but NOT world constants
+- `is_world_constant(s) -> bool` — true if `s` matches `W0`, `W1`, etc. (excluded from variable detection)
 - `apply_varmap(formula, varmap) -> formula` — substitute variables by name
 - `connectives` — frozenset of logical connective names (not predicates)
 
@@ -784,6 +790,12 @@ entity naming rules, clause rendering, and proof explanation structure with exam
    `globals.options` (axiom files, strategy, time limit, print level, KB flags).
 4. Reads stdout, decodes as ASCII, optionally caches the result, removes the temp file.
 5. Returns the raw prover output string (JSON).
+
+**Auto strategy selection** (`_auto_strategy`): when no `-strategy` flag is given,
+analyses the clause list for equalities with function terms (`$measure_of`, `$theof1`,
+`$list`, `$datetime`) or `less_measure` atoms.  When found, selects the `unit` strategy
+(`-strategytext`) which handles equational reasoning better than the default
+`negative_pref`.  Printed with `-debug`.
 
 Key paths (from `globals.py`):
 

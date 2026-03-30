@@ -494,6 +494,8 @@ Rules:
   If a specific entity (e.g., "John") appears in multiple sentences, it MUST carry the exact
   same ID (e.g., "John 1") in every sentence package where it occurs. Do not reset numbering
   or increment IDs for the same individual when moving to a new sentence package.
+- Capitalization must not cause ID splits: if the same entity appears as "Car"
+  (sentence start) and "car" (mid-sentence), use the same ID for both.
 - Real-world locations in rules MUST use the same URL grounding as in situation facts.
 - If there are no two different generics with the same noun in an ASU,
   do not attach a number to this generic.
@@ -799,9 +801,12 @@ omit it from adjectives.
 If simplified_text contains a definite possessive or "of" construction 
 with a relational noun  (e.g., "John's father", "the price of milk"):
 -  Add under a "definites" field: [ ["ROLE of", "VALUE_ID", "ARG_ID"], ... ].
--  Mandatory Exclusion: Do NOT add this field or create a second relation-stating ASU for 
+-  Mandatory Exclusion: Do NOT add this field or create a second relation-stating ASU for
    indefinite forms (e.g., "John is a father of Mike", "Mary saw a sister of Paul").
 -  Use "definites" only when the text refers to a specific, unique relationship or attribute instance.
+-  Do NOT create a separate extra unit to restate the definite for a query sentence.
+   "The price of the bike is 2 dollars?" should produce one query unit with
+   definites on it, not an additional "real" unit like "The price is the price of the bike."
 
 == 14. OUTPUT FORMAT ==
 

@@ -957,6 +957,25 @@ have(?:S, $measure_of(ATTR, ?:S, ?:W), $ctxt(?:T, ?:W, ?:L, ?:K))
 isa(ATTR, $measure_of(ATTR, ?:S, ?:W))
 ```
 
+#### `less_measure` — measurement comparison
+
+Comparison operators (`<`, `>`, `<=`, `>=`, `$less`, `$greater`, etc.) on
+measurement terms are rewritten to `less_measure` by the pipeline:
+
+| Stage 2 | GK input |
+|---------|----------|
+| `["<", A, B]` | `["less_measure", A, B]` |
+| `[">", A, B]` | `["less_measure", B, A]` |
+| `["<=", A, B]` | `["not", ["less_measure", B, A]]` |
+| `[">=", A, B]` | `["not", ["less_measure", A, B]]` |
+
+Axioms in `axioms_std.js` bridge between `less_measure` and `$less` on the
+numeric components of `$list` values (same unit required).
+
+The prover uses the **unit strategy** (auto-selected) when equalities with
+function terms are detected, enabling the equational reasoning needed
+for `less_measure` via `$measure_of` equality facts.
+
 ---
 
 ## 4. End-to-End Example

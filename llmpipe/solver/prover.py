@@ -35,6 +35,74 @@ from utils import *
 
 from cache import *
 
+# === strategy selection ===
+
+import json as _json
+
+# Function term prefixes that indicate equational/measurement reasoning.
+_EQ_FUNCTION_PREFIXES = ("$measure_of", "$theof1", "$list", "$datetime")
+
+
+def _has_eq_functions(logic):
+  """Return True if the clause list contains equalities with function terms.
+
+  Scans for ["=", ...] or ["-=", ...] atoms where at least one argument
+  is a list starting with a known function prefix ($measure_of, $theof1,
+  $list, $datetime).  Also detects less_measure atoms.
+  """
+  for obj in logic:
+    if not isinstance(obj, dict):
+      continue
+    for key in ("@logic", "@question"):
+      clause = obj.get(key)
+      if clause is not None and _scan_for_eq_functions(clause):
+        return True
+  return False
+
+
+def _scan_for_eq_functions(tree):
+  """Recursively check if tree contains equality with function terms or less_measure."""
+  if not isinstance(tree, list) or not tree:
+    return False
+  op = tree[0] if isinstance(tree[0], str) else None
+  # Check for less_measure predicate
+  if op == "less_measure":
+    return True
+  # Check for equality with function term arguments
+  if op in ("=", "-=") and len(tree) == 3:
+    for arg in (tree[1], tree[2]):
+      if (isinstance(arg, list) and arg
+          and isinstance(arg[0], str) and arg[0] in _EQ_FUNCTION_PREFIXES):
+        return True
+  # Recurse into sub-lists (multi-literal clauses)
+  for el in tree:
+    if isinstance(el, list) and _scan_for_eq_functions(el):
+      return True
+  return False
+
+
+def _auto_strategy(logic, opts):
+  """Build a strategy JSON string based on clause analysis.
+
+  Returns a JSON string for -strategytext, or None to use the default.
+  When equalities with function terms are present, uses the unit strategy
+  which is better at equational reasoning via paramodulation on unit clauses.
+  """
+  if not logic or not isinstance(logic, list):
+    return None
+  if not _has_eq_functions(logic):
+    return None  # default strategy is fine
+
+  strategy = {"strategy": ["unit"], "query_preference": 0}
+  strat_str = _json.dumps(strategy)
+
+  if opts.get("debug_print_flag"):
+    print("\n=== auto-selected strategy (eq functions detected) ===\n")
+    print(strat_str)
+
+  return strat_str
+
+
 # === calling the prover ===
  
 """
@@ -89,8 +157,13 @@ def call_prover(logic, s1_json=None):
     params=params+["-print",str(options["prover_print"])]
   if options["prover_strategy"]:
     params=params+["-strategy",options["prover_strategy"]]
+  else:
+    # Auto-select strategy based on clause analysis.
+    auto_strat = _auto_strategy(logic, options)
+    if auto_strat:
+      params=params+["-strategytext", auto_strat]
   if options["prover_seconds"]:
-    params=params+["-seconds",str(options["prover_seconds"])]    
+    params=params+["-seconds",str(options["prover_seconds"])]
   params.append(infilename)
   if options["usekb_flag"]: params=params+globals.usekb_prover_params
   else: params=params+globals.prover_params
