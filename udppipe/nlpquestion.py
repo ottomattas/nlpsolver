@@ -50,9 +50,27 @@ def is_question_sentence(sentence):
     return False
     
       
+def fix_lowercase_names_in_question(ctxt,sentence):
+  """Capitalize words that match known object names from earlier sentences."""
+  if "objects" not in ctxt: return
+  known_names = set()
+  for obj in ctxt["objects"]:
+    if len(obj) > 3 and obj[3]:
+      for name in obj[3]:
+        known_names.add(name)
+  if not known_names: return
+  for word in sentence:
+    if word["upos"] in ["PROPN"]: continue
+    cap = word["text"][0].upper() + word["text"][1:] if word["text"] else ""
+    if cap in known_names:
+      word["text"] = cap
+      word["lemma"] = cap
+      word["upos"] = "PROPN"
+
 def prepare_question_sentence(ctxt,sentence,origsentence):
   #debug_print("prepare_question_sentence sentence",sentence)
-  #debug_print("prepare_question_sentence origsentence",origsentence) 
+  #debug_print("prepare_question_sentence origsentence",origsentence)
+  fix_lowercase_names_in_question(ctxt,sentence)
   if simple_question(ctxt,sentence):
     #debug_print("prepare_question_sentence determined it is a simple question!")
     object=find_existing_name(ctxt,sentence[2:])
