@@ -78,7 +78,7 @@ def clause_list_to_json(clauselist):
     if "@logic" in clause: clauserep.append("\"@logic\": " + logicstr)
     if "@question" in clause: clauserep.append("\"@question\": " + logicstr)
     for key in clause:
-      if not (key in ["@logic", "@question", "@askvars", "@where_query", "@when_query", "@who_query", "@who_entity", "@who_kind", "@sourcetype"]):
+      if not (key in ["@logic", "@question", "@askvars", "@where_query", "@when_query", "@who_query", "@who_entity", "@who_kind", "@what_query", "@sourcetype"]):
         clauserep.append(",\n " + json.dumps(key) + ": " + json.dumps(clause[key]))
         count += 1
     clauserep.append("}")
@@ -241,7 +241,7 @@ def clause_list_to_json_commented(clauselist, s1_json=None):
     if "@logic" in clause: clauserep.append("\"@logic\": " + logicstr)
     if "@question" in clause: clauserep.append("\"@question\": " + logicstr)
     for key in clause:
-      if key not in ("@logic", "@question", "@askvars", "@where_query", "@when_query", "@who_query", "@who_entity", "@who_kind", "@sourcetype"):
+      if key not in ("@logic", "@question", "@askvars", "@where_query", "@when_query", "@who_query", "@who_entity", "@who_kind", "@what_query", "@sourcetype"):
         clauserep.append(",\n " + json.dumps(key) + ": " + json.dumps(clause[key]))
     clauserep.append("}")
     reslst.append("".join(clauserep))

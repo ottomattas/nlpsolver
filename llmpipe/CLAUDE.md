@@ -70,7 +70,7 @@ English text
 - `lc_clausify.py` — FOL-to-CNF compiler: implies/xor/equivalent elimination, NNF push, normally expansion, Skolemization, distribution, clause extraction.  Also provides Skolem identification helpers (`is_skolem_const`, `is_skolem_fn`, `skolem_type_from_name`), typed Skolem constant naming (`sk0_house`), `is_world_constant` (W0/W1 excluded from variable detection)
 - `lc_questions.py` — question wrapping (`ask`/`question` → `@question`/`@askvars`), population fact injection, and WH-question builders: `build_where_question`/`build_when_question` (preposition expansion), `build_who_question` (isa + equality biconditionals), `build_defq_question` (general $defq)
 - `lc_sets.py` — set/counting: `$setof` rewriting to canonical form, membership axiom generation, element instantiation, set existence fact generation
-- `procproofs.py` — post-processes prover output; formats answers (bool, who/what, where/when), confidence labels, proof deduplication, Skolem resolution, proof explanation dispatch
+- `procproofs.py` — post-processes prover output; formats answers (bool, who/what, where/when), confidence labels, proof deduplication, Skolem resolution, proof explanation dispatch; `@what_query` class-preference (population over concrete, Skolem-to-class resolution)
 - `proof_explain.py` — generates English proof explanations from prover proof steps
 - `proof_render.py` — facade module re-exporting from `proof_utils`, `proof_english`, `proof_logic`
 - `proof_utils.py` — entity naming, Skolem type resolution, render context state, ambiguity detection

@@ -813,6 +813,14 @@ The prover returns `["$ans", "in", "Paris 1"]` → formatted as "In Paris."
 ```
 The prover returns types (`$ans("car")`) and equalities (`$ans("king 2")`).
 
+#### `@what_query` — class-preferred answers
+
+General "what" questions (not who/where/when) get `@what_query: true` on the
+question object.  This triggers: (1) extra population facts `isa(CLASS, $some_CLASS)`
+for classes with concrete witnesses, (2) tier preference inversion (population
+over concrete), (3) Skolem function answers resolved to class via `get_skolem_fn_type`.
+Result: "What is Emily afraid of?" → "A wolf" instead of "Gertrude".
+
 ### 3.11 GK Input File Format
 
 The clause list is serialized as JSON with `//` comment lines between ASU groups:

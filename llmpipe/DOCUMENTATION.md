@@ -572,6 +572,7 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
     ├─ rewrite_definites() (global)        [lc_postprocess] $theof1 for all ASU definites
     ├─ rewrite_measure_terms()            [lc_postprocess] $measure→$list, less_measure rewrite, $theof1 unwrap in $measure_of
     ├─ insert population facts before first @question
+    ├─ generate "what" population facts     for @what_query: isa(CLASS,$some_CLASS) from witnesses
     ├─ inject $ctxt into population facts  [lc_ctxt]
     ├─ normalize_gradable_predicates()    [lc_postprocess]
     ├─ strip_isa_entity()                 [lc_postprocess]
@@ -710,6 +711,8 @@ Configurable via `globals.options["set_element_limit"]` (default 3).
 2. Checks for `"result": "answer found"`.  Returns `"Unknown."` if not found.
 3. Sorts answers by `_answer_goodness` (confidence desc, proof length asc).
 4. Filters to the best object-type tier: concrete entities > Skolem constants > population facts.
+   For `@what_query`: prefers population (class) over concrete (instance).
+   Resolves Skolem function answers to class names via `get_skolem_fn_type`.
 5. Formats the answer string via `_format_answers`:
    - Boolean `True`/`False` → `"True"` / `"False"`
    - Named entities → display name (strips numbering when unambiguous, strips URL when

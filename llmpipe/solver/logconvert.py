@@ -202,6 +202,72 @@ def _strip_definite_tags(tree):
           for child in tree]
 
 
+# ======== "what" question population facts ========
+
+def _has_what_query(s1_json):
+  """Return True if any query ASU text starts with 'what'."""
+  if not s1_json or not isinstance(s1_json, list):
+    return False
+  for pkg in s1_json:
+    if not isinstance(pkg, dict):
+      continue
+    for unit in pkg.get("units", []):
+      if not isinstance(unit, dict):
+        continue
+      if unit.get("type") == "query":
+        text = unit.get("text", "")
+        if text.lower().startswith("what ") or text.lower().startswith("which "):
+          return True
+  return False
+
+
+# Classes to skip when generating "what" population facts.
+_WHAT_POP_SKIP = frozenset({
+  "activity", "entity", "object", "thing", "event",
+})
+
+
+def _generate_what_population(result):
+  """Generate population isa facts for classes with concrete witnesses.
+
+  Scans the clause list for unconditional isa(CLASS, ENTITY) facts where
+  ENTITY is a concrete entity (not $some_*, not a variable).  For each
+  such CLASS, generates isa(CLASS, $some_CLASS) if not already present.
+
+  Returns a list of new clause dicts.
+  """
+  # Collect classes with concrete witnesses and existing population constants.
+  witnessed_classes = set()
+  existing_pop = set()
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    logic = obj.get("@logic")
+    if not isinstance(logic, list) or not logic:
+      continue
+    # Single-literal positive clause: ["isa", CLASS, ENTITY]
+    if (len(logic) == 3 and isinstance(logic[0], str) and logic[0] == "isa"
+        and isinstance(logic[1], str) and isinstance(logic[2], str)):
+      cls = logic[1]
+      ent = logic[2]
+      if cls.lower() in _WHAT_POP_SKIP:
+        continue
+      if ent.startswith("$some_"):
+        existing_pop.add(cls)
+      elif not ent.startswith("?:"):
+        witnessed_classes.add(cls)
+
+  # Generate population facts for witnessed classes without existing $some_
+  new_facts = []
+  for cls in witnessed_classes:
+    if cls in existing_pop:
+      continue
+    pop_name = "$some_" + cls.replace(" ", "_")
+    new_facts.append({"@name": "pop_what",
+                      "@logic": ["isa", cls, pop_name]})
+  return new_facts
+
+
 # ======== main entry point ========
 
 def _build_asu_index(s1_json):
@@ -545,6 +611,17 @@ def rawlogic_convert(logic, s1_json=None):
   first_q = next((i for i, o in enumerate(result) if "@question" in o), len(result))
   result[first_q:first_q] = background
 
+  # For "what" questions: generate extra population witnesses for classes
+  # that have concrete unconditional isa facts.  This lets the prover find
+  # class-level answers (e.g., "A wolf") in addition to concrete instances
+  # (e.g., "Gertrude").
+  if _has_what_query(s1_json):
+    what_pop = _generate_what_population(result)
+    if what_pop:
+      # Insert before first @question, after existing population facts.
+      first_q = next((i for i, o in enumerate(result) if "@question" in o), len(result))
+      result[first_q:first_q] = what_pop
+
   # Inject $ctxt into population and subsumption facts (free-variable rules).
   if not _g_options.get("nocontext_flag", False):
     for fact in background:
@@ -758,6 +835,10 @@ def _process_question(formula, name, raw_text=None):
             return None, None
           q_formula = flat[0] if len(flat) == 1 else [["and"] + flat]
           result = [{"@name": name, "@question": q_formula, "@askvars": 1}]
+          if raw_text and raw_text.lower().startswith("what"):
+            for obj in result:
+              if "@question" in obj:
+                obj["@what_query"] = True
         else:
           # Complex case: wrap in $defq biconditional.
           # Detect has_location(E, ask_var) → encode "in" as the preposition.
@@ -776,6 +857,10 @@ def _process_question(formula, name, raw_text=None):
               question_kind = "when"
             else:
               result = build_defq_question(name, ask_var, body)
+              if raw_text and raw_text.lower().startswith("what"):
+                for obj in result:
+                  if "@question" in obj:
+                    obj["@what_query"] = True
   else:
     # Yes/no question.
     # When $ctxt is active, always use $defq so the @question atom is the

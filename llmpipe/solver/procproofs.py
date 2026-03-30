@@ -73,7 +73,12 @@ def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=Non
 
   # For wh-questions: keep only answers in the best object-type tier
   # (concrete > Skolem > population), preserving the goodness order within tier.
-  answers = _filter_by_best_tier(answers)
+  # For "what" questions: prefer population (class) answers over concrete instances.
+  is_what = _is_what_query(logic)
+  if is_what:
+    answers = _filter_by_best_tier(answers, prefer_population=True)
+  else:
+    answers = _filter_by_best_tier(answers)
   answers = _filter_tautological_population_answers(answers, logic)
   answers = _deduplicate_proofs(answers)
   if not answers:
@@ -107,6 +112,11 @@ def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=Non
       if isinstance(p, list):
         all_proofs.extend(p)
   compute_skolem_types(all_proofs, logic=logic)
+
+  # For "what" queries: resolve Skolem function answers to their class.
+  # E.g., $ans(["sk3","Emily 1"]) where sk3 is typed as "wolf" → $ans("$some_wolf").
+  if is_what:
+    _resolve_what_skolem_answers(answers)
 
   # Format the answer value(s)
   who_surviving = None
@@ -206,6 +216,48 @@ def _get_who_kind(logic):
     if isinstance(obj, dict) and "@who_kind" in obj:
       return obj["@who_kind"]
   return "who"
+
+
+def _is_what_query(logic):
+  """Return True if logic contains a @what_query marker."""
+  if not logic or not isinstance(logic, list):
+    return False
+  for obj in logic:
+    if isinstance(obj, dict) and obj.get("@what_query"):
+      return True
+  return False
+
+
+def _resolve_what_skolem_answers(answers):
+  """For 'what' queries, replace Skolem function answer values with population constants.
+
+  E.g., $ans(["sk3","Emily 1"]) where sk3 is typed as "wolf" → $ans("$some_wolf").
+  The population constant renders as "a wolf" via entity_name.
+
+  Only replaces when the Skolem function type can be determined via
+  get_skolem_fn_type (populated by compute_skolem_types).
+  """
+  for ans in answers:
+    val = ans.get("answer")
+    if not isinstance(val, list):
+      continue
+    new_val = []
+    changed = False
+    for atom in val:
+      if (isinstance(atom, list) and len(atom) >= 2
+          and atom[0] == "$ans" and isinstance(atom[1], list)
+          and atom[1] and isinstance(atom[1][0], str)):
+        fn_name = atom[1][0]
+        fn_type = get_skolem_fn_type(fn_name)
+        if fn_type:
+          pop_name = "$some_" + fn_type.replace(" ", "_")
+          new_atom = ["$ans", pop_name] + atom[2:]
+          new_val.append(new_atom)
+          changed = True
+          continue
+      new_val.append(atom)
+    if changed:
+      ans["answer"] = new_val
 
 
 def _classify_who_answers(logic, who_entity):
@@ -662,17 +714,25 @@ def _ans_object_tier(val):
   return best
 
 
-def _filter_by_best_tier(answers):
-  """Return answers filtered to the best (lowest) object-type tier.
+def _filter_by_best_tier(answers, prefer_population=False):
+  """Return answers filtered to the best object-type tier.
 
   Boolean answers are never filtered out.  If all answers are boolean,
   or if no object answers exist, the list is returned unchanged.
+
+  prefer_population: when True ("what" questions), prefer population tier (2)
+  over concrete tier (0) if both exist.  This yields class-level answers
+  like "A wolf" instead of concrete instances like "Gertrude".
   """
   tiers = [_ans_object_tier(a.get("answer")) for a in answers]
   obj_tiers = [t for a, t in zip(answers, tiers)
                if not isinstance(a.get("answer"), bool)]
   if not obj_tiers:
     return answers
+  if prefer_population and 2 in obj_tiers and min(obj_tiers) < 2:
+    # "What" question: prefer population (class) answers over concrete.
+    return [a for a, t in zip(answers, tiers)
+            if isinstance(a.get("answer"), bool) or t == 2]
   best = min(obj_tiers)
   if best == 2:
     # All object answers are population constants — keep them all as-is.
