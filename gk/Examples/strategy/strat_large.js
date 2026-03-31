@@ -1,0 +1,1 @@
+{"strategy":["query_focus"], "query_preference":1, "max_answers":10, "independence": 100}

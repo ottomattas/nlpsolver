@@ -1,161 +1,296 @@
-gk
-==
+GK User Guide
+==============
 
-GK is a commonsense reasoning system.
+GK is a commonsense reasoner for first-order logic enhanced with
+confidence values and default rules with exceptions.
 
-The main developer is Tanel Tammet (tanel.tammet@gmail.com), 
-with contributions by Priit Järv (priit.jarv@gmail.com).
+Quick Start
+-----------
 
-It is built upon the gkc (gk core) at https://github.com/tammet/gkc by Tanel Tammet 
-(see the paper [high-performance FOL reasoner](https://link.springer.com/chapter/10.1007/978-3-030-29436-6_32))
-and a modified version of the whitedb database http://whitedb.org by Tanel Tammet and Priit Järv.
+Run an example:
 
-GK extends GKC to use [numeric confidences](https://link.springer.com/chapter/10.1007/978-3-030-79876-5_29)
-and [defeasible rules](https://link.springer.com/chapter/10.1007/978-3-031-10769-6_18).
+    ./gk Examples/core/grandfather.js
 
+GK reads a JSON file containing facts, rules, and a question,
+then searches for proofs and prints answers with confidence values.
 
-Running
--------
+The output looks like:
 
-Simplest way to run:
+    {"result": "answer found",
+    "answers": [
+    {
+    "answer": [["$ans","mark"]],
+    "confidence": 0.684,
+    "positive proof":
+    [
+    [1, ["in", "frm_3", "axiom", 0.95], [["-father","?:X","?:Y"], ...]],
+    ...
+    ]}
+    ]}
 
-    ./gk problem_file_name
-
-Example:
-
-    ./gk birdspenguins.js
-
-GK can parse and prepare a large axiom file into a shared memory database to perform quick
-independent queries upon this pre-built base. Several shared memory databases may be present
-at the same time: use different memory database numbers for indicating which to load or use.
-The memory database can be dumped to a disk for quick loading later. 
-
-The following is a list of available commands as output by `./gk -help`:
-
-    basic proof search with an automatic strategy for JSON-LD-LOGIC format input:
-    gk <filename> 
-
-    options for proof search with a user-determined strategy:
-    -strategy <strategy file>
-        use the json <strategy file> to determine proof search strategy and options
-    -strategytext 'strategy text in json' 
-        alternatively input strategy text directly from command line
-
-    options and parameters for using the shared memory database of axioms:
-    -usekb
-        use the axioms in the shared memory database in addition to other input
-    -mbnr <shared memory database nr>
-        if omitted, number 1000 is used
-    gkc -readkb <logic file>
-        parse and load a logic file into the shared memory database
-    gkc -deletekb
-        delete the present shared memory database (not necessary for reading a new one)
-
-    options with numeric parameters:
-    -seconds <n>
-        use <n> as an upper limit of running time in seconds;
-    -mbsize <megabytes to allocate initially>
-        if omitted, 5000 megabytes assumed
-    -print <nr>
-        indicate the amount of output: 10 is default, bigger numbers give more
-
-    options without parameters:
-    -defaults
-        starts using a taxonomy for comparing defaults, for this
-        reads in name/number file with this name: gk_name_number.txt
-        reads in packed graph file with this name: gk_taxonomy_packed.txt
-    -nonegative
-        if present, do not collect negative evidence
-    -firstanswer
-        do not attempt to find multiple derivations and answers
-    -version
-        show confer version
-    -help
-        show this help text;
-        
-See 
-
-* http://logictools.org/confer/ for some details and examples.
-* https://logictools.org/gk/ for more details and examples, including
-  the https://logictools.org/gk/tutorial.html
+The key fields are:
+  * `"result"` — whether an answer was found
+  * `"answer"` — the answer term(s)
+  * `"confidence"` — confidence value (0.0 to 1.0)
+  * `"positive proof"` — the derivation steps
 
 
-Datasets
+What GK Does
+------------
+
+GK answers questions about knowledge expressed as logical rules and facts.
+It handles three kinds of reasoning:
+
+  1. **Classical logic**: derive conclusions from facts and rules
+  2. **Uncertain reasoning**: track confidence values through derivations
+  3. **Default reasoning**: apply rules that are "typically true" but
+     can have exceptions (e.g., "birds fly, but penguins don't")
+
+
+Input Format
+------------
+
+GK reads JSON files (`.js` extension) in JSON-LD-LOGIC format.
+C-style comments (`//` and `/* */`) are supported.
+
+### Facts
+
+    ["bird","tweety"]
+
+### Rules
+
+    [["bird","?:X"], "=>", ["flies","?:X"]]
+
+Variables start with `?:` (e.g., `?:X`, `?:Name`).
+
+### Questions
+
+    {"@question": ["flies","tweety"]}
+
+Or with answer variables:
+
+    {"@question": ["-flies","?:X"], "$ans": ["?:X"]}
+
+### Confidence values
+
+    {"@logic": ["bird","tweety"], "@confidence": 0.9}
+
+Values range from 0.0 (uncertain) to 1.0 (certain).
+Integers 2-100 are treated as percentages (e.g., 90 means 0.9).
+
+### Default rules with exceptions
+
+    {"@logic": [["-bird","?:X"],["flies","?:X"],
+                 ["$block", 1, ["$not", ["flies","?:X"]]]]}
+
+The `$block` literal marks this as a defeasible rule. A rule with
+higher strength number overrides one with lower strength.
+
+For full format details, see `Doc/json_ld_logic.md`.
+
+
+Examples
 --------
 
-These datasets GK uses for taxonomy reasoning are built from the hypernym and hyponym
- relations of Wordnet:
+Examples are organized in `Examples/` by category:
 
-* gk_name_number.txt : a mapping of Wordnet synsets to class numbers
-* gk_taxonomy_packed.txt : packed topologically sorted class taxonomies 
+### Core logic (`Examples/core/`)
 
-Using defaults
---------------
+Basic facts, rules, queries, equality, and lists. No confidence
+or default rules.
 
-First, see and run the examples in the dstudy folder.
+    ./gk Examples/core/grandfather.js     # rule-based inference
+    ./gk Examples/core/algebra.js         # equality reasoning
+    ./gk Examples/core/lists.js           # list operations
+    ./gk Examples/core/negation.js        # negation
 
-The defaults are encoded like this:
+### Confidence values (`Examples/confidences/`)
 
-    {
-      "@logic": [["-bird","?:X"],["flies","?:X"], 
-                ["$block", ["$","bird"], ["$not", ["flies", "?:X"]]]]
-    }
+Reasoning with uncertain knowledge. GK tracks positive and negative
+evidence and cumulates confidence from multiple proofs.
 
-where the first blocker argument above
+    ./gk Examples/confidences/conf1.js          # positive + negative evidence
+    ./gk Examples/confidences/cumulate.js        # cumulation from multiple proofs
+    ./gk Examples/confidences/rulemult.js         # confidence multiplication
+    ./gk Examples/confidences/alarm.js            # burglary/alarm problem
+    ./gk Examples/confidences/smokes.js           # social smoking network
+    ./gk Examples/confidences/socialsmoking.js    # larger social network
+    ./gk Examples/confidences/near.js             # transitive chain decay
 
-    ["$","bird"] 
+### Default rules with exceptions (`Examples/exceptions/`)
 
-encodes the strength/specificity of the default. Here the "bird"
-is meant for being replaced automatically with the class number via
-using the -defaults key as shown next.
+Rules that are typically true but can be overridden by more specific
+exceptions.
 
-The first blocker argument can have following alternative forms:
+    ./gk Examples/exceptions/trivial.js           # simplest default
+    ./gk Examples/exceptions/bird_penguin.js       # birds fly, penguins don't
+    ./gk Examples/exceptions/penguin2.js           # deep taxonomy hierarchy
+    ./gk Examples/exceptions/classify.js           # classification
+    ./gk Examples/exceptions/nixon.js              # competing equal-strength defaults
+    ./gk Examples/exceptions/people_room.js        # situation calculus
+    ./gk Examples/exceptions/partcapability2.js    # part-capability reasoning
+    ./gk Examples/exceptions/gbirds.js             # scalability example
 
-    * integer: 
-       if 0, no blockers are stronger or weaker than this.
-       if >0, larger number is considered stronger/more specific
-    * ["$",integer] where integer is a class number in the taxonomy
-    * ["$",string] where string is converted to a class number in the taxonomy
-    * ["$",integer/string,integer2] where
-        integer/string is like in the previous case, class number or word
-        integer2 encodes strength directly like in the first case
+With taxonomy-based default comparison (requires data files):
 
-        When comparing this form with the first single integer form above,
-        the integer2 is used for comparison and integer/string is ignored.
+    ./gk Examples/exceptions/taxonomy.js -defaults -datafolder Examples/exceptions
 
-        When comparing two blockers of this/last form, the integer2 of
-        both is used for comparison in case the integer/string2 is 
-        mutually incomparable (no one blocks another)
+### Strategy files (`Examples/strategy/`)
 
-Blockers with equal first arguments block each other mutually, unless
-their strength integer is 0.       
+Strategy files control proof search. Use with `-strategy`:
 
-Next, use the wordnet taxonomies for comparing defaults:
+    ./gk Examples/core/algebra.js -strategy Examples/strategy/runs.txt
 
-    ./gk d5a.js -defaults
-
-which assumes the files gk_name_number.txt and gk_taxonomy_packed.txt
-are in the current folder. The first of these is used for automatically
-replacing words in the blocker first argument term with the class number
-from the graph. It can be created by the name_sort_from_graph.py utility
-in the Utils folder. The Utils folder is otherwise mostly a copy of 
-Priit's triplestore subfolder.
-
-Next, create a shared memory kb and use it for queries:
-
-    ./gk d5a_kb.js -readkb -defaults
-    ./gk d5a_q.js -usekb
-
-It is also OK to use the -defaults switch in the last command above.
+See `Examples/README.md` for descriptions of every example file.
 
 
+Common Command-Line Options
+----------------------------
+
+    ./gk <file>                   basic proof search
+    ./gk <file> -seconds 30       time limit (default: 10 seconds)
+    ./gk <file> -print 15         more verbose output (default: 10)
+    ./gk <file> -confidence 0.2   lower confidence threshold (default: 0.1)
+    ./gk <file> -firstanswer      stop after first answer
+    ./gk <file> -defaults         use taxonomy for default comparison
+    ./gk <file> -nonegative       skip negative evidence
+    ./gk -help                    show all options
+
+### Output formats
+
+    ./gk <file>                   JSON output (default)
+    ./gk <file> -tptp             TPTP format output
+
+### Shared memory knowledge base
+
+For large knowledge bases, load once and query multiple times:
+
+    ./gk axioms.js -readkb -mbsize 2000
+    ./gk query.js -usekb
+    ./gk -deletekb
+
+See `Doc/cli_reference.md` for the complete command-line reference.
 
 
+Understanding Results
+---------------------
+
+GK reports one of these results:
+
+    "answer found"
+        One or more answers with confidence above the threshold.
+
+    "evidence below limit"
+        Proofs found but confidence too low. Try `-confidence 0`.
+
+    "evidence for candidate answers below limit"
+        Candidate answers found but blocked or reduced by negative evidence.
+
+    "generic assumptions contradicted"
+        The question's assumptions lead to a contradiction.
+
+    "no information"
+        No relevant facts or rules found for the question.
+
+    "no answers found"
+        Search completed without finding proofs.
+
+    "time limit, proof not found"
+        Ran out of time. Try `-seconds 60`.
 
 
+How Confidence Works
+--------------------
+
+Each fact and rule can have a confidence value. When GK derives
+a new fact from premises, the derived confidence is the minimum
+of the premise confidences.
+
+GK collects both positive evidence (proofs something is true) and
+negative evidence (proofs something is false). The final confidence is:
+
+    final = positive_confidence - negative_confidence
+
+When multiple independent proofs support the same conclusion,
+their confidences are cumulated (combined).
 
 
+How Default Rules Work
+----------------------
+
+Default rules use `$block` to mark exceptions:
+
+    [["-bird","?:X"],["flies","?:X"],
+     ["$block", 1, ["$not", ["flies","?:X"]]]]
+
+This says: "if X is a bird, then X flies, UNLESS something with
+strength > 1 says X does not fly."
+
+A penguin exception with strength 2 overrides the bird default:
+
+    [["-penguin","?:X"],["-flies","?:X"],
+     ["$block", 2, ["flies","?:X"]]]
+
+GK checks proofs in four phases:
+  1. Find candidate proofs for the question
+  2. Check blockers on candidates
+  3. Find negative evidence
+  4. Check blockers on negative evidence
 
 
+Writing Your Own Problems
+-------------------------
+
+Create a `.js` file with this structure:
+
+    [
+      // Facts
+      ["bird","tweety"],
+      ["penguin","pete"],
+
+      // Rules
+      [["penguin","?:X"], "=>", ["bird","?:X"]],
+
+      // Rules with confidence
+      {"@logic": [["bird","?:X"], "=>", ["flies","?:X"]],
+       "@confidence": 0.9},
+
+      // Default rules with exceptions
+      {"@logic": [["-bird","?:X"],["flies","?:X"],
+                   ["$block", 1, ["$not", ["flies","?:X"]]]]},
+
+      // Question
+      {"@question": ["flies","?:X"], "$ans": ["?:X"]}
+    ]
+
+Run it:
+
+    ./gk myfile.js
+
+Tips:
+  * Start simple — add complexity gradually
+  * Use the examples as templates
+  * Check output with `-print 15` for more detail
+  * If no answer, try increasing time with `-seconds 30`
+  * If "evidence below limit", try `-confidence 0`
 
 
+Further Documentation
+---------------------
+
+  * `Examples/README.md` — Detailed guide to all examples
+  * `Doc/tutorial.md` — Full tutorial with 9 parts
+  * `Doc/json_ld_logic.md` — Complete input format specification
+  * `Doc/cli_reference.md` — All command-line options
+  * `Doc/strategy_reference.md` — Strategy file parameters
+  * https://logictools.org/gk/ — Online documentation
+  * https://logictools.org/gk/tutorial.html — Online tutorial
+
+
+Papers
+------
+
+  * T. Tammet: GKC: a reasoning system for large knowledge bases. CADE 2019.
+  * T. Tammet, D. Draheim, P. Jarv: Confidences for commonsense reasoning. CADE 2021.
+  * T. Tammet, D. Draheim, P. Jarv: GK: implementing full first order
+    default logic for commonsense reasoning. IJCAR 2022.
