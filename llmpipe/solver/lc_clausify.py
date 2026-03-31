@@ -43,6 +43,9 @@ _opaque_wrappers = {"normally", "-normally"}
 # can match them against specific instances.
 _GENERIC_OBJ_PREDS = frozenset({
   "has target", "has location", "has direction", "has instrument",
+  "has destination", "has recipient", "has source",
+  "has beneficiary", "has accompaniment", "has path", "has result",
+  "has topic", "has cause",
 })
 
 # Bare type name: all lowercase letters (no digits, no uppercase, no suffix number).

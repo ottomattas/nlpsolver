@@ -999,12 +999,17 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
       _inject_ctxt_into_objs(result, ctxt_template, tense_term)
     elif is_question:
       if question_kind in ("where", "when"):
-        # Where/when-query biconditionals must be world-agnostic: location/time
-        # facts may come from any world state (e.g. W0 travel facts vs W2 query).
-        situation  = _fresh_fv()
-        tense_term = _fresh_fv()
-        ctxt_template = ["$ctxt", None, situation, loc_term, kn_term]
-        _inject_ctxt_into_objs(result, ctxt_template, tense_term)
+        # Where/when questions: use the query's world and tense from Stage 1.
+        # The movement axiom produces present-tense results at the new world,
+        # and frame axioms persist locations across worlds.
+        matrix_world = world if world is not None else _fresh_fv()
+        desc_world   = _fresh_fv()
+        tense_term   = tense if tense is not None else _fresh_fv()
+        ctxt_matrix = ["$ctxt", None, matrix_world, loc_term, kn_term]
+        ctxt_desc   = ["$ctxt", None, desc_world,   loc_term, kn_term]
+        props_desc = _question_has_main_relation(formula)
+        _inject_ctxt_question(result, ctxt_matrix, ctxt_desc, tense_term,
+                              props_are_desc=props_desc)
       else:
         # Non-where questions: matrix predicates use the query's world;
         # descriptive predicates (isa, event atoms from relative clauses)

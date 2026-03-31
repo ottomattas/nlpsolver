@@ -224,18 +224,34 @@
   
 
   // Movement Results: If X 'go'es to Dest, X is 'at' Dest in the next state [cite: 146, 147]
+  // Result tense is "present" (at the new world), not copied from the source event.
+  // Uses variable worlds with next(?:W, ?:W2) precondition.
   [
-    ["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
-    ["-has type", "?:E", "go", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
-    ["-has destination", "?:E", "?:Dest", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
-    ["is rel2", "at", "?:X", "?:Dest", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]
+    ["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-has type", "?:E", "go", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-has destination", "?:E", "?:Dest", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-next", "?:W", "?:W2"],
+    ["is rel2", "at", "?:X", "?:Dest", ["$ctxt", "present", "?:W2", "?:L", "?:K"]]
   ],
   // Movement also works with has_direction (synonym for has_destination in some parses)
   [
-    ["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
-    ["-has type", "?:E", "go", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
-    ["-has direction", "?:E", "?:Dest", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
-    ["is rel2", "at", "?:X", "?:Dest", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]
+    ["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-has type", "?:E", "go", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-has direction", "?:E", "?:Dest", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-next", "?:W", "?:W2"],
+    ["is rel2", "at", "?:X", "?:Dest", ["$ctxt", "present", "?:W2", "?:L", "?:K"]]
+  ],
+  // Movement retraction: after moving to Dest, X is no longer at any previous location Y
+  // (unless Y = Dest, i.e. moved to the same place). This provides evidence for $block
+  // on the frame axiom, preventing old locations from persisting.
+  [
+    ["-is rel2", "at", "?:X", "?:Y", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-has actor", "?:E", "?:X", ["$ctxt", "?:T2", "?:W", "?:L2", "?:K2"]],
+    ["-has type", "?:E", "go", ["$ctxt", "?:T2", "?:W", "?:L2", "?:K2"]],
+    ["-has destination", "?:E", "?:Dest", ["$ctxt", "?:T2", "?:W", "?:L2", "?:K2"]],
+    ["-next", "?:W", "?:W2"],
+    ["=", "?:Y", "?:Dest"],
+    ["-is rel2", "at", "?:X", "?:Y", ["$ctxt", "present", "?:W2", "?:L", "?:K"]]
   ],
   // Movement Synonyms
   [["-has type", "?:E", "travel", "?:Ctxt"], ["has type", "?:E", "go", "?:Ctxt"]],
@@ -243,177 +259,66 @@
   [["-has type", "?:E", "move", "?:Ctxt"], ["has type", "?:E", "go", "?:Ctxt"]],
 
   // == 6. PERSISTENCE (FRAME PROBLEM) ==
-  // Default persistence of "is rel2" relations across world states
-  // W0 -> W1
+  // Default persistence across world states using variable worlds with next(?:W, ?:W2).
+  // Each predicate persists defeasibly ($block) unless overridden.
+  // is rel2
   {
     "@confidence": 0.99,
     "@logic": [
-      ["-is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
-      ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
+      ["-is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+      ["-next", "?:W", "?:W2"],
+      ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]]]]
     ]
   },
-  // W1 -> W2
+  // have
   {
     "@confidence": 0.99,
     "@logic": [
-      ["-is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
-      ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W2", "?:L", "?:K"]]]]
+      ["-have", "?:Y", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+      ["-next", "?:W", "?:W2"],
+      ["have", "?:Y", "?:X", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["have", "?:Y", "?:X", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]]]]
     ]
   },
-  // W2 -> W3
+  // has property
   {
     "@confidence": 0.99,
     "@logic": [
-      ["-is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
-      ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W3", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "W3", "?:L", "?:K"]]]]
+      ["-has property", "?:P", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+      ["-next", "?:W", "?:W2"],
+      ["has property", "?:P", "?:X", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has property", "?:P", "?:X", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]]]]
     ]
   },
-
-  // Default persistence of "have" (possession) across world states
-  // W0 -> W1
+  // has degree property
   {
     "@confidence": 0.99,
     "@logic": [
-      ["-have", "?:Y", "?:X", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
-      ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
+      ["-has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+      ["-next", "?:W", "?:W2"],
+      ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]]]]
     ]
   },
-  // W1 -> W2
+  // can
   {
     "@confidence": 0.99,
     "@logic": [
-      ["-have", "?:Y", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
-      ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W2", "?:L", "?:K"]]]]
+      ["-can", "?:X", "?:A", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+      ["-next", "?:W", "?:W2"],
+      ["can", "?:X", "?:A", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["can", "?:X", "?:A", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]]]]
     ]
   },
-  // W2 -> W3
+  // has part
   {
     "@confidence": 0.99,
     "@logic": [
-      ["-have", "?:Y", "?:X", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
-      ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W3", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["have", "?:Y", "?:X", ["$ctxt", "?:T", "W3", "?:L", "?:K"]]]]
-    ]
-  },
-
-  // Default persistence of "has property" across world states
-  // W0 -> W1
-  {
-    "@confidence": 0.99,
-    "@logic": [
-      ["-has property", "?:P", "?:X", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
-      ["has property", "?:P", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["has property", "?:P", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
-    ]
-  },
-  // W1 -> W2
-  {
-    "@confidence": 0.99,
-    "@logic": [
-      ["-has property", "?:P", "?:X", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
-      ["has property", "?:P", "?:X", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["has property", "?:P", "?:X", ["$ctxt", "?:T", "W2", "?:L", "?:K"]]]]
-    ]
-  },
-  // W2 -> W3
-  {
-    "@confidence": 0.99,
-    "@logic": [
-      ["-has property", "?:P", "?:X", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
-      ["has property", "?:P", "?:X", ["$ctxt", "?:T", "W3", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["has property", "?:P", "?:X", ["$ctxt", "?:T", "W3", "?:L", "?:K"]]]]
-    ]
-  },
-
-  // Default persistence of "has degree property" across world states
-  // W0 -> W1
-  {
-    "@confidence": 0.99,
-    "@logic": [
-      ["-has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
-      ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
-    ]
-  },
-  // W1 -> W2
-  {
-    "@confidence": 0.99,
-    "@logic": [
-      ["-has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
-      ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W2", "?:L", "?:K"]]]]
-    ]
-  },
-  // W2 -> W3
-  {
-    "@confidence": 0.99,
-    "@logic": [
-      ["-has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
-      ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W3", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "W3", "?:L", "?:K"]]]]
-    ]
-  },
-
-  // Default persistence of "can" across world states
-  // W0 -> W1
-  {
-    "@confidence": 0.99,
-    "@logic": [
-      ["-can", "?:X", "?:A", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
-      ["can", "?:X", "?:A", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["can", "?:X", "?:A", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
-    ]
-  },
-  // W1 -> W2
-  {
-    "@confidence": 0.99,
-    "@logic": [
-      ["-can", "?:X", "?:A", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
-      ["can", "?:X", "?:A", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["can", "?:X", "?:A", ["$ctxt", "?:T", "W2", "?:L", "?:K"]]]]
-    ]
-  },
-  // W2 -> W3
-  {
-    "@confidence": 0.99,
-    "@logic": [
-      ["-can", "?:X", "?:A", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
-      ["can", "?:X", "?:A", ["$ctxt", "?:T", "W3", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["can", "?:X", "?:A", ["$ctxt", "?:T", "W3", "?:L", "?:K"]]]]
-    ]
-  },
-
-  // Default persistence of "has part" across world states
-  // W0 -> W1
-  {
-    "@confidence": 0.99,
-    "@logic": [
-      ["-has part", "?:X", "?:Y", ["$ctxt", "?:T", "W0", "?:L", "?:K"]],
-      ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "W1", "?:L", "?:K"]]]]
-    ]
-  },
-  // W1 -> W2
-  {
-    "@confidence": 0.99,
-    "@logic": [
-      ["-has part", "?:X", "?:Y", ["$ctxt", "?:T", "W1", "?:L", "?:K"]],
-      ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "W2", "?:L", "?:K"]]]]
-    ]
-  },
-  // W2 -> W3
-  {
-    "@confidence": 0.99,
-    "@logic": [
-      ["-has part", "?:X", "?:Y", ["$ctxt", "?:T", "W2", "?:L", "?:K"]],
-      ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "W3", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "W3", "?:L", "?:K"]]]]
+      ["-has part", "?:X", "?:Y", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+      ["-next", "?:W", "?:W2"],
+      ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]]]]
     ]
   },
 
@@ -558,6 +463,15 @@ Does John 1 have two cars?
 // Axiom 1: Direct succession implies "before"
 
 [["next", "W0", "W1"]],
+[["next", "W1", "W2"]],
+[["next", "W2", "W3"]],
+[["next", "W3", "W4"]],
+[["next", "W4", "W5"]],
+[["next", "W5", "W6"]],
+[["next", "W6", "W7"]],
+[["next", "W7", "W8"]],
+[["next", "W8", "W9"]],
+[["next", "W9", "W10"]],
 
 [
   ["-next", "?:W_prev", "?:W_curr"],
@@ -756,6 +670,51 @@ Does John 1 have two cars?
   ["-can", "?:X", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
   ["-is_past_world", "?:W"],
   ["can", "?:X", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has destination", "?:E", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has destination", "?:E", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has recipient", "?:E", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has recipient", "?:E", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has source", "?:E", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has source", "?:E", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has beneficiary", "?:E", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has beneficiary", "?:E", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has accompaniment", "?:E", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has accompaniment", "?:E", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has path", "?:E", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has path", "?:E", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has result", "?:E", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has result", "?:E", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has topic", "?:E", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has topic", "?:E", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has cause", "?:E", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has cause", "?:E", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
 ],
 
 // experimentally defining the comparison between measures

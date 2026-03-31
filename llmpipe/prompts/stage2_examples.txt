@@ -2877,3 +2877,57 @@ OUTPUT:
     ["ask","X",
       ["=",["$measure_of","length","X","W0"],
            ["$measure",20,"kilometer"]]]]]
+
+-------
+
+INPUT:
+
+[
+  {
+    "raw": "John walked with the dog from the park through the forest to the lake for Mary.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "John 1 walked with the dog 2 from the park 3 through the forest 4 to the lake 5 for Mary 6.",
+        "type": "situation",
+        "entities": [
+          {"id":"John 1","type":"concrete","category":"person"},
+          {"id":"dog 2","type":"concrete","category":"animal"},
+          {"id":"park 3","type":"concrete","category":"place"},
+          {"id":"forest 4","type":"concrete","category":"place"},
+          {"id":"lake 5","type":"concrete","category":"place"},
+          {"id":"Mary 6","type":"concrete","category":"person"}
+        ],
+        "actions": [{"root":"walk","mode":"event","roles":{
+          "accompaniment":"dog 2","source":"park 3","path":"forest 4",
+          "destination":"lake 5","beneficiary":"Mary 6"}}],
+        "pre_state":"W0","next_state":"W1","time":"past"
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","dog","dog 2"],
+          ["isa","park","park 3"],
+          ["isa","forest","forest 4"],
+          ["isa","lake","lake 5"],
+          ["isa","person","Mary 6"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","walk"],
+              ["has actor","E","John 1"],
+              ["has accompaniment","E","dog 2"],
+              ["has source","E","park 3"],
+              ["has path","E","forest 4"],
+              ["has destination","E","lake 5"],
+              ["has beneficiary","E","Mary 6"]]]]],
+      ["next","W0","W1"]]]]

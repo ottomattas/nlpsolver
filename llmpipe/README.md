@@ -3,7 +3,7 @@ llmpipe
 
 `llmpipe` is a natural-language question-answering pipeline built on LLMs and a first-order
 theorem prover.  It converts English text into predicate logic using a two-stage LLM parser,
-then passes the logic to the [`gk`](../gk/) binary prover to produce answers.
+then passes the logic to the [`gk`](../gk/) prover to produce answers.
 
 Quick start
 -----------
@@ -53,10 +53,6 @@ Running
 # Basic usage
 python3 solver/solve.py "TEXT"
 
-# Call an LLM directly (no pipeline)
-python3 ask.py "What is the capital of France?"
-python3 ask.py -llm claude -p prompt.txt "input text"
-
 # Output level (hierarchy: each includes previous levels)
 -explain                          Show English proof
 -logic                            + simplified text, clauses, logic in proofs
@@ -75,6 +71,12 @@ python3 ask.py -llm claude -p prompt.txt "input text"
 # Run tests
 python3 test.py
 python3 test.py tests/tests_core.py -llm claude
+
+
+# Call an LLM directly (no pipeline)
+python3 ask.py "What is the capital of France?"
+python3 ask.py -llm claude -p prompt.txt "input text"
+
 ```
 
 Configuration
@@ -94,14 +96,14 @@ geminiversion = "gemini-2.0-flash"
 Documentation
 -------------
 
-See `ENCODINGS.md` for the three data representations (Stage-1, Stage-2, GK input) with examples.
+See  [`ENCODINGS.md`](ENCODINGS.md) for the three data representations (Stage-1, Stage-2, GK input) with examples.
 
-See `DOCUMENTATION.md` for a full developer guide covering:
+See  [`DOCUMENTATION.md`](DOCUMENTATION.md) for a full developer guide covering:
 - Every source file with its public API
 - Key algorithms: FOL→CNF clausification, defeasible reasoning, context injection,
   gradable property normalisation, wh-question encoding
 - How to extend the pipeline (new predicates, new LLM providers, improved prompts)
 
-See `PROOF_RENDERING.md` for how proofs are rendered as English explanations.
+See [`PROOF_RENDERING.md`](PROOF_RENDERING.md) for how proofs are rendered as English explanations.
 
-See `DEBUGGING.md` for the debugging workflow, failure taxonomy, and world/tense system.
+See [`DEBUGGING.md`](DEBUGGING.md) for the debugging workflow, failure taxonomy, and world/tense system.

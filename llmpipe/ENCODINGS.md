@@ -343,12 +343,21 @@ Dynamic verbs are encoded as Davidsonian events:
 | `isa "activity" E` | E is an event |
 | `has type E VERB` | Event type (verb root) |
 | `has actor E ENTITY` | Who performs the event |
-| `has target E ENTITY` | What the event acts on |
+| `has target E ENTITY` | What the event acts on (direct object) |
+| `has recipient E ENTITY` | Person receiving (dative: "gave book to Mary") |
+| `has destination E ENTITY` | Movement endpoint ("went to the kitchen") |
+| `has source E ENTITY` | Movement origin ("came from the office") |
 | `has location E ENTITY PREP` | Where the event occurs; PREP is the spatial preposition (`"in"`, `"at"`, `"near"`, etc.) |
 | `has instrument E ENTITY` | What tool is used |
 | `has manner E MANNER` | How the event is done |
-| `has direction E DIR` | Direction of movement |
+| `has direction E DIR` | Compass or abstract direction ("north", "left") |
 | `has time E TIME PREP` | When the event occurs; PREP is the temporal preposition (`"in"`, `"on"`, `"during"`, etc.) |
+| `has beneficiary E ENTITY` | Person benefiting ("cooked for Mary") |
+| `has accompaniment E ENTITY` | Entity accompanying ("walked with the dog") |
+| `has path E ENTITY` | Route taken ("walked through the forest") |
+| `has result E ENTITY` | Resulting state ("painted the wall green") |
+| `has topic E ENTITY` | Subject matter ("talked about the news") |
+| `has cause E ENTITY` | Entity or event causing ("fell because of ice") |
 | `typical E` | Marks the event as defeasible (for $block) |
 | `typically ENTITY VERB` | Atomic habitual predicate (Track 1) |
 
