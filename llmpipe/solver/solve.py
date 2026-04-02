@@ -342,6 +342,7 @@ def _parse_cmd_line():
         print("-seconds takes an integer parameter 1 or more")
         sys.exit(0)
       opts["prover_seconds"] = n
+      opts["prover_seconds_cli"] = True
       skippos = 1
     elif el in ["-printlevel", "--printlevel"]:
       if elpos + 1 >= len(params):

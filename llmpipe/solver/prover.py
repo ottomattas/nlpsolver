@@ -103,8 +103,62 @@ def _auto_strategy(logic, opts):
   return strat_str
 
 
+# === seconds estimation based on world state count ===
+
+# Minimum seconds needed per world count (from empirical measurement).
+# Key = number of distinct world constants; value = minimum seconds observed.
+_WORLD_SECONDS_TABLE = {
+    # worlds: min_seconds (empirical, with verb normalization)
+    6: 1,
+    7: 2,
+    8: 5,
+    9: 10,
+    10: 30,
+    11: 150,
+}
+# Multiplier applied to the table values for safety margin.
+_SECONDS_MULTIPLIER = 2
+
+
+def _count_worlds(logic):
+  """Count distinct world constants (W0, W1, ...) in the clause list."""
+  from lc_clausify import is_world_constant
+  worlds = set()
+  def _scan(tree):
+    if isinstance(tree, str):
+      if is_world_constant(tree):
+        worlds.add(tree)
+      return
+    if isinstance(tree, list):
+      for el in tree:
+        _scan(el)
+  for obj in logic:
+    if isinstance(obj, dict):
+      for key in ("@logic", "@question"):
+        v = obj.get(key)
+        if v is not None:
+          _scan(v)
+  return len(worlds)
+
+
+def _estimate_seconds(logic, default_seconds):
+  """Estimate prover seconds from world count.
+
+  Returns max(default_seconds, table_estimate * multiplier).
+  """
+  n = _count_worlds(logic)
+  # Find the best matching entry: highest key <= n
+  estimate = 0
+  for threshold, secs in sorted(_WORLD_SECONDS_TABLE.items()):
+    if n >= threshold:
+      estimate = secs
+  if estimate == 0:
+    return default_seconds
+  return max(default_seconds, int(estimate * _SECONDS_MULTIPLIER))
+
+
 # === calling the prover ===
- 
+
 """
 Example logic argument:
 
@@ -162,8 +216,15 @@ def call_prover(logic, s1_json=None):
     auto_strat = _auto_strategy(logic, options)
     if auto_strat:
       params=params+["-strategytext", auto_strat]
-  if options["prover_seconds"]:
+  if options.get("prover_seconds_cli"):
+    # CLI -seconds: use exactly what the user asked for
     params=params+["-seconds",str(options["prover_seconds"])]
+  elif options["prover_seconds"]:
+    # No CLI override: estimate from world count, never below default
+    secs = _estimate_seconds(logic, options["prover_seconds"])
+    if options.get("debug_print_flag") and secs > options["prover_seconds"]:
+      print(f"\n=== auto-estimated prover seconds: {secs} (worlds: {_count_worlds(logic)}) ===\n")
+    params=params+["-seconds",str(secs)]
   params.append(infilename)
   if options["usekb_flag"]: params=params+globals.usekb_prover_params
   else: params=params+globals.prover_params

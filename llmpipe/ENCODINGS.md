@@ -653,10 +653,16 @@ Mark will have the apple at some world state **after** W0.
 **Assertions**: concrete world/tense from Stage 1.  A clause in a narrative
 defaults to `present` at its own world state.
 
-**Questions**: three-way dispatch:
+**Questions**: three-way dispatch for worlds:
 - Descriptive atoms (isa, event predicates) → each gets its own independent free-var world
 - Stative matrix predicates (have, can, has part) → free-var world
 - Dynamic matrix predicates (is_rel2, properties as main query) → query's world
+
+Tense for questions: if Stage 1 provides `"time"` (e.g. `"past"` for "Did he run?"),
+that tense is used. Otherwise the question defaults to `"present"` — matching the
+Stage 1 convention that bare present-tense is the unmarked default. This prevents
+tense bridge axioms from leaking historical facts into present-tense queries
+(e.g. "Where is John?" should not match a past location via present→past conversion).
 
 #### Eligible predicates
 
@@ -872,7 +878,25 @@ The prover also loads `axioms_std.js` containing background knowledge:
 - **Spatial transitivity**: in/inside/located-in chaining
 - **Persistence (frame problem)**: facts persist across world states unless blocked
   (defeasible for have, has property, has degree property, can, has part, is rel2;
-  W0→W1→W2→W3)
+  variable worlds via `next(?:W, ?:W2)`)
+- **Movement axioms**: `has_actor(E,X) + has_type(E,go) + has_destination(E,Dest) +
+  next(W,W2) → is_rel2(at, X, Dest, $ctxt(present, W2, ...))`.  Result tense is
+  always "present" at the new world.
+- **Movement verb normalization**: the pipeline normalizes travel/journey/move → go
+  in `lc_rewrites.py` before clausification, avoiding synonym axiom chains in the
+  prover that cause combinatorial explosion with many world states.
+- **`moved(X,W)` helper**: derived from go-events; blocks `is_rel2` frame axiom
+  persistence for entities that moved at world W.
+- **Frame axiom blocking**: `is_rel2` persistence uses `$block(moved(X,W))` — if X
+  performed a go-event at world W, the old location does not persist to W+1.
+  Other predicates (have, has_property, etc.) use `$block($not(...))` since they
+  are not affected by movement.
+- **Tense bridge axioms**: convert `present@W_old` → `past@W_new` when
+  `before(W_old, W_new)`.  These correctly encode historical facts but must not
+  interfere with present-tense queries (ensured by the question tense default).
+- **Prover seconds auto-estimation**: `prover.py` counts distinct world constants
+  in the clause list and scales the prover time limit accordingly (empirical table
+  with 2x safety multiplier).  CLI `-seconds N` overrides the estimate.
 
 ### 3.13 Definite Functions and Measurements
 

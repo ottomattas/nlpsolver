@@ -535,7 +535,7 @@ list pipeline.  The computation is split across several files:
 | Module | Responsibility |
 |--------|---------------|
 | `logconvert.py` | Orchestration: package extraction, question/assertion dispatch |
-| `lc_rewrites.py` | Pre-clausification formula rewrites (meta-predicate normalization incl. `"time of"`→`has_time`, tense-valued `has_time` stripping, existential hoisting, spurious `can` removal, polarity flip) |
+| `lc_rewrites.py` | Pre-clausification formula rewrites (meta-predicate normalization incl. `"time of"`→`has_time`, tense-valued `has_time` stripping, movement verb normalization travel/journey/move→go, existential hoisting, spurious `can` removal, polarity flip) |
 | `lc_ctxt.py` | `$ctxt` injection, time-wrapper stripping, fresh variable generation |
 | `lc_postprocess.py` | Post-clausification clause-list passes (gradable normalization, RELCLASS coercion, `$theof1`, possessive `have`, population facts, degree stripping) |
 | `lc_clausify.py` | FOL→CNF compilation |
@@ -551,7 +551,7 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
     │
     ├─ _hoist_nested_ids(logic)           extract @id blocks nested by LLM bracket errors
     ├─ _build_asu_index(s1_json)          build unit_id→ASU lookup from Stage 1
-    ├─ rewrite_meta_predicates(logic)     [lc_rewrites] "located in"→"in", "is"→isa, "time of"→has_time
+    ├─ rewrite_meta_predicates(logic)     [lc_rewrites] "located in"→"in", "is"→isa, "time of"→has_time, travel/journey/move→go
     ├─ strip_tense_has_time(logic)       [lc_rewrites] remove has_time(E,"past",...) bogus atoms
     ├─ inject_degree_presuppositions()    [lc_rewrites] "not very X" → X and not very X
     ├─ populate_clauses(items)            [lc_postprocess] collect background facts
@@ -560,6 +560,8 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
     │    _convert_id_package(item, asu_index)
     │        _extract_package_ctx()        unpack PACKAGE: formula, world, tense, etc.
     │        override with Stage-1 ASU data (tense, world, location)
+    │        compute latest world numerically for queries without pre_state
+    │        default question tense to "present" when Stage 1 omits "time"
     │        generate $theof1/$datetime fact for explicit time values
     │        inject event has_time from Stage 1 if missing (repair for LLM omission)
     │        generate is_past_world(W) from state_tense="past"
@@ -799,6 +801,12 @@ analyses the clause list for equalities with function terms (`$measure_of`, `$th
 `$list`, `$datetime`) or `less_measure` atoms.  When found, selects the `unit` strategy
 (`-strategytext`) which handles equational reasoning better than the default
 `negative_pref`.  Printed with `-debug`.
+
+**Prover seconds auto-estimation** (`_estimate_seconds`): when no CLI `-seconds` is
+given, counts distinct world constants (W0, W1, ...) in the clause list and scales
+the time limit from an empirical table (2x safety multiplier).  Examples: ≤6 worlds →
+2s (default), 7 → 4s, 8 → 10s, 9 → 20s, 10 → 60s, 11 → 300s.  CLI `-seconds N`
+always overrides the estimate.
 
 Key paths (from `globals.py`):
 
@@ -1169,7 +1177,17 @@ WH-questions that don't match the who/what identity pattern or the where/when pr
 
 ### $ctxt injection for WH-questions
 
-Where and when queries get world-agnostic `$ctxt` (free-variable world and tense) because location/time facts may come from any world state.  Who/what queries and other WH-questions get the standard question `$ctxt` dispatch: descriptive atoms (isa, event atoms) get free-var world, matrix atoms keep the query's world.
+All question types use the query's concrete world from Stage 1 `pre_state` for matrix
+predicates (is_rel2, have, etc.), and free-var worlds for descriptive atoms (isa, event
+predicates).  Tense defaults to `"present"` when Stage 1 does not provide a `"time"`
+field — matching the convention that bare present-tense is the unmarked default.
+Stage 1 provides `"time": "past"` for explicitly past-tense questions ("Did he run?",
+"Was the car red?"), which the pipeline uses directly.
+
+This present-tense default prevents the tense bridge axioms (`present@W_old` →
+`past@W_new` via `before(W_old,W_new)`) from leaking stale historical facts into
+present-tense queries like "Where is John?" — the query's `$ctxt(present, W, ...)`
+only matches present-tense results at the query world, not past-tense bridged facts.
 
 ---
 

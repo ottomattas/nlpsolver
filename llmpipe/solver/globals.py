@@ -48,6 +48,7 @@ options={
   "prover_print":False,  # if not False, use the argument integer for gk printout level, instead of the default
   "prover_strategy":False,  # if not False, use the argument as a gk strategy file, instead of the default
   "prover_seconds":2,  # give the prover this many seconds, instead of the default 1
+  "prover_seconds_cli":False,  # True when -seconds was given on CLI (disables auto-estimation)
   # LLM response caching: ON by default.
   # The cache key covers provider, version, temperature, seed, max_tokens,
   # sysprompt and input text, so a cached result is only reused when every

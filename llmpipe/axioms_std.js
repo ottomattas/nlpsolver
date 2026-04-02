@@ -241,7 +241,9 @@
     ["-next", "?:W", "?:W2"],
     ["is rel2", "at", "?:X", "?:Dest", ["$ctxt", "present", "?:W2", "?:L", "?:K"]]
   ],
-  // Movement retraction: after moving to Dest, X is no longer at any previous location Y
+  /*
+  // Movement retraction (OLD, replaced by moved+$block approach):
+  // after moving to Dest, X is no longer at any previous location Y
   // (unless Y = Dest, i.e. moved to the same place). This provides evidence for $block
   // on the frame axiom, preventing old locations from persisting.
   [
@@ -253,6 +255,24 @@
     ["=", "?:Y", "?:Dest"],
     ["-is rel2", "at", "?:X", "?:Y", ["$ctxt", "present", "?:W2", "?:L", "?:K"]]
   ],
+  */
+
+  // Derive moved(X, W): X performed a movement event at world W.
+  // Used by the is_rel2 frame axiom to block location persistence when X moved.
+  // Listed for each movement verb to avoid depending on synonym chain for $block.
+  [["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+   ["-has type", "?:E", "go", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+   ["moved", "?:X", "?:W"]],
+  [["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+   ["-has type", "?:E", "travel", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+   ["moved", "?:X", "?:W"]],
+  [["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+   ["-has type", "?:E", "journey", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+   ["moved", "?:X", "?:W"]],
+  [["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+   ["-has type", "?:E", "move", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+   ["moved", "?:X", "?:W"]],
+
   // Movement Synonyms
   [["-has type", "?:E", "travel", "?:Ctxt"], ["has type", "?:E", "go", "?:Ctxt"]],
   [["-has type", "?:E", "journey", "?:Ctxt"], ["has type", "?:E", "go", "?:Ctxt"]],
@@ -261,7 +281,9 @@
   // == 6. PERSISTENCE (FRAME PROBLEM) ==
   // Default persistence across world states using variable worlds with next(?:W, ?:W2).
   // Each predicate persists defeasibly ($block) unless overridden.
-  // is rel2
+
+  /*
+  // is rel2 (OLD: general $not block — replaced by moved-based block)
   {
     "@confidence": 0.99,
     "@logic": [
@@ -271,6 +293,22 @@
       ["$block", 0, ["$not", ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]]]]
     ]
   },
+  */
+
+  // is rel2 persistence: blocked when X moved (go-event) at that world.
+  // This prevents old locations from persisting after movement while allowing
+  // non-movement is_rel2 relations (like "afraid of") to persist normally
+  // (since moved(X,W) is only derived from go-events, not from other relations).
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+      ["-next", "?:W", "?:W2"],
+      ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]],
+      ["$block", 0, ["moved", "?:X", "?:W"]]
+    ]
+  },
+
   // have
   {
     "@confidence": 0.99,
@@ -321,6 +359,50 @@
       ["$block", 0, ["$not", ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]]]]
     ]
   },
+
+  /*
+  // == 6b. SPATIAL MUTUAL EXCLUSION (experimental, commented out) ==
+  // If X is at two locations at the same world, and both are rooms of specific
+  // types known to be different, then they must be equal (contradiction via
+  // inequality facts).  Requires inequality axioms between room classes.
+
+  // Exclusion: two room locations for same person at same world must be equal
+  {"@logic": [
+    ["=", "?:Loc1", "?:Loc2"],
+    ["-isa", "room", "?:Loc1"],
+    ["-isa", "room", "?:Loc2"],
+    ["-is rel2", "at", "?:X", "?:Loc1", ["$ctxt", "present", "?:W", "?:L", "?:K"]],
+    ["-is rel2", "at", "?:X", "?:Loc2", ["$ctxt", "present", "?:W", "?:L", "?:K"]]
+  ], "@name": "ax_room_exclusion"},
+
+  // Room class inequality: entities of different room classes are distinct.
+  // These would need to be generated programmatically for each pair of room
+  // classes present in the input, or derived from a taxonomy.
+  // Example pairs (would be generated per problem):
+  [
+    ["-isa", "hallway", "?:X"],
+    ["-isa", "kitchen", "?:Y"],
+    ["-=", "?:X", "?:Y"]
+  ],
+  [
+    ["-isa", "hallway", "?:X"],
+    ["-isa", "bathroom", "?:Y"],
+    ["-=", "?:X", "?:Y"]
+  ],
+  [
+    ["-isa", "kitchen", "?:X"],
+    ["-isa", "bathroom", "?:Y"],
+    ["-=", "?:X", "?:Y"]
+  ],
+  // Also need: isa(room, X) for each location entity — could be generated
+  // from the isa(hallway, X) etc. via a superclass axiom:
+  [["-isa", "hallway", "?:X"], ["isa", "room", "?:X"]],
+  [["-isa", "kitchen", "?:X"], ["isa", "room", "?:X"]],
+  [["-isa", "bathroom", "?:X"], ["isa", "room", "?:X"]],
+  [["-isa", "bedroom", "?:X"], ["isa", "room", "?:X"]],
+  [["-isa", "garden", "?:X"], ["isa", "room", "?:X"]],
+  [["-isa", "office", "?:X"], ["isa", "room", "?:X"]],
+  */
 
   // == 7. SETS & COUNTING ==
   // Subset Cardinality: |A ∩ B| <= |A| [cite: 355]
@@ -472,6 +554,8 @@ Does John 1 have two cars?
 [["next", "W7", "W8"]],
 [["next", "W8", "W9"]],
 [["next", "W9", "W10"]],
+[["next", "W10", "W11"]],
+[["next", "W11", "W12"]],
 
 [
   ["-next", "?:W_prev", "?:W_curr"],

@@ -951,6 +951,24 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
         s1_world = asu.get("pre_state")
         if s1_world is not None:
           world = s1_world
+        elif world is None and asu_index:
+          # No pre_state on query — compute latest world from all ASUs.
+          # The latest world is the highest next_state across all ASUs.
+          # Compare numerically (W0 < W1 < ... < W10) not lexicographically.
+          latest = None
+          latest_n = -1
+          for a in asu_index.values():
+            ns = a.get("next_state")
+            if ns is not None and isinstance(ns, str) and ns.startswith("W"):
+              try:
+                n = int(ns[1:])
+              except ValueError:
+                n = -1
+              if n > latest_n:
+                latest_n = n
+                latest = ns
+          if latest is not None:
+            world = latest
       s1_loc = asu.get("location")
       if s1_loc is not None:
         location = s1_loc
@@ -1004,7 +1022,7 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
         # and frame axioms persist locations across worlds.
         matrix_world = world if world is not None else _fresh_fv()
         desc_world   = _fresh_fv()
-        tense_term   = tense if tense is not None else _fresh_fv()
+        tense_term   = tense if tense is not None else "present"
         ctxt_matrix = ["$ctxt", None, matrix_world, loc_term, kn_term]
         ctxt_desc   = ["$ctxt", None, desc_world,   loc_term, kn_term]
         props_desc = _question_has_main_relation(formula)
@@ -1018,7 +1036,7 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
         # predicates are also descriptive (restrictive noun modifiers).
         matrix_world = world if world is not None else _fresh_fv()
         desc_world   = _fresh_fv()
-        tense_term   = tense if tense is not None else _fresh_fv()
+        tense_term   = tense if tense is not None else "present"
         ctxt_matrix = ["$ctxt", None, matrix_world, loc_term, kn_term]
         ctxt_desc   = ["$ctxt", None, desc_world,   loc_term, kn_term]
         props_desc = _question_has_main_relation(formula)

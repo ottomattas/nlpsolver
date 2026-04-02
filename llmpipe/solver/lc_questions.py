@@ -329,7 +329,7 @@ def _find_prep_query_atom(body, ask_var, pred_set):
   """
   if not isinstance(body, list) or not body:
     return None
-  if (body[0] == "is rel2" and len(body) == 4 and body[3] == ask_var
+  if (body[0] == "is rel2" and len(body) in (4, 5) and body[3] == ask_var
       and body[1] in pred_set):
     return body
   if body[0] == "and":
