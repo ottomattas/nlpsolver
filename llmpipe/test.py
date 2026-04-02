@@ -101,7 +101,10 @@ Test files are Python files containing a single list literal of
     ["Elephants are animals. John is an elephant. John is an animal?", True],
     ["Elephants are animals. Who is an animal?", "An elephant."],
     ["John has a car?", None],   # None means "Unknown" is the expected answer
+    ["John gave a book to Mary. What did Mary receive?", ["A book.", "The book."]],
   ]
+When expected is a list, the test passes if the received answer matches
+ANY element of the list.
 
 If no test file is given, tests/tests_core.py is used.
 
@@ -259,7 +262,18 @@ def run_file(path, solver_opts):
 # ======== result comparison ========
 
 def _result_matches(expected, received):
-  """Return True if received is an acceptable answer for expected."""
+  """Return True if received is an acceptable answer for expected.
+
+  When expected is a list, the test passes if received matches ANY element.
+  """
+  # Multiple acceptable answers: pass if any alternative matches.
+  if isinstance(expected, list):
+    return any(_result_matches_single(alt, received) for alt in expected)
+  return _result_matches_single(expected, received)
+
+
+def _result_matches_single(expected, received):
+  """Return True if received matches a single expected value."""
   # Normalise Python booleans to canonical answer strings
   if received is True:  received  = "True."
   if received is False: received  = "False."
@@ -430,6 +444,8 @@ def _standardize(txt):
 
 def _display(expected):
   """Pretty-print an expected value for output."""
+  if isinstance(expected, list):
+    return " | ".join(_display(alt) for alt in expected)
   if expected is True:  return "True."
   if expected is False: return "False."
   if expected is None:  return "Unknown (None)"

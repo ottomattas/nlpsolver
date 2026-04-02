@@ -104,6 +104,7 @@ from lc_ctxt import (
 # Pre-clausification formula rewrites (in lc_rewrites.py).
 from lc_rewrites import (
   rewrite_meta_predicates as _rewrite_meta_predicates,
+  normalize_receive_events as _normalize_receive_events,
   strip_tense_has_time as _strip_tense_has_time,
   inject_degree_presuppositions as _inject_degree_presuppositions,
   hoist_misnested_exists as _hoist_misnested_exists,
@@ -483,6 +484,10 @@ def rawlogic_convert(logic, s1_json=None):
   # relation; LLMs (especially Gemini) sometimes produce it for identity/type
   # questions.  Safe because is_rel2("is",...) has no valid semantic meaning.
   logic = _rewrite_meta_predicates(logic)
+
+  # Normalize "receive" events: receive→give with actor→recipient swap.
+  # Must run after rewrite_meta_predicates (which normalizes verb synonyms).
+  logic = _normalize_receive_events(logic)
 
   # Remove has_time atoms where the value is a grammatical tense ("past", etc.)
   # LLMs sometimes put tense in has_time instead of leaving it to $ctxt.

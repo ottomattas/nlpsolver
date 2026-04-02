@@ -889,8 +889,22 @@ The prover also loads `axioms_std.js` containing background knowledge:
   persistence for entities that moved at world W.
 - **Frame axiom blocking**: `is_rel2` persistence uses `$block(moved(X,W))` — if X
   performed a go-event at world W, the old location does not persist to W+1.
-  Other predicates (have, has_property, etc.) use `$block($not(...))` since they
-  are not affected by movement.
+  `have` persistence uses `$block(transferred(Obj,W))` — if the object was given
+  away at world W, the old owner's possession does not persist to W+1.
+  Other predicates (has_property, etc.) use `$block($not(...))` as a general blocker.
+- **Transfer axioms**: `has_actor(E,X) + has_type(E,give) + has_recipient(E,Recip) +
+  has_target(E,Obj) + next(W,W2) → have(Recip, Obj, $ctxt(present, W2, ...))`.
+  Parallels movement axioms: give-event produces `have` in the next world state.
+- **`transferred(Obj,W)` helper**: derived from give + target; blocks `have` frame
+  axiom persistence for the transferred object, preventing the giver from keeping
+  possession after giving it away.
+- **Give/receive perspective bridge**: a give-event is also a receive-event
+  (`has_type(E,give) → has_type(E,receive)`), and the recipient of the give is the
+  actor of the receive.  The reverse direction (receive→give) is handled by pipeline
+  normalization in `lc_rewrites.py:normalize_receive_events()` which rewrites
+  `has_type(E,"receive")` to `has_type(E,"give")` and swaps actor→recipient.
+- **Transfer verb synonyms**: hand/pass/send → give (both axiom-level and pipeline
+  normalization in `lc_rewrites.py`).
 - **Tense bridge axioms**: convert `present@W_old` → `past@W_new` when
   `before(W_old, W_new)`.  These correctly encode historical facts but must not
   interfere with present-tense queries (ensured by the question tense default).

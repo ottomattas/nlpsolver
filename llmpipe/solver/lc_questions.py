@@ -227,6 +227,23 @@ def _replace_prep_with_var(body, concrete_prep, prep_var, target_pred=None):
           for child in body]
 
 
+def _strip_normally(frm):
+  """Recursively strip 'normally' wrappers from a formula.
+
+  Questions should not contain 'normally' — it is a modality for assertions,
+  not queries.  When an LLM wraps the query body in 'normally', the clausifier
+  turns it into $block atoms that create self-referential blockers, preventing
+  the prover from finding answers.  Stripping 'normally' before clausification
+  fixes this.
+  """
+  if not isinstance(frm, list) or not frm:
+    return frm
+  op = frm[0]
+  if op == "normally" and len(frm) >= 2:
+    return _strip_normally(frm[1])
+  return [_strip_normally(el) for el in frm]
+
+
 def build_defq_question(name, ask_var, body, where_prep=None,
                         wh_prep=None, wh_marker=None, wh_prep_pred=None):
   """Build $defq biconditional @logic clauses and a @question entry.
@@ -252,6 +269,10 @@ def build_defq_question(name, ask_var, body, where_prep=None,
   Non-ask free variables in body are automatically wrapped in 'exists' so
   the clausification handles them correctly (Skolem functions of ask_var).
   """
+  # Strip 'normally' from question body — it creates self-referential $block
+  # atoms in query clauses that prevent the prover from finding answers.
+  body = _strip_normally(body)
+
   # Legacy alias
   if where_prep and not wh_prep:
     wh_prep = where_prep

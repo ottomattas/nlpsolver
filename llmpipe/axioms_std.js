@@ -278,6 +278,41 @@
   [["-has type", "?:E", "journey", "?:Ctxt"], ["has type", "?:E", "go", "?:Ctxt"]],
   [["-has type", "?:E", "move", "?:Ctxt"], ["has type", "?:E", "go", "?:Ctxt"]],
 
+  // == 5b. TRANSFER RESULTS ==
+  // If X 'give's Target to Recipient, Recipient 'have's Target in the next state.
+  // Pattern follows movement result axiom above.
+  [
+    ["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-has type", "?:E", "give", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-has recipient", "?:E", "?:Recip", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-has target", "?:E", "?:Obj", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-next", "?:W", "?:W2"],
+    ["have", "?:Recip", "?:Obj", ["$ctxt", "present", "?:W2", "?:L", "?:K"]]
+  ],
+
+  // Derive transferred(Obj, W): object was transferred away at world W.
+  // Used by "have" frame axiom to block giver's possession from persisting.
+  [["-has type", "?:E", "give", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+   ["-has target", "?:E", "?:Obj", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+   ["transferred", "?:Obj", "?:W"]],
+
+  // == 5c. PERSPECTIVE BRIDGES (GIVE/RECEIVE) ==
+  // Give and receive describe the same event from different perspectives.
+  // Only give→receive direction to avoid circular role pollution.
+  // (receive→give is handled by pipeline normalization in lc_rewrites.py.)
+  // Type bridge: a give event is also a receive event.
+  [["-has type", "?:E", "give", "?:Ctxt"],
+   ["has type", "?:E", "receive", "?:Ctxt"]],
+  // Role mapping: the recipient of the give is the actor of the receive.
+  [["-has type", "?:E", "give", "?:Ctxt"],
+   ["-has recipient", "?:E", "?:X", "?:Ctxt"],
+   ["has actor", "?:E", "?:X", "?:Ctxt"]],
+
+  // Transfer verb synonyms
+  [["-has type", "?:E", "hand", "?:Ctxt"], ["has type", "?:E", "give", "?:Ctxt"]],
+  [["-has type", "?:E", "pass", "?:Ctxt"], ["has type", "?:E", "give", "?:Ctxt"]],
+  [["-has type", "?:E", "send", "?:Ctxt"], ["has type", "?:E", "give", "?:Ctxt"]],
+
   // == 6. PERSISTENCE (FRAME PROBLEM) ==
   // Default persistence across world states using variable worlds with next(?:W, ?:W2).
   // Each predicate persists defeasibly ($block) unless overridden.
@@ -309,14 +344,14 @@
     ]
   },
 
-  // have
+  // have: blocked when the possessed object was transferred at that world.
   {
     "@confidence": 0.99,
     "@logic": [
       ["-have", "?:Y", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
       ["-next", "?:W", "?:W2"],
       ["have", "?:Y", "?:X", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["have", "?:Y", "?:X", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]]]]
+      ["$block", 0, ["transferred", "?:X", "?:W"]]
     ]
   },
   // has property

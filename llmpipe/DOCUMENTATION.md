@@ -162,7 +162,8 @@ llmpipe/
 │   └── README.md        Full documentation for mkdata
 │
 ├── axioms_std.js        Default background-knowledge axioms for gk (persistence,
-│                        event-to-relation bridges, transitivity, degree entailments)
+│                        event-to-relation bridges, movement/transfer results,
+│                        give/receive perspective bridges, transitivity, degree entailments)
 ├── cache.db             SQLite cache (auto-created; not committed)
 │
 ├── ask.py               Direct LLM call tool (uses solver/llmcall.py)
@@ -535,7 +536,7 @@ list pipeline.  The computation is split across several files:
 | Module | Responsibility |
 |--------|---------------|
 | `logconvert.py` | Orchestration: package extraction, question/assertion dispatch |
-| `lc_rewrites.py` | Pre-clausification formula rewrites (meta-predicate normalization incl. `"time of"`→`has_time`, tense-valued `has_time` stripping, movement verb normalization travel/journey/move→go, existential hoisting, spurious `can` removal, polarity flip) |
+| `lc_rewrites.py` | Pre-clausification formula rewrites (meta-predicate normalization incl. `"time of"`→`has_time`, tense-valued `has_time` stripping, verb normalization: travel/journey/move→go, hand/pass/send→give, receive→give with actor↔recipient swap, existential hoisting, spurious `can` removal, polarity flip) |
 | `lc_ctxt.py` | `$ctxt` injection, time-wrapper stripping, fresh variable generation |
 | `lc_postprocess.py` | Post-clausification clause-list passes (gradable normalization, RELCLASS coercion, `$theof1`, possessive `have`, population facts, degree stripping) |
 | `lc_clausify.py` | FOL→CNF compilation |
@@ -551,7 +552,8 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
     │
     ├─ _hoist_nested_ids(logic)           extract @id blocks nested by LLM bracket errors
     ├─ _build_asu_index(s1_json)          build unit_id→ASU lookup from Stage 1
-    ├─ rewrite_meta_predicates(logic)     [lc_rewrites] "located in"→"in", "is"→isa, "time of"→has_time, travel/journey/move→go
+    ├─ rewrite_meta_predicates(logic)     [lc_rewrites] "located in"→"in", "is"→isa, "time of"→has_time, travel/journey/move→go, hand/pass/send→give
+    ├─ normalize_receive_events(logic)   [lc_rewrites] receive→give with actor→recipient swap
     ├─ strip_tense_has_time(logic)       [lc_rewrites] remove has_time(E,"past",...) bogus atoms
     ├─ inject_degree_presuppositions()    [lc_rewrites] "not very X" → X and not very X
     ├─ populate_clauses(items)            [lc_postprocess] collect background facts
@@ -1110,7 +1112,8 @@ bridge representation gaps.
 | Possessive `have` inference | `lc_postprocess.add_possessive_have` | "The handle of the fork" — `is_rel2(handle of, fork, handle)` + `isa(handle, handle)` → `have(fork, handle)` | Infers `have(Y,E,CT)` from possessive `is_rel2` patterns.  Handles ground entities, Skolem functions, and `$theof1` terms.  For rule clauses with guard literals (e.g., `[-isa,elephant,?:X]`), generates conditional `have` with the same guard. |
 | Misnested existential hoisting | `lc_rewrites.hoist_misnested_exists` | `[exists E, [and, has_actor(E,X), [exists X, isa(bear,X)]]]` → `[exists E, [exists X, [and, has_actor(E,X), isa(bear,X)]]]` | Pre-clausification fix for assertion formulas.  Detects existential variables used free in sibling conjuncts before their `exists` binding, hoists the binding to wrap the entire conjunction.  Only applies in assertion contexts (from `holds`), with collision checks against enclosing bindings. |
 | Spurious `can` removal | `lc_rewrites.strip_spurious_can` | "Did bears eat berries?" — removes `["can",X,E]` from event query when no modal language in ASU text | Pre-clausification pass on question formulas.  Fires when `can(X,E)` appears alongside `isa(activity,E)` and `has_actor(E,X)` in the same conjunction, both X and E are existentially quantified, and the ASU text contains no modal words (can, could, able, may, might, etc.). |
-| Meta-predicate normalization | `lc_rewrites.rewrite_meta_predicates` | `["is rel2","is",A,B]` → `["isa",A,B]`; `["is rel2","=",A,B]` → `["=",A,B]`; `["is rel2","located in",A,B]` → `["is rel2","in",A,B]` | Pre-clausification rewrite applied to all formulas.  Normalizes copula (`is` → `isa`), identity (`=`), and spatial meta-predicates (`located in/at/on/near/above/under` → bare preposition).  Ensures LLM-produced verbose predicates match the canonical forms used in facts and axioms. |
+| Meta-predicate normalization | `lc_rewrites.rewrite_meta_predicates` | `["is rel2","is",A,B]` → `["isa",A,B]`; `["is rel2","=",A,B]` → `["=",A,B]`; `["is rel2","located in",A,B]` → `["is rel2","in",A,B]` | Pre-clausification rewrite applied to all formulas.  Normalizes copula (`is` → `isa`), identity (`=`), spatial meta-predicates (`located in/at/on/near/above/under` → bare preposition), movement verbs (travel/journey/move → go), and transfer verb synonyms (hand/pass/send → give). |
+| Receive→give normalization | `lc_rewrites.normalize_receive_events` | `["has type",E,"receive"]` + `["has actor",E,X]` → `["has type",E,"give"]` + `["has recipient",E,X]` | Formula-level rewrite: in `and`-blocks containing a receive event, the verb is changed to "give" and the actor role is swapped to recipient.  This allows the give-based transfer axioms in `axioms_std.js` to derive `have(Recipient, Object)` in the next world state. |
 | Set existence fact | `lc_sets._walk_for_count` | "Bears ate berries" with `forall/implies/member/$setof` in assertion context → `member("$some_bear", $setof(...))` | Generates a ground set membership fact for assertion-context `forall/member` patterns so the prover can bootstrap resolution through member-guarded clauses.  Skipped when the set already has element instantiation from a count assertion. |
 | Degree stripping | `lc_postprocess.strip_degree_predicates` | With `-simpleproperties`: `has_degree_property(big,X,none,animal)` → `has_property(big,X)` | (Only with `-simpleproperties`) Replaces degree predicates with simple property predicates |
 | Semantic normalisation | `semnormalize.sem_normalize_clauses` | "The ball is outside the box" → `outside` is antonym of `inside` → flips polarity and substitutes: `-is_rel2(inside,ball,box)` | Antonym resolution (flip polarity + swap word) and canonical substitution (synonym → canonical form) |
