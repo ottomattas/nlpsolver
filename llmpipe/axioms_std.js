@@ -103,7 +103,29 @@
     ["-has degree rel2", "?:R", "?:X", "?:Y", "?:Deg", "?:Rel", "?:Ctxt"],
     ["has degree property", "?:R", "?:X", "none", "?:Rel", "?:Ctxt"]
   ],
-  
+
+  // == 3.1 COMPARATIVE ASYMMETRY ==
+  // A strict comparative cannot hold in both directions simultaneously.
+  // fast(X,Y,high) ∧ fast(Y,X,high) → contradiction
+  [
+    ["-has degree rel2", "?:R", "?:X", "?:Y", "high", "?:RC1", "?:C1"],
+    ["-has degree rel2", "?:R", "?:Y", "?:X", "high", "?:RC2", "?:C2"]
+  ],
+  // Strict measurement order is asymmetric: less(M1,M2) ∧ less(M2,M1) → contradiction
+  [
+    ["-less_measure", "?:M1", "?:M2"],
+    ["-less_measure", "?:M2", "?:M1"]
+  ],
+  // Equal measures exclude strict ordering in both directions.
+  [
+    ["-=", "?:M1", "?:M2"],
+    ["-less_measure", "?:M1", "?:M2"]
+  ],
+  [
+    ["-=", "?:M1", "?:M2"],
+    ["-less_measure", "?:M2", "?:M1"]
+  ],
+
   // event -> "is rel2" bridge for "like"
   /*
   [
@@ -145,8 +167,10 @@
   [["-is rel2", "contains", "?:A", "?:B", "?:Ctxt"], ["is rel2", "in", "?:B", "?:A", "?:Ctxt"]],
   [["-is rel2", "in", "?:B", "?:A", "?:Ctxt"], ["is rel2", "contains", "?:A", "?:B", "?:Ctxt"]],
   
-  // AND/OR add a synonym bridge:
-  [["-is rel2", "on", "?:X", "?:Y", "?:Ctxt"], ["is rel2", "in", "?:X", "?:Y", "?:Ctxt"]],
+  // Spatial hierarchy: "on" and "in" both imply "at" (general co-location).
+  // "on" does NOT imply "in" (surface contact ≠ containment).
+  [["-is rel2", "on", "?:X", "?:Y", "?:Ctxt"], ["is rel2", "at", "?:X", "?:Y", "?:Ctxt"]],
+  [["-is rel2", "in", "?:X", "?:Y", "?:Ctxt"], ["is rel2", "at", "?:X", "?:Y", "?:Ctxt"]],
 
   // == 5. ACTIVITY & MOVEMENT (BAbI TASK LOGIC) ==
   // Davidsonian Activity Reification: activity + has type + has actor [cite: 334, 335, 354]
@@ -312,6 +336,39 @@
   [["-has type", "?:E", "hand", "?:Ctxt"], ["has type", "?:E", "give", "?:Ctxt"]],
   [["-has type", "?:E", "pass", "?:Ctxt"], ["has type", "?:E", "give", "?:Ctxt"]],
   [["-has type", "?:E", "send", "?:Ctxt"], ["has type", "?:E", "give", "?:Ctxt"]],
+
+  // == 5d. COMPLETION RESULT STATES ==
+  // If a "finish" event targets X, then X has property "finished" in the next state.
+  [
+    ["-has type", "?:E", "finish", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-has target", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-next", "?:W", "?:W2"],
+    ["has property", "finished", "?:X", ["$ctxt", "present", "?:W2", "?:L", "?:K"]]
+  ],
+
+  // == 5e. PP-ATTACHMENT BRIDGES ==
+  // Bridge: instrument implies possession by the actor (defeasible, 90%).
+  // "The man saw the woman with a telescope" → the man had the telescope.
+  {
+    "@confidence": 0.9,
+    "@logic": [
+      ["-has instrument", "?:E", "?:X", "?:Ctxt"],
+      ["-has actor", "?:E", "?:Y", "?:Ctxt"],
+      ["have", "?:Y", "?:X", "?:Ctxt"],
+      ["$block", 0, ["$not", ["have", "?:Y", "?:X", "?:Ctxt"]]]
+    ]
+  },
+  // Bridge: event location implies target location (defeasible, 90%).
+  // "John ate the pizza on the table" → the pizza was on the table.
+  {
+    "@confidence": 0.9,
+    "@logic": [
+      ["-has location", "?:E", "?:L", "?:P", "?:Ctxt"],
+      ["-has target", "?:E", "?:Y", "?:Ctxt"],
+      ["is rel2", "?:P", "?:Y", "?:L", "?:Ctxt"],
+      ["$block", 0, ["$not", ["is rel2", "?:P", "?:Y", "?:L", "?:Ctxt"]]]
+    ]
+  },
 
   // == 6. PERSISTENCE (FRAME PROBLEM) ==
   // Default persistence across world states using variable worlds with next(?:W, ?:W2).

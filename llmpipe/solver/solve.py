@@ -286,7 +286,15 @@ def _parse_cmd_line():
     elif el in ["-clearcache", "--clearcache"]:
       opts["clearcache_flag"] = True
     elif el in ["-think", "--think"]:
-      opts["think_flag"] = True
+      # -think alone → True; -think N → integer budget
+      if elpos + 1 < len(params):
+        try:
+          opts["think_flag"] = int(params[elpos + 1])
+          skippos = 1
+        except ValueError:
+          opts["think_flag"] = True
+      else:
+        opts["think_flag"] = True
     elif el in ["-nollmcache", "--nollmcache"]:
       # LLM response caching is ON by default; this disables it for this run
       opts["use_llm_cache_flag"] = False

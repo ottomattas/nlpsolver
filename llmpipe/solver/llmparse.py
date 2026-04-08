@@ -34,10 +34,12 @@ import pretty
 # prompt files are found regardless of the working directory at runtime.
 _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-stage1_instructions_file = os.path.join(_root, "prompts", "stage1_instructions.txt")
+stage1_instructions_file = os.path.join(_root, "prompts", "stage1_instructions_full.txt")
 stage1_examples_file     = os.path.join(_root, "prompts", "stage1_examples.txt")
-stage2_instructions_file = os.path.join(_root, "prompts", "stage2_instructions.txt")
+stage1_checklist_file    = os.path.join(_root, "prompts", "stage1_checklist_full.txt")
+stage2_instructions_file = os.path.join(_root, "prompts", "stage2_instructions_full.txt")
 stage2_examples_file     = os.path.join(_root, "prompts", "stage2_examples.txt")
+stage2_checklist_file    = os.path.join(_root, "prompts", "stage2_checklist_full.txt")
 
 # Separator inserted between instructions and examples when building a prompt
 examples_separator = "\n\nExamples:\n\n"
@@ -65,11 +67,13 @@ _stage2_sysprompt = None
 def load_prompts():
   """Load and compose stage prompts from files. Called automatically on first use."""
   global _stage1_sysprompt, _stage2_sysprompt
-  _stage1_sysprompt = _compose_prompt(stage1_instructions_file, stage1_examples_file, "stage1")
-  _stage2_sysprompt = _compose_prompt(stage2_instructions_file, stage2_examples_file, "stage2")
+  _stage1_sysprompt = _compose_prompt(stage1_instructions_file, stage1_examples_file, "stage1",
+                                      checklist_file=stage1_checklist_file)
+  _stage2_sysprompt = _compose_prompt(stage2_instructions_file, stage2_examples_file, "stage2",
+                                      checklist_file=stage2_checklist_file)
 
 
-def _compose_prompt(instructions_file, examples_file, label):
+def _compose_prompt(instructions_file, examples_file, label, checklist_file=None):
   try:
     with open(instructions_file, "r") as f:
       instructions = f.read().strip()
@@ -82,8 +86,18 @@ def _compose_prompt(instructions_file, examples_file, label):
   except Exception as e:
     _print_error("Could not read " + label + " examples file '" + examples_file + "': " + str(e))
     examples = ""
+  checklist = ""
+  if checklist_file:
+    try:
+      with open(checklist_file, "r") as f:
+        checklist = f.read().strip()
+    except Exception as e:
+      _print_error("Could not read " + label + " checklist file '" + checklist_file + "': " + str(e))
   if instructions and examples:
-    return instructions + examples_separator + examples
+    prompt = instructions + examples_separator + examples
+    if checklist:
+      prompt = prompt + "\n\n" + checklist
+    return prompt
   return instructions or examples
 
 

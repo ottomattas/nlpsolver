@@ -262,8 +262,8 @@ def _collect_rel2_verbs(node, verbs):
   """Recursively scan stage-2 JSON for ["is rel2", REL, ...] and collect REL."""
   if not isinstance(node, list) or not node:
     return
-  if (node[0] in ("is rel2", "-is rel2") and len(node) >= 2
-      and isinstance(node[1], str) and not node[1].startswith("?:")):
+  if (node[0] in ("is rel2", "-is rel2", "has degree rel2", "-has degree rel2")
+      and len(node) >= 2 and isinstance(node[1], str) and not node[1].startswith("?:")):
     verbs.add(node[1].lower())
   for el in node:
     if isinstance(el, list):
@@ -308,12 +308,18 @@ def _collect_text_qualifiers(s1_json, action_verbs=None):
         if raw:
           eid_texts[eid].append(raw)
 
-  # Build extra stop words: entity base names + action verbs.
+  # Build extra stop words: entity base names + action verbs + conjugations.
   # Prevents "John" in "John 1 drove a car 2" from becoming a qualifier for
-  # "car 2", and "drive"/"buy" from becoming qualifiers.
+  # "car 2", and "likes"/"gave" from becoming qualifiers.
   entity_bases = {info[0].lower() for info in eid_info.values()}
   if action_verbs:
     entity_bases = entity_bases | action_verbs
+    for v in action_verbs:
+      entity_bases.add(v + "s")
+      entity_bases.add(v + "es")
+      entity_bases.add(v + "d")
+      entity_bases.add(v + "ed")
+      entity_bases.add(v + "ing")
 
   result = {}
   for eid, texts in eid_texts.items():

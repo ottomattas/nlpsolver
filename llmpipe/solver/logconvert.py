@@ -1146,12 +1146,28 @@ def _extract_package_ctx(package):
 
   elif op == "question":
     if len(package) >= 2:
-      return True, package[1], None, None, None, None, None
+      body = package[1]
+      # Strip "holds" wrapper from question body: ["question", ["holds", W, F]]
+      # → use F as formula and W as world (for $ctxt injection).
+      world = None
+      if (isinstance(body, list) and len(body) >= 3
+          and body[0] == "holds"):
+        world = body[1]
+        body  = body[2]
+      return True, body, None, world, None, None, None
     return True, None, None, None, None, None, None
 
   elif op == "ask":
     if len(package) >= 3:
-      return True, package, None, None, None, None, None
+      body = package
+      # Strip "holds" wrapper from ask body: ["ask", var, ["holds", W, F]]
+      # → use ["ask", var, F] and W as world.
+      world = None
+      if (len(package) >= 3 and isinstance(package[2], list)
+          and len(package[2]) >= 3 and package[2][0] == "holds"):
+        world = package[2][1]
+        body  = [package[0], package[1], package[2][2]]
+      return True, body, None, world, None, None, None
     return True, None, None, None, None, None, None
 
   elif op == "and":

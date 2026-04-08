@@ -533,9 +533,10 @@ def _format_prep_answers(answers, logic=None):
   """
   entity_props = _build_entity_props(logic)
 
-  parts = []
-  seen  = set()
-  best_conf = 0.0
+  # Collect all (prep, entity_key) pairs first, then filter.
+  _SPECIFIC_PREPS = frozenset({"on", "in", "above", "under", "near"})
+  entries = []   # list of (prep, entity_key, display_str, conf)
+  seen    = set()
   for ans in answers:
     val  = ans.get("answer")
     conf = ans.get("confidence", 1.0)
@@ -550,13 +551,27 @@ def _format_prep_answers(answers, logic=None):
       continue
     if not isinstance(entity_raw, (str, list)):
       continue
-    key = (prep, str(entity_raw))
+    entity_key = str(entity_raw)
+    key = (prep, entity_key)
     if key in seen:
       continue
     seen.add(key)
+    entries.append((prep, entity_key,
+                    prep + " " + _location_entity_name(entity_raw, entity_props),
+                    conf))
+
+  # Drop "at" answers when a more specific preposition ("on", "in", etc.)
+  # exists for the same entity.  "at" is derived from on→at / in→at axioms;
+  # showing both "on X" and "at X" is redundant.
+  specific_entities = {ek for p, ek, _, _ in entries if p in _SPECIFIC_PREPS}
+  parts = []
+  best_conf = 0.0
+  for prep, ek, display, conf in entries:
+    if prep == "at" and ek in specific_entities:
+      continue
+    parts.append(display)
     if conf > best_conf:
       best_conf = conf
-    parts.append(prep + " " + _location_entity_name(entity_raw, entity_props))
 
   if not parts:
     return "Unknown."

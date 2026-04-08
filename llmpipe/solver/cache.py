@@ -300,7 +300,7 @@ def make_llm_cache_key(llm, version, temperature, seed, max_tokens, think, syspr
     "temperature": temperature,
     "seed":        seed,
     "max_tokens":  max_tokens  or 0,
-    "think":       bool(think),
+    "think":       think if isinstance(think, int) else bool(think),
     "sysprompt":   sysprompt   or "",
     "input":       input_text  or "",
   }

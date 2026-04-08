@@ -11,4 +11,7 @@
 ANTONYMS={
 "outside":"inside",
 "below":"above",
+"unfinished":"finished",
+"incomplete":"complete",
+"undone":"done",
 }

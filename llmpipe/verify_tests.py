@@ -1,33 +1,27 @@
 #!/usr/bin/env python3
 """
-verify_tests.py  --  audit an nlpsolver test file using GPT, Gemini and Claude
-as logic judges, then produce an annotated copy.
+verify_tests.py  --  collect LLM answers for an nlpsolver test file.
 
-For each test [text, expected] the three LLMs are asked (with thinking enabled)
-whether the expected answer is correct and what alternatives exist.  The result
-is a goodness score (0-100) and an annotated output file.
+For each test [text, expected] the configured LLMs are asked (with thinking
+enabled) what the correct answer is.  The result is appended as a dict
+{"llm_name": answer, ...} to each test entry and flushed immediately.
 
 Usage:
-  python3 verify_tests.py tests/tests_core.py [options]
+  python3 verify_tests.py [tests/tests_core.py] [options]
 
 Options:
   --out FILE          write annotated output to FILE
                       (default: <input_stem>_verified.py in the same directory)
   --limit N           process only the first N tests  (default: all)
   --skip N            skip the first N tests           (default: 0)
+  --llms LIST         comma-separated LLM names to use (default: gpt,claude,gemini)
   --think LEVEL       reasoning level: none | low | medium  (default: medium)
   --dry-run           print results but do not write output file
 
-Goodness score:
-  100  all three LLMs agree the expected answer is correct
-   67  two LLMs agree
-   33  one LLM agrees
-    0  none agree
-  Values in between arise when LLM alternatives soft-match the expected answer.
-
-Output format: each test entry becomes [text, expected, metadata_dict] where
-metadata_dict contains "goodness", "alternatives" and "comment" fields.
-If an entry already has a third element (dict), it is updated in place.
+Output format: each test entry becomes [text, expected, llm_answers_dict] where
+llm_answers_dict maps LLM names to their proposed answers.
+If an entry already has a third element (dict with LLM keys), existing answers
+are preserved and only missing LLMs are queried.
 test.py only reads entry[0] and entry[1], so the third element is ignored there.
 """
 
@@ -36,7 +30,6 @@ import os
 import json
 import re
 import threading
-import random
 
 # Allow importing from solver/
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "solver"))
@@ -46,137 +39,43 @@ import globals as _globals
 import cache as _cache_mod
 
 # ── LLM versions used for verification ────────────────────────────────────────
-VERIFY_GPT_VERSION    = "gpt-5.1"
-VERIFY_CLAUDE_VERSION = "claude-sonnet-4-6"
-VERIFY_GEMINI_VERSION = "gemini-2.5-flash"
+LLM_VERSIONS = {
+  "gpt":      "gpt-5.1",
+  "claude":   "claude-sonnet-4-6",
+  "gemini":   "gemini-2.5-flash-lite",
+  "deepseek": "deepseek-chat",
+}
 
-# ── matching helpers (mirror of test.py) ──────────────────────────────────────
-
-_SPATIAL_PREPS = frozenset({
-  "in", "on", "at", "near", "above", "under", "below", "over",
-  "inside", "outside", "behind", "beside", "between", "by",
-  "within", "upon", "onto", "into",
-})
-_ARTICLES       = frozenset({"a", "an", "the"})
-_CONF_QUALIFIERS = frozenset({"probably", "likely", "perhaps", "certainly", "possibly"})
-
-
-def _split_and_phrases(txt):
-  parts = re.split(r',\s+and\s+|,\s+|\s+and\s+', txt)
-  return [p.strip() for p in parts if p.strip()]
-
-
-def _parse_phrase(phrase):
-  words = phrase.lower().replace(".", "").replace(",", "").split()
-  prep = ""
-  if words and words[0] in _SPATIAL_PREPS:
-    prep = words[0]
-    words = words[1:]
-  words = [w for w in words if w not in _ARTICLES]
-  return prep, " ".join(words)
-
-
-def _phrases_match(expected_str, received_str):
-  exp = _split_and_phrases(expected_str)
-  rec = _split_and_phrases(received_str)
-  if len(exp) != len(rec) or len(exp) <= 1:
-    return False
-  exp_p = sorted([_parse_phrase(p) for p in exp], key=lambda x: x[1])
-  rec_p = sorted([_parse_phrase(p) for p in rec], key=lambda x: x[1])
-  for (ep, ec), (rp, rc) in zip(exp_p, rec_p):
-    if ec != rc:
-      return False
-    if ep and rp and ep != rp:
-      return False
-  return True
-
-
-def _norm_conf(txt):
-  if not isinstance(txt, str):
-    return txt
-  parts = txt.split(" ", 1)
-  if len(parts) == 2 and parts[0].rstrip(".").lower() in _CONF_QUALIFIERS:
-    return parts[1]
-  return txt
-
-
-def _standardize(txt):
-  if not isinstance(txt, str):
-    return txt
-  txt = txt.replace(".", "").replace(",", " ").lower()
-  words = [w for w in txt.split() if w not in {"a", "an", "the"} and len(w) > 1]
-  words.sort()
-  return words
-
-
-def result_matches(expected, received):
-  """Return True if received is an acceptable answer for expected."""
-  if received is True:  received = "True."
-  if received is False: received = "False."
-  if expected is True:  expected = "True."
-  if expected is False: expected = "False."
-  if not received:
-    return False
-  cleaned = received
-  if isinstance(cleaned, str) and "(" in cleaned and ")" in cleaned:
-    tmp = []; depth = 0
-    for ch in cleaned:
-      if ch == "(":   depth += 1
-      elif ch == ")": depth -= 1
-      elif depth == 0: tmp.append(ch)
-    cleaned = "".join(tmp).replace(" .", ".").strip()
-  if isinstance(cleaned, str):
-    cleaned = cleaned.split("\n")[0].strip()
-  if expected is None:
-    return isinstance(cleaned, str) and cleaned.startswith("Unknown")
-  if isinstance(expected, str):
-    expected = expected.strip()
-  if expected == cleaned:
-    return True
-  if isinstance(expected, str) and isinstance(cleaned, str):
-    if _phrases_match(expected, cleaned):
-      return True
-  if _standardize(expected) == _standardize(cleaned):
-    return True
-  nc = _norm_conf(cleaned)
-  ne = _norm_conf(expected)
-  if nc != cleaned or ne != expected:
-    if nc == ne:
-      return True
-    if _standardize(ne) == _standardize(nc):
-      return True
-  return False
-
-
-# ── verification prompt ────────────────────────────────────────────────────────
+# ── prompt ────────────────────────────────────────────────────────────────────
 
 _SYSTEM_PROMPT = """\
 You are an expert in logical reasoning and natural language understanding.
-You will be given a short logical reasoning problem (a few sentences followed
-by a question) and a proposed expected answer.  Your job is to judge whether
-that answer is correct for the most natural, standard interpretation.
+You will be given a short logical reasoning problem: a few sentences followed
+by a question.  Your job is to determine the correct answer based ONLY on the
+information given.
 
 Rules:
-- Answer types: boolean questions → "True.", "False.", or "Unknown."
-  (Unknown = cannot be determined from the given information alone).
-  Confidence-qualified variants like "Probably true." are also valid.
-- Who/what questions → one or more entity names ending in ".", e.g. "John."
-  or "John and Mary."
-- None / null expected means the correct answer is "Unknown."
-- Do NOT solve the problem yourself first and then judge — reason about the
-  problem and the expected answer together.
+- For yes/no questions: answer "True.", "False.", or "Unknown."
+  (Unknown = cannot be determined from the given information alone.)
+  Use confidence-qualified variants like "Probably true." or "Likely false."
+  when the premises use words like "most", "probably", "normally" etc.
+- For who/what/where/when/which questions: answer with the entity name(s)
+  ending in ".", e.g. "John.", "John and Mary.", "In the house.", "On Monday."
+  Answer "Unknown." if the answer cannot be determined.
+- Use ONLY the information explicitly stated. Do not add world knowledge.
+  If a fact is not stated or derivable, the answer is "Unknown."
+- Treat each problem independently.
 
 Respond ONLY with a single JSON object, no markdown fences, no extra text:
 {
-  "correct": true or false,
-  "alternatives": [],
-  "comment": "one short sentence"
+  "answer": "your answer here",
+  "alternatives": []
 }
 
-"alternatives": list up to 3 alternative answers that are also correct,
-  but only if they genuinely differ from the proposed expected answer.
-  Leave the list empty when the expected answer is correct and no alternatives exist.
-"comment": one sentence summarising your reasoning.
+"answer": your answer to the question (a string like "True.", "False.",
+  "Unknown.", "John.", "In the house.", etc.)
+"alternatives": list of up to 3 alternative answers that could also be
+  correct under different reasonable interpretations. Empty list if none.
 """
 
 
@@ -184,21 +83,20 @@ def _expected_display(expected):
   if expected is None:  return "Unknown."
   if expected is True:  return "True."
   if expected is False: return "False."
+  if isinstance(expected, list):
+    return " or ".join(str(e) for e in expected)
   return str(expected)
 
 
-def _make_user_prompt(text, expected):
-  return (
-    "Problem:\n" + text.strip() +
-    "\n\nProposed expected answer: " + _expected_display(expected)
-  )
+def _make_user_prompt(text):
+  return "Problem:\n" + text.strip()
 
 
 # ── LLM calls ─────────────────────────────────────────────────────────────────
 
-def _call_llm_for_verification(llm, version, text, expected, think):
+def _call_llm_for_answer(llm, version, text, think):
   """Call one LLM and return the raw string result."""
-  user = _make_user_prompt(text, expected)
+  user = _make_user_prompt(text)
   return llmcall.call_llm(
     _SYSTEM_PROMPT, user,
     llm=llm, version=version,
@@ -229,102 +127,50 @@ def _parse_response(raw):
   return None
 
 
-def _call_all_llms(text, expected, think):
-  """Call GPT, Gemini, Claude in parallel.  Returns list of 3 dicts (or None)."""
-  results = [None, None, None]
-  specs = [
-    ("gpt",    VERIFY_GPT_VERSION,    0),
-    ("gemini", VERIFY_GEMINI_VERSION, 1),
-    ("claude", VERIFY_CLAUDE_VERSION, 2),
-  ]
+def _extract_answer(resp):
+  """Extract the answer from a parsed LLM response dict.
+  Returns a string if no alternatives, or a list [answer, alt1, alt2, ...]
+  if alternatives are present.  Handles missing fields gracefully."""
+  if resp is None:
+    return "Error"
+  answer = resp.get("answer")
+  alts = [str(a) for a in (resp.get("alternatives") or []) if a]
+  if answer is not None:
+    answer = str(answer)
+    # Deduplicate: drop alts that repeat the primary answer
+    alts = [a for a in alts if a != answer]
+    if alts:
+      return [answer] + alts
+    return answer
+  # No "answer" key — use alternatives if available
+  if alts:
+    if len(alts) == 1:
+      return alts[0]
+    return alts
+  return "Error"
 
-  def _worker(llm, version, idx):
-    raw = _call_llm_for_verification(llm, version, text, expected, think)
-    results[idx] = _parse_response(raw)
 
-  threads = [threading.Thread(target=_worker, args=spec) for spec in specs]
+def _call_llms(text, think, llm_names):
+  """Call specified LLMs in parallel.  Returns dict {name: answer_string_or_list}."""
+  results = {}
+  lock = threading.Lock()
+
+  def _worker(name):
+    try:
+      version = LLM_VERSIONS.get(name, name)
+      raw = _call_llm_for_answer(name, version, text, think)
+      resp = _parse_response(raw)
+      answer = _extract_answer(resp)
+    except Exception as e:
+      answer = "Error"
+      print(f"  {name}: error — {e}")
+    with lock:
+      results[name] = answer
+
+  threads = [threading.Thread(target=_worker, args=(name,)) for name in llm_names]
   for t in threads: t.start()
   for t in threads: t.join()
   return results
-
-
-# ── goodness & annotation ─────────────────────────────────────────────────────
-
-def _compute_annotation(expected, responses):
-  """
-  Compute goodness score, collect alternatives, build comment.
-
-  Returns dict with keys: goodness (int 0-100), alternatives (list),
-  comment (str), new_expected (same type as expected, possibly changed).
-  """
-  llm_names = ["gpt", "gemini", "claude"]
-  agrees = 0
-  llm_verdicts = []
-  all_alternatives = []
-
-  for name, resp in zip(llm_names, responses):
-    if resp is None:
-      llm_verdicts.append(name + ": error")
-      continue
-    correct = resp.get("correct", False)
-    alts    = [a for a in (resp.get("alternatives") or []) if a][:3]
-    cmt     = (resp.get("comment") or "").strip()
-
-    # An LLM "agrees" if it says correct=True, or if one of its alternatives
-    # matches the expected answer via result_matches.
-    llm_agrees = correct
-    if not llm_agrees:
-      for a in alts:
-        if result_matches(expected, a):
-          llm_agrees = True
-          break
-
-    if llm_agrees:
-      agrees += 1
-      llm_verdicts.append(name + ": correct")
-    else:
-      if alts:
-        alts_short = ", ".join('"' + a + '"' for a in alts)
-        llm_verdicts.append(name + ": wrong, suggests " + alts_short)
-      else:
-        llm_verdicts.append(name + ": wrong")
-
-    for a in alts:
-      if a and a not in all_alternatives:
-        all_alternatives.append(a)
-
-  goodness = round(agrees / 3 * 100)
-
-  # If nobody agrees, look for a consensus alternative (≥2 LLMs propose it).
-  new_expected = expected
-  if goodness == 0 and all_alternatives:
-    votes = {}
-    for resp in responses:
-      if not resp:
-        continue
-      for a in (resp.get("alternatives") or [])[:3]:
-        key = tuple(_standardize(a))
-        votes[key] = votes.get(key, 0) + 1
-    best_key = max(votes, key=votes.__getitem__) if votes else None
-    if best_key and votes[best_key] >= 2:
-      # Find the canonical string for this key
-      for resp in responses:
-        if not resp:
-          continue
-        for a in (resp.get("alternatives") or [])[:3]:
-          if tuple(_standardize(a)) == best_key:
-            new_expected = a
-            break
-        if new_expected != expected:
-          break
-
-  comment = "; ".join(llm_verdicts)
-  return {
-    "goodness":     goodness,
-    "alternatives": all_alternatives[:3],
-    "comment":      comment,
-    "new_expected": new_expected,
-  }
 
 
 # ── test file I/O ──────────────────────────────────────────────────────────────
@@ -339,43 +185,44 @@ def _load_tests(path):
   return tests
 
 
-def _repr_expected(v):
+def _repr_value(v):
   if v is True:  return "True"
   if v is False: return "False"
   if v is None:  return "None"
   return repr(v)
 
 
-def _write_annotated(path, tests, annotations):
-  """Write annotated test list to path as a valid Python eval-able file."""
+def _write_output(path, tests):
+  """Write test list to path as a valid Python eval-able file.
+  Flushes after each call so partial results survive interruption."""
   lines = ["# verified test file — generated by verify_tests.py\n", "\n", "[\n\n"]
 
-  for i, (entry, ann) in enumerate(zip(tests, annotations)):
+  for i, entry in enumerate(tests):
     text     = entry[0]
-    expected = ann.get("new_expected", entry[1])
-    goodness = ann.get("goodness", 100)
-    alts     = ann.get("alternatives", [])
-    comment  = ann.get("comment", "")
+    expected = entry[1]
     comma    = "," if i < len(tests) - 1 else ""
 
-    # Preserve existing extra fields beyond index 1 if present
-    extra = entry[2] if len(entry) > 2 and isinstance(entry[2], dict) else {}
-
-    meta = dict(extra)
-    meta["goodness"] = goodness
-    if alts:
-      meta["alternatives"] = alts
-    if comment:
-      meta["comment"] = comment
-
     text_repr = '"""' + text.replace('\\', '\\\\') + '"""' if "\n" in text else repr(text)
-    exp_repr  = _repr_expected(expected)
+    exp_repr  = _repr_value(expected)
 
-    lines.append("  [" + text_repr + ", " + exp_repr + ", " + json.dumps(meta) + "]" + comma + "\n\n")
+    if len(entry) > 2:
+      extra = entry[2]
+      if isinstance(extra, dict):
+        extra_repr = json.dumps(extra, ensure_ascii=False)
+      elif isinstance(extra, list):
+        # Preserve existing list flags like ["default"], ["nochange"]
+        extra_repr = repr(extra)
+      else:
+        extra_repr = repr(extra)
+      lines.append("  [" + text_repr + ", " + exp_repr + ", " + extra_repr + "]" + comma + "\n\n")
+    else:
+      lines.append("  [" + text_repr + ", " + exp_repr + "]" + comma + "\n\n")
 
   lines.append("]\n")
   with open(path, "w") as f:
     f.writelines(lines)
+    f.flush()
+    os.fsync(f.fileno())
 
 
 # ── command-line parsing ───────────────────────────────────────────────────────
@@ -387,6 +234,7 @@ def _parse_args():
   limit     = 0
   skip      = 0
   think_str = "medium"
+  llms_str  = "gpt,claude,gemini,deepseek"
   dry_run   = False
 
   i = 0
@@ -396,6 +244,8 @@ def _parse_args():
     elif a == "--skip"     and i + 1 < len(args): skip      = int(args[i+1]); i += 2
     elif a == "--out"      and i + 1 < len(args): out_file  = args[i+1];      i += 2
     elif a == "--think"    and i + 1 < len(args): think_str = args[i+1];      i += 2
+    elif a == "--think-medium": think_str = "medium"; i += 1
+    elif a == "--llms"     and i + 1 < len(args): llms_str  = args[i+1];      i += 2
     elif a == "--dry-run":  dry_run  = True;  i += 1
     elif not a.startswith("--"):
       test_file = a; i += 1
@@ -413,21 +263,42 @@ def _parse_args():
     base, ext = os.path.splitext(test_file)
     out_file = base + "_verified" + ext
 
-  return test_file, out_file, limit, skip, think_str, dry_run
+  llm_names = [s.strip() for s in llms_str.split(",") if s.strip()]
+
+  return test_file, out_file, limit, skip, think_str, llm_names, dry_run
 
 
 # ── main ───────────────────────────────────────────────────────────────────────
 
 def main():
-  test_file, out_file, limit, skip, think_str, dry_run = _parse_args()
+  test_file, out_file, limit, skip, think_str, llm_names, dry_run = _parse_args()
 
-  # none=False, low=500 token budget, medium=8000 token budget
   # none=False, low=1024 token budget, medium=8000 token budget
   think = {"none": False, "low": 1024, "medium": 8000}[think_str]
 
   print(f"Loading tests from: {test_file}")
   tests = _load_tests(test_file)
   print(f"Loaded {len(tests)} tests.")
+  print(f"LLMs: {', '.join(llm_names)}")
+
+  # Merge existing annotations from output file if it exists
+  if not dry_run and os.path.exists(out_file):
+    try:
+      prev = _load_tests(out_file)
+      if len(prev) == len(tests):
+        merged = 0
+        for j, pentry in enumerate(prev):
+          if len(pentry) > 2 and isinstance(pentry[2], dict):
+            # Carry over LLM answers into the working list
+            if len(tests[j]) > 2 and isinstance(tests[j][2], dict):
+              tests[j][2].update(pentry[2])
+            else:
+              tests[j] = [tests[j][0], tests[j][1], dict(pentry[2])]
+            merged += 1
+        if merged:
+          print(f"Merged {merged} existing annotations from: {out_file}")
+    except Exception:
+      pass  # output file corrupt or incompatible — start fresh
 
   start = skip
   end   = (start + limit) if limit else len(tests)
@@ -435,38 +306,61 @@ def main():
   print(f"Processing tests {start+1}–{end}  (think={think_str})")
   print()
 
-  # Annotations list parallel to tests; entries not in [start,end) keep defaults.
-  annotations = []
-  for i, entry in enumerate(tests):
-    if i < start or i >= end:
-      # Keep as-is
-      ann = {"new_expected": entry[1]}
+  for i in range(start, end):
+    try:
+      entry    = tests[i]
+      text     = entry[0]
+      expected = entry[1]
+
+      # Get or create the LLM answers dict (third element)
       if len(entry) > 2 and isinstance(entry[2], dict):
-        ann.update(entry[2])
-        ann["new_expected"] = entry[1]
-      annotations.append(ann)
-      continue
+        llm_answers = entry[2]
+      else:
+        llm_answers = {}
 
-    text     = entry[0]
-    expected = entry[1]
-    exp_disp = _expected_display(expected)
+      # Determine which LLMs still need to be queried
+      missing = [name for name in llm_names if name not in llm_answers]
 
-    print(f"[{i+1}/{len(tests)}] {text[:70].strip()}...")
-    print(f"  Expected: {exp_disp}")
+      if not missing:
+        print(f"[{i+1}/{len(tests)}] Already complete, skipping.")
+        continue
 
-    responses = _call_all_llms(text, expected, think)
-    ann       = _compute_annotation(expected, responses)
+      exp_disp = _expected_display(expected)
+      print(f"[{i+1}/{len(tests)}] {text[:70].strip()}...")
+      print(f"  Expected: {exp_disp}")
 
-    print(f"  Goodness: {ann['goodness']}%  |  {ann['comment']}")
-    if ann["alternatives"]:
-      print(f"  Alternatives: {ann['alternatives']}")
-    if ann["new_expected"] != expected:
-      print(f"  >>> Suggested new expected: {_expected_display(ann['new_expected'])}")
+      new_answers = _call_llms(text, think, missing)
+      llm_answers.update(new_answers)
 
-    annotations.append(ann)
+      # Print collected answers
+      for name in llm_names:
+        ans = llm_answers.get(name, "?")
+        if isinstance(ans, list):
+          primary = ans[0]
+          alts = ans[1:]
+          marker = " ✓" if primary == exp_disp else ""
+          print(f"  {name}: {primary}{marker}  (also: {', '.join(alts)})")
+        else:
+          marker = " ✓" if ans == exp_disp else ""
+          print(f"  {name}: {ans}{marker}")
 
-    if not dry_run:
-      _write_annotated(out_file, tests, annotations)
+      # Update the test entry in place
+      if len(entry) > 2 and isinstance(entry[2], dict):
+        entry[2] = llm_answers
+      elif len(entry) > 2:
+        tests[i] = [text, expected, llm_answers]
+      else:
+        tests[i] = [text, expected, llm_answers]
+
+      # Flush immediately
+      if not dry_run:
+        _write_output(out_file, tests)
+
+      print()
+
+    except Exception as e:
+      print(f"[{i+1}/{len(tests)}] ERROR: {e}")
+      print()
 
   if dry_run:
     print("\n[dry-run] Output not written.")

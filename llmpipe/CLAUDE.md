@@ -115,7 +115,7 @@ prompts/stage2_examples.txt       -- Stage 2 few-shot examples
 use_llm          = "gemini"              # "gpt" | "claude" | "gemini" | "deepseek"
 claudeversion    = "claude-sonnet-4-6"
 gptversion       = "gpt-5.1"
-geminiversion    = "gemini-2.0-flash"
+geminiversion    = "gemini-2.5-flash-lite"
 deepseekversion  = "deepseek-chat"       # V3.2; "deepseek-reasoner" for thinking
 temperature      = 0
 default_max_tokens = 8000
