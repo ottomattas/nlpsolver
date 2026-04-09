@@ -36,6 +36,12 @@ Output format:
 -jsonlogic       Shortcut for -logic -json
 -gkin FILE       Save GK prover input to FILE (with GK command as comment)
 
+Simplification (see ENCODINGS.md §5 for details):
+-nocontext       Context → constant "$c" (no worlds/tense)
+-noexceptions    Strip $block from defeasible rules
+-simpleproperties  Degree predicates → simple (+ -noexceptions)
+-simple          All three combined
+
 Other:
 -llm NAME        LLM provider: gpt, claude, gemini, or deepseek
 -version VER     Model version string, e.g. claude-sonnet-4-6

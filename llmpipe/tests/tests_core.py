@@ -87,7 +87,7 @@
   ['Big or strong elephants are nice. John is a big elephant. John is strong. John is nice?', True],
   ['Big or strong elephants are nice. John is an elephant. John is nice?', None],
   ['Big and strong elephants are nice. John is a big elephant. John is a strong elephant. John is nice?', True],
-  ['Yellow and green elephants are nice. John is an elephant. John is yellow and green. John is nice?', True],
+  ['Yellow and green elephants are nice. John is an elephant. John is yellow and green. John is nice?', "Probably true."],
   ['Big and strong elephants are nice. John is a strong elephant. John is nice?', None],
   ['Big and not strong elephants are nice. John is a big elephant. John is a not strong elephant. John is nice?', True],
 

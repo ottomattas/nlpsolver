@@ -14,6 +14,7 @@ For implementation details see `DOCUMENTATION.md`.
 2. [Stage-2: First-Order Logic JSON](#2-stage-2-first-order-logic-json)
 3. [GK Prover Input: Clause List](#3-gk-prover-input-clause-list)
 4. [End-to-End Example](#4-end-to-end-example)
+5. [Simplification Flags](#5-simplification-flags)
 
 ---
 
@@ -345,7 +346,7 @@ Dynamic verbs are encoded as Davidsonian events:
 | `has actor E ENTITY` | Who performs the event |
 | `has target E ENTITY` | What the event acts on (direct object) |
 | `has recipient E ENTITY` | Person receiving (dative: "gave book to Mary") |
-| `has destination E ENTITY` | Movement endpoint ("went to the kitchen") |
+| `has destination E ENTITY PREP` | Movement/placement endpoint with preposition. Use "at" for plain motion ("went to the kitchen"); use the spatial preposition for placement ("put on the chair" → "on") |
 | `has source E ENTITY` | Movement origin ("came from the office") |
 | `has location E ENTITY PREP` | Where the event occurs; PREP is the spatial preposition (`"in"`, `"at"`, `"near"`, etc.) |
 | `has instrument E ENTITY` | What tool is used |
@@ -879,11 +880,17 @@ The prover also loads `axioms_std.js` containing background knowledge:
 - **Persistence (frame problem)**: facts persist across world states unless blocked
   (defeasible for have, has property, has degree property, can, has part, is rel2;
   variable worlds via `next(?:W, ?:W2)`)
-- **Movement axioms**: `has_actor(E,X) + has_type(E,go) + has_destination(E,Dest) +
+- **Movement axioms**: `has_actor(E,X) + has_type(E,go) + has_destination(E,Dest,Prep) +
   next(W,W2) → is_rel2(at, X, Dest, $ctxt(present, W2, ...))`.  Result tense is
-  always "present" at the new world.
-- **Movement verb normalization**: the pipeline normalizes travel/journey/move → go
-  in `lc_rewrites.py` before clausification, avoiding synonym axiom chains in the
+  always "present" at the new world.  The `has_destination` predicate is 4-arg
+  with a preposition slot (use `"at"` for plain motion).
+- **Placement axioms**: `has_actor(E,X) + has_type(E,put) + has_target(E,Obj) +
+  has_destination(E,Dest,Prep) + next(W,W2) → is_rel2(Prep, Obj, Dest,
+  $ctxt(present, W2, ...))`.  Mirrors movement results but the **target** ends up
+  at the destination (with the spatial preposition preserved from `has_destination`).
+- **Movement & placement verb normalization**: the pipeline normalizes
+  travel/journey/move → go and place/set/lay/position/deposit → put in
+  `lc_rewrites.py` before clausification, avoiding synonym axiom chains in the
   prover that cause combinatorial explosion with many world states.
 - **`moved(X,W)` helper**: derived from go-events; blocks `is_rel2` frame axiom
   persistence for entities that moved at world W.
@@ -908,6 +915,21 @@ The prover also loads `axioms_std.js` containing background knowledge:
 - **Tense bridge axioms**: convert `present@W_old` → `past@W_new` when
   `before(W_old, W_new)`.  These correctly encode historical facts but must not
   interfere with present-tense queries (ensured by the question tense default).
+- **Dynamic question tense bridges**: for each present-tense (or past-tense)
+  stative literal in a question's body→defq clause, `logconvert.py` emits a
+  per-question bridge axiom of shape:
+    ```
+    [-pred(args, $ctxt(opposite_tense, ?:W, ...)),
+      pred(args, $ctxt(question_tense, ?:W, ...)),
+      $block(0, $not(pred(args, $ctxt(question_tense, ?:W, ...))))]
+    ```
+  Entity arguments are pinned to those mentioned in the question (free variables
+  in the question become fresh variables in the bridge), so the bridge only fires
+  on past-tense (or present-tense) facts about those specific entities.  This
+  replaces the global Section 6a same-world tense bridges (now disabled in
+  `axioms_std.js`) and avoids search-space explosion.  Stative predicates
+  covered: `have`, `has part`, `can`, `has property`, `has degree property`,
+  `is rel2`, `has degree rel2`.  Built by `lc_ctxt.build_question_tense_bridges`.
 - **Prover seconds auto-estimation**: `prover.py` counts distinct world constants
   in the clause list and scales the prover time limit accordingly (empirical table
   with 2x safety multiplier).  CLI `-seconds N` overrides the estimate.
@@ -1105,3 +1127,61 @@ True.
 The prover derives `isa(animal, John 1)` from the rule
 (`isa(elephant,X) => isa(animal,X)`) and the fact (`isa(elephant, John 1)`),
 which satisfies the `$defq0` biconditional, confirming the answer.
+
+---
+
+## 5. Simplification Flags
+
+The flags `-nocontext`, `-noexceptions`, `-simpleproperties`, and `-simple` produce
+progressively simplified encodings.  `-simple` enables all three.
+
+### 5.1 `-nocontext`
+
+Replaces the `$ctxt(tense, world, loc, know)` term with a constant `"$c"` in every
+predicate atom that normally receives context (§3.4).
+
+```
+Default:    has_degree_property(big, cat_1, none, cat, $ctxt(present, W0, ?:Fv1, ?:Fv2))
+-nocontext: has_degree_property(big, cat_1, none, cat, "$c")
+```
+
+Axioms in `axioms_std.js` that use `?:Ctxt` as a pass-through variable still unify
+(binding `?:Ctxt` to `"$c"`).  Axioms that destructure the context — frame axioms,
+tense bridges, movement/transfer results — do not unify with `"$c"` and become inert.
+This means world-state persistence and tense reasoning are disabled, but all
+context-agnostic axioms (taxonomy, transitivity, bridges, synonyms) remain active.
+
+### 5.2 `-noexceptions`
+
+Strips `$block` literals from defeasible rules produced by `normally` quantifiers
+during clausification.  Rules that were defeasible become strict universal rules.
+
+```
+Default:      [-isa(bird,X), can(X,fly,CTXT), $block(["$",bird,1], $not(can(X,fly,CTXT)))]
+-noexceptions: [-isa(bird,X), can(X,fly,CTXT)]
+```
+
+Only affects clauses derived from the input text.  Axiom-side `$block` literals
+(in `axioms_std.js` frame axioms, etc.) are unaffected.  The `@confidence` field
+is preserved.
+
+### 5.3 `-simpleproperties`
+
+Converts degree predicates to their non-gradable equivalents, dropping degree and
+relclass arguments while preserving the context argument:
+
+```
+has_degree_property(big, cat_1, none, cat, CTX) → has_property(big, cat_1, CTX)
+has_degree_rel2(taller, John, Mary, none, person, CTX) → is_rel2(taller, John, Mary, CTX)
+```
+
+Also implies `-noexceptions`.
+
+### 5.4 `-simple`
+
+Combines all three: `-nocontext` + `-noexceptions` + `-simpleproperties`.
+
+```
+Default: has_degree_property(big, cat_1, none, cat, $ctxt(present, W0, ?:Fv1, ?:Fv2))
+-simple: has_property(big, cat_1, "$c")
+```

@@ -64,6 +64,14 @@ def rewrite_meta_predicates(tree):
     # Transfer verb synonyms: hand/pass/send → give
     if isinstance(verb, str) and verb in ("hand", "pass", "send"):
       return [tree[0], tree[1], "give"] + tree[3:]
+    # Placement verb synonyms: place/set/lay/position/deposit → put
+    if isinstance(verb, str) and verb in ("place", "set", "lay", "position", "deposit"):
+      return [tree[0], tree[1], "put"] + tree[3:]
+  # has_destination 3-arg → 4-arg backward compat: insert "at" as default prep.
+  # Stage 2 may emit ["has destination", E, Dest] (no prep); axioms now expect
+  # ["has destination", E, Dest, Prep]. Insert "at" so existing encodings still work.
+  if op in ("has destination", "-has destination") and len(tree) == 3:
+    return [tree[0], tree[1], tree[2], "at"]
   if op in ("is rel2", "-is rel2") and len(tree) >= 4:
     pfx = "-" if op.startswith("-") else ""
     rel = tree[1]

@@ -1046,7 +1046,33 @@ The four `$ctxt` components per ASU:
 Rules use fresh free variables for all four components so they match facts from any time/world.
 Situational facts use concrete world/tense values so they match only facts in the same context.
 
-Context injection can be disabled globally with `nocontext_flag`.
+Context injection can be disabled globally with `nocontext_flag`.  In that mode the
+constant `"$c"` is injected as the last argument of every eligible atom (instead of
+a `$ctxt` term), so axioms with `?:Ctxt` still unify while axioms with explicit
+`$ctxt(...)` patterns become inert.
+
+#### Question-specific past↔present tense bridges
+
+For each question package, after `$ctxt` injection, `lc_ctxt.build_question_tense_bridges`
+walks the question's body→defq clauses, finds present-tense or past-tense stative
+literals, and emits one specialized bridge axiom per unique (predicate, args) signature:
+
+```
+[-pred(args, $ctxt(opposite_tense, ?:W, ...)),
+  pred(args, $ctxt(question_tense, ?:W, ...)),
+  $block(0, $not(pred(args, $ctxt(question_tense, ?:W, ...))))]
+```
+
+Entity arguments are pinned to the constants from the question; free variables in the
+question literal become fresh variables in the bridge.  Confidence per predicate:
+0.97 for `have`, 0.95 for `is rel2` and `has degree rel2`, 0.99 for the others
+(`has property`, `has degree property`, `has part`, `can`).
+
+This replaces the disabled global Section 6a same-world tense bridges in
+`axioms_std.js`.  Pinning entities keeps the search space small (the bridge can only
+fire on facts about those specific entities), avoiding the prover slowdown caused by
+the global axioms while bridging the same set of tense mismatches between
+past-tense assertions and present-tense questions (and vice versa).
 
 ### 7.5 Gradable property normalisation
 
@@ -1112,7 +1138,7 @@ bridge representation gaps.
 | Possessive `have` inference | `lc_postprocess.add_possessive_have` | "The handle of the fork" — `is_rel2(handle of, fork, handle)` + `isa(handle, handle)` → `have(fork, handle)` | Infers `have(Y,E,CT)` from possessive `is_rel2` patterns.  Handles ground entities, Skolem functions, and `$theof1` terms.  For rule clauses with guard literals (e.g., `[-isa,elephant,?:X]`), generates conditional `have` with the same guard. |
 | Misnested existential hoisting | `lc_rewrites.hoist_misnested_exists` | `[exists E, [and, has_actor(E,X), [exists X, isa(bear,X)]]]` → `[exists E, [exists X, [and, has_actor(E,X), isa(bear,X)]]]` | Pre-clausification fix for assertion formulas.  Detects existential variables used free in sibling conjuncts before their `exists` binding, hoists the binding to wrap the entire conjunction.  Only applies in assertion contexts (from `holds`), with collision checks against enclosing bindings. |
 | Spurious `can` removal | `lc_rewrites.strip_spurious_can` | "Did bears eat berries?" — removes `["can",X,E]` from event query when no modal language in ASU text | Pre-clausification pass on question formulas.  Fires when `can(X,E)` appears alongside `isa(activity,E)` and `has_actor(E,X)` in the same conjunction, both X and E are existentially quantified, and the ASU text contains no modal words (can, could, able, may, might, etc.). |
-| Meta-predicate normalization | `lc_rewrites.rewrite_meta_predicates` | `["is rel2","is",A,B]` → `["isa",A,B]`; `["is rel2","=",A,B]` → `["=",A,B]`; `["is rel2","located in",A,B]` → `["is rel2","in",A,B]` | Pre-clausification rewrite applied to all formulas.  Normalizes copula (`is` → `isa`), identity (`=`), spatial meta-predicates (`located in/at/on/near/above/under` → bare preposition), movement verbs (travel/journey/move → go), and transfer verb synonyms (hand/pass/send → give). |
+| Meta-predicate normalization | `lc_rewrites.rewrite_meta_predicates` | `["is rel2","is",A,B]` → `["isa",A,B]`; `["is rel2","=",A,B]` → `["=",A,B]`; `["is rel2","located in",A,B]` → `["is rel2","in",A,B]` | Pre-clausification rewrite applied to all formulas.  Normalizes copula (`is` → `isa`), identity (`=`), spatial meta-predicates (`located in/at/on/near/above/under` → bare preposition), movement verbs (travel/journey/move → go), placement verbs (place/set/lay/position/deposit → put), and transfer verb synonyms (hand/pass/send → give).  Also normalizes 3-arg `has_destination(E,Dest)` to 4-arg `has_destination(E,Dest,"at")` for backward compat with stale Stage-2 cache entries. |
 | Receive→give normalization | `lc_rewrites.normalize_receive_events` | `["has type",E,"receive"]` + `["has actor",E,X]` → `["has type",E,"give"]` + `["has recipient",E,X]` | Formula-level rewrite: in `and`-blocks containing a receive event, the verb is changed to "give" and the actor role is swapped to recipient.  This allows the give-based transfer axioms in `axioms_std.js` to derive `have(Recipient, Object)` in the next world state. |
 | Set existence fact | `lc_sets._walk_for_count` | "Bears ate berries" with `forall/implies/member/$setof` in assertion context → `member("$some_bear", $setof(...))` | Generates a ground set membership fact for assertion-context `forall/member` patterns so the prover can bootstrap resolution through member-guarded clauses.  Skipped when the set already has element instantiation from a count assertion. |
 | Degree stripping | `lc_postprocess.strip_degree_predicates` | With `-simpleproperties`: `has_degree_property(big,X,none,animal)` → `has_property(big,X)` | (Only with `-simpleproperties`) Replaces degree predicates with simple property predicates |

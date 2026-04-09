@@ -1007,12 +1007,21 @@ def _strip_deg_frm(frm):
   pfx  = "-" if neg else ""
 
   if base == "has degree property" and len(frm) >= 3:
-    # [pred, PROP, ENTITY, DEGREE, RELCLASS] -> [simple_pred, PROP, ENTITY]
-    return [pfx + "has property", frm[1], frm[2]]
+    # [pred, PROP, ENTITY, DEGREE, RELCLASS, ctx?] -> [simple_pred, PROP, ENTITY, ctx?]
+    result = [pfx + "has property", frm[1], frm[2]]
+    # Preserve context argument (last element) if present beyond RELCLASS.
+    # Full form: [pred, PROP, ENTITY, DEGREE, RELCLASS, CTXT] — 6 elements.
+    if len(frm) >= 6:
+      result.append(frm[5])
+    return result
 
   if base == "has degree rel2" and len(frm) >= 4:
-    # [pred, REL, E1, E2, DEGREE, RELCLASS] -> [simple_pred, REL, E1, E2]
-    return [pfx + "is rel2", frm[1], frm[2], frm[3]]
+    # [pred, REL, E1, E2, DEGREE, RELCLASS, ctx?] -> [simple_pred, REL, E1, E2, ctx?]
+    result = [pfx + "is rel2", frm[1], frm[2], frm[3]]
+    # Full form: [pred, REL, E1, E2, DEGREE, RELCLASS, CTXT] — 7 elements.
+    if len(frm) >= 7:
+      result.append(frm[6])
+    return result
 
   # Any other formula/atom: recurse into sub-elements to catch nested occurrences.
   return [frm[0]] + [_strip_deg_frm(a) if isinstance(a, list) else a

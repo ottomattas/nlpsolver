@@ -123,6 +123,194 @@ def strip_time_wrappers(frm, current_tense):
   return frm
 
 
+# ======== question-specific past->present bridge axioms ========
+
+# Stative predicates that get same-world past->present bridges, with confidence.
+STATIVE_BRIDGE_CONFIDENCE = {
+  "have":                0.97,
+  "has part":            0.99,
+  "can":                 0.99,
+  "has property":        0.99,
+  "has degree property": 0.99,
+  "is rel2":             0.95,
+  "has degree rel2":     0.95,
+}
+
+
+def _arg_signature(arg):
+  """Return a hashable signature for an entity argument.
+  Free variables collapse to a single token "?" so different fresh
+  variables produce the same bridge. Function terms (lists) reject."""
+  if isinstance(arg, str):
+    if arg.startswith("?:"):
+      return ("?",)
+    return ("c", arg)
+  if isinstance(arg, (int, float, bool)):
+    return ("c", arg)
+  if isinstance(arg, list):
+    return None  # function term — reject
+  return ("c", arg)
+
+
+def _collect_stative_signatures(atom, sigs):
+  """Walk an atom; collect signatures for stative literals appearing as
+  NEGATIVE literals (body->defq direction) with ground tense in $ctxt.
+  Each signature is (pred, tuple of arg signatures, tense_in_question)
+  where tense_in_question is "present" or "past" — the bridge will go
+  the opposite direction (from the assertion's tense to the question's).
+
+  Recurses into 'or' and '$block' bodies."""
+  if not isinstance(atom, list) or not atom:
+    return
+  pred = atom[0]
+  if not isinstance(pred, str):
+    return
+
+  if pred == "or":
+    for sub in atom[1:]:
+      _collect_stative_signatures(sub, sigs)
+    return
+
+  if pred == "$block" and len(atom) >= 3:
+    # Skip $block bodies — those are not question body literals.
+    return
+
+  # Only consider NEGATIVE literals: body->defq direction needs them satisfied.
+  if not pred.startswith("-"):
+    return
+  base = pred[1:]
+  if base not in STATIVE_BRIDGE_CONFIDENCE:
+    return
+
+  # Last argument must be ["$ctxt", "present"|"past", ...]
+  if len(atom) < 2:
+    return
+  ctxt = atom[-1]
+  if not (isinstance(ctxt, list) and len(ctxt) >= 2 and ctxt[0] == "$ctxt"):
+    return
+  tense = ctxt[1]
+  if tense not in ("present", "past"):
+    return
+
+  ent_args = atom[1:-1]
+  arg_sigs = []
+  for a in ent_args:
+    s = _arg_signature(a)
+    if s is None:
+      return  # function term — skip whole literal
+    arg_sigs.append(s)
+
+  sigs.add((base, tuple(arg_sigs), tense))
+
+
+def build_question_tense_bridges(question_objs, name):
+  """For each unique (predicate, ground-args) combination appearing as a
+  present-tense stative literal in the question clauses, emit a specialized
+  past->present bridge axiom with $block.
+
+  Returns a list of clause dicts (may be empty).
+  """
+  sigs = set()
+  for obj in question_objs:
+    if not isinstance(obj, dict):
+      continue
+    clause = obj.get("@logic")
+    if clause is None:
+      continue
+    if isinstance(clause, list) and clause:
+      if isinstance(clause[0], list):
+        for atom in clause:
+          _collect_stative_signatures(atom, sigs)
+      else:
+        _collect_stative_signatures(clause, sigs)
+
+  bridges = []
+  fv_counter = [0]
+  def _fv():
+    fv_counter[0] += 1
+    return "?:Br" + str(fv_counter[0])
+
+  for base, arg_sigs, q_tense in sigs:
+    conf = STATIVE_BRIDGE_CONFIDENCE[base]
+    # Materialize args: constants stay, placeholders become fresh variables.
+    args_list = []
+    for s in arg_sigs:
+      if s == ("?",):
+        args_list.append(_fv())
+      else:
+        args_list.append(s[1])
+    # Bridge goes from the OPPOSITE tense (assertion side) to the question side.
+    asn_tense = "past" if q_tense == "present" else "present"
+    head_neg = ["-" + base] + args_list + [["$ctxt", asn_tense, "?:W", "?:L", "?:K"]]
+    head_pos = [base] + args_list + [["$ctxt", q_tense, "?:W", "?:L", "?:K"]]
+    block_lit = ["$block", 0, ["$not", [base] + args_list +
+                  [["$ctxt", q_tense, "?:W", "?:L", "?:K"]]]]
+    clause = [head_neg, head_pos, block_lit]
+    bridges.append({
+      "@name": name,
+      "@sourcetype": "question_bridge",
+      "@confidence": conf,
+      "@logic": clause,
+    })
+  return bridges
+
+
+def _inject_const_ctxt_atom(atom):
+  """Append "$c" as the last argument of an eligible GK atom.
+
+  Used when nocontext_flag is set: provides a constant context argument
+  so axioms with "?:Ctxt" still unify, while axioms with explicit
+  $ctxt(...) terms (frame axioms, tense bridges) do not.
+  Strips any $tense sentinel left by time-wrapper processing.
+  """
+  if not isinstance(atom, list) or not atom:
+    return atom
+  pred = atom[0]
+  if not isinstance(pred, str):
+    return atom
+  base = pred[1:] if pred.startswith("-") else pred
+
+  if base == "or":
+    return ["or"] + [_inject_const_ctxt_atom(sub) for sub in atom[1:]]
+
+  if base == "$block" and len(atom) >= 3:
+    body = atom[2]
+    if isinstance(body, list) and len(body) >= 2 and body[0] == "$not":
+      inner = _inject_const_ctxt_atom(body[1])
+      return [atom[0], atom[1], ["$not", inner]]
+    inner = _inject_const_ctxt_atom(body)
+    return [atom[0], atom[1], inner]
+
+  if base in CTXT_ELIGIBLE:
+    args = list(atom)
+    # Strip $tense sentinel if present
+    if (len(args) >= 2 and isinstance(args[-1], list)
+        and len(args[-1]) == 2 and args[-1][0] == "$tense"):
+      args = args[:-1]
+    return args + ["$c"]
+
+  return atom
+
+
+def inject_const_ctxt_into_objs(objs):
+  """Inject "$c" constant context into clause dicts (in place).
+
+  Parallel to inject_ctxt_into_objs but for nocontext mode.
+  """
+  for obj in objs:
+    if not isinstance(obj, dict):
+      continue
+    if "@logic" in obj:
+      clause = obj["@logic"]
+      if isinstance(clause, list) and clause:
+        if isinstance(clause[0], list):
+          obj["@logic"] = [_inject_const_ctxt_atom(atom) for atom in clause]
+        else:
+          obj["@logic"] = _inject_const_ctxt_atom(clause)
+    if "@question" in obj:
+      obj["@question"] = _inject_const_ctxt_atom(obj["@question"])
+
+
 def inject_ctxt_atom(atom, ctxt_template, default_tense):
   """Append a $ctxt term as the last argument of an eligible GK atom.
 

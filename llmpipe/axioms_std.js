@@ -253,7 +253,7 @@
   [
     ["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
     ["-has type", "?:E", "go", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
-    ["-has destination", "?:E", "?:Dest", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-has destination", "?:E", "?:Dest", "?:Prep", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
     ["-next", "?:W", "?:W2"],
     ["is rel2", "at", "?:X", "?:Dest", ["$ctxt", "present", "?:W2", "?:L", "?:K"]]
   ],
@@ -274,7 +274,7 @@
     ["-is rel2", "at", "?:X", "?:Y", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
     ["-has actor", "?:E", "?:X", ["$ctxt", "?:T2", "?:W", "?:L2", "?:K2"]],
     ["-has type", "?:E", "go", ["$ctxt", "?:T2", "?:W", "?:L2", "?:K2"]],
-    ["-has destination", "?:E", "?:Dest", ["$ctxt", "?:T2", "?:W", "?:L2", "?:K2"]],
+    ["-has destination", "?:E", "?:Dest", "?:Prep", ["$ctxt", "?:T2", "?:W", "?:L2", "?:K2"]],
     ["-next", "?:W", "?:W2"],
     ["=", "?:Y", "?:Dest"],
     ["-is rel2", "at", "?:X", "?:Y", ["$ctxt", "present", "?:W2", "?:L", "?:K"]]
@@ -283,10 +283,13 @@
 
   // Derive moved(X, W): X performed a movement event at world W.
   // Used by the is_rel2 frame axiom to block location persistence when X moved.
-  // Listed for each movement verb to avoid depending on synonym chain for $block.
+  // Only the "go" version is needed: lc_rewrites.py normalizes travel/journey/
+  // move to "go" before clauses reach the prover (avoids synonym axiom chains).
   [["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
    ["-has type", "?:E", "go", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
    ["moved", "?:X", "?:W"]],
+  /*
+  // Redundant with pipeline normalization in lc_rewrites.py:
   [["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
    ["-has type", "?:E", "travel", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
    ["moved", "?:X", "?:W"]],
@@ -296,11 +299,29 @@
   [["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
    ["-has type", "?:E", "move", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
    ["moved", "?:X", "?:W"]],
+  */
 
-  // Movement Synonyms
+  // Movement Synonyms — REDUNDANT, kept commented for documentation.
+  // lc_rewrites.py rewrites travel/journey/move → go pre-clausification,
+  // so the prover never sees these verbs. Pipeline normalization avoids
+  // synonym axiom chains that cause combinatorial explosion with many worlds.
+  /*
   [["-has type", "?:E", "travel", "?:Ctxt"], ["has type", "?:E", "go", "?:Ctxt"]],
   [["-has type", "?:E", "journey", "?:Ctxt"], ["has type", "?:E", "go", "?:Ctxt"]],
   [["-has type", "?:E", "move", "?:Ctxt"], ["has type", "?:E", "go", "?:Ctxt"]],
+  */
+
+  // Placement Results: If X 'put's Target at Dest, Target is 'at' Dest in the next state.
+  // Mirrors the movement result axiom above, but the TARGET (not the actor) ends
+  // up at the destination. Pattern: "Tom put the book on the chair" → book is at chair.
+  [
+    ["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-has type", "?:E", "put", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-has target", "?:E", "?:Obj", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-has destination", "?:E", "?:Dest", "?:Prep", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+    ["-next", "?:W", "?:W2"],
+    ["is rel2", "?:Prep", "?:Obj", "?:Dest", ["$ctxt", "present", "?:W2", "?:L", "?:K"]]
+  ],
 
   // == 5b. TRANSFER RESULTS ==
   // If X 'give's Target to Recipient, Recipient 'have's Target in the next state.
@@ -332,10 +353,13 @@
    ["-has recipient", "?:E", "?:X", "?:Ctxt"],
    ["has actor", "?:E", "?:X", "?:Ctxt"]],
 
-  // Transfer verb synonyms
+  // Transfer verb synonyms — REDUNDANT, kept commented for documentation.
+  // lc_rewrites.py rewrites hand/pass/send → give pre-clausification.
+  /*
   [["-has type", "?:E", "hand", "?:Ctxt"], ["has type", "?:E", "give", "?:Ctxt"]],
   [["-has type", "?:E", "pass", "?:Ctxt"], ["has type", "?:E", "give", "?:Ctxt"]],
   [["-has type", "?:E", "send", "?:Ctxt"], ["has type", "?:E", "give", "?:Ctxt"]],
+  */
 
   // == 5d. COMPLETION RESULT STATES ==
   // If a "finish" event targets X, then X has property "finished" in the next state.
@@ -451,6 +475,88 @@
       ["$block", 0, ["$not", ["has part", "?:X", "?:Y", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]]]]
     ]
   },
+  // has degree rel2
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-has degree rel2", "?:R", "?:X", "?:Y", "?:D", "?:RC", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
+      ["-next", "?:W", "?:W2"],
+      ["has degree rel2", "?:R", "?:X", "?:Y", "?:D", "?:RC", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has degree rel2", "?:R", "?:X", "?:Y", "?:D", "?:RC", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]]]]
+    ]
+  },
+
+  // == 6a. SAME-WORLD TENSE BRIDGE: past@W → present@W (defeasible) ==
+  // DISABLED: replaced by question-specific bridge axioms generated in
+  // logconvert.py (build_question_tense_bridges). The dynamic axioms
+  // pin entity arguments to what the question actually mentions, so the
+  // prover only chains past->present for those specific entities — much
+  // smaller search space than the global axioms below.
+  /*
+  // have
+  {
+    "@confidence": 0.97,
+    "@logic": [
+      ["-have", "?:X", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]],
+      ["have", "?:X", "?:Y", ["$ctxt", "present", "?:W", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["have", "?:X", "?:Y", ["$ctxt", "present", "?:W", "?:L", "?:K"]]]]
+    ]
+  },
+  // has part
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-has part", "?:X", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]],
+      ["has part", "?:X", "?:Y", ["$ctxt", "present", "?:W", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has part", "?:X", "?:Y", ["$ctxt", "present", "?:W", "?:L", "?:K"]]]]
+    ]
+  },
+  // can
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-can", "?:X", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]],
+      ["can", "?:X", "?:Y", ["$ctxt", "present", "?:W", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["can", "?:X", "?:Y", ["$ctxt", "present", "?:W", "?:L", "?:K"]]]]
+    ]
+  },
+  // has property
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-has property", "?:P", "?:X", ["$ctxt", "past", "?:W", "?:L", "?:K"]],
+      ["has property", "?:P", "?:X", ["$ctxt", "present", "?:W", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has property", "?:P", "?:X", ["$ctxt", "present", "?:W", "?:L", "?:K"]]]]
+    ]
+  },
+  // has degree property
+  {
+    "@confidence": 0.99,
+    "@logic": [
+      ["-has degree property", "?:P", "?:X", "?:D", "?:RC", ["$ctxt", "past", "?:W", "?:L", "?:K"]],
+      ["has degree property", "?:P", "?:X", "?:D", "?:RC", ["$ctxt", "present", "?:W", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has degree property", "?:P", "?:X", "?:D", "?:RC", ["$ctxt", "present", "?:W", "?:L", "?:K"]]]]
+    ]
+  },
+  // is rel2
+  {
+    "@confidence": 0.95,
+    "@logic": [
+      ["-is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]],
+      ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "present", "?:W", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "present", "?:W", "?:L", "?:K"]]]]
+    ]
+  },
+  // has degree rel2
+  {
+    "@confidence": 0.95,
+    "@logic": [
+      ["-has degree rel2", "?:R", "?:X", "?:Y", "?:D", "?:RC", ["$ctxt", "past", "?:W", "?:L", "?:K"]],
+      ["has degree rel2", "?:R", "?:X", "?:Y", "?:D", "?:RC", ["$ctxt", "present", "?:W", "?:L", "?:K"]],
+      ["$block", 0, ["$not", ["has degree rel2", "?:R", "?:X", "?:Y", "?:D", "?:RC", ["$ctxt", "present", "?:W", "?:L", "?:K"]]]]
+    ]
+  },
+  */
 
   /*
   // == 6b. SPATIAL MUTUAL EXCLUSION (experimental, commented out) ==
@@ -787,9 +893,10 @@ Does John 1 have two cars?
   ["is_past_world", "?:W"]
 ],
 
-// --- D. Context Tense Normalization ---
-// If a world is determined to be in the past, any fact holds in that 
-// world also satisfies a context of "past".
+// --- D. Context Tense Normalization (datetime-triggered only) ---
+// When is_past_world(W) holds (currently only via explicit $datetime < 2026),
+// rewrite any-tense facts at W to past tense. Does NOT handle the common case
+// of LLM tense mismatch (present vs past on the same world without $datetime).
 [
   ["-is rel2", "?:R", "?:X", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
   ["-is_past_world", "?:W"],
@@ -848,9 +955,14 @@ Does John 1 have two cars?
   ["can", "?:X", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
 ],
 [
-  ["-has destination", "?:E", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-has degree rel2", "?:R", "?:X", "?:Y", "?:D", "?:RC", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
   ["-is_past_world", "?:W"],
-  ["has destination", "?:E", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+  ["has degree rel2", "?:R", "?:X", "?:Y", "?:D", "?:RC", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
+],
+[
+  ["-has destination", "?:E", "?:Y", "?:Prep", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
+  ["-is_past_world", "?:W"],
+  ["has destination", "?:E", "?:Y", "?:Prep", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
 ],
 [
   ["-has recipient", "?:E", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],

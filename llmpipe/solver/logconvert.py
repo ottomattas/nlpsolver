@@ -97,6 +97,8 @@ from lc_ctxt import (
   inject_ctxt_atom as _inject_ctxt_atom,
   inject_ctxt_into_objs as _inject_ctxt_into_objs,
   inject_ctxt_question as _inject_ctxt_question,
+  inject_const_ctxt_into_objs as _inject_const_ctxt_into_objs,
+  build_question_tense_bridges as _build_question_tense_bridges,
   MAIN_RELATION_PREDS as _MAIN_RELATION_PREDS,
 )
 
@@ -563,9 +565,11 @@ def rawlogic_convert(logic, s1_json=None):
     if objs:
       result.extend(objs)
 
-  # Emit any orphan element clauses (SIDs not matched) with free-variable $ctxt.
+  # Emit any orphan element clauses (SIDs not matched) with context.
   for sid, el_clauses in set_el_by_sid.items():
-    if not _g_options.get("nocontext_flag", False):
+    if _g_options.get("nocontext_flag", False):
+      _inject_const_ctxt_into_objs(el_clauses)
+    else:
       ctxt_template = ["$ctxt", None, _fresh_fv(), _fresh_fv(), _fresh_fv()]
       _inject_ctxt_into_objs(el_clauses, ctxt_template, _fresh_fv())
     result.extend(el_clauses)
@@ -595,9 +599,12 @@ def rawlogic_convert(logic, s1_json=None):
   # Convert $measure terms to canonical $list form and collect $measure_of attrs.
   measure_attrs = _rewrite_measure_terms(result)
   for attr in measure_attrs:
-    # have(?:S, $measure_of(ATTR, ?:S, ?:W), $ctxt(?:T, ?:W, ?:L, ?:K))
-    bridge_have = ["have", "?:S", ["$measure_of", attr, "?:S", "?:W"],
-                   ["$ctxt", "?:T", "?:W", "?:L", "?:K"]]
+    # have(?:S, $measure_of(ATTR, ?:S, ?:W), context)
+    bridge_have = ["have", "?:S", ["$measure_of", attr, "?:S", "?:W"]]
+    if _g_options.get("nocontext_flag", False):
+      bridge_have.append("$c")
+    else:
+      bridge_have.append(["$ctxt", "?:T", "?:W", "?:L", "?:K"])
     result.append({"@name": "frm_measure", "@logic": bridge_have})
     # isa(ATTR, $measure_of(ATTR, ?:S, ?:W))
     bridge_isa = ["isa", attr, ["$measure_of", attr, "?:S", "?:W"]]
@@ -627,8 +634,10 @@ def rawlogic_convert(logic, s1_json=None):
       first_q = next((i for i, o in enumerate(result) if "@question" in o), len(result))
       result[first_q:first_q] = what_pop
 
-  # Inject $ctxt into population and subsumption facts (free-variable rules).
-  if not _g_options.get("nocontext_flag", False):
+  # Inject context into population and subsumption facts.
+  if _g_options.get("nocontext_flag", False):
+    _inject_const_ctxt_into_objs(background)
+  else:
     for fact in background:
       ctxt_template = ["$ctxt", None, _fresh_fv(), _fresh_fv(), _fresh_fv()]
       _inject_ctxt_into_objs([fact], ctxt_template, _fresh_fv())
@@ -981,8 +990,9 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
   # Strip @time wrappers and annotate leaf atoms with $tense sentinels.
   # Pass the ASU-level tense as the default; atoms inside @time wrappers
   # will get their specific tense instead.
-  if not _g_options.get("nocontext_flag", False):
-    formula = _strip_time_wrappers(formula, tense)
+  # Always run: even in nocontext mode, @time wrappers must be removed
+  # from the formula tree (the $tense sentinels are stripped during injection).
+  formula = _strip_time_wrappers(formula, tense)
 
   question_kind = None
   if is_question:
@@ -1009,10 +1019,13 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
     formula = _hoist_misnested_exists(formula)
     result = _process_assertion(formula, name, confidence)
 
-  # Inject $ctxt into @logic entries (not @question entries).
+  # Inject context into @logic entries (not @question entries).
   ctxt_template = None
   tense_term = None
-  if not _g_options.get("nocontext_flag", False):
+  if _g_options.get("nocontext_flag", False):
+    # Nocontext mode: inject "$c" constant so axioms with ?:Ctxt still unify.
+    _inject_const_ctxt_into_objs(result)
+  else:
     loc_term = location if location is not None else _fresh_fv()
     kn_term  = knower  if knower  is not None else _fresh_fv()
     if _is_rule_formula(formula):
@@ -1054,15 +1067,25 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
       ctxt_template = ["$ctxt", None, situation, loc_term, kn_term]
       _inject_ctxt_into_objs(result, ctxt_template, tense_term)
 
+  # Question-specific past->present bridge axioms: for each present-tense
+  # stative literal in the question (with ground entity args), emit a
+  # specialized bridge axiom so past-tense assertions can satisfy the
+  # question. Replaces the disabled global axioms in axioms_std.js Section 6a.
+  if is_question and not _g_options.get("nocontext_flag", False):
+    bridges = _build_question_tense_bridges(result, name)
+    result.extend(bridges)
+
   # NOTE: $theof1 definite rewrite moved to rawlogic_convert (global pass)
   # so question packages can find is_rel2 matches from assertion packages.
 
-  # Inject $ctxt into set element instantiation clauses for this ASU.
+  # Inject context into set element instantiation clauses for this ASU.
   # Element clauses inherit the same world/tense as the ASU's own clauses.
   sid_key = str(sid)
   if set_el_by_sid and sid_key in set_el_by_sid:
     el_clauses = set_el_by_sid.pop(sid_key)
-    if ctxt_template is not None and not is_question:
+    if _g_options.get("nocontext_flag", False):
+      _inject_const_ctxt_into_objs(el_clauses)
+    elif ctxt_template is not None and not is_question:
       _inject_ctxt_into_objs(el_clauses, ctxt_template, tense_term)
     result.extend(el_clauses)
 
