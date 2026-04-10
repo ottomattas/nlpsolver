@@ -174,9 +174,9 @@ def main():
     ap.add_argument("--max_syn", type=int, default=12,
                     help="Max synonyms per merged cluster (default 12)")
     ap.add_argument("--out_rewrite", default=None,
-                    help="Output rewrite table path (default: ../syn_rewrite_<pos>.txt)")
+                    help="Output rewrite table path (default: ./syn_rewrite_<pos>.txt)")
     ap.add_argument("--out_axioms", default=None,
-                    help="Output axiom file path (default: ../syn_axioms_<pos>.js)")
+                    help="Output axiom file path (default: ./syn_axioms_<pos>.js)")
     args = ap.parse_args()
 
     pos = args.pos.upper()
