@@ -4,16 +4,13 @@ This directory builds synonym, antonym, and mutual-exclusion data files
 consumed by the `llmpipe` reasoning pipeline. It is self-contained and
 does not depend on any other `llmpipe` module.
 
-The directory has grown in two layers:
+The pipeline has two phases:
 
-- **Base layer** (March 2026): fastText + WordNet clustering produces
-  `syn_*_10.txt` and `ant_*.txt`; `build_syn_data.py` compiles them into
-  a score-thresholded rewrite table + GK axiom file. This layer is still
-  present but its outputs (`syn_rewrite_*.txt`, `syn_axioms_*.js`) are
-  not consumed by the current solver.
-- **April 2026 layer**: antonym-KB expansion, synonym harvesting, Policy
-  C canonical selection, expanded exclusion groups, and the new Tier A /
-  Tier B emission pipeline. This is the active work.
+- **Cluster generation** (March 2026): fastText + WordNet clustering produces
+  `syn_*_10.txt` and `ant_*.txt`.
+- **Tier A/B pipeline** (April 2026): synonym harvesting, Policy C canonical
+  selection, exclusion groups, and `build_solver_data.py` to generate the
+  runtime dict files in `solver/`.
 
 ---
 
@@ -62,7 +59,7 @@ are more polysemous in WordNet), `MIN_MEMBER_SIMILARITY=0.88`.
 
 | File | Purpose |
 |---|---|
-| `ant_a.txt` | Adjective antonym pairs (~1071 total). Format A. Sources: WordNet exhaustive + manual lists + CSV merge + adjectives.val merge (4 sources combined). |
+| `ant_a.txt` | Adjective antonym pairs (~1071 total). Format A. Sources: WordNet + manual + external dataset merges (applied historically, merge scripts removed). |
 | `ant_n.txt` | Noun antonym pairs. WordNet only. |
 | `ant_v.txt` | Verb antonym pairs. WordNet only. |
 
@@ -83,12 +80,6 @@ are more polysemous in WordNet), `MIN_MEMBER_SIMILARITY=0.88`.
 
 Regenerate after any source .txt changes: `cd mkdata && python3 build_solver_data.py`
 
-### Legacy outputs (kept, not currently consumed)
-
-| File | Status |
-|---|---|
-| `syn_rewrite_a.txt`, `syn_rewrite_n.txt`, `syn_rewrite_v.txt` | Old score-thresholded rewrite tables from `build_syn_data.py`. Superseded by the Tier A pipeline. |
-| `syn_axioms_a.js`, `syn_axioms_n.js`, `syn_axioms_v.js` | Old soft GK axiom files. Superseded by the Tier B pipeline. |
 
 ---
 
@@ -111,41 +102,7 @@ cc.en.300.bin (fastText) + WordNet (NLTK) + wordfreq
 fastText cosine similarity + WordNet Wu-Palmer blending, filtered by
 `--min_zipf 3.5`. ~10–30 min per POS. Produces the baseline clusters.
 
-### 2. Score-thresholded rewrite/axiom compile (original, March 2026)
-
-```
-syn_{a,n,v}_10.txt ──► build_syn_data.py ──► syn_rewrite_{a,n,v}.txt
-                            │                 syn_axioms_{a,n,v}.js
-                            └── merge.py (cluster merger library)
-```
-
-Splits cluster members into hard rewrites (score ≥ 0.90) and soft axioms
-(0.70 ≤ score < 0.90). Output files are kept but not consumed by the
-current solver.
-
-### 3. Antonym KB expansion (April 2026)
-
-```
-   WordNet (via build_exclusion_data.py)
-        │
-        │  initial ant_a.txt (634 WordNet pairs)
-        ▼
-   ┌─ merge_antonyms_manual.py  ◄── antonyms1.txt, antonyms2.txt         (+75 pairs, _AM01)
-   │
-   ├─ merge_antonyms_csv.py     ◄── antonyms.csv                          (+279 pairs, _AC01)
-   │                                 (CSV_BLACKLIST drops 26 spurious)
-   │
-   └─ merge_antonyms_val.py     ◄── adjectives.val                        (+83 pairs, _AV01)
-                                   (APPROVED_PAIRS allowlist of ~82)
-        │
-        ▼
-     ant_a.txt  (1071 pairs total)
-```
-
-All merge scripts are idempotent (re-running produces no changes). Each
-uses a distinct CID suffix to track provenance.
-
-### 4. Exclusion groups (April 2026, rewritten heavily)
+### 2. Exclusion groups (April 2026)
 
 ```
 WordNet synset.attributes() ────┐
@@ -163,7 +120,7 @@ WN_ATTRIBUTE_KEEP allowlist ────┘
 Run with `--only_excl` to rebuild just `excl_a.txt` without clobbering
 `ant_*.txt` (which have been merged with external sources).
 
-### 5. Synonym harvest (April 2026)
+### 3. Synonym harvest (April 2026)
 
 ```
 zaibacu en_thesaurus.jsonl (mkdata/roget.json)
@@ -185,7 +142,7 @@ Applies a Policy-C-style primary-sense alignment filter, then fastText
 scores. Thresholds: ADD members ≥ 0.70, NEW canonical-worthy ≥ 0.828,
 NEW 0.70–0.828 → soft-pair stash.
 
-### 6. Canonical selection — Policy C (April 2026)
+### 4. Canonical selection — Policy C (April 2026)
 
 ```
 syn_{a,n,v}_10.txt ──► pick_canonicals_{a,n,v}.py ──► syn_*_canonicals_review.txt
@@ -206,7 +163,7 @@ adjective thresholds:
 - Nouns: `MAX_MEMBER_NOUN_SYNSETS=3`, `MIN_MEMBER_SIMILARITY=0.88`, `BLOCKED_PAIRS` (18 entries)
 - Verbs: `MAX_MEMBER_VERB_SYNSETS=5`, `MIN_MEMBER_SIMILARITY=0.88`
 
-### 7. Solver data generation (April 2026)
+### 5. Solver data generation (April 2026)
 
 ```
 syn_{a,n,v}_rewrite.txt ──┐
@@ -235,13 +192,9 @@ The generated files are loaded at import time by `semnormalize.py` and
 
 | File | Origin | Used by |
 |---|---|---|
-| `cc.en.300.bin` | Facebook fastText Common Crawl 300-dim model, ~6.7 GB | `make_anto_synonyms.py`, `harvest_syn_a.py` |
-| `antonyms.csv` | Public antonym dataset (POS-tagged, ~11k rows) | `merge_antonyms_csv.py` |
-| `adjectives.val` | EACL 2017 antonym/synonym benchmark, "adjectives" validation split | `merge_antonyms_val.py` |
-| `ant_syn_pairs.zip` + `ant_syn_pairs/eacl2017/` | Unpacked EACL 2017 dataset (source of `adjectives.val`) | reference / re-extraction |
-| `antonyms1.txt`, `antonyms2.txt` | Hand-curated antonym lists (plain text, one pair per line) | `merge_antonyms_manual.py` |
+| `cc.en.300.bin` | Facebook fastText Common Crawl 300-dim model, ~6.7 GB | `make_anto_synonyms.py`, `harvest_syn_{a,n,v}.py` |
 | `childwords.txt` | Child-vocabulary seed list (Dolch-style) | `make_anto_synonyms.py` (seed prioritisation) |
-| `roget.json` | zaibacu/thesaurus (WordNet-derived JSONL, despite the filename) | `harvest_syn_a.py` |
+| `roget.json` | zaibacu/thesaurus (WordNet-derived JSONL, despite the filename) | `harvest_syn_{a,n,v}.py` |
 
 ### External tool/data resources used
 
@@ -273,12 +226,13 @@ with acceptable noise; "partially" means some manual review was needed;
 ### Synonym cluster build (`make_anto_synonyms.py`)
 - **fastText cosine + WordNet blending**: **worked**. Produced baseline `syn_*_10.txt` that the rest of the pipeline rests on. Key tuning: `--min_zipf 3.5`, `--require_min_syn 3`, relational-adjective filter enabled.
 
-### Antonym KB merge
-- **merge_antonyms_manual.py** (curated lists): **worked**. Small, clean.
-- **merge_antonyms_csv.py** (large public CSV): **worked after blacklist**. Raw CSV produced 305 pairs; 26 were spurious WordNet-quirk pairs (grammar/music/phonetics terms), captured in `CSV_BLACKLIST`. Net 279 added.
-- **merge_antonyms_val.py** (EACL 2017): **worked after allowlist**. Raw label=1 rows yielded ~143 candidates; only 82 survived manual review as good general-purpose antonyms.
+### Antonym KB enrichment (historical, merge scripts removed)
+The current `ant_a.txt` includes ~437 extra pairs merged from three external
+sources (public CSV, hand-curated lists, EACL 2017 benchmark) on top of the
+634 WordNet-only pairs. The merge scripts have been removed; their results
+are baked into `ant_a.txt`.
 
-### Synonym harvest (`harvest_syn_a.py`)
+### Synonym harvest (`harvest_syn_{a,n,v}.py`)
 - **Source labeled Roget 1911 was actually WordNet**: the zaibacu/thesaurus JSONL has `wordnet_id` fields on every entry — it is a repackaged WordNet, not Roget. The project memory initially misidentified it. **Partial signal** because `syn_a_10.txt` used fastText+threshold while zaibacu lists all WordNet synonym edges — the diff is exactly the pairs that failed the old fastText gate.
 - **Sense-alignment + WordNet-strong filter + fastText cosine scoring**: **worked**. 19,558 raw novel pairs → 545 WordNet-strong at zipf ≥ 4.0 → 67 ADD + 119 NEW after primary-sense alignment → 27 applied as members + 15 new clusters + 44 soft pairs at the user's 0.70 / 0.828 thresholds.
 - **Multi-CID duplication**: the same word sometimes lands in 3–4 sibling CIDs (satellite clusters of the same head synset). Added to all. Not deduped.
@@ -370,49 +324,18 @@ mkdata/
 │   ├── syn_{a,n,v}_soft_pairs.txt     # harvested sub-canonical stash
 │   └── syn_{a,n,v}_additions_review.txt   # harvest step review artifact
 │
-├── Legacy outputs (kept, not currently consumed)
-│   ├── syn_rewrite_{a,n,v}.txt
-│   └── syn_axioms_{a,n,v}.js
-│
 ├── Core scripts
-│   ├── build_exclusion_data.py        # antonyms + excl_a.txt
-│   ├── build_syn_data.py              # legacy rewrite/axiom compile
-│   ├── harvest_syn_{a,n,v}.py         # synonym harvest for syn_*_10.txt
-│   ├── pick_canonicals_{a,n,v}.py     # Policy C drops + Tier A/B emit
-│   ├── build_solver_data.py           # generate solver/data_*.py from .txt sources
-│   ├── make_anto_synonyms.py          # fastText/WordNet cluster builder
-│   ├── make_gradables.py              # gradable adjective extractor (library)
-│   ├── merge.py                       # cluster merger library
-│   ├── merge_antonyms_manual.py       # merge antonyms1.txt + antonyms2.txt
-│   ├── merge_antonyms_csv.py          # merge antonyms.csv
-│   └── merge_antonyms_val.py          # merge adjectives.val
+│   ├── make_anto_synonyms.py          # fastText/WordNet cluster builder (step 1)
+│   ├── build_exclusion_data.py        # antonyms + excl_a.txt (step 2)
+│   ├── harvest_syn_{a,n,v}.py         # synonym harvest (step 3)
+│   ├── pick_canonicals_{a,n,v}.py     # Policy C drops + Tier A/B emit (step 4)
+│   ├── build_solver_data.py           # generate solver/data_*.py (step 5)
+│   └── make_gradables.py              # gradable adjective extractor (library)
 │
 ├── Source data files
-│   ├── adjectives.val                 # EACL 2017 validation split
-│   ├── antonyms1.txt                  # hand-curated antonym list (free-text format)
-│   ├── antonyms2.txt                  # hand-curated antonym list ("w1 - w2" format)
-│   ├── antonyms.csv                   # public antonym CSV
-│   ├── ant_syn_pairs.zip              # EACL 2017 zip
-│   ├── ant_syn_pairs/eacl2017/        # EACL 2017 unpacked
 │   ├── childwords.txt                 # seed vocabulary
 │   └── roget.json                     # zaibacu/thesaurus JSONL (harvest input)
 │
 └── Large model files (NOT committed)
-    ├── cc.en.300.bin                  # fastText model, ~6.7 GB
-    └── cc.en.300.bin.gz               # compressed original, ~4.5 GB
+    └── cc.en.300.bin                  # fastText model, ~6.7 GB
 ```
-
----
-
-## Files worth reviewing for deletion
-
-The scratch and backup files left over from earlier experiments have
-already been cleaned up. Two remaining candidates are kept because they
-duplicate other data on disk:
-
-- `ant_syn_pairs.zip` — duplicates the unpacked `ant_syn_pairs/eacl2017/` tree; could remove the zip.
-- `cc.en.300.bin.gz` — compressed original of `cc.en.300.bin`; 4.5 GB, duplicates the unpacked model; consider removing once the unpacked model is known good.
-
-Legacy outputs (`syn_rewrite_{a,n,v}.txt`, `syn_axioms_{a,n,v}.js`) are
-superseded by the Tier A/B pipeline and `build_solver_data.py`. They can
-be deleted once confirmed no external tools depend on them.
