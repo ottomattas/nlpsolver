@@ -143,6 +143,12 @@ llmpipe/
 │   ├── prover.py        gk binary interface
 │   ├── pretty.py        JSON pretty-printer (Style B)
 │   ├── cache.py         SQLite cache for LLM responses and prover results
+│   ├── semnormalize.py  Semantic normalization (antonym folding + canonical substitution)
+│   ├── axiom_vocab.py   Axiom file vocabulary extraction and caching
+│   ├── data_canonicals.py  (generated) Tier A rewrite dict (~752 entries)
+│   ├── data_antonyms.py    (generated) Antonym pairs dict (~935 entries)
+│   ├── data_synonyms.py    (generated) Soft synonym index (~12K words)
+│   ├── data_exclusions.py  (generated) Exclusion groups + index
 │   ├── globals.py       Options dict and file paths
 │   ├── utils.py         debug_print, clause_list_to_json
 │   └── gradables.txt    Whitelist of gradable adjectives (~400 entries)
@@ -1142,7 +1148,9 @@ bridge representation gaps.
 | Receive→give normalization | `lc_rewrites.normalize_receive_events` | `["has type",E,"receive"]` + `["has actor",E,X]` → `["has type",E,"give"]` + `["has recipient",E,X]` | Formula-level rewrite: in `and`-blocks containing a receive event, the verb is changed to "give" and the actor role is swapped to recipient.  This allows the give-based transfer axioms in `axioms_std.js` to derive `have(Recipient, Object)` in the next world state. |
 | Set existence fact | `lc_sets._walk_for_count` | "Bears ate berries" with `forall/implies/member/$setof` in assertion context → `member("$some_bear", $setof(...))` | Generates a ground set membership fact for assertion-context `forall/member` patterns so the prover can bootstrap resolution through member-guarded clauses.  Skipped when the set already has element instantiation from a count assertion. |
 | Degree stripping | `lc_postprocess.strip_degree_predicates` | With `-simpleproperties`: `has_degree_property(big,X,none,animal)` → `has_property(big,X)` | (Only with `-simpleproperties`) Replaces degree predicates with simple property predicates |
-| Semantic normalisation | `semnormalize.sem_normalize_clauses` | "The ball is outside the box" → `outside` is antonym of `inside` → flips polarity and substitutes: `-is_rel2(inside,ball,box)` | Antonym resolution (flip polarity + swap word) and canonical substitution (synonym → canonical form) |
+| Semantic normalisation | `semnormalize.sem_normalize_clauses` | "The ball is outside the box" → `outside` is antonym of `inside` → flips polarity and substitutes: `-is_rel2(inside,ball,box)` | Antonym resolution (~935 pairs: flip polarity + swap word) and canonical substitution (~752 pairs: synonym → canonical form).  Skips `$ctxt` terms.  Data loaded from generated `data_antonyms.py` and `data_canonicals.py`. |
+| Soft synonym injection | `lc_postprocess.inject_soft_synonyms` | "The car is red" + axioms mention "crimson" → emits `red(X,Ct) <=> crimson(X,Ct)` biconditional | Dynamic injection of Tier B synonym axioms for words present in both input and axiom vocabulary.  Templates: `has property` (adj), `isa` (noun), `has type` (verb). |
+| Exclusion injection | `lc_postprocess.inject_exclusion_axioms` | "The car is blue. Was it red?" → emits `NOT blue(X,Ct) OR NOT red(X,Ct)` with `$block` | Dynamic injection of mutual-exclusion axioms from `excl_a.txt` groups.  `needs_blocker` groups use defeasible `$block`.  Temporal groups (MONTH, DAY_OF_WEEK, SEASON) use `is rel2` template. |
 | `@sourcetype` stripping | Serialisation (`clause_list_to_json`) | Population facts carry `@sourcetype:"populate"` internally for processing — stripped before the prover sees them | Internal `@sourcetype` tags are excluded from prover input |
 
 ---
@@ -1284,43 +1292,82 @@ english_to_answer(text, {"use_llm_cache_flag": False})
 
 ---
 
-## 9. The mkdata toolkit
+## 9. The mkdata toolkit and solver integration
 
-`mkdata/` is a standalone toolkit (separate venv, no dependency on `solver/`) for building the
-synonym/antonym data files consumed by the reasoning pipeline.
+`mkdata/` is a standalone toolkit (separate venv, no dependency on `solver/`) for building
+synonym, antonym, and mutual-exclusion data files. The final step (`build_solver_data.py`)
+generates Python dict files in `solver/` that are loaded at runtime.
 
-**What it produces:**
+### 9.1 What mkdata produces
 
-- `syn_rewrite_<pos>.txt` — hard rewrite table (word → canonical, similarity ≥ 0.90); used
-  by `logconvert.py` to normalise predicate names before clausification
-- `syn_axioms_<pos>.js` — soft GK axiom file (0.70 ≤ similarity < 0.90); passed to the `gk`
-  prover alongside `axioms_std.js` for near-synonym bridging during proof search
+| Output | Count | Purpose |
+|--------|-------|---------|
+| `syn_{a,n,v}_rewrite.txt` | 416 / 218 / 124 entries | Tier A hard rewrites (`member,canonical`) |
+| `syn_{a,n,v}_soft_axioms.txt` | 2496 / 6218 / 4103 pairs | Tier B soft synonym pairs (`word_a,word_b,score`) |
+| `ant_{a,n,v}.txt` | 1483 / 375 / 295 entries | Antonym pairs (directional, polarity-flip) |
+| `excl_a.txt` | 40 groups | Mutual-exclusion groups (colors, months, nationalities, etc.) |
 
-One pair of files per part of speech: N (nouns), A (adjectives), V (verbs/relations).
+### 9.2 Solver runtime files
 
-**Key scripts:**
+Generated by `cd mkdata && python3 build_solver_data.py` (fast, ~1 sec):
 
-| Script | Purpose |
-|--------|---------|
-| `build_syn_data.py` | Main pipeline: Format-A cluster file → rewrite table + GK axioms |
-| `make_anto_synonyms.py` | Build cluster files from scratch using fastText + WordNet |
-| `make_gradables.py` | Library module: extract gradable adjectives from a text corpus |
-| `merge.py` | Cluster merger library used by `build_syn_data.py` |
+| Generated file | Contents | Used by |
+|----------------|----------|---------|
+| `solver/data_canonicals.py` | `CANONICALS` dict (~752 entries, all POS merged) | `semnormalize.py` |
+| `solver/data_antonyms.py` | `ANTONYMS` dict (~935 directional pairs) | `semnormalize.py` |
+| `solver/data_synonyms.py` | `SOFT_SYNONYMS` dict (~12K words, bidirectional) | `lc_postprocess.py` |
+| `solver/data_exclusions.py` | `EXCLUSION_GROUPS` + `EXCLUSION_INDEX` | `lc_postprocess.py` |
 
-**Quick regeneration** (when `syn_*_10.txt` cluster files are updated):
-```bash
-cd mkdata/
-venv/bin/python build_syn_data.py syn_n_10.txt N
-venv/bin/python build_syn_data.py syn_a_10.txt A
-venv/bin/python build_syn_data.py syn_v_10.txt V
+Must be regenerated whenever any mkdata `.txt` source changes.
+
+### 9.3 Solver integration
+
+The data files are integrated at two points in the pipeline:
+
+**Post-clausification semantic normalization** (`semnormalize.py`, called from `solve.py`):
+1. Antonym folding: if a word is in `ANTONYMS`, flip atom polarity and substitute the antonym
+2. Canonical substitution: if a word is in `CANONICALS`, replace unconditionally
+
+Both passes walk all atom arguments (positions 1+), skip predicate names (position 0),
+skip `$ctxt` terms, and handle disjunctive clauses (list-of-lists). Controlled by
+`-nosemnormal` flag.
+
+**Dynamic axiom injection** (`lc_postprocess.py`, called from `logconvert.rawlogic_convert`):
+
+*Soft synonym axioms* (`inject_soft_synonyms`):
+- Scans the clause list for words appearing in `SOFT_SYNONYMS`
+- Emits biconditional clauses: `NOT pred(W,X,Ct) OR pred(OTHER,X,Ct)` (both directions)
+- Templates: `has property` for adjectives (gradable normalizer promotes later), `isa` for
+  nouns, `has type` for verbs
+- Uses a single free variable for context (unifies with any `$ctxt` term)
+- Two-side restriction (`REQUIRE_BOTH_SIDES = True` in `lc_postprocess.py`): only emits if
+  the other side also appears in the input clauses or axiom file vocabulary
+
+*Exclusion axioms* (`inject_exclusion_axioms`):
+- Scans the clause list for words appearing in `EXCLUSION_INDEX`
+- For groups with 2+ members present, emits pairwise exclusion clauses
+- `needs_blocker=False` (months, days): hard exclusion `NOT w1(X,Ct) OR NOT w2(X,Ct)`
+- `needs_blocker=True` (colors, nationalities): defeasible exclusion with `$block` on each
+  side (two axioms per pair), allowing override when both are explicitly asserted
+- Temporal groups (MONTH, DAY_OF_WEEK, SEASON): use `is rel2` template instead of `has property`
+
+*Axiom vocabulary cache* (`axiom_vocab.py`):
+- Extracts content words from axiom files (e.g. `axioms_std.js`), caches in `.vocab` sibling file
+- Auto-rebuilt when axiom file is newer than cache
+- Used by both injection functions for the two-side restriction
+
+### 9.4 Full build pipeline
+
+```
+Step 1: make_anto_synonyms.py --pos {a,n,v}  ->  syn_*_10.txt, ant_*.txt
+Step 2: harvest_syn_{a,n,v}.py               ->  expands syn_*_10.txt
+Step 3: pick_canonicals_{a,n,v}.py --apply --emit  ->  syn_*_rewrite.txt, syn_*_soft_axioms.txt
+Step 4: build_exclusion_data.py              ->  excl_a.txt
+Step 5: build_solver_data.py                 ->  solver/data_*.py
 ```
 
-See `mkdata/README.md` for full documentation including environment setup, cluster file format,
-and instructions for rebuilding cluster files from scratch (~30–90 min, requires `cc.en.300.bin`).
-
-> **Integration status:** The output files are not yet wired into the `solver/` pipeline.  When
-> integration is done, `syn_rewrite_*.txt` will be loaded by `logconvert.py` and `syn_axioms_*.js`
-> will be passed to `prover.py` alongside `axioms_std.js`.
+Steps 1-4 are heavy (fastText model, NLTK). Step 5 is fast and should be re-run after any
+source .txt changes. See `mkdata/README.md` for full documentation.
 
 ---
 

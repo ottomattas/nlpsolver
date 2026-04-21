@@ -86,6 +86,8 @@ from lc_postprocess import (
   rewrite_measure_terms as _rewrite_measure_terms,
   add_possessive_have as _add_possessive_have,
   strip_degree_predicates as _strip_degree_predicates,
+  inject_soft_synonyms as _inject_soft_synonyms,
+  inject_exclusion_axioms as _inject_exclusion_axioms,
 )
 
 # $ctxt injection and time handling (in lc_ctxt.py).
@@ -620,8 +622,22 @@ def rawlogic_convert(logic, s1_json=None):
   # Insert population facts and compound subsumption rules immediately before
   # the first @question entry so they are available as background knowledge.
   background = pop_facts + compound_subs
-  first_q = next((i for i, o in enumerate(result) if "@question" in o), len(result))
-  result[first_q:first_q] = background
+
+  # Inject soft synonym biconditional axioms and mutual-exclusion axioms
+  # for words appearing in the clause list. These use a single free context
+  # variable (not the expanded $ctxt template), so they are inserted
+  # separately and NOT passed through context injection.
+  sem_axioms = []
+  if not _g_options.get("nosemnormal_flag"):
+    from axiom_vocab import load_axiom_vocab as _load_axiom_vocab
+    _axiom_vocab = _load_axiom_vocab()
+    sem_axioms = (_inject_soft_synonyms(result, _axiom_vocab)
+                  + _inject_exclusion_axioms(result, _axiom_vocab))
+
+  # Append population facts, synonym axioms, and exclusion axioms after
+  # all sentence clauses (assertions + questions come first).
+  result.extend(background)
+  result.extend(sem_axioms)
 
   # For "what" questions: generate extra population witnesses for classes
   # that have concrete unconditional isa facts.  This lets the prover find
@@ -630,9 +646,7 @@ def rawlogic_convert(logic, s1_json=None):
   if _has_what_query(s1_json):
     what_pop = _generate_what_population(result)
     if what_pop:
-      # Insert before first @question, after existing population facts.
-      first_q = next((i for i, o in enumerate(result) if "@question" in o), len(result))
-      result[first_q:first_q] = what_pop
+      result.extend(what_pop)
 
   # Inject context into population and subsumption facts.
   if _g_options.get("nocontext_flag", False):

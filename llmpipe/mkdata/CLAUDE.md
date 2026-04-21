@@ -4,49 +4,145 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-`mkdata/` is a data-generation toolkit that produces synonym/antonym cluster files and gradable-adjective lists used by the broader `nlpsolver` pipeline. It is standalone and does not depend on other `llmpipe` modules.
+`mkdata/` is a data-generation toolkit that produces synonym/antonym/exclusion
+cluster files and gradable-adjective lists used by the broader `nlpsolver`
+pipeline. It is standalone and does not depend on other `llmpipe` modules.
 
-## Scripts
+The final step of the pipeline (`build_solver_data.py`) generates Python dict
+files in `solver/` that are loaded at runtime by the main solver.
 
-### `make_anto_synonyms.py` — synonym/antonym cluster builder
+## Data Files
 
-Requires heavy dependencies (fastText binary model ~4GB, NLTK WordNet, wordfreq). Run from this directory:
+### Synonym clusters (`syn_{a,n,v}_10.txt`)
+
+Raw synonym clusters produced by `make_anto_synonyms.py` and expanded by
+`harvest_syn_{a,n,v}.py`. Format: `CANONICAL_ID,word1,score1,word2,score2,...`
+where `CANONICAL_ID` is `LEMMA_POS##` (e.g. `HAPPY_A01`, `CAR_N01`, `USE_V01`).
+Scores are fastText cosine similarities.
+
+- `syn_a_10.txt` -- 587 adjective clusters
+- `syn_n_10.txt` -- 1968 noun clusters
+- `syn_v_10.txt` -- 1093 verb clusters
+
+### Tier A rewrite tables (`syn_{a,n,v}_rewrite.txt`)
+
+Unconditional `member -> canonical` word substitutions applied post-clausification
+by `semnormalize.py`. Only high-confidence, low-ambiguity pairs survive the
+filters in `pick_canonicals_{a,n,v}.py`. Format: `member,canonical`.
+
+- `syn_a_rewrite.txt` -- 416 adjective rewrites (e.g. `abrasive,rough`)
+- `syn_n_rewrite.txt` -- 218 noun rewrites (e.g. `automobile,car`)
+- `syn_v_rewrite.txt` -- 124 verb rewrites (e.g. `utilize,use`)
+
+### Tier B soft axiom pairs (`syn_{a,n,v}_soft_axioms.txt`)
+
+Weaker synonym pairs emitted as biconditional axioms at runtime, only when
+relevant to the current problem. Includes pairs from UNSAFE clusters and
+dropped members of SAFE clusters. Format: `word_a,word_b,score`.
+
+- `syn_a_soft_axioms.txt` -- 2496 adjective pairs
+- `syn_n_soft_axioms.txt` -- 6218 noun pairs
+- `syn_v_soft_axioms.txt` -- 4103 verb pairs
+
+### Antonym pairs (`ant_{a,n,v}.txt`)
+
+Directional antonym pairs from WordNet `lemma.antonyms()`. At runtime,
+encountering an antonym word flips atom polarity and substitutes the canonical.
+Format: `CANONICAL_ID,word1,score1,word2,score2,...`
+
+- `ant_a.txt` -- 1483 adjective antonym entries
+- `ant_n.txt` -- 375 noun antonym entries
+- `ant_v.txt` -- 295 verb antonym entries
+
+### Exclusion groups (`excl_a.txt`)
+
+Mutual-exclusion groups where at most one member can be true of an entity at a
+time (colors, months, nationalities, etc.). Injected as pairwise exclusion
+clauses at runtime when 2+ members appear in the problem.
+Format: `GROUP_ID,source,score,needs_blocker,word1,word2,...`
+
+- `needs_blocker=0`: hard exclusion (months, days, compass directions)
+- `needs_blocker=1`: defeasible exclusion with `$block` (colors, nationalities --
+  a thing can occasionally be multi-colored)
+
+40 groups, 288 indexed words.
+
+## Build Pipeline
+
+```
+Step 1: Cluster generation (heavy -- requires fastText model + NLTK WordNet)
+  make_anto_synonyms.py --pos {a,n,v}
+    -> syn_{a,n,v}_10.txt   (synonym clusters)
+    -> ant_{a,n,v}.txt       (antonym pairs)
+
+Step 2: Cluster expansion (adds new members via fastText + WordNet synset check)
+  harvest_syn_{a,n,v}.py
+    -> modifies syn_{a,n,v}_10.txt in place
+
+Step 3: Canonical selection + Tier A/B emission
+  pick_canonicals_{a,n,v}.py --apply --emit
+    -> syn_{a,n,v}_rewrite.txt       (Tier A hard rewrites)
+    -> syn_{a,n,v}_soft_axioms.txt   (Tier B soft axiom pairs)
+    -> modifies syn_{a,n,v}_10.txt   (drops unsafe members)
+
+Step 4: Exclusion group construction
+  build_exclusion_data.py
+    -> excl_a.txt
+
+Step 5: Generate solver runtime files (fast -- reads .txt, writes .py dicts)
+  build_solver_data.py
+    -> solver/data_canonicals.py   (~752 Tier A entries, all POS merged)
+    -> solver/data_antonyms.py     (~935 directional antonym pairs)
+    -> solver/data_synonyms.py     (~12K words, ~12.8K soft synonym pairs)
+    -> solver/data_exclusions.py   (40 groups, 288 indexed words)
+```
+
+Steps 1-4 are heavy and run rarely (when rebuilding clusters from scratch).
+Step 5 is fast and should be re-run whenever any source .txt file changes:
 
 ```bash
-# Install dependencies
+cd mkdata && python3 build_solver_data.py
+```
+
+## Tier A Filter Parameters
+
+### Adjectives (`pick_canonicals_a.py`)
+- `MIN_ADJ_ZIPF = 3.0` -- winner frequency gate
+
+### Nouns (`pick_canonicals_n.py`)
+- `MIN_ZIPF = 4.0`, `MIN_NOUN_FRACTION = 0.25`, `MIN_DOMINANCE_MARGIN = 0.5`
+- `MIN_MEMBER_ZIPF = 3.3`, `MAX_WINNER_SENSE_RANK = 0`
+- `MAX_MEMBER_NOUN_SYNSETS = 3`, `MIN_MEMBER_SIMILARITY = 0.88`
+- `BLOCKED_PAIRS` -- 18 manual blocklist entries (proper nouns, religious terms, etc.)
+
+### Verbs (`pick_canonicals_v.py`)
+- Same structure as nouns with: `MIN_MEMBER_ZIPF = 3.0`
+- `MAX_MEMBER_VERB_SYNSETS = 5` (higher than nouns -- verbs are more polysemous)
+
+## Other Scripts
+
+### `make_anto_synonyms.py` -- synonym/antonym cluster builder
+
+Requires heavy dependencies (fastText binary model ~4GB, NLTK WordNet, wordfreq).
+
+```bash
 pip install wordfreq fasttext nltk numpy
 python -c "import nltk; nltk.download('wordnet'); nltk.download('omw-1.4')"
 
-# Download fastText model (~4.2GB)
 wget https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.en.300.bin.gz
 gunzip cc.en.300.bin.gz
 
-# Build adjective synonym/antonym clusters (1000 concepts)
 python make_anto_synonyms.py --ft_model cc.en.300.bin --pos a --concepts 1000 \
   --out_syn clusters_adjs_syn.csv --out_ant clusters_adjs_ant.csv
-
-# Nouns and verbs follow the same pattern (--pos n, --pos v)
 ```
 
-**Output format** (CSV):
-- Synonyms: `CANONICAL_ID,word1,score1,word2,score2,...`
-- Antonyms: same format; `CANONICAL_ID` is shared between synonym and antonym files
-- `CANONICAL_ID` format: `LEMMA_POS##` (e.g., `HAPPY_A01`)
+### `make_gradables.py` -- gradable adjective extractor (library module)
 
-**Key parameters:**
-- `--concepts N` — number of output clusters (default 1000)
-- `--min_zipf F` — minimum word frequency threshold (default 3.5)
-- `--syn_min_score` / `--ant_min_score` — confidence thresholds (default 0.50)
-- `--require_min_syn N` — skip clusters with fewer than N synonyms (default 3)
-- `--no_filter_rel_adj` — include relational adjectives (e.g., *national*, *historic*)
-
-### `make_gradables.py` — gradable adjective extractor (library module)
-
-Not a standalone script; import `extract_gradable_adjs(docs, nlp)` from it. `docs` is an iterable of raw text strings; `nlp` is a loaded spaCy model. Returns a ranked list of `(lemma, count, deg_rate, comp_rate, scale, score)` tuples. The `scale` field is `"open"` or `"closed"` depending on whether the adjective co-occurs more with degree modifiers (*very*, *extremely*) vs. closed-scale modifiers (*completely*, *perfectly*).
+Not a standalone script; import `extract_gradable_adjs(docs, nlp)` from it.
 
 ## Input word lists
 
-- `important_words.txt` — graded sight-word list (Dolch-style, ordered by reading level)
-- `childwords.txt` — supplementary child vocabulary list
+- `important_words.txt` -- graded sight-word list (Dolch-style, ordered by reading level)
+- `childwords.txt` -- supplementary child vocabulary list
 
 These lists are used as seed/filter inputs for deciding which lemmas to include in generated data files.

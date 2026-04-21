@@ -72,7 +72,7 @@ English text
 - `logconvert.py` — main driver for stage-2 JSON → GK clause list; `rawlogic_convert(logic)`; orchestrates package extraction, question/assertion processing, and post-processing passes
 - `lc_rewrites.py` — pre-clausification formula rewrites: meta-predicate normalization (incl. `is_rel2("time of")`→`has_time`), tense-valued `has_time` stripping, degree presuppositions, existential hoisting, spurious `can` removal, polarity flip
 - `lc_ctxt.py` — `$ctxt` context injection, time-wrapper stripping, fresh variable generation, predicate classification constants
-- `lc_postprocess.py` — post-clausification clause-list passes: gradable normalization, RELCLASS coercion, isa-entity stripping, `$theof1` definite rewrites (global pass), `$measure`→`$list` canonical unit conversion for `$measure_of` terms, `less_measure` rewriting for comparison operators on measures, `$theof1` unwrap inside `$measure_of`, possessive `have` inference, population facts, degree stripping
+- `lc_postprocess.py` — post-clausification clause-list passes: gradable normalization, RELCLASS coercion, isa-entity stripping, `$theof1` definite rewrites (global pass), `$measure`→`$list` canonical unit conversion for `$measure_of` terms, `less_measure` rewriting for comparison operators on measures, `$theof1` unwrap inside `$measure_of`, possessive `have` inference, population facts, degree stripping, soft synonym axiom injection, exclusion axiom injection
 - `lc_clausify.py` — FOL-to-CNF compiler: implies/xor/equivalent elimination, NNF push, normally expansion, Skolemization, distribution, clause extraction.  Also provides Skolem identification helpers (`is_skolem_const`, `is_skolem_fn`, `skolem_type_from_name`), typed Skolem constant naming (`sk0_house`), `is_world_constant` (W0/W1 excluded from variable detection)
 - `lc_questions.py` — question wrapping (`ask`/`question` → `@question`/`@askvars`), population fact injection, and WH-question builders: `build_where_question`/`build_when_question` (preposition expansion), `build_who_question` (isa + equality biconditionals), `build_defq_question` (general $defq)
 - `lc_sets.py` — set/counting: `$setof` rewriting to canonical form, membership axiom generation, element instantiation, set existence fact generation
@@ -88,6 +88,60 @@ English text
 - `globals.py` — global `options` dict and file paths (uses `os.path` for absolute paths)
 - `pretty.py` — JSON pretty-printer; `pp_str/pp_logic/pp_stage1/pp_stage2`; Style B layout with `noquotes` mode
 - `utils.py` — utility functions: `debug_print`, `clause_list_to_json`
+- `semnormalize.py` — post-clausification semantic normalization: antonym folding (flip polarity + replace word) and canonical word substitution; skips `$ctxt` terms; handles disjunctive clauses
+- `data_canonicals.py` — (generated) `CANONICALS` dict: ~752 Tier A `{variant: canonical}` entries from `mkdata/syn_{a,n,v}_rewrite.txt`
+- `data_antonyms.py` — (generated) `ANTONYMS` dict: ~935 `{word: antonym}` entries from `mkdata/ant_{a,n,v}.txt`
+- `data_synonyms.py` — (generated) `SOFT_SYNONYMS` dict: ~12K words, bidirectional `{word: [(other, score, pos), ...]}` index from `mkdata/syn_{a,n,v}_soft_axioms.txt`
+- `data_exclusions.py` — (generated) `EXCLUSION_GROUPS` + `EXCLUSION_INDEX` from `mkdata/excl_a.txt`
+- `axiom_vocab.py` — extracts and caches content words from axiom files (e.g. `axioms_std.js`); used to restrict synonym/exclusion injection to pairs where both sides appear in the problem or axioms
+
+### Semantic Normalization Pipeline
+
+Applied after clausification, before the prover. Controlled by `-nosemnormal` flag.
+
+```
+rawlogic_convert() produces clause list
+  |
+  v
+semnormalize.sem_normalize_clauses(clauses)     [solve.py:184]
+  Pass 1: Antonym folding — if word in ANTONYMS, flip atom polarity + replace
+  Pass 2: Canonical substitution — if word in CANONICALS, replace unconditionally
+  (Both skip $ctxt terms, handle disjunctive clauses)
+```
+
+Soft synonym and exclusion axioms are injected earlier, inside `rawlogic_convert()`:
+
+```
+rawlogic_convert():
+  ... clausification, population facts ...
+  result.extend(background)            # population + compound subsumption
+  result.extend(sem_axioms)            # soft synonyms + exclusions [appended after all sent_* clauses]
+  ... gradable normalization (promotes has_property -> has_degree_property) ...
+```
+
+**Soft synonym axioms** (`inject_soft_synonyms` in `lc_postprocess.py`):
+- Scans clause list for words in `SOFT_SYNONYMS`
+- Emits biconditional clauses: `[-has_property, W, X, Ct], [has_property, OTHER, X, Ct]`
+- Templates: `has property` for adjectives (gradable normalizer promotes later), `isa` for nouns, `has type` for verbs
+- Uses a single free variable `?:Ct` for context (unifies with any `$ctxt` term)
+- Two-side restriction (`REQUIRE_BOTH_SIDES = True`): only emits if other side also appears in input clauses or axiom file vocabulary
+
+**Exclusion axioms** (`inject_exclusion_axioms` in `lc_postprocess.py`):
+- Scans clause list for words in `EXCLUSION_INDEX`
+- For groups with 2+ members present, emits pairwise exclusion clauses
+- `needs_blocker=False` groups: hard exclusion `[-has_property, W1, X, Ct], [-has_property, W2, X, Ct]`
+- `needs_blocker=True` groups: two defeasible axioms per pair with `$block` on each side
+- Temporal groups (MONTH, DAY_OF_WEEK, SEASON): use `is rel2` template instead of `has property`
+
+**Axiom vocabulary cache** (`axiom_vocab.py`):
+- Extracts content words from axiom files, caches in `.vocab` sibling file
+- Auto-rebuilt when axiom file is newer than vocab cache
+- Used by both injection functions for the two-side restriction
+
+**Regenerating data files** after changing `mkdata/*.txt` sources:
+```bash
+cd mkdata && python3 build_solver_data.py
+```
 
 ### Logic Representation
 

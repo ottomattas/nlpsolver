@@ -72,17 +72,29 @@ def _normalize_atom(atom):
 
   Recurses into list-valued arguments.
   Position 0 (predicate name) is never modified.
+  For GK disjunctive clauses (first element is a list), recurses into
+  every element — there is no predicate name to skip.
   """
   if not isinstance(atom, list) or len(atom) == 0:
     return 0
+  # GK disjunctive clause: first element is a list → recurse all elements.
+  if isinstance(atom[0], list):
+    changes = 0
+    for sub in atom:
+      changes += _normalize_atom(sub)
+    return changes
   changes = 0
   pred = atom[0]
   negated = isinstance(pred, str) and pred.startswith("-")
   for i in range(1, len(atom)):
     arg = atom[i]
     if isinstance(arg, list):
-      # recurse but do not flip polarity into nested sub-structures
-      changes += _normalize_atom(arg)
+      # Skip $ctxt terms — these are context markers, not semantic content.
+      if arg and isinstance(arg[0], str) and arg[0].startswith("$ctxt"):
+        pass
+      else:
+        # recurse but do not flip polarity into nested sub-structures
+        changes += _normalize_atom(arg)
     elif _eligible(arg):
       word = arg
       # Pass 1: antonym resolution — flip polarity and swap to antonym
