@@ -90,7 +90,7 @@ English text
 - `utils.py` — utility functions: `debug_print`, `clause_list_to_json`
 - `semnormalize.py` — post-clausification semantic normalization: antonym folding (flip polarity + replace word) and canonical word substitution; skips `$ctxt` terms; handles disjunctive clauses
 - `data_canonicals.py` — (generated) `CANONICALS` dict: ~752 Tier A `{variant: canonical}` entries from `mkdata/syn_{a,n,v}_rewrite.txt`
-- `data_antonyms.py` — (generated) `ANTONYMS` dict: ~935 `{word: antonym}` entries from `mkdata/ant_{a,n,v}.txt`
+- `data_antonyms.py` — (generated) `ANTONYMS` dict: ~908 `{word: antonym}` entries from `mkdata/ant_{a,n,v}.txt` (kinship/gender/spatial/temporal/colour pairs blocked via `BLOCKED_ANTONYM_WORDS`)
 - `data_synonyms.py` — (generated) `SOFT_SYNONYMS` dict: ~12K words, bidirectional `{word: [(other, score, pos), ...]}` index from `mkdata/syn_{a,n,v}_soft_axioms.txt`
 - `data_exclusions.py` — (generated) `EXCLUSION_GROUPS` + `EXCLUSION_INDEX` from `mkdata/excl_a.txt`
 - `axiom_vocab.py` — extracts and caches content words from axiom files (e.g. `axioms_std.js`); used to restrict synonym/exclusion injection to pairs where both sides appear in the problem or axioms
@@ -131,7 +131,9 @@ rawlogic_convert():
 - For groups with 2+ members present, emits pairwise exclusion clauses
 - `needs_blocker=False` groups: hard exclusion `[-has_property, W1, X, Ct], [-has_property, W2, X, Ct]`
 - `needs_blocker=True` groups: two defeasible axioms per pair with `$block` on each side
-- Temporal groups (MONTH, DAY_OF_WEEK, SEASON): use `is rel2` template instead of `has property`
+- Four atom shapes by group id: default `has_property` (adjectives); `_IS_REL2_EXCL_GROUPS` (MONTH/DAY_OF_WEEK/SEASON) use `is rel2` with target at arg 3; `_IS_REL2_PREP_GROUPS` (SPATIAL_*, TEMPORAL_ORDER) use `is rel2` with preposition at arg 1 plus two free entity variables; `_HAS_DEGREE_REL2_PREP_GROUPS` (PROXIMITY) emit two asymmetric axioms per pair — positive side any-degree, antonym side `"none"` intensity, shared `?:RC`
+- `MANUAL_ANTONYMS` (in `mkdata/build_solver_data.py`) contributes synthetic `MANUAL_ADJ_*` 2-member exclusion groups (adjective pairs like `broken/intact`); it no longer feeds ANTONYMS rewriting
+- Spatial/temporal preposition subsumption (under → below, prior_to → before, etc.) lives as static axioms in `axioms_std.js` §7c/7d. Preposition surface-form canonicalisation ("in front of" → "in_front_of") happens pre-clausification in `lc_rewrites._PREP_CANONICAL`. See DOCUMENTATION.md §9.5.
 
 **Axiom vocabulary cache** (`axiom_vocab.py`):
 - Extracts content words from axiom files, caches in `.vocab` sibling file
@@ -175,7 +177,7 @@ prompts/stage2_examples.txt       -- Stage 2 few-shot examples
 use_llm          = "gemini"              # "gpt" | "claude" | "gemini" | "deepseek"
 claudeversion    = "claude-sonnet-4-6"
 gptversion       = "gpt-5.1"
-geminiversion    = "gemini-2.5-flash-lite"
+geminiversion    = "gemini-2.5-flash"
 deepseekversion  = "deepseek-chat"       # V3.2; "deepseek-reasoner" for thinking
 temperature      = 0
 default_max_tokens = 8000
@@ -206,14 +208,14 @@ Full solver data: http://logictools.org/data/nlpsolver_data.tar.gz
 
 ## Debug Case Workflow
 
-When the user says **"Debug case N"** (where N is a case number in `testfixlog.txt`):
+When the user says **"Debug case N"** (where N is a case number in `testfixlog_april.txt`):
 
-1. **Run `python3 examine.py N`** — this looks up Case N in `testfixlog.txt`, runs all five
+1. **Run `python3 examine.py N`** — this looks up Case N in `testfixlog_april.txt`, runs all five
    solvers (gemini, claude, gpt, deepseek, udp) in parallel with `-debug -json`, and writes
    logs to `eN_gemini.txt`, `eN_claude.txt`, `eN_gpt.txt`, `eN_deepseek.txt`, `eN_udp.txt`.
    The `-json` flag ensures logic is shown in raw JSON for cross-referencing with prover I/O.
 
-2. **Read `testfixlog.txt` entry for Case N** — note the `Input:` text and `Expected:` value.
+2. **Read `testfixlog_april.txt` entry for Case N** — note the `Input:` text and `Expected:` value.
 
 3. **Explore all five log files** — read them fully, comparing the answers and logic/proof
    output across all LLM providers and the UDP pipeline.
@@ -225,7 +227,7 @@ When the user says **"Debug case N"** (where N is a case number in `testfixlog.t
    Both stages must be correct, not just the final answer.
 
 5. **Assess the Expected value** — form an independent opinion on whether the `Expected:`
-   value in testfixlog.txt is the correct answer under a normal interpretation of the input,
+   value in testfixlog_april.txt is the correct answer under a normal interpretation of the input,
    or whether it should be changed, or whether there are good alternatives.
    Assume the UDP pipeline answer is correct in most (but not all) cases.
 
@@ -249,7 +251,7 @@ When the user says **"Debug case N"** (where N is a case number in `testfixlog.t
 When the user says **"Register fix for case N"** — assuming the debug analysis was done,
 a fix was implemented, and it has been verified to work:
 
-1. **Read the Case N entry in `testfixlog.txt`** to see its current state.
+1. **Read the Case N entry in `testfixlog_april.txt`** to see its current state.
 2. **Add brief `Conclusion:`, `Cause:`, and `Fixes:` fields** to the case entry, following
    the style and brevity of existing entries in the file. Keep all text short — one or two
    lines per field. If a comment would be long, shorten it to the essential point.

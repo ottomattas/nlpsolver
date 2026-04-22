@@ -33,6 +33,39 @@ _LOCATED_PREFIX_MAP = {}
 for _p in ("in", "at", "on", "near", "above", "under"):
   _LOCATED_PREFIX_MAP["located " + _p] = _p
 
+
+# Preposition canonicalisation — pure surface-form variants mapped to the
+# canonical form used by the exclusion/subsumption axioms. Handled as
+# rewriting (not axioms) because the variants are the SAME concept, just
+# spelled differently. Near-synonyms with distinct meaning (over/above,
+# under/below, on_top_of/above) are handled by subsumption axioms in
+# axioms_std.js, NOT by this table.
+_PREP_CANONICAL = {
+  # spatial — spaced form → underscored form (LLM mostly underscores already)
+  "in front of":       "in_front_of",
+  "in front":          "in_front_of",   # missing trailing "of"
+  "front of":          "in_front_of",   # missing leading "in"
+  "in back of":        "behind",        # colloquial ≡ behind
+  "back of":           "behind",
+  "to the left of":    "left_of",
+  "left of":           "left_of",
+  "to the right of":   "right_of",
+  "right of":          "right_of",
+  "on top of":         "on_top_of",
+  "inside of":         "inside",
+  "outside of":        "outside",
+  "out of":            "outside",
+  "far away from":     "far_from",
+  "far from":          "far_from",
+  "far":               "far_from",       # has_degree_rel2 arg 1: LLM sometimes drops "from"
+  "close to":          "near",           # canonical collapse (close_to ⊆ near)
+  "close_to":          "near",
+  "next to":           "next_to",
+  # temporal
+  "prior to":          "prior_to",
+  "subsequent to":     "after",
+}
+
 def rewrite_meta_predicates(tree):
   """Normalize verbose/meta is_rel2 predicates throughout the formula tree.
 
@@ -88,6 +121,26 @@ def rewrite_meta_predicates(tree):
       canonical = _LOCATED_PREFIX_MAP.get(rel)
       if canonical:
         return [pfx + "is rel2", canonical] + tree[2:]
+      # Preposition canonicalisation: "in front of" → "in_front_of" etc.
+      canonical = _PREP_CANONICAL.get(rel)
+      if canonical:
+        return [pfx + "is rel2", canonical] + tree[2:]
+  # Also canonicalise the preposition in has_degree_rel2 (near/far_from) and
+  # in has_location / has_time / has_destination's preposition slot.
+  if op in ("has degree rel2", "-has degree rel2") and len(tree) >= 2:
+    rel = tree[1]
+    if isinstance(rel, str):
+      canonical = _PREP_CANONICAL.get(rel)
+      if canonical:
+        return [op, canonical] + list(tree[2:])
+  if op in ("has location", "-has location",
+            "has time", "-has time",
+            "has destination", "-has destination") and len(tree) >= 4:
+    prep = tree[3]
+    if isinstance(prep, str):
+      canonical = _PREP_CANONICAL.get(prep)
+      if canonical:
+        return list(tree[:3]) + [canonical] + list(tree[4:])
   return [rewrite_meta_predicates(child) if isinstance(child, list) else child
           for child in tree]
 

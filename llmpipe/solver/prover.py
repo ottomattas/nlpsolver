@@ -84,20 +84,27 @@ def _scan_for_eq_functions(tree):
 def _auto_strategy(logic, opts):
   """Build a strategy JSON string based on clause analysis.
 
-  Returns a JSON string for -strategytext, or None to use the default.
   When equalities with function terms are present, uses the unit strategy
   which is better at equational reasoning via paramodulation on unit clauses.
+  Otherwise returns the default negative_pref/knuthbendix_pref strategy,
+  which handles axioms with many equalities more efficiently than the
+  prover's built-in default.
   """
   if not logic or not isinstance(logic, list):
     return None
-  if not _has_eq_functions(logic):
-    return None  # default strategy is fine
 
-  strategy = {"strategy": ["unit"], "query_preference": 0}
+  if _has_eq_functions(logic):
+    strategy = {"strategy": ["unit"], "query_preference": 0}
+    reason = "eq functions detected"
+  else:
+    strategy = {"strategy": ["negative_pref", "knuthbendix_pref"],
+                "query_preference": 1}
+    reason = "default"
+
   strat_str = _json.dumps(strategy)
 
   if opts.get("debug_print_flag"):
-    print("\n=== auto-selected strategy (eq functions detected) ===\n")
+    print(f"\n=== auto-selected strategy ({reason}) ===\n")
     print(strat_str)
 
   return strat_str

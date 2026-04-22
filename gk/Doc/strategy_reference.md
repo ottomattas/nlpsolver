@@ -114,6 +114,100 @@ Clause Selection and Queue Control
         problems).
 
 
+Clause Roles and Strategy
+-------------------------
+
+Each input clause carries a role assigned via the `@role` key (or
+inferred from `@question`). The role influences the proof search
+only through queue placement in the given-clause loop:
+
+  * **Goal roles** (`conjecture`, `negated_conjecture`, `question`)
+    → GOAL queue
+  * **Assumption roles** (`assumption`, `hypothesis`)
+    → ASSUMPTIONS queue
+  * **Axiom roles** (`axiom`, `extaxiom`)
+    → AXIOMS queue
+  * **Derived clauses** with mixed parents → a mixed queue matching
+    the highest-priority parent class.
+
+Whether these queues are actually kept separate depends on
+`query_preference`:
+
+    0   All clauses share one queue; role is only a label.
+    1   Queues are kept separate exactly as marked by roles.
+    2   Positive goal units are demoted to assumptions;
+        non-included axioms are promoted to assumptions.
+    3   Only fully negative goal clauses stay as goals; assumptions
+        are demoted to axioms.
+    4   Every clause is forced to axiom; role is ignored entirely.
+
+The named strategy `query_focus` is the one that actually exploits
+role-based queue separation — it prefers GOAL-queue clauses during
+given-clause selection. `negative_pref`, `positive_pref`, and
+`hardness_pref` use orthogonal preferences and do not key off role
+directly.
+
+
+Role Semantics (Bottom Line)
+----------------------------
+
+A short summary of how `@role` and `@question` interact at parse
+time (the full discussion is in `Doc/json_ld_logic.md`):
+
+  * `@question` and `@role` are **mutually exclusive** in the same
+    object — this is enforced by the parser, not a convention.
+  * `@question` is macro-expanded to `@role: "question"` plus
+    `@logic: <formula>`.
+  * `@role: "question"` is internally rewritten to
+    `negated_conjecture`: the formula is negated automatically, and
+    free variables are wrapped in `$ans(...)` for answer collection.
+  * `conjecture` and `negated_conjecture` share one internal role
+    number; they differ only in whether the parser negates the
+    formula (`conjecture` is negated, `negated_conjecture` is taken
+    as-is).
+  * `hypothesis` and `assumption` are indistinguishable internally.
+  * Role affects search **only** when the active strategy reads
+    queue position — i.e. `query_focus`, or any non-zero
+    `query_preference`.
+
+
+axiom vs extaxiom
+-----------------
+
+`extaxiom` is an "imported / background axiom" marker. A clause gets
+extaxiom role in two ways:
+
+  * explicit `@role: "extaxiom"`; or
+  * `@role: "axiom"` (or no role) when the clause comes from an
+    included file — the parser prefixes its `@name` with `$inc_` and
+    auto-upgrades the role. In practice this happens for clauses
+    loaded via the shared-memory KB (`-readkb` / `-usekb`), not for
+    a plain `./gk file.js` run.
+
+The two roles share storage, weighting, indexing, SINE filtering,
+and confidence handling. They also collapse to the same derived-
+clause role (`FROMAXIOM`) after the first inference — the extaxiom
+marker does not propagate to children.
+
+The **one behavioural difference** during search is in initial
+clause activation under `query_preference: 2`:
+
+  * normal `axiom` clauses are suppressed from initial activation
+    (they are pushed back into the regular selection queue);
+  * `extaxiom` clauses are always initially activated.
+
+This is the "trust the background library more than the problem
+axioms" hook: when a large imported KB is available and
+`query_preference: 2` is in effect, the library's clauses are
+activated immediately while the problem's own axioms are held back.
+Under `query_preference` 0, 1, 3, or 4 there is no behavioural
+difference between the two roles.
+
+Proof output preserves the label (`axiom` vs `extaxiom`), so the
+distinction remains useful for provenance even when it has no
+operational effect.
+
+
 Clause Size and Complexity Limits
 ----------------------------------
 

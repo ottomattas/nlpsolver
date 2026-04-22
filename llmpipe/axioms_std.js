@@ -721,11 +721,31 @@ Does John 1 have two cars?
 
 
   // == 7b. DEFINITE FUNCTION TERMS ($theof1) ==
-  // Generic possession bridge: John has $theof1("father", John, CT)
-  [["have", "?:S", ["$theof1", "?:R", "?:S", "?:C"], "?:C"]],
-  // Note: isa bridge is generated per-relation in logconvert to avoid
-  // spurious answers (a generic isa bridge would make $theof1(R,S,C) an R
-  // for any R and S, creating infinite witnesses for wh-queries).
+  // Note: both the isa and the have bridges are generated per-relation at
+  // parse time (isa in logconvert, have via add_possessive_have) so that
+  // they are grounded to concrete owners. A generic have bridge like
+  //   [["have", "?:S", ["$theof1", "?:R", "?:S", "?:C"], "?:C"]]
+  // is universally quantified in S and lets the prover answer any
+  // wh-query about possession with a free-variable witness (e.g. "X3"
+  // alongside "Tom" for "who had a bicycle?"), so it is intentionally
+  // NOT defined here.
+
+  // == 7c. PREPOSITION SUBSUMPTION (spatial) ==
+  // Unidirectional specific → general implications for near-synonymous
+  // spatial prepositions. "X is under Y" implies "X is below Y", but not
+  // vice versa ("below" is more general — no contact implication).
+  // Mutual-exclusion between opposites (behind/in_front_of etc.) is
+  // handled dynamically by inject_exclusion_axioms from excl_a.txt.
+  [["-is rel2", "underneath", "?:X", "?:Y", "?:C"], ["is rel2", "below", "?:X", "?:Y", "?:C"]],
+  [["-is rel2", "beneath",    "?:X", "?:Y", "?:C"], ["is rel2", "below", "?:X", "?:Y", "?:C"]],
+  [["-is rel2", "under",      "?:X", "?:Y", "?:C"], ["is rel2", "below", "?:X", "?:Y", "?:C"]],
+  [["-is rel2", "over",       "?:X", "?:Y", "?:C"], ["is rel2", "above", "?:X", "?:Y", "?:C"]],
+  [["-is rel2", "on_top_of",  "?:X", "?:Y", "?:C"], ["is rel2", "above", "?:X", "?:Y", "?:C"]],
+
+  // == 7d. PREPOSITION SUBSUMPTION (temporal) ==
+  [["-is rel2", "prior_to",   "?:X", "?:Y", "?:C"], ["is rel2", "before", "?:X", "?:Y", "?:C"]],
+  [["-is rel2", "following",  "?:X", "?:Y", "?:C"], ["is rel2", "after",  "?:X", "?:Y", "?:C"]],
+  [["-is rel2", "preceding",  "?:X", "?:Y", "?:C"], ["is rel2", "before", "?:X", "?:Y", "?:C"]],
 
   // == 8. MEASUREMENTS & ATTRIBUTES ==
   // Value Holders [cite: 306, 307]

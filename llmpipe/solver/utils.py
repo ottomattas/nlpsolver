@@ -240,8 +240,13 @@ def clause_list_to_json_commented(clauselist, s1_json=None):
     clauserep = ["{"]
     if "@logic" in clause: clauserep.append("\"@logic\": " + logicstr)
     if "@question" in clause: clauserep.append("\"@question\": " + logicstr)
+    # Emit @role: "assumption" on every non-@question clause.
+    # @question and @role are mutually exclusive at the gk parser — the
+    # @question shorthand already sets role="question" internally.
+    if "@question" not in clause:
+      clauserep.append(",\n \"@role\": \"assumption\"")
     for key in clause:
-      if key not in ("@logic", "@question", "@askvars", "@where_query", "@when_query", "@who_query", "@who_entity", "@who_kind", "@what_query", "@sourcetype"):
+      if key not in ("@logic", "@question", "@askvars", "@where_query", "@when_query", "@who_query", "@who_entity", "@who_kind", "@what_query", "@sourcetype", "@role"):
         clauserep.append(",\n " + json.dumps(key) + ": " + json.dumps(clause[key]))
     clauserep.append("}")
     reslst.append("".join(clauserep))

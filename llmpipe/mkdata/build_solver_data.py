@@ -29,12 +29,21 @@ MANUAL_CANONICALS = {
     "awake": "wake",
 }
 
+# Manual adjective-antonym PAIRS. These are NOT used for semnormalize
+# polarity-flipping rewriting any more; instead each pair is injected as a
+# 2-member `needs_blocker=False` mutual-exclusion group into
+# data_exclusions.py, so the prover sees a has_property-template exclusion
+# axiom [-has_property(w1,X,C), -has_property(w2,X,C)].
+#
+# Format: {word_a: word_b} — one entry per pair (direction doesn't matter).
+#
+# Spatial pairs (outside/inside, below/above etc.) are NOT listed here —
+# they belong in excl_a.txt SPATIAL_* groups with the is_rel2 template.
 MANUAL_ANTONYMS = {
-    "outside": "inside",
-    "below": "above",
+    "broken":     "intact",
     "unfinished": "finished",
     "incomplete": "complete",
-    "undone": "done",
+    "undone":     "done",
 }
 
 # Words that should never appear as antonym keys, even if WordNet lists them.
@@ -42,6 +51,25 @@ MANUAL_ANTONYMS = {
 # "past"/"present"/"future" clash with tense markers inside $ctxt terms.
 BLOCKED_ANTONYM_WORDS = frozenset({
     "abstract", "past", "present", "future",
+    # Kinship / gender — complementary categories, not true antonyms.
+    # Flipping "X is a sister" to "X is not a brother" loses positive
+    # type info and destroys $theof1 resolution. Handled instead as
+    # mutual-exclusion pair groups in excl_a.txt (KIN_* / GENDER_*).
+    "sister", "brother", "mother", "father", "aunt", "uncle",
+    "daughter", "son", "nephew", "niece", "husband", "wife",
+    "man", "woman", "boy", "girl", "male", "female",
+    "king", "queen",
+    # Spatial / directional — complementary positions, not antonyms.
+    "top", "bottom", "front", "back", "left", "right",
+    "rear", "head", "tail", "here", "there",
+    "north", "south", "east", "west",
+    # Temporal sequence — mutually exclusive at a time, not antonyms.
+    "day", "night", "sunrise", "sunset",
+    "waning", "waxing", "waking", "sleeping",
+    # Colours — handled by COLOR_BASIC exclusion group.
+    "black", "white",
+    # Ambiguous homographs (animal vs market term).
+    "bull", "bear",
 })
 
 
@@ -198,9 +226,13 @@ def build_canonicals():
 
 
 def build_antonyms(canonicals):
-    """Generate data_antonyms.py from manual entries + ant_*.txt files."""
+    """Generate data_antonyms.py from ant_*.txt files.
+
+    Note: MANUAL_ANTONYMS is NOT merged here any more — its pairs are
+    injected as exclusion groups by build_exclusions().
+    """
     print("Building data_antonyms.py ...")
-    merged = dict(MANUAL_ANTONYMS)
+    merged = {}
     skipped_circular = 0
     skipped_self = 0
     for pos, fname in [("a", "ant_a.txt"), ("n", "ant_n.txt"), ("v", "ant_v.txt")]:
@@ -215,9 +247,6 @@ def build_antonyms(canonicals):
                 # Skip if this would create a circular mapping
                 if canonical in merged and merged[canonical] == word:
                     skipped_circular += 1
-                    continue
-                # Don't overwrite manual entries
-                if word in MANUAL_ANTONYMS:
                     continue
                 # Don't map a word that is itself a canonical target in CANONICALS
                 # (the canonical pass would then try to re-substitute)
@@ -240,7 +269,7 @@ def build_antonyms(canonicals):
         "".join(lines),
         "Directional antonym pairs for semantic normalisation.",
     )
-    print(f"  {len(merged)} entries ({len(MANUAL_ANTONYMS)} manual + {len(merged) - len(MANUAL_ANTONYMS)} generated)")
+    print(f"  {len(merged)} entries (all generated; MANUAL_ANTONYMS now feeds data_exclusions.py)")
     if skipped_circular:
         print(f"  skipped {skipped_circular} circular mappings")
     if skipped_self:
@@ -288,9 +317,28 @@ def build_synonyms():
 
 
 def build_exclusions():
-    """Generate data_exclusions.py from excl_a.txt."""
+    """Generate data_exclusions.py from excl_a.txt plus MANUAL_ANTONYMS pairs."""
     print("Building data_exclusions.py ...")
     groups = read_exclusion_file(os.path.join(SCRIPT_DIR, "excl_a.txt"))
+
+    # Inject MANUAL_ANTONYMS pairs as 2-member has_property exclusion groups.
+    # Deduped by pair (frozenset) so a dict carrying both directions still emits
+    # a single group.
+    manual_seen = set()
+    for w1, w2 in MANUAL_ANTONYMS.items():
+        pair = frozenset([w1, w2])
+        if pair in manual_seen:
+            continue
+        manual_seen.add(pair)
+        a, b = sorted([w1, w2])
+        gid = f"MANUAL_ADJ_{a.upper()}_{b.upper()}"
+        groups[gid] = {
+            "source": "manual",
+            "score": 0.95,
+            "needs_blocker": False,
+            "words": [a, b],
+        }
+
     if not groups:
         print("  no exclusion data found")
         return

@@ -67,21 +67,27 @@ def _eligible(s):
 
 # ======== atom-level normalisation ========
 
-def _normalize_atom(atom):
+def _normalize_atom(atom, allow_flip=True):
   """Normalise a single atom (list) in place; return change count.
 
-  Recurses into list-valued arguments.
-  Position 0 (predicate name) is never modified.
+  Recurses into list-valued arguments. Position 0 (predicate name) is never
+  modified at the top level, and polarity-flipping antonym folding is
+  performed only at the top level (allow_flip=True). Inside nested function
+  terms like $theof1, $measure_of, Skolem functions etc. only canonical
+  substitution is applied — flipping the "polarity" of a function symbol
+  (e.g. $theof1 → -$theof1) would produce invalid terms that the renderer
+  and prover have no way to interpret.
   For GK disjunctive clauses (first element is a list), recurses into
   every element — there is no predicate name to skip.
   """
   if not isinstance(atom, list) or len(atom) == 0:
     return 0
   # GK disjunctive clause: first element is a list → recurse all elements.
+  # Each sub-element is itself a top-level literal, so flips are allowed.
   if isinstance(atom[0], list):
     changes = 0
     for sub in atom:
-      changes += _normalize_atom(sub)
+      changes += _normalize_atom(sub, allow_flip=True)
     return changes
   changes = 0
   pred = atom[0]
@@ -93,12 +99,13 @@ def _normalize_atom(atom):
       if arg and isinstance(arg[0], str) and arg[0].startswith("$ctxt"):
         pass
       else:
-        # recurse but do not flip polarity into nested sub-structures
-        changes += _normalize_atom(arg)
+        # Function term: canonical substitution only, never polarity flip.
+        changes += _normalize_atom(arg, allow_flip=False)
     elif _eligible(arg):
       word = arg
-      # Pass 1: antonym resolution — flip polarity and swap to antonym
-      if word in ANTONYMS:
+      # Pass 1: antonym resolution — flip polarity and swap to antonym.
+      # Only at the top-level literal; function terms have no polarity.
+      if allow_flip and word in ANTONYMS:
         antonym = ANTONYMS[word]
         # flip predicate polarity
         if negated:

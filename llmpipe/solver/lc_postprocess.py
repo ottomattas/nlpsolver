@@ -638,6 +638,18 @@ def rewrite_definites(result, asu_index, sid, theof_relations):
           result.pop(i)
           break
 
+    # Emit the grounded possession fact have(arg, fn_term, ctxt). The
+    # matching is_rel2 fact was just consumed/removed, and the universal
+    # have bridge formerly in axioms_std.js (removed because it generated
+    # free-variable wh-answers) no longer fills the gap — so we explicitly
+    # assert this grounded fact. Needed whenever arg_term is concrete
+    # (e.g. "Mary 3") so "Mary had a brother?" resolves via a concrete have.
+    if arg_term is not None:
+      have_atom = ["have", arg_term, fn_term]
+      if ctxt is not None:
+        have_atom.append(list(ctxt) if isinstance(ctxt, list) else ctxt)
+      result.append({"@name": "frm_theof", "@logic": have_atom})
+
     # Record for bridge axiom generation
     theof_relations.add((rel_name, type_base))
 
@@ -923,6 +935,12 @@ def add_possessive_have(result):
   for obj in result:
     if not isinstance(obj, dict) or "@logic" not in obj:
       continue
+    # Skip the universal frm_theof schema axioms: their is_rel2 form has a
+    # free ?:S owner and would yield a universally-quantified have axiom
+    # ("every entity has its own X"), which lets the prover satisfy any
+    # wh-query with a free-variable answer (e.g. "X3 and Tom").
+    if obj.get("@name") == "frm_theof":
+      continue
     clause = obj["@logic"]
     for atom in _extract_atoms(clause):
       if not (isinstance(atom, list) and len(atom) >= 4
@@ -1160,6 +1178,33 @@ _IS_REL2_EXCL_GROUPS = frozenset({
     "MONTH", "DAY_OF_WEEK", "SEASON",
 })
 
+# Groups whose members appear as the RELATION at is_rel2 argument 1
+# (spatial / temporal-order prepositions like behind, above, before).
+# Emitted axiom shape:
+#   [-is_rel2(w1,?:X,?:Y,ct), -is_rel2(w2,?:X,?:Y,ct)]
+_IS_REL2_PREP_GROUPS = frozenset({
+    "SPATIAL_SAGITTAL",
+    "SPATIAL_VERTICAL",
+    "SPATIAL_VERTICAL_OVER_UNDER",
+    "SPATIAL_CONTAINMENT",
+    "SPATIAL_LATERAL",
+    "TEMPORAL_ORDER",
+})
+
+# Groups whose members appear as the RELATION at has_degree_rel2 argument 1
+# (degree-based binary relations like near, far_from).
+# Emitted per pair: two asymmetric axioms — positive side any-degree,
+# antonym side "none" intensity, shared RELCLASS:
+#   [-has_degree_rel2(W1, ?:X, ?:Y, ?:D, ?:RC, ct),
+#    -has_degree_rel2(W2, ?:X, ?:Y, "none", ?:RC, ct)]
+#   [-has_degree_rel2(W2, ?:X, ?:Y, ?:D, ?:RC, ct),
+#    -has_degree_rel2(W1, ?:X, ?:Y, "none", ?:RC, ct)]
+# The existing high→none / low→none intensity bridges in axioms_std.js §9
+# then propagate the "none" negation to all intensities via contrapositive.
+_HAS_DEGREE_REL2_PREP_GROUPS = frozenset({
+    "PROXIMITY",
+})
+
 
 def inject_exclusion_axioms(result, axiom_vocab=frozenset()):
   """Scan clause list for words in exclusion groups; emit pairwise mutual-
@@ -1195,11 +1240,40 @@ def inject_exclusion_axioms(result, axiom_vocab=frozenset()):
       continue
     score = ginfo["score"]
     is_rel2_group = gid in _IS_REL2_EXCL_GROUPS
+    is_rel2_prep_group = gid in _IS_REL2_PREP_GROUPS
+    has_degree_rel2_prep_group = gid in _HAS_DEGREE_REL2_PREP_GROUPS
     present_list = sorted(present)
     for i in range(len(present_list)):
       for j in range(i + 1, len(present_list)):
         w1, w2 = present_list[i], present_list[j]
-        if is_rel2_group:
+        if has_degree_rel2_prep_group:
+          # Preposition at has_degree_rel2 arg 1. Two asymmetric axioms per
+          # pair: positive side any-degree (?:D), antonym side "none"
+          # intensity, shared ?:RC. Intensity bridges (high→none, low→none)
+          # in axioms_std.js §9 propagate the "none" negation to all
+          # intensities via contrapositive.
+          for (left, right) in ((w1, w2), (w2, w1)):
+            d = _fresh_fv()
+            rc = _fresh_fv()
+            ct = _fresh_fv()
+            clause = [
+                ["-has degree rel2", left,  "?:X", "?:Y", d,      rc, ct],
+                ["-has degree rel2", right, "?:X", "?:Y", "none", rc, ct],
+            ]
+            axioms.append({"@name": "frm_excl",
+                            "@logic": clause,
+                            "@confidence": score})
+        elif is_rel2_prep_group:
+          # Preposition at is_rel2 arg 1; two free entity variables.
+          ct = _fresh_fv()
+          clause = [
+              ["-is rel2", w1, "?:X", "?:Y", ct],
+              ["-is rel2", w2, "?:X", "?:Y", ct],
+          ]
+          axioms.append({"@name": "frm_excl",
+                          "@logic": clause,
+                          "@confidence": score})
+        elif is_rel2_group:
           ct = _fresh_fv()
           clause = [
               ["-is rel2", "?:R", "?:X", w1, ct],

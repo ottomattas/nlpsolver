@@ -46,7 +46,7 @@ use_llm = "gemini"
 # Model versions
 gptversion = "gpt-5.1"
 claudeversion = "claude-sonnet-4-6"
-geminiversion = "gemini-2.0-flash"
+geminiversion = "gemini-2.5-flash"
 deepseekversion = "deepseek-chat"          # V3.2; use "deepseek-reasoner" for thinking
 
 # API key files (absolute paths relative to llmpipe/)

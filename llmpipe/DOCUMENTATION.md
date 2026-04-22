@@ -47,7 +47,12 @@ representation so that a developer or LLM can quickly start extending or modifyi
    - 7.6 [Population facts](#76-population-facts)
    - 7.7 [Stage-2 rewrites and modifications](#77-stage-2-rewrites-and-modifications)
 8. [Configuration and options](#8-configuration-and-options)
-9. [The mkdata toolkit](#9-the-mkdata-toolkit)
+9. [The mkdata toolkit and solver integration](#9-the-mkdata-toolkit-and-solver-integration)
+   - 9.1 [What mkdata produces](#91-what-mkdata-produces)
+   - 9.2 [Solver runtime files](#92-solver-runtime-files)
+   - 9.3 [Solver integration](#93-solver-integration)
+   - 9.4 [Full build pipeline](#94-full-build-pipeline)
+   - 9.5 [Spatial and temporal preposition handling](#95-spatial-and-temporal-preposition-handling)
 10. [Extending and modifying the pipeline](#10-extending-and-modifying-the-pipeline)
 
 ---
@@ -146,7 +151,7 @@ llmpipe/
 │   ├── semnormalize.py  Semantic normalization (antonym folding + canonical substitution)
 │   ├── axiom_vocab.py   Axiom file vocabulary extraction and caching
 │   ├── data_canonicals.py  (generated) Tier A rewrite dict (~752 entries)
-│   ├── data_antonyms.py    (generated) Antonym pairs dict (~935 entries)
+│   ├── data_antonyms.py    (generated) Antonym pairs dict (~908 entries)
 │   ├── data_synonyms.py    (generated) Soft synonym index (~12K words)
 │   ├── data_exclusions.py  (generated) Exclusion groups + index
 │   ├── globals.py       Options dict and file paths
@@ -523,7 +528,7 @@ call is stored in the cache before returning.  Caching is controlled by
 use_llm          = "gemini"            # "gpt" | "claude" | "gemini" | "deepseek"
 claudeversion    = "claude-sonnet-4-6"
 gptversion       = "gpt-5.1"
-geminiversion    = "gemini-2.0-flash"
+geminiversion    = "gemini-2.5-flash"
 deepseekversion  = "deepseek-chat"     # V3.2; "deepseek-reasoner" for thinking
 temperature      = 0
 default_max_tokens = 8000
@@ -1140,17 +1145,17 @@ bridge representation gaps.
 | Gradable normalisation | `lc_postprocess.normalize_gradable_predicates` | "John is big" — LLM used `has property(big,...)` but "big" is in the gradable whitelist → upgraded to `has degree property` | Whitelist-based `has property` ↔ `has degree property` conversion; replaces `"entity"` and `"none"` relclass with free variables (§7.5) |
 | `isa entity` stripping | `lc_postprocess.strip_isa_entity` | "Every entity that is big is strong" — `isa(entity,X)` is always true, so the clause is a tautology → removed | Removes tautological `isa(entity,X)` literals (§7.5) |
 | RELCLASS coercion | `lc_postprocess.coerce_relclass` | "Is John big?" — query uses relclass "person" (John's category) but the rule uses "bear" → relclass replaced with free variable so they unify | Fixes relclass mismatches in question degree-predicate atoms |
-| `$theof1` definite rewrite | `lc_postprocess.rewrite_definites` | "The father of John is nice" — `"the father 2"` → `["$theof1","father","John 1",CTXT]` throughout all clauses; `is_rel2` clause removed; per-relation `isa`/`is_rel2` bridge axioms generated as `frm_theof` | Replaces flat entity IDs for definite functional descriptions with canonical function terms so that "the father of John", "John's father", and wh-queries all refer to the same term.  Triggered by Stage-1 `definites` field.  Primary: matches `is_rel2` clause.  Fallback: matches `have` + `isa` pair.  Generic `have` bridge in `axioms_std.js`. |
-| Possessive `have` inference | `lc_postprocess.add_possessive_have` | "The handle of the fork" — `is_rel2(handle of, fork, handle)` + `isa(handle, handle)` → `have(fork, handle)` | Infers `have(Y,E,CT)` from possessive `is_rel2` patterns.  Handles ground entities, Skolem functions, and `$theof1` terms.  For rule clauses with guard literals (e.g., `[-isa,elephant,?:X]`), generates conditional `have` with the same guard. |
+| `$theof1` definite rewrite | `lc_postprocess.rewrite_definites` | "The father of John is nice" — `"the father 2"` → `["$theof1","father","John 1",CTXT]` throughout all clauses; `is_rel2` clause removed; per-relation `isa`/`is_rel2` bridge axioms generated as `frm_theof`; grounded `have(arg,$theof1,ctxt)` fact emitted for the concrete owner | Replaces flat entity IDs for definite functional descriptions with canonical function terms so that "the father of John", "John's father", and wh-queries all refer to the same term.  Triggered by Stage-1 `definites` field.  Primary: matches `is_rel2` clause.  Fallback: matches `have` + `isa` pair.  The formerly-universal `have` bridge in `axioms_std.js` (`[have, ?:S, $theof1(?:R,?:S,?:C), ?:C]`) has been removed because its free `?:S` let the prover satisfy any wh-possession query with a free-variable witness; `rewrite_definites` now emits the needed grounded possession fact directly. |
+| Possessive `have` inference | `lc_postprocess.add_possessive_have` | "The handle of the fork" — `is_rel2(handle of, fork, handle)` + `isa(handle, handle)` → `have(fork, handle)` | Infers `have(Y,E,CT)` from possessive `is_rel2` patterns.  Handles ground entities, Skolem functions, and `$theof1` terms.  For rule clauses with guard literals (e.g., `[-isa,elephant,?:X]`), generates conditional `have` with the same guard.  Skips `@name=frm_theof` clauses (the universally-quantified per-relation schema axioms) because processing them would regenerate the universal have bridge that was removed for free-variable-witness reasons (see `$theof1` definite rewrite row above). |
 | Misnested existential hoisting | `lc_rewrites.hoist_misnested_exists` | `[exists E, [and, has_actor(E,X), [exists X, isa(bear,X)]]]` → `[exists E, [exists X, [and, has_actor(E,X), isa(bear,X)]]]` | Pre-clausification fix for assertion formulas.  Detects existential variables used free in sibling conjuncts before their `exists` binding, hoists the binding to wrap the entire conjunction.  Only applies in assertion contexts (from `holds`), with collision checks against enclosing bindings. |
 | Spurious `can` removal | `lc_rewrites.strip_spurious_can` | "Did bears eat berries?" — removes `["can",X,E]` from event query when no modal language in ASU text | Pre-clausification pass on question formulas.  Fires when `can(X,E)` appears alongside `isa(activity,E)` and `has_actor(E,X)` in the same conjunction, both X and E are existentially quantified, and the ASU text contains no modal words (can, could, able, may, might, etc.). |
 | Meta-predicate normalization | `lc_rewrites.rewrite_meta_predicates` | `["is rel2","is",A,B]` → `["isa",A,B]`; `["is rel2","=",A,B]` → `["=",A,B]`; `["is rel2","located in",A,B]` → `["is rel2","in",A,B]` | Pre-clausification rewrite applied to all formulas.  Normalizes copula (`is` → `isa`), identity (`=`), spatial meta-predicates (`located in/at/on/near/above/under` → bare preposition), movement verbs (travel/journey/move → go), placement verbs (place/set/lay/position/deposit → put), and transfer verb synonyms (hand/pass/send → give).  Also normalizes 3-arg `has_destination(E,Dest)` to 4-arg `has_destination(E,Dest,"at")` for backward compat with stale Stage-2 cache entries. |
 | Receive→give normalization | `lc_rewrites.normalize_receive_events` | `["has type",E,"receive"]` + `["has actor",E,X]` → `["has type",E,"give"]` + `["has recipient",E,X]` | Formula-level rewrite: in `and`-blocks containing a receive event, the verb is changed to "give" and the actor role is swapped to recipient.  This allows the give-based transfer axioms in `axioms_std.js` to derive `have(Recipient, Object)` in the next world state. |
 | Set existence fact | `lc_sets._walk_for_count` | "Bears ate berries" with `forall/implies/member/$setof` in assertion context → `member("$some_bear", $setof(...))` | Generates a ground set membership fact for assertion-context `forall/member` patterns so the prover can bootstrap resolution through member-guarded clauses.  Skipped when the set already has element instantiation from a count assertion. |
 | Degree stripping | `lc_postprocess.strip_degree_predicates` | With `-simpleproperties`: `has_degree_property(big,X,none,animal)` → `has_property(big,X)` | (Only with `-simpleproperties`) Replaces degree predicates with simple property predicates |
-| Semantic normalisation | `semnormalize.sem_normalize_clauses` | "The ball is outside the box" → `outside` is antonym of `inside` → flips polarity and substitutes: `-is_rel2(inside,ball,box)` | Antonym resolution (~935 pairs: flip polarity + swap word) and canonical substitution (~752 pairs: synonym → canonical form).  Skips `$ctxt` terms.  Data loaded from generated `data_antonyms.py` and `data_canonicals.py`. |
+| Semantic normalisation | `semnormalize.sem_normalize_clauses` | "The ball is outside the box" → `outside` is antonym of `inside` → flips polarity and substitutes: `-is_rel2(inside,ball,box)` | Antonym resolution (~908 pairs: flip polarity + swap word) and canonical substitution (~752 pairs: synonym → canonical form).  Skips `$ctxt` terms.  Polarity-flipping is applied ONLY at the top-level literal — inside nested function terms (`$theof1`, `$measure_of`, Skolem), only canonical substitution runs (flipping `$theof1` to `-$theof1` would produce invalid terms).  Data loaded from generated `data_antonyms.py` and `data_canonicals.py`. |
 | Soft synonym injection | `lc_postprocess.inject_soft_synonyms` | "The car is red" + axioms mention "crimson" → emits `red(X,Ct) <=> crimson(X,Ct)` biconditional | Dynamic injection of Tier B synonym axioms for words present in both input and axiom vocabulary.  Templates: `has property` (adj), `isa` (noun), `has type` (verb). |
-| Exclusion injection | `lc_postprocess.inject_exclusion_axioms` | "The car is blue. Was it red?" → emits `NOT blue(X,Ct) OR NOT red(X,Ct)` with `$block` | Dynamic injection of mutual-exclusion axioms from `excl_a.txt` groups.  `needs_blocker` groups use defeasible `$block`.  Temporal groups (MONTH, DAY_OF_WEEK, SEASON) use `is rel2` template. |
+| Exclusion injection | `lc_postprocess.inject_exclusion_axioms` | "The car is blue. Was it red?" → emits `NOT blue(X,Ct) OR NOT red(X,Ct)` with `$block` | Dynamic injection of mutual-exclusion axioms from `excl_a.txt` groups.  `needs_blocker=True` groups use defeasible `$block`; `False` groups are hard exclusions. Three atom shapes: default `has_property` (adjective); `_IS_REL2_EXCL_GROUPS` (MONTH/DAY_OF_WEEK/SEASON) — `is_rel2` target at arg 3; `_IS_REL2_PREP_GROUPS` (SPATIAL_*, TEMPORAL_ORDER) — `is_rel2` preposition at arg 1 with two free entity variables. Also injects `MANUAL_ANTONYMS` adjective pairs as synthetic `MANUAL_ADJ_<W1>_<W2>` groups. See §9.5 for preposition handling. |
 | `@sourcetype` stripping | Serialisation (`clause_list_to_json`) | Population facts carry `@sourcetype:"populate"` internally for processing — stripped before the prover sees them | Internal `@sourcetype` tags are excluded from prover input |
 
 ---
@@ -1271,7 +1276,7 @@ Skolem type resolution for rendering (`procproofs._resolve_skolem_entity`):
 **To change the default LLM provider or model**, edit `solver/llmcall.py`:
 ```python
 use_llm          = "gemini"            # "gpt" | "claude" | "gemini" | "deepseek"
-geminiversion    = "gemini-2.0-flash"
+geminiversion    = "gemini-2.5-flash"
 claudeversion    = "claude-sonnet-4-6"
 deepseekversion  = "deepseek-chat"
 ```
@@ -1305,7 +1310,7 @@ generates Python dict files in `solver/` that are loaded at runtime.
 | `syn_{a,n,v}_rewrite.txt` | 416 / 218 / 124 entries | Tier A hard rewrites (`member,canonical`) |
 | `syn_{a,n,v}_soft_axioms.txt` | 2496 / 6218 / 4103 pairs | Tier B soft synonym pairs (`word_a,word_b,score`) |
 | `ant_{a,n,v}.txt` | 1483 / 375 / 295 entries | Antonym pairs (directional, polarity-flip) |
-| `excl_a.txt` | 40 groups | Mutual-exclusion groups (colors, months, nationalities, etc.) |
+| `excl_a.txt` | 56 groups (+ 4 synthetic from `MANUAL_ANTONYMS`) | Mutual-exclusion groups (colors, months, nationalities, kinship/gender pairs, spatial/temporal opposites) |
 
 ### 9.2 Solver runtime files
 
@@ -1314,9 +1319,9 @@ Generated by `cd mkdata && python3 build_solver_data.py` (fast, ~1 sec):
 | Generated file | Contents | Used by |
 |----------------|----------|---------|
 | `solver/data_canonicals.py` | `CANONICALS` dict (~752 entries, all POS merged) | `semnormalize.py` |
-| `solver/data_antonyms.py` | `ANTONYMS` dict (~935 directional pairs) | `semnormalize.py` |
+| `solver/data_antonyms.py` | `ANTONYMS` dict (~908 directional pairs) | `semnormalize.py` |
 | `solver/data_synonyms.py` | `SOFT_SYNONYMS` dict (~12K words, bidirectional) | `lc_postprocess.py` |
-| `solver/data_exclusions.py` | `EXCLUSION_GROUPS` + `EXCLUSION_INDEX` | `lc_postprocess.py` |
+| `solver/data_exclusions.py` | `EXCLUSION_GROUPS` + `EXCLUSION_INDEX` (~60 groups, 6 shapes) | `lc_postprocess.py` |
 
 Must be regenerated whenever any mkdata `.txt` source changes.
 
@@ -1346,10 +1351,34 @@ skip `$ctxt` terms, and handle disjunctive clauses (list-of-lists). Controlled b
 *Exclusion axioms* (`inject_exclusion_axioms`):
 - Scans the clause list for words appearing in `EXCLUSION_INDEX`
 - For groups with 2+ members present, emits pairwise exclusion clauses
-- `needs_blocker=False` (months, days): hard exclusion `NOT w1(X,Ct) OR NOT w2(X,Ct)`
+- `needs_blocker=False` (months, days, kinship, spatial opposites): hard exclusion
+  `NOT w1(X,Ct) OR NOT w2(X,Ct)`
 - `needs_blocker=True` (colors, nationalities): defeasible exclusion with `$block` on each
   side (two axioms per pair), allowing override when both are explicitly asserted
-- Temporal groups (MONTH, DAY_OF_WEEK, SEASON): use `is rel2` template instead of `has property`
+- Four atom shapes selected per group:
+  - **Default** (`has_property`): adjective groups — `[-has property, w, ?:X, ct]`
+  - **`_IS_REL2_EXCL_GROUPS`** (MONTH, DAY_OF_WEEK, SEASON): preposition-target at
+    is_rel2 position 3 — `[-is rel2, ?:R, ?:X, w, ct]`
+  - **`_IS_REL2_PREP_GROUPS`** (SPATIAL_*, TEMPORAL_ORDER): preposition itself at
+    is_rel2 position 1, with two free entity variables —
+    `[-is rel2, w, ?:X, ?:Y, ct]`
+  - **`_HAS_DEGREE_REL2_PREP_GROUPS`** (PROXIMITY): preposition at has_degree_rel2
+    position 1. Emitted as TWO asymmetric axioms per pair — positive side
+    any-degree, antonym side `"none"` intensity, shared `?:RC`:
+    `[-has degree rel2, W1, ?:X, ?:Y, ?:D, ?:RC, ct], [-has degree rel2, W2, ?:X, ?:Y, "none", ?:RC, ct]`
+    (and the symmetric axiom with W1/W2 swapped). The existing high→none /
+    low→none intensity bridges in axioms_std.js §9 propagate the "none"
+    negation to all intensities via contrapositive.
+
+*MANUAL_ANTONYMS → synthetic adjective exclusion groups*:
+`MANUAL_ANTONYMS` in `build_solver_data.py` is a small hand-curated dict of adjective
+antonym pairs (currently `broken/intact`, `unfinished/finished`, `incomplete/complete`,
+`undone/done`). **It no longer feeds `ANTONYMS` for polarity-flip rewriting.** Instead,
+`build_exclusions()` converts each pair into a 2-member `needs_blocker=False` exclusion
+group named `MANUAL_ADJ_<W1>_<W2>`, emitted with the default has_property template.
+Semantically this is cleaner: "X is broken" and "X is intact" are mutually exclusive, not
+strictly complementary — the axiom form expresses that precisely without losing positive
+atoms.
 
 *Axiom vocabulary cache* (`axiom_vocab.py`):
 - Extracts content words from axiom files (e.g. `axioms_std.js`), caches in `.vocab` sibling file
@@ -1368,6 +1397,111 @@ Step 5: build_solver_data.py                 ->  solver/data_*.py
 
 Steps 1-4 are heavy (fastText model, NLTK). Step 5 is fast and should be re-run after any
 source .txt changes. See `mkdata/README.md` for full documentation.
+
+### 9.5 Spatial and temporal preposition handling
+
+Handled via three cooperating mechanisms. Each is used where it fits best — pure surface
+variants get rewritten, mutual exclusions get dynamic axioms, near-synonyms with distinct
+meaning get static subsumption axioms.
+
+**(a) Canonical rewriting — form variants (pre-clausification)**
+
+`_PREP_CANONICAL` in `solver/lc_rewrites.py` maps spaced / colloquial preposition forms to
+their underscored canonical forms. Applied inside `rewrite_meta_predicates` to:
+- `is_rel2` argument 1,
+- `has_degree_rel2` argument 1 (for near/far_from/close_to),
+- `has_location` / `has_time` / `has_destination` preposition slot (argument 3).
+
+Examples:
+```
+"in front of"      → "in_front_of"
+"to the left of"   → "left_of"
+"in back of"       → "behind"        # colloquial collapse
+"inside of"        → "inside"        # "of" drop
+"out of"           → "outside"
+"far away from"    → "far_from"
+"far"              → "far_from"      # has_degree_rel2: LLM sometimes drops "from"
+"close to"         → "near"          # collapse into near (no subsumption axiom needed)
+"prior to"         → "prior_to"
+"subsequent to"    → "after"
+```
+
+Used only when the source form is a pure surface variant of the target (same concept,
+different spelling). True lexical synonyms with distinct connotations (under ≠ below
+exactly) are not collapsed here.
+
+**(b) Mutual-exclusion axioms — spatial/temporal opposites (dynamic injection)**
+
+Groups in `mkdata/excl_a.txt` whose ids belong to `_IS_REL2_PREP_GROUPS` (in
+`solver/lc_postprocess.py`) are emitted with the preposition-at-pos-1 template:
+```
+[-is_rel2(w1, ?:X, ?:Y, ct), -is_rel2(w2, ?:X, ?:Y, ct)]
+```
+Current groups (all `needs_blocker=False`, i.e. hard exclusion):
+```
+SPATIAL_SAGITTAL                 behind, in_front_of
+SPATIAL_VERTICAL                 above, below
+SPATIAL_VERTICAL_OVER_UNDER      over, under
+SPATIAL_CONTAINMENT              inside, outside
+SPATIAL_LATERAL                  left_of, right_of
+TEMPORAL_ORDER                   before, after
+```
+
+A fourth shape, `_HAS_DEGREE_REL2_PREP_GROUPS`, handles binary relations that
+use `has_degree_rel2` instead of `is_rel2` (6-arg predicate with DEGREE and
+RELCLASS slots). Currently one group:
+```
+PROXIMITY                        near, far_from
+```
+Each such group emits **two asymmetric axioms per pair** — positive side at
+any degree (`?:D`), antonym side at `"none"` intensity, shared `?:RC`:
+```
+[-has_degree_rel2(near,     ?:X, ?:Y, ?:D,   ?:RC, ct),
+ -has_degree_rel2(far_from, ?:X, ?:Y, "none", ?:RC, ct)]
+[-has_degree_rel2(far_from, ?:X, ?:Y, ?:D,   ?:RC, ct),
+ -has_degree_rel2(near,     ?:X, ?:Y, "none", ?:RC, ct)]
+```
+The intensity bridges (high→none, low→none) in axioms_std.js §9 then
+propagate the `"none"` negation to all intensities via contrapositive, so
+"very near" correctly rules out "far_from" at every degree.
+Axioms emitted only when ≥2 members of a group appear in the problem or axiom vocabulary
+(two-side restriction via `REQUIRE_BOTH_SIDES`).
+
+**(c) Subsumption axioms — near-synonyms (static, in axioms_std.js)**
+
+A small set of universally-useful one-way implications, placed as static axioms in
+`axioms_std.js` §7c (spatial) and §7d (temporal). Direction is always
+specific → general (the more specific predicate implies the more general one):
+```
+underneath, beneath, under   →  below          [§7c]
+over, on_top_of              →  above          [§7c]
+prior_to, preceding          →  before         [§7d]
+following                    →  after          [§7d]
+```
+These are static (always loaded) rather than dynamically injected because the set is
+small (~8 axioms), universally relevant, and should chain cleanly with other static
+axioms in the KB.
+
+**Canonical rewriting adjustments for has_degree_rel2 forms:**
+- `"far"` → `"far_from"` (LLM sometimes drops "from" in query form)
+- `"close to"` / `"close_to"` → `"near"` (close_to collapsed into near; subsumption not needed)
+
+**Out of scope for now:**
+- `earlier_than` / `later_than` (also `has_degree_rel2`): no active exclusion partner in
+  tests (temporal order is captured in `is_rel2(before/after)`). A subsumption like
+  `earlier_than → before` would require crossing `has_degree_rel2 → is_rel2` — a
+  different axiom shape.
+
+**Interaction example.** For "The car parked behind the house was blue. Was the car in
+front of the house?":
+
+1. Stage 2 emits `is_rel2("behind", car, house, C)` and query
+   `is_rel2("in_front_of", car, house, C)`.
+2. `rewrite_meta_predicates` is a no-op here (both already canonical).
+3. `inject_exclusion_axioms` sees both `behind` and `in_front_of` in `SPATIAL_SAGITTAL`
+   and emits `[-is_rel2("behind",?:X,?:Y,ct), -is_rel2("in_front_of",?:X,?:Y,ct)]`.
+4. Assertion + exclusion axiom derives `-is_rel2("in_front_of", car, house, C)`,
+   contradicting the query → answer **False**.
 
 ---
 
