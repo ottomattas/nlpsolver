@@ -199,13 +199,20 @@ def normalize_receive_events(tree):
 _GRAMMATICAL_TENSES = frozenset({"past", "present", "future", "timeless"})
 
 def strip_tense_has_time(tree):
-  """Remove has_time atoms where the time value is a grammatical tense.
+  """Remove has_time and state_time atoms where the time value is a
+  grammatical tense.
 
   LLMs sometimes produce ["has time", E, "past", "in"] in questions,
   treating grammatical tense as a time value.  These are always wrong —
   tense belongs in $ctxt, not in has_time.  Strips them from "and"
   conjunctions; replaces a standalone occurrence with True (no-op for
   clausification since the conjunction collapses).
+
+  Similarly, ["state time", W, "past"] belongs at the package level
+  (sibling of holds/question/ask) as metadata — some LLMs misplace it
+  inside a question/assertion body.  Package-level tense is already
+  carried by the Stage-1 ASU ("time" field), so stripping in-body
+  state_time is safe.
   """
   if not isinstance(tree, list) or not tree:
     return tree
@@ -214,6 +221,10 @@ def strip_tense_has_time(tree):
   if op in ("has time", "-has time") and len(tree) >= 3:
     if isinstance(tree[2], str) and tree[2] in _GRAMMATICAL_TENSES:
       return None  # sentinel: remove this conjunct
+  # Misplaced state_time with tense value (belongs at package level).
+  if op in ("state time", "-state time") and len(tree) >= 3:
+    if isinstance(tree[2], str) and tree[2] in _GRAMMATICAL_TENSES:
+      return None
   # Recurse into children; filter out None from "and" conjunctions
   if op == "and":
     children = []

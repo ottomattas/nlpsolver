@@ -151,7 +151,7 @@ llmpipe/
 │   ├── semnormalize.py  Semantic normalization (antonym folding + canonical substitution)
 │   ├── axiom_vocab.py   Axiom file vocabulary extraction and caching
 │   ├── data_canonicals.py  (generated) Tier A rewrite dict (~752 entries)
-│   ├── data_antonyms.py    (generated) Antonym pairs dict (~908 entries)
+│   ├── data_antonyms.py    (generated) Antonym pairs dict (~850 entries)
 │   ├── data_synonyms.py    (generated) Soft synonym index (~12K words)
 │   ├── data_exclusions.py  (generated) Exclusion groups + index
 │   ├── globals.py       Options dict and file paths
@@ -813,7 +813,11 @@ entity naming rules, clause rendering, and proof explanation structure with exam
 analyses the clause list for equalities with function terms (`$measure_of`, `$theof1`,
 `$list`, `$datetime`) or `less_measure` atoms.  When found, selects the `unit` strategy
 (`-strategytext`) which handles equational reasoning better than the default
-`negative_pref`.  Printed with `-debug`.
+`negative_pref/posunitpara` strategy (empirically better than
+`negative_pref/knuthbendix_pref` on complex multi-existential queries).
+Printed with `-debug`.  Alternate strategies worth trying on timeout-suspected cases:
+`{"strategy": ["unit"], "query_preference": 1}` and
+`{"strategy": ["query_focus"], "query_preference": 1}`.
 
 **Prover seconds auto-estimation** (`_estimate_seconds`): when no CLI `-seconds` is
 given, counts distinct world constants (W0, W1, ...) in the clause list and scales
@@ -1153,9 +1157,9 @@ bridge representation gaps.
 | Receive→give normalization | `lc_rewrites.normalize_receive_events` | `["has type",E,"receive"]` + `["has actor",E,X]` → `["has type",E,"give"]` + `["has recipient",E,X]` | Formula-level rewrite: in `and`-blocks containing a receive event, the verb is changed to "give" and the actor role is swapped to recipient.  This allows the give-based transfer axioms in `axioms_std.js` to derive `have(Recipient, Object)` in the next world state. |
 | Set existence fact | `lc_sets._walk_for_count` | "Bears ate berries" with `forall/implies/member/$setof` in assertion context → `member("$some_bear", $setof(...))` | Generates a ground set membership fact for assertion-context `forall/member` patterns so the prover can bootstrap resolution through member-guarded clauses.  Skipped when the set already has element instantiation from a count assertion. |
 | Degree stripping | `lc_postprocess.strip_degree_predicates` | With `-simpleproperties`: `has_degree_property(big,X,none,animal)` → `has_property(big,X)` | (Only with `-simpleproperties`) Replaces degree predicates with simple property predicates |
-| Semantic normalisation | `semnormalize.sem_normalize_clauses` | "The ball is outside the box" → `outside` is antonym of `inside` → flips polarity and substitutes: `-is_rel2(inside,ball,box)` | Antonym resolution (~908 pairs: flip polarity + swap word) and canonical substitution (~752 pairs: synonym → canonical form).  Skips `$ctxt` terms.  Polarity-flipping is applied ONLY at the top-level literal — inside nested function terms (`$theof1`, `$measure_of`, Skolem), only canonical substitution runs (flipping `$theof1` to `-$theof1` would produce invalid terms).  Data loaded from generated `data_antonyms.py` and `data_canonicals.py`. |
+| Semantic normalisation | `semnormalize.sem_normalize_clauses` | "The ball is outside the box" → `outside` is antonym of `inside` → flips polarity and substitutes: `-is_rel2(inside,ball,box)` | Antonym resolution (~850 pairs: flip polarity + swap word) and canonical substitution (~752 pairs: synonym → canonical form).  Skips `$ctxt` terms.  Polarity-flipping is applied ONLY at the top-level literal — inside nested function terms (`$theof1`, `$measure_of`, Skolem), only canonical substitution runs (flipping `$theof1` to `-$theof1` would produce invalid terms).  Data loaded from generated `data_antonyms.py` and `data_canonicals.py`.  `build_antonyms` skips any pair whose canonical target is itself a CANONICALS key — such chain-through pairs are deferred to `build_exclusions` and emitted as synthetic `ANT_<W1>_<W2>` exclusion groups instead (prevents Pass 2 from chain-substituting the fold target to an unrelated sense, e.g. `open→close→near`). |
 | Soft synonym injection | `lc_postprocess.inject_soft_synonyms` | "The car is red" + axioms mention "crimson" → emits `red(X,Ct) <=> crimson(X,Ct)` biconditional | Dynamic injection of Tier B synonym axioms for words present in both input and axiom vocabulary.  Templates: `has property` (adj), `isa` (noun), `has type` (verb). |
-| Exclusion injection | `lc_postprocess.inject_exclusion_axioms` | "The car is blue. Was it red?" → emits `NOT blue(X,Ct) OR NOT red(X,Ct)` with `$block` | Dynamic injection of mutual-exclusion axioms from `excl_a.txt` groups.  `needs_blocker=True` groups use defeasible `$block`; `False` groups are hard exclusions. Three atom shapes: default `has_property` (adjective); `_IS_REL2_EXCL_GROUPS` (MONTH/DAY_OF_WEEK/SEASON) — `is_rel2` target at arg 3; `_IS_REL2_PREP_GROUPS` (SPATIAL_*, TEMPORAL_ORDER) — `is_rel2` preposition at arg 1 with two free entity variables. Also injects `MANUAL_ANTONYMS` adjective pairs as synthetic `MANUAL_ADJ_<W1>_<W2>` groups. See §9.5 for preposition handling. |
+| Exclusion injection | `lc_postprocess.inject_exclusion_axioms` | "The car is blue. Was it red?" → emits `NOT blue(X,Ct) OR NOT red(X,Ct)` with `$block` | Dynamic injection of mutual-exclusion axioms from `excl_a.txt` groups.  `needs_blocker=True` groups use defeasible `$block`; `False` groups are hard exclusions. Four atom shapes: default `has_property` (adjective); `_IS_REL2_EXCL_GROUPS` (MONTH/DAY_OF_WEEK/SEASON) — `is_rel2` target at arg 3; `_IS_REL2_PREP_GROUPS` (SPATIAL_*, TEMPORAL_ORDER) — `is_rel2` preposition at arg 1 with two free entity variables; `_HAS_DEGREE_REL2_PREP_GROUPS` (PROXIMITY) — `has_degree_rel2` preposition at arg 1 with two asymmetric axioms per pair. Also injects `MANUAL_ANTONYMS` adjective pairs as synthetic `MANUAL_ADJ_<W1>_<W2>` groups, and chain-rejected antonym pairs (from `build_antonyms`) as synthetic `ANT_<W1>_<W2>` defeasible adjective groups. See §9.5 for preposition handling. |
 | `@sourcetype` stripping | Serialisation (`clause_list_to_json`) | Population facts carry `@sourcetype:"populate"` internally for processing — stripped before the prover sees them | Internal `@sourcetype` tags are excluded from prover input |
 
 ---
@@ -1310,7 +1314,7 @@ generates Python dict files in `solver/` that are loaded at runtime.
 | `syn_{a,n,v}_rewrite.txt` | 416 / 218 / 124 entries | Tier A hard rewrites (`member,canonical`) |
 | `syn_{a,n,v}_soft_axioms.txt` | 2496 / 6218 / 4103 pairs | Tier B soft synonym pairs (`word_a,word_b,score`) |
 | `ant_{a,n,v}.txt` | 1483 / 375 / 295 entries | Antonym pairs (directional, polarity-flip) |
-| `excl_a.txt` | 56 groups (+ 4 synthetic from `MANUAL_ANTONYMS`) | Mutual-exclusion groups (colors, months, nationalities, kinship/gender pairs, spatial/temporal opposites) |
+| `excl_a.txt` | ~60 groups (+ 4 synthetic from `MANUAL_ANTONYMS`, + ~60 synthetic `ANT_*` groups from chain-rejected antonym pairs) | Mutual-exclusion groups (colors, months, nationalities, kinship/gender pairs, spatial/temporal opposites) |
 
 ### 9.2 Solver runtime files
 
@@ -1319,9 +1323,9 @@ Generated by `cd mkdata && python3 build_solver_data.py` (fast, ~1 sec):
 | Generated file | Contents | Used by |
 |----------------|----------|---------|
 | `solver/data_canonicals.py` | `CANONICALS` dict (~752 entries, all POS merged) | `semnormalize.py` |
-| `solver/data_antonyms.py` | `ANTONYMS` dict (~908 directional pairs) | `semnormalize.py` |
+| `solver/data_antonyms.py` | `ANTONYMS` dict (~850 directional pairs) | `semnormalize.py` |
 | `solver/data_synonyms.py` | `SOFT_SYNONYMS` dict (~12K words, bidirectional) | `lc_postprocess.py` |
-| `solver/data_exclusions.py` | `EXCLUSION_GROUPS` + `EXCLUSION_INDEX` (~60 groups, 6 shapes) | `lc_postprocess.py` |
+| `solver/data_exclusions.py` | `EXCLUSION_GROUPS` + `EXCLUSION_INDEX` (~123 groups, 4 atom shapes) | `lc_postprocess.py` |
 
 Must be regenerated whenever any mkdata `.txt` source changes.
 
@@ -1379,6 +1383,25 @@ group named `MANUAL_ADJ_<W1>_<W2>`, emitted with the default has_property templa
 Semantically this is cleaner: "X is broken" and "X is intact" are mutually exclusive, not
 strictly complementary — the axiom form expresses that precisely without losing positive
 atoms.
+
+*Chain-rejected antonyms → synthetic `ANT_*` exclusion groups*:
+`build_antonyms` applies two symmetric guards against chain-contamination with the
+canonical-substitution pass:
+1. `word in CANONICALS` — skip; Pass 2 would shadow the fold source.
+2. `canonical in CANONICALS` — skip rewriting; Pass 2 would chain-substitute the target
+   to an unrelated sense. Example: WordNet has `open ↔ close` (verb sense) and
+   `CANONICALS["close"] = "near"` (adjective sense from syn_a rewrites). Without the
+   guard, semnormalize would turn `has_property(open, door)` into
+   `-has_property(near, door)` — a nonsense atom (door is not near).
+
+Pairs rejected by guard (2) — about 65 pairs — are deferred to `build_exclusions` and
+emitted as synthetic 2-member `needs_blocker=True` (defeasible) exclusion groups named
+`ANT_<W1>_<W2>`. Same has_property template as `MANUAL_ADJ_*`, same two-side
+restriction, same injection code path. This preserves the semantic link between
+antonym pairs (so the prover can still derive contradictions) without the destructive
+rewriting that caused the chain bug. `needs_blocker=True` is used because many of these
+pairs are gradable (abundant/scarce, hot/cold) where a middle ground exists and a hard
+exclusion would overshoot.
 
 *Axiom vocabulary cache* (`axiom_vocab.py`):
 - Extracts content words from axiom files (e.g. `axioms_std.js`), caches in `.vocab` sibling file

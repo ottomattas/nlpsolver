@@ -90,7 +90,7 @@ English text
 - `utils.py` — utility functions: `debug_print`, `clause_list_to_json`
 - `semnormalize.py` — post-clausification semantic normalization: antonym folding (flip polarity + replace word) and canonical word substitution; skips `$ctxt` terms; handles disjunctive clauses
 - `data_canonicals.py` — (generated) `CANONICALS` dict: ~752 Tier A `{variant: canonical}` entries from `mkdata/syn_{a,n,v}_rewrite.txt`
-- `data_antonyms.py` — (generated) `ANTONYMS` dict: ~908 `{word: antonym}` entries from `mkdata/ant_{a,n,v}.txt` (kinship/gender/spatial/temporal/colour pairs blocked via `BLOCKED_ANTONYM_WORDS`)
+- `data_antonyms.py` — (generated) `ANTONYMS` dict: ~850 `{word: antonym}` entries from `mkdata/ant_{a,n,v}.txt` (kinship/gender/spatial/temporal/colour pairs blocked via `BLOCKED_ANTONYM_WORDS`; pairs whose target is itself a `CANONICALS` key are deferred to exclusion-axiom emission instead of rewriting, to prevent semnormalize Pass 2 from chain-substituting to an unrelated sense)
 - `data_synonyms.py` — (generated) `SOFT_SYNONYMS` dict: ~12K words, bidirectional `{word: [(other, score, pos), ...]}` index from `mkdata/syn_{a,n,v}_soft_axioms.txt`
 - `data_exclusions.py` — (generated) `EXCLUSION_GROUPS` + `EXCLUSION_INDEX` from `mkdata/excl_a.txt`
 - `axiom_vocab.py` — extracts and caches content words from axiom files (e.g. `axioms_std.js`); used to restrict synonym/exclusion injection to pairs where both sides appear in the problem or axioms
@@ -133,6 +133,7 @@ rawlogic_convert():
 - `needs_blocker=True` groups: two defeasible axioms per pair with `$block` on each side
 - Four atom shapes by group id: default `has_property` (adjectives); `_IS_REL2_EXCL_GROUPS` (MONTH/DAY_OF_WEEK/SEASON) use `is rel2` with target at arg 3; `_IS_REL2_PREP_GROUPS` (SPATIAL_*, TEMPORAL_ORDER) use `is rel2` with preposition at arg 1 plus two free entity variables; `_HAS_DEGREE_REL2_PREP_GROUPS` (PROXIMITY) emit two asymmetric axioms per pair — positive side any-degree, antonym side `"none"` intensity, shared `?:RC`
 - `MANUAL_ANTONYMS` (in `mkdata/build_solver_data.py`) contributes synthetic `MANUAL_ADJ_*` 2-member exclusion groups (adjective pairs like `broken/intact`); it no longer feeds ANTONYMS rewriting
+- Chain-rejected antonym pairs (where the ANTONYMS target is also a CANONICALS key) are deferred from `build_antonyms` to `build_exclusions` and emitted as synthetic `ANT_<W1>_<W2>` defeasible adjective exclusion groups (~65 pairs). Same runtime template as `MANUAL_ADJ_*`
 - Spatial/temporal preposition subsumption (under → below, prior_to → before, etc.) lives as static axioms in `axioms_std.js` §7c/7d. Preposition surface-form canonicalisation ("in front of" → "in_front_of") happens pre-clausification in `lc_rewrites._PREP_CANONICAL`. See DOCUMENTATION.md §9.5.
 
 **Axiom vocabulary cache** (`axiom_vocab.py`):
@@ -243,7 +244,17 @@ When the user says **"Debug case N"** (where N is a case number in `testfixlog_a
    the input text that isolates the suspected issue, run `python3 solver/solve.py ...` on it,
    and examine the result. Repeat as needed.
 
-9. **Write analysis and fix plan** — summarize the root cause(s) of any errors and propose a
+9. **Prover-timeout suspected?** — if the failure looks like the prover may simply be
+   running out of time on a complex query (not a logic bug), try in this order:
+   (a) run without `axioms_std.js` (smaller search space — pass an empty axiom file or
+       use the `-axiomfiles` flag if available) to see if the axiom file is the bottleneck;
+   (b) swap the strategy: `{"strategy": ["unit"], "query_preference": 1}` or
+       `{"strategy": ["query_focus"], "query_preference": 1}` — these often close proofs
+       that `negative_pref/posunitpara` (the current default) doesn't;
+   (c) only as a last resort, increase `-seconds` to confirm the proof exists.
+   If one of the alternate strategies works much faster, the default may need to change.
+
+10. **Write analysis and fix plan** — summarize the root cause(s) of any errors and propose a
    concrete plan for fixing. Do **not** write any code or modify any files at this stage.
 
 ## Register Fix Workflow

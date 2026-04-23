@@ -467,15 +467,15 @@
   ["Elephant's head is green. John is an elephant. John has a head. John has a green head?", True],
   ["Big elephant's head is green. John is a big elephant. John has a head. John has a green head?", True],
   ["Big elephant's head is green. John is an elephant. John has a head. John has a green head?", None],
-  ['A head of an elephant is green. An elephant has a green head?', 'Maybe true'],
+  ['A head of an elephant is green. An elephant has a green head?', True],
 
   ['A head of an elephant is green. All elephants have a head. An elephant has a green head?', True],
   ['A head of an elephant is green. Elephants have a head. An elephant has a green head?', True],
-  ['A head of an elephant is green. Elephants have a head. John is an elephant. John has a green head?', True],
+  ['A head of an elephant is green. Elephants have a head. John is an elephant. John has a green head?', 'Probably true'],
 
   # -- generic possessives --
 
-  ["Elephant's head is green. Elephant's head is green?", 'Maybe true'],
+  ["Elephant's head is green. Elephant's head is green?", 'Probably true'],
   ['The head of Mary is clean. Mary has a clean head?', True],
 
   ['The car of Mary is clean. Mary has a car?', True],

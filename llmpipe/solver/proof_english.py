@@ -385,10 +385,13 @@ def render_term_english(term):
   if op == "$datetime" and len(term) >= 2:
     return str(term[1])
 
-  # $theof1 -> "the TYPE of SUBJECT"
+  # $theof1 -> "SUBJECT's TYPE" for named entities, else "the TYPE of SUBJECT"
   if op == "$theof1" and len(term) >= 3:
     type_name = term[1] if isinstance(term[1], str) else str(term[1])
     subj = entity_name(term[2], proof_mode=True)
+    if subj and subj[0:1].isupper() and not subj.lower().startswith(("the ", "a ", "an ")):
+      suffix = "'" if subj.endswith("s") else "'s"
+      return subj + suffix + " " + type_name
     return "the " + type_name + " of " + subj
 
   # $measure_of -> "the TYPE of SUBJECT"

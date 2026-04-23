@@ -86,9 +86,9 @@ def _auto_strategy(logic, opts):
 
   When equalities with function terms are present, uses the unit strategy
   which is better at equational reasoning via paramodulation on unit clauses.
-  Otherwise returns the default negative_pref/knuthbendix_pref strategy,
-  which handles axioms with many equalities more efficiently than the
-  prover's built-in default.
+  Otherwise returns the default negative_pref/posunitpara strategy, which
+  handles complex multi-existential queries with many frame/synonym axioms
+  better than negative_pref/knuthbendix_pref.
   """
   if not logic or not isinstance(logic, list):
     return None
@@ -97,7 +97,7 @@ def _auto_strategy(logic, opts):
     strategy = {"strategy": ["unit"], "query_preference": 0}
     reason = "eq functions detected"
   else:
-    strategy = {"strategy": ["negative_pref", "knuthbendix_pref"],
+    strategy = {"strategy": ["negative_pref", "posunitpara"],
                 "query_preference": 1}
     reason = "default"
 

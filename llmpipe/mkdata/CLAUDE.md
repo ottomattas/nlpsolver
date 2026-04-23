@@ -54,6 +54,16 @@ Format: `CANONICAL_ID,word1,score1,word2,score2,...`
 - `ant_n.txt` -- 375 noun antonym entries
 - `ant_v.txt` -- 295 verb antonym entries
 
+`build_antonyms` in `build_solver_data.py` applies two symmetric guards to
+avoid chain-contamination with `CANONICALS`:
+1. `word in CANONICALS` — skip; Pass 2 canonical sub would shadow the
+   antonym fold.
+2. `canonical in CANONICALS` — don't rewrite; Pass 2 would chain-substitute
+   the target to an unrelated sense (e.g. `open → close → near`). These
+   rejected pairs are deferred to `build_exclusions` and emitted as
+   defeasible adjective mutual-exclusion groups `ANT_<W1>_<W2>` (same
+   runtime treatment as `MANUAL_ADJ_*` / `MANUAL_ANTONYMS`).
+
 ### Exclusion groups (`excl_a.txt`)
 
 Mutual-exclusion groups where at most one member can be true of an entity at a
@@ -65,7 +75,9 @@ Format: `GROUP_ID,source,score,needs_blocker,word1,word2,...`
 - `needs_blocker=1`: defeasible exclusion with `$block` (colors, nationalities --
   a thing can occasionally be multi-colored)
 
-40 groups, 288 indexed words.
+~60 groups in `excl_a.txt`. After `build_solver_data.py` the runtime dict
+`data_exclusions.py` has ~123 groups, 441 indexed words (includes
+synthetic `MANUAL_ADJ_*` and `ANT_*` groups).
 
 ## Build Pipeline
 
@@ -92,9 +104,9 @@ Step 4: Exclusion group construction
 Step 5: Generate solver runtime files (fast -- reads .txt, writes .py dicts)
   build_solver_data.py
     -> solver/data_canonicals.py   (~752 Tier A entries, all POS merged)
-    -> solver/data_antonyms.py     (~935 directional antonym pairs)
+    -> solver/data_antonyms.py     (~850 directional antonym pairs)
     -> solver/data_synonyms.py     (~12K words, ~12.8K soft synonym pairs)
-    -> solver/data_exclusions.py   (40 groups, 288 indexed words)
+    -> solver/data_exclusions.py   (~123 groups, ~441 indexed words)
 ```
 
 Steps 1-4 are heavy and run rarely (when rebuilding clusters from scratch).

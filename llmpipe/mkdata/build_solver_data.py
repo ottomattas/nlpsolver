@@ -230,9 +230,16 @@ def build_antonyms(canonicals):
 
     Note: MANUAL_ANTONYMS is NOT merged here any more — its pairs are
     injected as exclusion groups by build_exclusions().
+
+    Returns chain_rejected: [(word, canonical), ...] — pairs whose canonical
+    target is itself a CANONICALS key (would chain-substitute in semnormalize
+    Pass 2 to an unrelated sense, e.g. open→close→near). These are not written
+    to ANTONYMS; build_exclusions() emits them as has_property-template
+    mutual-exclusion axioms instead.
     """
     print("Building data_antonyms.py ...")
     merged = {}
+    chain_rejected = []
     skipped_circular = 0
     skipped_self = 0
     for pos, fname in [("a", "ant_a.txt"), ("n", "ant_n.txt"), ("v", "ant_v.txt")]:
@@ -251,6 +258,12 @@ def build_antonyms(canonicals):
                 # Don't map a word that is itself a canonical target in CANONICALS
                 # (the canonical pass would then try to re-substitute)
                 if word in canonicals:
+                    continue
+                # Don't rewrite to a target that is itself canonicalized — the
+                # canonical pass would chain-substitute to an unrelated sense.
+                # Defer to exclusion-axiom emission instead.
+                if canonical in canonicals:
+                    chain_rejected.append((word, canonical))
                     continue
                 merged[word] = canonical
 
@@ -274,6 +287,9 @@ def build_antonyms(canonicals):
         print(f"  skipped {skipped_circular} circular mappings")
     if skipped_self:
         print(f"  skipped {skipped_self} self-mappings")
+    if chain_rejected:
+        print(f"  deferred {len(chain_rejected)} pairs to exclusion axioms (target is a CANONICALS key)")
+    return chain_rejected
 
 
 def build_synonyms():
@@ -316,8 +332,10 @@ def build_synonyms():
     print(f"  {len(index)} unique words, {len(all_pairs)} pairs")
 
 
-def build_exclusions():
-    """Generate data_exclusions.py from excl_a.txt plus MANUAL_ANTONYMS pairs."""
+def build_exclusions(chain_rejected=None):
+    """Generate data_exclusions.py from excl_a.txt plus MANUAL_ANTONYMS pairs
+    plus chain_rejected antonym pairs deferred from build_antonyms().
+    """
     print("Building data_exclusions.py ...")
     groups = read_exclusion_file(os.path.join(SCRIPT_DIR, "excl_a.txt"))
 
@@ -336,6 +354,26 @@ def build_exclusions():
             "source": "manual",
             "score": 0.95,
             "needs_blocker": False,
+            "words": [a, b],
+        }
+
+    # Inject chain-rejected antonym pairs (from build_antonyms) as 2-member
+    # has_property exclusion groups — same treatment as MANUAL_ANTONYMS.
+    # needs_blocker=True (defeasible) because many of these are gradable
+    # adjectives (abundant/scarce) where a middle ground exists.
+    for w1, w2 in (chain_rejected or []):
+        pair = frozenset([w1, w2])
+        if pair in manual_seen:
+            continue
+        manual_seen.add(pair)
+        a, b = sorted([w1, w2])
+        gid = f"ANT_{a.upper()}_{b.upper()}"
+        if gid in groups:
+            continue
+        groups[gid] = {
+            "source": "manual",
+            "score": 0.95,
+            "needs_blocker": True,
             "words": [a, b],
         }
 
@@ -384,11 +422,11 @@ def main():
     print()
     canonicals = build_canonicals()
     print()
-    build_antonyms(canonicals)
+    chain_rejected = build_antonyms(canonicals)
     print()
     build_synonyms()
     print()
-    build_exclusions()
+    build_exclusions(chain_rejected)
     print()
     print("Done.")
 
