@@ -50,7 +50,7 @@ from globals import options as _g_options
 import lc_clausify
 import lc_questions
 
-from lc_clausify import clausify
+from lc_clausify import clausify, is_skolem_const, is_skolem_fn
 
 from lc_questions import (
   simplify_contradictory_and,
@@ -210,8 +210,19 @@ def _strip_definite_tags(tree):
 
 # ======== "what" question population facts ========
 
+def _raw_has_what_word(text):
+  """True if `text` contains 'what' or 'which' as a whole word anywhere.
+  Covers both front-position queries ('What does John smoke?') and
+  back-position queries ('John smokes what?')."""
+  if not text or not isinstance(text, str):
+    return False
+  import re as _re
+  return bool(_re.search(r'\b(what|which)\b', text.lower()))
+
+
 def _has_what_query(s1_json):
-  """Return True if any query ASU text starts with 'what'."""
+  """Return True if any query ASU text contains 'what' or 'which' as a
+  wh-word (anywhere in the text)."""
   if not s1_json or not isinstance(s1_json, list):
     return False
   for pkg in s1_json:
@@ -221,8 +232,7 @@ def _has_what_query(s1_json):
       if not isinstance(unit, dict):
         continue
       if unit.get("type") == "query":
-        text = unit.get("text", "")
-        if text.lower().startswith("what ") or text.lower().startswith("which "):
+        if _raw_has_what_word(unit.get("text", "")):
           return True
   return False
 
@@ -851,7 +861,7 @@ def _process_question(formula, name, raw_text=None):
         who_entity = _detect_who_query(body, ask_var)
         if who_entity is not None:
           # Determine who vs what from raw question text
-          who_kind = "what" if raw_text and raw_text.lower().startswith("what") else "who"
+          who_kind = "what" if _raw_has_what_word(raw_text) else "who"
           result = build_who_question(name, who_entity, ask_var, who_kind=who_kind)
           question_kind = "who"
         elif is_simple_question_formula(body):
@@ -864,7 +874,7 @@ def _process_question(formula, name, raw_text=None):
             return None, None
           q_formula = flat[0] if len(flat) == 1 else [["and"] + flat]
           result = [{"@name": name, "@question": q_formula, "@askvars": 1}]
-          if raw_text and raw_text.lower().startswith("what"):
+          if _raw_has_what_word(raw_text):
             for obj in result:
               if "@question" in obj:
                 obj["@what_query"] = True
@@ -886,7 +896,7 @@ def _process_question(formula, name, raw_text=None):
               question_kind = "when"
             else:
               result = build_defq_question(name, ask_var, body)
-              if raw_text and raw_text.lower().startswith("what"):
+              if _raw_has_what_word(raw_text):
                 for obj in result:
                   if "@question" in obj:
                     obj["@what_query"] = True
@@ -914,12 +924,31 @@ def _process_question(formula, name, raw_text=None):
 
 
 def _process_assertion(formula, name, confidence):
-  """Handle assertion formulas → list of GK clause dicts."""
+  """Handle assertion formulas → list of GK clause dicts.
+
+  Confidence distribution.  Stage-1 probability p is transformed to an
+  evidence value e = 2p - 1 (with polarity flip for p < 0.5) before being
+  distributed across clauses.  The distribution picks an anchor set via
+  priority:
+
+    1. Clauses carrying a $block atom (defeasibility anchors) → each gets
+       e^(1/k); non-$block clauses stay at 1.0.
+    2. Else, clauses referencing a Skolem constant/function (the event's
+       structural spine) → each gets e^(1/k); non-Skolem clauses at 1.0.
+    3. Else (pure class/relation assertion, no events) → every clause gets
+       e^(1/k).
+
+  The chain product over the anchor set equals e exactly, so the prover's
+  chain multiplication reports the intended confidence rather than
+  decaying by e per clause.  See DOCUMENTATION.md §7.8 companion notes.
+  """
   # Pre-clausification polarity flip for low-confidence negative-leaning rules.
-  # Stage-1 probability p ∈ (0, 0.5) → negate the consequent BEFORE clausify
+  # Stage-1 probability p ∈ [0, 0.5) → negate the consequent BEFORE clausify
   # so the negation is encoded in the formula structure (avoids Skolem companion
-  # clause split that the post-clausification approach suffered from).
-  if confidence is not None and 0 < confidence < 0.5:
+  # clause split that the post-clausification approach suffered from).  p=0
+  # is included: "John is an elephant with probability 0" should become a
+  # full-confidence negated assertion (evidence = 1 - 2*0 = 1).
+  if confidence is not None and 0 <= confidence < 0.5:
     formula = _negate_consequent(formula)
     confidence = round(1.0 - 2.0 * confidence, 4)
   elif confidence is not None and 0.5 < confidence < 1.0:
@@ -928,18 +957,96 @@ def _process_assertion(formula, name, confidence):
     confidence = 0   # exactly 0.5 → abs(2*0.5-1)=0; prover filters it out → "no information"
   # Clausify the formula.
   clauses = clausify(formula)
+  return _distribute_clause_confidence(clauses, confidence, name)
+
+
+def _distribute_clause_confidence(clauses, e, name):
+  """Build the clause-dict list from clausify() output, applying the
+  three-tier confidence distribution described in _process_assertion.
+
+  e==None → no confidence annotation (prover default = full confidence).
+  e==0.0  → all clauses dropped (prover rejects @confidence 0).
+  e==1.0  → no annotation (prover default).
+  else    → case 1/2/3 selection as described.
+  """
+  if e == 0.0:
+    return []                       # 0.5 probability → no evidence either way
+  # No confidence or full confidence: emit unannotated clauses.
+  if e is None or e == 1.0:
+    return [{"@name": name, "@logic": c} for c in clauses]
+  if not clauses:
+    return []
+
+  # Case 1: $block-carrying clauses are the defeasibility anchors.
+  anchor_idx = [i for i, c in enumerate(clauses) if _clause_has_block(c)]
+  # Case 2: else, clauses referencing a Skolem (event spine).
+  if not anchor_idx:
+    anchor_idx = [i for i, c in enumerate(clauses) if _clause_has_skolem(c)]
+  # Case 3: else, every clause is part of the claim.
+  if not anchor_idx:
+    anchor_idx = list(range(len(clauses)))
+
+  k = len(anchor_idx)
+  # Each anchor clause gets e^(1/k); product over the anchor set = e.
+  per_clause = round(e ** (1.0 / k), 4) if k > 1 else e
+  anchor_set = set(anchor_idx)
+
   result = []
-  for clause in clauses:
-    # Confidence 0.0 means 50% probability: abs(2*0.5-1)=0, no evidence either
-    # way.  GK rejects @confidence values of exactly 0, so skip the clause
-    # entirely — the prover will return "no information".
-    if confidence == 0.0:
-      continue
+  for i, clause in enumerate(clauses):
     obj = {"@name": name, "@logic": clause}
-    if confidence is not None:
-      obj["@confidence"] = confidence
+    if i in anchor_set:
+      obj["@confidence"] = per_clause
+    # Non-anchor clauses carry no @confidence → prover treats as 1.0.
     result.append(obj)
   return result
+
+
+def _clause_has_block(clause):
+  """True if the clause contains any atom with '$block' at position 0."""
+  if not isinstance(clause, list) or not clause:
+    return False
+  # Single-atom clause.
+  if isinstance(clause[0], str):
+    return clause[0] == "$block"
+  # Disjunctive clause (list of atoms).
+  for atom in clause:
+    if isinstance(atom, list) and atom and atom[0] == "$block":
+      return True
+  return False
+
+
+def _clause_has_skolem(clause):
+  """True if any argument anywhere in the clause references a Skolem
+  constant (like 'sk0_house') or Skolem function term (like ['sk0', '?:X']).
+  Uses is_skolem_const / is_skolem_fn from lc_clausify."""
+  def walk(term):
+    if isinstance(term, str):
+      return is_skolem_const(term)
+    if isinstance(term, list) and term:
+      if is_skolem_fn(term):
+        return True
+      for sub in term[1:]:                 # skip op/predicate name
+        if walk(sub):
+          return True
+    return False
+  if not isinstance(clause, list) or not clause:
+    return False
+  # Single-atom clause.
+  if isinstance(clause[0], str):
+    for arg in clause[1:]:
+      if walk(arg):
+        return True
+    return False
+  # Disjunctive clause.
+  for atom in clause:
+    if isinstance(atom, list) and atom:
+      if isinstance(atom[0], str):
+        for arg in atom[1:]:
+          if walk(arg):
+            return True
+      elif walk(atom):
+        return True
+  return False
 
 
 def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=None):

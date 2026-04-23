@@ -229,13 +229,19 @@ def _is_what_query(logic):
 
 
 def _resolve_what_skolem_answers(answers):
-  """For 'what' queries, replace Skolem function answer values with population constants.
+  """For 'what' queries, replace Skolem-typed answer values with population
+  constants of the corresponding class.
 
-  E.g., $ans(["sk3","Emily 1"]) where sk3 is typed as "wolf" → $ans("$some_wolf").
-  The population constant renders as "a wolf" via entity_name.
+  Two patterns handled:
+    1. Skolem function terms:  $ans(["sk3","Emily 1"]) where sk3 is typed
+       "wolf" → $ans("$some_wolf").  Uses get_skolem_fn_type.
+    2. Skolem constants:       $ans("sk1_tobacco") where sk1_tobacco is typed
+       "tobacco" (from isa(tobacco, sk1_tobacco) facts) → $ans("$some_tobacco").
+       Uses get_skolem_type.
 
-  Only replaces when the Skolem function type can be determined via
-  get_skolem_fn_type (populated by compute_skolem_types).
+  The population constant renders as "a tobacco" / "a wolf" via entity_name,
+  matching user expectations for "what is X?" queries that should return a
+  class rather than a raw Skolem name.
   """
   for ans in answers:
     val = ans.get("answer")
@@ -244,15 +250,24 @@ def _resolve_what_skolem_answers(answers):
     new_val = []
     changed = False
     for atom in val:
-      if (isinstance(atom, list) and len(atom) >= 2
-          and atom[0] == "$ans" and isinstance(atom[1], list)
-          and atom[1] and isinstance(atom[1][0], str)):
-        fn_name = atom[1][0]
-        fn_type = get_skolem_fn_type(fn_name)
+      if not (isinstance(atom, list) and len(atom) >= 2 and atom[0] == "$ans"):
+        new_val.append(atom)
+        continue
+      arg = atom[1]
+      # Case 1: Skolem function term like ["sk3", "Emily 1"]
+      if isinstance(arg, list) and arg and isinstance(arg[0], str):
+        fn_type = get_skolem_fn_type(arg[0])
         if fn_type:
           pop_name = "$some_" + fn_type.replace(" ", "_")
-          new_atom = ["$ans", pop_name] + atom[2:]
-          new_val.append(new_atom)
+          new_val.append(["$ans", pop_name] + atom[2:])
+          changed = True
+          continue
+      # Case 2: Skolem constant like "sk1_tobacco"
+      elif isinstance(arg, str) and is_skolem_const(arg):
+        typ = get_skolem_type(arg)
+        if typ:
+          pop_name = "$some_" + typ.replace(" ", "_")
+          new_val.append(["$ans", pop_name] + atom[2:])
           changed = True
           continue
       new_val.append(atom)
@@ -351,6 +366,16 @@ def _format_who_answers(answers, logic=None):
       types.append(v)
     elif v in prop_names:
       properties.append(v)
+    elif is_skolem_const(v):
+      # Skolem with a known type from isa(type, sk_name) clauses —
+      # promote the TYPE into the types list ("sk1_tobacco" → "tobacco")
+      # so the answer renders as "a tobacco" instead of the raw Skolem
+      # display name ("Tob1").
+      typ = get_skolem_type(v)
+      if typ:
+        types.append(typ)
+      else:
+        equalities.append(v)
     else:
       base = v.split()[0] if " " in v else v
       if base and base[0].islower() and not any(c.isdigit() for c in v):
