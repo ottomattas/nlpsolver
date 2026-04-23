@@ -37,6 +37,7 @@ representation so that a developer or LLM can quickly start extending or modifyi
    - 5.13 [globals.py](#513-globalspy)
    - 5.14 [utils.py](#514-utilspy)
    - 5.15 [linguistics.py](#515-linguisticspy)
+   - 5.16 [stage_sanity.py](#516-stage_sanitypy)
 6. [Prompt files](#6-prompt-files)
 7. [Key algorithms in logconvert.py and lc_clausify.py](#7-key-algorithms-in-logconvertpy-and-lc_clausifypy)
    - 7.1 [Package extraction](#71-package-extraction)
@@ -46,6 +47,7 @@ representation so that a developer or LLM can quickly start extending or modifyi
    - 7.5 [Gradable property normalisation](#75-gradable-property-normalisation)
    - 7.6 [Population facts](#76-population-facts)
    - 7.7 [Stage-2 rewrites and modifications](#77-stage-2-rewrites-and-modifications)
+   - 7.8 [Stage sanity checks and corrective retry loop](#78-stage-sanity-checks-and-corrective-retry-loop)
 8. [Configuration and options](#8-configuration-and-options)
 9. [The mkdata toolkit and solver integration](#9-the-mkdata-toolkit-and-solver-integration)
    - 9.1 [What mkdata produces](#91-what-mkdata-produces)
@@ -489,8 +491,11 @@ The function:
 - If that fails, applies `fix_json` (heuristic repairs: strip markdown fences, remove Python
   literals, balance brackets, strip trailing junk, etc.).
 - If still invalid, makes one LLM retry with error feedback in the prompt.
+- After a successful parse, invokes a per-stage **sanity checker** (`check_stage1` /
+  `check_stage2` from `stage_sanity.py`) and, if it reports issues, enters a separate
+  corrective-retry loop via `_maybe_sanity_retry` (see §7.8 and §5.16 for details).
 - Tracks all events in the stats dict (`s1_calls`, `s1_json_errors`, `s1_json_fixes`,
-  `s1_retry_calls`, etc.).
+  `s1_retry_calls`, `s1_sanity_retries`, `s1_sanity_ok`, `s1_sanity_fail`, etc.).
 
 **`fix_json(s)`** applies up to 10 repair strategies in sequence, returning the first one that
 produces valid JSON.  Repairs include: stripping ` ```json ``` ` fences, replacing Python
@@ -927,6 +932,51 @@ No dependency on proof state or any other pipeline module.
 - `make_comparative(adj) -> str` — comparative form (`nice` → `nicer`, `beautiful` → `more beautiful`)
 - `to_gerund(verb) -> str` — gerund form (`run` → `running`, `bite` → `biting`)
 
+### 5.16 stage_sanity.py
+
+**Role:** Structural sanity checks for Stage-1 ASU JSON and Stage-2 logic JSON, used by
+`llmparse._maybe_sanity_retry` to detect LLM output errors that the Stage prompts explicitly
+forbid (or that the downstream pipeline cannot handle) and trigger a corrective re-call of
+the same LLM.  See §7.8 for the retry-loop semantics and motivation.
+
+**Public API:**
+
+- `Issue(kind, location, description, evidence)` — frozen dataclass representing a single
+  detected problem.  `kind` is the category (e.g. `free_variable`); `(kind, location)` is the
+  fingerprint used to detect persistence across retries; `description` and `evidence` are
+  shown to the LLM in the corrective prompt.
+- `check_stage1(s1_json) -> list[Issue]` — runs all registered Stage-1 checks (currently
+  empty; framework in place).
+- `check_stage2(logic, s1_json=None) -> list[Issue]` — runs all registered Stage-2 checks
+  (see table below).
+- `format_retry_suffix(issues, flawed_parsed) -> str` — builds the text appended to the
+  original stage input when re-calling the LLM.  Structure: shows the LLM's flawed output,
+  lists the issues (kind + location + description), then asks for a corrected JSON.
+- `issue_fingerprints(issues) -> frozenset[tuple[str,str]]` — persistence-comparison helper.
+
+**Registered Stage-2 checks:**
+
+| Check | Kind | Triggers on | Example case |
+|---|---|---|---|
+| `_check_stage2_free_variables` | `free_variable` | Any atom-argument string that matches a binder name (`forall`/`exists`/`ask`) elsewhere in the formula but is outside the binder's scope. | Case 259 — donkey anaphora |
+| `_check_stage2_misplaced_meta_tense` | `state_time_in_body` | `["state time", W, TENSE]` atom inside a `holds`/`question`/`ask` body.  Tense metadata belongs at package level, not as a body literal. | Case 37 |
+| `_check_stage2_dropped_specific_noun` | `dropped_specific_noun` | Query `exists VAR, (and ... isa(CAT, VAR) ...)` where Stage-1 has a unique generic entity with `category=CAT` and `id != CAT` — the query lost the specific noun. | Case 136 |
+| `_check_stage2_arities` | `wrong_arity` | Atom whose arity disagrees with the declared Stage-2 signature (whitelist of 27 predicates: `isa/2`, `has property/2`, `has type/2`, `has actor/2`, `has part/2`, `is rel2/3`, `has degree property/4`, `has degree rel2/5`, `typical/1`, etc.). | Scattered |
+| `_check_stage2_event_shapes` | `event_missing_activity_isa` / `event_missing_role` | Event variable E used as first arg of `has_type(E, VERB)` must have `isa("activity", E)` AND at least one thematic-role atom (any of `has_actor`, `has_target`, `has_recipient`, `has_source`, `has_destination`, `has_location`, `has_instrument`, `has_manner`, `has_direction`, `has_time`, `has_beneficiary`, `has_accompaniment`, `has_path`, `has_result`, `has_topic`, `has_cause`, `typical`) in the same `and` conjunction.  Either missing item is its own issue. | — |
+
+**Conventions:**
+
+- Checks are pure functions over the parsed JSON; they do not mutate or consult other
+  pipeline state.
+- When a check also has a downstream post-processing rescue (e.g., `strip_tense_has_time` for
+  misplaced meta-tense, `inject_query_specific_noun_isas` for dropped specific nouns), the
+  sanity check takes priority: a successful retry produces cleaner Stage-2 output, and the
+  post-processor silently no-ops on the corrected formula.
+- Checks that overlap with benign LLM-prompt examples are deliberately omitted.  For
+  instance, `["has time", E, "past", "in"]` is labelled WRONG in the Stage-2 instructions
+  but appears in the examples file; LLMs emit it consistently, so no check fires —
+  `strip_tense_has_time` handles it cheaply.
+
 ---
 
 ## 6. Prompt files
@@ -1148,7 +1198,7 @@ bridge representation gaps.
 | Descriptive/stative/dynamic split | `lc_ctxt.inject_ctxt_question` | "Did the man have the red car which a woman bought?" — `bought` events and `red` property each get independent free-var worlds; stative `have` also gets free-var world; only dynamic event predicates (if matrix) keep the query's world | Three-way $ctxt world dispatch in `$defq` questions: (1) **descriptive** atoms (isa, event atoms, properties when a main relation is present) each get an independent free-var world; (2) **stative matrix** predicates (have, can, has part) get free-var world — persistent states don't need concrete world anchoring; (3) **dynamic matrix** predicates (is_rel2, properties when no main relation) keep the query's world.  `_question_has_main_relation` detects whether properties are restrictive modifiers.  Each descriptive/stative atom gets its OWN fresh world variable to avoid forced co-unification across different world states |
 | Gradable normalisation | `lc_postprocess.normalize_gradable_predicates` | "John is big" — LLM used `has property(big,...)` but "big" is in the gradable whitelist → upgraded to `has degree property` | Whitelist-based `has property` ↔ `has degree property` conversion; replaces `"entity"` and `"none"` relclass with free variables (§7.5) |
 | `isa entity` stripping | `lc_postprocess.strip_isa_entity` | "Every entity that is big is strong" — `isa(entity,X)` is always true, so the clause is a tautology → removed | Removes tautological `isa(entity,X)` literals (§7.5) |
-| RELCLASS coercion | `lc_postprocess.coerce_relclass` | "Is John big?" — query uses relclass "person" (John's category) but the rule uses "bear" → relclass replaced with free variable so they unify | Fixes relclass mismatches in question degree-predicate atoms |
+| RELCLASS coercion | `lc_postprocess.coerce_relclass` | (question) "Is John big?" — query uses relclass "person" (John's category) but the rule uses "bear" → relclass replaced with free variable; (assertion) "John is a nice big bear. John is nice." — stage-1 split loses the "bear" context and tags "nice" with relclass "animal" while the rule expects "bear" → assertion's "animal" replaced with a free variable | Fixes relclass mismatches. Question-side: `has degree rel2` always coerces to free var; `has degree property` coerces when the relclass is one of the entity's isa classes and no matching rule exists. Assertion-side (new): coerces when the fact's relclass is either (a) one of the entity's multiple isa classes while another class of the entity also appears as a rule-side relclass for the same property, or (b) not in the entity's isa classes while some isa class of the entity appears as a rule-side relclass — both symptoms of stage-1 generic-category leakage. `prop_relclasses` is built from both positive and negated literals so rule bodies contribute. |
 | `$theof1` definite rewrite | `lc_postprocess.rewrite_definites` | "The father of John is nice" — `"the father 2"` → `["$theof1","father","John 1",CTXT]` throughout all clauses; `is_rel2` clause removed; per-relation `isa`/`is_rel2` bridge axioms generated as `frm_theof`; grounded `have(arg,$theof1,ctxt)` fact emitted for the concrete owner | Replaces flat entity IDs for definite functional descriptions with canonical function terms so that "the father of John", "John's father", and wh-queries all refer to the same term.  Triggered by Stage-1 `definites` field.  Primary: matches `is_rel2` clause.  Fallback: matches `have` + `isa` pair.  The formerly-universal `have` bridge in `axioms_std.js` (`[have, ?:S, $theof1(?:R,?:S,?:C), ?:C]`) has been removed because its free `?:S` let the prover satisfy any wh-possession query with a free-variable witness; `rewrite_definites` now emits the needed grounded possession fact directly. |
 | Possessive `have` inference | `lc_postprocess.add_possessive_have` | "The handle of the fork" — `is_rel2(handle of, fork, handle)` + `isa(handle, handle)` → `have(fork, handle)` | Infers `have(Y,E,CT)` from possessive `is_rel2` patterns.  Handles ground entities, Skolem functions, and `$theof1` terms.  For rule clauses with guard literals (e.g., `[-isa,elephant,?:X]`), generates conditional `have` with the same guard.  Skips `@name=frm_theof` clauses (the universally-quantified per-relation schema axioms) because processing them would regenerate the universal have bridge that was removed for free-variable-witness reasons (see `$theof1` definite rewrite row above). |
 | Misnested existential hoisting | `lc_rewrites.hoist_misnested_exists` | `[exists E, [and, has_actor(E,X), [exists X, isa(bear,X)]]]` → `[exists E, [exists X, [and, has_actor(E,X), isa(bear,X)]]]` | Pre-clausification fix for assertion formulas.  Detects existential variables used free in sibling conjuncts before their `exists` binding, hoists the binding to wrap the entire conjunction.  Only applies in assertion contexts (from `holds`), with collision checks against enclosing bindings. |
@@ -1161,6 +1211,67 @@ bridge representation gaps.
 | Soft synonym injection | `lc_postprocess.inject_soft_synonyms` | "The car is red" + axioms mention "crimson" → emits `red(X,Ct) <=> crimson(X,Ct)` biconditional | Dynamic injection of Tier B synonym axioms for words present in both input and axiom vocabulary.  Templates: `has property` (adj), `isa` (noun), `has type` (verb). |
 | Exclusion injection | `lc_postprocess.inject_exclusion_axioms` | "The car is blue. Was it red?" → emits `NOT blue(X,Ct) OR NOT red(X,Ct)` with `$block` | Dynamic injection of mutual-exclusion axioms from `excl_a.txt` groups.  `needs_blocker=True` groups use defeasible `$block`; `False` groups are hard exclusions. Four atom shapes: default `has_property` (adjective); `_IS_REL2_EXCL_GROUPS` (MONTH/DAY_OF_WEEK/SEASON) — `is_rel2` target at arg 3; `_IS_REL2_PREP_GROUPS` (SPATIAL_*, TEMPORAL_ORDER) — `is_rel2` preposition at arg 1 with two free entity variables; `_HAS_DEGREE_REL2_PREP_GROUPS` (PROXIMITY) — `has_degree_rel2` preposition at arg 1 with two asymmetric axioms per pair. Also injects `MANUAL_ANTONYMS` adjective pairs as synthetic `MANUAL_ADJ_<W1>_<W2>` groups, and chain-rejected antonym pairs (from `build_antonyms`) as synthetic `ANT_<W1>_<W2>` defeasible adjective groups. See §9.5 for preposition handling. |
 | `@sourcetype` stripping | Serialisation (`clause_list_to_json`) | Population facts carry `@sourcetype:"populate"` internally for processing — stripped before the prover sees them | Internal `@sourcetype` tags are excluded from prover input |
+
+---
+
+### 7.8 Stage sanity checks and corrective retry loop
+
+LLMs occasionally produce Stage-2 output that violates constraints the prompt explicitly
+forbids — for example, free variables (case 259, "Every farmer who owns a donkey beats it"
+where gemini leaves `Y` unbound in the consequent).  Rather than add a post-processing
+rewrite for each such quirk, `llmparse.py` runs a **sanity checker** on every Stage-1 and
+Stage-2 parse and, when issues are detected, re-calls the same LLM with the original prompt
+plus the flawed output and a description of what went wrong.
+
+**Mechanism** (in `llmparse._maybe_sanity_retry`):
+
+1. After a Stage-N parse succeeds, call `check_stage<N>(parsed)`.  If the issue list is
+   empty, return immediately.
+2. Otherwise, fingerprint the issues by `(kind, location)` and enter the retry loop.
+3. **Attempt 1 (corrective retry).**  Build a prompt = original input + `format_retry_suffix`
+   (shows the flawed output and lists the issues).  Call the LLM.  Parse (with `fix_json`
+   fallback) and re-check.  If clean, return.
+4. **Attempt 2 (final retry).**  Only if attempt 1 produced issues that are **all new**
+   (no fingerprint overlap with attempt 0).  Persistent issues → stop (retry not
+   productive).  If cap reached, return best-effort output; downstream passes handle
+   residual imperfections.
+5. **Hard cap:** 2 corrective retries per stage.  The initial call plus 2 retries = 3 LLM
+   calls max per stage.
+
+**Cache interaction:** each retry input is a longer string (original + suffix describing the
+flaw), so it hashes to a distinct cache key via `cache.make_llm_cache_key`.  Retries benefit
+from the normal cache: a repeated run with the same input and flawed first response will
+reuse the cached retry instead of re-calling the LLM.
+
+**Stats tracked** (per stage, added to the `parse_text` stats dict):
+
+- `sN_sanity_retries` — number of corrective LLM calls made.
+- `sN_sanity_ok` — number of attempts that produced clean output (at most one per input).
+- `sN_sanity_fail` — number of attempts that failed (returned None, JSON-invalid even after
+  `fix_json`, or persisted with the same issues).
+
+Visible in the `-debug` flag's Parse-stats block.
+
+**Relationship to post-processing rescues:** some sanity-check kinds have overlapping
+post-processing passes (e.g. `state_time_in_body` ↔ `lc_rewrites.strip_tense_has_time`;
+`dropped_specific_noun` ↔ `lc_rewrites.inject_query_specific_noun_isas`).  The retry is
+preferred when the LLM can plausibly fix the issue itself — the resulting Stage-2 is cleaner
+and less reliant on rescue heuristics.  Post-processing remains as a belt-and-braces for
+LLMs/inputs where the retry doesn't land.
+
+**Design boundary — what is NOT checked:**
+
+- Purely semantic calibration (confidence values, word choice between synonyms, tense
+  accuracy on past/future verbs) is not flagged.
+- Structural patterns that appear in the Stage-2 examples file are not flagged even if
+  technically "wrong" per instructions (e.g. `has time E TENSE PREP`), because LLMs follow
+  examples.  Post-processing handles these.
+- Verb-frame decomposition (e.g. `has property "filled with water"`) is not flagged — the
+  LLM cannot plausibly rewrite its own output that much on a retry.
+
+The list of checks lives in `stage_sanity.py` (§5.16).  Adding a new check = one new
+`_check_stage<N>_*` function plus a call inside `check_stage<N>`; no change to `llmparse.py`
+is needed.
 
 ---
 

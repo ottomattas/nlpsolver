@@ -114,6 +114,7 @@ from lc_rewrites import (
   hoist_misnested_exists as _hoist_misnested_exists,
   strip_spurious_can as _strip_spurious_can,
   negate_consequent as _negate_consequent,
+  inject_query_specific_noun_isas as _inject_query_specific_noun_isas,
 )
 
 
@@ -1020,6 +1021,11 @@ def _convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=Non
     # Safety net: if Stage-1 has wh_placeholder but Stage-2 used ["question",...]
     # instead of ["ask",VAR,...], detect the free variable and convert.
     formula = _fix_missing_ask(formula, asu_index, sid)
+    # Inject isa(specific_noun, X) constraints for generic query entities
+    # whose Stage-2 used only the ontological category (e.g. gemini emitting
+    # isa(person,X) for a "man"-id entity — see case 136).
+    asu_for_isa = asu_index.get(sid) if asu_index else None
+    formula = _inject_query_specific_noun_isas(formula, asu_for_isa)
     # Get raw question text for who/what detection
     raw_q_text = ""
     if asu_index:

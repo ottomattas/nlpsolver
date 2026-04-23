@@ -27,6 +27,12 @@ import re
 # llmcall.py must be importable (run from the llmpipe/ working directory)
 from llmcall import call_llm
 import pretty
+from stage_sanity import (
+  check_stage1 as _check_stage1,
+  check_stage2 as _check_stage2,
+  format_retry_suffix as _format_retry_suffix,
+  issue_fingerprints as _issue_fingerprints,
+)
 
 # ======== prompt file configuration ========
 
@@ -128,7 +134,8 @@ def parse_text(text, llm=None, version=None, tokens=None, think=None):
 
   # --- stage 1 ---
   s1_json, s1_raw, s1_err = _run_stage(1, text, _stage1_sysprompt,
-                                        eff_llm, eff_version, eff_tokens, eff_think, stats)
+                                        eff_llm, eff_version, eff_tokens, eff_think, stats,
+                                        check_fn=lambda parsed: _check_stage1(parsed))
   if s1_err:
     _debug_write("STAGE 1 ERROR: " + s1_err)
   else:
@@ -143,7 +150,8 @@ def parse_text(text, llm=None, version=None, tokens=None, think=None):
   # --- stage 2 ---
   s2_input = json.dumps(s1_json)
   s2_json, s2_raw, s2_err = _run_stage(2, s2_input, _stage2_sysprompt,
-                                        eff_llm, eff_version, eff_tokens, eff_think, stats)
+                                        eff_llm, eff_version, eff_tokens, eff_think, stats,
+                                        check_fn=lambda parsed: _check_stage2(parsed, s1_json))
   if s2_err:
     _debug_write("STAGE 2 ERROR: " + s2_err)
   else:
@@ -154,8 +162,16 @@ def parse_text(text, llm=None, version=None, tokens=None, think=None):
 
 # ======== stage runner ========
 
-def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, think, stats):
+def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, think, stats,
+               check_fn=None):
   """Run one LLM stage with JSON checking, fixing, and one retry on bad JSON.
+
+  If check_fn is provided, it is called on the successfully-parsed output
+  (check_fn(parsed) -> list[Issue]).  When it reports issues a separate
+  sanity-retry loop kicks in: the LLM is re-called with the original input
+  plus a suffix describing the flawed output and the issues.  At most two
+  sanity retries per stage; retry stops early if an issue persists across
+  attempts (see _run_sanity_retry).
 
   Returns (parsed_json, raw_text, error_or_None).
   """
@@ -178,7 +194,8 @@ def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, think, sta
   # --- first parse attempt ---
   parsed, err = _try_parse(raw)
   if parsed is not None:
-    return (parsed, raw, None)
+    return _maybe_sanity_retry(stage_nr, input_text, parsed, raw, check_fn,
+                               sysprompt, llm, version, tokens, think, stats)
 
   stats[key + "_json_errors"] += 1
   _debug_write("JSON parse failed: " + err)
@@ -191,7 +208,8 @@ def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, think, sta
     parsed, err = _try_parse(fixed)
     if parsed is not None:
       _debug_write("Fixed JSON parsed OK")
-      return (parsed, fixed, None)
+      return _maybe_sanity_retry(stage_nr, input_text, parsed, fixed, check_fn,
+                                 sysprompt, llm, version, tokens, think, stats)
     _debug_write("Fixed JSON still invalid: " + err)
 
   # --- LLM retry ---
@@ -211,7 +229,8 @@ def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, think, sta
   parsed, err = _try_parse(raw2)
   if parsed is not None:
     stats[key + "_retry_ok"] += 1
-    return (parsed, raw2, None)
+    return _maybe_sanity_retry(stage_nr, input_text, parsed, raw2, check_fn,
+                               sysprompt, llm, version, tokens, think, stats)
 
   # --- fixes on retry output ---
   fixed2, fixes2 = fix_json(raw2)
@@ -222,11 +241,111 @@ def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, think, sta
     if parsed is not None:
       stats[key + "_retry_ok"] += 1
       _debug_write("Retry fixed JSON parsed OK")
-      return (parsed, fixed2, None)
+      return _maybe_sanity_retry(stage_nr, input_text, parsed, fixed2, check_fn,
+                                 sysprompt, llm, version, tokens, think, stats)
 
   stats[key + "_retry_fail"] += 1
   _debug_write("Stage " + str(stage_nr) + " failed after retry: " + err)
   return (None, raw2, "stage " + str(stage_nr) + " JSON invalid after fix and retry: " + err)
+
+
+# ======== sanity-check retry ========
+
+# Hard cap on total LLM calls per stage for sanity retry (not counting the
+# initial call).  Attempt 1 is the first corrective retry; attempt 2 is the
+# last.  Beyond that the current best-effort output is returned even if
+# issues linger, so the pipeline can proceed.
+_SANITY_MAX_RETRIES = 2
+
+
+def _maybe_sanity_retry(stage_nr, input_text, parsed, raw, check_fn,
+                        sysprompt, llm, version, tokens, think, stats):
+  """Run the per-stage sanity checker and, if it reports issues, re-call
+  the LLM with a corrective prompt.  Returns (parsed, raw, None) — the
+  best-effort output regardless of whether the issues were fully fixed
+  (the pipeline continues with imperfect output rather than aborting).
+  """
+  if check_fn is None:
+    return (parsed, raw, None)
+
+  key = "s" + str(stage_nr)
+  try:
+    issues = check_fn(parsed)
+  except Exception as e:
+    _debug_write("Sanity checker raised exception: " + str(e))
+    return (parsed, raw, None)
+
+  if not issues:
+    return (parsed, raw, None)
+
+  # Track issue fingerprints across attempts to detect persistence.
+  prev_fingerprints = _issue_fingerprints(issues)
+  current_parsed, current_raw = parsed, raw
+  current_issues = issues
+
+  for attempt in range(1, _SANITY_MAX_RETRIES + 1):
+    stats[key + "_sanity_retries"] += 1
+    _debug_write("Stage " + str(stage_nr) + " sanity retry #" + str(attempt)
+                 + " with " + str(len(current_issues)) + " issue(s)")
+    suffix = _format_retry_suffix(current_issues, current_parsed)
+    retry_input = input_text + suffix
+
+    raw_new = call_llm(sysprompt, retry_input,
+                       llm=llm, version=version, max_tokens=tokens, think=think)
+    if raw_new is None:
+      stats[key + "_sanity_fail"] += 1
+      _debug_write("Stage " + str(stage_nr) + " sanity retry #" + str(attempt)
+                   + " LLM returned None; stopping")
+      break
+    _debug_write_json("SANITY RETRY #" + str(attempt) + " OUTPUT:", raw_new)
+
+    # Parse + JSON-fix fallback (mirrors the _run_stage primary path).
+    parsed_new, perr = _try_parse(raw_new)
+    raw_final = raw_new
+    if parsed_new is None:
+      fixed_new, fixes_new = fix_json(raw_new)
+      if fixes_new:
+        stats[key + "_json_fixes"] += len(fixes_new)
+        parsed_new, perr = _try_parse(fixed_new)
+        if parsed_new is not None:
+          raw_final = fixed_new
+
+    if parsed_new is None:
+      stats[key + "_sanity_fail"] += 1
+      _debug_write("Stage " + str(stage_nr) + " sanity retry #" + str(attempt)
+                   + " JSON invalid: " + perr + "; stopping")
+      break
+
+    current_parsed, current_raw = parsed_new, raw_final
+
+    try:
+      new_issues = check_fn(parsed_new)
+    except Exception as e:
+      _debug_write("Sanity checker raised exception on retry: " + str(e))
+      break
+
+    if not new_issues:
+      stats[key + "_sanity_ok"] += 1
+      _debug_write("Stage " + str(stage_nr) + " sanity retry #" + str(attempt)
+                   + " produced clean output")
+      return (current_parsed, current_raw, None)
+
+    new_fingerprints = _issue_fingerprints(new_issues)
+    # Persistence: any issue from the previous attempt still present → stop.
+    if new_fingerprints & prev_fingerprints:
+      stats[key + "_sanity_fail"] += 1
+      _debug_write("Stage " + str(stage_nr) + " sanity retry #" + str(attempt)
+                   + " — issue(s) persist across attempts; stopping")
+      break
+
+    # All-new issues: try once more (if cap not reached).
+    prev_fingerprints = new_fingerprints
+    current_issues = new_issues
+
+  # Out of retries or stopped on persistence.  Return the best-effort output;
+  # downstream passes handle residual imperfections (or the query fails in
+  # ways we already recognise).
+  return (current_parsed, current_raw, None)
 
 
 # ======== JSON fixing ========
@@ -502,8 +621,10 @@ def _make_stats():
   keys = [
     "s1_calls", "s1_llm_errors", "s1_json_errors", "s1_json_fixes",
     "s1_retry_calls", "s1_retry_ok", "s1_retry_fail",
+    "s1_sanity_retries", "s1_sanity_ok", "s1_sanity_fail",
     "s2_calls", "s2_llm_errors", "s2_json_errors", "s2_json_fixes",
     "s2_retry_calls", "s2_retry_ok", "s2_retry_fail",
+    "s2_sanity_retries", "s2_sanity_ok", "s2_sanity_fail",
   ]
   return {k: 0 for k in keys}
 
@@ -513,10 +634,12 @@ def print_stats(stats):
   print("Parse stats:")
   print("  Stage 1: calls={s1_calls}  llm_errors={s1_llm_errors}"
         "  json_errors={s1_json_errors}  fixes={s1_json_fixes}"
-        "  retries={s1_retry_calls}  retry_ok={s1_retry_ok}  retry_fail={s1_retry_fail}".format(**stats))
+        "  retries={s1_retry_calls}  retry_ok={s1_retry_ok}  retry_fail={s1_retry_fail}"
+        "  sanity_retries={s1_sanity_retries}  sanity_ok={s1_sanity_ok}  sanity_fail={s1_sanity_fail}".format(**stats))
   print("  Stage 2: calls={s2_calls}  llm_errors={s2_llm_errors}"
         "  json_errors={s2_json_errors}  fixes={s2_json_fixes}"
-        "  retries={s2_retry_calls}  retry_ok={s2_retry_ok}  retry_fail={s2_retry_fail}".format(**stats))
+        "  retries={s2_retry_calls}  retry_ok={s2_retry_ok}  retry_fail={s2_retry_fail}"
+        "  sanity_retries={s2_sanity_retries}  sanity_ok={s2_sanity_ok}  sanity_fail={s2_sanity_fail}".format(**stats))
 
 
 def add_stats(total, delta):

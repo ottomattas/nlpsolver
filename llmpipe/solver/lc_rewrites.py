@@ -543,3 +543,113 @@ def negate_consequent(formula):
     # "not" here gives double-negation: ["not",["not",F]] → clausifier eliminates
     return ["not", formula]
   return flip_polarity_atom(formula)
+
+
+# ======== query-side specific-noun isa injection ========
+# Mirror of the assertion-side _build_entity_category_clauses: when a Stage-2
+# question formula constrains an existential with isa(CAT, X) but Stage-1 has
+# a unique generic entity with category=CAT and id!=CAT, add isa(id, X) as
+# an extra conjunct so the query reflects the user's specific noun.
+# Covers gemini's tendency to emit the category instead of the specific noun
+# in query bodies (case 136: "Did a man buy a car?" → isa(person,X) only).
+
+_WH_PLACEHOLDERS = frozenset({
+  "who", "what", "which", "whom", "whose",
+  "where", "when", "why", "how",
+})
+
+
+def _build_query_cat_to_id(asu):
+  """From a Stage-1 ASU, build {category: specific_id} for generic entities
+  that pass all the conservative guards.  Only categories with a UNIQUE
+  matching generic entity are kept.  Returns {} when no entry qualifies."""
+  if not isinstance(asu, dict):
+    return {}
+  cat_to_ids = {}
+  for ent in asu.get("entities", []) or []:
+    if not isinstance(ent, dict):
+      continue
+    if ent.get("type") != "generic":
+      continue
+    eid = ent.get("id")
+    cat = ent.get("category")
+    if not (isinstance(eid, str) and isinstance(cat, str)):
+      continue
+    if not eid or not cat:
+      continue
+    if eid.lower() == cat.lower():
+      continue                         # already specific
+    if eid.lower() in _WH_PLACEHOLDERS:
+      continue                         # wh-placeholder
+    if " " in eid:
+      continue                         # multi-word id
+    if eid[:1].isupper():
+      continue                         # proper noun
+    cat_to_ids.setdefault(cat, []).append(eid)
+  return {cat: ids[0] for cat, ids in cat_to_ids.items() if len(ids) == 1}
+
+
+def _inject_isa_into_and(body, var, cat_to_id):
+  """If body is ['and', ...args] with EXACTLY ONE isa(CAT, var) literal where
+  CAT is in cat_to_id, return a new 'and' with isa(cat_to_id[CAT], var)
+  appended.  Otherwise return body unchanged.
+
+  The single-isa requirement is the key safety guard: if Stage-2 already
+  emits multiple isa constraints for var, we don't interfere."""
+  if not (isinstance(body, list) and len(body) >= 2 and body[0] == "and"):
+    return body
+  args = body[1:]
+  isa_cats_for_var = []
+  for arg in args:
+    if (isinstance(arg, list) and len(arg) >= 3 and
+        arg[0] == "isa" and arg[2] == var and isinstance(arg[1], str)):
+      isa_cats_for_var.append(arg[1])
+  if len(isa_cats_for_var) != 1:
+    return body
+  cat = isa_cats_for_var[0]
+  if cat not in cat_to_id:
+    return body
+  specific = cat_to_id[cat]
+  if specific == cat:
+    return body
+  # Defensive: also skip if the specific already appears somewhere (shouldn't
+  # given len==1 check, but harmless).
+  if specific in isa_cats_for_var:
+    return body
+  return ["and"] + list(args) + [["isa", specific, var]]
+
+
+def _inject_walk(node, cat_to_id):
+  """Recurse through the formula tree.  Only 'exists VAR BODY' triggers
+  injection on VAR; other structural nodes pass through unchanged except
+  for recursion into children."""
+  if not isinstance(node, list) or not node:
+    return node
+  op = node[0]
+  if not isinstance(op, str):
+    return node
+  if op == "exists" and len(node) == 3:
+    var = node[1]
+    new_body = _inject_walk(node[2], cat_to_id)
+    new_body = _inject_isa_into_and(new_body, var, cat_to_id)
+    return [op, var, new_body]
+  # Recurse into other structural nodes (question, ask, holds, and, or, not,
+  # implies, forall, @time, etc.).  Leave children that are not lists alone.
+  return [op] + [_inject_walk(el, cat_to_id) if isinstance(el, list) else el
+                 for el in node[1:]]
+
+
+def inject_query_specific_noun_isas(formula, asu):
+  """Add isa(specific_noun, X) constraints for generic query entities whose
+  Stage-1 id differs from category.  Mirrors _build_entity_category_clauses
+  on the assertion side.  Conservative: only fires when Stage-1 has a
+  UNIQUE matching generic entity and Stage-2 emitted exactly one isa for
+  the existential variable.  See also: _inject_isa_into_and.
+
+  No-op when asu is missing, has no qualifying generic entities, or the
+  formula lacks a matching 'exists VAR, (and ... isa(CAT, VAR) ...)' pattern.
+  """
+  cat_to_id = _build_query_cat_to_id(asu)
+  if not cat_to_id:
+    return formula
+  return _inject_walk(formula, cat_to_id)

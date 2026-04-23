@@ -193,12 +193,15 @@ def coerce_relclass(result):
       if not isinstance(atom, list) or not atom or not isinstance(atom[0], str):
         continue
       pred = atom[0]
-      # isa(CLASS, CONST) — build const_classes
+      # Strip leading "-" so rule-body negated literals also contribute.
+      base_pred = pred[1:] if pred.startswith("-") else pred
+      # isa(CLASS, CONST) — build const_classes (positive only)
       if pred == "isa" and len(atom) >= 3 and is_ground_term(atom[2]):
         const_classes.setdefault(atom[2], set()).add(str(atom[1]))
       # has degree property [pred, PROP, ENTITY, DEGREE, RELCLASS, ...]
-      # Collect concrete (non-variable) relclass strings only.
-      elif pred == "has degree property" and len(atom) >= 5:
+      # Collect concrete (non-variable) relclass strings from both positive
+      # (ground fact) and negative (rule body) occurrences.
+      elif base_pred == "has degree property" and len(atom) >= 5:
         rc = atom[4]
         if isinstance(rc, str) and not rc.startswith("?"):
           prop_relclasses.setdefault(str(atom[1]), set()).add(rc)
@@ -219,8 +222,27 @@ def coerce_relclass(result):
                                      prop_relclasses=prop_relclasses,
                                      is_question=True)
 
+  # --- 3. apply assertion-side coercion for multi-class entities ---
+  # When a ground entity has isa classes that differ from an assertion's
+  # RELCLASS slot (e.g. John is isa "bear" but the fact says "nice for an
+  # animal"), Stage-1 has leaked a generic category into the relclass.
+  # Coerce such assertion-side relclasses to a free variable so rules using
+  # the entity's actual class (or another cross-used relclass) can unify.
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    if "@logic" not in obj:
+      continue
+    if obj.get("@sourcetype") in ("question", "populate"):
+      continue
+    obj["@logic"] = _coerce_clause(obj["@logic"], const_classes,
+                                   prop_relclasses=prop_relclasses,
+                                   is_question=False,
+                                   assertion_multi_class=True)
 
-def _coerce_atom(atom, const_classes, prop_relclasses=None, is_question=False):
+
+def _coerce_atom(atom, const_classes, prop_relclasses=None, is_question=False,
+                 assertion_multi_class=False):
   """Recursively substitute RELCLASS in degree-predicate atoms.
 
   Handles both raw question formulas (with connectives and quantifiers)
@@ -237,8 +259,15 @@ def _coerce_atom(atom, const_classes, prop_relclasses=None, is_question=False):
   ("Is John a big mouse?" keeps "mouse" when no mouse-bigness rule exists but
   "mouse" is not one of John's isa classes).
 
-  For non-question assertional atoms: replace relclass when it mismatches the
-  entity's single known isa class (original coercion behaviour).
+  For non-question assertional atoms (default): replace relclass when it
+  mismatches the entity's single known isa class (original behaviour).
+
+  For non-question assertional atoms with assertion_multi_class=True:
+  replace relclass with a free variable when the entity has multiple
+  known classes, the current relclass is one of them, and another of the
+  entity's classes appears as a relclass for the same property elsewhere
+  (evidence of a rule/fact relclass split, e.g. "John is big (for an
+  animal)" vs rule "for a bear").
   """
   if not isinstance(atom, list) or not atom:
     return atom
@@ -271,6 +300,32 @@ def _coerce_atom(atom, const_classes, prop_relclasses=None, is_question=False):
           new_atom = list(atom)
           new_atom[relclass_idx] = _fresh_fv()
           return new_atom
+      elif assertion_multi_class:
+        # Assertion-side RELCLASS coercion. Fires in two situations:
+        # (a) Entity has multiple isa classes and the relclass is one of them,
+        #     while another of the entity's classes is used as a relclass
+        #     elsewhere (evidence of a split between generic vs specific class).
+        # (b) The relclass is NOT one of the entity's isa classes but a rule
+        #     elsewhere uses a relclass that IS one of the entity's classes
+        #     (the stage-1 generic category leaked into the relclass slot
+        #     even though no matching isa fact was emitted).
+        # In either case, replace with a fresh free variable so the rule's
+        # relclass can unify.
+        if (base == "has degree property" and
+            entity and is_ground_term(entity) and
+            entity in const_classes and
+            isinstance(relclass, str) and not relclass.startswith("?")):
+          prop = atom[1] if len(atom) > 1 else ""
+          existing = (prop_relclasses or {}).get(str(prop), set())
+          entity_classes = const_classes[entity]
+          case_a = (relclass in entity_classes and len(entity_classes) > 1 and
+                    any(c in existing for c in entity_classes - {relclass}))
+          case_b = (relclass not in entity_classes and
+                    any(c in existing for c in entity_classes))
+          if case_a or case_b:
+            new_atom = list(atom)
+            new_atom[relclass_idx] = _fresh_fv()
+            return new_atom
       else:
         # Assertional (non-question): replace relclass when it mismatches the
         # entity's single known isa class.
@@ -287,24 +342,29 @@ def _coerce_atom(atom, const_classes, prop_relclasses=None, is_question=False):
 
   # Logical connectives / quantifiers: recurse.
   if pred in ("and", "or", "not"):
-    return [pred] + [_coerce_atom(el, const_classes, prop_relclasses, is_question)
+    return [pred] + [_coerce_atom(el, const_classes, prop_relclasses,
+                                  is_question, assertion_multi_class)
                      for el in atom[1:]]
   if pred in ("forall", "exists") and len(atom) >= 3:
-    return [pred, atom[1], _coerce_atom(atom[2], const_classes, prop_relclasses, is_question)]
+    return [pred, atom[1], _coerce_atom(atom[2], const_classes, prop_relclasses,
+                                        is_question, assertion_multi_class)]
 
   return atom
 
 
-def _coerce_clause(clause, const_classes, prop_relclasses=None, is_question=False):
+def _coerce_clause(clause, const_classes, prop_relclasses=None, is_question=False,
+                   assertion_multi_class=False):
   """Apply _coerce_atom to a GK clause (single atom or disjunction)."""
   if not isinstance(clause, list) or not clause:
     return clause
   # Disjunction: first element is itself a list of atoms.
   if isinstance(clause[0], list):
-    return [_coerce_atom(atom, const_classes, prop_relclasses, is_question)
+    return [_coerce_atom(atom, const_classes, prop_relclasses, is_question,
+                         assertion_multi_class)
             for atom in clause]
   # Single atom.
-  return _coerce_atom(clause, const_classes, prop_relclasses, is_question)
+  return _coerce_atom(clause, const_classes, prop_relclasses, is_question,
+                      assertion_multi_class)
 
 
 # ======== gradable predicate normalization ========

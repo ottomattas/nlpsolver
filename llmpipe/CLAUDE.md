@@ -67,7 +67,7 @@ English text
 ### Solver Modules (`solver/`)
 
 - `solve.py` — CLI entry point and `english_to_answer(text, options)` function
-- `llmparse.py` — two-stage LLM parser; `parse_text(text)` → `(s1_json, s2_json, stats)`; includes entity ID case normalization between stages
+- `llmparse.py` — two-stage LLM parser; `parse_text(text)` → `(s1_json, s2_json, stats)`; includes entity ID case normalization between stages; runs `stage_sanity.check_stage{1,2}` after each parse and re-calls the LLM with a corrective prompt (max 2 retries per stage) if issues are found
 - `llmcall.py` — LLM API wrapper (GPT/Claude/Gemini/DeepSeek) with retries and SQLite caching; `call_llm(sysprompt, input_text)`
 - `logconvert.py` — main driver for stage-2 JSON → GK clause list; `rawlogic_convert(logic)`; orchestrates package extraction, question/assertion processing, and post-processing passes
 - `lc_rewrites.py` — pre-clausification formula rewrites: meta-predicate normalization (incl. `is_rel2("time of")`→`has_time`), tense-valued `has_time` stripping, degree presuppositions, existential hoisting, spurious `can` removal, polarity flip
@@ -94,6 +94,7 @@ English text
 - `data_synonyms.py` — (generated) `SOFT_SYNONYMS` dict: ~12K words, bidirectional `{word: [(other, score, pos), ...]}` index from `mkdata/syn_{a,n,v}_soft_axioms.txt`
 - `data_exclusions.py` — (generated) `EXCLUSION_GROUPS` + `EXCLUSION_INDEX` from `mkdata/excl_a.txt`
 - `axiom_vocab.py` — extracts and caches content words from axiom files (e.g. `axioms_std.js`); used to restrict synonym/exclusion injection to pairs where both sides appear in the problem or axioms
+- `stage_sanity.py` — structural sanity checks for Stage-1/Stage-2 LLM output. Five Stage-2 checks today: free-variable references outside binder scope (case 259); misplaced `state_time` inside formula body (case 37); query `isa(CAT, VAR)` dropping Stage-1's specific noun (case 136); predicate-arity violations; events missing `isa(activity, E)` or any thematic role. Framework supports a corrective retry loop in `llmparse.py`: see DOCUMENTATION.md §7.8
 
 ### Semantic Normalization Pipeline
 
