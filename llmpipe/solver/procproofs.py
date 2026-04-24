@@ -75,6 +75,16 @@ def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=Non
   # (concrete > Skolem > population), preserving the goodness order within tier.
   # For "what" questions: prefer population (class) answers over concrete instances.
   is_what = _is_what_query(logic)
+  is_who  = _is_who_query(logic)
+  if is_who and _get_who_entity(logic) is None:
+    # Filter class-name leaks for generic wh-placeholder queries only:
+    # the part-inheritance bg axiom (`has_part(X,Y,Z) & isa(X,U) ->
+    # has_part(U,Y,Z)`) can unify the answer variable with a CLASS name
+    # string (e.g. "elephant") via a population fact (cases 241, 242).
+    # For "Who is X?" with a specific @who_entity, class-names like "man"
+    # / "person" can be legitimate type descriptions of the queried
+    # entity, so we keep them there (case 236).
+    answers = _filter_class_name_leaks(answers, logic)
   if is_what:
     answers = _filter_by_best_tier(answers, prefer_population=True)
   else:
@@ -321,8 +331,12 @@ def _format_who_answers(answers, logic=None):
   who_kind = _get_who_kind(logic)
   isa_types, prop_names = _classify_who_answers(logic, who_entity)
 
-  # Collect all valid answer values
-  all_vals = []  # (value, is_self_ref)
+  # Collect all valid answer values with their per-answer confidences.
+  # Lower bound 0.05 (was 0.60): keep partial-confidence answers so that
+  # cases 241/242 emit "Probably John." / "Maybe John." with a qualitative
+  # prefix instead of "Unknown."  Very low confidence (< 0.05) is still
+  # dropped — such answers are dominated by noise from the prover chain.
+  all_vals = []  # (value, is_self_ref, confidence)
   seen = set()
 
   for ans in answers:
@@ -330,7 +344,7 @@ def _format_who_answers(answers, logic=None):
     if not isinstance(val, list):
       continue
     conf = ans.get("confidence", 1)
-    if conf < 0.60:
+    if conf < 0.05:
       continue
     for atom in val:
       if not isinstance(atom, list) or len(atom) < 2 or atom[0] != "$ans":
@@ -345,23 +359,23 @@ def _format_who_answers(answers, logic=None):
         continue
       seen.add(v)
       is_self = (who_entity and v == who_entity)
-      all_vals.append((v, is_self))
+      all_vals.append((v, is_self, conf))
 
   # Separate self-referential from non-self
-  non_self = [(v, s) for v, s in all_vals if not s]
-  self_only = [(v, s) for v, s in all_vals if s]
+  non_self = [(v, s, c) for v, s, c in all_vals if not s]
+  self_only = [(v, s, c) for v, s, c in all_vals if s]
 
   # Use non-self answers if available; fall back to self-referential only
   # when no direct properties exist either (properties are injected below
   # but we check prop_names here to suppress tautological self-ref fallback).
   use_vals = non_self if (non_self or prop_names) else self_only
-  surviving_values = set(v for v, _ in use_vals)
+  surviving_values = set(v for v, _, _ in use_vals)
 
   # Classify into categories
   equalities = []
   types = []
   properties = []
-  for v, _ in use_vals:
+  for v, _, _ in use_vals:
     if v in isa_types:
       types.append(v)
     elif v in prop_names:
@@ -428,7 +442,32 @@ def _format_who_answers(answers, logic=None):
   result = parts[0]
   if len(parts) > 1:
     result = ", ".join(parts[:-1]) + " and " + parts[-1]
-  return result[0].upper() + result[1:] + ".", surviving_values
+
+  # Qualitative confidence prefix based on the MINIMUM confidence across
+  # the surviving answer set (the weakest link in the claim):
+  #   > 0.8  -> no prefix
+  #   > 0.4  -> "Probably "
+  #   else   -> "Maybe "
+  # Thresholds mirror the Stage-1 confidence table (0.8 = probably/likely,
+  # 0.6 = maybe/possibly).  Applied to who-queries only; "what"-queries
+  # have their own rendering pathway (set via who_kind).
+  prefix = ""
+  confs_in_use = [c for v, _, c in use_vals if v in surviving_values]
+  if confs_in_use:
+    min_conf = min(confs_in_use)
+    if min_conf <= 0.4:
+      prefix = "Maybe "
+    elif min_conf <= 0.8:
+      prefix = "Probably "
+
+  if prefix:
+    # Keep the first word's original case — "John" stays capitalized,
+    # "a tobacco" stays lowercase after the capitalized prefix.
+    result = prefix + result + "."
+  else:
+    result = result[0].upper() + result[1:] + "."
+
+  return result, surviving_values
 
 
 def _resolve_skolem_entity(val):
@@ -779,6 +818,64 @@ def _filter_by_best_tier(answers, prefer_population=False):
     return answers
   return [a for a, t in zip(answers, tiers)
           if isinstance(a.get("answer"), bool) or t == best]
+
+
+def _extract_class_names(logic):
+  """Return the set of strings that appear as the CLASS (first arg) of any
+  isa(CLASS, ENTITY) atom in the clause list.  Used to detect class-name
+  leaks in wh-answers (cases 241, 242)."""
+  class_names = set()
+  if not isinstance(logic, list):
+    return class_names
+  for obj in logic:
+    if not isinstance(obj, dict):
+      continue
+    clause = obj.get("@logic")
+    if not isinstance(clause, list) or not clause:
+      continue
+    # Clause may be a single atom [pred, ...] or a disjunction of atoms.
+    atoms = [clause] if isinstance(clause[0], str) else clause
+    for atom in atoms:
+      if not isinstance(atom, list) or len(atom) < 3:
+        continue
+      pred = atom[0]
+      if isinstance(pred, str) and pred.lstrip("-") == "isa":
+        cls = atom[1]
+        if isinstance(cls, str) and cls:
+          class_names.add(cls)
+  return class_names
+
+
+def _filter_class_name_leaks(answers, logic):
+  """Drop answers whose every $ans atom binds to a CLASS name string
+  (a name appearing as the first arg of some isa(CLASS, *) in the logic).
+  These answers arise when part-inheritance-style bg axioms unify the
+  answer variable with a class name via a population fact; they are not
+  legitimate entity answers.  Answers mixing entity + class values are
+  preserved; pure class-leak answers are removed."""
+  class_names = _extract_class_names(logic)
+  if not class_names:
+    return answers
+  result = []
+  for ans in answers:
+    val = ans.get("answer")
+    if not isinstance(val, list):
+      result.append(ans)
+      continue
+    has_any_ans = False
+    all_class = True
+    for atom in val:
+      if not isinstance(atom, list) or len(atom) < 2 or atom[0] != "$ans":
+        continue
+      has_any_ans = True
+      v = atom[1]
+      if not isinstance(v, str) or v not in class_names:
+        all_class = False
+        break
+    if has_any_ans and all_class:
+      continue                     # drop: every $ans value is a class name
+    result.append(ans)
+  return result
 
 
 def _extract_question_pop_keys(logic):

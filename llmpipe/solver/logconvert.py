@@ -220,6 +220,14 @@ def _raw_has_what_word(text):
   return bool(_re.search(r'\b(what|which)\b', text.lower()))
 
 
+def _raw_has_who_word(text):
+  """True if `text` contains 'who' or 'whom' as a whole word anywhere."""
+  if not text or not isinstance(text, str):
+    return False
+  import re as _re
+  return bool(_re.search(r'\b(who|whom)\b', text.lower()))
+
+
 def _has_what_query(s1_json):
   """Return True if any query ASU text contains 'what' or 'which' as a
   wh-word (anywhere in the text)."""
@@ -900,6 +908,15 @@ def _process_question(formula, name, raw_text=None):
                 for obj in result:
                   if "@question" in obj:
                     obj["@what_query"] = True
+              elif _raw_has_who_word(raw_text):
+                # Complex "who"-question (e.g. "Who does not have wings?").
+                # _detect_who_query only matches simple identity patterns;
+                # for complex bodies we still want @who_query so answer
+                # formatting goes through _format_who_answers (strips the
+                # numeric confidence suffix, applies qualitative labels).
+                for obj in result:
+                  if "@question" in obj:
+                    obj["@who_query"] = True
   else:
     # Yes/no question.
     # When $ctxt is active, always use $defq so the @question atom is the
@@ -942,6 +959,16 @@ def _process_assertion(formula, name, confidence):
   chain multiplication reports the intended confidence rather than
   decaying by e per clause.  See DOCUMENTATION.md §7.8 companion notes.
   """
+  # Safety net for LLMs that double-encode negation.  Some LLMs render
+  # "It is false that X" as BOTH an explicit `["not", F]` in the formula
+  # AND an @p=0.0 on the package.  The two encodings are redundant; the
+  # existing @p<0.5 branch would call _negate_consequent on the already-
+  # negated formula and flip polarity back to positive (case 234).
+  # Resolution: drop @p (treat as full-confidence); the formula's own
+  # `not` carries the negation.  Narrow to @p==0.0 exactly — a genuine
+  # "probably not X" can legitimately pair `not F` with @p<0.5.
+  if confidence == 0.0 and _has_explicit_negation_at_top(formula):
+    confidence = None
   # Pre-clausification polarity flip for low-confidence negative-leaning rules.
   # Stage-1 probability p ∈ [0, 0.5) → negate the consequent BEFORE clausify
   # so the negation is encoded in the formula structure (avoids Skolem companion
@@ -1046,6 +1073,29 @@ def _clause_has_skolem(clause):
             return True
       elif walk(atom):
         return True
+  return False
+
+
+def _has_explicit_negation_at_top(formula):
+  """True if formula has ['not', F] at a position representing the
+  assertion's main claim: root, direct 'and' conjunct, 'implies'
+  consequent, or 'forall/exists' body root.  Used by the double-
+  encoding safety net in _process_assertion (case 234)."""
+  if not isinstance(formula, list) or not formula:
+    return False
+  op = formula[0]
+  if op == "not":
+    return True
+  if op == "and":
+    return any(
+      isinstance(c, list) and len(c) >= 1 and c[0] == "not"
+      for c in formula[1:]
+    )
+  if op == "implies" and len(formula) >= 3:
+    cons = formula[2]
+    return isinstance(cons, list) and len(cons) >= 1 and cons[0] == "not"
+  if op in ("forall", "exists") and len(formula) >= 3:
+    return _has_explicit_negation_at_top(formula[2])
   return False
 
 

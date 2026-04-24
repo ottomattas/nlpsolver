@@ -304,8 +304,10 @@ Default rules:
 Treat as concrete only if the text refers to a particular identifiable instance;
 otherwise use generic.
 
-In negative and probability assertions under 0.5 (confidence < 0.5, e.g. "with probability 10%"),
-indefinite NPs ("a cave", "a dog") must be generic: no specific entity should be introduced.
+In probability assertions under 0.5 (confidence < 0.5, e.g. "with probability 10%")
+and in explicitly negated assertions ("it is false that", "it is not true that",
+"John is not a fox"), indefinite NPs ("a cave", "a dog") must be generic:
+no specific entity should be introduced.
 
 In normal_rule or strict_rule ASUs, indefinite noun phrases
 (e.g., "a forest", "a spoon", "a box") must be marked as generic
@@ -909,6 +911,25 @@ Quantifier Handling Summary Table:
 | "Most"                 | 0.80       | Universal Default       |
 | "Many"                 | 0.70       | Universal Default       |
 | "A few"                | 0.30       | Universal Default       |
+
+PART 4: Explicit Negation Markers.
+
+"It is false that X" / "It is not true that X" / "It is not the case
+that X" are full-confidence negations, NOT probability claims. Do NOT
+encode them as confidence < 0.5. Put the negation in "text"
+("... is not ...") and omit "confidence".
+
+Queries: "Is it false that X?" -> text: "Is X not ...?".
+
+If combined with a probability modifier ("probably false", "with 0.8
+probability it is false", "likely false"), keep the negation in "text"
+and apply PART 1/PART 2 to set "confidence".
+
+Examples:
+  "It is false that John is a child of Mike."
+    -> text: "John 1 is not a child of Mike 2."  (no confidence field)
+  "It is likely false that John is nice."
+    -> text: "John 1 is not nice.", confidence: 0.8
 
 --- 10.2 Time ---
 

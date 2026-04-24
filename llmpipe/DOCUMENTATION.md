@@ -1306,9 +1306,24 @@ Stage-1 extracts probabilistic hedges from the input text and attaches them as a
 | `"maybe"` | ~0.60 |
 | `"unlikely"`, `"hardly"`, `"rarely"` | ~0.20 |
 | `"probably not"`, `"not probable"` | ~0.20 |
-| `"with probability 0%"`, `"it is false that"` | 0.0 |
+| `"with probability 0%"` | 0.0 |
+| `"it is false that X"`, `"it is not true that X"` | (omitted) — encoded as negation in `text` |
 
 The field semantics: **probability** that the ASU's claim holds, in [0, 1].
+
+**Explicit negation markers are NOT probability.**  Phrases like
+`"it is false that X"`, `"it is not true that X"`, `"it is not the case that X"`
+are full-confidence negated assertions.  Stage-1 PART 4 of the confidence
+rules (`prompts/stage1_instructions_full.txt`) instructs the LLM to encode
+the negation in the `text` field (`"X is not ..."`) and **omit** the
+`confidence` field entirely.  When combined with a probability modifier
+(`"it is probably false that X"`, `"with 0.8 probability it is false that X"`),
+the probability goes in `confidence` and the negation stays in `text`:
+`"it is likely false that John is nice"` → `text: "John 1 is not nice."`,
+`confidence: 0.8`.  Without this rule, LLMs double-encode the negation
+(`["not", F]` in the formula **plus** `confidence: 0.0`), which collapses to
+a positive assertion after `_negate_consequent` fires.  See the "double-
+encoding safety net" subsection below.
 
 #### Stage-2 optionally reports confidence via `@p`
 
@@ -1346,6 +1361,27 @@ Polarity flip: `_negate_consequent(formula)` (see `lc_rewrites.py`) negates the
 consequent of a rule body (or the whole formula for a bare assertion) so that low-p inputs
 become high-evidence negated assertions.  This is done pre-clausification so the CNF is
 structurally correct.
+
+#### Double-encoding safety net (case 234)
+
+When an LLM ignores PART 4 and double-encodes a negation (emits both
+`["not", F]` in the formula **and** `confidence: 0.0` / `@p: 0.0`), the
+`negate_consequent` step above would apply a second negation, collapsing
+the claim back to positive (e.g. "It is false that X" would be asserted
+as "X at full confidence" — case 234).
+
+`_process_assertion` catches this in `logconvert.py`: if `@p == 0.0` **and**
+the formula has an explicit `not` at a top-level position (root, direct
+`and` conjunct, `implies` consequent, or `forall/exists` body root —
+checked by `_has_explicit_negation_at_top`), the `@p` is dropped (treated
+as absent/full-confidence).  The formula's own `not` then carries the
+negation through clausification, producing the intended fully-confident
+negated assertion.
+
+Narrow to exactly `@p == 0.0`: a formula with `not F` paired with
+`@p < 0.5` but > 0 can legitimately mean "I'm unsure about the negation"
+(`"probably not X"` style), which the existing `negate_consequent` branch
+handles correctly.  Broadening would regress that case.
 
 #### Per-clause distribution of evidence
 
@@ -1415,9 +1451,35 @@ The asymmetry is intentional: True is graduated finely because positive proof ch
 vary in strength, while False is proved by contradiction and even weak negative evidence
 is informative.
 
-Wh-answers append `(confidence X)` to the answer entity name when `conf < 0.99`
-(`_format_answers`).  The test-harness matcher strips the parenthetical by default
-(non-strict mode), so `"The man (confidence 0.94)"` passes tests expecting `"The man"`.
+Generic wh-answers (what-queries, and who-queries that fall into the
+`_format_answers` path) append `(confidence X)` to the answer entity name
+when `conf < 0.99`.  The test-harness matcher strips the parenthetical by
+default (non-strict mode), so `"The man (confidence 0.94)"` passes tests
+expecting `"The man"`.
+
+**Who-queries use a qualitative prefix instead of numeric suffix**
+(`_format_who_answers`).  The prefix is derived from the **minimum
+confidence** across the surviving answer set (the weakest link in the
+claim):
+
+| Min confidence | Prefix |
+|---|---|
+| `> 0.8` | (none) |
+| `(0.4, 0.8]` | `"Probably "` |
+| `[0.05, 0.4]` | `"Maybe "` |
+| `< 0.05` | answer dropped |
+
+Examples (cases 241, 242):
+- `"Elephants probably do not have wings. John is an elephant. Who does
+  not have wings?"` → John has confidence 0.6 → `"Probably John."`
+- `"Elephants probably do not have wings. John is maybe an elephant.
+  Who does not have wings?"` → John has confidence 0.12 (chained
+  0.6 × 0.2) → `"Maybe John."`
+
+The threshold values mirror the Stage-1 adverb mapping (`probably` → 0.8,
+`maybe` → 0.6).  The prefix is capitalized; the following word retains
+its original case, so `"Probably John."` keeps the proper-noun capital
+and `"Probably a tobacco."` keeps the article lowercase.
 
 #### Skolem-typed answer rendering for "what" queries
 
@@ -1449,11 +1511,12 @@ they contain digits (the skolem index).  Now if the Skolem has a known type from
 
 | File | Role |
 |---|---|
-| `solver/logconvert.py` | `_process_assertion`, `_distribute_clause_confidence`, `_clause_has_block`, `_clause_has_skolem`, `_raw_has_what_word`, `_has_what_query` |
+| `solver/logconvert.py` | `_process_assertion`, `_distribute_clause_confidence`, `_clause_has_block`, `_clause_has_skolem`, `_has_explicit_negation_at_top` (double-encoding safety net), `_raw_has_what_word`, `_raw_has_who_word`, `_has_what_query` |
 | `solver/lc_rewrites.py` | `negate_consequent` (used by polarity flip) |
 | `solver/lc_clausify.py` | `is_skolem_const`, `is_skolem_fn` (reused by the distribution) |
-| `solver/procproofs.py` | `_format_bool_answer`, `_format_answers`, `_format_who_answers`, `_resolve_what_skolem_answers` |
+| `solver/procproofs.py` | `_format_bool_answer`, `_format_answers`, `_format_who_answers` (qualitative prefix), `_resolve_what_skolem_answers`, `_extract_class_names`, `_filter_class_name_leaks` |
 | `solver/globals.py` | prover confidence thresholds (`-confidence 0.1`, `-keepconfidence 0.1`) |
+| `prompts/stage1_instructions_full.txt` | PART 4 of `--- confidence ---`: explicit-negation-marker rule |
 
 ---
 
@@ -1513,6 +1576,37 @@ Returns both the answer string and the set of surviving values (used to filter p
 ### Other WH-questions ("Who is an animal?", "What did John eat?")
 
 WH-questions that don't match the who/what identity pattern or the where/when preposition pattern fall through to the general `build_defq_question` path, which wraps the full ask body in a `$defq` biconditional. These handle "Who is an animal?" (find entities of type animal), "What did John eat?" (find event targets), etc.
+
+The defq path also injects wh-kind markers so answer formatting can route
+through the right formatter:
+
+- `_raw_has_what_word(raw_text)` detects `what`/`which` as whole words
+  anywhere in the query text → sets `@what_query: True` on the question
+  object.
+- `_raw_has_who_word(raw_text)` detects `who`/`whom` → sets
+  `@who_query: True`.  Without this, complex who-questions like
+  `"Who does not have wings?"` (whose body doesn't match the simple
+  identity patterns of `_detect_who_query`) would fall through to the
+  generic `_format_answers` path and render with a numeric
+  `(confidence X)` suffix instead of the qualitative `"Probably X."` /
+  `"Maybe X."` prefix from `_format_who_answers` (cases 241, 242).
+
+### Class-name leak filtering in who-queries
+
+The background part-inheritance axiom
+`has_part(X, Y, Z) ∧ isa(X, U) → has_part(U, Y, Z)` (an elephant's part
+is a part of all elephants) can unify the answer variable with a **class
+name string** (e.g. `"elephant"`) via a population fact like
+`isa(elephant, $some_elephant)`.  The resulting `$ans("elephant")` is not
+an entity answer — it's a leak from the meta-variable in the axiom.
+
+`_filter_class_name_leaks` in `procproofs.py` drops answers whose every
+`$ans` atom binds to a class name (computed by `_extract_class_names`:
+the set of first-arg strings from all `isa(CLASS, *)` atoms in the
+problem's clause list).  The filter fires only for generic
+wh-placeholder queries — when `@who_entity` is **unset**.  For queries
+with an explicit `@who_entity` (like `"Who is John?"`), class names are
+legitimate type descriptions of the queried entity and are kept.
 
 ### $ctxt injection for WH-questions
 
