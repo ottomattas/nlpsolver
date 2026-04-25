@@ -333,6 +333,65 @@ def _classify_who_answers(logic, who_entity):
   return isa_types, prop_names
 
 
+def _classify_use_vals(use_vals, isa_types, prop_names, who_entity,
+                       non_self, self_only, seen):
+  """Bucket each answer value into (types, properties, equalities), then
+  inject prop_names (always) and isa_types (only when non_self is empty).
+
+  Mutates `seen` to dedup injected names against answer values.
+  Returns (types, properties, equalities, surviving_values).
+  """
+  surviving_values = set(v for v, _, _ in use_vals)
+  equalities, types, properties = [], [], []
+
+  for v, _, _ in use_vals:
+    if v in isa_types:
+      types.append(v)
+    elif v in prop_names:
+      properties.append(v)
+    elif is_skolem_const(v):
+      # Skolem with a known type — promote ("sk1_tobacco" → "tobacco")
+      # so the answer renders "a tobacco" not the raw Skolem name.
+      typ = get_skolem_type(v)
+      if typ:
+        types.append(typ)
+      else:
+        equalities.append(v)
+    else:
+      base = v.split()[0] if " " in v else v
+      is_lower_noun = (base and base[0].islower()
+                       and not any(c.isdigit() for c in v))
+      if who_entity and isa_types and is_lower_noun:
+        # Authoritative isa_types is full-confidence; lowercase value
+        # NOT in that set is a partial-conf type leak — drop it.
+        surviving_values.discard(v)
+        continue
+      if is_lower_noun:
+        types.append(v)
+      else:
+        equalities.append(v)
+
+  for p in prop_names:
+    if p not in seen:
+      seen.add(p)
+      properties.append(p)
+      surviving_values.add(p)
+
+  # Case 236: prover only had self-ref answers but fact base has known
+  # types — inject those and drop the tautological self-reference.
+  if not non_self and isa_types:
+    for v, _, _ in self_only:
+      surviving_values.discard(v)
+    equalities = []
+    for t in sorted(isa_types):
+      if t not in seen:
+        seen.add(t)
+        types.append(t)
+        surviving_values.add(t)
+
+  return types, properties, equalities, surviving_values
+
+
 def _format_who_answers(answers, logic=None):
   """Format who/what-query answers as type, property, or identity descriptions.
 
@@ -392,69 +451,22 @@ def _format_who_answers(answers, logic=None):
   non_self = [(v, s, c) for v, s, c in all_vals if not s]
   self_only = [(v, s, c) for v, s, c in all_vals if s]
 
-  # Use non-self answers if available; fall back to self-referential only
-  # when no direct properties exist either (properties are injected below
-  # but we check prop_names here to suppress tautological self-ref fallback).
-  use_vals = non_self if (non_self or prop_names) else self_only
-  surviving_values = set(v for v, _, _ in use_vals)
+  # Decide which answer set to render.  Three mutually-exclusive cases:
+  #   - non_self non-empty: prover found real answers; render those.
+  #   - non_self empty + prop_names exist: render only the injected
+  #     properties below; self_only would be tautological.
+  #   - both empty: keep self_only as a fallback (the isa_types injection
+  #     below may replace it for case 236-style queries).
+  if non_self:
+    use_vals = non_self
+  elif prop_names:
+    use_vals = []
+  else:
+    use_vals = self_only
 
-  # Classify into categories
-  equalities = []
-  types = []
-  properties = []
-  for v, _, _ in use_vals:
-    if v in isa_types:
-      types.append(v)
-    elif v in prop_names:
-      properties.append(v)
-    elif is_skolem_const(v):
-      # Skolem with a known type from isa(type, sk_name) clauses —
-      # promote the TYPE into the types list ("sk1_tobacco" → "tobacco")
-      # so the answer renders as "a tobacco" instead of the raw Skolem
-      # display name ("Tob1").
-      typ = get_skolem_type(v)
-      if typ:
-        types.append(typ)
-      else:
-        equalities.append(v)
-    else:
-      base = v.split()[0] if " " in v else v
-      is_lower_noun = (base and base[0].islower()
-                       and not any(c.isdigit() for c in v))
-      if who_entity and isa_types and is_lower_noun:
-        # Authoritative isa_types is populated for this who_entity (full-
-        # confidence types only).  A lowercase value NOT in that set is a
-        # partial-confidence type leak — drop it rather than rendering as
-        # a (malformed) equality "person" or adding it back as a type.
-        surviving_values.discard(v)
-        continue
-      if is_lower_noun:
-        types.append(v)
-      else:
-        equalities.append(v)
-
-  # Inject direct properties from clause scan (not via prover)
-  for p in prop_names:
-    if p not in seen:
-      seen.add(p)
-      properties.append(p)
-      surviving_values.add(p)
-
-  # When the prover only found self-referential answers (non_self empty)
-  # but the fact base gives isa types for the queried entity, inject
-  # those types and drop the tautological self-reference.  Case 236:
-  # "John is a man. Who is John?" -> "A man." not "John."
-  if not non_self and isa_types:
-    # Remove self-ref values from surviving_values — they were the
-    # fallback; the injected types replace them.
-    for v, _, _ in self_only:
-      surviving_values.discard(v)
-    equalities = []
-    for t in sorted(isa_types):
-      if t not in seen:
-        seen.add(t)
-        types.append(t)
-        surviving_values.add(t)
+  types, properties, equalities, surviving_values = _classify_use_vals(
+    use_vals, isa_types, prop_names, who_entity, non_self, self_only, seen,
+  )
 
   if not types and not properties and not equalities:
     return "Unknown.", set()

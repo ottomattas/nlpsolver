@@ -116,36 +116,37 @@ def _qualifier_words(text, base, suffix, extra_stops=None):
   return []
 
 
+def _is_qualifier_stop(w, extra_stops=None):
+  """True if w cannot be a pre-nominal adjective qualifier.
+
+  Stops on: _STOP_WORDS, caller-supplied extra_stops (entity bases / verbs),
+  bare digits (entity ID suffixes), past-tense -ed verbs (with a small
+  participial-adjective allowlist), and possessive 's tokens.
+  """
+  wl = w.lower()
+  if wl in _STOP_WORDS:
+    return True
+  if extra_stops and wl in extra_stops:
+    return True
+  if w.isdigit():
+    return True
+  if wl.endswith("ed") and len(wl) > 3 and wl not in ("red", "named", "called"):
+    return True
+  if wl == "'s" or wl.endswith("'s"):
+    return True
+  return False
+
+
 def _gather_backwards(words, pos, raw_words=None, extra_stops=None):
   """Collect qualifier words to the left of words[pos].
 
-  Skips over leading _SKIP_WORDS, then collects non-skip words.
-  Stops at clause boundaries (words with trailing comma/semicolon in raw text),
-  at _STOP_WORDS, at extra_stops (entity base names), and at purely numeric
-  tokens (entity ID suffixes).
-  Returns them in left-to-right order (closest to base is last).
+  Skips over leading _SKIP_WORDS, then collects non-stop words until
+  the next stop word, clause boundary (comma/semicolon in raw_words),
+  or another _SKIP_WORDS token.  Returns them in left-to-right order.
   """
   def _at_boundary(idx):
-    """True if the raw word at idx ends with clause-boundary punctuation."""
     if raw_words and idx < len(raw_words):
       return raw_words[idx][-1:] in (",", ";")
-    return False
-
-  def _is_stop(w):
-    wl = w.lower()
-    if wl in _STOP_WORDS:
-      return True
-    if extra_stops and wl in extra_stops:
-      return True
-    if w.isdigit():
-      return True
-    # Past-tense verbs (ending in -ed) are not adjective qualifiers.
-    # Exception: common participial adjectives like "named", "called".
-    if wl.endswith("ed") and len(wl) > 3 and wl not in ("red", "named", "called"):
-      return True
-    # Possessive markers ("Mary's", "1's", bare "'s") are not qualifiers.
-    if wl == "'s" or wl.endswith("'s"):
-      return True
     return False
 
   j = pos - 1
@@ -155,7 +156,7 @@ def _gather_backwards(words, pos, raw_words=None, extra_stops=None):
     j -= 1
   quals = []
   while j >= 0 and words[j].lower() not in _SKIP_WORDS:
-    if _at_boundary(j) or _is_stop(words[j]):
+    if _at_boundary(j) or _is_qualifier_stop(words[j], extra_stops):
       break
     quals.insert(0, words[j])
     j -= 1
