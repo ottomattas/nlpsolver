@@ -143,6 +143,9 @@ def _gather_backwards(words, pos, raw_words=None, extra_stops=None):
     # Exception: common participial adjectives like "named", "called".
     if wl.endswith("ed") and len(wl) > 3 and wl not in ("red", "named", "called"):
       return True
+    # Possessive markers ("Mary's", "1's", bare "'s") are not qualifiers.
+    if wl == "'s" or wl.endswith("'s"):
+      return True
     return False
 
   j = pos - 1
@@ -521,7 +524,53 @@ def build_entity_map(s1_json, s2_json=None):
             if url:
               result.setdefault(url, display)
 
+  _apply_genitive_overrides(result, s2_json, eid_to_base={e: b for e, _, _, b, _ in entities})
   return result
+
+
+def _apply_genitive_overrides(result, s2_json, eid_to_base):
+  """Override generic "the X" displays with "OWNER's X" derived from
+  ["is rel2","X of",ENT,OWNER] atoms in stage-2 logic.
+
+  Only applies when the relation head ("X" in "X of") matches the entity's
+  Stage-1 base name — this is the safety filter that distinguishes kinship
+  / role relations ("sister of", "owner of") from spatial ones ("north of",
+  "in front of") where ENT.base is a place noun, not the role word.
+  """
+  if not s2_json:
+    return
+  for ent, role, owner in _collect_genitive_relations(s2_json):
+    if ent not in result or owner not in result:
+      continue
+    role_head = role[:-len(" of")].strip()
+    if not role_head:
+      continue
+    base = eid_to_base.get(ent, "")
+    if base.lower() != role_head.lower():
+      continue
+    owner_disp = result[owner]
+    if not owner_disp:
+      continue
+    suffix = "'" if owner_disp.endswith("s") else "'s"
+    result[ent] = owner_disp + suffix + " " + role_head
+
+
+def _collect_genitive_relations(s2_json):
+  """Yield (entity_id, relation_name, owner_id) from ["is rel2","X of",ENT,OWNER]."""
+  results = []
+  def _walk(node):
+    if not isinstance(node, list) or not node:
+      return
+    if (node[0] == "is rel2" and len(node) >= 4
+        and isinstance(node[1], str) and node[1].lower().endswith(" of")
+        and isinstance(node[2], str) and not node[2].startswith("?:")
+        and isinstance(node[3], str) and not node[3].startswith("?:")):
+      results.append((node[2], node[1], node[3]))
+    for el in node:
+      if isinstance(el, list):
+        _walk(el)
+  _walk(s2_json)
+  return results
 
 
 # =========== the end ===========

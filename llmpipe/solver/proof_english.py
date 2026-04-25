@@ -369,12 +369,17 @@ def _is_var_raw(args, i):
   """True if args[i] is a raw variable string (starts with '?:')."""
   return (len(args) > i and isinstance(args[i], str) and args[i].startswith("?:"))
 
-def render_term_english(term):
+def render_term_english(term, proof_mode=True):
   """Render a complex list term (nested function/predicate) as English.
 
   Handles $count, $setof, TPTP arithmetic ($sum, $difference, $product,
   $quotient), and infix arithmetic (+, -, *, /).
   Falls back to str() for unrecognized terms.
+
+  proof_mode controls how nested entity names are rendered: True (default,
+  used for proof explanation) keeps raw IDs in JSON mode for traceability;
+  False (used for the user-facing answer line) consults entity_map to get
+  cosmetic names like "Mary" instead of "Mary 1".
   """
   if not isinstance(term, list) or not term:
     return str(term)
@@ -388,7 +393,7 @@ def render_term_english(term):
   # $theof1 -> "SUBJECT's TYPE" for named entities, else "the TYPE of SUBJECT"
   if op == "$theof1" and len(term) >= 3:
     type_name = term[1] if isinstance(term[1], str) else str(term[1])
-    subj = entity_name(term[2], proof_mode=True)
+    subj = entity_name(term[2], proof_mode=proof_mode)
     if subj and subj[0:1].isupper() and not subj.lower().startswith(("the ", "a ", "an ")):
       suffix = "'" if subj.endswith("s") else "'s"
       return subj + suffix + " " + type_name

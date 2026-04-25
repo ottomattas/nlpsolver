@@ -144,11 +144,16 @@ def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=Non
     # For who/what queries, only explain answers that survived filtering
     explain_answers = answers
     if who_surviving is not None:
+      def _atom_in_surviving(atom):
+        if not (isinstance(atom, list) and len(atom) >= 2 and atom[0] == "$ans"):
+          return False
+        v = atom[1]
+        if isinstance(v, list):
+          v = entity_name(v)   # match the rendering done in _format_who_answers
+        return isinstance(v, str) and v in who_surviving
       explain_answers = [a for a in answers
                          if isinstance(a.get("answer"), list)
-                         and any(isinstance(atom, list) and len(atom) >= 2
-                                 and atom[0] == "$ans" and atom[1] in who_surviving
-                                 for atom in a["answer"])]
+                         and any(_atom_in_surviving(atom) for atom in a["answer"])]
     explanation = format_explanation(explain_answers, sentence_map, show_logic=show_logic, logic=logic)
     if explanation:
       answer_str = answer_str + "\n\n" + explanation
@@ -363,7 +368,16 @@ def _format_who_answers(answers, logic=None):
       if not isinstance(atom, list) or len(atom) < 2 or atom[0] != "$ans":
         continue
       v = atom[1]
-      if not isinstance(v, str):
+      if isinstance(v, list):
+        # Complex term (e.g., ["$theof1","sister","Mary 1",...]) — render
+        # via entity_name → render_term_english to get an English string
+        # like "Mary's sister".  Without this, $theof1 answers fall through
+        # and the user sees "Unknown."
+        rendered = entity_name(v)
+        if not isinstance(rendered, str) or not rendered:
+          continue
+        v = rendered
+      elif not isinstance(v, str):
         continue
       # Filter $-prefixed constants (population, metadata)
       if v.startswith("$"):
