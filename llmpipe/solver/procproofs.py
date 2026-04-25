@@ -288,6 +288,15 @@ def _resolve_what_skolem_answers(answers):
 def _classify_who_answers(logic, who_entity):
   """Scan assertion clauses to build sets of known types and properties for who_entity.
 
+  Only full-confidence isa facts (clauses without @confidence or
+  @confidence == 1.0) qualify as type descriptions — partial-confidence
+  isa entries (from probabilistic clauses) are excluded, since they
+  would over-broaden the answer (case 236: isa(person, John) at 0.77
+  is an artifact of the "John is probably not bad" formula structure,
+  not a genuine uncertain type claim).  Property detection has no
+  confidence filter: a partial-confidence property is still a valid
+  qualitative descriptor.
+
   Returns (isa_types, property_names) where both are sets of strings.
   """
   isa_types = set()
@@ -308,6 +317,10 @@ def _classify_who_answers(logic, who_entity):
     if isinstance(clause[0], list):
       continue
     pred = clause[0]
+    conf = obj.get("@confidence")
+    full_conf = (conf is None or conf >= 1.0)
+    if not full_conf:
+      continue          # skip partial-confidence facts in both lists
     if pred == "isa" and len(clause) >= 3 and clause[2] == who_entity:
       isa_types.add(clause[1])
     if pred in ("has degree property", "has property") and len(clause) >= 3 and clause[2] == who_entity:
@@ -392,7 +405,16 @@ def _format_who_answers(answers, logic=None):
         equalities.append(v)
     else:
       base = v.split()[0] if " " in v else v
-      if base and base[0].islower() and not any(c.isdigit() for c in v):
+      is_lower_noun = (base and base[0].islower()
+                       and not any(c.isdigit() for c in v))
+      if who_entity and isa_types and is_lower_noun:
+        # Authoritative isa_types is populated for this who_entity (full-
+        # confidence types only).  A lowercase value NOT in that set is a
+        # partial-confidence type leak — drop it rather than rendering as
+        # a (malformed) equality "person" or adding it back as a type.
+        surviving_values.discard(v)
+        continue
+      if is_lower_noun:
         types.append(v)
       else:
         equalities.append(v)
@@ -403,6 +425,22 @@ def _format_who_answers(answers, logic=None):
       seen.add(p)
       properties.append(p)
       surviving_values.add(p)
+
+  # When the prover only found self-referential answers (non_self empty)
+  # but the fact base gives isa types for the queried entity, inject
+  # those types and drop the tautological self-reference.  Case 236:
+  # "John is a man. Who is John?" -> "A man." not "John."
+  if not non_self and isa_types:
+    # Remove self-ref values from surviving_values — they were the
+    # fallback; the injected types replace them.
+    for v, _, _ in self_only:
+      surviving_values.discard(v)
+    equalities = []
+    for t in sorted(isa_types):
+      if t not in seen:
+        seen.add(t)
+        types.append(t)
+        surviving_values.add(t)
 
   if not types and not properties and not equalities:
     return "Unknown.", set()

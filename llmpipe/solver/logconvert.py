@@ -783,6 +783,9 @@ def _detect_who_query(body, ask_var):
     ["isa", ask_var, ENTITY] or ["isa", ENTITY, ask_var]
     ["is rel2", "is", ENTITY, ask_var]
   where ENTITY is a ground constant (not a stage-2 variable).
+  Also recurses into top-level ["and", ...] bodies so compound forms like
+  `["and", ["isa","person","John 1"], ["=","X","John 1"]]` still return
+  the identity entity "John 1".
   Returns the entity string, or None if not matched.
   """
   if not isinstance(body, list) or len(body) < 3:
@@ -806,6 +809,12 @@ def _detect_who_query(body, ask_var):
       return a
     if a == ask_var and isinstance(b, str) and not S2_VAR_RE.match(b):
       return b
+  # Compound conjunction: look inside each conjunct for an identity atom.
+  if op == "and":
+    for conj in body[1:]:
+      found = _detect_who_query(conj, ask_var)
+      if found is not None:
+        return found
   return None
 
 
