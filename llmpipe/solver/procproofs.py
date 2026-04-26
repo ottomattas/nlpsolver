@@ -857,6 +857,23 @@ def _ans_object_tier(val):
   return best
 
 
+def _has_real_concrete_atom(val):
+  """True if val (a list of $ans atoms) contains an atom whose argument is
+  a real concrete entity name — a string that is neither a Skolem constant
+  nor a population ($some_*) constant.  Used to distinguish "Tallinn" (a
+  real concrete answer that should beat population) from ["sk3","Emily 1"]
+  (a Skolem function that is better rendered via the population class)."""
+  if not isinstance(val, list):
+    return False
+  for atom in val:
+    if not isinstance(atom, list) or len(atom) < 2:
+      continue
+    s = atom[1]
+    if isinstance(s, str) and not s.startswith("$some_") and not is_skolem_const(s):
+      return True
+  return False
+
+
 def _filter_by_best_tier(answers, prefer_population=False):
   """Return answers filtered to the best object-type tier.
 
@@ -864,8 +881,11 @@ def _filter_by_best_tier(answers, prefer_population=False):
   or if no object answers exist, the list is returned unchanged.
 
   prefer_population: when True ("what" questions), prefer population tier (2)
-  over concrete tier (0) if both exist.  This yields class-level answers
-  like "A wolf" instead of concrete instances like "Gertrude".
+  over Skolem-function answers — yielding class-level renderings like
+  "A wolf" instead of opaque Skolem function output.  Real concrete entity
+  names (proper names, URLs) are never overridden by population — Tallinn
+  must beat $some_city_in_Estonia for "What is an Estonian city?" (cases
+  189, 190).
   """
   tiers = [_ans_object_tier(a.get("answer")) for a in answers]
   obj_tiers = [t for a, t in zip(answers, tiers)
@@ -873,9 +893,14 @@ def _filter_by_best_tier(answers, prefer_population=False):
   if not obj_tiers:
     return answers
   if prefer_population and 2 in obj_tiers and min(obj_tiers) < 2:
-    # "What" question: prefer population (class) answers over concrete.
-    return [a for a, t in zip(answers, tiers)
-            if isinstance(a.get("answer"), bool) or t == 2]
+    has_real_concrete = any(
+      not isinstance(a.get("answer"), bool)
+      and _has_real_concrete_atom(a.get("answer"))
+      for a in answers
+    )
+    if not has_real_concrete:
+      return [a for a, t in zip(answers, tiers)
+              if isinstance(a.get("answer"), bool) or t == 2]
   best = min(obj_tiers)
   if best == 2:
     # All object answers are population constants — keep them all as-is.
