@@ -145,45 +145,62 @@ def rewrite_meta_predicates(tree):
           for child in tree]
 
 
-# ======== receive → give normalization ========
+# ======== perspective verb → dative head normalization ========
+#
+# A perspective verb (receive/get/hear/see) describes the recipient's view
+# of a dative event (give/tell/show).  Canonicalise to the dative head and
+# swap actor→recipient so prover queries about the perspective verb match
+# facts encoded with the dative head, and vice-versa.
+#
+# Asymmetry is preserved: the rewrite never adds an actor for
+# perspective-verb events that lack an explicit dative agent.  E.g.
+# "Mary received a book" → give(recipient=Mary, target=book) — no actor —
+# so "Did John receive a book?" still fails (John was actor, not recipient).
+_PERSPECTIVE_TO_DATIVE = {
+  "receive": "give",
+  "get":     "give",
+  "hear":    "tell",
+  "see":     "show",
+}
+
 
 def normalize_receive_events(tree):
-  """Rewrite 'receive' events to 'give' with swapped actor→recipient.
+  """Rewrite perspective-verb events (receive/get/hear/see) to their dative
+  head (give/tell/show) with swapped actor→recipient.
 
-  In an ["and", ...] block containing ["has type", E, "receive"],
-  changes the verb to "give" and swaps ["has actor", E, X] to
-  ["has recipient", E, X].  This handles assertions where the input
-  describes a receive event ("Mary received a book") so the prover
-  can use the give-based transfer axioms.
+  In an ["and", ...] block containing ["has type", E, V] where V is a
+  perspective verb, the verb becomes the dative head and ["has actor",E,X]
+  becomes ["has recipient",E,X] for that E.
 
-  The give→receive axiom bridge in axioms_std.js handles the reverse
-  direction (queries asking about "receive" when facts use "give").
+  Function name kept for back-compat with the original receive-only form;
+  see _PERSPECTIVE_TO_DATIVE for the actual mapping.
   """
   if not isinstance(tree, list) or not tree:
     return tree
   op = tree[0] if isinstance(tree[0], str) else None
-  # Look for ["and", ...] blocks containing a receive event.
+  # Look for ["and", ...] blocks containing a perspective-verb event.
   if op == "and" and len(tree) >= 2:
-    # Find event variables bound to "receive".
-    receive_evars = set()
+    # event-var → dative-head verb (only events whose type is a perspective verb)
+    persp_evars = {}
     for item in tree[1:]:
       if (isinstance(item, list) and len(item) >= 3
           and isinstance(item[0], str) and item[0] in ("has type", "-has type")
-          and item[2] == "receive"):
-        receive_evars.add(item[1])
-    if receive_evars:
+          and isinstance(item[2], str) and item[2] in _PERSPECTIVE_TO_DATIVE):
+        persp_evars[item[1]] = _PERSPECTIVE_TO_DATIVE[item[2]]
+    if persp_evars:
       result = [tree[0]]
       for item in tree[1:]:
         item = normalize_receive_events(item)  # recurse first
         if isinstance(item, list) and len(item) >= 3 and isinstance(item[0], str):
           evar = item[1]
-          if evar in receive_evars:
-            if item[0] in ("has type", "-has type") and item[2] == "receive":
-              # receive → give
-              result.append([item[0], item[1], "give"] + item[3:])
+          if evar in persp_evars:
+            dative = persp_evars[evar]
+            if (item[0] in ("has type", "-has type")
+                and isinstance(item[2], str)
+                and item[2] in _PERSPECTIVE_TO_DATIVE):
+              result.append([item[0], item[1], dative] + item[3:])
               continue
             if item[0] in ("has actor", "-has actor"):
-              # actor of receive → recipient of give
               neg = "-" if item[0].startswith("-") else ""
               result.append([neg + "has recipient"] + item[1:])
               continue
