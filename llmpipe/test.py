@@ -537,13 +537,16 @@ def _phrases_match(expected_str, received_str):
     permissive (default): "Estonia" == "in Estonia" (prep on one side only → OK)
     strict: prepositions must match exactly on both sides.
   Comparison is case-insensitive and strips articles.
+
+  Single-phrase comparisons are handled by the same prep-permissive logic
+  so e.g. "Estonia." matches "In Estonia." for case 187.
   """
   exp_phrases = _split_and_phrases(expected_str)
   rec_phrases = _split_and_phrases(received_str)
   if len(exp_phrases) != len(rec_phrases):
     return False
-  if len(exp_phrases) <= 1:
-    return False  # single phrase — handled by existing checks
+  if not exp_phrases:
+    return False
 
   exp_parsed = sorted([_parse_phrase(p) for p in exp_phrases], key=lambda x: x[1])
   rec_parsed = sorted([_parse_phrase(p) for p in rec_phrases], key=lambda x: x[1])
