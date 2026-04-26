@@ -85,6 +85,7 @@ from lc_postprocess import (
   rewrite_definites as _rewrite_definites,
   rewrite_measure_terms as _rewrite_measure_terms,
   add_possessive_have as _add_possessive_have,
+  add_haspart_for_typed_have as _add_haspart_for_typed_have,
   strip_degree_predicates as _strip_degree_predicates,
   inject_soft_synonyms as _inject_soft_synonyms,
   inject_exclusion_axioms as _inject_exclusion_axioms,
@@ -677,6 +678,10 @@ def rawlogic_convert(logic, s1_json=None):
 
   # Infer have(Y,E,CT) from possessive is_rel2(T+" of",E,Y,CT) + isa(T,E) pairs.
   _add_possessive_have(result)
+
+  # Bridge have(X,Y,CT) -> has_part(X,Y,CT) when a rule uses has_part on the
+  # same noun type (case 207: "John has a long trunk" + has_part-typed rule).
+  _add_haspart_for_typed_have(result)
 
   # Normalize has property / has degree property based on the gradable whitelist.
   # Must run before _coerce_relclass so relclass coercion sees the correct predicate.

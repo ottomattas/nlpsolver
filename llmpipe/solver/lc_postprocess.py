@@ -1041,6 +1041,172 @@ def add_possessive_have(result):
     result.insert(first_q + i, fact)
 
 
+# ======== have → has_part bridge for typed body-part nouns ========
+
+def _parse_entity_name_type(entity):
+  """Extract a candidate type string from an entity name using Stage-2 naming
+  conventions.  Returns None for non-strings or names without a recognisable
+  noun stem.
+
+    "trunk 1"      -> "trunk"      (concrete + numeric suffix)
+    "sk0_trunk"    -> "trunk"      (Skolem const with type tag)
+    "$some_trunk"  -> "trunk"      (population existential)
+    "John 1"       -> "John"       (proper name + suffix)
+
+  Used by add_haspart_for_typed_have as a fallback when the explicit
+  isa(T, E) atom is missing from Stage-2 output.
+  """
+  if not isinstance(entity, str):
+    return None
+  if entity.startswith("$some_"):
+    rest = entity[len("$some_"):]
+    if rest.startswith("not_"):
+      rest = rest[4:]
+    return rest.split("_", 1)[0] if rest else None
+  if entity.startswith("sk") and "_" in entity:
+    return entity.split("_", 1)[1] or None
+  parts = entity.split()
+  return parts[0] if parts else None
+
+
+def add_haspart_for_typed_have(result):
+  """Bridge specific have-facts to has_part when a rule uses has_part on the
+  same noun type.  Conservative: fires only when the problem contains a
+  has_part-using rule whose typed premise matches the have-fact's possessee.
+
+  Motivating example (case 207):
+    Rule:  "If an animal has a trunk, it is an elephant."
+           Stage-2 clause uses has_part:
+             [-isa(animal,?:X), -isa(trunk,?:Y), -has_part(?:X,?:Y,Ctxt),
+              isa(elephant,?:X), $block, ...]
+    Fact:  "John has a long trunk."
+           Stage-2 (gemini/gpt) uses have, not has_part:
+             have(John 1, trunk 1, Ctxt), isa(trunk, trunk 1)
+    Query: "John is an elephant?" → Unknown (rule never fires because
+           has_part(John 1, trunk 1, …) is not asserted).
+
+  This bridge scans the rule clauses and finds the type "trunk" is paired
+  with has_part.  It then sees have(John 1, trunk 1, …) where trunk 1 has
+  isa(trunk, …), matching the rule's expected type, and emits the missing
+  has_part(John 1, trunk 1, Ctxt).  The rule then fires → True.
+
+  Conservatism:
+  - RULE_HASPART_TYPES is local to the current problem — only types
+    explicitly used in a has_part-typed rule premise here qualify.
+  - For "John has a book" with no has_part rule about books, nothing fires.
+  - For a hypothetical rule about "has_part friend", "John has a friend"
+    would correctly fire.
+
+  Name-parsing fallback (_parse_entity_name_type):
+  - When the explicit isa(T, Y_const) atom is missing from Stage-2 output,
+    parse the entity name (e.g. "trunk 1" → "trunk", "sk0_trunk" → "trunk")
+    as a fallback type.  Removes the dependency on LLM reliably emitting
+    isa, while remaining safe (still gated by RULE_HASPART_TYPES).
+  """
+  def _is_var(s):
+    return isinstance(s, str) and s.startswith("?:")
+
+  def _is_ground_str(v):
+    return isinstance(v, str) and not v.startswith("?:")
+
+  def _is_entity_term(v):
+    if _is_ground_str(v):
+      return True
+    if isinstance(v, list) and len(v) >= 2 and isinstance(v[0], str):
+      return v[0].startswith("sk") or v[0] == "$theof1"
+    return False
+
+  def _entity_key(v):
+    return str(v) if isinstance(v, list) else v
+
+  def _extract_atoms(clause):
+    if not isinstance(clause, list) or not clause:
+      return []
+    if isinstance(clause[0], list):
+      return clause
+    if isinstance(clause[0], str):
+      return [clause]
+    return []
+
+  # Pass 1: scan rule clauses for has_part-typed premises.
+  # A "has_part-typed rule" is a multi-literal clause containing both
+  # ["-has part", ?:X, ?:Y, …] and ["-isa", T, ?:Y] for the same ?:Y.
+  rule_haspart_types = set()
+  for obj in result:
+    if not isinstance(obj, dict) or "@logic" not in obj:
+      continue
+    clause = obj["@logic"]
+    if not (isinstance(clause, list) and clause and isinstance(clause[0], list)):
+      continue   # not a multi-literal rule
+    # collect ?:Y vars that appear as second arg of -has part
+    haspart_vars = set()
+    for atom in clause:
+      if (isinstance(atom, list) and len(atom) >= 3
+          and atom[0] == "-has part" and _is_var(atom[2])):
+        haspart_vars.add(atom[2])
+    if not haspart_vars:
+      continue
+    # for each such ?:Y, find -isa(T, ?:Y) in the same clause
+    for atom in clause:
+      if (isinstance(atom, list) and len(atom) >= 3
+          and atom[0] == "-isa"
+          and isinstance(atom[1], str)
+          and atom[2] in haspart_vars):
+        rule_haspart_types.add(atom[1])
+
+  if not rule_haspart_types:
+    return   # no has_part-typed rule in this problem; bridge would fire on nothing
+
+  # Pass 2: collect explicit isa(T, E) for ground/function-term entities.
+  isa_types = {}
+  for obj in result:
+    if not isinstance(obj, dict) or "@logic" not in obj:
+      continue
+    for atom in _extract_atoms(obj["@logic"]):
+      if (isinstance(atom, list) and len(atom) >= 3
+          and atom[0] == "isa"
+          and isinstance(atom[1], str) and _is_entity_term(atom[2])):
+        isa_types.setdefault(_entity_key(atom[2]), set()).add(atom[1])
+
+  # Pass 3: walk single-atom positive have facts and emit has_part where
+  # the possessee's type matches a rule's has_part-typed premise.
+  new_facts = []
+  seen = set()
+  for obj in result:
+    if not isinstance(obj, dict) or "@logic" not in obj:
+      continue
+    clause = obj["@logic"]
+    if not (isinstance(clause, list) and clause and isinstance(clause[0], str)
+            and clause[0] == "have" and len(clause) >= 3):
+      continue   # not a single-atom positive have fact
+    x_const, y_const = clause[1], clause[2]
+    if not _is_entity_term(y_const):
+      continue
+    ekey = _entity_key(y_const)
+    types = set(isa_types.get(ekey, ()))
+    if not types:
+      parsed = _parse_entity_name_type(y_const)
+      if parsed:
+        types = {parsed}
+    if not (types & rule_haspart_types):
+      continue
+    # Build has_part atom with the same Ctxt (4th arg) if present.
+    haspart = ["has part", x_const, y_const]
+    if len(clause) > 3:
+      haspart.append(clause[3])
+    key = (str(x_const), ekey)
+    if key in seen:
+      continue
+    seen.add(key)
+    new_facts.append({"@name": obj.get("@name", "sent_?"), "@logic": haspart})
+
+  if not new_facts:
+    return
+  first_q = next((i for i, o in enumerate(result) if "@question" in o), len(result))
+  for i, fact in enumerate(new_facts):
+    result.insert(first_q + i, fact)
+
+
 # ======== degree-predicate stripping (noproptypes_flag) ========
 
 def strip_degree_predicates(result):
