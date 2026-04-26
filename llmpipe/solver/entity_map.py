@@ -140,21 +140,21 @@ def _is_qualifier_stop(w, extra_stops=None):
 def _gather_backwards(words, pos, raw_words=None, extra_stops=None):
   """Collect qualifier words to the left of words[pos].
 
-  Skips over leading _SKIP_WORDS, then collects non-stop words until
-  the next stop word, clause boundary (comma/semicolon in raw_words),
-  or another _SKIP_WORDS token.  Returns them in left-to-right order.
+  Pre-nominal adjectives sit between an article/determiner and the noun;
+  the article itself bounds the noun phrase.  Walk backwards from pos-1
+  collecting non-stop words; stop at the first SKIP_WORD (article/
+  demonstrative), stop word, or clause boundary (comma/semicolon).
+  Crucially we do NOT skip past a leading article — doing so would cross
+  out of the noun phrase and pick up the preceding verb (e.g. "owns a
+  house" → "owns" wrongly captured as a qualifier of "house").
   """
   def _at_boundary(idx):
     if raw_words and idx < len(raw_words):
       return raw_words[idx][-1:] in (",", ";")
     return False
 
-  j = pos - 1
-  while j >= 0 and words[j].lower() in _SKIP_WORDS:
-    if _at_boundary(j):
-      return []
-    j -= 1
   quals = []
+  j = pos - 1
   while j >= 0 and words[j].lower() not in _SKIP_WORDS:
     if _at_boundary(j) or _is_qualifier_stop(words[j], extra_stops):
       break
