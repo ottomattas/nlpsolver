@@ -416,6 +416,32 @@ def _collect_positive_isa_entities(tree, polarity=True):
   return found
 
 
+def _try_singularize(word):
+  """Return a candidate singular form of word, or None if no rule applies.
+
+  Conservative: handles common -ies, -ches/shes/xes/ses/zes, and -s patterns.
+  May produce a non-word for edge cases like "gas" → "ga", but that's harmless
+  because rules use proper singular forms which won't match the bad output.
+
+  Used to bridge LLM plural/singular inconsistency when Stage-1 picks a plural
+  entity id (e.g. "berries 2") but rules use the singular type ("berry").
+  """
+  if not isinstance(word, str) or len(word) < 4:
+    return None
+  if word.endswith("ies"):
+    return word[:-3] + "y"
+  if (word.endswith("ches") or word.endswith("shes")
+      or word.endswith("xes") or word.endswith("ses")
+      or word.endswith("zes")):
+    return word[:-2]
+  if (word.endswith("s")
+      and not word.endswith("ss")
+      and not word.endswith("us")
+      and not word.endswith("is")):
+    return word[:-1]
+  return None
+
+
 def _build_entity_category_clauses(s1_json, skip_entities=frozenset()):
   """Build isa clauses for concrete entities that carry a category annotation.
 
@@ -427,6 +453,13 @@ def _build_entity_category_clauses(s1_json, skip_entities=frozenset()):
   the category, also emits isa(base, entity_id).  For example, "man 1" with
   category "person" produces both isa(person, man 1) and isa(man, man 1).
   This ensures the descriptive type word is available for query matching.
+
+  When the base word is detectably plural ("berries", "cars", "boxes"), also
+  emits isa(singular, entity_id) — e.g. "berries 2" with base "berries" gets
+  both isa(berries, berries 2) and isa(berry, berries 2).  Bridges Stage-2
+  LLM inconsistency: rules typically use singular type names ("berry") but
+  Stage-1 may pick plural entity ids ("berries 2") for mass-noun-like
+  references.  Fixes case 164.
 
   Deduplicates by entity_id so each entity produces at most one set of clauses.
   Entities in *skip_entities* are skipped (they already have an isa in
@@ -468,6 +501,12 @@ def _build_entity_category_clauses(s1_json, skip_entities=frozenset()):
           base = parts[0]
           if base[:1].islower() and base.lower() != category.lower():
             clauses.append({"@name": name, "@logic": ["isa", base, eid]})
+            # Also emit singular form when the base is detectably plural,
+            # to bridge "berries"/"berry"-style mismatches (case 164).
+            singular = _try_singularize(base)
+            if (singular and singular != base
+                and singular.lower() != category.lower()):
+              clauses.append({"@name": name, "@logic": ["isa", singular, eid]})
   return clauses
 
 
