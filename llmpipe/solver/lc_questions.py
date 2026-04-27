@@ -631,11 +631,17 @@ def scan_item_formula(frm, name, polarity, classes, has_props, deg_props,
 
 
 def _scan_compound_antecedent(ante, name, compound_witnesses):
-  """Scan a rule antecedent for compound patterns (type + spatial relation).
+  """Scan a rule antecedent for compound patterns on the same variable.
 
-  When the antecedent is ["and", ...] and contains both an isa(TYPE, VAR) atom
-  and a spatial is_rel2/has_degree_rel2 atom on the same variable with a ground
-  location target, record a compound witness pattern.
+  Detects two flavors:
+    (a) type + spatial relation: isa(TYPE, VAR) + is_rel2/has_degree_rel2(prep, VAR, ground_target)
+    (b) type + adjective property: isa(TYPE, VAR) + has_property(ATTR, VAR)
+        or has_degree_property(ATTR, VAR, intensity, relclass)
+
+  For each match, records a compound witness pattern so that
+  build_population_facts can emit a concrete intersection entity that satisfies
+  both atoms — needed by defeasibility cases where rules of shape
+  "ADJ TYPEs are/are not P" must apply to a concrete witness (case 74).
   """
   if not isinstance(ante, list) or not ante:
     return
@@ -647,6 +653,7 @@ def _scan_compound_antecedent(ante, name, compound_witnesses):
   # Collect conditions grouped by variable
   var_isa = {}       # var -> list of (type_name,)
   var_spatial = {}    # var -> list of (pred, prep, target, extra_args)
+  var_adj = {}        # var -> list of (pred, attr, intensity_or_None, relclass_or_None)
 
   for conj in conjuncts:
     if not isinstance(conj, list) or len(conj) < 3:
@@ -668,6 +675,20 @@ def _scan_compound_antecedent(ante, name, compound_witnesses):
         extra = conj[4:] if len(conj) > 4 else []
         var_spatial.setdefault(entity, []).append((pred, prep, target, extra))
 
+    elif pred == "has property" and len(conj) >= 3:
+      attr, entity = conj[1], conj[2]
+      if (isinstance(attr, str) and isinstance(entity, str)
+          and looks_like_var(entity)):
+        var_adj.setdefault(entity, []).append(("has property", attr, None, None))
+
+    elif pred == "has degree property" and len(conj) >= 5:
+      attr, entity, intensity, relclass = conj[1], conj[2], conj[3], conj[4]
+      if (isinstance(attr, str) and isinstance(entity, str)
+          and looks_like_var(entity)
+          and isinstance(intensity, str) and isinstance(relclass, str)):
+        var_adj.setdefault(entity, []).append(
+          ("has degree property", attr, intensity, relclass))
+
   # Generate compound witnesses for variables with both type and spatial
   for var in var_isa:
     if var not in var_spatial:
@@ -678,8 +699,23 @@ def _scan_compound_antecedent(ante, name, compound_witnesses):
         key = (typ, pred, prep, target)
         if key not in compound_witnesses:
           compound_witnesses[key] = {
+            "kind": "spatial",
             "name": name, "type": typ, "pred": pred,
             "prep": prep, "target": target, "extra": extra,
+          }
+
+  # Generate compound witnesses for variables with both type and adjective
+  for var in var_isa:
+    if var not in var_adj:
+      continue
+    for typ in var_isa[var]:
+      for pred, attr, intensity, relclass in var_adj[var]:
+        key = (typ, pred, attr, intensity, relclass)
+        if key not in compound_witnesses:
+          compound_witnesses[key] = {
+            "kind": "adjective",
+            "name": name, "type": typ, "pred": pred,
+            "attr": attr, "intensity": intensity, "relclass": relclass,
           }
 
 
@@ -743,27 +779,49 @@ def build_population_facts(classes, has_props, deg_props, compound_witnesses=Non
                      "@logic": ["-has degree property", prop, "$some_not_" + cn,
                                 "none", relclass]})
 
-  # Compound witnesses: type + spatial relation on same variable
+  # Compound witnesses: type + spatial relation OR type + adjective on same variable
   if compound_witnesses:
     for key, info in compound_witnesses.items():
+      kind = info.get("kind", "spatial")  # back-compat: missing kind = spatial
+      name = info["name"]
       typ = info["type"]
       pred = info["pred"]
-      prep = info["prep"]
-      target = info["target"]
-      extra = info["extra"]
-      name = info["name"]
-      loc_name = _extract_location_name(target)
-      const = "$some_" + _norm_for_const(typ) + "_" + _norm_for_const(prep) + "_" + loc_name
-      # isa fact
-      result.append({"@name": name, "@sourcetype": "populate",
-                     "@logic": ["isa", typ, const]})
-      # spatial relation fact
-      rel_atom = [pred, prep, const, target]
-      # For has_degree_rel2, add degree and relclass from extra args
-      if pred == "has degree rel2" and extra:
-        rel_atom.extend(extra)
-      result.append({"@name": name, "@sourcetype": "populate",
-                     "@logic": rel_atom})
+
+      if kind == "spatial":
+        prep = info["prep"]
+        target = info["target"]
+        extra = info["extra"]
+        loc_name = _extract_location_name(target)
+        const = "$some_" + _norm_for_const(typ) + "_" + _norm_for_const(prep) + "_" + loc_name
+        # isa fact
+        result.append({"@name": name, "@sourcetype": "populate",
+                       "@logic": ["isa", typ, const]})
+        # spatial relation fact
+        rel_atom = [pred, prep, const, target]
+        if pred == "has degree rel2" and extra:
+          rel_atom.extend(extra)
+        result.append({"@name": name, "@sourcetype": "populate",
+                       "@logic": rel_atom})
+
+      elif kind == "adjective":
+        attr = info["attr"]
+        intensity = info["intensity"]
+        relclass = info["relclass"]
+        const = "$some_" + _norm_for_const(attr) + "_" + _norm_for_const(typ)
+        # isa fact: the witness is a TYPE
+        result.append({"@name": name, "@sourcetype": "populate",
+                       "@logic": ["isa", typ, const]})
+        # property fact: the witness has the attribute (3-arg has_property
+        # for degenerate degree, 5-arg has_degree_property otherwise; Ctxt is
+        # injected downstream by lc_ctxt for context-bearing predicates).
+        if pred == "has degree property" and (intensity != "none" or relclass != "none"):
+          result.append({"@name": name, "@sourcetype": "populate",
+                         "@logic": [pred, attr, const, intensity, relclass]})
+        else:
+          # Degenerate has_degree_property (none/none) reduces to has_property,
+          # matching the lc_rewrites canonical form used downstream.
+          result.append({"@name": name, "@sourcetype": "populate",
+                         "@logic": ["has property", attr, const]})
 
   return result
 

@@ -1183,6 +1183,18 @@ use it.
 Population facts are tagged with `"@sourcetype": "populate"` internally (stripped before the
 prover sees them) so that `_coerce_relclass` can treat them differently from question clauses.
 
+**Compound witnesses.** When a rule's antecedent is a conjunction binding the same variable
+to multiple atoms, `_scan_compound_antecedent` records a *compound witness* and the population
+emits an intersection entity satisfying ALL the conjuncts simultaneously. Two flavors today:
+
+- **Spatial**: `[isa, TYPE, X] ∧ [is_rel2/has_degree_rel2, prep, X, ground_target]` →
+  `$some_<type>_<prep>_<location>` with both atoms.
+- **Adjective**: `[isa, TYPE, X] ∧ [has_property, ATTR, X]` (or `has_degree_property` with
+  intensity/relclass) → `$some_<attr>_<type>` with both atoms. Without this, defeasible
+  rules of the form "ADJ TYPEs are not P" have no concrete witness for the prover to apply
+  them to (case 74: "Red cars are not nice" was being closed via the more general
+  "Cars are nice" rule alone, returning "Probably true" instead of the expected False).
+
 ### 7.7 Stage-2 rewrites and modifications
 
 The pipeline applies several transformations to the raw Stage-2 LLM output before and after
