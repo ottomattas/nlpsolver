@@ -52,10 +52,22 @@ Format: `CANONICAL_ID,word1,score1,word2,score2,...`
 
 - `ant_a.txt` -- 1483 adjective antonym entries
 - `ant_n.txt` -- 375 noun antonym entries
-- `ant_v.txt` -- 295 verb antonym entries
+- `ant_v.txt` -- 295 verb antonym entries (NOT loaded by `build_antonyms` —
+  see below)
 
-`build_antonyms` in `build_solver_data.py` applies two symmetric guards to
-avoid chain-contamination with `CANONICALS`:
+`build_antonyms` in `build_solver_data.py` reads only `ant_a.txt` and
+`ant_n.txt`. Verb antonyms (`ant_v.txt`) are intentionally excluded because
+most pairs are perspective inversions (give/take, buy/sell), process
+complementarities (start/stop, come/go), or weak pairs where polarity-flip
+is semantically wrong. Several verbs also collide with axiom-vocab predicates
+in `axioms_std.js` — folding `give → ¬take` strips the literal `give` token
+and disables the give→have transfer axiom (case 171). The 295 entries in
+`ant_v.txt` are kept on disk for reference and are scheduled for re-routing
+through a defeasible attitude-mutex injector for the small attitude subset
+(like/dislike, love/hate, etc., ~28 pairs).
+
+`build_antonyms` applies two symmetric guards to avoid chain-contamination
+with `CANONICALS`:
 1. `word in CANONICALS` — skip; Pass 2 canonical sub would shadow the
    antonym fold.
 2. `canonical in CANONICALS` — don't rewrite; Pass 2 would chain-substitute

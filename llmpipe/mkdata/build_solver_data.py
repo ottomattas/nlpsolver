@@ -242,7 +242,16 @@ def build_antonyms(canonicals):
     chain_rejected = []
     skipped_circular = 0
     skipped_self = 0
-    for pos, fname in [("a", "ant_a.txt"), ("n", "ant_n.txt"), ("v", "ant_v.txt")]:
+    # Verb antonym rewrites are intentionally excluded.
+    # Most verb antonym pairs from WordNet (give/take, buy/sell, come/go, ...)
+    # are perspective inversions or process complementarities, not logical
+    # opposites. Polarity-flip is wrong for them, and key verbs collide with
+    # axiom-vocab predicates (e.g. give/take broke the give->have bridge in
+    # axioms_std.js:329-336, surfacing as case 171). The few verb pairs where
+    # polarity-flip is defensible (like/dislike, love/hate, etc.) will be
+    # re-introduced via a separate defeasible attitude-mutex injector
+    # (Phase 2) gated on both sides being present.
+    for pos, fname in [("a", "ant_a.txt"), ("n", "ant_n.txt")]:
         entries = read_antonym_file(os.path.join(SCRIPT_DIR, fname))
         for canonical, words in entries:
             for word, score in words:
