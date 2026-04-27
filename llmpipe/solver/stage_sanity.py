@@ -423,6 +423,95 @@ def _check_stage2_arities(logic):
   return issues
 
 
+# ======== Stage-2 missing-question check ========
+#
+# Detects the case where a Stage-1 unit was identified as a query (either
+# its parent package's raw text contains a "?" or the unit's `type` field
+# is "query"), but the corresponding Stage-2 @id package contains no
+# `question` / `ask` wrapper.  This catches LLM truncations where the
+# query unit was silently dropped, as well as cases where the LLM emitted
+# a `holds` package for what should have been a question.
+
+def _contains_question_or_ask(node):
+  """Return True if any node in the tree has op `question` or `ask`."""
+  if not isinstance(node, list) or not node:
+    return False
+  if isinstance(node[0], str) and node[0] in ("question", "ask"):
+    return True
+  for child in node[1:]:
+    if isinstance(child, list) and _contains_question_or_ask(child):
+      return True
+  return False
+
+
+def _collect_question_ids_from_logic(node, found):
+  """Walk the Stage-2 tree.  For every `@id` encountered, record its s_id
+  in `found` if the body sub-tree contains a `question` or `ask` wrapper.
+  @ids are siblings under the top-level `and`, never nested, so we don't
+  recurse past them once visited."""
+  if not isinstance(node, list) or not node:
+    return
+  if isinstance(node[0], str):
+    op = node[0]
+    if op == "@id" and len(node) >= 3 and isinstance(node[1], str):
+      sid = node[1]
+      body = node[2]
+      if isinstance(body, list) and _contains_question_or_ask(body):
+        found.add(sid)
+      return
+  for child in node[1:]:
+    if isinstance(child, list):
+      _collect_question_ids_from_logic(child, found)
+
+
+def _check_stage2_missing_question(logic, s1_json):
+  """Detect Stage-1 query units that have no corresponding question/ask
+  package in Stage-2.  Triggered when either unit.type == "query" or the
+  parent package's raw text contains "?"."""
+  if not isinstance(logic, list) or not isinstance(s1_json, list):
+    return []
+  expected = []      # list of (unit_id, raw)
+  for pkg in s1_json:
+    if not isinstance(pkg, dict):
+      continue
+    raw = pkg.get("raw", "") if isinstance(pkg.get("raw", ""), str) else ""
+    raw_has_q = "?" in raw
+    for unit in pkg.get("units", []) or []:
+      if not isinstance(unit, dict):
+        continue
+      uid = unit.get("unit_id")
+      if not isinstance(uid, str):
+        continue
+      utype = unit.get("type")
+      if utype == "query" or raw_has_q:
+        expected.append((uid, raw))
+  if not expected:
+    return []
+
+  found = set()
+  _collect_question_ids_from_logic(logic, found)
+
+  issues = []
+  for uid, raw in expected:
+    if uid in found:
+      continue
+    issues.append(Issue(
+      kind="missing_question",
+      location="@id:" + uid,
+      description=("Source sentence \"" + raw + "\" is a question (Stage-1 "
+                   "marked unit " + uid + " as a query and/or the raw text "
+                   "contains '?'), but the Stage-2 output has no "
+                   "['question', FORMULA] or ['ask', VAR, FORMULA] wrapper "
+                   "for unit " + uid + ".  Every query unit must be wrapped "
+                   "as a 'question' (yes/no questions) or 'ask' (WH "
+                   "questions) package — the @id for unit " + uid + " is "
+                   "missing or wraps the wrong package shape.  Please add "
+                   "the appropriate query package."),
+      evidence=raw,
+    ))
+  return issues
+
+
 # ======== Stage-2 event-shape check ========
 
 # Event-role predicates (other than has_type).  If any of these mentions
@@ -546,6 +635,7 @@ def check_stage2(logic, s1_json=None):
   issues.extend(_check_stage2_dropped_specific_noun(logic, s1_json))
   issues.extend(_check_stage2_arities(logic))
   issues.extend(_check_stage2_event_shapes(logic))
+  issues.extend(_check_stage2_missing_question(logic, s1_json))
   return issues
 
 
