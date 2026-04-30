@@ -117,6 +117,7 @@ from lc_rewrites import (
   strip_spurious_can as _strip_spurious_can,
   negate_consequent as _negate_consequent,
   inject_query_specific_noun_isas as _inject_query_specific_noun_isas,
+  lower_normally_through_forall as _lower_normally_through_forall,
 )
 
 
@@ -533,6 +534,15 @@ def rawlogic_convert(logic, s1_json=None):
   # a closing bracket to be dropped, nesting one @id inside another after
   # auto-fix.  @id blocks are never legitimately nested.
   logic = _hoist_nested_ids(logic)
+
+  # Lower outer `normally` into the consequent of forall...implies bodies:
+  # ["normally", ["forall", X, ["implies", A, B]]] →
+  # ["forall", X, ["implies", A, ["normally", B]]].
+  # Some LLMs (gemini) emit the outer-normally form which clausifies into a
+  # Skolem witness for "the rule has an exception" — useless for concrete
+  # entities. The inner-normally form clausifies into the per-entity
+  # defeasible rule (with $block guard) other LLMs already produce.
+  logic = _lower_normally_through_forall(logic)
 
   # Inject degree presuppositions before any other processing:
   # "not very X" presupposes "X", so expand ["not",["has degree property",P,E,"high",C]]

@@ -264,6 +264,43 @@ def strip_tense_has_time(tree):
           for child in tree]
 
 
+# ======== normally-through-forall lowering ========
+
+def lower_normally_through_forall(tree):
+  """Push `normally` from outside a `forall...implies` down to the consequent.
+
+  Some LLMs (gemini) emit
+    ["normally", ["forall", X, ["implies", A, B]]]
+  ("normally the rule holds"), while others (claude) emit
+    ["forall", X, ["implies", A, ["normally", B]]]
+  ("for each X, normally if A then B").
+
+  The two readings are intended to be equivalent, but only the latter
+  clausifies into a useful per-entity defeasible rule (with a $block
+  guard).  The outer-normally form clausifies into a Skolem witness for
+  "the rule has an exception" which doesn't propagate to concrete
+  entities.
+
+  Rewrite the outer-normally form into the inner-normally form by walking
+  the tree bottom-up.  Cases 225, 232 rely on this for gemini.
+  """
+  if not isinstance(tree, list) or not tree:
+    return tree
+  tree = [lower_normally_through_forall(c) if isinstance(c, list) else c
+          for c in tree]
+  if (len(tree) == 2 and tree[0] == "normally"
+      and isinstance(tree[1], list) and len(tree[1]) >= 3
+      and tree[1][0] == "forall"
+      and isinstance(tree[1][2], list) and len(tree[1][2]) >= 3
+      and tree[1][2][0] == "implies"):
+    var = tree[1][1]
+    impl = tree[1][2]
+    antecedent = impl[1]
+    consequent = impl[2]
+    return ["forall", var, ["implies", antecedent, ["normally", consequent]]]
+  return tree
+
+
 # ======== degree presupposition injection ========
 
 def inject_degree_presuppositions(tree):

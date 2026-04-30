@@ -821,12 +821,8 @@ def _format_answers(answers, askvars=None):
         display = val[:askvars] if askvars is not None else val
         names = [ans_atom_name(a) for a in display]
         s = names[0] if len(names) == 1 else "(" + " and ".join(names) + ")"
-      if conf < 0.99:
-        s += " (confidence " + _fmt_conf(conf) + ")"
     else:
       s = str(val)
-      if conf < 0.99:
-        s += " (confidence " + _fmt_conf(conf) + ")"
     parts.append(s)
 
   if not parts:
