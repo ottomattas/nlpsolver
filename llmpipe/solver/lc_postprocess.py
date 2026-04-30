@@ -188,7 +188,13 @@ def coerce_relclass(result):
     if not isinstance(obj, dict):
       continue
     src = obj.get("@sourcetype")
-    if src in ("question", "populate"):
+    # Skip question / question_bridge / populate entries: question_bridge
+    # clauses are mechanically derived from the question's stative literals
+    # (lc_ctxt.build_question_tense_bridges), so their relclass values are
+    # copies of the question's. Letting them populate prop_relclasses would
+    # circularly tell coerce_relclass that the question's own relclass is
+    # evidence-supported and suppress coercion.
+    if src in ("question", "question_bridge", "populate"):
       continue
     if "@logic" not in obj:
       continue
@@ -776,14 +782,31 @@ def _convert_to_canonical(number, unit):
 def _canonicalize_measure(term):
   """Convert ["$measure", NUM, UNIT] → ["$list", CANON_NUM, "#:CANON_UNIT"].
 
-  If the unit is unknown, returns ["$list", NUM, "#:UNIT"] (preserves number
-  as integer, prefixes unit with #: for UNA).
+  If NUM is a numeric literal, the value is converted to canonical units
+  (e.g. (80, kilometer) → (80000, meter)).
+
+  If NUM is a variable (e.g. "X" pre-clausification or "?:X" after), the
+  $measure wrapper is dropped entirely and the bare variable is returned.
+  Rationale: in question-side encodings like
+    ["=", $measure_of(...), $measure("?:X", "kilometer")]
+  some LLMs (claude/deepseek) put the variable inside $measure's number
+  slot. Rewriting to ["$list", "?:X", "#:meter"] would unify against an
+  assertion's $list(80000, "#:meter") with ?:X bound to just the number
+  80000 — losing the unit when rendered. Returning bare "?:X" instead
+  yields the same shape gemini emits ("=", $measure_of(...), "X"), so the
+  variable binds to the assertion's full $list term and the renderer can
+  show "80000 meters" → "80 kilometers" via _normalize_measure.
+
+  Unknown units in the literal branch fall back to ["$list", NUM, "#:UNIT"]
+  — preserves the number, prefixes the unit with #: for UNA.
   """
   if (not isinstance(term, list) or len(term) != 3
       or term[0] != "$measure"):
     return term
   number = term[1]
   unit = term[2]
+  if isinstance(number, str):
+    return number
   if not isinstance(number, (int, float)):
     return term
   converted = _convert_to_canonical(number, unit)

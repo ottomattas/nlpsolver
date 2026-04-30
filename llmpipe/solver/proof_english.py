@@ -369,6 +369,40 @@ def _is_var_raw(args, i):
   """True if args[i] is a raw variable string (starts with '?:')."""
   return (len(args) > i and isinstance(args[i], str) and args[i].startswith("?:"))
 
+# Measure-unit promotion table for rendering. When a $list value is exactly
+# divisible by the divisor (and has no fractional part), promote to the next
+# unit. Cascades naturally: 80000 mm → 80 m → 0.08 km not triggered (80 m %
+# 1000 ≠ 0). 1000000 mm → 1000 m → 1 km (cascade fires).
+_MEASURE_PROMOTE = {
+  "meter":      ("kilometer", 1000),
+  "millimeter": ("meter",     1000),
+  "centimeter": ("meter",      100),
+  "gram":       ("kilogram",  1000),
+  "milligram":  ("gram",      1000),
+}
+
+
+def _normalize_measure(val, unit_name):
+  """Promote (val, unit_name) to a larger unit when val is integer-valued
+  and exactly divisible by the unit's promotion factor.
+
+  Cascades while a promotion still applies. Returns (val, unit_name)
+  unchanged when no promotion is possible (e.g. 100 meters stays "100
+  meters" because 100 % 1000 ≠ 0).
+  """
+  if isinstance(val, float) and val.is_integer():
+    val = int(val)
+  if not isinstance(val, int):
+    return val, unit_name
+  while unit_name in _MEASURE_PROMOTE:
+    bigger, divisor = _MEASURE_PROMOTE[unit_name]
+    if val % divisor != 0:
+      break
+    val //= divisor
+    unit_name = bigger
+  return val, unit_name
+
+
 def render_term_english(term, proof_mode=True):
   """Render a complex list term (nested function/predicate) as English.
 
@@ -415,6 +449,7 @@ def render_term_english(term, proof_mode=True):
     unit = term[2]
     if isinstance(unit, str) and unit.startswith("#:"):
       unit_name = unit[2:]  # strip #: prefix
+      val, unit_name = _normalize_measure(val, unit_name)
       return str(val) + " " + unit_name + "s"
     return str(val) + " " + str(unit)
 

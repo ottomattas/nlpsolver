@@ -68,6 +68,17 @@ def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=Non
   if not answers:
     return "Unknown."
 
+  # Simplify $get_world($ctxt(_, W, _, _)) → W in $ans atoms before any
+  # filtering. The $get_world destructor axiom (axioms_std.js §13.A) is
+  # bidirectional: paramodulation can wrap any term as $get_world of a
+  # synthesized $ctxt, producing redundant alternative shapes of the same
+  # answer. Reducing eagerly collapses those shapes so dedup and tier
+  # filtering treat them as one.
+  for ans in answers:
+    val = ans.get("answer")
+    if isinstance(val, list):
+      ans["answer"] = [_simplify_get_world(atom) for atom in val]
+
   # Sort: highest confidence first, shorter proofs preferred
   answers = sorted(answers, key=_answer_goodness, reverse=True)
 
@@ -838,6 +849,25 @@ def _answer_goodness(ans):
   return conf * 10_000_000 - length - blockers
 
 
+def _simplify_get_world(atom):
+  """Rewrite ["$ans", ["$get_world", ["$ctxt", _, W, _, _]]] -> ["$ans", W].
+
+  Applies the $get_world destructor axiom (axioms_std.js §13.A) eagerly so
+  paramodulation-produced wrapping doesn't survive into tier filtering or
+  rendering. Atoms whose argument is not a $get_world wrapper, or whose
+  $get_world wraps something other than a $ctxt term of length >= 3, are
+  returned unchanged.
+  """
+  if not isinstance(atom, list) or len(atom) < 2 or atom[0] != "$ans":
+    return atom
+  arg = atom[1]
+  if (isinstance(arg, list) and len(arg) >= 2 and arg[0] == "$get_world"):
+    ctxt = arg[1]
+    if (isinstance(ctxt, list) and len(ctxt) >= 3 and ctxt[0] == "$ctxt"):
+      return [atom[0], ctxt[2]]
+  return atom
+
+
 def _ans_object_tier(val, class_names=frozenset()):
   """Return the object-type tier for an answer value.
 
@@ -864,7 +894,23 @@ def _ans_object_tier(val, class_names=frozenset()):
       continue
     s = atom[1]
     if isinstance(s, list):
-      tier = 1 if is_skolem_fn(s) else 0
+      if is_skolem_fn(s):
+        tier = 1
+      elif s and s[0] == "$get_world":
+        # Residual $get_world wrapper (unsimplified — typically a free-var
+        # world slot). Demote so a cleaner sibling answer wins.
+        tier = 1
+      elif s and s[0] == "$measure_of":
+        # Abstract reference ("the price of X") — semantically equivalent
+        # to its measurement value but not the value itself. Demote so a
+        # concrete $list/$datetime/number sibling wins.
+        tier = 1
+      else:
+        # $list (canonical measurement), $datetime, $theof1, and other
+        # complex terms remain at the concrete tier. $list and $datetime
+        # carry the actual value; $theof1 is the only meaningful binding
+        # in cases like "Mary's sister" where no concrete entity exists.
+        tier = 0
     elif isinstance(s, str):
       if s.startswith("$some_"):
         tier = 2

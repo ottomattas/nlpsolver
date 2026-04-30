@@ -614,14 +614,113 @@ def _safe_json(obj):
     return str(obj)
 
 
+# ======== Stage-1 missing-wh-placeholder check ========
+#
+# Detects WH-question units whose Stage-1 entities list is missing a
+# wh_placeholder entity.  The Stage-1 instructions require WH queries to
+# include {id: "entity", type: "generic", wh_placeholder: true} and to
+# transform the unit's text per the question-word rules (What → "Which
+# entity", etc.).  Some LLMs (notably gpt) skip the entity injection and
+# leave the text unchanged, which then makes Stage-2 fall back to a yes/no
+# encoding (case 48 with gpt: "What is the length of the red car?" became
+# a yes/no with a hallucinated 80).
+
+# Wh-words that mark the start of a wh-question.  Detection is
+# case-insensitive and applied to the leading word of the raw / text
+# field.  "How" + "many" is treated specially: "How many ..." should keep
+# numeric wording per the Stage-1 instructions, but still needs a
+# placeholder to give Stage-2 a binding slot.
+_WH_LEAD_WORDS = frozenset({
+  "what", "which", "who", "whom", "whose",
+  "where", "when", "why", "how",
+})
+
+
+def _starts_with_wh(text):
+  """Return True if the leading word of `text` is a wh-question word."""
+  if not isinstance(text, str):
+    return False
+  s = text.strip()
+  if not s:
+    return False
+  # Take the first word, strip punctuation/quotes.
+  for sep in (" ", "\t", "\n"):
+    idx = s.find(sep)
+    if idx > 0:
+      s = s[:idx]
+      break
+  s = s.strip(".,!?;:'\"()[]{}")
+  return s.lower() in _WH_LEAD_WORDS
+
+
+def _has_wh_placeholder(unit):
+  """Return True if any entity in the unit has wh_placeholder=True."""
+  if not isinstance(unit, dict):
+    return False
+  for ent in unit.get("entities", []) or []:
+    if isinstance(ent, dict) and ent.get("wh_placeholder"):
+      return True
+  return False
+
+
+def _check_stage1_missing_wh_placeholder(s1_json):
+  """Detect Stage-1 query units with a wh-leading text but no
+  wh_placeholder entity.  Triggers a corrective retry asking the LLM to
+  add the placeholder and apply the question-word transformation to the
+  unit's `text` field."""
+  if not isinstance(s1_json, list):
+    return []
+  issues = []
+  for pkg in s1_json:
+    if not isinstance(pkg, dict):
+      continue
+    raw = pkg.get("raw", "")
+    raw_text = raw if isinstance(raw, str) else ""
+    for unit in pkg.get("units", []) or []:
+      if not isinstance(unit, dict):
+        continue
+      if unit.get("type") != "query":
+        continue
+      if _has_wh_placeholder(unit):
+        continue
+      utext = unit.get("text", "") if isinstance(unit.get("text", ""), str) else ""
+      # A unit is wh if either its own text or the parent raw begins with
+      # a wh-word.  Most reliable signal is the unit's text after Stage-1
+      # rewrites; raw is the user's original wording.
+      if not (_starts_with_wh(utext) or _starts_with_wh(raw_text)):
+        continue
+      uid = unit.get("unit_id", "?")
+      issues.append(Issue(
+        kind="missing_wh_placeholder",
+        location="@id:" + str(uid),
+        description=("Unit " + str(uid) + " has type='query' and a "
+                     "wh-question text (\"" + (utext or raw_text) +
+                     "\"), but its entities list contains no "
+                     "wh_placeholder entry. Wh-questions MUST include a "
+                     "placeholder entity such as "
+                     "{\"id\":\"entity\",\"type\":\"generic\","
+                     "\"wh_placeholder\":true} (or "
+                     "{\"id\":<noun>,\"type\":\"generic\","
+                     "\"wh_placeholder\":true} when the question names a "
+                     "category, e.g. \"Which person\" → id \"person\"). "
+                     "Also transform the unit's `text` field per the "
+                     "Question Word Transformation rules: What/Where → "
+                     "\"Which entity ...\", Who/Whom → \"Which entity "
+                     "...\", When → keep \"When\", How many → keep "
+                     "numeric wording."),
+        evidence=_safe_json(unit),
+      ))
+  return issues
+
+
 # ======== public API ========
 
 def check_stage1(s1_json):
-  """Run all Stage-1 sanity checks.  Currently empty: no Stage-1 issue
-  patterns have been identified yet.  Returns [] always."""
-  # Placeholder — the framework is in place so Stage-1 checks can be
-  # added later without touching llmparse.py.
-  return []
+  """Run all registered Stage-1 sanity checks and return the combined
+  issue list."""
+  issues = []
+  issues.extend(_check_stage1_missing_wh_placeholder(s1_json))
+  return issues
 
 
 def check_stage2(logic, s1_json=None):

@@ -442,6 +442,19 @@ def fix_json(s):
       applied.append('fixed ]\"][ glitch')
   if _ok(s): return (s, applied or None)
 
+  # 7a. Quote bare Stage-2-style variable identifiers in JSON array context.
+  # Some LLMs (notably gpt) emit ["ask","X",[..., ["=", ..., X]]] where the
+  # interior X is left as a bare identifier instead of "X".  The bare token
+  # only appears in array element positions (between [/, on the left and
+  # ,/] on the right), and is a single uppercase letter optionally followed
+  # by digits (Stage-2 variable convention: X, Y, E, S1, ...).  Quoting it
+  # leaves quoted strings unchanged because the lookbehind requires [ or ,.
+  s2 = re.sub(r'(?<=[\[,])(\s*)([A-Z][0-9]*)(\s*)(?=[,\]])', r'\1"\2"\3', s)
+  if s2 != s:
+    s = s2
+    applied.append("quoted bare variable identifiers")
+  if _ok(s): return (s, applied or None)
+
   # 8. Remove junk after the top-level closing bracket (fix_internal)
   s2 = _fix_internal(s)
   if s2 != s:
