@@ -1438,6 +1438,21 @@ _HAS_DEGREE_REL2_PREP_GROUPS = frozenset({
     "PROXIMITY",
 })
 
+# Groups whose mutual-exclusion axioms are now emitted statically in
+# axioms_std.js §7e. These first-class preposition predicates appear in the
+# standard ontology (subsumption rules in §7c/7d), so the exclusions hold
+# universally and dynamic injection would also misfire (both sides are in
+# axiom_vocab on every problem). Skipped at the discovery stage below.
+_STATIC_PREP_EXCL_GROUPS = frozenset({
+    "SPATIAL_VERTICAL",
+    "SPATIAL_VERTICAL_OVER_UNDER",
+    "SPATIAL_SAGITTAL",
+    "SPATIAL_CONTAINMENT",
+    "SPATIAL_LATERAL",
+    "TEMPORAL_ORDER",
+    "PROXIMITY",
+})
+
 
 def inject_exclusion_axioms(result, axiom_vocab=frozenset()):
   """Scan clause list for words in exclusion groups; emit pairwise mutual-
@@ -1459,6 +1474,8 @@ def inject_exclusion_axioms(result, axiom_vocab=frozenset()):
     if lc_word not in EXCLUSION_INDEX:
       continue
     for gid in EXCLUSION_INDEX[lc_word]:
+      if gid in _STATIC_PREP_EXCL_GROUPS:
+        continue
       if gid not in group_members:
         group_members[gid] = set()
       # Use original case from input if available, else lowercase.

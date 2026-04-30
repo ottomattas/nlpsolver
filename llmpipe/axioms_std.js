@@ -734,8 +734,7 @@ Does John 1 have two cars?
   // Unidirectional specific → general implications for near-synonymous
   // spatial prepositions. "X is under Y" implies "X is below Y", but not
   // vice versa ("below" is more general — no contact implication).
-  // Mutual-exclusion between opposites (behind/in_front_of etc.) is
-  // handled dynamically by inject_exclusion_axioms from excl_a.txt.
+  // Mutual-exclusion between opposites lives below (§7e) as static axioms.
   [["-is rel2", "underneath", "?:X", "?:Y", "?:C"], ["is rel2", "below", "?:X", "?:Y", "?:C"]],
   [["-is rel2", "beneath",    "?:X", "?:Y", "?:C"], ["is rel2", "below", "?:X", "?:Y", "?:C"]],
   [["-is rel2", "under",      "?:X", "?:Y", "?:C"], ["is rel2", "below", "?:X", "?:Y", "?:C"]],
@@ -746,6 +745,31 @@ Does John 1 have two cars?
   [["-is rel2", "prior_to",   "?:X", "?:Y", "?:C"], ["is rel2", "before", "?:X", "?:Y", "?:C"]],
   [["-is rel2", "following",  "?:X", "?:Y", "?:C"], ["is rel2", "after",  "?:X", "?:Y", "?:C"]],
   [["-is rel2", "preceding",  "?:X", "?:Y", "?:C"], ["is rel2", "before", "?:X", "?:Y", "?:C"]],
+
+  // == 7e. PREPOSITION MUTUAL EXCLUSION ==
+  // Permanent mutual-exclusion between opposite preposition pairs. These
+  // are first-class predicates in the standard ontology (they appear as
+  // subsumption targets in §7c/7d), so the exclusions hold universally
+  // and are emitted statically here rather than by inject_exclusion_axioms.
+  // Spatial:
+  [["-is rel2", "above",       "?:X", "?:Y", "?:C"], ["-is rel2", "below",       "?:X", "?:Y", "?:C"]],
+  [["-is rel2", "over",        "?:X", "?:Y", "?:C"], ["-is rel2", "under",       "?:X", "?:Y", "?:C"]],
+  [["-is rel2", "behind",      "?:X", "?:Y", "?:C"], ["-is rel2", "in_front_of", "?:X", "?:Y", "?:C"]],
+  [["-is rel2", "inside",      "?:X", "?:Y", "?:C"], ["-is rel2", "outside",     "?:X", "?:Y", "?:C"]],
+  [["-is rel2", "left_of",     "?:X", "?:Y", "?:C"], ["-is rel2", "right_of",    "?:X", "?:Y", "?:C"]],
+  // Temporal:
+  [["-is rel2", "before",      "?:X", "?:Y", "?:C"], ["-is rel2", "after",       "?:X", "?:Y", "?:C"]],
+  // Proximity (gradable: positive side any-degree, antonym side "none"
+  // intensity, shared RELCLASS — the high→none / low→none intensity
+  // bridges in §9 propagate the negation across all intensities).
+  [
+    ["-has degree rel2", "near",     "?:X", "?:Y", "?:D",  "?:RC", "?:C"],
+    ["-has degree rel2", "far_from", "?:X", "?:Y", "none", "?:RC", "?:C"]
+  ],
+  [
+    ["-has degree rel2", "far_from", "?:X", "?:Y", "?:D",  "?:RC", "?:C"],
+    ["-has degree rel2", "near",     "?:X", "?:Y", "none", "?:RC", "?:C"]
+  ],
 
   // == 8. MEASUREMENTS & ATTRIBUTES ==
   // Value Holders [cite: 306, 307]
