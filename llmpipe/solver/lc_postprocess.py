@@ -25,6 +25,7 @@
 import os as _os
 
 from lc_ctxt import fresh_fv as _fresh_fv
+from lc_clausify import is_world_constant as _is_world_constant
 from lc_questions import scan_item_formula, build_population_facts, is_ground_term
 import globals as _g
 _g_options = _g.options
@@ -72,8 +73,14 @@ def populate_clauses(items):
       scan_item_formula(formula, name, True, classes, has_props, deg_props,
                         compound_witnesses=compound_witnesses)
 
+  # Track concrete intersections (entity X with both isa(TYPE,X) and adj atom)
+  # so we can suppress redundant adjective-intersection witnesses.
+  from lc_questions import collect_concrete_intersections
+  concrete_intersections = collect_concrete_intersections(items)
+
   return build_population_facts(classes, has_props, deg_props,
-                                compound_witnesses=compound_witnesses)
+                                compound_witnesses=compound_witnesses,
+                                concrete_intersections=concrete_intersections)
 
 
 # ======== compound type rules ========
@@ -1538,6 +1545,46 @@ def inject_exclusion_axioms(result, axiom_vocab=frozenset()):
           axioms.append({"@name": "frm_excl",
                           "@logic": clause,
                           "@confidence": score})
+  return axioms
+
+
+def inject_world_geometry(result):
+  """Emit a minimal `next` chain spanning the concrete worlds (W0, W1, ...)
+  actually present in the clause list.
+
+  Replaces the static W0..W12 chain that used to live in axioms_std.js §11.
+  When 0 or 1 distinct worlds are present, emits nothing (transitivity has
+  nothing to chain). Otherwise fills any gaps in [min_idx, max_idx] so the
+  `before` transitivity closure still derives `before(Wi,Wj)` for all
+  observed i<j.
+  """
+  worlds = set()
+  def _scan(tree):
+    if isinstance(tree, str):
+      if _is_world_constant(tree):
+        worlds.add(tree)
+      return
+    if isinstance(tree, list):
+      for el in tree:
+        _scan(el)
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    for key in ("@logic", "@question"):
+      v = obj.get(key)
+      if v is not None:
+        _scan(v)
+
+  if len(worlds) <= 1:
+    return []
+
+  indices = sorted(int(w[1:]) for w in worlds)
+  lo, hi = indices[0], indices[-1]
+  axioms = []
+  for i in range(lo, hi):
+    axioms.append({"@name": "frm_world_geom",
+                   "@sourcetype": "world_geometry",
+                   "@logic": ["next", "W" + str(i), "W" + str(i + 1)]})
   return axioms
 
 

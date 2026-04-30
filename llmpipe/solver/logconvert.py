@@ -89,6 +89,7 @@ from lc_postprocess import (
   strip_degree_predicates as _strip_degree_predicates,
   inject_soft_synonyms as _inject_soft_synonyms,
   inject_exclusion_axioms as _inject_exclusion_axioms,
+  inject_world_geometry as _inject_world_geometry,
 )
 
 # $ctxt injection and time handling (in lc_ctxt.py).
@@ -737,6 +738,10 @@ def rawlogic_convert(logic, s1_json=None):
   # their non-gradable equivalents so the prover sees simpler atoms.
   if _g_options.get("noproptypes_flag", False):
     _strip_degree_predicates(result)
+
+  # Emit a minimal `next` chain over the concrete worlds actually present.
+  # Replaces the static W0..W12 chain that used to live in axioms_std.js §11.
+  result.extend(_inject_world_geometry(result))
 
   # @sourcetype is kept in the clause list so that downstream display code
   # (format_sentences_to_clauses) can distinguish population facts from

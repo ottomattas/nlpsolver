@@ -760,20 +760,13 @@ Does John 1 have two cars?
   
   // == 11. WORLD GRAPH GEOMETRY ==
 
-// Axiom 1: Direct succession implies "before"
-
-[["next", "W0", "W1"]],
-[["next", "W1", "W2"]],
-[["next", "W2", "W3"]],
-[["next", "W3", "W4"]],
-[["next", "W4", "W5"]],
-[["next", "W5", "W6"]],
-[["next", "W6", "W7"]],
-[["next", "W7", "W8"]],
-[["next", "W8", "W9"]],
-[["next", "W9", "W10"]],
-[["next", "W10", "W11"]],
-[["next", "W11", "W12"]],
+// Axiom 1: Direct succession implies "before".
+//
+// The concrete W0..Wn `next` chain that used to live here is now generated
+// dynamically by lc_postprocess.inject_world_geometry, based on which world
+// constants (W0, W1, ...) actually appear in the per-sentence clauses. Only
+// the minimal chain spanning the observed worlds is emitted, so the `before`
+// transitivity closure stays small when a problem touches only a few worlds.
 
 [
   ["-next", "?:W_prev", "?:W_curr"],
