@@ -719,6 +719,75 @@ def _scan_compound_antecedent(ante, name, compound_witnesses):
           }
 
 
+def collect_concrete_intersections(items):
+  """Walk raw stage-2 items; return a set of (TYPE, PRED, ATTR, INT, RC) keys
+  that are already satisfied by a concrete ground entity in the input.
+
+  A key is "satisfied" when some ground entity X has BOTH a positive
+  isa(TYPE, X) atom and a positive PRED(ATTR, X, ...) atom (where PRED is
+  "has property" or "has degree property", with matching INT/RC if applicable).
+
+  Used by build_population_facts to suppress redundant adjective intersection
+  witnesses when a real entity already covers the conjunction (case cars3:
+  "John is a red car" makes $some_red_car redundant noise).
+  """
+  isa_entities = {}     # TYPE -> set of ground entities
+  has_prop_entities = {}  # ATTR -> set of ground entities
+  deg_prop_entities = {}  # (ATTR, INT, RC) -> set of ground entities
+
+  def walk(frm):
+    if not isinstance(frm, list) or not frm:
+      return
+    first = frm[0]
+    # Disjunction-of-clauses or list of clauses (clausified shape)
+    if isinstance(first, list):
+      for atom in frm:
+        walk(atom)
+      return
+    if not isinstance(first, str):
+      return
+    # Connectives and wrappers — recurse into children
+    if first in ("@id", "and", "or", "implies", "not", "forall", "exists",
+                 "ask", "normally", "question", "holds", "@time"):
+      for child in frm[1:]:
+        if isinstance(child, list):
+          walk(child)
+      return
+    # Atoms — only collect positive polarity
+    pred = first
+    if pred.startswith("-"):
+      return
+    if pred == "isa" and len(frm) >= 3:
+      typ, ent = frm[1], frm[2]
+      if isinstance(typ, str) and is_ground_term(ent):
+        isa_entities.setdefault(typ, set()).add(ent)
+    elif pred == "has property" and len(frm) >= 3:
+      attr, ent = frm[1], frm[2]
+      if isinstance(attr, str) and is_ground_term(ent):
+        has_prop_entities.setdefault(attr, set()).add(ent)
+    elif pred == "has degree property" and len(frm) >= 5:
+      attr, ent, intensity, rc = frm[1], frm[2], frm[3], frm[4]
+      if (isinstance(attr, str) and is_ground_term(ent)
+          and isinstance(intensity, str) and isinstance(rc, str)):
+        deg_prop_entities.setdefault((attr, intensity, rc), set()).add(ent)
+
+  for item in items:
+    walk(item)
+
+  satisfied = set()
+  # has_property intersections
+  for typ, type_ents in isa_entities.items():
+    for attr, attr_ents in has_prop_entities.items():
+      if type_ents & attr_ents:
+        satisfied.add((typ, "has property", attr, None, None))
+  # has_degree_property intersections
+  for typ, type_ents in isa_entities.items():
+    for (attr, intensity, rc), attr_ents in deg_prop_entities.items():
+      if type_ents & attr_ents:
+        satisfied.add((typ, "has degree property", attr, intensity, rc))
+  return satisfied
+
+
 def _extract_location_name(target):
   """Extract a short name from a location entity for witness naming.
 
@@ -735,13 +804,21 @@ def _extract_location_name(target):
   return m.group(1) if m else target
 
 
-def build_population_facts(classes, has_props, deg_props, compound_witnesses=None):
+def build_population_facts(classes, has_props, deg_props,
+                           compound_witnesses=None,
+                           concrete_intersections=None):
   """Build the list of @logic population entries from collected scan data.
 
   For each key, emits a positive and/or negative synthetic clause, skipping
   whichever polarity is already covered by an existing ground constant.
   Every entry carries @sourcetype:"populate".
+
+  concrete_intersections: optional set of (TYPE, PRED, ATTR, INT, RC) keys
+  that are already satisfied by a real ground entity in the input. Adjective
+  intersection witnesses for these keys are suppressed as redundant.
   """
+  if concrete_intersections is None:
+    concrete_intersections = set()
   result = []
 
   for cls, info in classes.items():
@@ -766,14 +843,22 @@ def build_population_facts(classes, has_props, deg_props, compound_witnesses=Non
 
   for (prop, relclass), info in deg_props.items():
     name = info["name"]
-    cn   = _norm_for_const(prop) + "_" + _norm_for_const(relclass)
+    # Degenerate degree (relclass=="none") reduces to has_property semantically;
+    # name the witness $some_<prop> (no relclass suffix) and skip the companion
+    # isa, since "none" is a sentinel string, not a class.
+    is_degenerate = (relclass == "none")
+    if is_degenerate:
+      cn = _norm_for_const(prop)
+    else:
+      cn = _norm_for_const(prop) + "_" + _norm_for_const(relclass)
     if not info["has_pos"]:
       result.append({"@name": name, "@sourcetype": "populate",
                      "@logic": ["has degree property", prop, "$some_" + cn,
                                 "none", relclass]})
-      # Companion isa: $some_PROP_CLASS is by construction a member of CLASS.
-      result.append({"@name": name, "@sourcetype": "populate",
-                     "@logic": ["isa", relclass, "$some_" + cn]})
+      if not is_degenerate:
+        # Companion isa: $some_PROP_CLASS is by construction a member of CLASS.
+        result.append({"@name": name, "@sourcetype": "populate",
+                       "@logic": ["isa", relclass, "$some_" + cn]})
     if not info["has_neg"]:
       result.append({"@name": name, "@sourcetype": "populate",
                      "@logic": ["-has degree property", prop, "$some_not_" + cn,
@@ -807,6 +892,10 @@ def build_population_facts(classes, has_props, deg_props, compound_witnesses=Non
         attr = info["attr"]
         intensity = info["intensity"]
         relclass = info["relclass"]
+        # Skip if a real ground entity already satisfies both atoms.
+        intersect_key = (typ, pred, attr, intensity, relclass)
+        if intersect_key in concrete_intersections:
+          continue
         const = "$some_" + _norm_for_const(attr) + "_" + _norm_for_const(typ)
         # isa fact: the witness is a TYPE
         result.append({"@name": name, "@sourcetype": "populate",

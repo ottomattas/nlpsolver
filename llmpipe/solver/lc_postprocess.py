@@ -1438,11 +1438,13 @@ _HAS_DEGREE_REL2_PREP_GROUPS = frozenset({
     "PROXIMITY",
 })
 
-# Groups whose mutual-exclusion axioms are now emitted statically in
+# Groups whose mutual-exclusion axioms are emitted statically in
 # axioms_std.js §7e. These first-class preposition predicates appear in the
 # standard ontology (subsumption rules in §7c/7d), so the exclusions hold
-# universally and dynamic injection would also misfire (both sides are in
-# axiom_vocab on every problem). Skipped at the discovery stage below.
+# universally — dynamic injection would emit equivalent clauses on every
+# problem (both sides are in axiom_vocab), but placing them statically
+# pairs them with the related subsumption rules. Skipped here to avoid
+# duplication.
 _STATIC_PREP_EXCL_GROUPS = frozenset({
     "SPATIAL_VERTICAL",
     "SPATIAL_VERTICAL_OVER_UNDER",
