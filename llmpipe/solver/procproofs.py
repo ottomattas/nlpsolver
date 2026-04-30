@@ -74,22 +74,23 @@ def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=Non
   # For wh-questions: keep only answers in the best object-type tier
   # (concrete > Skolem > population), preserving the goodness order within tier.
   # For "what" questions: prefer population (class) answers over concrete instances.
+  # Class-name leaks (the part-inheritance bg axiom `has_part(X,Y,Z) &
+  # isa(X,U) -> has_part(U,Y,Z)` can unify the answer variable with a class
+  # name string via a population fact) are demoted to the population tier:
+  # concrete entities beat class labels, but class labels survive as a
+  # fallback when no concrete entity exists (cases 236, 241, 242).  Class
+  # labels that are tautological wrt the queried predicate are dropped by
+  # _filter_tautological_population_answers.
   is_what = _is_what_query(logic)
   is_who  = _is_who_query(logic)
-  if is_who and _get_who_entity(logic) is None:
-    # Filter class-name leaks for generic wh-placeholder queries only:
-    # the part-inheritance bg axiom (`has_part(X,Y,Z) & isa(X,U) ->
-    # has_part(U,Y,Z)`) can unify the answer variable with a CLASS name
-    # string (e.g. "elephant") via a population fact (cases 241, 242).
-    # For "Who is X?" with a specific @who_entity, class-names like "man"
-    # / "person" can be legitimate type descriptions of the queried
-    # entity, so we keep them there (case 236).
-    answers = _filter_class_name_leaks(answers, logic)
+  class_names = _extract_class_names(logic)
   if is_what:
-    answers = _filter_by_best_tier(answers, prefer_population=True)
+    answers = _filter_by_best_tier(answers, prefer_population=True,
+                                   class_names=class_names)
   else:
-    answers = _filter_by_best_tier(answers)
-  answers = _filter_tautological_population_answers(answers, logic)
+    answers = _filter_by_best_tier(answers, class_names=class_names)
+  answers = _filter_tautological_population_answers(answers, logic,
+                                                   class_names=class_names)
   answers = _deduplicate_proofs(answers)
   if not answers:
     return "Unknown."
@@ -407,12 +408,18 @@ def _format_who_answers(answers, logic=None):
   who_entity = _get_who_entity(logic)
   who_kind = _get_who_kind(logic)
   isa_types, prop_names = _classify_who_answers(logic, who_entity)
+  class_names = _extract_class_names(logic)
 
   # Collect all valid answer values with their per-answer confidences.
   # Lower bound 0.05 (was 0.60): keep partial-confidence answers so that
   # cases 241/242 emit "Probably John." / "Maybe John." with a qualitative
   # prefix instead of "Unknown."  Very low confidence (< 0.05) is still
   # dropped — such answers are dominated by noise from the prover chain.
+  # Per-atom tier filtering: a single proof's val may carry multiple $ans
+  # atoms of different tiers (e.g. [$ans("John 1"), $ans("wing")] from a
+  # part-inheritance chain).  Within each val we keep only atoms at the
+  # best tier present, so concrete entities suppress class-label / Skolem
+  # leaks within the same proof.
   all_vals = []  # (value, is_self_ref, confidence)
   seen = set()
 
@@ -423,8 +430,12 @@ def _format_who_answers(answers, logic=None):
     conf = ans.get("confidence", 1)
     if conf < 0.05:
       continue
+    best_atom_tier = _ans_object_tier(val, class_names)
     for atom in val:
       if not isinstance(atom, list) or len(atom) < 2 or atom[0] != "$ans":
+        continue
+      atom_tier = _ans_object_tier([atom], class_names)
+      if atom_tier > best_atom_tier:
         continue
       v = atom[1]
       if isinstance(v, list):
@@ -482,12 +493,18 @@ def _format_who_answers(answers, logic=None):
     primary_type = types[0]
     adj_str = " ".join(properties) if properties else ""
     noun = adj_str + " " + primary_type if adj_str else primary_type
-    article = "an" if noun[0] in "aeiou" else "a"
-    parts.append(article + " " + noun)
+    if noun.startswith(("the ", "a ", "an ")):
+      parts.append(noun)
+    else:
+      article = "an" if noun[0] in "aeiou" else "a"
+      parts.append(article + " " + noun)
     # Additional types without adjectives
     for t in types[1:]:
-      article = "an" if t[0] in "aeiou" else "a"
-      parts.append(article + " " + t)
+      if t.startswith(("the ", "a ", "an ")):
+        parts.append(t)
+      else:
+        article = "an" if t[0] in "aeiou" else "a"
+        parts.append(article + " " + t)
   elif properties:
     # No types — list properties bare
     parts.extend(properties)
@@ -727,8 +744,8 @@ def _format_bool_answer(val, conf, has_conflict=False):
     True,  conf >= 0.10              -> "Possibly true (confidence X)"
     True,  conf <  0.10              -> "Unknown."
     False, conf >= 0.95              -> "False"
-    False, conf >= 0.85              -> "Likely false (confidence X)"
-    False, conf >= 0.60              -> "Probably false (confidence X)"
+    False, conf >= 0.85              -> "Likely false"
+    False, conf >= 0.60              -> "Probably false"
     False, conf <  0.60              -> "Probably false"
 
   The asymmetry is intentional: True uses finer graduation because positive
@@ -749,9 +766,9 @@ def _format_bool_answer(val, conf, has_conflict=False):
     return "Unknown."
   else:  # val is False
     if conf >= 0.85:
-      return "Likely false (confidence " + _fmt_conf(conf) + ")"
+      return "Likely false"
     if conf >= 0.60:
-      return "Probably false (confidence " + _fmt_conf(conf) + ")"
+      return "Probably false"
     return "Probably false"
 
 
@@ -821,13 +838,18 @@ def _answer_goodness(ans):
   return conf * 10_000_000 - length - blockers
 
 
-def _ans_object_tier(val):
+def _ans_object_tier(val, class_names=frozenset()):
   """Return the object-type tier for an answer value.
 
   Tiers (lower is better / more preferred):
     0 -- CONCRETE: a specific named constant (e.g. "John 1", a URL)
-    1 -- SKOLEM:   a Skolem constant ("sk0", "sk1", ...)
-    2 -- POPULATION: a class-population constant ("$some_*", "$some_not_*")
+    1 -- SKOLEM:   a Skolem constant ("sk0", "sk1", ...) or Skolem function
+                   term (["sk0", X])
+    2 -- POPULATION: a class-population constant ("$some_*") or a bare
+                   class-name string (e.g. "elephant" appearing as the first
+                   argument of some isa(...) literal — demoted so concrete
+                   entities beat class labels but class labels survive as a
+                   fallback when no concrete entity exists).
 
   Boolean answers (True/False) always return 0 so they are never filtered out.
   When val is a list of $ans atoms, the tier of the *most concrete* atom wins.
@@ -841,13 +863,17 @@ def _ans_object_tier(val):
     if not isinstance(atom, list) or len(atom) < 2:
       continue
     s = atom[1]
-    if not isinstance(s, str):
-      best = 0   # non-string arg → treat as concrete
-      break
-    if s.startswith("$some_"):
-      tier = 2
-    elif is_skolem_const(s):
-      tier = 1
+    if isinstance(s, list):
+      tier = 1 if is_skolem_fn(s) else 0
+    elif isinstance(s, str):
+      if s.startswith("$some_"):
+        tier = 2
+      elif is_skolem_const(s):
+        tier = 1
+      elif s in class_names:
+        tier = 2
+      else:
+        tier = 0
     else:
       tier = 0
     if tier < best:
@@ -857,24 +883,28 @@ def _ans_object_tier(val):
   return best
 
 
-def _has_real_concrete_atom(val):
+def _has_real_concrete_atom(val, class_names=frozenset()):
   """True if val (a list of $ans atoms) contains an atom whose argument is
-  a real concrete entity name — a string that is neither a Skolem constant
-  nor a population ($some_*) constant.  Used to distinguish "Tallinn" (a
-  real concrete answer that should beat population) from ["sk3","Emily 1"]
-  (a Skolem function that is better rendered via the population class)."""
+  a real concrete entity name — a string that is neither a Skolem constant,
+  a population ($some_*) constant, nor a bare class label.  Used to
+  distinguish "Tallinn" (a real concrete answer that should beat population)
+  from ["sk3","Emily 1"] (a Skolem function) and from "elephant" (a class
+  label demoted to the population tier)."""
   if not isinstance(val, list):
     return False
   for atom in val:
     if not isinstance(atom, list) or len(atom) < 2:
       continue
     s = atom[1]
-    if isinstance(s, str) and not s.startswith("$some_") and not is_skolem_const(s):
+    if (isinstance(s, str)
+        and not s.startswith("$some_")
+        and not is_skolem_const(s)
+        and s not in class_names):
       return True
   return False
 
 
-def _filter_by_best_tier(answers, prefer_population=False):
+def _filter_by_best_tier(answers, prefer_population=False, class_names=frozenset()):
   """Return answers filtered to the best object-type tier.
 
   Boolean answers are never filtered out.  If all answers are boolean,
@@ -887,7 +917,7 @@ def _filter_by_best_tier(answers, prefer_population=False):
   must beat $some_city_in_Estonia for "What is an Estonian city?" (cases
   189, 190).
   """
-  tiers = [_ans_object_tier(a.get("answer")) for a in answers]
+  tiers = [_ans_object_tier(a.get("answer"), class_names) for a in answers]
   obj_tiers = [t for a, t in zip(answers, tiers)
                if not isinstance(a.get("answer"), bool)]
   if not obj_tiers:
@@ -895,7 +925,7 @@ def _filter_by_best_tier(answers, prefer_population=False):
   if prefer_population and 2 in obj_tiers and min(obj_tiers) < 2:
     has_real_concrete = any(
       not isinstance(a.get("answer"), bool)
-      and _has_real_concrete_atom(a.get("answer"))
+      and _has_real_concrete_atom(a.get("answer"), class_names)
       for a in answers
     )
     if not has_real_concrete:
@@ -1026,17 +1056,22 @@ def _extract_question_pop_keys(logic):
   return keys
 
 
-def _is_tautological_population_answer(ans, question_pop_keys):
+def _is_tautological_population_answer(ans, question_pop_keys, class_names=frozenset()):
   """Return True if ans is a $some_* constant proved directly via the
-  population clause that asserts the very property/class being queried.
+  population clause that asserts the very property/class being queried,
+  or a bare class-label string that matches the queried class/property.
 
-  Two checks:
+  Three checks:
     1. question_pop_keys non-empty: $some_* constant proved via a single-atom
        population clause [PRED, PROP, answer_const, ...] where PRED/PROP
        match any of the question's population keys.
     2. $some_not_* constant proved via its own negative population clause
        ["-PRED", ..., answer_const, ...] — always circular regardless of
        what the question predicate is.
+    3. Bare class-label string answer (e.g. "elephant") that matches the
+       second element of any question_pop_keys entry — e.g. "Who is an
+       elephant? -> elephant" restates the queried class, so it's a
+       tautological wh-leak via part-inheritance / population chains.
   """
   val = ans.get("answer")
   if not isinstance(val, list) or not val:
@@ -1044,6 +1079,11 @@ def _is_tautological_population_answer(ans, question_pop_keys):
   if not isinstance(val[0], list) or len(val[0]) < 2:
     return False
   answer_const = val[0][1]
+  # Class-label tautology: bare class string matching the queried class.
+  if (isinstance(answer_const, str)
+      and answer_const in class_names
+      and any(answer_const == qkey[1] for qkey in question_pop_keys)):
+    return True
   if not isinstance(answer_const, str) or not answer_const.startswith("$some_"):
     return False
 
@@ -1080,18 +1120,22 @@ def _is_tautological_population_answer(ans, question_pop_keys):
   return False
 
 
-def _filter_tautological_population_answers(answers, logic):
-  """Remove tautological population answers.
+def _filter_tautological_population_answers(answers, logic, class_names=frozenset()):
+  """Remove tautological population / class-label answers.
 
-  A tautological answer is a $some_* constant proved solely via the
-  population clause that asserts the very property/class being queried —
-  i.e. the proof is circular: 'some big elephant is big because some big
-  elephant is big (by population)'. Such answers are always filtered out,
-  even when no non-tautological alternatives exist (producing "Unknown").
+  A tautological answer is one of:
+    - A $some_* constant proved solely via the population clause that
+      asserts the very property/class being queried ('some big elephant is
+      big because some big elephant is big').
+    - A bare class-label string that matches the class being queried
+      ('Who is an elephant? -> elephant').
+  Such answers are always filtered out, even when no non-tautological
+  alternatives exist (producing "Unknown").
   """
   question_pop_keys = _extract_question_pop_keys(logic)
   tautological = [a for a in answers
-                  if _is_tautological_population_answer(a, question_pop_keys)]
+                  if _is_tautological_population_answer(a, question_pop_keys,
+                                                       class_names)]
   if not tautological:
     return answers
   return [a for a in answers if a not in tautological]
