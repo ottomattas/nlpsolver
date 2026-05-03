@@ -353,13 +353,19 @@
    ["-has recipient", "?:E", "?:X", "?:Ctxt"],
    ["has actor", "?:E", "?:X", "?:Ctxt"]],
 
-  // Transfer verb synonyms — REDUNDANT, kept commented for documentation.
-  // lc_rewrites.py rewrites hand/pass/send → give pre-clausification.
-  /*
-  [["-has type", "?:E", "hand", "?:Ctxt"], ["has type", "?:E", "give", "?:Ctxt"]],
-  [["-has type", "?:E", "pass", "?:Ctxt"], ["has type", "?:E", "give", "?:Ctxt"]],
-  [["-has type", "?:E", "send", "?:Ctxt"], ["has type", "?:E", "give", "?:Ctxt"]],
-  */
+  // Transfer verb synonyms — hand/send → give are still rewritten in
+  // lc_rewrites.py pre-clausification. "pass" is no longer rewritten there
+  // because it has too many non-transfer senses (pass an exam, pass by, ...);
+  // instead we bridge defeasibly here so the give-axiom chain remains
+  // available when "pass" really does mean transfer.
+  {
+    "@confidence": 0.85,
+    "@logic": [
+      ["-has type", "?:E", "pass", "?:Ctxt"],
+      ["has type", "?:E", "give", "?:Ctxt"],
+      ["$block", 0, ["$not", ["has type", "?:E", "give", "?:Ctxt"]]]
+    ]
+  },
 
   // == 5d. COMPLETION RESULT STATES ==
   // If a "finish" event targets X, then X has property "finished" in the next state.
@@ -369,6 +375,33 @@
     ["-next", "?:W", "?:W2"],
     ["has property", "finished", "?:X", ["$ctxt", "present", "?:W2", "?:L", "?:K"]]
   ],
+
+  // Stative "keep": "Eve kept the milk in the fridge" → normally the milk
+  // is in the fridge in the same world (keep is durative, not transitional —
+  // no next() chain). Higher confidence than the generic PP-attachment
+  // bridge below because "keep" lexicalises the stative-result reading.
+  // Two sibling axioms, since LLMs vary on whether they emit the locative PP
+  // as has_location (gemini, claude) or has_destination (deepseek).
+  {
+    "@confidence": 0.95,
+    "@logic": [
+      ["-has type", "?:E", "keep", "?:Ctxt"],
+      ["-has target", "?:E", "?:Obj", "?:Ctxt"],
+      ["-has location", "?:E", "?:Loc", "?:Prep", "?:Ctxt"],
+      ["is rel2", "?:Prep", "?:Obj", "?:Loc", "?:Ctxt"],
+      ["$block", 0, ["$not", ["is rel2", "?:Prep", "?:Obj", "?:Loc", "?:Ctxt"]]]
+    ]
+  },
+  {
+    "@confidence": 0.95,
+    "@logic": [
+      ["-has type", "?:E", "keep", "?:Ctxt"],
+      ["-has target", "?:E", "?:Obj", "?:Ctxt"],
+      ["-has destination", "?:E", "?:Loc", "?:Prep", "?:Ctxt"],
+      ["is rel2", "?:Prep", "?:Obj", "?:Loc", "?:Ctxt"],
+      ["$block", 0, ["$not", ["is rel2", "?:Prep", "?:Obj", "?:Loc", "?:Ctxt"]]]
+    ]
+  },
 
   // == 5e. PP-ATTACHMENT BRIDGES ==
   // Bridge: instrument implies possession by the actor (defeasible, 90%).
@@ -835,11 +868,52 @@ Does John 1 have two cars?
 ],
 
 // is rel2
-[
-  ["-is rel2", "?:R", "?:E1", "?:E2", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
-  ["-before", "?:W_old", "?:W_new"],
-  ["is rel2", "?:R", "?:E1", "?:E2", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]]
-],
+//
+// HISTORY: previously this axiom had no $block — any present-tense is_rel2
+// fact in W_old freely migrated to a past-tense fact at any later W_new.
+//
+// CHANGE: added $block(0, moved(?:E1, ?:W_old)). The block fires when E1
+// (the locatum / first entity argument) performed a movement event at
+// W_old; in that case the present-tense fact about E1 in W_old has already
+// been superseded by the next motion-result and must not project forward
+// as a historical fact about later worlds.
+//
+// WHY: case 197 ("Sandra travelled to the kitchen. Sandra travelled to the
+// hallway. Where is Sandra?") was returning BOTH "at hallway" and "at
+// kitchen" because:
+//   1. motion-result from sk0 derived  is_rel2 at Sandra kitchen [present W1]
+//   2. this axiom (no block) migrated to is_rel2 at Sandra kitchen [past W2]
+//   3. the dynamic question_bridge (lc_ctxt.build_question_tense_bridges)
+//      defeasibly converted past W2 → present W2
+//   4. the goal "where is Sandra in present W2" matched the stale kitchen
+//      location in addition to the correct hallway location.
+// The is_rel2 PERSISTENCE axiom (above, §6) already blocks on moved(?:X,?:W)
+// for the same reason — this brings tense-migration in line.
+//
+// RISKS / KNOWN LIMITATIONS:
+//   * Past-location queries about moved entities ("Was Sandra at the
+//     kitchen?" asked at W2) lose this migration path. They must fall
+//     back to a direct past-tense assertion or the same-world
+//     question_bridge.
+//   * The default prover strategy (negative_pref/posunitpara) suffers
+//     a search-space slowdown when there are 4+ motion events with the
+//     same actor — case 198 (8 events, multiple actors) goes from
+//     wrong-but-derivable to "no answers found" within the time budget.
+//     Investigation deferred. Workaround: -strategy query_focus closes
+//     4-event same-actor cases.
+//
+// SCOPE: only is_rel2 — the other §12 migration axioms (has_property,
+// have, has_part, can, has_degree_*, has_actor, has_target, ...) describe
+// things that don't have a "moved" notion in the same sense.
+{
+  "@confidence": 0.99,
+  "@logic": [
+    ["-is rel2", "?:R", "?:E1", "?:E2", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
+    ["-before", "?:W_old", "?:W_new"],
+    ["is rel2", "?:R", "?:E1", "?:E2", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]],
+    ["$block", 0, ["moved", "?:E1", "?:W_old"]]
+  ]
+},
 
 // can (capability)
 [

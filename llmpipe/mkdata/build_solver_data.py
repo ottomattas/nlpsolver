@@ -46,6 +46,34 @@ MANUAL_ANTONYMS = {
     "undone":     "done",
 }
 
+# Predicate roots that appear as positive `has type E ROOT Ctxt` literals in
+# axioms_std.js. ANY antonym pair that touches one of these roots (on either
+# side) is filtered out of `build_antonyms`, because folding the root into an
+# antonym substitutes it with a different word and silently invalidates every
+# motion-/transfer-/state-frame axiom that mentions the root.
+#
+# Concrete prior incident: WordNet's GO_A01,no-go entry produced
+# `merged["go"] = "no_go"`; semnormalize Pass 1 then flipped every
+# `has_type E "go"` literal to `-has_type E "no_go"`, killing the axiom chain
+# in axioms_std.js:255-289 and breaking cases 197/198 (and likely many more
+# motion-frame cases silently).
+#
+# The list mirrors the verbs that are wired into named axiom packages in
+# axioms_std.js (motion, transfer, place, completion, perception, modality,
+# attitude). Add a root here whenever a new axiom package keys off `has type`.
+AXIOM_VOCAB_ROOTS = frozenset({
+    "go", "put", "give", "eat", "drink", "make", "build",
+    "read", "write", "say", "know", "think", "believe",
+    "want", "like", "love", "hate",
+    "see", "show", "tell", "hear",
+    "receive", "get", "take",
+    "come", "leave", "enter", "exit", "arrive",
+    "fly", "run", "walk", "sit", "stand", "sleep",
+    "live", "die", "find", "ask", "use", "help",
+    "open", "close", "start", "stop", "begin", "end",
+    "continue", "happen", "keep", "have",
+})
+
 # Words that should never appear as antonym keys, even if WordNet lists them.
 # "abstract" clashes with isa(abstract, X) category annotations from stage 1.
 # "past"/"present"/"future" clash with tense markers inside $ctxt terms.
@@ -232,16 +260,19 @@ def build_antonyms(canonicals):
     injected as exclusion groups by build_exclusions().
 
     Returns chain_rejected: [(word, canonical), ...] — pairs whose canonical
-    target is itself a CANONICALS key (would chain-substitute in semnormalize
-    Pass 2 to an unrelated sense, e.g. open→close→near). These are not written
-    to ANTONYMS; build_exclusions() emits them as has_property-template
+    target is itself a CANONICALS key OR (after the second pass) itself a
+    key in the resulting ANTONYMS dict. Both shapes would chain-substitute
+    in semnormalize Pass 1/2 to an unrelated sense
+    (e.g. open→close→near; tall→short→long). These are not written to
+    ANTONYMS; build_exclusions() emits them as has_property-template
     mutual-exclusion axioms instead.
     """
     print("Building data_antonyms.py ...")
-    merged = {}
+    candidate = {}
     chain_rejected = []
     skipped_circular = 0
     skipped_self = 0
+    skipped_axiom_vocab = 0
     # Verb antonym rewrites are intentionally excluded.
     # Most verb antonym pairs from WordNet (give/take, buy/sell, come/go, ...)
     # are perspective inversions or process complementarities, not logical
@@ -251,6 +282,9 @@ def build_antonyms(canonicals):
     # polarity-flip is defensible (like/dislike, love/hate, etc.) will be
     # re-introduced via a separate defeasible attitude-mutex injector
     # (Phase 2) gated on both sides being present.
+    #
+    # Pass 1: collect all (word -> canonical) candidates after the existing
+    # CANONICALS-based filters.
     for pos, fname in [("a", "ant_a.txt"), ("n", "ant_n.txt")]:
         entries = read_antonym_file(os.path.join(SCRIPT_DIR, fname))
         for canonical, words in entries:
@@ -260,8 +294,17 @@ def build_antonyms(canonicals):
                     continue
                 if word in BLOCKED_ANTONYM_WORDS:
                     continue
+                # Hard blocklist: predicate roots that appear as positive
+                # `has type` literals in axioms_std.js. Folding any of these
+                # into an antonym would silently invalidate the corresponding
+                # axiom chain (e.g. go -> no_go disabled every motion-frame
+                # axiom; see CRITICAL_go_no_go_regression.md). Filter both
+                # sides — neither word nor canonical may be a vocab root.
+                if word in AXIOM_VOCAB_ROOTS or canonical in AXIOM_VOCAB_ROOTS:
+                    skipped_axiom_vocab += 1
+                    continue
                 # Skip if this would create a circular mapping
-                if canonical in merged and merged[canonical] == word:
+                if canonical in candidate and candidate[canonical] == word:
                     skipped_circular += 1
                     continue
                 # Don't map a word that is itself a canonical target in CANONICALS
@@ -274,7 +317,22 @@ def build_antonyms(canonicals):
                 if canonical in canonicals:
                     chain_rejected.append((word, canonical))
                     continue
-                merged[word] = canonical
+                candidate[word] = canonical
+
+    # Pass 2: now that the full set of antonym keys is known, reject pairs
+    # whose canonical target is itself an ANTONYMS key — semnormalize Pass 1
+    # would otherwise chain-substitute to an unrelated sense
+    # (e.g. tall -> short -> long; heavy -> light -> dim). Defer those to
+    # exclusion-axiom emission.
+    antonym_keys = set(candidate.keys())
+    merged = {}
+    chain_rejected_antonyms = 0
+    for word, canonical in candidate.items():
+        if canonical in antonym_keys:
+            chain_rejected.append((word, canonical))
+            chain_rejected_antonyms += 1
+            continue
+        merged[word] = canonical
 
     lines = []
     lines.append("# Directional antonym pairs for semantic normalisation.\n")
@@ -296,8 +354,11 @@ def build_antonyms(canonicals):
         print(f"  skipped {skipped_circular} circular mappings")
     if skipped_self:
         print(f"  skipped {skipped_self} self-mappings")
+    if skipped_axiom_vocab:
+        print(f"  skipped {skipped_axiom_vocab} pairs touching AXIOM_VOCAB_ROOTS")
     if chain_rejected:
-        print(f"  deferred {len(chain_rejected)} pairs to exclusion axioms (target is a CANONICALS key)")
+        print(f"  deferred {len(chain_rejected)} pairs to exclusion axioms"
+              f" ({chain_rejected_antonyms} via ANTONYMS-target chain-reject)")
     return chain_rejected
 
 

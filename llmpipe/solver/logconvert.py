@@ -89,6 +89,7 @@ from lc_postprocess import (
   strip_degree_predicates as _strip_degree_predicates,
   inject_soft_synonyms as _inject_soft_synonyms,
   inject_exclusion_axioms as _inject_exclusion_axioms,
+  inject_verb_mutex_axioms as _inject_verb_mutex_axioms,
   inject_world_geometry as _inject_world_geometry,
 )
 
@@ -702,7 +703,8 @@ def rawlogic_convert(logic, s1_json=None):
     from axiom_vocab import load_axiom_vocab as _load_axiom_vocab
     _axiom_vocab = _load_axiom_vocab()
     sem_axioms = (_inject_soft_synonyms(result, _axiom_vocab)
-                  + _inject_exclusion_axioms(result, _axiom_vocab))
+                  + _inject_exclusion_axioms(result, _axiom_vocab)
+                  + _inject_verb_mutex_axioms(result, _axiom_vocab))
 
   # Append population facts, synonym axioms, and exclusion axioms after
   # all sentence clauses (assertions + questions come first).

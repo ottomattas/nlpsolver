@@ -149,6 +149,13 @@ def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=Non
   else:
     answer_str = _format_answers(answers, askvars=askvars)
 
+  # For what-queries, strip property words named in the question from the
+  # rendered answer. "What was deep? / the deep dent" → "the dent".
+  if is_what:
+    qprops = _extract_question_property_words(logic)
+    if qprops:
+      answer_str = _strip_question_props(answer_str, qprops)
+
   # Optionally append a step-by-step proof explanation
   explain     = options.get("prover_explain_flag", False)
   show_logic  = options.get("show_logic_flag", False)
@@ -253,6 +260,56 @@ def _is_what_query(logic):
     if isinstance(obj, dict) and obj.get("@what_query"):
       return True
   return False
+
+
+def _extract_question_property_words(logic):
+  """Return the set of property words that the question's predicate body
+  asks about — has_property / has_degree_property atoms with a literal
+  string at the property slot. Used to strip those words from what-answer
+  rendering ("What was deep?" / dent 2 → "the dent", not "the deep dent").
+  """
+  if not logic or not isinstance(logic, list):
+    return frozenset()
+  out = set()
+
+  def _walk(node):
+    if not isinstance(node, list) or not node:
+      return
+    head = node[0]
+    if isinstance(head, str):
+      bare = head[1:] if head.startswith("-") else head
+      if bare == "has property" and len(node) >= 3 and isinstance(node[1], str):
+        if not node[1].startswith("?:"):
+          out.add(node[1])
+      elif bare == "has degree property" and len(node) >= 3 and isinstance(node[1], str):
+        if not node[1].startswith("?:"):
+          out.add(node[1])
+    for child in node:
+      _walk(child)
+
+  for clause in logic:
+    if not isinstance(clause, dict):
+      continue
+    if clause.get("@sourcetype") == "question" or clause.get("@what_query"):
+      _walk(clause.get("@logic"))
+      _walk(clause.get("@question"))
+  return frozenset(out)
+
+
+def _strip_question_props(answer_str, prop_words):
+  """Remove each prop word (whole word, case-insensitive) from answer_str
+  and tidy up resulting whitespace and articles."""
+  if not answer_str or not prop_words:
+    return answer_str
+  s = answer_str
+  for w in prop_words:
+    if not w:
+      continue
+    s = re.sub(r'\b' + re.escape(w) + r'\b', '', s, flags=re.IGNORECASE)
+  # Collapse runs of whitespace and tidy stray space before punctuation.
+  s = re.sub(r'\s+', ' ', s).strip()
+  s = re.sub(r'\s+([.,;:])', r'\1', s)
+  return s
 
 
 def _resolve_what_skolem_answers(answers):
@@ -707,14 +764,23 @@ def _format_prep_answers(answers, logic=None):
       continue
     if not isinstance(entity_raw, (str, list)):
       continue
+    # Drop answers whose entity slot is an unresolved variable (the prover
+    # returned a free `?:Xn` rather than a concrete location); they would
+    # render as garbage like "in ?:X3".
+    if isinstance(entity_raw, str) and entity_raw.startswith("?:"):
+      continue
+    # If the preposition slot is an unresolved variable, drop the prep
+    # prefix and keep just the entity. Common when the prover unifies via
+    # persistence with a variable-prep axiom and never narrows the prep.
+    prep_for_display = "" if prep.startswith("?:") else prep
     entity_key = str(entity_raw)
     key = (prep, entity_key)
     if key in seen:
       continue
     seen.add(key)
-    entries.append((prep, entity_key,
-                    prep + " " + _location_entity_name(entity_raw, entity_props),
-                    conf))
+    entity_display = _location_entity_name(entity_raw, entity_props)
+    display = (prep_for_display + " " + entity_display) if prep_for_display else entity_display
+    entries.append((prep, entity_key, display, conf))
 
   # Drop "at" answers when a more specific preposition ("on", "in", etc.)
   # exists for the same entity.  "at" is derived from on→at / in→at axioms;

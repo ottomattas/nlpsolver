@@ -94,8 +94,10 @@ def rewrite_meta_predicates(tree):
     verb = tree[2]
     if isinstance(verb, str) and verb in ("travel", "journey", "move"):
       return [tree[0], tree[1], "go"] + tree[3:]
-    # Transfer verb synonyms: hand/pass/send → give
-    if isinstance(verb, str) and verb in ("hand", "pass", "send"):
+    # Transfer verb synonyms: hand/send → give
+    # ("pass" excluded: too polysemous; "students passed the exam" should not
+    # become "give" and lose the pass↔fail antonym path.)
+    if isinstance(verb, str) and verb in ("hand", "send"):
       return [tree[0], tree[1], "give"] + tree[3:]
     # Placement verb synonyms: place/set/lay/position/deposit → put
     if isinstance(verb, str) and verb in ("place", "set", "lay", "position", "deposit"):

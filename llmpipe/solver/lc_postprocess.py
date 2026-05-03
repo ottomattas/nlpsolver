@@ -1590,6 +1590,62 @@ def inject_exclusion_axioms(result, axiom_vocab=frozenset()):
   return axioms
 
 
+# Verb-event defeasible mutex pairs. For each (v1, v2) pair, when both
+# verbs appear in the input (or axiom vocabulary), inject a defeasible
+# cross-event mutex saying that two events sharing actor + target cannot
+# defeasibly have these mutually-incompatible types in the same context.
+# Verb antonyms cannot be folded into ANTONYMS (verb antonyms are mostly
+# perspective inversions, not logical opposites — see mkdata/CLAUDE.md).
+# The mutex injector handles the small set where polarity-style mutex IS
+# semantically appropriate (pass/fail, succeed/fail, ...).
+_VERB_MUTEX_PAIRS = [
+    ("pass", "fail"),
+]
+
+
+def inject_verb_mutex_axioms(result, axiom_vocab=frozenset()):
+  """Scan clause list for verbs in _VERB_MUTEX_PAIRS; for each pair where
+  BOTH verbs appear, emit two symmetric defeasible cross-event mutex
+  axioms.
+
+  Shape (one direction):
+    [-has type   E1 v1 Ct,
+     -has actor  E1 X  Ct,
+     -has target E1 Y  Ct,
+     -has type   E2 v2 Ct,
+     -has actor  E2 X  Ct,
+     -has target E2 Y  Ct,
+     $block(0, has type E2 v2 Ct)]
+
+  Two events sharing actor + target + context cannot have these
+  mutually-incompatible types unless the right-side type is independently
+  supported (defeated by $block).
+  """
+  words = _collect_eligible_words(result)
+  if not words:
+    return []
+  all_known = set(words) | axiom_vocab if REQUIRE_BOTH_SIDES else set(words)
+  axioms = []
+  for v1, v2 in _VERB_MUTEX_PAIRS:
+    if v1 not in all_known or v2 not in all_known:
+      continue
+    for (left, right) in ((v1, v2), (v2, v1)):
+      ct = _fresh_fv()
+      clause = [
+          ["-has type",   "?:E1", left,  ct],
+          ["-has actor",  "?:E1", "?:Ag", ct],
+          ["-has target", "?:E1", "?:Tg", ct],
+          ["-has type",   "?:E2", right, ct],
+          ["-has actor",  "?:E2", "?:Ag", ct],
+          ["-has target", "?:E2", "?:Tg", ct],
+          ["$block", 0, ["has type", "?:E2", right, ct]],
+      ]
+      axioms.append({"@name": "frm_verb_excl",
+                      "@logic": clause,
+                      "@confidence": 0.85})
+  return axioms
+
+
 def inject_world_geometry(result):
   """Emit a minimal `next` chain spanning the concrete worlds (W0, W1, ...)
   actually present in the clause list.

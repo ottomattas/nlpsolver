@@ -21,6 +21,7 @@
 
 from dataclasses import dataclass
 import json
+import re
 
 
 @dataclass(frozen=True)
@@ -605,6 +606,124 @@ def _check_stage2_event_shapes(logic):
   return issues
 
 
+# ======== Stage-2 entity-ID prefix-typo check ========
+#
+# Detects entity IDs like "fr fridge 3" that are an existing entity ID
+# ("fridge 3") prefixed by a stray initial fragment of the same noun. Seen
+# on case 152 with gemini, where the question's isa guard contained
+# "fr fridge 3" while the assertion (and the question's is_rel2 atom)
+# used "fridge 3" — the mismatch made the goal unreachable. The check
+# triggers a corrective Stage-2 retry via the standard sanity-retry loop.
+
+# Entity IDs follow the convention "<lowercase-noun-or-phrase> <integer>"
+# or "<Capitalized-name> <integer>". Match anything that ends with a single
+# space + digits.
+_ENTITY_ID_RE = re.compile(r'^(\S.*?) (\d+)$')
+
+# Stop the prefix check from flagging legitimate adjective-modified IDs.
+_MAX_TYPO_PREFIX_LEN = 4
+
+
+def _collect_entity_ids_with_paths(node, found, path):
+  """Walk node (dicts, lists, strings), recording the first path at which
+  each id-shaped string is seen. id-shape := "<text> <integer>".
+
+  found: dict id -> path (first occurrence wins).
+  """
+  if isinstance(node, str):
+    if _ENTITY_ID_RE.match(node) and node not in found:
+      found[node] = path
+    return
+  if isinstance(node, dict):
+    # Walk dict values; key into path so we can locate by key when useful.
+    for key, val in node.items():
+      _collect_entity_ids_with_paths(val, found, path + "/" + str(key))
+    return
+  if not isinstance(node, list) or not node:
+    return
+  head = node[0] if isinstance(node[0], str) else None
+  for i, child in enumerate(node):
+    child_path = (path + "/" + head) if head and i == 0 else (path + "[" + str(i) + "]")
+    _collect_entity_ids_with_paths(child, found, child_path)
+
+
+def _is_prefix_typo(candidate_base, target_base):
+  """Return the stray prefix `extra` if candidate_base = extra + ' ' + target_base
+  AND extra is a prefix of target_base's first word (case-insensitive),
+  with len(extra) <= _MAX_TYPO_PREFIX_LEN. Otherwise None.
+  """
+  needle = " " + target_base
+  if not candidate_base.endswith(needle):
+    return None
+  extra = candidate_base[: -len(needle)]
+  if not extra or " " in extra:
+    return None
+  if len(extra) > _MAX_TYPO_PREFIX_LEN:
+    return None
+  first_word = target_base.split(" ", 1)[0]
+  if not first_word:
+    return None
+  if first_word.lower().startswith(extra.lower()):
+    return extra
+  return None
+
+
+def _check_stage2_entity_id_typos(logic):
+  """Flag entity IDs that look like prefix-typos of another entity in the
+  same Stage-2 output. See module docstring for case 152 (gemini) example.
+  """
+  if not isinstance(logic, list):
+    return []
+  found = {}
+  _collect_entity_ids_with_paths(logic, found, "")
+  if len(found) < 2:
+    return []
+
+  # Bucket by numeric suffix to limit the pairwise scan.
+  by_suffix = {}
+  for ident, path in found.items():
+    m = _ENTITY_ID_RE.match(ident)
+    if not m:
+      continue
+    by_suffix.setdefault(m.group(2), []).append((ident, m.group(1), path))
+
+  issues = []
+  reported = set()
+  for suffix, items in by_suffix.items():
+    if len(items) < 2:
+      continue
+    # Compare every distinct pair; flag the longer one if the shorter
+    # is a typo-target of it.
+    for i in range(len(items)):
+      for j in range(len(items)):
+        if i == j:
+          continue
+        cand_id, cand_base, cand_path = items[i]
+        tgt_id,  tgt_base,  _         = items[j]
+        if cand_id in reported:
+          continue
+        if len(cand_base) <= len(tgt_base):
+          continue
+        extra = _is_prefix_typo(cand_base, tgt_base)
+        if extra is None:
+          continue
+        reported.add(cand_id)
+        issues.append(Issue(
+          kind="entity_id_typo",
+          location=cand_path,
+          description=('Entity id ' + json.dumps(cand_id)
+                       + ' looks like a typo of '
+                       + json.dumps(tgt_id)
+                       + ' (stray prefix ' + json.dumps(extra) + ').'
+                       + ' Replace ' + json.dumps(cand_id)
+                       + ' with ' + json.dumps(tgt_id)
+                       + ' wherever it appears.'),
+          evidence=_safe_json([cand_id, "->", tgt_id]),
+        ))
+        break
+  return issues
+
+
 # ======== small helpers ========
 
 def _safe_json(obj):
@@ -735,6 +854,7 @@ def check_stage2(logic, s1_json=None):
   issues.extend(_check_stage2_arities(logic))
   issues.extend(_check_stage2_event_shapes(logic))
   issues.extend(_check_stage2_missing_question(logic, s1_json))
+  issues.extend(_check_stage2_entity_id_typos(logic))
   return issues
 
 
