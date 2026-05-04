@@ -135,9 +135,12 @@ llmpipe/
 │   ├── llmparse.py      Two-stage LLM parser
 │   ├── llmcall.py       LLM API wrapper (GPT / Claude / Gemini / DeepSeek, no SDK)
 │   ├── logconvert.py    Stage-2 JSON → GK clause list (orchestration)
+│   ├── lc_packages.py   Per-ASU-package processing (extract_package_ctx, convert_id_package, _process_question/_assertion)
 │   ├── lc_rewrites.py   Pre-clausification formula rewrites
 │   ├── lc_ctxt.py       $ctxt injection, time handling, fresh variables
-│   ├── lc_postprocess.py Post-clausification clause-list passes
+│   ├── lc_post_normalize.py Post-clausification: fix Stage-2 errors and normalise predicate forms
+│   ├── lc_post_reify.py     Post-clausification: $theof1 / $measure_of reification
+│   ├── lc_post_inject.py    Post-clausification: dynamic axiom injection (synonyms, exclusions, mutexes, world geometry)
 │   ├── lc_clausify.py   FOL → CNF clausification
 │   ├── lc_questions.py  Wh-question encoding and population facts
 │   ├── lc_sets.py       Set/counting: $setof rewriting, membership axioms, element instantiation
@@ -560,10 +563,13 @@ list pipeline.  The computation is split across several files:
 
 | Module | Responsibility |
 |--------|---------------|
-| `logconvert.py` | Orchestration: package extraction, question/assertion dispatch |
+| `logconvert.py` | Top-level orchestration: `rawlogic_convert` entry point, structural repair, what-question population, Stage-1 entity bookkeeping |
+| `lc_packages.py` | Per-`@id` package processing: `extract_package_ctx`, `convert_id_package`, `_process_question`/`_process_assertion`, raw wh-word probes, confidence distribution |
 | `lc_rewrites.py` | Pre-clausification formula rewrites (meta-predicate normalization incl. `"time of"`→`has_time`, tense-valued `has_time` stripping, verb normalization: travel/journey/move→go, hand/pass/send→give, receive→give with actor↔recipient swap, existential hoisting, spurious `can` removal, polarity flip) |
 | `lc_ctxt.py` | `$ctxt` injection, time-wrapper stripping, fresh variable generation |
-| `lc_postprocess.py` | Post-clausification clause-list passes (gradable normalization, RELCLASS coercion, `$theof1`, possessive `have`, population facts, degree stripping) |
+| `lc_post_normalize.py` | Post-clausification normalising / repair passes: gradable normalization, RELCLASS coercion, `isa entity` stripping, possessive `have` and `has_part` bridges, degree stripping, population and compound subsumption extraction |
+| `lc_post_reify.py` | Post-clausification reification of definite descriptions and measurements: `rewrite_definites` (`$theof1`), `rewrite_measure_terms` (`$measure_of`/`$measure`/`less_measure`) |
+| `lc_post_inject.py` | Post-clausification dynamic axiom injection: soft synonyms, exclusions, verb mutex, kinship mutex, containment bridge, world-graph geometry |
 | `lc_clausify.py` | FOL→CNF compilation |
 | `lc_questions.py` | Question encoding and population fact builders |
 | `lc_sets.py` | Set/counting: `$setof` rewriting, membership axioms, element instantiation |
@@ -581,11 +587,11 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
     ├─ normalize_receive_events(logic)   [lc_rewrites] receive→give with actor→recipient swap
     ├─ strip_tense_has_time(logic)       [lc_rewrites] remove has_time(E,"past",...) bogus atoms
     ├─ inject_degree_presuppositions()    [lc_rewrites] "not very X" → X and not very X
-    ├─ populate_clauses(items)            [lc_postprocess] collect background facts
+    ├─ populate_clauses(items)            [lc_post_normalize] collect background facts
     │
     ├─ for each @id item:
-    │    _convert_id_package(item, asu_index)
-    │        _extract_package_ctx()        unpack PACKAGE: formula, world, tense, etc.
+    │    convert_id_package(item, asu_index)                   [lc_packages]
+    │        extract_package_ctx()        unpack PACKAGE: formula, world, tense, etc. [lc_packages]
     │        override with Stage-1 ASU data (tense, world, location)
     │        compute latest world numerically for queries without pre_state
     │        default question tense to "present" when Stage 1 omits "time"
@@ -598,15 +604,19 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
     │        _process_assertion()          clausify + three-tier confidence distribution (§7.9) [→ lc_clausify]
     │        inject $ctxt into result      [lc_ctxt]
     │
-    ├─ rewrite_definites() (global)        [lc_postprocess] $theof1 for all ASU definites
-    ├─ rewrite_measure_terms()            [lc_postprocess] $measure→$list, less_measure rewrite, $theof1 unwrap in $measure_of
+    ├─ rewrite_definites() (global)        [lc_post_reify] $theof1 for all ASU definites
+    ├─ rewrite_measure_terms()            [lc_post_reify] $measure→$list, less_measure rewrite, $theof1 unwrap in $measure_of
     ├─ insert population facts before first @question
     ├─ generate "what" population facts     for @what_query: isa(CLASS,$some_CLASS) from witnesses
     ├─ inject $ctxt into population facts  [lc_ctxt]
-    ├─ normalize_gradable_predicates()    [lc_postprocess]
-    ├─ strip_isa_entity()                 [lc_postprocess]
-    ├─ coerce_relclass()                  [lc_postprocess]
-    ├─ strip_degree_predicates()          [lc_postprocess] (only if -simpleproperties)
+    ├─ inject_soft_synonyms / inject_exclusion_axioms / inject_verb_mutex_axioms
+    │    inject_kinship_mutex_axioms / inject_containment_bridge_axioms  [lc_post_inject]
+    ├─ add_possessive_have / add_haspart_for_typed_have                  [lc_post_normalize]
+    ├─ normalize_gradable_predicates()    [lc_post_normalize]
+    ├─ strip_isa_entity()                 [lc_post_normalize]
+    ├─ coerce_relclass()                  [lc_post_normalize]
+    ├─ strip_degree_predicates()          [lc_post_normalize] (only if -simpleproperties)
+    ├─ inject_world_geometry()            [lc_post_inject] minimal next chain over present worlds
     └─ strip @sourcetype                  remove internal annotation before prover
 ```
 
@@ -973,6 +983,7 @@ the same LLM.  See §7.8 for the retry-loop semantics and motivation.
 | `_check_stage2_arities` | `wrong_arity` | Atom whose arity disagrees with the declared Stage-2 signature (whitelist of 27 predicates: `isa/2`, `has property/2`, `has type/2`, `has actor/2`, `has part/2`, `is rel2/3`, `has degree property/4`, `has degree rel2/5`, `typical/1`, etc.). | Scattered |
 | `_check_stage2_event_shapes` | `event_missing_activity_isa` / `event_missing_role` | Event variable E used as first arg of `has_type(E, VERB)` must have `isa("activity", E)` AND at least one thematic-role atom (any of `has_actor`, `has_target`, `has_recipient`, `has_source`, `has_destination`, `has_location`, `has_instrument`, `has_manner`, `has_direction`, `has_time`, `has_beneficiary`, `has_accompaniment`, `has_path`, `has_result`, `has_topic`, `has_cause`, `typical`) in the same `and` conjunction.  Either missing item is its own issue. | — |
 | `_check_stage2_missing_question` | `missing_question` | A Stage-1 unit is a query (either `unit.type == "query"` or its parent package's `raw` text contains `?`) but the matching `@id` in Stage-2 has no `question`/`ask` wrapper anywhere in its body — covers both whole-package truncations and `holds`-where-`question`-was-expected. | LLM truncation on multi-sentence inputs |
+| `_check_stage2_entity_id_typos` | `entity_id_typo` | An entity ID `XYZ N` whose first word has a stray prefix that is itself a prefix of another ID's first word in the same problem (max 4 extra chars).  Catches gemini's "fr fridge 3" vs "fridge 3" pattern where one mention picks up a stray article/preposition fragment. | Case 152 |
 
 **Conventions:**
 
@@ -1210,7 +1221,7 @@ bridge representation gaps.
 | `@time` stripping | `lc_ctxt.strip_time_wrappers` | "John was tall" — the past-tense `@time` wrapper becomes a `$tense` sentinel controlling the tense slot in `$ctxt` | Converts `["@time","past",ATOM]` wrappers into `$tense` sentinels on the atom |
 | Entity category injection | `logconvert._build_entity_category_clauses` | "John is an elephant" — Stage-1 says John's category is "person", so `isa(person, John 1)` is added even though Stage-2 only emits `isa(elephant, John 1)` | Adds `isa(CATEGORY, ENTITY)` facts from Stage-1 entity annotations.  Skipped when the entity already has a **positive-polarity** isa in Stage-2 (`_collect_positive_isa_entities` tracks polarity through connectives, negation, implications, and low-confidence packages).  Entities in negated or low-confidence contexts are NOT skipped — they need the injection.  Exact duplicates with `sent_S*` clauses are removed by `_dedup_entity_clauses`. |
 | Entity base-word isa | `logconvert._build_entity_category_clauses` | "A man had a car" — entity `man 1` has category "person", but the base word "man" is also a type; adds `isa(man, man 1)` alongside `isa(person, man 1)` | For concrete entities with a lowercase base word different from the category, injects `isa(BASE, ENTITY)` so queries using the descriptive type word can match |
-| Compound subsumption | `lc_postprocess.build_compound_subsumption` | "Baby birds do not fly" — adds a rule that baby birds are birds, so general bird rules can apply to them | Adds `isa(BASE, X) :- isa(COMPOUND, X)` rules for compound types |
+| Compound subsumption | `lc_post_normalize.build_compound_subsumption` | "Baby birds do not fly" — adds a rule that baby birds are birds, so general bird rules can apply to them | Adds `isa(BASE, X) :- isa(COMPOUND, X)` rules for compound types |
 
 **Post-clausification modifications** (on the GK clause list):
 
@@ -1218,22 +1229,25 @@ bridge representation gaps.
 |-------------|-------|---------|-------------|
 | `$ctxt` injection | `lc_ctxt.inject_ctxt_into_objs` / `inject_ctxt_question` | "John was tall" → atom gets `$ctxt(past,W0,?,?)` anchoring it to the past in world W0 | Appends `["$ctxt",T,W,L,K]` to eligible predicate atoms.  Rules: all-free-var.  Assertions: concrete world/tense.  Questions: see next row (§7.4) |
 | Descriptive/stative/dynamic split | `lc_ctxt.inject_ctxt_question` | "Did the man have the red car which a woman bought?" — `bought` events and `red` property each get independent free-var worlds; stative `have` also gets free-var world; only dynamic event predicates (if matrix) keep the query's world | Three-way $ctxt world dispatch in `$defq` questions: (1) **descriptive** atoms (isa, event atoms, properties when a main relation is present) each get an independent free-var world; (2) **stative matrix** predicates (have, can, has part) get free-var world — persistent states don't need concrete world anchoring; (3) **dynamic matrix** predicates (is_rel2, properties when no main relation) keep the query's world.  `_question_has_main_relation` detects whether properties are restrictive modifiers.  Each descriptive/stative atom gets its OWN fresh world variable to avoid forced co-unification across different world states |
-| Gradable normalisation | `lc_postprocess.normalize_gradable_predicates` | "John is big" — LLM used `has property(big,...)` but "big" is in the gradable whitelist → upgraded to `has degree property` | Whitelist-based `has property` ↔ `has degree property` conversion; replaces `"entity"` and `"none"` relclass with free variables (§7.5) |
-| `isa entity` stripping | `lc_postprocess.strip_isa_entity` | "Every entity that is big is strong" — `isa(entity,X)` is always true, so the clause is a tautology → removed | Removes tautological `isa(entity,X)` literals (§7.5) |
-| RELCLASS coercion | `lc_postprocess.coerce_relclass` | (question) "Is John big?" — query uses relclass "person" (John's category) but the rule uses "bear" → relclass replaced with free variable; (assertion) "John is a nice big bear. John is nice." — stage-1 split loses the "bear" context and tags "nice" with relclass "animal" while the rule expects "bear" → assertion's "animal" replaced with a free variable | Fixes relclass mismatches. Question-side: `has degree rel2` always coerces to free var; `has degree property` coerces when the relclass is one of the entity's isa classes and no matching rule exists. Assertion-side (new): coerces when the fact's relclass is either (a) one of the entity's multiple isa classes while another class of the entity also appears as a rule-side relclass for the same property, or (b) not in the entity's isa classes while some isa class of the entity appears as a rule-side relclass — both symptoms of stage-1 generic-category leakage. `prop_relclasses` is built from both positive and negated literals so rule bodies contribute. |
-| `$theof1` definite rewrite | `lc_postprocess.rewrite_definites` | "The father of John is nice" — `"the father 2"` → `["$theof1","father","John 1",CTXT]` throughout all clauses; `is_rel2` clause removed; per-relation `isa`/`is_rel2` bridge axioms generated as `frm_theof`; grounded `have(arg,$theof1,ctxt)` fact emitted for the concrete owner | Replaces flat entity IDs for definite functional descriptions with canonical function terms so that "the father of John", "John's father", and wh-queries all refer to the same term.  Triggered by Stage-1 `definites` field.  Primary: matches `is_rel2` clause.  Fallback: matches `have` + `isa` pair.  The formerly-universal `have` bridge in `axioms_std.js` (`[have, ?:S, $theof1(?:R,?:S,?:C), ?:C]`) has been removed because its free `?:S` let the prover satisfy any wh-possession query with a free-variable witness; `rewrite_definites` now emits the needed grounded possession fact directly. |
-| Possessive `have` inference | `lc_postprocess.add_possessive_have` | "The handle of the fork" — `is_rel2(handle of, fork, handle)` + `isa(handle, handle)` → `have(fork, handle)` | Infers `have(Y,E,CT)` from possessive `is_rel2` patterns.  Handles ground entities, Skolem functions, and `$theof1` terms.  For rule clauses with guard literals (e.g., `[-isa,elephant,?:X]`), generates conditional `have` with the same guard.  Skips `@name=frm_theof` clauses (the universally-quantified per-relation schema axioms) because processing them would regenerate the universal have bridge that was removed for free-variable-witness reasons (see `$theof1` definite rewrite row above). |
-| `have` → `has_part` bridge for typed body-part nouns | `lc_postprocess.add_haspart_for_typed_have` | Rule "If an animal has a trunk, it is an elephant" Stage-2-encoded with `-has_part(?:X,?:Y,Ctxt)` and `-isa(trunk,?:Y)`; fact "John has a long trunk" Stage-2-encoded as `have(John 1, trunk 1, Ctxt)` + `isa(trunk, trunk 1)` → emit `has_part(John 1, trunk 1, Ctxt)` so the rule fires (case 207). | **Conservative, problem-local bridge.**  Stage-2 LLM is inconsistent: generic universal claims ("Elephants have trunks") use `has_part`, but specific instance claims with adjectives ("John has a long trunk") often use `have` for some LLMs (gemini, gpt) — which then fail to unify with has_part-using rules.  Pass 1 walks rule clauses and collects the set of types T paired with `-has_part(?:X,?:Y)` AND `-isa(T,?:Y)` for the same `?:Y`; if empty, the bridge does nothing.  Pass 2 collects explicit `isa(T, E)` facts for ground/Skolem entities.  Pass 3 walks single-atom positive `have(X, Y, Ctxt)` clauses; for each, looks up Y's type (explicit isa first; else `_parse_entity_name_type` fallback peels off Stage-2's naming convention "trunk 1" → "trunk", "sk0_trunk" → "trunk") and emits `has_part(X, Y, Ctxt)` only when the type intersects the rule-collected set.  Safe under the subtype rule in `axioms_std.js` because that rule requires `isa(Y1, Y2)` where Y1 is a class with subtypes; specific entities are not classes so the inheritance never propagates back to a class. |
+| Gradable normalisation | `lc_post_normalize.normalize_gradable_predicates` | "John is big" — LLM used `has property(big,...)` but "big" is in the gradable whitelist → upgraded to `has degree property` | Whitelist-based `has property` ↔ `has degree property` conversion; replaces `"entity"` and `"none"` relclass with free variables (§7.5) |
+| `isa entity` stripping | `lc_post_normalize.strip_isa_entity` | "Every entity that is big is strong" — `isa(entity,X)` is always true, so the clause is a tautology → removed | Removes tautological `isa(entity,X)` literals (§7.5) |
+| RELCLASS coercion | `lc_post_normalize.coerce_relclass` | (question) "Is John big?" — query uses relclass "person" (John's category) but the rule uses "bear" → relclass replaced with free variable; (assertion) "John is a nice big bear. John is nice." — stage-1 split loses the "bear" context and tags "nice" with relclass "animal" while the rule expects "bear" → assertion's "animal" replaced with a free variable | Fixes relclass mismatches. Question-side: `has degree rel2` always coerces to free var; `has degree property` coerces when the relclass is one of the entity's isa classes and no matching rule exists. Assertion-side (new): coerces when the fact's relclass is either (a) one of the entity's multiple isa classes while another class of the entity also appears as a rule-side relclass for the same property, or (b) not in the entity's isa classes while some isa class of the entity appears as a rule-side relclass — both symptoms of stage-1 generic-category leakage. `prop_relclasses` is built from both positive and negated literals so rule bodies contribute. |
+| `$theof1` definite rewrite | `lc_post_reify.rewrite_definites` | "The father of John is nice" — `"the father 2"` → `["$theof1","father","John 1",CTXT]` throughout all clauses; `is_rel2` clause removed; per-relation `isa`/`is_rel2` bridge axioms generated as `frm_theof`; grounded `have(arg,$theof1,ctxt)` fact emitted for the concrete owner | Replaces flat entity IDs for definite functional descriptions with canonical function terms so that "the father of John", "John's father", and wh-queries all refer to the same term.  Triggered by Stage-1 `definites` field.  Primary: matches `is_rel2` clause.  Fallback: matches `have` + `isa` pair.  The formerly-universal `have` bridge in `axioms_std.js` (`[have, ?:S, $theof1(?:R,?:S,?:C), ?:C]`) has been removed because its free `?:S` let the prover satisfy any wh-possession query with a free-variable witness; `rewrite_definites` now emits the needed grounded possession fact directly.  **Chain-rewrite guard:** `_find_is_rel2_match` skips any `is_rel2` atom whose value-slot already holds a `$theof1` term — a previous pass has already reified this slot, and a second pass with a different `type_base` would silently overwrite the existing type label.  This is the case-79 sister/brother trap: with two definites pointing to the same entity but using different relation types ("Sara, the sister of Mike" + "Sara is the brother of Mike?"), the second pass would otherwise rewrite `$theof1("sister",...)` → `$theof1("brother",...)` and break downstream mutex reasoning. |
+| Possessive `have` inference | `lc_post_normalize.add_possessive_have` | "The handle of the fork" — `is_rel2(handle of, fork, handle)` + `isa(handle, handle)` → `have(fork, handle)` | Infers `have(Y,E,CT)` from possessive `is_rel2` patterns.  Handles ground entities, Skolem functions, and `$theof1` terms.  For rule clauses with guard literals (e.g., `[-isa,elephant,?:X]`), generates conditional `have` with the same guard.  Skips `@name=frm_theof` clauses (the universally-quantified per-relation schema axioms) because processing them would regenerate the universal have bridge that was removed for free-variable-witness reasons (see `$theof1` definite rewrite row above). |
+| `have` → `has_part` bridge for typed body-part nouns | `lc_post_normalize.add_haspart_for_typed_have` | Rule "If an animal has a trunk, it is an elephant" Stage-2-encoded with `-has_part(?:X,?:Y,Ctxt)` and `-isa(trunk,?:Y)`; fact "John has a long trunk" Stage-2-encoded as `have(John 1, trunk 1, Ctxt)` + `isa(trunk, trunk 1)` → emit `has_part(John 1, trunk 1, Ctxt)` so the rule fires (case 207). | **Conservative, problem-local bridge.**  Stage-2 LLM is inconsistent: generic universal claims ("Elephants have trunks") use `has_part`, but specific instance claims with adjectives ("John has a long trunk") often use `have` for some LLMs (gemini, gpt) — which then fail to unify with has_part-using rules.  Pass 1 walks rule clauses and collects the set of types T paired with `-has_part(?:X,?:Y)` AND `-isa(T,?:Y)` for the same `?:Y`; if empty, the bridge does nothing.  Pass 2 collects explicit `isa(T, E)` facts for ground/Skolem entities.  Pass 3 walks single-atom positive `have(X, Y, Ctxt)` clauses; for each, looks up Y's type (explicit isa first; else `_parse_entity_name_type` fallback peels off Stage-2's naming convention "trunk 1" → "trunk", "sk0_trunk" → "trunk") and emits `has_part(X, Y, Ctxt)` only when the type intersects the rule-collected set.  Safe under the subtype rule in `axioms_std.js` because that rule requires `isa(Y1, Y2)` where Y1 is a class with subtypes; specific entities are not classes so the inheritance never propagates back to a class. |
 | Misnested existential hoisting | `lc_rewrites.hoist_misnested_exists` | `[exists E, [and, has_actor(E,X), [exists X, isa(bear,X)]]]` → `[exists E, [exists X, [and, has_actor(E,X), isa(bear,X)]]]` | Pre-clausification fix for assertion formulas.  Detects existential variables used free in sibling conjuncts before their `exists` binding, hoists the binding to wrap the entire conjunction.  Only applies in assertion contexts (from `holds`), with collision checks against enclosing bindings. |
 | Spurious `can` removal | `lc_rewrites.strip_spurious_can` | "Did bears eat berries?" — removes `["can",X,E]` from event query when no modal language in ASU text | Pre-clausification pass on question formulas.  Fires when `can(X,E)` appears alongside `isa(activity,E)` and `has_actor(E,X)` in the same conjunction, both X and E are existentially quantified, and the ASU text contains no modal words (can, could, able, may, might, etc.). |
 | Meta-predicate normalization | `lc_rewrites.rewrite_meta_predicates` | `["is rel2","is",A,B]` → `["isa",A,B]`; `["is rel2","=",A,B]` → `["=",A,B]`; `["is rel2","located in",A,B]` → `["is rel2","in",A,B]` | Pre-clausification rewrite applied to all formulas.  Normalizes copula (`is` → `isa`), identity (`=`), spatial meta-predicates (`located in/at/on/near/above/under` → bare preposition), movement verbs (travel/journey/move → go), placement verbs (place/set/lay/position/deposit → put), and transfer verb synonyms (hand/pass/send → give).  Also normalizes 3-arg `has_destination(E,Dest)` to 4-arg `has_destination(E,Dest,"at")` for backward compat with stale Stage-2 cache entries. |
 | Perspective verb → dative head normalization | `lc_rewrites.normalize_receive_events` | `["has type",E,"receive"]` + `["has actor",E,X]` → `["has type",E,"give"]` + `["has recipient",E,X]`.  Same pattern for hear→tell, see→show, get→give. | Formula-level rewrite: in `and`-blocks containing a perspective-verb event (receive, get, hear, see), the verb is changed to its dative head (give, tell, show) and the actor role is swapped to recipient.  Single mapping table `_PERSPECTIVE_TO_DATIVE`; function name retained for back-compat.  Asymmetry preserved — the rewrite never adds an actor for events lacking an explicit dative agent, so "Did John receive a book?" still fails when John was the giver.  Allows the give-based transfer axioms in `axioms_std.js` to derive `have(Recipient, Object)` in the next world state, and lets queries about hear/see/get match facts about tell/show/give. |
 | Set existence fact | `lc_sets._walk_for_count` | "Bears ate berries" with `forall/implies/member/$setof` in assertion context → `member("$some_bear", $setof(...))` | Generates a ground set membership fact for assertion-context `forall/member` patterns so the prover can bootstrap resolution through member-guarded clauses.  Skipped when the set already has element instantiation from a count assertion. |
-| Degree stripping | `lc_postprocess.strip_degree_predicates` | With `-simpleproperties`: `has_degree_property(big,X,none,animal)` → `has_property(big,X)` | (Only with `-simpleproperties`) Replaces degree predicates with simple property predicates |
+| Degree stripping | `lc_post_normalize.strip_degree_predicates` | With `-simpleproperties`: `has_degree_property(big,X,none,animal)` → `has_property(big,X)` | (Only with `-simpleproperties`) Replaces degree predicates with simple property predicates |
 | Semantic normalisation | `semnormalize.sem_normalize_clauses` | "The ball is outside the box" → `outside` is antonym of `inside` → flips polarity and substitutes: `-is_rel2(inside,ball,box)` | Antonym resolution (~710 pairs, adjective + noun only: flip polarity + swap word) and canonical substitution (~752 pairs: synonym → canonical form).  Skips `$ctxt` terms.  Polarity-flipping is applied ONLY at the top-level literal — inside nested function terms (`$theof1`, `$measure_of`, Skolem), only canonical substitution runs (flipping `$theof1` to `-$theof1` would produce invalid terms).  Data loaded from generated `data_antonyms.py` and `data_canonicals.py`.  Verb antonyms (`ant_v.txt`) are intentionally excluded from rewriting — most are perspective inversions (give/take, buy/sell), process complementarities (start/stop, come/go), or weak pairs where polarity-flip is wrong, and key verbs collide with axiom-vocab predicates (case 171).  Useful verb subsets (attitude pairs like like/dislike) are scheduled for re-introduction via a defeasible attitude-mutex injector.  `build_antonyms` also skips any pair whose canonical target is itself a CANONICALS key — such chain-through pairs are deferred to `build_exclusions` and emitted as synthetic `ANT_<W1>_<W2>` exclusion groups instead (prevents Pass 2 from chain-substituting the fold target to an unrelated sense, e.g. `open→close→near`). |
-| Soft synonym injection | `lc_postprocess.inject_soft_synonyms` | "The car is red" + axioms mention "crimson" → emits `red(X,Ct) <=> crimson(X,Ct)` biconditional | Dynamic injection of Tier B synonym axioms for words present in both input and axiom vocabulary.  Templates: `has property` (adj), `isa` (noun), `has type` (verb). |
-| Exclusion injection | `lc_postprocess.inject_exclusion_axioms` | "The car is blue. Was it red?" → emits `NOT blue(X,Ct) OR NOT red(X,Ct)` with `$block` | Dynamic injection of mutual-exclusion axioms from `excl_a.txt` groups.  `needs_blocker=True` groups use defeasible `$block`; `False` groups are hard exclusions. Four atom shapes: default `has_property` (adjective); `_IS_REL2_EXCL_GROUPS` (MONTH/DAY_OF_WEEK/SEASON) — `is_rel2` target at arg 3; `_IS_REL2_PREP_GROUPS` (SPATIAL_*, TEMPORAL_ORDER) — `is_rel2` preposition at arg 1 with two free entity variables; `_HAS_DEGREE_REL2_PREP_GROUPS` (PROXIMITY) — `has_degree_rel2` preposition at arg 1 with two asymmetric axioms per pair. Also injects `MANUAL_ANTONYMS` adjective pairs as synthetic `MANUAL_ADJ_<W1>_<W2>` groups, and chain-rejected antonym pairs (from `build_antonyms`) as synthetic `ANT_<W1>_<W2>` defeasible adjective groups. See §9.5 for preposition handling. **Note**: the seven preposition groups in `_STATIC_PREP_EXCL_GROUPS` (SPATIAL_VERTICAL/_OVER_UNDER/_SAGITTAL/_CONTAINMENT/_LATERAL, TEMPORAL_ORDER, PROXIMITY) are skipped here — their mutual-exclusion axioms live statically in `axioms_std.js` §7e because both sides are first-class predicates in the standard ontology. |
-| World-graph geometry | `lc_postprocess.inject_world_geometry` | "Mary slept. Mary is awake. Was Mary awake?" → emits `next(W0,W1)` | Dynamic injection of the minimal `next(Wi,Wi+1)` chain spanning the concrete world constants actually present in the clause list. Replaces the static `W0..W12` chain that used to live in `axioms_std.js` §11. Skips emission entirely when ≤1 world is present (most single-tense problems); otherwise fills any gaps in `[min_idx, max_idx]` so `before` transitivity still closes. Keeps the `before` derivation graph small. |
+| Soft synonym injection | `lc_post_inject.inject_soft_synonyms` | "The car is red" + axioms mention "crimson" → emits `red(X,Ct) <=> crimson(X,Ct)` biconditional | Dynamic injection of Tier B synonym axioms for words present in both input and axiom vocabulary.  Templates: `has property` (adj), `isa` (noun), `has type` (verb). |
+| Exclusion injection | `lc_post_inject.inject_exclusion_axioms` | "The car is blue. Was it red?" → emits `NOT blue(X,Ct) OR NOT red(X,Ct)` with `$block` | Dynamic injection of mutual-exclusion axioms from `excl_a.txt` groups.  `needs_blocker=True` groups use defeasible `$block`; `False` groups are hard exclusions. Four atom shapes: default `has_property` (adjective); `_IS_REL2_EXCL_GROUPS` (MONTH/DAY_OF_WEEK/SEASON) — `is_rel2` target at arg 3; `_IS_REL2_PREP_GROUPS` (SPATIAL_*, TEMPORAL_ORDER) — `is_rel2` preposition at arg 1 with two free entity variables; `_HAS_DEGREE_REL2_PREP_GROUPS` (PROXIMITY) — `has_degree_rel2` preposition at arg 1 with two asymmetric axioms per pair. Also injects `MANUAL_ANTONYMS` adjective pairs as synthetic `MANUAL_ADJ_<W1>_<W2>` groups, and chain-rejected antonym pairs (from `build_antonyms`) as synthetic `ANT_<W1>_<W2>` defeasible adjective groups. See §9.5 for preposition handling. **Note**: the seven preposition groups in `_STATIC_PREP_EXCL_GROUPS` (SPATIAL_VERTICAL/_OVER_UNDER/_SAGITTAL/_CONTAINMENT/_LATERAL, TEMPORAL_ORDER, PROXIMITY) are skipped here — their mutual-exclusion axioms live statically in `axioms_std.js` §7e because both sides are first-class predicates in the standard ontology. |
+| World-graph geometry | `lc_post_inject.inject_world_geometry` | "Mary slept. Mary is awake. Was Mary awake?" → emits `next(W0,W1)` | Dynamic injection of the minimal `next(Wi,Wi+1)` chain spanning the concrete world constants actually present in the clause list. Replaces the static `W0..W12` chain that used to live in `axioms_std.js` §11. Skips emission entirely when ≤1 world is present (most single-tense problems); otherwise fills any gaps in `[min_idx, max_idx]` so `before` transitivity still closes. Keeps the `before` derivation graph small. |
+| Verb mutex injection | `lc_post_inject.inject_verb_mutex_axioms` | "Did everyone pass the exam? — No, Mary failed." → for each entity with both `pass` and `fail` events on it, emits a defeasible mutex preventing the same event from being both | Dynamic, cross-event mutex (distinct from `inject_exclusion_axioms`, which mutexes adjective properties on a single entity).  Pair table `_VERB_MUTEX_PAIRS` currently lists `(pass, fail)`.  Each pair emits a defeasible 0.85 axiom with `$block` so that an explicit positive can override.  Atom shape uses `has_type` event predicates plus shared `?:E` and `?:Ctxt`.  Does not fire unless both verbs of the pair appear in the input clauses. |
+| Containment bridge injection | `lc_post_inject.inject_containment_bridge_axioms` | "The cup filled with water fell" → emits `is rel2 in <swapped args>` | Dynamic bridge from container-language predicates to canonical `is rel2 in`.  Source relations: `filled with`, `contain`, `containing`, `contains`.  Treats `in` as always-axiomatic (no axiom-vocab gating).  Emitted only when the source relation appears in input clauses.  Args are swapped: `filled with(cup, water)` → `is rel2 in (water, cup)`.  Resolves the case-84 family where a containment fact is asserted with one phrasing but queried with another. |
+| Kinship mutex injection | `lc_post_inject.inject_kinship_mutex_axioms` | "Sara is the sister of Mike. Is Sara the brother of Mike?" → emits `isa(sister,X) ∧ isa(brother,X) → false` (and the matching `is_rel2 "X of"` mutex) | Dynamic gender-paired role mutex covering 16 pairs: kinship (sister/brother, daughter/son, mother/father, wife/husband, aunt/uncle, niece/nephew), grand- (grandmother/grandfather, granddaughter/grandson), step- (step{mother,father,daughter,son,sister,brother}), god- (godmother/godfather), status (widow/widower, bride/groom), royalty (queen/king, princess/prince).  Each pair emits two atom shapes: `isa` 3-arg (no `$ctxt`) and `is rel2 "X of"` 5-arg with shared `$ctxt`.  Interacts with the `$theof1` chain-rewrite guard above — without that guard, two definites carrying both kinship roles for the same entity would chain-collapse and the mutex would never fire. |
 | `@sourcetype` stripping | Serialisation (`clause_list_to_json`) | Population facts carry `@sourcetype:"populate"` internally for processing — stripped before the prover sees them | Internal `@sourcetype` tags are excluded from prover input |
 
 ---
@@ -1677,6 +1691,16 @@ Skolem type resolution for rendering (`procproofs._resolve_skolem_entity`):
 
 ---
 
+### 7.10 Frame persistence and motion blocking
+
+`axioms_std.js` §12 contains the **`is_rel2` tense-migration axiom**: a present-world `is_rel2(P, X, Y, ctx_present_W)` fact propagates to past worlds whenever `before(W_past, W_present)` holds.  This is what lets *"The cup is on the table. Was the cup on the table?"* close to True without an explicit past-tense fact.
+
+The migration is **gated by `$block(0, moved(?:E1, ?:W_old))`**: if the entity has moved between the two worlds, the present-world fact must not be back-propagated as if nothing changed.  `moved(X, W)` is itself derived in `axioms_std.js` from `has_actor(E, X) + has_type(E, "go")` (the canonical movement event), so any motion event with `X` as actor blocks the frame inference for `X` over its enclosing world transition.
+
+**Known limitation:** with 4+ same-actor motion events in one problem (case 198), the prover's default strategy (`negative_pref` + `posunitpara`) struggles to enumerate the answer set within the 2-second budget.  The block is correct — the search blowup is a strategy issue, not an axiom issue.  Switching to `unit` or `query_focus` strategy can close such proofs but is not currently the default; see the *Prover-timeout suspected?* step in `CLAUDE.md` for diagnosis.
+
+---
+
 ## 8. Configuration and options
 
 **To change the default LLM provider or model**, edit `solver/llmcall.py`:
@@ -1726,8 +1750,8 @@ Generated by `cd mkdata && python3 build_solver_data.py` (fast, ~1 sec):
 |----------------|----------|---------|
 | `solver/data_canonicals.py` | `CANONICALS` dict (~752 entries, all POS merged) | `semnormalize.py` |
 | `solver/data_antonyms.py` | `ANTONYMS` dict (~850 directional pairs) | `semnormalize.py` |
-| `solver/data_synonyms.py` | `SOFT_SYNONYMS` dict (~12K words, bidirectional) | `lc_postprocess.py` |
-| `solver/data_exclusions.py` | `EXCLUSION_GROUPS` + `EXCLUSION_INDEX` (~123 groups, 4 atom shapes) | `lc_postprocess.py` |
+| `solver/data_synonyms.py` | `SOFT_SYNONYMS` dict (~12K words, bidirectional) | `lc_post_inject.py` |
+| `solver/data_exclusions.py` | `EXCLUSION_GROUPS` + `EXCLUSION_INDEX` (~123 groups, 4 atom shapes) | `lc_post_inject.py` |
 
 Must be regenerated whenever any mkdata `.txt` source changes.
 
@@ -1743,7 +1767,7 @@ Both passes walk all atom arguments (positions 1+), skip predicate names (positi
 skip `$ctxt` terms, and handle disjunctive clauses (list-of-lists). Controlled by
 `-nosemnormal` flag.
 
-**Dynamic axiom injection** (`lc_postprocess.py`, called from `logconvert.rawlogic_convert`):
+**Dynamic axiom injection** (`lc_post_inject.py`, called from `logconvert.rawlogic_convert`):
 
 *Soft synonym axioms* (`inject_soft_synonyms`):
 - Scans the clause list for words appearing in `SOFT_SYNONYMS`
@@ -1751,7 +1775,7 @@ skip `$ctxt` terms, and handle disjunctive clauses (list-of-lists). Controlled b
 - Templates: `has property` for adjectives (gradable normalizer promotes later), `isa` for
   nouns, `has type` for verbs
 - Uses a single free variable for context (unifies with any `$ctxt` term)
-- Two-side restriction (`REQUIRE_BOTH_SIDES = True` in `lc_postprocess.py`): only emits if
+- Two-side restriction (`REQUIRE_BOTH_SIDES = True` in `lc_post_inject.py`): only emits if
   the other side also appears in the input clauses or axiom file vocabulary
 
 *Exclusion axioms* (`inject_exclusion_axioms`):
@@ -1804,6 +1828,9 @@ antonym pairs (so the prover can still derive contradictions) without the destru
 rewriting that caused the chain bug. `needs_blocker=True` is used because many of these
 pairs are gradable (abundant/scarce, hot/cold) where a middle ground exists and a hard
 exclusion would overshoot.
+
+*Axiom-vocab predicate-root blocklist* (`AXIOM_VOCAB_ROOTS`):
+A frozenset of ~50 verb/noun roots used as predicate names in `axioms_std.js` (e.g. `give`, `have`, `move`, `own`).  `build_antonyms` drops any pair where either side's root is in this set, preventing semnormalize from rewriting through axiom-vocab words and breaking proof chains.  Reduced ANTONYMS from ~850 to ~621 entries.
 
 *Axiom vocabulary cache* (`axiom_vocab.py`):
 - Extracts content words from axiom files (e.g. `axioms_std.js`), caches in `.vocab` sibling file
@@ -1858,7 +1885,7 @@ exactly) are not collapsed here.
 **(b) Mutual-exclusion axioms — spatial/temporal opposites (dynamic injection)**
 
 Groups in `mkdata/excl_a.txt` whose ids belong to `_IS_REL2_PREP_GROUPS` (in
-`solver/lc_postprocess.py`) are emitted with the preposition-at-pos-1 template:
+`solver/lc_post_inject.py`) are emitted with the preposition-at-pos-1 template:
 ```
 [-is_rel2(w1, ?:X, ?:Y, ct), -is_rel2(w2, ?:X, ?:Y, ct)]
 ```
@@ -1955,6 +1982,10 @@ Edit `prompts/stage2_instructions.txt` and `prompts/stage2_examples.txt`.  The m
 sections are:
 - `== 4. QUANTIFICATION RULES ==` — how each ASU type is compiled to FOL
 - The Property and Relation Predicate Selection Rule — `has degree property` vs `has property`
+
+### Defeasible bridge axioms in `axioms_std.js`
+
+A recurring pattern: bridge a surface verb to a canonical predicate **defeasibly** so other readings can override it.  Shape: `[-source(...), canonical(...), $block(0, $not canonical(...))]` at `@confidence` < 1.  Examples currently in the file: `pass → give` at 0.85 (most "pass" events are transfers, but exam-passing should not be); `keep ... in/at LOC → is_rel2` at 0.95 (two siblings — `has_location` and `has_destination`).  Use this pattern when a surface word has a dominant canonical reading but rare alternatives must remain reachable; use a hard rewrite (no `$block`) only when the equivalence is exceptionless.
 
 ### Adding a new LLM provider
 

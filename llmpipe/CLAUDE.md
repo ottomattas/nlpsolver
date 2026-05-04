@@ -69,10 +69,13 @@ English text
 - `solve.py` — CLI entry point and `english_to_answer(text, options)` function
 - `llmparse.py` — two-stage LLM parser; `parse_text(text)` → `(s1_json, s2_json, stats)`; includes entity ID case normalization between stages; runs `stage_sanity.check_stage{1,2}` after each parse and re-calls the LLM with a corrective prompt (max 2 retries per stage) if issues are found
 - `llmcall.py` — LLM API wrapper (GPT/Claude/Gemini/DeepSeek) with retries and SQLite caching; `call_llm(sysprompt, input_text)`
-- `logconvert.py` — main driver for stage-2 JSON → GK clause list; `rawlogic_convert(logic)`; orchestrates package extraction, question/assertion processing, and post-processing passes
+- `logconvert.py` — top-level orchestrator for stage-2 JSON → GK clause list; `rawlogic_convert(logic)`; runs structural repair, what-question population, Stage-1 entity bookkeeping, and dispatches per-package processing to `lc_packages`
+- `lc_packages.py` — per-`@id` package processing: `extract_package_ctx`, `convert_id_package`, `_process_question`/`_process_assertion`, raw wh-word probes, confidence distribution
 - `lc_rewrites.py` — pre-clausification formula rewrites: meta-predicate normalization (incl. `is_rel2("time of")`→`has_time`), tense-valued `has_time` stripping, degree presuppositions, existential hoisting, spurious `can` removal, polarity flip
 - `lc_ctxt.py` — `$ctxt` context injection, time-wrapper stripping, fresh variable generation, predicate classification constants
-- `lc_postprocess.py` — post-clausification clause-list passes: gradable normalization, RELCLASS coercion, isa-entity stripping, `$theof1` definite rewrites (global pass), `$measure`→`$list` canonical unit conversion for `$measure_of` terms, `less_measure` rewriting for comparison operators on measures, `$theof1` unwrap inside `$measure_of`, possessive `have` inference, population facts, degree stripping, soft synonym axiom injection, exclusion axiom injection
+- `lc_post_normalize.py` — post-clausification normalising / repair passes: gradable predicate normalization, RELCLASS coercion, isa-entity stripping, possessive `have` inference, `have`→`has_part` bridge for typed body-part nouns, degree stripping, population fact extraction, compound subsumption rules
+- `lc_post_reify.py` — post-clausification reification of definite descriptions and measurements: `$theof1` definite rewrites (global pass, with chain-rewrite guard), `$measure`→`$list` canonical unit conversion for `$measure_of` terms, `less_measure` rewriting for comparison operators on measures, `$theof1` unwrap inside `$measure_of`
+- `lc_post_inject.py` — post-clausification dynamic axiom injection: soft synonym axioms, mutual-exclusion axioms, verb mutex (pass↔fail), kinship mutex (16 gender-paired roles), containment bridge (filled with/contain → "is rel2 in"), world-graph geometry (next-chain over present worlds)
 - `lc_clausify.py` — FOL-to-CNF compiler: implies/xor/equivalent elimination, NNF push, normally expansion, Skolemization, distribution, clause extraction.  Also provides Skolem identification helpers (`is_skolem_const`, `is_skolem_fn`, `skolem_type_from_name`), typed Skolem constant naming (`sk0_house`), `is_world_constant` (W0/W1 excluded from variable detection)
 - `lc_questions.py` — question wrapping (`ask`/`question` → `@question`/`@askvars`), population fact injection, and WH-question builders: `build_where_question`/`build_when_question` (preposition expansion), `build_who_question` (isa + equality biconditionals), `build_defq_question` (general $defq)
 - `lc_sets.py` — set/counting: `$setof` rewriting to canonical form, membership axiom generation, element instantiation, set existence fact generation
@@ -120,14 +123,14 @@ rawlogic_convert():
   ... gradable normalization (promotes has_property -> has_degree_property) ...
 ```
 
-**Soft synonym axioms** (`inject_soft_synonyms` in `lc_postprocess.py`):
+**Soft synonym axioms** (`inject_soft_synonyms` in `lc_post_inject.py`):
 - Scans clause list for words in `SOFT_SYNONYMS`
 - Emits biconditional clauses: `[-has_property, W, X, Ct], [has_property, OTHER, X, Ct]`
 - Templates: `has property` for adjectives (gradable normalizer promotes later), `isa` for nouns, `has type` for verbs
 - Uses a single free variable `?:Ct` for context (unifies with any `$ctxt` term)
 - Two-side restriction (`REQUIRE_BOTH_SIDES = True`): only emits if other side also appears in input clauses or axiom file vocabulary
 
-**Exclusion axioms** (`inject_exclusion_axioms` in `lc_postprocess.py`):
+**Exclusion axioms** (`inject_exclusion_axioms` in `lc_post_inject.py`):
 - Scans clause list for words in `EXCLUSION_INDEX`
 - For groups with 2+ members present, emits pairwise exclusion clauses
 - `needs_blocker=False` groups: hard exclusion `[-has_property, W1, X, Ct], [-has_property, W2, X, Ct]`
