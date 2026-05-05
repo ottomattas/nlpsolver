@@ -95,6 +95,7 @@ from lc_post_reify import (
 from lc_post_inject import (
   inject_soft_synonyms as _inject_soft_synonyms,
   inject_exclusion_axioms as _inject_exclusion_axioms,
+  inject_isa_cross_group_axioms as _inject_isa_cross_group_axioms,
   inject_verb_mutex_axioms as _inject_verb_mutex_axioms,
   inject_containment_bridge_axioms as _inject_containment_bridge_axioms,
   inject_kinship_mutex_axioms as _inject_kinship_mutex_axioms,
@@ -708,6 +709,7 @@ def rawlogic_convert(logic, s1_json=None):
     _axiom_vocab = _load_axiom_vocab()
     sem_axioms = (_inject_soft_synonyms(result, _axiom_vocab)
                   + _inject_exclusion_axioms(result, _axiom_vocab)
+                  + _inject_isa_cross_group_axioms(result, _axiom_vocab)
                   + _inject_verb_mutex_axioms(result, _axiom_vocab)
                   + _inject_containment_bridge_axioms(result, _axiom_vocab)
                   + _inject_kinship_mutex_axioms(result, _axiom_vocab)

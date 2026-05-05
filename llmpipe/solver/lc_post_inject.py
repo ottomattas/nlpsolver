@@ -208,6 +208,28 @@ _STATIC_PREP_EXCL_GROUPS = frozenset({
     "PROXIMITY",
 })
 
+# Noun-mutex groups whose members appear as ARG-1 of isa atoms
+# (concept names like "table", "floor", "car"). Emit cross-entity
+# inequality clauses:
+#   [-isa w1 ?:X ?:Ctxt1, -isa w2 ?:Y ?:Ctxt2, -=(?:X, ?:Y)]
+# Captures both same-entity ("X is not both a table and a floor")
+# and different-entity ("a table-instance and a floor-instance are
+# distinct entities") via a single clause shape — when X=Y, the
+# inequality is unsatisfiable and the clause collapses to standard
+# strict mutex on the same entity.
+_ISA_EXCL_GROUPS = frozenset({
+    "NOUN_TOP_LEVEL",
+    "NOUN_FURNITURE_FIXTURE",
+    "NOUN_VEHICLE",
+    "NOUN_ANIMAL_KIND",
+    "NOUN_BODY_OF_WATER",
+    "NOUN_TERRAIN",
+    "NOUN_CELESTIAL",
+    "NOUN_BUILDING",
+    "NOUN_GARMENT",
+    "NOUN_TOOL",
+})
+
 
 def inject_exclusion_axioms(result, axiom_vocab=frozenset()):
   """Scan clause list for words in exclusion groups; emit pairwise mutual-
@@ -247,11 +269,36 @@ def inject_exclusion_axioms(result, axiom_vocab=frozenset()):
     is_rel2_group = gid in _IS_REL2_EXCL_GROUPS
     is_rel2_prep_group = gid in _IS_REL2_PREP_GROUPS
     has_degree_rel2_prep_group = gid in _HAS_DEGREE_REL2_PREP_GROUPS
+    isa_group = gid in _ISA_EXCL_GROUPS
     present_list = sorted(present)
     for i in range(len(present_list)):
       for j in range(i + 1, len(present_list)):
         w1, w2 = present_list[i], present_list[j]
-        if has_degree_rel2_prep_group:
+        if isa_group:
+          # Noun mutex within the same group. isa is 3-arg in this pipeline
+          # (no Ctxt slot), so axioms use 3-position atoms.
+          # Emit two clauses:
+          #   (a) Same-entity strict mutex (shortcut):
+          #         [¬isa w1 ?:X, ¬isa w2 ?:X]
+          #   (b) Cross-entity inequality (general case):
+          #         [¬isa w1 ?:X, ¬isa w2 ?:Y, ¬=(?:X, ?:Y)]
+          # (b) logically subsumes (a) (collapses when X=Y), but emitting
+          # the 2-literal form too gives the prover a directly-applicable
+          # shortcut that doesn't require equality reasoning.
+          axioms.append({"@name": "frm_excl_isa",
+                          "@logic": [
+                              ["-isa", w1, "?:X"],
+                              ["-isa", w2, "?:X"],
+                          ],
+                          "@confidence": score})
+          axioms.append({"@name": "frm_excl_isa",
+                          "@logic": [
+                              ["-isa", w1, "?:X"],
+                              ["-isa", w2, "?:Y"],
+                              ["-=", "?:X", "?:Y"],
+                          ],
+                          "@confidence": score})
+        elif has_degree_rel2_prep_group:
           # Preposition at has_degree_rel2 arg 1. Two asymmetric axioms per
           # pair: positive side any-degree (?:D), antonym side "none"
           # intensity, shared ?:RC. Intensity bridges (high→none, low→none)
@@ -317,6 +364,75 @@ def inject_exclusion_axioms(result, axiom_vocab=frozenset()):
           axioms.append({"@name": "frm_excl",
                           "@logic": clause,
                           "@confidence": score})
+  return axioms
+
+
+def inject_isa_cross_group_axioms(result, axiom_vocab=frozenset()):
+  """Layer 2 noun mutex: cross-group cross-entity inequality.
+
+  For every pair (w1, w2) where w1 belongs to a group G1 in
+  _ISA_EXCL_GROUPS, w2 belongs to a different group G2 in
+  _ISA_EXCL_GROUPS, and both w1 and w2 are present in input clauses or
+  axiom_vocab, emit:
+
+      [-isa w1 ?:X ?:Ct1, -isa w2 ?:Y ?:Ct2, -=(?:X, ?:Y)]
+
+  Same shape as the within-group axiom emitted by
+  inject_exclusion_axioms (Layer 1) — when X=Y the inequality forces
+  strict mutex; when X != Y the clause asserts entity distinctness.
+
+  Both layers are gated by REQUIRE_BOTH_SIDES via _eligible_word /
+  axiom_vocab membership.
+  """
+  words = _collect_eligible_words(result)
+  all_known = set(words) | axiom_vocab if REQUIRE_BOTH_SIDES else set(words)
+
+  # Build word -> group_id (only for _ISA_EXCL_GROUPS entries)
+  word_to_group = {}
+  for gid in _ISA_EXCL_GROUPS:
+    ginfo = EXCLUSION_GROUPS.get(gid)
+    if not ginfo:
+      continue
+    for w in ginfo["words"]:
+      if w not in word_to_group:
+        word_to_group[w] = gid
+
+  # Eligible words: in some _ISA_EXCL_GROUPS group AND in all_known.
+  eligible = sorted(w for w in word_to_group if w in all_known)
+  if len(eligible) < 2:
+    return []
+
+  axioms = []
+  emitted_pairs = set()
+  # Use the first group's score as representative (all are 0.95 in our
+  # current data; future groups should keep parity).
+  default_score = 0.95
+  for i in range(len(eligible)):
+    for j in range(i + 1, len(eligible)):
+      w1, w2 = eligible[i], eligible[j]
+      g1, g2 = word_to_group[w1], word_to_group[w2]
+      if g1 == g2:
+        continue                      # within-group handled by Layer 1
+      pair = (w1, w2) if w1 < w2 else (w2, w1)
+      if pair in emitted_pairs:
+        continue
+      emitted_pairs.add(pair)
+      score = EXCLUSION_GROUPS.get(g1, {}).get("score", default_score)
+      # Same shape as Layer 1 (within-group). Emit both same-entity
+      # shortcut and cross-entity inequality.
+      axioms.append({"@name": "frm_excl_isa_xg",
+                      "@logic": [
+                          ["-isa", w1, "?:X"],
+                          ["-isa", w2, "?:X"],
+                      ],
+                      "@confidence": score})
+      axioms.append({"@name": "frm_excl_isa_xg",
+                      "@logic": [
+                          ["-isa", w1, "?:X"],
+                          ["-isa", w2, "?:Y"],
+                          ["-=", "?:X", "?:Y"],
+                      ],
+                      "@confidence": score})
   return axioms
 
 
