@@ -633,6 +633,97 @@ def inject_carrier_lifts(result, axiom_vocab=frozenset()):
   return axioms
 
 
+# ======== verb-result-state bridges ========
+
+# Verb → past-participle result-state property pairs. For each pair where
+# the verb appears in the input clauses (or axiom_vocab), inject a
+# defeasible bridge: if event E has type V and target X, and next(W, W2)
+# in E's context, then X has property <past_participle> at present W2.
+# Defeasible at 0.9 with $block(¬property@W2) — explicit ¬property defeats.
+#
+# Conservative initial set — verbs whose past-participle is unambiguously
+# a stable result property.  Ambiguous cases (start/started — process vs
+# state, leave/left — direction vs state) deliberately omitted.
+_VERB_RESULT_STATES = (
+    ("destroy",  "destroyed"),
+    ("break",    "broken"),
+    ("damage",   "damaged"),
+    ("finish",   "finished"),
+    ("complete", "completed"),
+    ("kill",     "killed"),
+    ("repair",   "repaired"),
+)
+
+
+def inject_verb_result_state_axioms(result, axiom_vocab=frozenset()):
+  """For each (verb, property) pair in _VERB_RESULT_STATES whose verb
+  appears in the input clauses or axiom_vocab, emit a defeasible
+  result-state bridge axiom.
+
+  Shape:
+    [-has type E V Ct, -has target E X CtFull, -next W W2,
+     has property <prop> X CtNext,
+     $block(0, $not(has property <prop> X CtNext))]
+  where CtFull is the full $ctxt and W comes from its world slot;
+  CtNext is the present-tense $ctxt at W2 with the same L/K vars.
+
+  Closes case 156 ("The city was destroyed. Is the city destroyed?")
+  and case 157 ("...Is the city intact?") via the destroy → destroyed
+  result-state plus the destroyed/intact mutex (data_exclusions.py).
+  """
+  words = _collect_eligible_words(result)
+  all_known = set(words) | axiom_vocab
+  axioms = []
+  for verb, prop in _VERB_RESULT_STATES:
+    if verb not in all_known:
+      continue
+    # Bridge A: event-based encoding (gemini/deepseek style).
+    #   has type E V Ct  +  has target E X Ct  +  next W W2
+    #     →  has property <prop> X CtNext
+    t  = _fresh_fv()
+    w  = _fresh_fv()
+    w2 = _fresh_fv()
+    l  = _fresh_fv()
+    k  = _fresh_fv()
+    full_ct = ["$ctxt", t, w, l, k]
+    next_ct = ["$ctxt", "present", w2, l, k]
+    clause = [
+        ["-has type",   "?:E", verb, full_ct],
+        ["-has target", "?:E", "?:X", full_ct],
+        ["-next",       w,    w2],
+        ["has property", prop, "?:X", next_ct],
+        ["$block", 0,
+          ["$not", ["has property", prop, "?:X", next_ct]]],
+    ]
+    axioms.append({"@name": "frm_verb_result",
+                    "@logic": clause,
+                    "@confidence": 0.9})
+    # Bridge B: stative property encoding (claude style).
+    # Claude sometimes emits `was destroyed` as `has property "destroy" X`
+    # (verb root as property name).  Emit the canonical past-participle
+    # result-state at present at the next world — same target context as
+    # Bridge A so mutex axioms (e.g. destroyed/intact) can fire on the
+    # question's present-tense reading.
+    t2  = _fresh_fv()
+    w2a = _fresh_fv()
+    w2b = _fresh_fv()
+    l2  = _fresh_fv()
+    k2  = _fresh_fv()
+    full_ct_b = ["$ctxt", t2, w2a, l2, k2]
+    next_ct_b = ["$ctxt", "present", w2b, l2, k2]
+    clause_b = [
+        ["-has property", verb, "?:X", full_ct_b],
+        ["-next",         w2a,  w2b],
+        ["has property",  prop, "?:X", next_ct_b],
+        ["$block", 0,
+          ["$not", ["has property", prop, "?:X", next_ct_b]]],
+    ]
+    axioms.append({"@name": "frm_verb_result",
+                    "@logic": clause_b,
+                    "@confidence": 0.9})
+  return axioms
+
+
 # ======== world-graph geometry ========
 
 def inject_world_geometry(result):

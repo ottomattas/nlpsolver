@@ -100,6 +100,7 @@ from lc_post_inject import (
   inject_containment_bridge_axioms as _inject_containment_bridge_axioms,
   inject_kinship_mutex_axioms as _inject_kinship_mutex_axioms,
   inject_carrier_lifts as _inject_carrier_lifts,
+  inject_verb_result_state_axioms as _inject_verb_result_state_axioms,
   inject_world_geometry as _inject_world_geometry,
 )
 
@@ -707,6 +708,12 @@ def rawlogic_convert(logic, s1_json=None):
   if not _g_options.get("nosemnormal_flag"):
     from axiom_vocab import load_axiom_vocab as _load_axiom_vocab
     _axiom_vocab = _load_axiom_vocab()
+    # Verb-result-state must run BEFORE inject_exclusion_axioms so that
+    # the result-state property words (e.g. "destroyed" from a destroy
+    # event) become eligible for the exclusion injector's REQUIRE_BOTH_SIDES
+    # check (e.g. destroyed/intact via MANUAL_ADJ_GRAD_*).
+    verb_result_axioms = _inject_verb_result_state_axioms(result, _axiom_vocab)
+    result.extend(verb_result_axioms)
     sem_axioms = (_inject_soft_synonyms(result, _axiom_vocab)
                   + _inject_exclusion_axioms(result, _axiom_vocab)
                   + _inject_isa_cross_group_axioms(result, _axiom_vocab)
