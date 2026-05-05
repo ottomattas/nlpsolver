@@ -810,6 +810,45 @@ Does John 1 have two cars?
     ["-has degree rel2", "near",     "?:X", "?:Y", "none", "?:RC", "?:C"]
   ],
 
+  // == 7f. CARRIER TRANSPARENCY ==
+  // If C is a carrier (plate, tray, newspaper, ...), X is on C, and C is
+  // on S, then X is also on S. Defeasible at 0.85 so an explicit
+  // ¬is_rel2(on, X, S) defeats the bridge.
+  // "The pizza is on the plate. The plate is on the table." => pizza on table.
+  // The carrier tag itself is emitted dynamically from lc_post_inject's
+  // inject_carrier_lifts: the per-noun lift `[¬isa(<noun>,X), isa(carrier,X)]`
+  // is added only when <noun> appears in input or axiom_vocab.
+  {
+    "@confidence": 0.85,
+    "@logic": [
+      ["-isa", "carrier", "?:C", "?:Ctxt"],
+      ["-is rel2", "on", "?:X", "?:C", "?:Ctxt"],
+      ["-is rel2", "on", "?:C", "?:S", "?:Ctxt"],
+      ["is rel2", "on", "?:X", "?:S", "?:Ctxt"],
+      ["$block", 0, ["$not", ["is rel2", "on", "?:X", "?:S", "?:Ctxt"]]]
+    ]
+  },
+
+  // == 7g. DIRECT-SUPPORT UNIQUENESS (X2 with containment escape) ==
+  // If X is on Y1 and X is on Y2 in the same context, the targets must
+  // be the same — UNLESS one is on or part of the other (allows stacked
+  // and sub-part configurations like book-on-table-on-rug or
+  // soup-on-stove-on-burner).
+  //
+  // Strict (no @confidence): under entity UNA via the `#:` prefix
+  // (lc_post_una.apply_una), forcing Y1=Y2 on syntactically distinct
+  // entity constants gives an immediate contradiction. Closes case
+  // 148: "John ate the pizza on the table. Was the pizza on the floor?"
+  [
+    ["-is rel2", "on", "?:X", "?:Y1", "?:C"],
+    ["-is rel2", "on", "?:X", "?:Y2", "?:C"],
+    ["=", "?:Y1", "?:Y2"],
+    ["$block", 0, ["is rel2", "on",      "?:Y1", "?:Y2", "?:C"]],
+    ["$block", 0, ["is rel2", "on",      "?:Y2", "?:Y1", "?:C"]],
+    ["$block", 0, ["is rel2", "part of", "?:Y1", "?:Y2", "?:C"]],
+    ["$block", 0, ["is rel2", "part of", "?:Y2", "?:Y1", "?:C"]]
+  ],
+
   // == 8. MEASUREMENTS & ATTRIBUTES ==
   // Value Holders [cite: 306, 307]
   [["isa", "weight", ["$theof1", "weight", "?:O", "?:Ctxt"]]],
