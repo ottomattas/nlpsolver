@@ -539,7 +539,13 @@ def inject_kinship_mutex_axioms(result, axiom_vocab=frozenset()):
   all_known = set(words) | axiom_vocab
   axioms = []
   for a, b in _KINSHIP_MUTEX_PAIRS:
-    if a not in all_known or b not in all_known:
+    # Accept either the bare role noun ("sister") OR the relation form
+    # ("sister of") — gpt's Stage-2 sometimes only emits the relation
+    # form for definite-description questions ("Is Sara the brother of
+    # Mike?"), which would otherwise fail to trigger kinship mutex.
+    a_present = (a in all_known) or ((a + " of") in all_known)
+    b_present = (b in all_known) or ((b + " of") in all_known)
+    if not (a_present and b_present):
       continue
     # Category-level mutex: isa atoms are 3-arg, no $ctxt.
     axioms.append({"@name": "frm_kin_excl",
@@ -550,6 +556,23 @@ def inject_kinship_mutex_axioms(result, axiom_vocab=frozenset()):
                    "@logic": [
                        ["-is rel2", a + " of", "?:X", "?:Y", ct],
                        ["-is rel2", b + " of", "?:X", "?:Y", ct],
+                   ]})
+    # Relation→category bridges: `is rel2 "<role> of" X Y CT → isa(<role>, X)`.
+    # Required when the relation form is the only encoding emitted (e.g. gpt's
+    # case 79 has `is rel2 brother of #:Sara #:Mike` but no `isa(brother, ...)`
+    # for any entity, so the isa-mutex above alone cannot fire).  These
+    # bridges feed both the category mutex and any other isa-keyed reasoning.
+    ct_a = _fresh_fv()
+    ct_b = _fresh_fv()
+    axioms.append({"@name": "frm_kin_excl",
+                   "@logic": [
+                       ["-is rel2", a + " of", "?:X", "?:Y", ct_a],
+                       ["isa", a, "?:X"],
+                   ]})
+    axioms.append({"@name": "frm_kin_excl",
+                   "@logic": [
+                       ["-is rel2", b + " of", "?:X", "?:Y", ct_b],
+                       ["isa", b, "?:X"],
                    ]})
   return axioms
 
