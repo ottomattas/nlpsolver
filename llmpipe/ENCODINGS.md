@@ -737,9 +737,12 @@ The pipeline applies several transformations between Stage-2 output and GK input
 - isa(entity,X) stripping (lc_post_normalize.py, tautological)
 - RELCLASS coercion for question atoms (lc_post_normalize.py)
 - Population fact generation (lc_post_normalize.py, synthetic witnesses for rule variables)
-- Dynamic axiom injection — soft synonyms, exclusions (incl. noun-mutex via
-  `_ISA_EXCL_GROUPS`), cross-group isa-mutex, verb mutex, kinship mutex,
-  containment bridge, carrier vocabulary lift, world geometry (lc_post_inject.py)
+- Dynamic axiom injection — verb-result-state bridges (run first so result-
+  state words become eligible for the exclusion injector), then soft synonyms,
+  exclusions (incl. noun-mutex via `_ISA_EXCL_GROUPS` and gradable adjective
+  antonyms via `MANUAL_ADJ_GRAD_*`), cross-group isa-mutex, verb mutex,
+  kinship mutex, containment bridge, carrier vocabulary lift, world geometry
+  (lc_post_inject.py)
 - Set existence fact generation (lc_sets.py, assertion-context `forall/member` patterns)
 - Semantic normalization (semnormalize.py, antonym resolution, canonical substitution)
 - **Entity UNA wrapping** (lc_post_una.py, last pass): every Stage-1 numbered

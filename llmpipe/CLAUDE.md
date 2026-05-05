@@ -75,7 +75,7 @@ English text
 - `lc_ctxt.py` — `$ctxt` context injection, time-wrapper stripping, fresh variable generation, predicate classification constants
 - `lc_post_normalize.py` — post-clausification normalising / repair passes: gradable predicate normalization, RELCLASS coercion, isa-entity stripping, possessive `have` inference, `have`→`has_part` bridge for typed body-part nouns, degree stripping, population fact extraction, compound subsumption rules
 - `lc_post_reify.py` — post-clausification reification of definite descriptions and measurements: `$theof1` definite rewrites (global pass, with chain-rewrite guard), `$measure`→`$list` canonical unit conversion for `$measure_of` terms, `less_measure` rewriting for comparison operators on measures, `$theof1` unwrap inside `$measure_of`
-- `lc_post_inject.py` — post-clausification dynamic axiom injection: soft synonym axioms, mutual-exclusion axioms (incl. noun-mutex via `_ISA_EXCL_GROUPS`), cross-group isa-mutex (`inject_isa_cross_group_axioms`), verb mutex (pass↔fail), kinship mutex (16 gender-paired roles), containment bridge (filled with/contain → "is rel2 in"), carrier vocabulary lift (`inject_carrier_lifts` — plate/tray/etc. → `isa(carrier,X)`), world-graph geometry (next-chain over present worlds)
+- `lc_post_inject.py` — post-clausification dynamic axiom injection: soft synonym axioms, mutual-exclusion axioms (incl. noun-mutex via `_ISA_EXCL_GROUPS` and gradable adjective antonyms via `MANUAL_ADJ_GRAD_*`), cross-group isa-mutex (`inject_isa_cross_group_axioms`), verb mutex (pass↔fail), kinship mutex (16 gender-paired roles), containment bridge (filled with/contain → "is rel2 in"), carrier vocabulary lift (`inject_carrier_lifts` — plate/tray/etc. → `isa(carrier,X)`), verb-result-state bridges (`inject_verb_result_state_axioms` — destroy/break/etc. → has property "destroyed"/"broken"/etc. with two bridges A and B for event-based and stative encodings; runs BEFORE inject_exclusion_axioms so result-state words become eligible for the exclusion injector), world-graph geometry (next-chain over present worlds)
 - `lc_post_una.py` — post-clausification entity UNA wrapping: prefix every Stage-1 numbered entity with `#:` so the gk prover treats distinct entity constants as definitely unequal. Three-step criterion: surface-form regex + Stage-1 entity-set membership + not-Skolem-shaped. Required by axioms_std.js §7g (X2 direct-support uniqueness). Render-time strip in `proof_utils.entity_name`, `proof_logic._logic_name`, `procproofs.process_proof`
 - `lc_clausify.py` — FOL-to-CNF compiler: implies/xor/equivalent elimination, NNF push, normally expansion, Skolemization, distribution, clause extraction.  Also provides Skolem identification helpers (`is_skolem_const`, `is_skolem_fn`, `skolem_type_from_name`), typed Skolem constant naming (`sk0_house`), `is_world_constant` (W0/W1 excluded from variable detection)
 - `lc_questions.py` — question wrapping (`ask`/`question` → `@question`/`@askvars`), population fact injection, and WH-question builders: `build_where_question`/`build_when_question` (preposition expansion), `build_who_question` (isa + equality biconditionals), `build_defq_question` (general $defq)
@@ -151,6 +151,21 @@ rawlogic_convert():
 - Static list `_CARRIER_NOUNS = {plate, tray, saucer, dish, newspaper, napkin, tablecloth, mat, rug, carpet}`.
 - For each present noun, emits one lifting clause `[-isa <noun> ?:X ?:Ctxt, isa "carrier" ?:X ?:Ctxt]`.
 - Consumed by the static carrier-transparency axiom in `axioms_std.js` §7f. Handles "pizza on plate, plate on table → pizza on table".
+
+**Verb-result-state bridges** (`inject_verb_result_state_axioms` in `lc_post_inject.py`):
+- Pair list `_VERB_RESULT_STATES = {(destroy, destroyed), (break, broken), (damage, damaged), (finish, finished), (complete, completed), (kill, killed), (repair, repaired)}`.
+- For each pair whose verb appears in input or axiom_vocab, emits TWO defeasible (0.9) bridges to handle both Stage-2 encodings:
+  - **Bridge A** (event-based, gemini/deepseek): `has type E V Ct + has target E X Ct + next W W2 → has property <pp> X [present W2 ...]`.
+  - **Bridge B** (stative property-name, claude): `has property V X [_ W _ _ _] + next W W2 → has property <pp> X [present W2 ...]`.
+- Both target `present @ next-world` so mutex axioms fire on the question's present-tense reading.
+- Wired into `rawlogic_convert` BEFORE `inject_exclusion_axioms` so result-state words become eligible for the exclusion injector's REQUIRE_BOTH_SIDES check (e.g. enables `destroyed/intact` mutex when "destroy" appears).
+- Closes cases 156 (True) and 157 (False) on all three LLMs.
+
+**MANUAL_GRADABLE_ANTONYMS** (`mkdata/build_solver_data.py`):
+- Hand-curated dict of gradable adjective antonym pairs that should NOT polarity-flip via ANTONYMS (the flip negates the assertion, defeating cross-world frame propagation in §6).
+- Initial pairs: `expensive/cheap`, `destroyed/intact`. Emits defeasible `MANUAL_ADJ_GRAD_<W1>_<W2>` exclusion groups (`needs_blocker=True`) via `build_exclusions`.
+- `build_antonyms` filters these pairs out of ANTONYMS so they flow exclusively through the exclusion path.
+- Closes case 55 (claude/deepseek "bicycle was expensive / was cheap?" → False) and contributes to case 157.
 
 **X2 direct-support uniqueness** (axioms_std.js §7g, static):
 - Strict — `on(X,Y1) ∧ on(X,Y2) → Y1 = Y2` with four `$block` escapes for stacked / part-of configurations.

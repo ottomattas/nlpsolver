@@ -610,6 +610,9 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
     ├─ insert population facts before first @question
     ├─ generate "what" population facts     for @what_query: isa(CLASS,$some_CLASS) from witnesses
     ├─ inject $ctxt into population facts  [lc_ctxt]
+    ├─ inject_verb_result_state_axioms (extends `result` in place
+    │    so the result-state property words become eligible for the
+    │    exclusion injector below)                                       [lc_post_inject]
     ├─ inject_soft_synonyms / inject_exclusion_axioms /
     │    inject_isa_cross_group_axioms / inject_verb_mutex_axioms /
     │    inject_kinship_mutex_axioms / inject_containment_bridge_axioms /
@@ -1261,6 +1264,7 @@ bridge representation gaps.
 | World-graph geometry | `lc_post_inject.inject_world_geometry` | "Mary slept. Mary is awake. Was Mary awake?" → emits `next(W0,W1)` | Dynamic injection of the minimal `next(Wi,Wi+1)` chain spanning the concrete world constants actually present in the clause list. Replaces the static `W0..W12` chain that used to live in `axioms_std.js` §11. Skips emission entirely when ≤1 world is present (most single-tense problems); otherwise fills any gaps in `[min_idx, max_idx]` so `before` transitivity still closes. Keeps the `before` derivation graph small. |
 | Verb mutex injection | `lc_post_inject.inject_verb_mutex_axioms` | "Did everyone pass the exam? — No, Mary failed." → for each entity with both `pass` and `fail` events on it, emits a defeasible mutex preventing the same event from being both | Dynamic, cross-event mutex (distinct from `inject_exclusion_axioms`, which mutexes adjective properties on a single entity).  Pair table `_VERB_MUTEX_PAIRS` currently lists `(pass, fail)`.  Each pair emits a defeasible 0.85 axiom with `$block` so that an explicit positive can override.  Atom shape uses `has_type` event predicates plus shared `?:E` and `?:Ctxt`.  Does not fire unless both verbs of the pair appear in the input clauses. |
 | Containment bridge injection | `lc_post_inject.inject_containment_bridge_axioms` | "The cup filled with water fell" → emits `is rel2 in <swapped args>` | Dynamic bridge from container-language predicates to canonical `is rel2 in`.  Source relations: `filled with`, `contain`, `containing`, `contains`.  Treats `in` as always-axiomatic (no axiom-vocab gating).  Emitted only when the source relation appears in input clauses.  Args are swapped: `filled with(cup, water)` → `is rel2 in (water, cup)`.  Resolves the case-84 family where a containment fact is asserted with one phrasing but queried with another. |
+| Verb-result-state injection | `lc_post_inject.inject_verb_result_state_axioms` | "The city was destroyed" → emits bridges to `has property "destroyed" #:city @ present @ next-world` | For each `(verb, past_participle)` pair in `_VERB_RESULT_STATES = {(destroy, destroyed), (break, broken), (damage, damaged), (finish, finished), (complete, completed), (kill, killed), (repair, repaired)}` whose verb appears in input or axiom_vocab, emits TWO defeasible (0.9) bridge axioms covering both Stage-2 encodings. Bridge A (event-based, gemini/deepseek): `has type E V Ct + has target E X Ct + next W W2 → has property <pp> X [present W2 ...]`. Bridge B (stative property-name, claude): `has property V X [_ W _ _ _] + next W W2 → has property <pp> X [present W2 ...]`. Both target the same `present @ next-world` slot so mutex axioms fire on the question's present-tense reading regardless of LLM encoding. Wired into `rawlogic_convert` BEFORE `inject_exclusion_axioms` so the result-state words become eligible for the exclusion injector's REQUIRE_BOTH_SIDES check (e.g. enables `destroyed/intact` mutex when "destroy" is in the input). |
 | Kinship mutex injection | `lc_post_inject.inject_kinship_mutex_axioms` | "Sara is the sister of Mike. Is Sara the brother of Mike?" → emits `isa(sister,X) ∧ isa(brother,X) → false` (and the matching `is_rel2 "X of"` mutex) | Dynamic gender-paired role mutex covering 16 pairs: kinship (sister/brother, daughter/son, mother/father, wife/husband, aunt/uncle, niece/nephew), grand- (grandmother/grandfather, granddaughter/grandson), step- (step{mother,father,daughter,son,sister,brother}), god- (godmother/godfather), status (widow/widower, bride/groom), royalty (queen/king, princess/prince).  Each pair emits two atom shapes: `isa` 3-arg (no `$ctxt`) and `is rel2 "X of"` 5-arg with shared `$ctxt`.  Interacts with the `$theof1` chain-rewrite guard above — without that guard, two definites carrying both kinship roles for the same entity would chain-collapse and the mutex would never fire. |
 | `@sourcetype` stripping | Serialisation (`clause_list_to_json`) | Population facts carry `@sourcetype:"populate"` internally for processing — stripped before the prover sees them | Internal `@sourcetype` tags are excluded from prover input |
 
@@ -1790,7 +1794,7 @@ generates Python dict files in `solver/` that are loaded at runtime.
 | `syn_{a,n,v}_rewrite.txt` | 416 / 218 / 124 entries | Tier A hard rewrites (`member,canonical`) |
 | `syn_{a,n,v}_soft_axioms.txt` | 2496 / 6218 / 4103 pairs | Tier B soft synonym pairs (`word_a,word_b,score`) |
 | `ant_{a,n,v}.txt` | 1483 / 375 / 295 entries | Antonym pairs (directional, polarity-flip) |
-| `excl_a.txt` | ~60 groups (+ 4 synthetic from `MANUAL_ANTONYMS`, + ~60 synthetic `ANT_*` groups from chain-rejected antonym pairs) | Mutual-exclusion groups (colors, months, nationalities, kinship/gender pairs, spatial/temporal opposites) |
+| `excl_a.txt` | ~60 groups (+ 4 synthetic from `MANUAL_ANTONYMS`, + 2 synthetic from `MANUAL_GRADABLE_ANTONYMS`, + ~60 synthetic `ANT_*` groups from chain-rejected antonym pairs) | Mutual-exclusion groups (colors, months, nationalities, kinship/gender pairs, spatial/temporal opposites) |
 | `excl_n.txt` | 10 groups (`NOUN_TOP_LEVEL`, `NOUN_FURNITURE_FIXTURE`, `NOUN_VEHICLE`, `NOUN_ANIMAL_KIND`, `NOUN_BODY_OF_WATER`, `NOUN_TERRAIN`, `NOUN_CELESTIAL`, `NOUN_BUILDING`, `NOUN_GARMENT`, `NOUN_TOOL`) | Noun-mutex groups for `isa(category, X)` exclusion. Members curated to avoid hyponym overlap (person/animal, sun/star, desk/table excluded). |
 
 ### 9.2 Solver runtime files
@@ -1886,6 +1890,23 @@ group named `MANUAL_ADJ_<W1>_<W2>`, emitted with the default has_property templa
 Semantically this is cleaner: "X is broken" and "X is intact" are mutually exclusive, not
 strictly complementary — the axiom form expresses that precisely without losing positive
 atoms.
+
+*MANUAL_GRADABLE_ANTONYMS → synthetic defeasible exclusion groups*:
+A second hand-curated dict in `build_solver_data.py` for **gradable** adjective antonym
+pairs where polarity-flip-and-substitute would actively defeat reasoning across worlds
+(currently `expensive/cheap`, `destroyed/intact`).  Same code path as `MANUAL_ANTONYMS`
+except `needs_blocker=True` (defeasible — gradable pairs admit a middle ground), and
+`build_antonyms` is patched to filter these pairs out of `ANTONYMS` so the polarity-flip
+path doesn't pre-empt the exclusion path. Group naming: `MANUAL_ADJ_GRAD_<W1>_<W2>`.
+
+**Why two separate paths.** With strict mutex (`MANUAL_ADJ_*`) the assertion stays
+positive (`broken X`), the cross-world frame axiom (axioms_std.js §6) propagates it,
+and the mutex contradicts at the question's world.  With polarity-flip ANTONYMS, the
+assertion becomes negative (`¬cheap X`) which the frame axiom does NOT propagate
+(propagation is positive-atoms only).  So pairs where the question and assertion live
+in different worlds **must** flow through the exclusion path or they fail.  Add new
+gradable pairs to `MANUAL_GRADABLE_ANTONYMS` (not to ANTONYMS) when they exhibit this
+cross-world failure mode — see case 55 (expensive/cheap) and 157 (destroyed/intact).
 
 *Chain-rejected antonyms → synthetic `ANT_*` exclusion groups*:
 `build_antonyms` applies two symmetric guards against chain-contamination with the
