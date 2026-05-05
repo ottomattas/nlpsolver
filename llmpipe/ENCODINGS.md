@@ -729,7 +729,7 @@ The pipeline applies several transformations between Stage-2 output and GK input
 - Skolemization (exists → typed Skolem constants `sk0_house`, plain functions `["sk0","?:X"]`)
 - CNF distribution (or over and)
 
-**Post-clausification** (lc_ctxt.py + lc_post_normalize.py + lc_post_reify.py + lc_post_inject.py, on the clause list):
+**Post-clausification** (lc_ctxt.py + lc_post_normalize.py + lc_post_reify.py + lc_post_inject.py + lc_post_una.py, on the clause list):
 - $ctxt injection with world dispatch (lc_ctxt.py)
 - `$theof1` definite function terms and `$measure_of` measurement encoding
   (lc_post_reify.py) — see §3.13 for details.
@@ -737,10 +737,18 @@ The pipeline applies several transformations between Stage-2 output and GK input
 - isa(entity,X) stripping (lc_post_normalize.py, tautological)
 - RELCLASS coercion for question atoms (lc_post_normalize.py)
 - Population fact generation (lc_post_normalize.py, synthetic witnesses for rule variables)
-- Dynamic axiom injection — soft synonyms, exclusions, verb / kinship mutex,
-  containment bridge, world geometry (lc_post_inject.py)
+- Dynamic axiom injection — soft synonyms, exclusions (incl. noun-mutex via
+  `_ISA_EXCL_GROUPS`), cross-group isa-mutex, verb mutex, kinship mutex,
+  containment bridge, carrier vocabulary lift, world geometry (lc_post_inject.py)
 - Set existence fact generation (lc_sets.py, assertion-context `forall/member` patterns)
 - Semantic normalization (semnormalize.py, antonym resolution, canonical substitution)
+- **Entity UNA wrapping** (lc_post_una.py, last pass): every Stage-1 numbered
+  entity (e.g. `"John 1"`, `"table 3"`) gets a `#:` prefix — required by the
+  X2 direct-support uniqueness axiom (axioms_std.js §7g) so `gk` treats
+  distinct entity constants as definitely unequal. Three-step criterion:
+  regex match `^.+ \d+$` AND in Stage-1 entity set AND not Skolem-shaped.
+  Skolems, function terms, worlds, and `$some_X` constants are NOT wrapped.
+  The `#:` prefix is stripped at proof rendering time.
 
 **Post-prover** (procproofs.py):
 - Answer tier filtering (concrete > Skolem > population)
@@ -878,7 +886,10 @@ The prover also loads `axioms_std.js` containing background knowledge:
 - **Degree intensity**: high → none entailment, high/low contradiction
 - **Gradable transitivity**: comparative relation chaining
 - **Event bridges**: activity + has type + has actor → is rel2 / have
-- **Spatial transitivity**: in/inside/located-in chaining
+- **Spatial transitivity**: in/inside/located-in chaining (note: `on` is non-transitive — `on(X,Y) ∧ on(Y,Z) → on(X,Z)` is intentionally commented out in axioms_std.js:161; transparent stacking is handled by carrier transparency below)
+- **Preposition mutex (§7e)**: opposite preposition pairs are mutually exclusive at `is_rel2` arg 1: (above,below), (over,under), (behind,in_front_of), (inside,outside), (left_of,right_of), (before,after), and asymmetrically (on,under) / (on,below). All strict.
+- **Carrier transparency (§7f)**: defeasible (0.85) — `isa(carrier, C) ∧ on(X, C) ∧ on(C, S) → on(X, S)`. Carrier tag injected dynamically per-noun by `inject_carrier_lifts` for nouns in `_CARRIER_NOUNS = {plate, tray, saucer, dish, newspaper, napkin, tablecloth, mat, rug, carpet}`. Handles "pizza on plate, plate on table → pizza on table".
+- **Direct-support uniqueness — X2 (§7g)**: strict — `on(X,Y1) ∧ on(X,Y2) → Y1=Y2`, with four `$block` escapes for stacked / part-of configurations. Combined with entity UNA via `#:` (lc_post_una.py), forces contradiction when two distinct Stage-1 entities are claimed as `on`-targets of the same X. Closes case 148 ("pizza on table, ask pizza on floor?" → False).
 - **Persistence (frame problem)**: facts persist across world states unless blocked
   (defeasible for have, has property, has degree property, can, has part, is rel2;
   variable worlds via `next(?:W, ?:W2)`)

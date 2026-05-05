@@ -569,7 +569,8 @@ list pipeline.  The computation is split across several files:
 | `lc_ctxt.py` | `$ctxt` injection, time-wrapper stripping, fresh variable generation |
 | `lc_post_normalize.py` | Post-clausification normalising / repair passes: gradable normalization, RELCLASS coercion, `isa entity` stripping, possessive `have` and `has_part` bridges, degree stripping, population and compound subsumption extraction |
 | `lc_post_reify.py` | Post-clausification reification of definite descriptions and measurements: `rewrite_definites` (`$theof1`), `rewrite_measure_terms` (`$measure_of`/`$measure`/`less_measure`) |
-| `lc_post_inject.py` | Post-clausification dynamic axiom injection: soft synonyms, exclusions, verb mutex, kinship mutex, containment bridge, world-graph geometry |
+| `lc_post_inject.py` | Post-clausification dynamic axiom injection: soft synonyms, exclusions (incl. noun-mutex via `_ISA_EXCL_GROUPS`), cross-group isa-mutex, verb mutex, kinship mutex, containment bridge, carrier-vocabulary lift, world-graph geometry |
+| `lc_post_una.py` | Post-clausification UNA wrapping: prefix every Stage-1 numbered entity with `#:` so `gk` treats distinct entity constants as definitely unequal. Three-step criterion (regex + Stage-1 set + not-Skolem). Required by the X2 direct-support uniqueness axiom (axioms_std.js §7g) |
 | `lc_clausify.py` | FOL→CNF compilation |
 | `lc_questions.py` | Question encoding and population fact builders |
 | `lc_sets.py` | Set/counting: `$setof` rewriting, membership axioms, element instantiation |
@@ -609,15 +610,18 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
     ├─ insert population facts before first @question
     ├─ generate "what" population facts     for @what_query: isa(CLASS,$some_CLASS) from witnesses
     ├─ inject $ctxt into population facts  [lc_ctxt]
-    ├─ inject_soft_synonyms / inject_exclusion_axioms / inject_verb_mutex_axioms
-    │    inject_kinship_mutex_axioms / inject_containment_bridge_axioms  [lc_post_inject]
+    ├─ inject_soft_synonyms / inject_exclusion_axioms /
+    │    inject_isa_cross_group_axioms / inject_verb_mutex_axioms /
+    │    inject_kinship_mutex_axioms / inject_containment_bridge_axioms /
+    │    inject_carrier_lifts                                            [lc_post_inject]
     ├─ add_possessive_have / add_haspart_for_typed_have                  [lc_post_normalize]
     ├─ normalize_gradable_predicates()    [lc_post_normalize]
     ├─ strip_isa_entity()                 [lc_post_normalize]
     ├─ coerce_relclass()                  [lc_post_normalize]
     ├─ strip_degree_predicates()          [lc_post_normalize] (only if -simpleproperties)
     ├─ inject_world_geometry()            [lc_post_inject] minimal next chain over present worlds
-    └─ strip @sourcetype                  remove internal annotation before prover
+    ├─ strip @sourcetype                  remove internal annotation before prover
+    └─ apply_una(result, stage1_set)      [lc_post_una] wrap Stage-1 entities with #: prefix
 ```
 
 **Counter globals** (reset at the start of each `rawlogic_convert` call):
@@ -964,8 +968,8 @@ the same LLM.  See §7.8 for the retry-loop semantics and motivation.
   detected problem.  `kind` is the category (e.g. `free_variable`); `(kind, location)` is the
   fingerprint used to detect persistence across retries; `description` and `evidence` are
   shown to the LLM in the corrective prompt.
-- `check_stage1(s1_json) -> list[Issue]` — runs all registered Stage-1 checks (currently
-  empty; framework in place).
+- `check_stage1(s1_json) -> list[Issue]` — runs all registered Stage-1 checks
+  (`missing_wh_placeholder`, `entity_used_as_location`).
 - `check_stage2(logic, s1_json=None) -> list[Issue]` — runs all registered Stage-2 checks
   (see table below).
 - `format_retry_suffix(issues, flawed_parsed) -> str` — builds the text appended to the
@@ -984,6 +988,13 @@ the same LLM.  See §7.8 for the retry-loop semantics and motivation.
 | `_check_stage2_event_shapes` | `event_missing_activity_isa` / `event_missing_role` | Event variable E used as first arg of `has_type(E, VERB)` must have `isa("activity", E)` AND at least one thematic-role atom (any of `has_actor`, `has_target`, `has_recipient`, `has_source`, `has_destination`, `has_location`, `has_instrument`, `has_manner`, `has_direction`, `has_time`, `has_beneficiary`, `has_accompaniment`, `has_path`, `has_result`, `has_topic`, `has_cause`, `typical`) in the same `and` conjunction.  Either missing item is its own issue. | — |
 | `_check_stage2_missing_question` | `missing_question` | A Stage-1 unit is a query (either `unit.type == "query"` or its parent package's `raw` text contains `?`) but the matching `@id` in Stage-2 has no `question`/`ask` wrapper anywhere in its body — covers both whole-package truncations and `holds`-where-`question`-was-expected. | LLM truncation on multi-sentence inputs |
 | `_check_stage2_entity_id_typos` | `entity_id_typo` | An entity ID `XYZ N` whose first word has a stray prefix that is itself a prefix of another ID's first word in the same problem (max 4 extra chars).  Catches gemini's "fr fridge 3" vs "fridge 3" pattern where one mention picks up a stray article/preposition fragment. | Case 152 |
+
+**Registered Stage-1 checks:**
+
+| Check | Kind | Triggers on | Example case |
+|---|---|---|---|
+| `_check_stage1_missing_wh_placeholder` | `missing_wh_placeholder` | A query unit whose text or parent raw begins with a wh-question word but has no entity flagged `wh_placeholder=true`.  The retry prompt asks the LLM to add the placeholder and apply the question-word transformation. | Wh-questions in any LLM |
+| `_check_stage1_entity_used_as_location` | `entity_used_as_location` | A unit whose `location` field is a concrete-entity ID declared in the same unit's entities list.  The unit-level `location` field is the SCENE / place of the situation, NEVER a concrete object that participates in a spatial relation as the secondary argument.  The retry prompt explains the distinction and asks the LLM to either move the spatial info into the action's roles (with `location_prep`) or omit `location` entirely. | Case 148 — gemini and gpt put `location: "table 3"` / `"floor 4"` at unit level, polluting `$ctxt` position 3 |
 
 **Conventions:**
 
@@ -1243,7 +1254,10 @@ bridge representation gaps.
 | Degree stripping | `lc_post_normalize.strip_degree_predicates` | With `-simpleproperties`: `has_degree_property(big,X,none,animal)` → `has_property(big,X)` | (Only with `-simpleproperties`) Replaces degree predicates with simple property predicates |
 | Semantic normalisation | `semnormalize.sem_normalize_clauses` | "The ball is outside the box" → `outside` is antonym of `inside` → flips polarity and substitutes: `-is_rel2(inside,ball,box)` | Antonym resolution (~710 pairs, adjective + noun only: flip polarity + swap word) and canonical substitution (~752 pairs: synonym → canonical form).  Skips `$ctxt` terms.  Polarity-flipping is applied ONLY at the top-level literal — inside nested function terms (`$theof1`, `$measure_of`, Skolem), only canonical substitution runs (flipping `$theof1` to `-$theof1` would produce invalid terms).  Data loaded from generated `data_antonyms.py` and `data_canonicals.py`.  Verb antonyms (`ant_v.txt`) are intentionally excluded from rewriting — most are perspective inversions (give/take, buy/sell), process complementarities (start/stop, come/go), or weak pairs where polarity-flip is wrong, and key verbs collide with axiom-vocab predicates (case 171).  Useful verb subsets (attitude pairs like like/dislike) are scheduled for re-introduction via a defeasible attitude-mutex injector.  `build_antonyms` also skips any pair whose canonical target is itself a CANONICALS key — such chain-through pairs are deferred to `build_exclusions` and emitted as synthetic `ANT_<W1>_<W2>` exclusion groups instead (prevents Pass 2 from chain-substituting the fold target to an unrelated sense, e.g. `open→close→near`). |
 | Soft synonym injection | `lc_post_inject.inject_soft_synonyms` | "The car is red" + axioms mention "crimson" → emits `red(X,Ct) <=> crimson(X,Ct)` biconditional | Dynamic injection of Tier B synonym axioms for words present in both input and axiom vocabulary.  Templates: `has property` (adj), `isa` (noun), `has type` (verb). |
-| Exclusion injection | `lc_post_inject.inject_exclusion_axioms` | "The car is blue. Was it red?" → emits `NOT blue(X,Ct) OR NOT red(X,Ct)` with `$block` | Dynamic injection of mutual-exclusion axioms from `excl_a.txt` groups.  `needs_blocker=True` groups use defeasible `$block`; `False` groups are hard exclusions. Four atom shapes: default `has_property` (adjective); `_IS_REL2_EXCL_GROUPS` (MONTH/DAY_OF_WEEK/SEASON) — `is_rel2` target at arg 3; `_IS_REL2_PREP_GROUPS` (SPATIAL_*, TEMPORAL_ORDER) — `is_rel2` preposition at arg 1 with two free entity variables; `_HAS_DEGREE_REL2_PREP_GROUPS` (PROXIMITY) — `has_degree_rel2` preposition at arg 1 with two asymmetric axioms per pair. Also injects `MANUAL_ANTONYMS` adjective pairs as synthetic `MANUAL_ADJ_<W1>_<W2>` groups, and chain-rejected antonym pairs (from `build_antonyms`) as synthetic `ANT_<W1>_<W2>` defeasible adjective groups. See §9.5 for preposition handling. **Note**: the seven preposition groups in `_STATIC_PREP_EXCL_GROUPS` (SPATIAL_VERTICAL/_OVER_UNDER/_SAGITTAL/_CONTAINMENT/_LATERAL, TEMPORAL_ORDER, PROXIMITY) are skipped here — their mutual-exclusion axioms live statically in `axioms_std.js` §7e because both sides are first-class predicates in the standard ontology. |
+| Exclusion injection | `lc_post_inject.inject_exclusion_axioms` | "The car is blue. Was it red?" → emits `NOT blue(X,Ct) OR NOT red(X,Ct)` with `$block` | Dynamic injection of mutual-exclusion axioms from `excl_a.txt` and `excl_n.txt` groups.  `needs_blocker=True` groups use defeasible `$block`; `False` groups are hard exclusions. Five atom shapes: default `has_property` (adjective); `_IS_REL2_EXCL_GROUPS` (MONTH/DAY_OF_WEEK/SEASON) — `is_rel2` target at arg 3; `_IS_REL2_PREP_GROUPS` (SPATIAL_*, TEMPORAL_ORDER) — `is_rel2` preposition at arg 1 with two free entity variables; `_HAS_DEGREE_REL2_PREP_GROUPS` (PROXIMITY) — `has_degree_rel2` preposition at arg 1 with two asymmetric axioms per pair; `_ISA_EXCL_GROUPS` (NOUN_*) — concept name at `isa` arg 1, emits both same-entity shortcut `[-isa w1 ?:X, -isa w2 ?:X]` and cross-entity inequality `[-isa w1 ?:X, -isa w2 ?:Y, -=(?:X, ?:Y)]`. Also injects `MANUAL_ANTONYMS` adjective pairs as synthetic `MANUAL_ADJ_<W1>_<W2>` groups, and chain-rejected antonym pairs (from `build_antonyms`) as synthetic `ANT_<W1>_<W2>` defeasible adjective groups. See §9.5 for preposition handling. **Note**: the seven preposition groups in `_STATIC_PREP_EXCL_GROUPS` (SPATIAL_VERTICAL/_OVER_UNDER/_SAGITTAL/_CONTAINMENT/_LATERAL, TEMPORAL_ORDER, PROXIMITY) are skipped here — their mutual-exclusion axioms live statically in `axioms_std.js` §7e because both sides are first-class predicates in the standard ontology. |
+| Cross-group noun mutex | `lc_post_inject.inject_isa_cross_group_axioms` | "John is a car. Is the cat an animal?" → derives John ≠ cat | Layer 2 of noun mutex. For pairs `(w1, w2)` from different `_ISA_EXCL_GROUPS` groups (e.g. `car` in NOUN_VEHICLE, `animal` in NOUN_TOP_LEVEL), emits the same two shapes as the within-group injector. Same REQUIRE_BOTH_SIDES gating. |
+| Carrier vocabulary lift | `lc_post_inject.inject_carrier_lifts` | "pizza on plate" present → emits `[¬isa(plate,X,Ct), isa(carrier,X,Ct)]` | Tags entities of carrier-noun categories so the static carrier-transparency axiom (axioms_std.js §7f) can fire. Carrier list: `_CARRIER_NOUNS = {plate, tray, saucer, dish, newspaper, napkin, tablecloth, mat, rug, carpet}`. |
+| Entity UNA wrapping | `lc_post_una.apply_una` | After all post-processing: `is_rel2(on, "pizza 2", "table 3", …)` → `is_rel2(on, "#:pizza 2", "#:table 3", …)` | Wraps every Stage-1 numbered entity with `#:` prefix so `gk` treats distinct entity constants as definitely unequal. See §7.10 for the three-step criterion. Required by axioms_std.js §7g (X2 direct-support uniqueness). |
 | World-graph geometry | `lc_post_inject.inject_world_geometry` | "Mary slept. Mary is awake. Was Mary awake?" → emits `next(W0,W1)` | Dynamic injection of the minimal `next(Wi,Wi+1)` chain spanning the concrete world constants actually present in the clause list. Replaces the static `W0..W12` chain that used to live in `axioms_std.js` §11. Skips emission entirely when ≤1 world is present (most single-tense problems); otherwise fills any gaps in `[min_idx, max_idx]` so `before` transitivity still closes. Keeps the `before` derivation graph small. |
 | Verb mutex injection | `lc_post_inject.inject_verb_mutex_axioms` | "Did everyone pass the exam? — No, Mary failed." → for each entity with both `pass` and `fail` events on it, emits a defeasible mutex preventing the same event from being both | Dynamic, cross-event mutex (distinct from `inject_exclusion_axioms`, which mutexes adjective properties on a single entity).  Pair table `_VERB_MUTEX_PAIRS` currently lists `(pass, fail)`.  Each pair emits a defeasible 0.85 axiom with `$block` so that an explicit positive can override.  Atom shape uses `has_type` event predicates plus shared `?:E` and `?:Ctxt`.  Does not fire unless both verbs of the pair appear in the input clauses. |
 | Containment bridge injection | `lc_post_inject.inject_containment_bridge_axioms` | "The cup filled with water fell" → emits `is rel2 in <swapped args>` | Dynamic bridge from container-language predicates to canonical `is rel2 in`.  Source relations: `filled with`, `contain`, `containing`, `contains`.  Treats `in` as always-axiomatic (no axiom-vocab gating).  Emitted only when the source relation appears in input clauses.  Args are swapped: `filled with(cup, water)` → `is rel2 in (water, cup)`.  Resolves the case-84 family where a containment fact is asserted with one phrasing but queried with another. |
@@ -1691,7 +1705,43 @@ Skolem type resolution for rendering (`procproofs._resolve_skolem_entity`):
 
 ---
 
-### 7.10 Frame persistence and motion blocking
+### 7.10 Entity UNA via `#:` prefix
+
+The `gk` prover treats two distinct constants as definitely unequal **only when both are
+prefixed with `#:`**.  Without UNA, a clause like `[¬is_rel2(on,X,Y1,C), ¬is_rel2(on,X,Y2,C),
+=(Y1,Y2)]` (axioms_std.js §7g) cannot derive a contradiction from
+`is_rel2(on, pizza, table)` plus the assumed-question `is_rel2(on, pizza, floor)` —
+the prover would happily add `=(table, floor)` to its KB rather than detect the conflict.
+
+`lc_post_una.py` runs at the end of `rawlogic_convert` and rewrites every Stage-1
+numbered entity to its `#:`-prefixed form.  A string is wrapped iff **all three**
+checks pass:
+
+1. **Surface-form regex** — `^[A-Za-z][A-Za-z0-9_' -]* \d+$` (word + space + digits).
+2. **Membership in the Stage-1 entity set** built from `s1_json -> packages -> units ->
+   entities` — only ids that the LLM declared as concrete entities.
+3. **Not Skolem-shaped** — `^sk\d+_…` excluded.
+
+Skolem constants, function terms (`$theof1`, `$measure_of`), worlds (`W0`/`W1`), and
+`$some_X` / `$some_not_X` constants are **not** wrapped.  These have their own
+distinctness machinery (Skolems are pairwise distinct by construction; function terms
+inherit equality from their arguments).  Broadening UNA to Skolems is intentionally
+deferred — the conservative criterion is sufficient for the X2 case-148 closure on
+LLMs whose Stage-2 produces concrete entity ids for definite descriptions.
+
+The `#:` prefix is stripped at proof rendering time (`proof_utils.entity_name`,
+`proof_logic._logic_name`) and at the top of `procproofs.process_proof` via
+`_strip_una_prefix`, so user-facing answers are unaffected.
+
+When deepseek emits a Skolem like `sk1_floor` for "the floor" (definite description),
+UNA does NOT wrap it.  The closure path then runs through the noun-mutex axioms in
+§7g instead: `[¬isa(table, X), ¬isa(floor, X)]` (same-entity shortcut emitted by
+`inject_exclusion_axioms` for NOUN_FURNITURE_FIXTURE) plus paramodulation through
+the X2-derived equality.  See §9.6 for the mutex injector.
+
+---
+
+### 7.11 Frame persistence and motion blocking
 
 `axioms_std.js` §12 contains the **`is_rel2` tense-migration axiom**: a present-world `is_rel2(P, X, Y, ctx_present_W)` fact propagates to past worlds whenever `before(W_past, W_present)` holds.  This is what lets *"The cup is on the table. Was the cup on the table?"* close to True without an explicit past-tense fact.
 
@@ -1741,6 +1791,7 @@ generates Python dict files in `solver/` that are loaded at runtime.
 | `syn_{a,n,v}_soft_axioms.txt` | 2496 / 6218 / 4103 pairs | Tier B soft synonym pairs (`word_a,word_b,score`) |
 | `ant_{a,n,v}.txt` | 1483 / 375 / 295 entries | Antonym pairs (directional, polarity-flip) |
 | `excl_a.txt` | ~60 groups (+ 4 synthetic from `MANUAL_ANTONYMS`, + ~60 synthetic `ANT_*` groups from chain-rejected antonym pairs) | Mutual-exclusion groups (colors, months, nationalities, kinship/gender pairs, spatial/temporal opposites) |
+| `excl_n.txt` | 10 groups (`NOUN_TOP_LEVEL`, `NOUN_FURNITURE_FIXTURE`, `NOUN_VEHICLE`, `NOUN_ANIMAL_KIND`, `NOUN_BODY_OF_WATER`, `NOUN_TERRAIN`, `NOUN_CELESTIAL`, `NOUN_BUILDING`, `NOUN_GARMENT`, `NOUN_TOOL`) | Noun-mutex groups for `isa(category, X)` exclusion. Members curated to avoid hyponym overlap (person/animal, sun/star, desk/table excluded). |
 
 ### 9.2 Solver runtime files
 
@@ -1751,7 +1802,7 @@ Generated by `cd mkdata && python3 build_solver_data.py` (fast, ~1 sec):
 | `solver/data_canonicals.py` | `CANONICALS` dict (~752 entries, all POS merged) | `semnormalize.py` |
 | `solver/data_antonyms.py` | `ANTONYMS` dict (~850 directional pairs) | `semnormalize.py` |
 | `solver/data_synonyms.py` | `SOFT_SYNONYMS` dict (~12K words, bidirectional) | `lc_post_inject.py` |
-| `solver/data_exclusions.py` | `EXCLUSION_GROUPS` + `EXCLUSION_INDEX` (~123 groups, 4 atom shapes) | `lc_post_inject.py` |
+| `solver/data_exclusions.py` | `EXCLUSION_GROUPS` + `EXCLUSION_INDEX` (~205 groups, 5 atom shapes — adjective `has_property`, `is_rel2` target, `is_rel2` preposition, `has_degree_rel2` preposition, `isa` noun-mutex) | `lc_post_inject.py` |
 
 Must be regenerated whenever any mkdata `.txt` source changes.
 
@@ -1799,6 +1850,32 @@ skip `$ctxt` terms, and handle disjunctive clauses (list-of-lists). Controlled b
     (and the symmetric axiom with W1/W2 swapped). The existing high→none /
     low→none intensity bridges in axioms_std.js §9 propagate the "none"
     negation to all intensities via contrapositive.
+  - **`_ISA_EXCL_GROUPS`** (NOUN_*): noun concept names at `isa` position 1.
+    Per pair, emits BOTH shapes:
+    `[-isa w1 ?:X, -isa w2 ?:X]` — same-entity strict mutex (shortcut)
+    `[-isa w1 ?:X, -isa w2 ?:Y, -=(?:X, ?:Y)]` — cross-entity inequality
+    The shortcut enables direct refutation (no equality reasoning needed);
+    the cross-entity form provides distinctness for two distinct ids
+    classified into different mutex categories. Subsumes the shortcut
+    (collapses when X=Y), but the shortcut is kept for prover efficiency.
+
+*Cross-group noun mutex* (`inject_isa_cross_group_axioms`):
+- Layer 2 of the noun-mutex story (Layer 1 is the within-group `_ISA_EXCL_GROUPS`
+  branch above). For every pair `(w1, w2)` where `w1` is in group `G1`, `w2` in
+  `G2`, and `G1 != G2` (both groups in `_ISA_EXCL_GROUPS`), emit the same two
+  shapes (same-entity shortcut + cross-entity inequality).
+- Both gated by REQUIRE_BOTH_SIDES — pair only emitted when both nouns appear in
+  input clauses or `axiom_vocab`. So for problems mentioning ~5 noun categories,
+  emitted axioms are bounded to a handful per problem.
+
+*Carrier vocabulary lift* (`inject_carrier_lifts`):
+- Static list `_CARRIER_NOUNS = {plate, tray, saucer, dish, newspaper, napkin,
+  tablecloth, mat, rug, carpet}`. For each present noun, emits one lifting
+  clause `[-isa <noun> ?:X ?:Ctxt, isa "carrier" ?:X ?:Ctxt]`.
+- Consumed by the static carrier-transparency axiom in `axioms_std.js` §7f:
+  `isa(carrier, C) ∧ on(X, C) ∧ on(C, S) → on(X, S)` (defeasible 0.85).
+  Handles "pizza on plate, plate on table → pizza on table".
+- New nouns: append one line to `_CARRIER_NOUNS`.
 
 *MANUAL_ANTONYMS → synthetic adjective exclusion groups*:
 `MANUAL_ANTONYMS` in `build_solver_data.py` is a small hand-curated dict of adjective
@@ -1933,6 +2010,61 @@ following                    →  after          [§7d]
 These are static (always loaded) rather than dynamically injected because the set is
 small (~8 axioms), universally relevant, and should chain cleanly with other static
 axioms in the KB.
+
+**(c') Asymmetric "on" mutex axioms (static, in axioms_std.js §7e)**
+
+Two pairs that don't fit either the dynamic-mutex template (no group in `excl_a.txt`)
+or the symmetric subsumption pattern: "on" excludes "under" and "below", because
+"on" means top-surface contact:
+```
+[-is_rel2(on, ?:X, ?:Y, ?:C), -is_rel2(under, ?:X, ?:Y, ?:C)]
+[-is_rel2(on, ?:X, ?:Y, ?:C), -is_rel2(below, ?:X, ?:Y, ?:C)]
+```
+Both static and strict.  Closes case 150 ("Mary found the key under the table.
+Was the key on the table?" → False) via the existing X3 verb→relation bridge
+(verb `find` produces `is_rel2(under, key, table, …)`) plus the new mutex.
+
+**(d) Direct-support uniqueness — X2 (static, axioms_std.js §7g)**
+
+Captures "an entity has at most one immediate `on` support" (with escapes for
+stacked / part-of configurations):
+```
+[-is_rel2(on, ?:X, ?:Y1, ?:C),
+ -is_rel2(on, ?:X, ?:Y2, ?:C),
+ =(?:Y1, ?:Y2),
+ $block(0, is_rel2(on,      ?:Y1, ?:Y2, ?:C)),
+ $block(0, is_rel2(on,      ?:Y2, ?:Y1, ?:C)),
+ $block(0, is_rel2(part of, ?:Y1, ?:Y2, ?:C)),
+ $block(0, is_rel2(part of, ?:Y2, ?:Y1, ?:C))]
+```
+Strict in conclusion. Relies on entity UNA via `#:` (lc_post_una) so that the
+forced equality `Y1 = Y2` between syntactically distinct Stage-1 entities yields
+an immediate contradiction. Closes case 148 ("John ate the pizza on the table.
+Was the pizza on the floor?" → False) via X3 bridge → X2 → UNA.
+
+For LLMs that introduce a Skolem for the question's entity (e.g. deepseek's
+`sk1_floor` for "the floor"), UNA does not directly contradict — but the
+within-group noun-mutex axioms emitted by `inject_exclusion_axioms` for
+`NOUN_FURNITURE_FIXTURE` (table, floor) provide an alternate refutation path
+via paramodulation through the X2-derived equality.
+
+**(e) Carrier transparency — defeasible (static, axioms_std.js §7f)**
+
+```
+{ "@confidence": 0.85,
+  "@logic": [
+    [-isa, "carrier", ?:C, ?:Ctxt],
+    [-is_rel2, "on", ?:X, ?:C, ?:Ctxt],
+    [-is_rel2, "on", ?:C, ?:S, ?:Ctxt],
+    [is_rel2, "on", ?:X, ?:S, ?:Ctxt],
+    [$block, 0, [$not, [is_rel2, "on", ?:X, ?:S, ?:Ctxt]]]
+  ]
+}
+```
+The carrier tag is supplied dynamically by `inject_carrier_lifts` (one lift per
+carrier noun present in the problem). Handles "pizza on plate, plate on table →
+pizza on table" while leaving non-carrier intermediates (table, chair, …) opaque
+so case 148 stays False.
 
 **Canonical rewriting adjustments for has_degree_rel2 forms:**
 - `"far"` → `"far_from"` (LLM sometimes drops "from" in query form)
