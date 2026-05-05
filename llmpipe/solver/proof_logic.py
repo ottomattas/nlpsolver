@@ -76,6 +76,9 @@ def _logic_name(val):
     return "true" if val else "false"
   if not isinstance(val, str):
     return str(val)
+  # UNA prefix: strip `#:` so all later branches see the bare entity id.
+  if val.startswith("#:"):
+    val = val[2:]
   # Variable
   if val.startswith("?:"):
     bare = val[2:]

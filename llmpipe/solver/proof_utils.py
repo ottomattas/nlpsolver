@@ -250,6 +250,10 @@ def _scan_constants(obj, base_numbers, url_names):
   if isinstance(obj, str):
     if obj.startswith("?:"):
       return
+    # Strip the UNA `#:` marker before classifying so ambiguity tracking
+    # uses bare entity bases ("John") rather than prefixed ones ("#:John").
+    if obj.startswith("#:"):
+      obj = obj[2:]
     if obj.startswith("http://") or obj.startswith("https://"):
       name = _extract_url_name(obj)
       url_names.setdefault(name, set()).add(obj)
@@ -434,6 +438,12 @@ def entity_name(val, with_url=False, proof_mode=False):
     return render_term_english(val, proof_mode=proof_mode)
   if not isinstance(val, str):
     return str(val)
+
+  # --- UNA prefix: strip `#:` so display name matches the raw entity id. ---
+  # All later branches (entity_map lookup, regex parsing, etc.) treat the
+  # bare form. Entity ids are wrapped only inside the prover input.
+  if val.startswith("#:"):
+    val = val[2:]
 
   # --- Variables: use display map, then fallback ---
   if val.startswith("?:"):

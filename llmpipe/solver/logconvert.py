@@ -98,7 +98,13 @@ from lc_post_inject import (
   inject_verb_mutex_axioms as _inject_verb_mutex_axioms,
   inject_containment_bridge_axioms as _inject_containment_bridge_axioms,
   inject_kinship_mutex_axioms as _inject_kinship_mutex_axioms,
+  inject_carrier_lifts as _inject_carrier_lifts,
   inject_world_geometry as _inject_world_geometry,
+)
+
+from lc_post_una import (
+  collect_stage1_entities as _collect_stage1_entities,
+  apply_una as _apply_una,
 )
 
 # $ctxt injection and time handling (in lc_ctxt.py).
@@ -704,7 +710,8 @@ def rawlogic_convert(logic, s1_json=None):
                   + _inject_exclusion_axioms(result, _axiom_vocab)
                   + _inject_verb_mutex_axioms(result, _axiom_vocab)
                   + _inject_containment_bridge_axioms(result, _axiom_vocab)
-                  + _inject_kinship_mutex_axioms(result, _axiom_vocab))
+                  + _inject_kinship_mutex_axioms(result, _axiom_vocab)
+                  + _inject_carrier_lifts(result, _axiom_vocab))
 
   # Append population facts, synonym axioms, and exclusion axioms after
   # all sentence clauses (assertions + questions come first).
@@ -759,6 +766,13 @@ def rawlogic_convert(logic, s1_json=None):
   # (format_sentences_to_clauses) can distinguish population facts from
   # ASU-derived clauses.  It is stripped in clause_list_to_json_commented
   # before serialization for the prover.
+
+  # UNA wrapping: prefix every Stage-1 numbered entity with "#:" so the gk
+  # prover treats distinct entity constants as definitely unequal. Required
+  # by axioms_std.js §7h (X2 direct-support uniqueness).
+  stage1_entities = _collect_stage1_entities(s1_json)
+  if stage1_entities:
+    result = _apply_una(result, stage1_entities)
 
   return result
 

@@ -34,6 +34,17 @@ from proof_explain import format_explanation, build_sentence_map, ans_display_ke
 from entity_map import build_entity_map
 
 
+def _strip_una_prefix(node):
+  """Recursively strip the leading `#:` UNA marker from every string."""
+  if isinstance(node, str):
+    return node[2:] if node.startswith("#:") else node
+  if isinstance(node, list):
+    return [_strip_una_prefix(x) for x in node]
+  if isinstance(node, dict):
+    return {k: _strip_una_prefix(v) for k, v in node.items()}
+  return node
+
+
 # ======== main entry point ========
 
 def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=None, options=None):
@@ -57,6 +68,13 @@ def process_proof(proof_result, text=None, s1_json=None, s2_json=None, logic=Non
   data = _parse_result(proof_result)
   if isinstance(data, str):       # _parse_result returned an error string
     return data
+
+  # Strip the UNA `#:` prefix from every string in the prover output before
+  # the rest of the post-processing runs. The prefix is only meaningful to
+  # gk's UNA mechanism inside the prover; all downstream entity-id parsing
+  # (Skolem detection, type extraction, ambiguity scanning) expects the
+  # bare ids it emitted in the original logic.
+  data = _strip_una_prefix(data)
 
   # Top-level error / no answer
   if "error" in data:

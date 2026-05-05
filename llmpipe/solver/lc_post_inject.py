@@ -481,6 +481,42 @@ def inject_containment_bridge_axioms(result, axiom_vocab=frozenset()):
   return axioms
 
 
+# ======== carrier vocabulary lift ========
+
+# Carrier nouns: small movable surfaces that "pass through" the on-support
+# relation. The carrier-transparency axiom (axioms_std.js §7g) consumes
+# `isa(carrier, X, Ctxt)` to derive on(X, S) from on(X, C) + on(C, S).
+# Each lift here is emitted only when its noun appears in the input clauses
+# or axiom_vocab (mirrors REQUIRE_BOTH_SIDES from soft synonyms).
+_CARRIER_NOUNS = frozenset({
+    "plate", "tray", "saucer", "dish",
+    "newspaper", "napkin", "tablecloth",
+    "mat", "rug", "carpet",
+})
+
+
+def inject_carrier_lifts(result, axiom_vocab=frozenset()):
+  """Scan clause list for carrier nouns; emit one isa-to-carrier
+  lifting clause per noun present in input or axiom_vocab.
+
+  Shape (per noun N):
+    [-isa N ?:X ?:Ctxt, isa "carrier" ?:X ?:Ctxt]
+  """
+  words = _collect_eligible_words(result)
+  all_known = set(words) | axiom_vocab
+  axioms = []
+  for noun in _CARRIER_NOUNS:
+    if noun not in all_known:
+      continue
+    ct = _fresh_fv()
+    clause = [
+        ["-isa", noun, "?:X", ct],
+        ["isa", "carrier", "?:X", ct],
+    ]
+    axioms.append({"@name": "frm_carrier_lift", "@logic": clause})
+  return axioms
+
+
 # ======== world-graph geometry ========
 
 def inject_world_geometry(result):
