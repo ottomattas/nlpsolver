@@ -46,6 +46,21 @@ MANUAL_ANTONYMS = {
     "undone":     "done",
 }
 
+# Gradable adjective pairs whose mutual exclusion should be DEFEASIBLE
+# (a thing can be neither expensive nor cheap, neither destroyed nor
+# intact — middle states like "moderately priced" or "damaged but
+# standing" exist).  These pairs are NOT folded by semnormalize
+# because the fold would convert positive `expensive` to negative
+# `¬cheap`, breaking the cross-world frame axiom which only propagates
+# positive atoms (axioms_std.js §6).  Instead they emit
+# `MANUAL_ADJ_GRAD_<W1>_<W2>` exclusion groups with needs_blocker=True
+# so the prover defeasibly contradicts same-entity pairs but allows a
+# middle ground when the input warrants.
+MANUAL_GRADABLE_ANTONYMS = {
+    "expensive": "cheap",       # case 55
+    "destroyed": "intact",      # case 157
+}
+
 # Predicate roots that appear as positive `has type E ROOT Ctxt` literals in
 # axioms_std.js. ANY antonym pair that touches one of these roots (on either
 # side) is filtered out of `build_antonyms`, because folding the root into an
@@ -273,6 +288,12 @@ def build_antonyms(canonicals):
     skipped_circular = 0
     skipped_self = 0
     skipped_axiom_vocab = 0
+    # Words handled by MANUAL_GRADABLE_ANTONYMS (defeasible exclusion path)
+    # are intentionally NOT folded here — the polarity flip turns positive
+    # assertions into negative atoms, defeating the cross-world frame axiom
+    # in axioms_std.js §6 which propagates positives only.
+    grad_words = (set(MANUAL_GRADABLE_ANTONYMS)
+                  | set(MANUAL_GRADABLE_ANTONYMS.values()))
     # Verb antonym rewrites are intentionally excluded.
     # Most verb antonym pairs from WordNet (give/take, buy/sell, come/go, ...)
     # are perspective inversions or process complementarities, not logical
@@ -293,6 +314,8 @@ def build_antonyms(canonicals):
                     skipped_self += 1
                     continue
                 if word in BLOCKED_ANTONYM_WORDS:
+                    continue
+                if word in grad_words or canonical in grad_words:
                     continue
                 # Hard blocklist: predicate roots that appear as positive
                 # `has type` literals in axioms_std.js. Folding any of these
@@ -434,6 +457,24 @@ def build_exclusions(chain_rejected=None):
             "source": "manual",
             "score": 0.95,
             "needs_blocker": False,
+            "words": [a, b],
+        }
+
+    # Inject MANUAL_GRADABLE_ANTONYMS pairs as 2-member needs_blocker=True
+    # has_property exclusion groups (defeasible — gradable adjectives have a
+    # middle ground).
+    grad_seen = set()
+    for w1, w2 in MANUAL_GRADABLE_ANTONYMS.items():
+        pair = frozenset([w1, w2])
+        if pair in grad_seen:
+            continue
+        grad_seen.add(pair)
+        a, b = sorted([w1, w2])
+        gid = f"MANUAL_ADJ_GRAD_{a.upper()}_{b.upper()}"
+        groups[gid] = {
+            "source": "manual",
+            "score": 0.95,
+            "needs_blocker": True,
             "words": [a, b],
         }
 
