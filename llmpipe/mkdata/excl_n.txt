@@ -1,0 +1,37 @@
+# Mutual-exclusion groups for nouns (sibling and cross-group).
+# Same format as excl_a.txt:
+#   GROUP_ID,source,score,needs_blocker,word1,word2,...
+#
+# Group ID prefix NOUN_* signals the runtime injector
+# (lc_post_inject._ISA_EXCL_GROUPS) to:
+#   1. Emit pairwise WITHIN-group cross-entity-inequality clauses:
+#      [-isa A ?:X ?:Ctxt1, -isa B ?:Y ?:Ctxt2, -=(?:X, ?:Y)]
+#   2. Emit pairwise CROSS-group cross-entity-inequality clauses for
+#      every (A, B) pair where A is in group G1 and B is in group G2,
+#      G1 != G2 (separate injector inject_isa_cross_group_axioms).
+#
+# Both layers are gated by REQUIRE_BOTH_SIDES — only emit when both
+# concept words appear in the input clauses or axiom_vocab.
+#
+# Polysemy / hyponym overlap caveats (KEEP IN MIND when extending):
+#   - "person" intentionally excluded from NOUN_TOP_LEVEL: humans are
+#     animals, so isa(person, X) and isa(animal, X) co-hold.
+#   - "boat" / "ship" both kept in NOUN_VEHICLE despite minor overlap —
+#     in normal text they refer to distinct entity instances.
+#   - "desk" / "bed" / "sofa" excluded from NOUN_FURNITURE_FIXTURE
+#     because of inheritance (desk is a kind of table) or overlap
+#     (sofa-bed convertibles).
+#   - "sun" excluded from NOUN_CELESTIAL — the Sun is a star.
+#   - "office" / "library" / "church" excluded from NOUN_BUILDING —
+#     same building can be multi-purpose.
+
+NOUN_TOP_LEVEL,manual,0.95,0,animal,plant,artifact,place,substance,event
+NOUN_FURNITURE_FIXTURE,manual,0.95,0,floor,ceiling,wall,table,chair,shelf,counter,cupboard
+NOUN_VEHICLE,manual,0.95,0,car,bicycle,motorcycle,truck,bus,train,plane,ship,boat
+NOUN_ANIMAL_KIND,manual,0.95,0,bird,fish,mammal,reptile,amphibian,insect,arachnid
+NOUN_BODY_OF_WATER,manual,0.95,0,lake,river,ocean,pond
+NOUN_TERRAIN,manual,0.95,0,forest,desert,mountain,valley,beach,meadow,swamp
+NOUN_CELESTIAL,manual,0.95,0,moon,planet,star,comet,asteroid
+NOUN_BUILDING,manual,0.95,0,house,school,store,hospital,factory
+NOUN_GARMENT,manual,0.95,0,shirt,pants,dress,jacket,hat,shoe,sock,glove
+NOUN_TOOL,manual,0.95,0,hammer,saw,screwdriver,wrench,drill

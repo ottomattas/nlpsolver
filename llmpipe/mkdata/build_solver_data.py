@@ -403,11 +403,21 @@ def build_synonyms():
 
 
 def build_exclusions(chain_rejected=None):
-    """Generate data_exclusions.py from excl_a.txt plus MANUAL_ANTONYMS pairs
-    plus chain_rejected antonym pairs deferred from build_antonyms().
+    """Generate data_exclusions.py from excl_a.txt + excl_n.txt plus
+    MANUAL_ANTONYMS pairs plus chain_rejected antonym pairs deferred from
+    build_antonyms().
     """
     print("Building data_exclusions.py ...")
     groups = read_exclusion_file(os.path.join(SCRIPT_DIR, "excl_a.txt"))
+    # Merge noun mutex groups (NOUN_*) — consumed by the runtime
+    # _ISA_EXCL_GROUPS branch in lc_post_inject.inject_exclusion_axioms,
+    # plus the inject_isa_cross_group_axioms cross-group injector.
+    noun_groups = read_exclusion_file(os.path.join(SCRIPT_DIR, "excl_n.txt"))
+    for gid, info in noun_groups.items():
+        if gid in groups:
+            print(f"  WARNING: group id collision {gid} between excl_a.txt and excl_n.txt; excl_a wins")
+            continue
+        groups[gid] = info
 
     # Inject MANUAL_ANTONYMS pairs as 2-member has_property exclusion groups.
     # Deduped by pair (frozenset) so a dict carrying both directions still emits
