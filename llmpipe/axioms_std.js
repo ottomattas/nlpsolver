@@ -790,6 +790,12 @@ Does John 1 have two cars?
   [["-is rel2", "behind",      "?:X", "?:Y", "?:C"], ["-is rel2", "in_front_of", "?:X", "?:Y", "?:C"]],
   [["-is rel2", "inside",      "?:X", "?:Y", "?:C"], ["-is rel2", "outside",     "?:X", "?:Y", "?:C"]],
   [["-is rel2", "left_of",     "?:X", "?:Y", "?:C"], ["-is rel2", "right_of",    "?:X", "?:Y", "?:C"]],
+  // "on" excludes "under"/"below" (top-surface contact rules out being below).
+  // The (over,under) and (above,below) pairs above already block over/above
+  // co-occurrence; "on" needs explicit pairing because it is not subsumed by
+  // "above" in §7c (on means top contact, above does not).
+  [["-is rel2", "on",          "?:X", "?:Y", "?:C"], ["-is rel2", "under",       "?:X", "?:Y", "?:C"]],
+  [["-is rel2", "on",          "?:X", "?:Y", "?:C"], ["-is rel2", "below",       "?:X", "?:Y", "?:C"]],
   // Temporal:
   [["-is rel2", "before",      "?:X", "?:Y", "?:C"], ["-is rel2", "after",       "?:X", "?:Y", "?:C"]],
   // Proximity (gradable: positive side any-degree, antonym side "none"
