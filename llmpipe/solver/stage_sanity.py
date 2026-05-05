@@ -832,6 +832,81 @@ def _check_stage1_missing_wh_placeholder(s1_json):
   return issues
 
 
+# ======== Stage-1 entity-used-as-location check ========
+
+def _collect_concrete_entity_ids(unit):
+  """Return the set of concrete-entity IDs declared in a unit's
+  entities list. Generic / wh-placeholder entities are skipped."""
+  out = set()
+  if not isinstance(unit, dict):
+    return out
+  for ent in unit.get("entities", []) or []:
+    if not isinstance(ent, dict):
+      continue
+    if ent.get("type") != "concrete":
+      continue
+    eid = ent.get("id")
+    if isinstance(eid, str) and eid:
+      out.add(eid)
+  return out
+
+
+def _check_stage1_entity_used_as_location(s1_json):
+  """Detect Stage-1 units where the `location` field is a concrete-entity
+  ID declared in the same unit's `entities` list.
+
+  Stage-1's `location` field is the *scene* where the unit's situation
+  occurs (e.g. "the kitchen", "the park", "outside"). It must NOT be a
+  concrete object that participates in a spatial relation as a secondary
+  argument — that belongs in the actions/relations, not in the
+  scene-location.
+
+  Symptom: lc_ctxt injects `location` into the `$ctxt` location slot, so
+  ASU pairs that should share a context end up with distinct entity
+  constants there. Mutex / X2 axioms cannot then unify the two contexts.
+  See gemini's case 148 trace (assertion ctxt has "table 3", question
+  ctxt has "floor 4" — contexts don't unify, X2 cannot fire).
+  """
+  if not isinstance(s1_json, list):
+    return []
+  issues = []
+  for pkg in s1_json:
+    if not isinstance(pkg, dict):
+      continue
+    for unit in pkg.get("units", []) or []:
+      if not isinstance(unit, dict):
+        continue
+      loc = unit.get("location")
+      if not isinstance(loc, str) or not loc:
+        continue
+      concrete_ids = _collect_concrete_entity_ids(unit)
+      if loc not in concrete_ids:
+        continue
+      uid = unit.get("unit_id", "?")
+      issues.append(Issue(
+        kind="entity_used_as_location",
+        location="@id:" + str(uid),
+        description=("Unit " + str(uid) + " has location=\"" + loc +
+                     "\" which is a concrete entity declared in the "
+                     "same unit's entities list. The `location` field "
+                     "is for the SCENE / place where the situation "
+                     "occurs (e.g. \"the kitchen\", \"the park\", "
+                     "\"outside\"). It must NOT be a concrete object "
+                     "that participates in a spatial relation as the "
+                     "secondary argument. If the only spatial info is "
+                     "\"X is on Y\" (or under/in/etc.), put that "
+                     "preposition + entity in the relevant action's "
+                     "roles (e.g. roles.location with location_prep) "
+                     "and OMIT the unit-level `location` field. If "
+                     "there is a separate scene location, replace "
+                     "\"" + loc + "\" with that scene name. Do not "
+                     "use the concrete entity " + loc + " as the "
+                     "scene location."),
+        evidence=_safe_json(unit),
+      ))
+  return issues
+
+
 # ======== public API ========
 
 def check_stage1(s1_json):
@@ -839,6 +914,7 @@ def check_stage1(s1_json):
   issue list."""
   issues = []
   issues.extend(_check_stage1_missing_wh_placeholder(s1_json))
+  issues.extend(_check_stage1_entity_used_as_location(s1_json))
   return issues
 
 
