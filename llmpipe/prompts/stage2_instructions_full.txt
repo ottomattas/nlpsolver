@@ -89,6 +89,11 @@ Entity:
   Use this to inform scope, predicate, and quantification decisions.
   NOTE: isa(category, entity_id) facts for concrete categorised entities
   are injected automatically by the pipeline — do NOT emit them yourself.
+  This is especially important for concrete entities with a `url` field:
+  emitting `["isa", category, url]` inside the formula creates a multi-literal
+  clause whose `isa(category, url)` literal cannot unify with the
+  pipeline-injected `isa(category, entity_id)`, leaving the assertion
+  effectively unusable. Just emit the relation; let the pipeline handle isa.
 
 Optional ASU fields:
 - "pre_state": string
@@ -438,6 +443,13 @@ Canonical yes-no question pattern:
     ]
   ]
 ]
+
+This existential form is REQUIRED for yes/no queries even when the SUBJECT
+is a bare-plural generic (e.g. "Do cars have trunks?", "Do birds fly?").
+Do NOT emit `forall X, isa(car,X) -> ...` for such queries — the pipeline
+strips `normally` from query bodies, turning that into a strict universal
+that defeasible counterexamples can refute. The query asks "does any
+typical X satisfy P?" — wrap the subject in `exists`, not `forall`.
 
 --- scope == "global" ---
 

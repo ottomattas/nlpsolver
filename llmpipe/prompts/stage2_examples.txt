@@ -980,6 +980,51 @@ INPUT:
 INPUT:
 
 [{
+  "raw": "Cars have trunks?",
+  "units": [
+    {
+      "unit_id": "S1",
+      "text": "Do cars have trunks?",
+      "type": "query",
+      "entities": [
+        {"id": "cars", "type": "generic"},
+        {"id": "trunks", "type": "generic", "scope": "dependent"}
+      ]
+    }
+  ]
+}]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["question",
+      ["exists","X",
+        ["exists","Y",
+          ["and",
+            ["isa","car","X"],
+            ["isa","trunk","Y"],
+            ["has part","X","Y"]
+          ]
+        ]
+      ]
+    ]
+  ]
+]
+
+Note: a bare-plural generic SUBJECT in a yes/no question is encoded
+existentially, not universally. The query asks "is there a (typical)
+car with a trunk?" — a defeasible normal_rule supplies the witness.
+A `forall X, isa(car,X) -> ...` encoding of such a question becomes
+a strict universal (the pipeline strips `normally` from query bodies),
+which any defeasible exception (e.g. "Red cars do not have trunks")
+will refute.
+
+---
+
+INPUT:
+
+[{
   "raw": "Who likes Mike?",
   "units": [
     {

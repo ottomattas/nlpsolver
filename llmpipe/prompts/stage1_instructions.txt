@@ -183,11 +183,13 @@ Never produce more than one query ASU for a single question sentence.
 
 You must determine if a question is asking about a category (Class-Level) or searching for an instance (Existential).
 
-1. Class-Level (Generic) Normalization: 
-   When asking a property of a plural generic subject in a general sense (e.g., "Are elephants animals?", "Do birds fly?"), 
-   normalize the 'text' field by adding "all" or "typically" to clarify it is a class-level query.
-   - "Are elephants animals?" -> "Are all elephants animals?"
-   - "Do birds fly?" -> "Do all birds fly?"
+1. Class-Level (Generic) Normalization:
+   When asking a property of a plural generic subject in a general sense (e.g., "Are elephants animals?", "Do birds fly?"),
+   normalize the 'text' field by inserting "typically" to make it explicit that the query is a class-level / defeasible question.
+   - "Are elephants animals?" -> "Are elephants typically animals?"
+   - "Do birds fly?" -> "Do birds typically fly?"
+   - "Cars have trunks?" -> "Do cars typically have trunks?"
+   Use "all" / "every" / "each" only when the source text itself contains an explicit universal marker ("all cats", "every dog", "each car"); a bare plural alone does NOT warrant "all".
 
 2. Existential (Instance-Search) Preservation:
    When searching for the existence of an individual or subset (e.g., "Are there any red bears?", "Is there a dog in the yard?"),
@@ -202,7 +204,7 @@ You must determine if a question is asking about a category (Class-Level) or sea
      "No bird can fly?" -> "Can no bird fly?"
 
 4. Ambiguity Resolution:
-   In cases of high ambiguity, default to the Class-Level (Universal) interpretation if the subject is a bare plural (e.g., "Foxes are toys?"). 
+   In cases of high ambiguity, default to the Class-Level (Generic / typically) interpretation if the subject is a bare plural (e.g., "Foxes are toys?" -> "Are foxes typically toys?"). Do not promote a bare-plural query to a universal "all"-quantified form unless the source text explicitly says "all"/"every"/"each".
    Default to Existential if there is a locative or temporary state (e.g., "Are foxes in the box?").
 
 

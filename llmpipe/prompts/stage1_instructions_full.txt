@@ -716,9 +716,12 @@ You must determine if a question is asking about a category (Class-Level) or sea
 
 1. Class-Level (Generic) Normalization:
    When asking a property of a plural generic subject in a general sense (e.g., "Are elephants animals?", "Do birds fly?"),
-   normalize the 'text' field by adding "all" or "typically" to clarify it is a class-level query.
-   - "Are elephants animals?" -> "Are all elephants animals?"
-   - "Do birds fly?" -> "Do all birds fly?"
+   normalize the 'text' field to a well-formed generic question, but preserve the bare plural — do NOT promote it to a universal "all"-quantified form.
+   - "Are elephants animals?" -> "Are elephants animals?"
+   - "Do birds fly?" -> "Do birds fly?"
+   - "Cars have trunks?" -> "Do cars have trunks?"
+   Use "all" / "every" / "each" only when the source text itself contains an explicit universal marker ("all cats", "every dog", "each car"); a bare plural alone does NOT warrant "all".
+   Stage-2 encodes generic-query bare plurals existentially (e.g. "Do cars have trunks?" → exists X, isa(car,X) ∧ exists Y, has_part(X,Y) ∧ isa(trunk,Y)). Adding "all" forces a strict universal that a defeasible rule cannot prove.
 
 2. Existential (Instance-Search) Preservation:
    When searching for the existence of an individual or subset (e.g., "Are there any red bears?", "Is there a dog in the yard?"),
@@ -726,7 +729,7 @@ You must determine if a question is asking about a category (Class-Level) or sea
    - "Are there red bears?" -> "Does there exist a red bear?"
 
 3. Ambiguity Resolution:
-   In cases of high ambiguity, default to the Class-Level (Universal) interpretation if the subject is a bare plural (e.g., "Foxes are toys?").
+   In cases of high ambiguity, default to the Class-Level (Generic) interpretation if the subject is a bare plural (e.g., "Foxes are toys?" -> "Are foxes toys?"). Do not promote a bare-plural query to a universal "all"-quantified form unless the source text explicitly says "all"/"every"/"each".
    Default to Existential if there is a locative or temporary state (e.g., "Are foxes in the box?").
 
 --- 8.4 Negation Preservation in Questions ---
@@ -930,6 +933,34 @@ Examples:
     -> text: "John 1 is not a child of Mike 2."  (no confidence field)
   "It is likely false that John is nice."
     -> text: "John 1 is not nice.", confidence: 0.8
+
+PART 5: Probability-Negated Claims ("It is not probable that X", "It is unlikely that X").
+
+"It is not probable that X" / "It is unlikely that X" / "It is improbable that X" /
+"It is doubtful that X" mean "X has LOW probability" — they are PROBABILITY claims
+about X, NOT strict negations.
+
+Encode them by keeping the POSITIVE form in "text" (unchanged) and setting
+"confidence" to a LOW value (≤ 0.3). Do NOT negate the text.
+
+  "It is not probable that elephants are animals."
+    -> text: "Elephants are animals.", confidence: 0.2     (CORRECT)
+    -> text: "Elephants are not animals.", confidence: 0.2 (WRONG — inverted polarity:
+       "not animals at low confidence" means "not-animal rarely holds", i.e.
+       "animal usually holds", which flips the meaning.)
+
+  "It is unlikely that John smokes."
+    -> text: "John 1 smokes.", confidence: 0.2
+
+Mapping table:
+  * "improbable" / "not probable"     -> confidence: 0.2
+  * "unlikely"                        -> confidence: 0.2
+  * "doubtful"                        -> confidence: 0.2
+  * "very unlikely" / "highly improbable" -> confidence: 0.1
+
+Contrast with PART 4: "It is false that X" is a STRICT negation (text negated,
+no confidence field); "It is not probable that X" is a LOW-probability claim
+(text kept positive, low confidence).
 
 --- 10.2 Time ---
 
