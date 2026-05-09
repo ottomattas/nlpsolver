@@ -683,6 +683,14 @@ _extract_clauses               collect flat clause list
 
 - `build_defq_question(name, ask_var, body, where_prep=None) -> list` — encode a wh- or yes/no
   question as `$defq` biconditional GK clauses
+- `hoist_generic_yn_subject(formula, name) -> (skq, hoisted_atom, rewritten_body) | (None, None, formula)`
+  — bare-plural-generic yes/no rewrite. Matches `forall X, isa(C,X) → normally(BODY)` (the
+  Stage-2 §7.4(a) shape), and on match returns a fresh skolem constant `skq_S<qid>_<C>`,
+  a hoisted antecedent atom (or `["and", …]` when the antecedent had multiple atoms about
+  X), and the consequent BODY with `X ← skq…` substituted in. `lc_packages._process_question`
+  prepends the hoisted atom as a `@sourcetype: "question_subject"` fact and feeds the
+  rewritten body to standard yes/no clausification, producing UDP-shaped `isa(C, skq) +
+  $defq ↔ BODY[skq]` clauses (closes cases 213/214/215 across all four LLMs)
 - `find_where_atom(body, ask_var) -> atom | None` — find the location atom in a where-question body
 - `build_where_question(name, entity, ask_var, specific_prep=None) -> list` — encode a where-question
 - `flatten_q_atoms(frm, varmap) -> list` — flatten an `ask` formula into a list of atoms

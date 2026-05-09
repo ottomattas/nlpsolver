@@ -227,6 +227,102 @@ def _replace_prep_with_var(body, concrete_prep, prep_var, target_pred=None):
           for child in body]
 
 
+def _walk_subst(frm, var, replacement):
+  """Substitute every free occurrence of variable name `var` in `frm` with
+  `replacement`.  Respects scoping: skips subtrees of binders that re-bind `var`.
+  """
+  if not isinstance(frm, list):
+    return replacement if frm == var else frm
+  if not frm:
+    return frm
+  op = frm[0]
+  if op in ("forall", "exists", "ask") and len(frm) >= 3 and frm[1] == var:
+    return frm
+  return [_walk_subst(el, var, replacement) for el in frm]
+
+
+def _atom_mentions_var(atom, var):
+  """True if `atom` is a flat predicate atom that has `var` as one of its
+  top-level arguments.  Predicate atoms are lists whose first element is a
+  string predicate name (possibly negated with '-').
+  """
+  if not isinstance(atom, list) or not atom:
+    return False
+  if not isinstance(atom[0], str):
+    return False
+  for el in atom[1:]:
+    if el == var:
+      return True
+  return False
+
+
+def hoist_generic_yn_subject(formula, name):
+  """Detect the bare-plural-generic yes/no question pattern and rewrite.
+
+  Pattern (per Stage-2 prompt §7.4(a)):
+    ["forall", VAR, ["implies", ANTE, ["normally", BODY]]]
+
+  where ANTE is either a single atom mentioning VAR, or
+    ["and", ATOM_1, ATOM_2, ...] with every ATOM_i mentioning VAR.
+  At least one ATOM must be ["isa", CLASS, VAR] (used to name the skolem).
+
+  On match, return:
+    (skq_const, hoisted_atom, rewritten_body)
+  where:
+    - skq_const: fresh constant "skq_<sid>_<class>" (sid extracted from name).
+    - hoisted_atom: ANTE with VAR substituted by skq_const.  Returned as a
+      single ["and", ...] when ANTE was already an "and"; otherwise a single
+      atom list.
+    - rewritten_body: BODY with VAR substituted by skq_const.
+
+  Otherwise return (None, None, formula) unchanged.
+  """
+  if not (isinstance(formula, list) and len(formula) >= 3
+          and formula[0] == "forall"):
+    return (None, None, formula)
+  var = formula[1]
+  inner = formula[2]
+  if not (isinstance(inner, list) and len(inner) >= 3
+          and inner[0] == "implies"):
+    return (None, None, formula)
+  ante = inner[1]
+  cons = inner[2]
+  if not (isinstance(cons, list) and len(cons) >= 2
+          and cons[0] == "normally"):
+    return (None, None, formula)
+  body = cons[1]
+
+  if isinstance(ante, list) and ante and ante[0] == "and":
+    atoms = list(ante[1:])
+  else:
+    atoms = [ante]
+
+  isa_class = None
+  for a in atoms:
+    if (isinstance(a, list) and len(a) >= 3
+        and a[0] == "isa" and a[2] == var):
+      isa_class = a[1]
+      break
+  if isa_class is None:
+    return (None, None, formula)
+
+  for a in atoms:
+    if not _atom_mentions_var(a, var):
+      return (None, None, formula)
+
+  sid = name[5:] if isinstance(name, str) and name.startswith("sent_") else str(name)
+  cname = str(isa_class).replace(" ", "_")
+  skq = "skq_" + sid + "_" + cname
+
+  hoisted_atoms = [_walk_subst(a, var, skq) for a in atoms]
+  if len(hoisted_atoms) == 1:
+    hoisted = hoisted_atoms[0]
+  else:
+    hoisted = ["and"] + hoisted_atoms
+  rewritten_body = _walk_subst(body, var, skq)
+  return (skq, hoisted, rewritten_body)
+
+
 def _strip_normally(frm):
   """Recursively strip 'normally' wrappers from a formula.
 

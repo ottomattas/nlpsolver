@@ -89,11 +89,6 @@ Entity:
   Use this to inform scope, predicate, and quantification decisions.
   NOTE: isa(category, entity_id) facts for concrete categorised entities
   are injected automatically by the pipeline — do NOT emit them yourself.
-  This is especially important for concrete entities with a `url` field:
-  emitting `["isa", category, url]` inside the formula creates a multi-literal
-  clause whose `isa(category, url)` literal cannot unify with the
-  pipeline-injected `isa(category, entity_id)`, leaving the assertion
-  effectively unusable. Just emit the relation; let the pipeline handle isa.
 
 Optional ASU fields:
 - "pre_state": string
@@ -434,22 +429,26 @@ Canonical rule pattern:
   ]
 ]
 
-Canonical yes-no question pattern:
+Canonical yes-no question pattern (with dependent entity Y inside the body):
+
+(a) Bare-plural subject — defeasible reading (see §7.4):
 
 ["question",
-  ["exists","X",
-    ["exists","Y",
-      ["and", X_CONSTRAINTS, Y_CONSTRAINTS, REL_XY]
-    ]
-  ]
-]
+  ["forall","X",
+    ["implies",
+      X_CONSTRAINTS,
+      ["normally",
+        ["exists","Y",
+          ["and", Y_CONSTRAINTS, REL_XY]]]]]]
 
-This existential form is REQUIRED for yes/no queries even when the SUBJECT
-is a bare-plural generic (e.g. "Do cars have trunks?", "Do birds fly?").
-Do NOT emit `forall X, isa(car,X) -> ...` for such queries — the pipeline
-strips `normally` from query bodies, turning that into a strict universal
-that defeasible counterexamples can refute. The query asks "does any
-typical X satisfy P?" — wrap the subject in `exists`, not `forall`.
+(b) Explicit "all" subject — strict universal:
+
+["question",
+  ["forall","X",
+    ["implies",
+      X_CONSTRAINTS,
+      ["exists","Y",
+        ["and", Y_CONSTRAINTS, REL_XY]]]]]
 
 --- scope == "global" ---
 
@@ -933,9 +932,40 @@ NEVER use ["is rel2",...] for when-questions — always use ["has time",...].
 
 --- 7.4 Plural Generic Queries (MANDATORY) ---
 
-If a Yes/No query involves a plural generic subject
-without an explicit quantifier (e.g., "Are elephants animals?"), treat it as a claim about the entire class.
-Use the universal pattern: ["question", ["forall", "X", ["implies", ["isa", CLASS, "X"], PROPERTY_OF_X]]].
+For Yes/No queries with a plural generic subject, choose between TWO patterns
+based on the query text (mirror of Stage-1 §8.3):
+
+(a) Bare plural — no explicit quantifier ("Are cars red?", "Do birds fly?",
+"Do cars have trunks?"): the intended reading is normally / typically.
+Wrap the consequent in ["normally", ...]:
+
+    ["question",
+      ["forall","X",
+        ["implies",
+          ["isa", CLASS, "X"],
+          ["normally", PROPERTY_OF_X]]]]
+
+(b) Explicit universal quantifier ("Are all cars red?", "Does every dog bark?"):
+the intended reading is strict universal. Do NOT wrap in "normally":
+
+    ["question",
+      ["forall","X",
+        ["implies",
+          ["isa", CLASS, "X"],
+          PROPERTY_OF_X]]]
+
+Class-membership / taxonomy questions ("Are elephants animals?",
+"Are bicycles vehicles?") follow case (b): the intended reading is a strict
+subset relation between categories.
+
+For negative bare-plural queries ("Are cars not red?", "Do birds not fly?"),
+the negation goes inside the "normally" wrapper:
+
+    ["question",
+      ["forall","X",
+        ["implies",
+          ["isa", CLASS, "X"],
+          ["normally", ["not", PROPERTY_OF_X]]]]]
 
 --- 7.5 Negation Handling in Questions ---
 
@@ -948,6 +978,11 @@ same forall/implies structure as the corresponding rule, with "not" wrapping the
     ["not", ["exists","E",["and", ...event predicates..., ]]]]]]
   Do NOT use ["question", ["exists","X", ["and", ..., ["not",...]]]]
   for these queries.
+
+For bare-plural subjects (no explicit "all"), wrap the consequent in "normally"
+per §7.4(a):
+  ["question", ["forall","X", ["implies", ANTE,
+    ["normally", ["not", ["exists","E",["and", ...event predicates..., ]]]]]]]
 
 --- 7.6 Question Anchoring ---
 

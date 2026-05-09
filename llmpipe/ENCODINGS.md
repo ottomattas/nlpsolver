@@ -850,6 +850,44 @@ for classes with concrete witnesses, (2) tier preference inversion (population
 over concrete), (3) Skolem function answers resolved to class via `get_skolem_fn_type`.
 Result: "What is Emily afraid of?" → "A wolf" instead of "Gertrude".
 
+#### Bare-plural-generic yes/no questions — named-Skolem rewrite
+
+For yes/no queries with a bare-plural generic subject ("Cars have trunks?",
+"Are cars red?"), Stage-2 §7.4(a) instructs the LLM to wrap the consequent
+in `["normally", ...]`:
+
+```json
+["question",
+ ["forall","X",
+  ["implies", ["isa","car","X"],
+   ["normally", ["exists","Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]]]]
+```
+
+`lc_questions.hoist_generic_yn_subject` detects this shape before the standard
+yes/no encoding fires and rewrites it to a UDP-shaped pair:
+
+```json
+{"@name": "sent_S3", "@sourcetype": "question_subject",
+ "@logic": ["isa","car","skq_S3_car"]}
+{"@logic": [["-isa","trunk","?:Y"], ["-has part","skq_S3_car","?:Y", ...],
+            ["$defq0"]]}
+{"@logic": [["-$defq0"], ["isa","trunk","sk0"]]}
+{"@logic": [["-$defq0"], ["has part","skq_S3_car","sk0", ...]]}
+{"@question": ["$defq0"]}
+```
+
+The skolem constant name is `skq_S<qid>_<class>` (extracted from the question's
+`@name` and the antecedent `isa` class), so multiple bare-plural questions in a
+problem get distinct constants.  Three-way distinction on the consequent shape
+during clausification (no normally → strict universal; existential → John-shortcut;
+this rewrite → defeasible-on-fresh-witness) closes cases like 213/214/215
+("Red cars do not have trunks. Cars have trunks. Cars have trunks?" → True)
+that fail under either of the simpler encodings.
+
+For explicit "all" subjects ("Are all cars red?"), Stage-2 §7.4(b) keeps the
+strict `forall` shape (no `normally` wrapper), the rewrite does not fire, and
+the prover handles it as a true universal.
+
 ### 3.11 GK Input File Format
 
 The clause list is serialized as JSON with `//` comment lines between ASU groups:

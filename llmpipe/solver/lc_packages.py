@@ -47,6 +47,7 @@ from lc_questions import (
   build_when_question,
   build_who_question,
   flatten_q_atoms,
+  hoist_generic_yn_subject,
   scan_item_formula,
   build_population_facts,
   is_ground_term,
@@ -329,6 +330,24 @@ def _process_question(formula, name, raw_text=None):
                     obj["@who_query"] = True
   else:
     # Yes/no question.
+    # Bare-plural-generic rewrite (Stage-2 prompt §7.4(a)): if the formula
+    # matches  forall X, isa(C,X) → normally(BODY)  hoist isa(C, skq) as a
+    # fact and replace the question body with BODY[X ← skq] — this produces
+    # the named-Skolem encoding (UDP-shaped) where the defeasible rule fires
+    # on the fresh skq, avoiding the John-shortcut bug of the existential
+    # form and the strict-collapse bug of the universal form.
+    extra_facts = []
+    skq, hoisted, rewritten = hoist_generic_yn_subject(formula, name)
+    if skq is not None:
+      formula = rewritten
+      hoisted_conjuncts = (hoisted[1:] if (isinstance(hoisted, list)
+                                           and hoisted and hoisted[0] == "and")
+                           else [hoisted])
+      for atom in hoisted_conjuncts:
+        extra_facts.append({"@name": name,
+                            "@sourcetype": "question_subject",
+                            "@logic": atom})
+
     # When $ctxt is active, always use $defq so the @question atom is the
     # machinery literal ["$defq0"] (no free variables → GK returns plain
     # `true` rather than `$ans(W0,…)` which confuses answer extraction).
@@ -347,6 +366,8 @@ def _process_question(formula, name, raw_text=None):
       # "No X is Y?" questions — simplify to just ["not", A].
       formula = simplify_contradictory_and(formula)
       result = build_defq_question(name, None, formula)
+    if extra_facts:
+      result = extra_facts + result
   return result, question_kind
 
 
