@@ -173,79 +173,41 @@
   [["-is rel2", "in", "?:X", "?:Y", "?:Ctxt"], ["is rel2", "at", "?:X", "?:Y", "?:Ctxt"]],
 
   // == 5. ACTIVITY & MOVEMENT (BAbI TASK LOGIC) ==
-  // Davidsonian Activity Reification: activity + has type + has actor [cite: 334, 335, 354]
-  
-   
-  [
-    ["-typical", "?:E", "?:Ctxt"],
-    ["-has type", "?:E", "?:V", "?:Ctxt"],
-    ["-has actor", "?:E", "?:X", "?:Ctxt"],
-    ["typically", "?:X", "?:V", "?:Ctxt"]
-  ],
-  
-  // If E is typical and X is the actor, then X can E.
-  [
-    ["-typical", "?:E", "?:Ctxt"],
-    ["-has actor", "?:E", "?:X", "?:Ctxt"],
-    ["can", "?:X", "?:E", "?:Ctxt"]
-  ],
+  //
+  // Davidsonian Activity Reification: every event is shape
+  //   isa(activity, E, Ctxt) + has_type(E, V, Ctxt) + has_actor(E, X, Ctxt)
+  // with optional arity-1 modal classifiers ["typical", E], ["capability", E],
+  // ["necessity", E], ["obligation", E], ["volition", E], ["intention", E],
+  // ["expectation", E], ["speech_act", E] flagging the event's mode.
 
-  // Capability: If one typically does V, one can do V [cite: 354]
-  [["-typically", "?:X", "?:V", "?:Ctxt"], ["can", "?:X", "?:V", "?:Ctxt"]],  
+  // -- 5.1 Modal Classifier Bridge: event -> capability (defeasible) --
+  //
+  // From any Davidsonian event, derive capability(E) on the SAME event
+  // variable.  Preserves all role atoms (has_target, has_recipient,
+  // has_location, has_time, ...) for the capability reading.
+  //
+  // Defeasible: the conclusion carries $block so a strict ¬capability(E)
+  // (e.g., "Penguins cannot fly") can override the inferred capability.
+  //
+  // Inner-content guard: the positive disjunct ["has content", ?:Eo, ?:E]
+  // makes the clause vacuously true when E is the content of some other
+  // event, so the bridge does NOT fire on the inner E2 of two-event
+  // reifications (volition / intention / expectation / speech_act).
+  // Example: "John told Mary to leave" — inner leave event has
+  // has_content(E_tell, E_leave) — A1 skipped — "Can Mary leave?" is
+  // not auto-derived from the telling.
+  //
+  // Note: isa(activity, E) and has_content(E1, E2) are world-invariant
+  // arity-2 forms (no Ctxt).  has_type and has_actor share Ctxt so the
+  // bridge fires per-world.
 
-  [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
-   ["isa", "activity", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"]]],
+  [["-isa", "activity", "?:E"],
+   ["-has type", "?:E", "?:V", "?:Ctxt"],
+   ["-has actor", "?:E", "?:X", "?:Ctxt"],
+   ["capability", "?:E"],
+   ["$block", ["bridge_capability", "?:E"], ["$not", ["capability", "?:E"]]],
+   ["$block", ["bridge_capability_content", "?:E"], ["has content", "?:Eo", "?:E"]]],
 
-  [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
-   ["has type", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"], "?:V"]],
-
-  [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
-   ["has actor", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"], "?:X"]],
-
-  [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
-   ["has time", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"], "?:Time", "?:Prep_t"]],
-
-  [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]],
-   ["has location", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"], "?:Loc", "?:Prep_l"]],
-
-  [["-typically", "?:X", "?:V", ["$ctxt", "?:Time", "?:W", "?:Loc", "?:KB"]], 
-   ["typical", ["sk_E", "?:X", "?:V", "?:Time", "?:W", "?:Loc", "?:KB"]]],
-   
-   // == 8. ACTION MODAL BRIDGES ==
-
-  // Axiom 1: Track-2 Habitual -> Capability (DEFEASIBLE)
-  // "If E is a typical event for X, then X can E, unless blocked."
-  [
-    ["-typical", "?:E", "?:Ctxt"],
-    ["-has actor", "?:E", "?:X", "?:Ctxt"],
-    ["can", "?:X", "?:E", "?:Ctxt"],
-    ["$block", ["bridge_typical", "?:E"], ["$not", ["can", "?:X", "?:E", "?:Ctxt"]]]
-  ],
-
-  // Axiom 2: Track-2 Event -> Capability (STRICT)
-  // "If an event occurred, the actor must have been able to do it."
-  [
-    ["-isa", "activity", "?:E", "?:Ctxt"],
-    ["-has actor", "?:E", "?:X", "?:Ctxt"],
-    ["can", "?:X", "?:E", "?:Ctxt"]
-  ],
-
-  // Axiom 3: Track-1 Habitual -> Capability (DEFEASIBLE)
-  // "If X typically does V, then X can do V, unless blocked."
-  [
-    ["-typically", "?:X", "?:V", "?:Ctxt"],
-    ["can", "?:X", "?:V", "?:Ctxt"],
-    ["$block", ["bridge_typically", "?:V"], ["$not", ["can", "?:X", "?:V", "?:Ctxt"]]]
-  ],
-
-  // Axiom 4: Davidsonian to Atomic Bridge (STRICT)
-  // "If X can do specific event E of type V, then X can do V."
-  [
-    ["-can", "?:X", "?:E", "?:Ctxt"],
-    ["-has type", "?:E", "?:V", "?:Ctxt"],
-    ["can", "?:X", "?:V", "?:Ctxt"]
-  ],
-  
 
   // Movement Results: If X 'go'es to Dest, X is 'at' Dest in the next state [cite: 146, 147]
   // Result tense is "present" (at the new world), not copied from the source event.
@@ -486,16 +448,6 @@
       ["-next", "?:W", "?:W2"],
       ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]],
       ["$block", 0, ["$not", ["has degree property", "?:P", "?:X", "?:D", "?:C", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]]]]
-    ]
-  },
-  // can
-  {
-    "@confidence": 0.99,
-    "@logic": [
-      ["-can", "?:X", "?:A", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
-      ["-next", "?:W", "?:W2"],
-      ["can", "?:X", "?:A", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]],
-      ["$block", 0, ["$not", ["can", "?:X", "?:A", ["$ctxt", "?:T", "?:W2", "?:L", "?:K"]]]]
     ]
   },
   // has part
@@ -960,13 +912,6 @@ Does John 1 have two cars?
   ]
 },
 
-// can (capability)
-[
-  ["-can", "?:X", "?:Act", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
-  ["-before", "?:W_old", "?:W_new"],
-  ["can", "?:X", "?:Act", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]]
-],
-
 // --- Gradable Predicates ---
 
 // has degree property
@@ -1104,11 +1049,6 @@ Does John 1 have two cars?
   ["-has part", "?:X", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
   ["-is_past_world", "?:W"],
   ["has part", "?:X", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
-],
-[
-  ["-can", "?:X", "?:Y", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],
-  ["-is_past_world", "?:W"],
-  ["can", "?:X", "?:Y", ["$ctxt", "past", "?:W", "?:L", "?:K"]]
 ],
 [
   ["-has degree rel2", "?:R", "?:X", "?:Y", "?:D", "?:RC", ["$ctxt", "?:AnyTense", "?:W", "?:L", "?:K"]],

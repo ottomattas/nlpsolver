@@ -1450,12 +1450,34 @@ OUTPUT:
 ["and",
   ["@id", "S1",
     ["and",
-      ["holds", "W0", ["normally", ["typically", "John 1", "smoke"]]],
+      ["holds", "W0",
+        ["normally",
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","smoke"],
+              ["has actor","E","John 1"],
+              ["typical","E"]
+            ]
+          ]
+        ]
+      ],
       ["@p", "S1", 0.1]
     ]
   ],
   ["@id", "S2",
-    ["question", ["typically", "John 1", "smoke"]]
+    ["question",
+      ["normally",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","smoke"],
+            ["has actor","E","John 1"],
+            ["typical","E"]
+          ]
+        ]
+      ]
+    ]
   ]
 ]
 
@@ -2280,11 +2302,10 @@ OUTPUT:
             ["normally",
               ["exists","E",
                 ["and",
-                  ["can","X","E"],
                   ["isa","activity","E"],
                   ["has type","E","throw"],
                   ["has target","E","X"],
-                  ["typical","E"]
+                  ["capability","E"]
                 ]
               ]
             ]
@@ -2433,16 +2454,16 @@ INPUT:
 [
   {
     "raw":"Students study.",
-    "units":[    
+    "units":[
       {
-        "unitid": "S1",
+        "unit_id": "S1",
         "text": "Students study.",
         "type": "normal_rule",
-        "ents": [{"id": "students", "type": "generic"}],
+        "entities": [{"id": "students", "type": "generic"}],
         "actions": [{"root": "study", "mode": "habitual"}]
       }
-    ]  
-  }  
+    ]
+  }
 ]
 
 OUTPUT:
@@ -2453,7 +2474,16 @@ OUTPUT:
       ["forall","X",
         ["implies",
           ["isa","student","X"],
-          ["normally",["typically","X","study"]]
+          ["normally",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","study"],
+                ["has actor","E","X"],
+                ["typical","E"]
+              ]
+            ]
+          ]
         ]
       ]
     ]
@@ -2502,7 +2532,16 @@ OUTPUT:
         ["forall","X",
           ["implies",
             ["isa","bird","X"],
-            ["normally",["can","X","fly"]]
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
           ]
         ]
       ],
@@ -2514,7 +2553,16 @@ OUTPUT:
       ["forall","X",
         ["implies",
           ["isa","penguin","X"],
-          ["not",["can","X","fly"]]
+          ["not",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","fly"],
+                ["has actor","E","X"],
+                ["capability","E"]
+              ]
+            ]
+          ]
         ]
       ]
     ]
@@ -2679,7 +2727,11 @@ OUTPUT:
 ["and",
   ["@id","S1",["holds","W0",["forall","X",["implies",["isa","penguin","X"],["isa","bird","X"]]]]],
   ["@id","S2",["holds","W0",["forall","X",["implies",["isa","penguin","X"],["isa","sea bird","X"]]]]],
-  ["@id","S3",["holds","W0",["forall","X",["implies",["isa","penguin","X"],["not",["can","X","fly"]]]]]],
+  ["@id","S3",["holds","W0",["forall","X",["implies",["isa","penguin","X"],
+    ["not",["exists","E",["and",
+      ["isa","activity","E"],["has type","E","fly"],["has actor","E","X"],["capability","E"]
+    ]]]
+  ]]]],
   ["@id","S4",["and",
     ["holds","W0",["forall","X",["implies",["isa","penguin","X"],
       ["normally",["exists","E",["and",
@@ -2931,3 +2983,294 @@ OUTPUT:
               ["has destination","E","lake 5","at"],
               ["has beneficiary","E","Mary 6"]]]]],
       ["next","W0","W1"]]]]
+
+-------
+
+INPUT:
+
+[
+  {
+    "raw": "John must leave.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "John 1 must leave.",
+        "type": "situation",
+        "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+        "actions": [{"root": "leave", "mode": "necessity", "roles": {"actor": "John 1"}}]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["holds","W0",
+      ["and",
+        ["isa","person","John 1"],
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","leave"],
+            ["has actor","E","John 1"],
+            ["necessity","E"]
+          ]
+        ]
+      ]
+    ]
+  ]
+]
+
+-------
+
+INPUT:
+
+[
+  {
+    "raw": "Children should respect elders.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "Children should respect elders.",
+        "type": "normal_rule",
+        "entities": [
+          {"id": "children", "type": "generic", "category": "person"},
+          {"id": "elders", "type": "generic", "category": "person"}
+        ],
+        "actions": [{"root": "respect", "mode": "obligation", "roles": {"actor": "children", "target": "elders"}}],
+        "confidence": 0.95
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["and",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","child","X"],
+            ["forall","Y",
+              ["implies",
+                ["isa","elder","Y"],
+                ["normally",
+                  ["exists","E",
+                    ["and",
+                      ["isa","activity","E"],
+                      ["has type","E","respect"],
+                      ["has actor","E","X"],
+                      ["has target","E","Y"],
+                      ["obligation","E"]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      ["@p","S1",0.95]
+    ]
+  ]
+]
+
+-------
+
+INPUT:
+
+[
+  {
+    "raw": "Tom wanted to leave.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "Tom 1 wanted to leave.",
+        "type": "situation",
+        "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"}],
+        "actions": [
+          {
+            "root": "want",
+            "mode": "volition",
+            "roles": {
+              "actor": "Tom 1",
+              "content": {
+                "root": "leave",
+                "mode": "event",
+                "roles": {"actor": "Tom 1"}
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["holds","W0",
+      ["and",
+        ["isa","person","Tom 1"],
+        ["exists","E1",
+          ["and",
+            ["isa","activity","E1"],
+            ["has type","E1","want"],
+            ["has actor","E1","Tom 1"],
+            ["has time","E1","past","in"],
+            ["exists","E2",
+              ["and",
+                ["has content","E1","E2"],
+                ["isa","activity","E2"],
+                ["has type","E2","leave"],
+                ["has actor","E2","Tom 1"]
+              ]
+            ],
+            ["volition","E1"]
+          ]
+        ]
+      ]
+    ]
+  ]
+]
+
+-------
+
+INPUT:
+
+[
+  {
+    "raw": "John told Mary to leave.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "John 1 told Mary 2 to leave.",
+        "type": "situation",
+        "entities": [
+          {"id": "John 1", "type": "concrete", "category": "person"},
+          {"id": "Mary 2", "type": "concrete", "category": "person"}
+        ],
+        "actions": [
+          {
+            "root": "tell",
+            "mode": "speech_act",
+            "roles": {
+              "actor": "John 1",
+              "recipient": "Mary 2",
+              "content": {
+                "root": "leave",
+                "mode": "obligation",
+                "roles": {"actor": "Mary 2"}
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["holds","W0",
+      ["and",
+        ["isa","person","John 1"],
+        ["isa","person","Mary 2"],
+        ["exists","E1",
+          ["and",
+            ["isa","activity","E1"],
+            ["has type","E1","tell"],
+            ["has actor","E1","John 1"],
+            ["has recipient","E1","Mary 2"],
+            ["has time","E1","past","in"],
+            ["exists","E2",
+              ["and",
+                ["has content","E1","E2"],
+                ["isa","activity","E2"],
+                ["has type","E2","leave"],
+                ["has actor","E2","Mary 2"],
+                ["obligation","E2"]
+              ]
+            ],
+            ["speech_act","E1"]
+          ]
+        ]
+      ]
+    ]
+  ]
+]
+
+-------
+
+INPUT:
+
+[
+  {
+    "raw": "John promised to help Mary.",
+    "units": [
+      {
+        "unit_id": "S1",
+        "text": "John 1 promised to help Mary 2.",
+        "type": "situation",
+        "entities": [
+          {"id": "John 1", "type": "concrete", "category": "person"},
+          {"id": "Mary 2", "type": "concrete", "category": "person"}
+        ],
+        "actions": [
+          {
+            "root": "promise",
+            "mode": "speech_act",
+            "roles": {
+              "actor": "John 1",
+              "content": {
+                "root": "help",
+                "mode": "obligation",
+                "roles": {"actor": "John 1", "target": "Mary 2"}
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
+
+OUTPUT:
+
+["and",
+  ["@id","S1",
+    ["holds","W0",
+      ["and",
+        ["isa","person","John 1"],
+        ["isa","person","Mary 2"],
+        ["exists","E1",
+          ["and",
+            ["isa","activity","E1"],
+            ["has type","E1","promise"],
+            ["has actor","E1","John 1"],
+            ["has time","E1","past","in"],
+            ["exists","E2",
+              ["and",
+                ["has content","E1","E2"],
+                ["isa","activity","E2"],
+                ["has type","E2","help"],
+                ["has actor","E2","John 1"],
+                ["has target","E2","Mary 2"],
+                ["obligation","E2"]
+              ]
+            ],
+            ["speech_act","E1"]
+          ]
+        ]
+      ]
+    ]
+  ]
+]

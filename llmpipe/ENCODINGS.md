@@ -92,17 +92,55 @@ Generic entities may carry a `"scope"` hint:
 
 ### 1.5 Actions
 
-Physical acts and capabilities are annotated with the `"actions"` field:
+Physical acts, capabilities, propositional attitudes, and speech acts are
+annotated with the `"actions"` field:
 
 ```json
 "actions": [{"root": "eat", "mode": "habitual", "roles": {"target": "berries"}}]
 ```
 
 - **root**: base verb in infinitive form (`"eat"` not `"ate"`)
-- **mode**: `habitual` (regular tendency), `capability` (ability), `event` (one-time)
-- **roles** (optional): `target`, `location`, `instrument`, `direction`, `manner`, `recipient`
+- **mode**: one of nine values — `event` (one-time), `habitual` (regular
+  tendency), `capability` (ability: can/could/able), `necessity`
+  (must/need/have to), `obligation` (should/ought/supposed to),
+  `volition` (want/wish/desire), `intention` (plan/intend/aim/mean to),
+  `expectation` (hope/expect/anticipate), `speech_act`
+  (tell/say/ask/order/promise)
+- **roles** (optional): `target`, `location`, `instrument`, `direction`,
+  `manner`, `recipient`, plus `content` for two-event reification (see
+  below)
 
-Stative verbs (have, own, like, love, fear, know, believe) are NOT encoded as actions.
+**Two-event reification (volition / intention / expectation / speech_act).**
+These four modes describe an EXPERIENCER (or speaker) related to an
+EMBEDDED event.  Stage-1 emits this as a nested action object in
+`roles.content` — option-b inline nesting:
+
+```json
+{
+  "root": "want",
+  "mode": "volition",
+  "roles": {
+    "actor": "Tom 1",
+    "content": {
+      "root": "leave",
+      "mode": "event",
+      "roles": {"actor": "Tom 1"}
+    }
+  }
+}
+```
+
+Subject control sets `content.roles.actor` to the experiencer; object
+control sets it to the recipient (e.g., "John told Mary to leave" → inner
+`actor` is Mary).  Speech-act content events typically take an inner
+mode of `obligation` (tell/order/promise) or `event` (say-that-clauses).
+The §12 Mental Attitudes infrastructure (`mental_holder` /
+`mental_attitude`) is reserved for pure epistemic `knows that` /
+`believes that`; all hopes / wants / intends / tells migrate to
+`actions[mode=…]`.
+
+Stative verbs (have, own, like, love, fear, know, believe) are NOT
+encoded as actions.
 
 ### 1.6 Adjectives
 
@@ -166,6 +204,23 @@ predicates describe something that was true before W2 — possibly at W0 or W1.
 
 This relative interpretation is carried through to the `$ctxt` context term in
 the GK clause list (see §3.4).
+
+For **Davidsonian events** specifically, when an event's tense diverges from
+the ambient ASU tense (most commonly: a past assertion inside an otherwise
+present-tense formula), Stage-2 encodes it directly on the event:
+
+```
+["has time", "E", "past",    "in"]
+["has time", "E", "present", "in"]
+["has time", "E", "future",  "in"]
+```
+
+The preposition is literally `"in"` for grammatical tenses.  This is the
+canonical shape and is preserved through clausification.  Non-Davidsonian
+predicates (`have`, `is rel2`, `has part`, `has property`, …) still receive
+tense through the `$ctxt` mechanism or via the `["@time", TENSE, ATOM]`
+wrapper.  See `MEMO_2026_05_14_modal_rework.md` (Plan A section) and the
+narrowed `strip_tense_has_time` in `solver/lc_rewrites.py`.
 
 #### Explicit time values (dated world states)
 
@@ -359,8 +414,26 @@ Dynamic verbs are encoded as Davidsonian events:
 | `has result E ENTITY` | Resulting state ("painted the wall green") |
 | `has topic E ENTITY` | Subject matter ("talked about the news") |
 | `has cause E ENTITY` | Entity or event causing ("fell because of ice") |
-| `typical E` | Marks the event as defeasible (for $block) |
-| `typically ENTITY VERB` | Atomic habitual predicate (Track 1) |
+| `has content E1 E2` | Inner event E2 is the content of outer event E1 (two-event reification for volition / intention / expectation / speech_act). World-invariant. |
+| `typical E` | Habitual classifier (arity 1) — marks E as a typical/normally-occurring event |
+| `capability E` | Capability classifier — marks E as the actor's ability |
+| `necessity E` | Necessity classifier (must / need / have to) |
+| `obligation E` | Obligation classifier (should / ought / supposed to) |
+| `volition E` | Volition classifier (want / wish / desire) — used on outer event of two-event reification |
+| `intention E` | Intention classifier (plan / intend / aim) — outer event of two-event reification |
+| `expectation E` | Expectation classifier (hope / expect / anticipate) — outer event of two-event reification |
+| `speech_act E` | Speech-act classifier (tell / say / ask / order / promise) — outer event of two-event reification |
+
+All eight modal classifiers are **arity 1**: they mark the event variable
+intrinsically.  World, tense, location, and KB information lives on the
+event's role atoms (`has_time`, `has_location`, etc.) which do carry a
+`$ctxt` term.  See `axioms_std.js` §5.1 for the defeasible
+event→capability bridge.
+
+Removed in the 2026-05-14 modal rework (see
+`MEMO_2026_05_14_modal_rework.md`): the old Track-1 atomic predicates
+`["can", X, V, Ctxt]` and `["typically", X, V, Ctxt]`, along with the
+arity-2 `["typical", E, Ctxt]` form.  Stage-2 no longer emits these.
 
 #### Structural Predicates
 
@@ -932,8 +1005,20 @@ The prover also loads `axioms_std.js` containing background knowledge:
 - **Carrier transparency (§7f)**: defeasible (0.85) — `isa(carrier, C) ∧ on(X, C) ∧ on(C, S) → on(X, S)`. Carrier tag injected dynamically per-noun by `inject_carrier_lifts` for nouns in `_CARRIER_NOUNS = {plate, tray, saucer, dish, newspaper, napkin, tablecloth, mat, rug, carpet}`. Handles "pizza on plate, plate on table → pizza on table".
 - **Direct-support uniqueness — X2 (§7g)**: strict — `on(X,Y1) ∧ on(X,Y2) → Y1=Y2`, with four `$block` escapes for stacked / part-of configurations. Combined with entity UNA via `#:` (lc_post_una.py), forces contradiction when two distinct Stage-1 entities are claimed as `on`-targets of the same X. Closes case 148 ("pizza on table, ask pizza on floor?" → False).
 - **Persistence (frame problem)**: facts persist across world states unless blocked
-  (defeasible for have, has property, has degree property, can, has part, is rel2;
-  variable worlds via `next(?:W, ?:W2)`)
+  (defeasible for have, has property, has degree property, has part, is rel2;
+  variable worlds via `next(?:W, ?:W2)`). Note: prior to the 2026-05-14 modal
+  rework `can` was also in this set; with the migration to the arity-1
+  `capability(E)` classifier the frame propagation lives on the event's role
+  atoms (which already participate in the existing per-predicate frame).
+- **Modal classifier bridge (§5.1)**: defeasible event→capability — for any
+  Davidsonian event `isa(activity,E) + has_type(E,V,Ctxt) + has_actor(E,X,Ctxt)`,
+  derive `capability(E)` on the SAME event variable, gated by two `$block`s:
+  (i) `$not(capability(E))` — strict ¬capability override (e.g., "Penguins
+  cannot fly" blocks the inferred capability for a penguin event); (ii)
+  `has_content(?:Eo, E)` — when E is the inner content of a two-event
+  reification (volition / intention / expectation / speech_act) the bridge
+  is blocked, preventing "John told Mary to leave" from leaking to
+  "Mary can leave". See `MEMO_2026_05_14_modal_rework.md` for the design.
 - **Movement axioms**: `has_actor(E,X) + has_type(E,go) + has_destination(E,Dest,Prep) +
   next(W,W2) → is_rel2(at, X, Dest, $ctxt(present, W2, ...))`.  Result tense is
   always "present" at the new world.  The `has_destination` predicate is 4-arg
@@ -982,8 +1067,12 @@ The prover also loads `axioms_std.js` containing background knowledge:
   on past-tense (or present-tense) facts about those specific entities.  This
   replaces the global Section 6a same-world tense bridges (now disabled in
   `axioms_std.js`) and avoids search-space explosion.  Stative predicates
-  covered: `have`, `has part`, `can`, `has property`, `has degree property`,
+  covered: `have`, `has part`, `has property`, `has degree property`,
   `is rel2`, `has degree rel2`.  Built by `lc_ctxt.build_question_tense_bridges`.
+  (`can` was previously in this set; with the 2026-05-14 migration to the
+  arity-1 `capability(E)` classifier it no longer participates — capability
+  questions are answered via the event's role atoms which already use these
+  bridges.)
 - **Prover seconds auto-estimation**: `prover.py` counts distinct world constants
   in the clause list and scales the prover time limit accordingly (empirical table
   with 2x safety multiplier).  CLI `-seconds N` overrides the estimate.

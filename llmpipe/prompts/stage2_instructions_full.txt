@@ -161,7 +161,6 @@ Do NOT invent new predicates.
 ["have", OWNER, OWNED]
 ["has part", WHOLE, PART]
 ["is rel2", RELATION, ENTITY1, ENTITY2]
-["can", ENTITY, ACTION]
 
 --- 2.3 Gradable Predicates ---
 
@@ -249,8 +248,15 @@ Never emit both ["is rel2"] and ["has degree rel2"] for the same word.
 ["has result", E, ENTITY]            -- resulting state ("painted the wall green")
 ["has topic", E, ENTITY]             -- subject matter ("talked about the news")
 ["has cause", E, ENTITY]             -- entity or event causing ("fell because of ice")
-["typical", E]
-["typically", ENTITY, VERB]
+["typical", E]                       -- habitual classifier
+["capability", E]                    -- capability classifier (can / could / able)
+["necessity", E]                     -- necessity classifier (must / need / have to)
+["obligation", E]                    -- obligation classifier (should / ought / supposed)
+["volition", E]                      -- volition classifier (want / wish / desire)
+["intention", E]                     -- intention classifier (plan / intend / aim)
+["expectation", E]                   -- expectation classifier (hope / expect / anticipate)
+["speech_act", E]                    -- speech-act classifier (tell / say / ask / order / promise)
+["has content", E1, E2]              -- two-event link: outer experiencer/speaker E1 to inner E2
 
 --- 2.7 State / World Predicates ---
 
@@ -654,61 +660,36 @@ Relation-Only Rules: If a rule relates two entities (e.g., "If X is a grandfathe
 use only the relationship predicate (is rel2). Do NOT add categorical checks like isa(person, X) or isa(grandfather, X).
 
 
-== 6. ACTION TRACKS ==
+== 6. ACTION COMPILATION ==
 
-ACTION COMPILATION RULES: When an ASU contains an "actions" list, use it to
-determine the logic track and modal form for each action verb. Do not re-analyze
-the text to decide between Track 1 and Track 2 — the actions structure (mode +
-roles) determines this mechanically.
+ACTION COMPILATION RULES: When an ASU contains an "actions" list, use it
+to compile each action verb. The actions structure (mode + roles +
+optional nested content) determines the logic shape.
 
-For all other aspects of the ASU (negation, quantifiers, disjunction, entities,
-adjectives, time, etc.), continue interpreting the text and other JSON fields
-as usual.
+For all other aspects of the ASU (negation, quantifiers, disjunction,
+entities, adjectives, time, etc.), continue interpreting the text and
+other JSON fields as usual.
 
-Do not create event variables for stative verbs like have, own, like, love, prefer, know,
-believe, contain, belong etc.
+Do not create event variables for stative verbs like have, own, like,
+love, prefer, know, believe, contain, belong etc.
 Stative verbs must be encoded as direct relations:
 * "have" as ["have",OWNER,OBJECT]
 * for others either ["has degree property",VERB, ...] or ["has property", VERB, ...]
 
---- 6.1 Track Selection ---
+--- 6.1 Single-Track Davidsonian Overview ---
 
-For each action object {root, mode, roles}:
+All actions compile as Davidsonian events: a fresh event variable E
+quantified by ["exists","E",["and",...]], with the action's identity
+encoded by core predicates (isa / has_type / has_actor), thematic
+roles (has_target, has_location, ...), and a modality classifier
+chosen per the action's mode (Section 6.2 Step C). Every action root
+produces an event variable, even when the roles dict is empty.
 
-  Track 1 (Atomic Predicate): roles is absent or empty AND mode is NOT event.
-  Track 2 (Davidsonian Event): for two cases:
-     - roles contains any key OR mode is event.
-     - action occurs in a query ASU
+The modes volition / intention / expectation / speech_act produce TWO
+linked events (an outer experiencer/speaker event and an inner content
+event); see Section 6.3.
 
---- 6.2 Track 1: Atomic Compilation ---
-
-Wrap the actor and verb root in a modal predicate based on mode:
-
-  habitual   -> ["typically", ACTOR, ROOT]
-  capability -> ["can", ACTOR, ROOT]
-
-Sentence-type wrapping for Track 1:
-
-  Generic rule:
-  ["forall","X",
-    ["implies",
-      ANTE,
-      ["normally", ["typically","X",ROOT]]
-    ]
-  ]
-
-  Concrete situation:
-  ["holds","W0",["typically",ACTOR,ROOT]]
-
-  Negation:
-  ["holds","W0",["not",["can",ACTOR,ROOT]]]
-
-  Query:
-  ["question",["typically",ACTOR,ROOT]]
-
---- 6.3 Track 2: Davidsonian Compilation ---
-
-When roles are present or mode is event, reify the action into an event variable E.
+--- 6.2 Davidsonian Compilation ---
 
 Step A — core predicates (always present):
   ["isa","activity","E"]
@@ -740,56 +721,108 @@ Step B — role predicates (one per role key-value):
       ]
     ]
 
-Step C — modal treatment based on mode:
+  Special role: roles.content (TWO-EVENT modes only):
+  For modes volition / intention / expectation / speech_act, the
+  `content` role value is a NESTED ACTION OBJECT (not a string).
+  Compile it as a separate Davidsonian event E2 inside the outer
+  event block, linked by ["has content","E","E2"]. See Section 6.3.
 
-  event:      No modal predicate added. The existential block stands alone.
-  habitual:   Wrap the entire existential block in ["normally",...].
-  capability: Add ["can",ACTOR,"E"] as a predicate inside the "and" block.
+Step C — modal classifier:
 
-  Never use ["can", ACTOR, E] for habitual or event modes, even in negations or strict_rules.
-  NEVER use ["can", ACTOR, COMPLEX_TERM] where COMPLEX_TERM is an
-  ["exists",...] or ["and",...] block. ["can",ACTOR,"E"] takes only
-  an event variable or a constant.
+For each event E, add the modal-classifier conjunct based on mode.
+The classifier is the LAST conjunct of the outer "and" block.
 
-  Event example:
+  mode         | classifier conjunct (LAST in and-block)
+  -------------|----------------------------------------
+  event        | (none)
+  habitual     | ["typical","E"]
+  capability   | ["capability","E"]
+  necessity    | ["necessity","E"]
+  obligation   | ["obligation","E"]
+  volition     | ["volition","E"]     (also: has_content → nested E2; see §6.3)
+  intention    | ["intention","E"]    (also: has_content → nested E2; see §6.3)
+  expectation  | ["expectation","E"]  (also: has_content → nested E2; see §6.3)
+  speech_act   | ["speech_act","E"]   (also: has_content → nested E2; see §6.3)
+
+  Note: wrapping the event block in ["normally", ...] is governed by
+  sentence TYPE (normal_rule), NOT by mode. Step D below decides
+  wrapping. A habitual situation ("Mary smoked yesterday") does NOT
+  wrap; a capability inside a normal_rule ("Birds fly") DOES wrap.
+
+  Event example (mode=event, "John smiled"):
   ["exists","E",["and",
     ["isa","activity","E"],
     ["has type","E","smile"],
     ["has actor","E","John 1"]
   ]]
 
-  Habitual with kind target (meat = scope "kind", bare constant):
-  ["normally",
-    ["exists","E",["and",
-      ["isa","activity","E"],
-      ["has type","E","eat"],
-      ["has actor","E","X"],
-      ["has target","E","meat"]
-    ]]
+  Habitual with kind target (mode=habitual, "Dogs eat meat"):
+  ["forall","X",
+    ["implies",
+      ["isa","dog","X"],
+      ["normally",
+        ["exists","E",["and",
+          ["isa","activity","E"],
+          ["has type","E","eat"],
+          ["has actor","E","X"],
+          ["has target","E","meat"],
+          ["typical","E"]
+        ]]
+      ]
+    ]
   ]
 
-  Habitual with non-kind generic target ("a carrot" = generic, existential):
-  ["normally",
-    ["exists","E",["and",
-      ["isa","activity","E"],
-      ["has type","E","eat"],
-      ["has actor","E","John 1"],
-      ["exists","Y",["and",["isa","carrot","Y"],["has target","E","Y"]]]
-    ]]
+  Habitual with non-kind generic target (mode=habitual, "Cats chase mice"):
+  ["forall","X",
+    ["implies",
+      ["isa","cat","X"],
+      ["normally",
+        ["exists","E",["and",
+          ["isa","activity","E"],
+          ["has type","E","chase"],
+          ["has actor","E","X"],
+          ["exists","Y",["and",["isa","mouse","Y"],["has target","E","Y"]]],
+          ["typical","E"]
+        ]]
+      ]
+    ]
   ]
 
-  Capability with roles example:
+  Capability example (mode=capability, "John can fly"):
   ["exists","E",["and",
-    ["can","X","E"],
     ["isa","activity","E"],
-    ["has type","E","eat"],
-    ["has actor","E","X"],
-    ["has target","E","fish"]
+    ["has type","E","fly"],
+    ["has actor","E","John 1"],
+    ["capability","E"]
   ]]
 
-Step D — sentence-type wrapping for Track 2:
+  Necessity example (mode=necessity, "John must leave"):
+  ["exists","E",["and",
+    ["isa","activity","E"],
+    ["has type","E","leave"],
+    ["has actor","E","John 1"],
+    ["necessity","E"]
+  ]]
 
-  Generic rule (habitual):
+  Obligation example (mode=obligation, "Children should respect elders"):
+  ["forall","X",
+    ["implies",
+      ["isa","child","X"],
+      ["normally",
+        ["exists","E",["and",
+          ["isa","activity","E"],
+          ["has type","E","respect"],
+          ["has actor","E","X"],
+          ["has target","E","elders"],
+          ["obligation","E"]
+        ]]
+      ]
+    ]
+  ]
+
+Step D — sentence-type wrapping:
+
+  Generic rule (mode=habitual):
   ["forall","X",
     ["implies",
       ANTE,
@@ -799,14 +832,16 @@ Step D — sentence-type wrapping for Track 2:
           ["has type","E",ROOT],
           ["has actor","E","X"],
           ...role predicates...,
-          ["can","X","E"]
+          ["typical","E"]
         ]]
       ]
     ]
   ]
 
-  CRITICAL: ["typical","E"] MUST always be the LAST conjunct in the event "and".
-  It is the defeasible anchor; the $block is placed on it.
+  CRITICAL: the modal classifier (typical / capability / necessity /
+  obligation / volition / intention / expectation / speech_act) MUST
+  always be the LAST conjunct in the event "and". It is the defeasible
+  anchor; the $block is placed on it.
 
   Concrete situation:
   ["holds","W0",["exists","E",["and",...]]]
@@ -826,21 +861,45 @@ Step D — sentence-type wrapping for Track 2:
     ]]
   ]
 
-  Strict negation of events: When type is strict_rule, the negation block
-  ["not",["exists","E",["and",...]]] must contain ONLY core event predicates:
-  ["isa","activity","E"], ["has type","E",ROOT], ["has actor","E",ACTOR],
-  and role predicates. Do NOT include ["can",ACTOR,"E"] or ["typical","E"]
-  in the negated event block.
+  Strict negation of events: The negated block
+  ["not",["exists","E",["and",...]]] preserves the SAME shape the
+  assertion would emit, INCLUDING the modal classifier as the LAST
+  conjunct of the "and". This gives the intended WEAK reading
+  (lack of capability / no obligation / not normally) rather than
+  the absolute reading (no event of this shape ever exists).
+
+  Example — "Penguins cannot fly" (strict_rule, mode=capability):
+  ["forall","X",
+    ["implies",
+      ["isa","penguin","X"],
+      ["not",
+        ["exists","E",["and",
+          ["isa","activity","E"],
+          ["has type","E","fly"],
+          ["has actor","E","X"],
+          ["capability","E"]
+        ]]
+      ]
+    ]
+  ]
 
   Query:
 
-  For habitual queries, include ["typical","E"] as the last conjunct:
-    ["question",["exists","E",["and",...,["typical","E"]]]]
+  Queries take the same modal classifier as the matching assertion.
+  Use the mode field on the query's action object (set by Stage-1's
+  Global Action Synchronization, §5.3) to choose the classifier.
+  Include the mode's classifier as the LAST conjunct of the event
+  "and" block.
 
-  For capability queries, include ["can",ACTOR,"E"] instead of ["typical","E"].
+    For mode=event:        no classifier conjunct.
+    For mode=habitual:     ["typical","E"]   (also wrap in ["normally",...])
+    For mode=capability:   ["capability","E"]
+    For mode=necessity:    ["necessity","E"]
+    For mode=obligation:   ["obligation","E"]
+    For mode=volition / intention / expectation / speech_act: see Section 6.3.
 
-  For plain yes/no queries where the mode is unclear or mixed
-  (e.g., "Do bears eat berries?"), default to including  ["can",ACTOR,"E"].
+  Use the mode emitted by Stage-1 directly. Do not infer or add a
+  modal classifier when Stage-1 emits mode=event.
 
   ROLE ADJECTIVES: When any role entity (target, location, instrument,
   recipient, etc.) has adjectives, introduce a variable for that entity
@@ -863,23 +922,88 @@ Step D — sentence-type wrapping for Track 2:
                                     ["has target","E","Y"]]],
               ["exists","Z",["and",["isa","forest","Z"],
                                     ["has degree property","deep","Z","none","forest"],
-                                    ["has location","E","Z","in"]]]
+                                    ["has location","E","Z","in"]]],
+              ["typical","E"]
             ]]]]]
 
   NEVER place adjective predicates outside the ["exists","E",...] block.
   NEVER apply adjectives to the type name string (e.g.,
   ["has degree property","deep","forest",...] is WRONG).
 
-  Keep ["typical","E"] as the last conjunct of the outer "and".
+  Keep the modal classifier conjunct as the LAST conjunct of the outer "and".
 
-  For plain Yes/No queries (e.g., "Do bears eat?"), default to ["can", ACTOR, "E"] as the modal conjunct.
+  If a role-entity in a query has adjectives, follow the Modified Roles
+  nesting pattern above.
 
-  If a role-entity in a query has adjectives, follow the Modified Roles nesting pattern above.
+--- 6.3 Two-Event Compilation (volition / intention / expectation / speech_act) ---
+
+These four modes describe an EXPERIENCER (or speaker) related to an
+EMBEDDED event. Stage-1 emits this as a nested action object in
+roles.content (see Stage-1 §6.2.2). Stage-2 compiles it as TWO
+linked Davidsonian events:
+
+  Outer event E1 — the experiencing/speaking event:
+    ["isa","activity","E1"]
+    ["has type","E1",OUTER_ROOT]   (e.g., "want", "tell", "promise", "hope")
+    ["has actor","E1",EXPERIENCER]
+    ...other outer roles (recipient, etc.)...
+    ["has content","E1","E2"]
+    [<outer classifier>,"E1"]      (volition / intention / expectation / speech_act)
+
+  Inner event E2 — the embedded event (the wanted / intended / expected / told thing):
+    ["isa","activity","E2"]
+    ["has type","E2",INNER_ROOT]
+    ["has actor","E2",INNER_ACTOR]
+    ...other inner roles...
+    [<inner classifier>,"E2"]      (per inner action's own mode; usually
+                                    omitted for mode=event, sometimes
+                                    ["obligation","E2"] for tell/order/ask
+                                    /promise content)
+
+  E2 is introduced as a nested existential INSIDE E1's "and" block.
+
+  Subject control example ("John wanted to leave"):
+  ["exists","E1",["and",
+    ["isa","activity","E1"],
+    ["has type","E1","want"],
+    ["has actor","E1","John 1"],
+    ["exists","E2",["and",
+      ["has content","E1","E2"],
+      ["isa","activity","E2"],
+      ["has type","E2","leave"],
+      ["has actor","E2","John 1"]
+    ]],
+    ["volition","E1"]
+  ]]
+
+  Object control example ("John told Mary to leave"):
+  ["exists","E1",["and",
+    ["isa","activity","E1"],
+    ["has type","E1","tell"],
+    ["has actor","E1","John 1"],
+    ["has recipient","E1","Mary 2"],
+    ["exists","E2",["and",
+      ["has content","E1","E2"],
+      ["isa","activity","E2"],
+      ["has type","E2","leave"],
+      ["has actor","E2","Mary 2"],
+      ["obligation","E2"]
+    ]],
+    ["speech_act","E1"]
+  ]]
+
+The outer-event classifier (volition / intention / expectation /
+speech_act) is the LAST conjunct of E1's outer "and". The inner-event
+classifier, if any, is the LAST conjunct of E2's inner "and".
+
+Sentence-type wrapping (rule, situation, query) for the outer event
+follows the same patterns as Section 6.2 Step D — wrap the entire E1
+block exactly as you would any single Davidsonian event.
 
 --- 6.4 Action Constraints ---
 
   Actions override text for verbs: Use the actions structure, not the text,
-  to select the track and modal form. If a modifier appears in the text but
+  to select the modal form. If a modifier appears in the text but
   not in roles, do not add it as a role predicate.
 
   ID Consistency: The ACTOR is the primary entity identified as the subject
@@ -1019,6 +1143,14 @@ past | present | future | timeless
 
 Do not nest @time wrappers.
 
+@time scope:
+@time wraps NON-Davidsonian atoms only — have, is rel2, has part,
+has property, has degree property, has degree rel2, isa-with-Ctxt
+predicates, and the like. For Davidsonian events (an event variable E
+introduced by ["exists","E", ["and",["isa","activity","E"], ...]])
+do NOT use @time. Encode tense on the event itself with
+["has time", "E", "past"|"present"|"future", "in"] — see §8.1.
+
 has_time and explicit time expressions:
 When the ASU "time" field is an explicit time expression (e.g., "1800", "Monday"),
 use it as the value in has_time for event ASUs:
@@ -1028,11 +1160,26 @@ Do NOT put explicit time expressions in @time wrappers — @time is only for
 grammatical tenses. The pipeline handles world-level temporal anchoring
 automatically from Stage-1 data.
 
-Do NOT put grammatical tenses ("past", "present", "future") as has_time values.
-has_time is only for explicit time expressions (years, dates, times of day).
-WRONG: ["has time", "E", "past", "in"]   — "past" is a tense, not a time value.
-RIGHT: ["has time", "E", "1800", "during"] — "1800" is an explicit time value.
-If an event has no explicit time expression, omit has_time entirely.
+Grammatical tense on Davidsonian events:
+For an event variable E whose tense differs from the ambient ASU tense
+(e.g., a past assertion appearing inside a present-tense formula),
+encode tense ON the event:
+  ["has time", "E", "past",    "in"]
+  ["has time", "E", "present", "in"]
+  ["has time", "E", "future",  "in"]
+The preposition is "in" for grammatical tenses. This is the canonical
+form for Davidsonian events; the pipeline reads tense from this slot
+when present.
+
+For non-Davidsonian atoms (have, is rel2, has part, has property, etc.)
+do NOT use has_time. Tense for those flows through the $ctxt mechanism
+(injected from the Stage-1 unit "time" field) and through @time wrappers
+when an individual atom diverges from the unit default. See §2.9.
+
+For explicit time expressions (years, dates, times of day, meals) keep
+has_time as documented above — the value is the literal expression
+("1800", "Monday", "noon") with the appropriate preposition
+("during", "on", "at", "before", "after").
 
 --- 8.2 State Transitions ---
 
@@ -1175,13 +1322,14 @@ Before finalizing output, verify:
 - No free variables
 - No invented predicates
 - strict_rule -> never normally
-- normal_rule -> normally or typically
-- can only when explicit
+- normal_rule -> wrap in normally
+- modal classifier (capability / necessity / obligation / volition / intention / expectation / speech_act) only when Stage-1 mode field requires it
 - has degree property iff word in adjectives; has property otherwise; never both; same rule applies to has degree rel2 vs is rel2
 - Mental only if provided
 - Sets only when required
 - No ["is rel2", "is", ...] for copula — use ["isa", TYPE, ENTITY]
 - Stative verbs (have, like, know) never get event variables
-- Track 2 queries include modal conjunct (typical/can) as last in "and"
+- Queries include the mode's modal classifier (typical / capability / necessity / ...) as the LAST conjunct of the event "and" block
 - No @time wrapper for explicit time expressions — use has_time
-- No grammatical tenses as has_time values
+- No @time wrapper for Davidsonian events — use has_time on the event variable
+- Grammatical tenses as has_time values are allowed ONLY on Davidsonian event variables (canonical: ["has time","E","past"|"present"|"future","in"])

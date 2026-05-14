@@ -742,6 +742,25 @@ _PRED_TABLE = {
   # mental predicates
   "kb":                 (3, lambda e,a: e(1)+" "+e(2)+" that ...", None),
   "kb force":           (0, None,                                  None),
+  # ---- modal classifiers (arity-1, attach to a Davidsonian event variable) ----
+  # Atom-level forms; clause-level rendering ("X can V" from sibling
+  # has_type+has_actor) is deferred to Phase 6.
+  "capability":         (1, lambda e,a: e(0)+" is possible",
+                            lambda e,a: e(0)+" is not possible"),
+  "volition":           (1, lambda e,a: e(0)+" is wanted",
+                            lambda e,a: e(0)+" is not wanted"),
+  "intention":          (1, lambda e,a: e(0)+" is intended",
+                            lambda e,a: e(0)+" is not intended"),
+  "expectation":        (1, lambda e,a: e(0)+" is expected",
+                            lambda e,a: e(0)+" is not expected"),
+  "necessity":          (1, lambda e,a: e(0)+" is necessary",
+                            lambda e,a: e(0)+" is not necessary"),
+  "obligation":         (1, lambda e,a: e(0)+" is obligatory",
+                            lambda e,a: e(0)+" is not obligatory"),
+  "speech_act":         (1, lambda e,a: e(0)+" is a speech act",
+                            lambda e,a: e(0)+" is not a speech act"),
+  "has content":        (2, lambda e,a: e(0)+" is about "+e(1),
+                            lambda e,a: e(0)+" is not about "+e(1)),
 }
 
 

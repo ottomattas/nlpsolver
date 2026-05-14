@@ -184,11 +184,10 @@ def _walk_body_depth(node, inside_body, issues, path):
       ))
       return
 
-  # NOTE: intentionally do NOT flag `has time E TENSE PREP` here. The
-  # Stage-2 examples file illustrates this shape and most LLMs emit it
-  # consistently.  The pipeline's strip_tense_has_time post-processor
-  # handles it cheaply; triggering an LLM retry on every past-tense verb
-  # would waste calls for a problem already solved.
+  # NOTE: intentionally do NOT flag `has time E TENSE PREP` here. Per
+  # Stage-2 §8.1, this is the canonical shape for grammatical tense on
+  # Davidsonian event variables and must survive into clausification.
+  # strip_tense_has_time keeps it on event vars and strips it elsewhere.
 
   # Body-introducing operators: recurse into the last child with inside_body=True.
   if op in _BODY_OPS:

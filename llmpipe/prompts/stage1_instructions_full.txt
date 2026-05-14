@@ -571,16 +571,34 @@ Each ACTION is an object:
 
 Fields:
   root   -- base verb (infinitive form: "eat" not "ate", "fly" not "flew")
-  mode   -- one of:
-    habitual    -- regular tendency or class behavior ("Birds fly", "Dogs eat meat")
+  mode   -- one of (see §6.2.1 verb-mode table for surface markers):
+    event       -- specific bounded occurrence; default for past tense and
+                   "will V" future ("John ate a fish", "A bear ran",
+                   "John will leave")
+    habitual    -- regular tendency or class behavior
+                   ("Birds fly", "Dogs eat meat")
     capability  -- ability or potential ("He can sing", "It can be thrown")
-    event       -- specific bounded occurrence ("John ate a fish", "A bear ran")
-  roles  -- optional dict mapping role names to entity IDs.
+    necessity   -- requirement / must / need to / have to
+                   ("John must leave", "Birds need water")
+    obligation  -- normative duty / should / ought to / supposed to
+                   ("John should help", "Children ought to obey")
+    volition    -- want / wish / desire (TWO-EVENT, see §6.2.2)
+                   ("Tom wanted to leave", "Mary wishes to fly")
+    intention   -- plan / intend / aim / mean to (TWO-EVENT, see §6.2.2)
+                   ("John plans to leave", "Mary intends to fly")
+    expectation -- hope / expect / anticipate (TWO-EVENT, see §6.2.2)
+                   ("John hopes to win", "Mary expects rain")
+    speech_act  -- communicative act: tell / say / ask / order / promise
+                   (TWO-EVENT, see §6.2.2)
+                   ("John told Mary to leave", "Bill said it was raining")
+  roles  -- optional dict mapping role names to entity IDs (and, for
+            two-event modes, to a nested action object — see §6.2.2).
     Omit when the action has no object or modifiers.
     Keys: target, location, location_prep, instrument, direction, manner,
           recipient, destination, source, beneficiary, accompaniment, path, result,
-          topic, cause.
-    Values: entity IDs or lists of IDs.
+          topic, cause, content.
+    Values: entity IDs or lists of IDs (or, for `content` under a TWO-EVENT
+    outer action, a nested action object).
     location_prep -- the spatial preposition ("in", "at", "on", "near", etc.).
       Include when the text uses a specific preposition with the location.
       Default "in" if omitted. Examples:
@@ -600,19 +618,101 @@ Fields:
 When a concrete sentence echoes a verb from a rule in the same input,
 use the same mode as the rule.
 
+--- 6.2.1. Verb-to-Mode Table (illustrative, not exhaustive) ---
+
+Choose `mode` based on the dominant surface marker:
+
+  Surface marker                       | Mode         | Reification
+  -------------------------------------|--------------|-------------
+  past tense, "will V" (future)        | event        | single
+  normally / typically / usually       | habitual     | single
+  can / could / able / capable         | capability   | single
+  must / need / have to                | necessity    | single
+  should / ought / supposed to         | obligation   | single
+  want / wish / desire                 | volition     | TWO-EVENT
+  plan / intend / aim / mean to        | intention    | TWO-EVENT
+  hope / expect / anticipate           | expectation  | TWO-EVENT
+  tell / say / ask / order / promise   | speech_act   | TWO-EVENT
+
+Dominant-marker rule: if multiple markers apply (e.g., "can typically
+fly"), the dominant marker wins. Capability beats habitual.
+
+Modes are mutually exclusive: a verb that would normally trigger
+speech_act/volition/intention/expectation, when used in a habitual or
+capability context, takes habitual/capability mode (single, flat
+action) and SKIPS the two-event reification.
+  - "John tells Mary to leave" (one occasion)  -> speech_act, two-event
+  - "John always tells Mary to leave" (habit)   -> habitual, single flat
+  - "John can tell Mary to leave"  (ability)    -> capability, single flat
+
+--- 6.2.2. Two-Event Complement Structure (volition / intention / expectation / speech_act) ---
+
+The four TWO-EVENT modes describe an EXPERIENCER (or speaker) related to
+an embedded EVENT. Emit ONE outer action whose `roles.content` value is
+the inner action OBJECT (not a string id). The inner action object has
+its own `root`, `mode`, and `roles`.
+
+Subject control ("John wanted to leave"):
+  outer.actor = John, inner.actor = John
+
+  "actions": [
+    {
+      "root": "want",
+      "mode": "volition",
+      "roles": {
+        "actor": "John 1",
+        "content": {
+          "root": "leave",
+          "mode": "event",
+          "roles": {"actor": "John 1"}
+        }
+      }
+    }
+  ]
+
+Object control ("John told Mary to leave"):
+  outer.actor = John, outer.recipient = Mary, inner.actor = Mary
+
+  "actions": [
+    {
+      "root": "tell",
+      "mode": "speech_act",
+      "roles": {
+        "actor": "John 1",
+        "recipient": "Mary 2",
+        "content": {
+          "root": "leave",
+          "mode": "obligation",
+          "roles": {"actor": "Mary 2"}
+        }
+      }
+    }
+  ]
+
+Inner-mode rules for speech_act content:
+  - tell / order / ask  X to V    -> inner mode = obligation, inner actor = addressee
+  - promise / vow       to V      -> inner mode = obligation, inner actor = speaker
+  - tell / say          that <P>  -> inner mode = event       (no classifier on inner)
+
+Inner-mode rules for volition / intention / expectation:
+  - usually inner mode = event (the desired/intended/expected occurrence).
+  - if the embedded clause itself has a modal marker, propagate it.
+
 --- 6.3. Global Action Synchronization (CRITICAL) ---
 
 You must ensure that every instance of a verb root (e.g., "fly") across different ASUs in the same package uses the same mode:
 
-1.  Explicit Markers: If the ASU uses "can," "is able to," or "possible," use capability.
-    If it uses "normally," "typically," or "usually," use habitual.
+1.  Explicit Markers: choose mode by the dominant surface marker per
+    §6.2.1 (capability for can/could/able; habitual for normally/
+    typically/usually; necessity for must/need/have to; obligation for
+    should/ought/supposed; volition for want/wish/desire; intention for
+    plan/intend/aim/mean; expectation for hope/expect/anticipate;
+    speech_act for tell/say/ask/order/promise).
 2.  If a strict_rule or normal_rule defines an action (e.g., "Birds fly"),
     every subsequent ASU mentioning that action -- including negations and queries - -MUST use the same mode
     (e.g., capability or habitual) unless an explicit marker says otherwise.
 3.  Negation Mapping: If a rule states a capability (e.g., "can fly"), a sentence like "John does not fly" must be interpreted
     as a denial of that capability (mode: capability), NOT as a specific event (mode: event).
-4.  Default Query Preference: When no rule or marker is present, default queries with a bare verb (e.g., "John swims?")
-    as capability.
 
 
 == 7. ADJECTIVES ==
@@ -757,6 +857,7 @@ For a negative question (e.g., "Are elephants not animals?", "Is John not at hom
 - Preserve negation quantifiers ("no", "no one", "nothing", "none", "not any") in the rewritten text.
   "John eats no berries?" -> "Does John 1 eat no berries?" (NOT "Does John 1 eat berries?")
   "No bird can fly?" -> "Can no bird fly?"
+  "John cannot fly?" -> "Can John 1 not fly?" (NOT "Can John 1 fly?")
 
 --- 8.5 Conjunctive/Disjunctive Questions ---
 
@@ -1046,12 +1147,12 @@ with a relational noun  (e.g., "John's father", "the price of milk"):
    definites on it, not an additional "real" unit like "The price is the price of the bike."
 
 
-== 12. MENTAL ATTITUDES (PROPOSITIONAL ONLY) ==
+== 12. MENTAL ATTITUDES (EPISTEMIC ONLY) ==
 
-Add only for propositional attitudes:
+Use the mental_holder / mental_attitude infrastructure ONLY for pure
+epistemic propositional attitudes:
 - knows that
 - believes that
-- hopes that
 
 Fields:
 - mental_holder
@@ -1061,6 +1162,12 @@ Fields:
 
 Rules:
 - Do NOT add for object-directed liking or wanting.
+- Do NOT add for hopes / expects / anticipates (use actions[mode=expectation]
+  with two-event reification, see §6.2.2).
+- Do NOT add for wants / wishes / desires (use actions[mode=volition]).
+- Do NOT add for plans / intends / aims (use actions[mode=intention]).
+- Do NOT add for tells / says / asks / orders / promises (use
+  actions[mode=speech_act]).
 - Create separate ASUs for embedded propositions.
 - If non_factive -> do NOT assert embedded proposition as true.
 

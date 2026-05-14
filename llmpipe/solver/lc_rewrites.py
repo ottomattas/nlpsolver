@@ -217,29 +217,54 @@ def normalize_receive_events(tree):
 
 _GRAMMATICAL_TENSES = frozenset({"past", "present", "future", "timeless"})
 
-def strip_tense_has_time(tree):
-  """Remove has_time and state_time atoms where the time value is a
-  grammatical tense.
 
-  LLMs sometimes produce ["has time", E, "past", "in"] in questions,
-  treating grammatical tense as a time value.  These are always wrong —
-  tense belongs in $ctxt, not in has_time.  Strips them from "and"
-  conjunctions; replaces a standalone occurrence with True (no-op for
-  clausification since the conjunction collapses).
+def _collect_event_vars(tree):
+  """Walk tree; return the set of variable strings X for which
+  ["isa", "activity", X] appears anywhere — i.e., Davidsonian event
+  variables.  has_time on these may legitimately carry a grammatical
+  tense per Stage-2 §8.1."""
+  out = set()
+  def visit(node):
+    if not isinstance(node, list) or not node:
+      return
+    if (len(node) >= 3 and isinstance(node[0], str)
+        and node[0] == "isa"
+        and isinstance(node[1], str) and node[1] == "activity"
+        and isinstance(node[2], str)):
+      out.add(node[2])
+    for child in node:
+      if isinstance(child, list):
+        visit(child)
+  visit(tree)
+  return out
 
-  Similarly, ["state time", W, "past"] belongs at the package level
-  (sibling of holds/question/ask) as metadata — some LLMs misplace it
-  inside a question/assertion body.  Package-level tense is already
-  carried by the Stage-1 ASU ("time" field), so stripping in-body
-  state_time is safe.
+
+def strip_tense_has_time(tree, event_vars=None):
+  """Remove tense-valued has_time / state_time atoms where the value
+  is a grammatical tense, EXCEPT when first arg is a Davidsonian event
+  variable.
+
+  Per Stage-2 §8.1, the canonical shape for grammatical tense on a
+  Davidsonian event is ["has time", E, "past"|"present"|"future", "in"]
+  and must survive.  For non-event predicates, tense belongs in $ctxt
+  (injected from the Stage-1 ASU "time" field) and a has_time with a
+  tense value there is the old wrong shape — strip it.
+
+  ["state time", W, "past"] belongs at the package level as metadata;
+  if it appears inside a formula body it is a misplacement and is
+  always stripped.
   """
+  if event_vars is None:
+    event_vars = _collect_event_vars(tree)
   if not isinstance(tree, list) or not tree:
     return tree
   op = tree[0] if isinstance(tree[0], str) else None
-  # Check if this node IS a tense-valued has_time
+  # has_time with tense value: keep on Davidsonian events, strip otherwise.
   if op in ("has time", "-has time") and len(tree) >= 3:
     if isinstance(tree[2], str) and tree[2] in _GRAMMATICAL_TENSES:
-      return None  # sentinel: remove this conjunct
+      first_arg = tree[1] if len(tree) >= 2 else None
+      if not (isinstance(first_arg, str) and first_arg in event_vars):
+        return None  # sentinel: remove this conjunct
   # Misplaced state_time with tense value (belongs at package level).
   if op in ("state time", "-state time") and len(tree) >= 3:
     if isinstance(tree[2], str) and tree[2] in _GRAMMATICAL_TENSES:
@@ -248,7 +273,7 @@ def strip_tense_has_time(tree):
   if op == "and":
     children = []
     for child in tree[1:]:
-      result = strip_tense_has_time(child)
+      result = strip_tense_has_time(child, event_vars)
       if result is not None:
         children.append(result)
     if not children:
@@ -258,11 +283,11 @@ def strip_tense_has_time(tree):
     return ["and"] + children
   # Wrappers whose body may be stripped: propagate None upward.
   if op == "@time" and len(tree) == 3:
-    body = strip_tense_has_time(tree[2])
+    body = strip_tense_has_time(tree[2], event_vars)
     if body is None:
       return None
     return [tree[0], tree[1], body]
-  return [strip_tense_has_time(child) if isinstance(child, list) else child
+  return [strip_tense_has_time(child, event_vars) if isinstance(child, list) else child
           for child in tree]
 
 
