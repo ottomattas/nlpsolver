@@ -63,6 +63,10 @@ default_max_tokens = 8000
 sleepseconds = 2
 timeout = 60
 max_retries = 3
+# Extra re-calls when a provider returns None or an empty/whitespace string
+# from a 200-OK response (transient malformed/empty payload — not retried by
+# _post_with_retry, which only retries HTTP-level failures).
+empty_response_retries = 2
 
 # Debug output
 debug = False
@@ -106,25 +110,36 @@ def call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None, thi
       print("cache hit (" + llm + " " + ver + ")")
     return cached
 
-  # --- call the LLM ---
+  # --- call the LLM (retry on None / empty response) ---
+  # All providers can return None (200-OK but missing the expected structure)
+  # or an empty string (content blocks present but text-less) from a transient
+  # failure.  _post_with_retry does not retry these, so retry here.
   if debug:
     print("calling " + llm + " " + ver + " ...")
-  try:
-    if llm == "claude":
-      result = call_claude(ver, input_text, sysprompt, max_tokens, think=think)
-    elif llm == "gemini":
-      result = call_gemini(ver, input_text, sysprompt, max_tokens, think=think)
-    elif llm == "deepseek":
-      result = call_deepseek(ver, input_text, sysprompt, max_tokens, think=think)
-    else:
-      result = call_gpt(ver, input_text, sysprompt, max_tokens, think=think)
-  except KeyboardInterrupt:
-    raise
-  except Exception as e:
-    return llm_error("unexpected error calling LLM: " + str(e))
+  result = None
+  for attempt in range(1, empty_response_retries + 2):
+    try:
+      if llm == "claude":
+        result = call_claude(ver, input_text, sysprompt, max_tokens, think=think)
+      elif llm == "gemini":
+        result = call_gemini(ver, input_text, sysprompt, max_tokens, think=think)
+      elif llm == "deepseek":
+        result = call_deepseek(ver, input_text, sysprompt, max_tokens, think=think)
+      else:
+        result = call_gpt(ver, input_text, sysprompt, max_tokens, think=think)
+    except KeyboardInterrupt:
+      raise
+    except Exception as e:
+      return llm_error("unexpected error calling LLM: " + str(e))
+    if result is not None and result.strip():
+      break
+    if attempt <= empty_response_retries:
+      print(llm + " returned an empty/None response, retrying...")
+      time.sleep(sleepseconds * attempt)
 
-  # --- store to cache ---
-  _store_llm_cached(llm, ver, max_tokens, think, sysprompt, input_text, result)
+  # --- store to cache (skip None / empty — likely a transient failure) ---
+  if result is not None and result.strip():
+    _store_llm_cached(llm, ver, max_tokens, think, sysprompt, input_text, result)
 
   return result
 

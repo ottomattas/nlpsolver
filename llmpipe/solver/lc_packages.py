@@ -251,11 +251,18 @@ def _process_question(formula, name, raw_text=None):
       # defq path below (meta-preds like "located in" don't exist in facts).
       entity_is_s2var = isinstance(entity, str) and bool(S2_VAR_RE.match(entity))
       if entity_is_s2var:
-        # Variable entity + meta-predicate: fall through to general path.
-        # Variable entity + concrete prep: use defq with that prep.
-        if specific_prep:
+        # Variable entity + spatial preposition (in/on/at/near/above/under):
+        # build a defq question tagged @where_query.  This includes the
+        # generic preps in/on/at — without this branch they would leave
+        # result=None and fall through to the when-branch, which matches the
+        # same is_rel2 atom (in/on/at are also temporal preps) and would
+        # mislabel a spatial query as @when_query.
+        # Variable entity + meta-predicate ("located in", ...): NOT in
+        # WHERE_SPATIAL_PREPS, so fall through to the general defq path
+        # (the when-branch will not match a where meta-predicate).
+        if atom_pred in WHERE_SPATIAL_PREPS:
           result = build_defq_question(name, ask_var, body,
-                                       wh_prep=specific_prep, wh_marker="@where_query")
+                                       wh_prep=atom_pred, wh_marker="@where_query")
           question_kind = "where"
       else:
         result = build_where_question(name, entity, ask_var, specific_prep=specific_prep)

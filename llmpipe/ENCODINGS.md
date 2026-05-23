@@ -415,6 +415,7 @@ Dynamic verbs are encoded as Davidsonian events:
 | `has topic E ENTITY` | Subject matter ("talked about the news") |
 | `has cause E ENTITY` | Entity or event causing ("fell because of ice") |
 | `has content E1 E2` | Inner event E2 is the content of outer event E1 (two-event reification for volition / intention / expectation / speech_act). World-invariant. |
+| `actuality E` | Actuality classifier (arity 1) — marks E as a real / actually-occurring event.  **Pipeline-injected** by `lc_rewrites.inject_actuality`; Stage 2 never emits it.  Hidden from English rendering. |
 | `typical E` | Habitual classifier (arity 1) — marks E as a typical/normally-occurring event |
 | `capability E` | Capability classifier — marks E as the actor's ability |
 | `necessity E` | Necessity classifier (must / need / have to) |
@@ -424,16 +425,22 @@ Dynamic verbs are encoded as Davidsonian events:
 | `expectation E` | Expectation classifier (hope / expect / anticipate) — outer event of two-event reification |
 | `speech_act E` | Speech-act classifier (tell / say / ask / order / promise) — outer event of two-event reification |
 
-All eight modal classifiers are **arity 1**: they mark the event variable
+All nine modal classifiers are **arity 1**: they mark the event variable
 intrinsically.  World, tense, location, and KB information lives on the
 event's role atoms (`has_time`, `has_location`, etc.) which do carry a
-`$ctxt` term.  See `axioms_std.js` §5.1 for the defeasible
-event→capability bridge.
+`$ctxt` term.  Exactly one classifier attaches to each Davidsonian event:
+Stage 2 emits one of the eight modal classifiers when the event is
+non-actual; for actual events Stage 2 emits nothing and the pipeline
+injects `actuality`.  Inner content events (E2 in two-event reification)
+carry no classifier.  See `axioms_std.js` §5.1 for the defeasible
+actuality→capability bridge.
 
 Removed in the 2026-05-14 modal rework (see
 `MEMO_2026_05_14_modal_rework.md`): the old Track-1 atomic predicates
 `["can", X, V, Ctxt]` and `["typically", X, V, Ctxt]`, along with the
 arity-2 `["typical", E, Ctxt]` form.  Stage-2 no longer emits these.
+The `actuality` classifier was added 2026-05-15 — see
+`MEMO_2026_05_15_actuality.md`.
 
 #### Structural Predicates
 
@@ -1010,15 +1017,16 @@ The prover also loads `axioms_std.js` containing background knowledge:
   rework `can` was also in this set; with the migration to the arity-1
   `capability(E)` classifier the frame propagation lives on the event's role
   atoms (which already participate in the existing per-predicate frame).
-- **Modal classifier bridge (§5.1)**: defeasible event→capability — for any
-  Davidsonian event `isa(activity,E) + has_type(E,V,Ctxt) + has_actor(E,X,Ctxt)`,
-  derive `capability(E)` on the SAME event variable, gated by two `$block`s:
-  (i) `$not(capability(E))` — strict ¬capability override (e.g., "Penguins
-  cannot fly" blocks the inferred capability for a penguin event); (ii)
-  `has_content(?:Eo, E)` — when E is the inner content of a two-event
-  reification (volition / intention / expectation / speech_act) the bridge
-  is blocked, preventing "John told Mary to leave" from leaking to
-  "Mary can leave". See `MEMO_2026_05_14_modal_rework.md` for the design.
+- **Modal classifier bridge (§5.1)**: defeasible actuality→capability — for any
+  real Davidsonian event `actuality(E) + has_type(E,V,Ctxt) + has_actor(E,X,Ctxt)`,
+  derive `capability(E)` on the SAME event variable, gated by one `$block`
+  for strict `¬capability(E)` overrides (e.g., "Penguins cannot fly" blocks
+  the inferred capability for a penguin event). Modal events (typical /
+  capability / necessity / ...) and inner content events of two-event
+  reifications carry no `actuality` marker — they were never injected by
+  the pipeline — so the bridge cannot fire on them by construction (no
+  has_content guard needed). See `MEMO_2026_05_14_modal_rework.md` for the
+  original design and `MEMO_2026_05_15_actuality.md` for the actuality refinement.
 - **Movement axioms**: `has_actor(E,X) + has_type(E,go) + has_destination(E,Dest,Prep) +
   next(W,W2) → is_rel2(at, X, Dest, $ctxt(present, W2, ...))`.  Result tense is
   always "present" at the new world.  The `has_destination` predicate is 4-arg

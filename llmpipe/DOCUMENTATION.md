@@ -302,7 +302,7 @@ Each `PACKAGE` is one of:
 | Core | `isa TYPE ENTITY`, `has property PROP ENTITY`, `have OWNER OWNED`, `has part WHOLE PART`, `is rel2 REL E1 E2` |
 | Gradable | `has degree property PROP ENTITY DEGREE RELCLASS`, `has degree rel2 REL E1 E2 DEGREE RELCLASS` |
 | Events | `isa "activity" E`, `has type E VERB`, `has actor E ENTITY`, `has target E ENTITY`, `has location E ENTITY PREP`, `has instrument E ENTITY`, `has manner E MANNER`, `has direction E DIR`, `has time E TIME PREP`, `has content E1 E2` (two-event reification) |
-| Modal classifiers (arity 1, last conjunct of event "and") | `typical E` (habitual), `capability E`, `necessity E`, `obligation E`, `volition E`, `intention E`, `expectation E`, `speech_act E` |
+| Modal classifiers (arity 1, last conjunct of event "and") | `typical E` (habitual), `capability E`, `necessity E`, `obligation E`, `volition E`, `intention E`, `expectation E`, `speech_act E`; plus pipeline-injected `actuality E` for real events (Stage 2 never emits this) |
 | World | `holds W F`, `next W1 W2`, `before W1 W2` (axiom-derived), `state time W T`, `state location W L` |
 | Defeasible | `normally FORMULA` |
 | Mental (epistemic only) | `kb K HOLDER ATTITUDE W`, `kb force K FORCE`, `kb holds K FORMULA`, `kb says K1 K2 FORMULA` — reserved for `knows that` / `believes that`; all hopes / wants / intends / tells migrate to `actions[mode=…]` |
@@ -318,6 +318,14 @@ ENTITY ACTION` and `typically ENTITY VERB`, and the arity-2
 is now carried exclusively by the arity-1 classifier predicates listed
 above, with role / world / time information living on the event's other
 atoms (which do carry `$ctxt`).
+
+Added 2026-05-15 (see `MEMO_2026_05_15_actuality.md`): the arity-1
+`actuality E` marker for real events.  Stage 2 does **not** emit it;
+`lc_rewrites.inject_actuality` appends `["actuality", E]` to every
+Davidsonian event lacking one of the eight Stage-2 modal classifiers
+and not appearing as the inner argument of `has_content`.  The
+`axioms_std.js` §5.1 capability bridge is gated on `actuality(E)` so it
+fires only on real events.  `actuality` is hidden from English rendering.
 
 **Predicate selection rule for adjectives** (mandatory):
 
@@ -543,6 +551,13 @@ Dispatches to `call_gemini`, `call_claude`, `call_gpt`, or `call_deepseek` based
 - `_post_with_retry(host, url, body, headers, provider)` — HTTPS POST with retry loop,
   error handling, and JSON response parsing
 
+**Retry on empty/None response:** `_post_with_retry` only retries HTTP-level failures.
+Any provider can also return a 200-OK with a missing or empty text payload (transient
+flake).  `call_llm` wraps the provider dispatch in an extra retry loop controlled by
+`empty_response_retries = 2`, re-calling the provider when the result is `None` or a
+whitespace-only string.  Empty results are NOT written to the cache (would otherwise
+poison the entry permanently).
+
 **Caching:** Before calling the LLM, `call_llm` checks the SQLite cache in `cache.db`.  The
 cache key encodes: provider, version, temperature, seed, max_tokens, think, sysprompt, input_text.
 If a match is found, the cached response is returned immediately.  The result of every new LLM
@@ -579,11 +594,11 @@ list pipeline.  The computation is split across several files:
 |--------|---------------|
 | `logconvert.py` | Top-level orchestration: `rawlogic_convert` entry point, structural repair, what-question population, Stage-1 entity bookkeeping |
 | `lc_packages.py` | Per-`@id` package processing: `extract_package_ctx`, `convert_id_package`, `_process_question`/`_process_assertion`, raw wh-word probes, confidence distribution |
-| `lc_rewrites.py` | Pre-clausification formula rewrites (meta-predicate normalization incl. `"time of"`→`has_time`, tense-valued `has_time` stripping, verb normalization: travel/journey/move→go, hand/pass/send→give, receive→give with actor↔recipient swap, existential hoisting, spurious `can` removal, polarity flip) |
+| `lc_rewrites.py` | Pre-clausification formula rewrites (meta-predicate normalization incl. `"time of"`→`has_time`, tense-valued `has_time` stripping, verb normalization: travel/journey/move→go, hand/pass/send→give, receive→give with actor↔recipient swap, perspective-relation lift `["is rel2", got/received/saw/heard, X, Y]` → Davidsonian event, existential hoisting, spurious `can` removal, polarity flip) |
 | `lc_ctxt.py` | `$ctxt` injection, time-wrapper stripping, fresh variable generation |
 | `lc_post_normalize.py` | Post-clausification normalising / repair passes: gradable normalization, RELCLASS coercion, `isa entity` stripping, possessive `have` and `has_part` bridges, degree stripping, population and compound subsumption extraction |
 | `lc_post_reify.py` | Post-clausification reification of definite descriptions and measurements: `rewrite_definites` (`$theof1`), `rewrite_measure_terms` (`$measure_of`/`$measure`/`less_measure`) |
-| `lc_post_inject.py` | Post-clausification dynamic axiom injection: soft synonyms, exclusions (incl. noun-mutex via `_ISA_EXCL_GROUPS`), cross-group isa-mutex, verb mutex, kinship mutex, containment bridge, carrier-vocabulary lift, world-graph geometry |
+| `lc_post_inject.py` | Post-clausification dynamic axiom injection: soft synonyms, exclusions (incl. noun-mutex via `_ISA_EXCL_GROUPS`), cross-group isa-mutex, verb mutex, kinship mutex, containment bridge, beneficiary↔`is rel2 "for"` bridge, carrier-vocabulary lift, world-graph geometry |
 | `lc_post_una.py` | Post-clausification UNA wrapping: prefix every Stage-1 numbered entity with `#:` so `gk` treats distinct entity constants as definitely unequal. Three-step criterion (regex + Stage-1 set + not-Skolem). Required by the X2 direct-support uniqueness axiom (axioms_std.js §7g) |
 | `lc_clausify.py` | FOL→CNF compilation |
 | `lc_questions.py` | Question encoding and population fact builders |
@@ -599,8 +614,10 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
     ├─ _hoist_nested_ids(logic)           extract @id blocks nested by LLM bracket errors
     ├─ _build_asu_index(s1_json)          build unit_id→ASU lookup from Stage 1
     ├─ rewrite_meta_predicates(logic)     [lc_rewrites] "located in"→"in", "is"→isa, "time of"→has_time, travel/journey/move→go, hand/pass/send→give
+    ├─ rewrite_perspective_relations(logic) [lc_rewrites] lift ["is rel2", got/received/saw/heard, X, Y] into a Davidsonian event so the next pass can bridge it (covers gpt/deepseek relation-form encodings)
     ├─ normalize_receive_events(logic)   [lc_rewrites] receive→give with actor→recipient swap
     ├─ strip_tense_has_time(logic)       [lc_rewrites] remove has_time(E,"past",...) bogus atoms
+    ├─ inject_actuality(logic)           [lc_rewrites] append ["actuality",E] to every Davidsonian event lacking a modal classifier (skip inner content events)
     ├─ inject_degree_presuppositions()    [lc_rewrites] "not very X" → X and not very X
     ├─ populate_clauses(items)            [lc_post_normalize] collect background facts
     │
@@ -630,7 +647,7 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
     ├─ inject_soft_synonyms / inject_exclusion_axioms /
     │    inject_isa_cross_group_axioms / inject_verb_mutex_axioms /
     │    inject_kinship_mutex_axioms / inject_containment_bridge_axioms /
-    │    inject_carrier_lifts                                            [lc_post_inject]
+    │    inject_beneficiary_for_bridge / inject_carrier_lifts            [lc_post_inject]
     ├─ add_possessive_have / add_haspart_for_typed_have                  [lc_post_normalize]
     ├─ normalize_gradable_predicates()    [lc_post_normalize]
     ├─ strip_isa_entity()                 [lc_post_normalize]
@@ -1273,6 +1290,7 @@ bridge representation gaps.
 | `have` → `has_part` bridge for typed body-part nouns | `lc_post_normalize.add_haspart_for_typed_have` | Rule "If an animal has a trunk, it is an elephant" Stage-2-encoded with `-has_part(?:X,?:Y,Ctxt)` and `-isa(trunk,?:Y)`; fact "John has a long trunk" Stage-2-encoded as `have(John 1, trunk 1, Ctxt)` + `isa(trunk, trunk 1)` → emit `has_part(John 1, trunk 1, Ctxt)` so the rule fires (case 207). | **Conservative, problem-local bridge.**  Stage-2 LLM is inconsistent: generic universal claims ("Elephants have trunks") use `has_part`, but specific instance claims with adjectives ("John has a long trunk") often use `have` for some LLMs (gemini, gpt) — which then fail to unify with has_part-using rules.  Pass 1 walks rule clauses and collects the set of types T paired with `-has_part(?:X,?:Y)` AND `-isa(T,?:Y)` for the same `?:Y`; if empty, the bridge does nothing.  Pass 2 collects explicit `isa(T, E)` facts for ground/Skolem entities.  Pass 3 walks single-atom positive `have(X, Y, Ctxt)` clauses; for each, looks up Y's type (explicit isa first; else `_parse_entity_name_type` fallback peels off Stage-2's naming convention "trunk 1" → "trunk", "sk0_trunk" → "trunk") and emits `has_part(X, Y, Ctxt)` only when the type intersects the rule-collected set.  Safe under the subtype rule in `axioms_std.js` because that rule requires `isa(Y1, Y2)` where Y1 is a class with subtypes; specific entities are not classes so the inheritance never propagates back to a class. |
 | Misnested existential hoisting | `lc_rewrites.hoist_misnested_exists` | `[exists E, [and, has_actor(E,X), [exists X, isa(bear,X)]]]` → `[exists E, [exists X, [and, has_actor(E,X), isa(bear,X)]]]` | Pre-clausification fix for assertion formulas.  Detects existential variables used free in sibling conjuncts before their `exists` binding, hoists the binding to wrap the entire conjunction.  Only applies in assertion contexts (from `holds`), with collision checks against enclosing bindings. |
 | Tense-valued `has_time` filter | `lc_rewrites.strip_tense_has_time` | `has_time(E, "past", "in")` survives when E is a Davidsonian event variable; same shape on a non-event variable is stripped; in-body `state_time(W, "past")` is always stripped (belongs at the package level) | Pre-clausification narrowing pass. After the 2026-05-14 Plan A canonicalisation, `["has time", E, "past"|"present"|"future", "in"]` is the canonical shape for grammatical tense on Davidsonian events (instructed by Stage-2 §8.1). The pass scans the tree once via `_collect_event_vars` to identify all variables `X` such that `isa(activity, X)` appears, then strips tense-valued `has_time` only when the first argument is NOT one of those event variables. Strips misplaced `state_time(W, TENSE)` from formula bodies unconditionally. Replaces the older blanket-strip behaviour that conflicted with the example file. |
+| `actuality(E)` injection | `lc_rewrites.inject_actuality` | An `and`-block containing `isa(activity, E)` plus any of `has_type`/`has_actor` and no modal classifier on E gets `["actuality", E]` appended.  Stage 2 deliberately does not emit this marker; the pipeline adds it post-Stage-2. | Pre-clausification injection (added 2026-05-15).  Walks the formula tree; for every Davidsonian event variable introduced by `isa(activity, E)`, appends `["actuality", E]` to the same `and`-block unless one of the eight Stage-2 modal classifiers (`typical`, `capability`, `necessity`, `obligation`, `volition`, `intention`, `expectation`, `speech_act`) already attaches to E, OR E appears as the second argument of `has_content` anywhere in the tree (inner content event of a two-event reification).  Idempotent — guards against re-injection on a second pass.  Consumed by the `axioms_std.js` §5.1 actuality→capability bridge, which is gated on `actuality(E)` instead of "any Davidsonian event"; this lets the bridge dispatch positively on real events rather than negating eight other classifier predicates.  See `MEMO_2026_05_15_actuality.md`. |
 | Spurious `can` removal | `lc_rewrites.strip_spurious_can` | (Legacy — no longer fires after the 2026-05-14 modal rework.) Was used to drop a `can(X,E)` literal injected into queries by the old Stage-2 default. With the new arity-1 `capability(E)` classifier, Stage-2 only emits modal markers when Stage-1 specifies the mode — the spurious-default behaviour is gone. The function remains in `lc_rewrites.py` for backwards compatibility with cached responses produced before the rework. |
 | Meta-predicate normalization | `lc_rewrites.rewrite_meta_predicates` | `["is rel2","is",A,B]` → `["isa",A,B]`; `["is rel2","=",A,B]` → `["=",A,B]`; `["is rel2","located in",A,B]` → `["is rel2","in",A,B]` | Pre-clausification rewrite applied to all formulas.  Normalizes copula (`is` → `isa`), identity (`=`), spatial meta-predicates (`located in/at/on/near/above/under` → bare preposition), movement verbs (travel/journey/move → go), placement verbs (place/set/lay/position/deposit → put), and transfer verb synonyms (hand/pass/send → give).  Also normalizes 3-arg `has_destination(E,Dest)` to 4-arg `has_destination(E,Dest,"at")` for backward compat with stale Stage-2 cache entries. |
 | Perspective verb → dative head normalization | `lc_rewrites.normalize_receive_events` | `["has type",E,"receive"]` + `["has actor",E,X]` → `["has type",E,"give"]` + `["has recipient",E,X]`.  Same pattern for hear→tell, see→show, get→give. | Formula-level rewrite: in `and`-blocks containing a perspective-verb event (receive, get, hear, see), the verb is changed to its dative head (give, tell, show) and the actor role is swapped to recipient.  Single mapping table `_PERSPECTIVE_TO_DATIVE`; function name retained for back-compat.  Asymmetry preserved — the rewrite never adds an actor for events lacking an explicit dative agent, so "Did John receive a book?" still fails when John was the giver.  Allows the give-based transfer axioms in `axioms_std.js` to derive `have(Recipient, Object)` in the next world state, and lets queries about hear/see/get match facts about tell/show/give. |

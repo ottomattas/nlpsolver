@@ -227,6 +227,15 @@ def _replace_prep_with_var(body, concrete_prep, prep_var, target_pred=None):
           for child in body]
 
 
+def _tree_contains_atom_str(tree, target):
+  """True if the string `target` occurs anywhere in the nested list `tree`."""
+  if isinstance(tree, str):
+    return tree == target
+  if isinstance(tree, list):
+    return any(_tree_contains_atom_str(el, target) for el in tree)
+  return False
+
+
 def _walk_subst(frm, var, replacement):
   """Substitute every free occurrence of variable name `var` in `frm` with
   `replacement`.  Respects scoping: skips subtrees of binders that re-bind `var`.
@@ -379,13 +388,29 @@ def build_defq_question(name, ask_var, body, where_prep=None,
 
   # When wh_prep is set, replace the concrete preposition in the body with
   # a variable so the biconditional matches any preposition.
-  prep_var = "_Prep"
+  #
+  # Orphan-prep filter: _replace_prep_with_var only rewrites has_location /
+  # has_time atoms (preposition at index 3).  When the query body instead
+  # pins the preposition inside an `is rel2` atom (index 1), the replacement
+  # is a no-op and prep_var would land in the $defq atom without occurring
+  # in the body — an orphan ask-var the prover leaves free (renders as
+  # "?:X3").  In that case keep the 2-arg $defq but put the LITERAL
+  # preposition in the slot instead of the variable: no orphan, and the
+  # in/under/at distinction is still reported from the literal.
+  prep_var  = "_Prep"
+  prep_slot = None        # value placed in the $defq preposition slot
   if wh_prep and ask_var:
-    body = _replace_prep_with_var(body, wh_prep, prep_var, target_pred=wh_prep_pred)
+    new_body = _replace_prep_with_var(body, wh_prep, prep_var,
+                                      target_pred=wh_prep_pred)
+    if _tree_contains_atom_str(new_body, prep_var):
+      body      = new_body
+      prep_slot = prep_var      # body genuinely varies the preposition
+    else:
+      prep_slot = wh_prep       # body fixed the preposition to a literal
 
   # Wrap body in 'exists' for every free variable that is not the ask variable.
   initial_bound = {ask_var} if ask_var else set()
-  if wh_prep:
+  if prep_slot == prep_var:
     initial_bound.add(prep_var)
   free_vars = sorted(collect_body_free_vars(body, bound=initial_bound))
   wrapped_body = body
@@ -395,12 +420,16 @@ def build_defq_question(name, ask_var, body, where_prep=None,
   # Build the biconditional formula.
   if ask_var:
     if wh_prep:
-      # 2-arg $defq: [$defqN, _Prep, X] — prep is a variable, matches any preposition.
-      defq_atom = [defq_name, prep_var, ask_var]
+      # 2-arg $defq: [$defqN, PREP, X].  PREP is the _Prep variable when the
+      # body varies the preposition, or a literal when the body fixed it.
+      defq_atom = [defq_name, prep_slot, ask_var]
       q_atom    = [defq_name, "?:Rel", "?:" + ask_var]
       askvars   = 2
-      frm = ["forall", ask_var, ["forall", prep_var,
-              ["equivalent", defq_atom, wrapped_body]]]
+      if prep_slot == prep_var:
+        frm = ["forall", ask_var, ["forall", prep_var,
+                ["equivalent", defq_atom, wrapped_body]]]
+      else:
+        frm = ["forall", ask_var, ["equivalent", defq_atom, wrapped_body]]
     else:
       defq_atom = [defq_name, ask_var]
       q_atom    = [defq_name, "?:" + ask_var]

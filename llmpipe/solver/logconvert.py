@@ -98,6 +98,7 @@ from lc_post_inject import (
   inject_isa_cross_group_axioms as _inject_isa_cross_group_axioms,
   inject_verb_mutex_axioms as _inject_verb_mutex_axioms,
   inject_containment_bridge_axioms as _inject_containment_bridge_axioms,
+  inject_beneficiary_for_bridge as _inject_beneficiary_for_bridge,
   inject_kinship_mutex_axioms as _inject_kinship_mutex_axioms,
   inject_carrier_lifts as _inject_carrier_lifts,
   inject_verb_result_state_axioms as _inject_verb_result_state_axioms,
@@ -127,8 +128,10 @@ from lc_ctxt import (
 # Pre-clausification formula rewrites (in lc_rewrites.py).
 from lc_rewrites import (
   rewrite_meta_predicates as _rewrite_meta_predicates,
+  rewrite_perspective_relations as _rewrite_perspective_relations,
   normalize_receive_events as _normalize_receive_events,
   strip_tense_has_time as _strip_tense_has_time,
+  inject_actuality as _inject_actuality,
   inject_degree_presuppositions as _inject_degree_presuppositions,
   hoist_misnested_exists as _hoist_misnested_exists,
   strip_spurious_can as _strip_spurious_can,
@@ -566,13 +569,26 @@ def rawlogic_convert(logic, s1_json=None):
   # questions.  Safe because is_rel2("is",...) has no valid semantic meaning.
   logic = _rewrite_meta_predicates(logic)
 
+  # Lift binary-relation perspective verbs (`["is rel2","got",X,Y]` etc.)
+  # into Davidsonian events so normalize_receive_events can bridge them.
+  # Some LLMs (gpt, deepseek) emit the relation form for perspective verbs
+  # in queries; without this lift, "Who got a letter?" never unifies with
+  # "Eve gave a letter to Tom".
+  logic = _rewrite_perspective_relations(logic)
+
   # Normalize "receive" events: receive→give with actor→recipient swap.
-  # Must run after rewrite_meta_predicates (which normalizes verb synonyms).
+  # Must run after rewrite_meta_predicates (which normalizes verb synonyms)
+  # and rewrite_perspective_relations (which produces fresh perspective events).
   logic = _normalize_receive_events(logic)
 
   # Remove has_time atoms where the value is a grammatical tense ("past", etc.)
   # LLMs sometimes put tense in has_time instead of leaving it to $ctxt.
   logic = _strip_tense_has_time(logic)
+
+  # Attach ["actuality", E] to every Davidsonian event without a modal
+  # classifier.  Pipeline-only marker; Stage 2 doesn't emit it.  Skips
+  # inner content events of two-event reifications (has_content second arg).
+  logic = _inject_actuality(logic)
 
   # Strip @definite tags from the logic tree.  These are metadata annotations
   # produced by Stage 2 but not consumed by the pipeline (definite info comes
@@ -719,6 +735,7 @@ def rawlogic_convert(logic, s1_json=None):
                   + _inject_isa_cross_group_axioms(result, _axiom_vocab)
                   + _inject_verb_mutex_axioms(result, _axiom_vocab)
                   + _inject_containment_bridge_axioms(result, _axiom_vocab)
+                  + _inject_beneficiary_for_bridge(result)
                   + _inject_kinship_mutex_axioms(result, _axiom_vocab)
                   + _inject_carrier_lifts(result, _axiom_vocab))
 

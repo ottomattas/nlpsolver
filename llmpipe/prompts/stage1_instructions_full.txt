@@ -588,9 +588,13 @@ Fields:
                    ("John plans to leave", "Mary intends to fly")
     expectation -- hope / expect / anticipate (TWO-EVENT, see §6.2.2)
                    ("John hopes to win", "Mary expects rain")
-    speech_act  -- communicative act: tell / say / ask / order / promise
-                   (TWO-EVENT, see §6.2.2)
+    speech_act  -- communicative act WITH A CLAUSAL COMPLEMENT:
+                   tell / say / ask / order / promise + "to V" / "that P" /
+                   quoted speech (TWO-EVENT, see §6.2.2)
                    ("John told Mary to leave", "Bill said it was raining")
+                   NOTE: the same verbs with a plain noun-phrase object
+                   ("told a story", "asked a question") take mode `event`,
+                   NOT speech_act -- see §6.2.1.
   roles  -- optional dict mapping role names to entity IDs (and, for
             two-event modes, to a nested action object — see §6.2.2).
     Omit when the action has no object or modifiers.
@@ -632,7 +636,8 @@ Choose `mode` based on the dominant surface marker:
   want / wish / desire                 | volition     | TWO-EVENT
   plan / intend / aim / mean to        | intention    | TWO-EVENT
   hope / expect / anticipate           | expectation  | TWO-EVENT
-  tell / say / ask / order / promise   | speech_act   | TWO-EVENT
+  tell/say/ask/order/promise + clause  | speech_act   | TWO-EVENT
+  same verbs + plain NP object only    | event        | single
 
 Dominant-marker rule: if multiple markers apply (e.g., "can typically
 fly"), the dominant marker wins. Capability beats habitual.
@@ -644,6 +649,18 @@ action) and SKIPS the two-event reification.
   - "John tells Mary to leave" (one occasion)  -> speech_act, two-event
   - "John always tells Mary to leave" (habit)   -> habitual, single flat
   - "John can tell Mary to leave"  (ability)    -> capability, single flat
+
+Clausal complement vs plain object: a speech-act verb takes speech_act
+mode (and the TWO-EVENT structure of §6.2.2) ONLY when its complement is
+a clause -- an infinitival "to V", a "that P" clause, or quoted speech.
+With a plain noun-phrase object the verb is an ordinary dative `event`
+(single, flat), exactly like give/send.
+  - "John told Mary to leave"       -> speech_act, two-event (clause "to leave")
+  - "John told Mary that it rained" -> speech_act, two-event (clause "that ...")
+  - "John told Mary a story"        -> event, single  (NP object "a story";
+                                       roles: actor John, recipient Mary,
+                                       target story)
+  - "Eve asked John a question"     -> event, single  (NP object "a question")
 
 --- 6.2.2. Two-Event Complement Structure (volition / intention / expectation / speech_act) ---
 
@@ -707,7 +724,8 @@ You must ensure that every instance of a verb root (e.g., "fly") across differen
     typically/usually; necessity for must/need/have to; obligation for
     should/ought/supposed; volition for want/wish/desire; intention for
     plan/intend/aim/mean; expectation for hope/expect/anticipate;
-    speech_act for tell/say/ask/order/promise).
+    speech_act for tell/say/ask/order/promise ONLY with a clausal
+    complement -- with a plain noun-phrase object these verbs are `event`).
 2.  If a strict_rule or normal_rule defines an action (e.g., "Birds fly"),
     every subsequent ASU mentioning that action -- including negations and queries - -MUST use the same mode
     (e.g., capability or habitual) unless an explicit marker says otherwise.

@@ -213,6 +213,66 @@ def normalize_receive_events(tree):
           for child in tree]
 
 
+# ======== perspective relation → event normalization ========
+#
+# Some LLMs (gpt, deepseek) encode a perspective verb as a binary `is rel2`
+# relation rather than a Davidsonian event.  Example: "Who got a letter?" →
+#   ["ask","X",["exists","Y",["and",["isa","letter","Y"],
+#                                   ["is rel2","got","X","Y"]]]]
+# The downstream normalize_receive_events only inspects ["has type",E,V]
+# events, so the relation form never reaches the perspective→dative bridge
+# and the query fails to unify with the assertion's give/tell/show event.
+#
+# This pass rewrites such ["is rel2",V,X,Y] atoms into the canonical event
+# form so normalize_receive_events (next pass) can canonicalize them.  The
+# dict maps inflected surface forms to the lemma, since the downstream
+# normalizer is lemma-only.
+_PERSPECTIVE_REL_VERBS = {
+  "get": "get", "gets": "get", "got": "get", "gotten": "get",
+  "receive": "receive", "receives": "receive", "received": "receive",
+  "see": "see", "sees": "see", "saw": "see", "seen": "see",
+  "hear": "hear", "hears": "hear", "heard": "hear",
+}
+
+
+def rewrite_perspective_relations(tree):
+  """Rewrite ["is rel2", VERB, X, Y] (and negated form) where VERB is a
+  perspective verb surface form into the Davidsonian event form so that
+  normalize_receive_events can bridge it to the dative head.
+
+  Runs BEFORE clausification — Stage-2 is rel2 has 4 elements at this stage
+  (no $ctxt yet), so longer/shorter shapes are left untouched.  Each rewrite
+  introduces a fresh existentially-bound event variable EprN.
+  """
+  counter = [0]
+  return _rewrite_perspective_relations_walk(tree, counter)
+
+
+def _rewrite_perspective_relations_walk(node, counter):
+  if not isinstance(node, list) or not node:
+    return node
+  op = node[0] if isinstance(node[0], str) else None
+  if op in ("is rel2", "-is rel2") and len(node) == 4:
+    rel = node[1]
+    if isinstance(rel, str) and rel in _PERSPECTIVE_REL_VERBS:
+      lemma = _PERSPECTIVE_REL_VERBS[rel]
+      x = node[2]
+      y = node[3]
+      e = "Epr" + str(counter[0])
+      counter[0] += 1
+      event = ["exists", e,
+               ["and",
+                ["isa", "activity", e],
+                ["has type", e, lemma],
+                ["has actor", e, x],
+                ["has target", e, y]]]
+      if op == "-is rel2":
+        return ["not", event]
+      return event
+  return [_rewrite_perspective_relations_walk(c, counter) if isinstance(c, list) else c
+          for c in node]
+
+
 # ======== strip tense-valued has_time ========
 
 _GRAMMATICAL_TENSES = frozenset({"past", "present", "future", "timeless"})
@@ -289,6 +349,90 @@ def strip_tense_has_time(tree, event_vars=None):
     return [tree[0], tree[1], body]
   return [strip_tense_has_time(child, event_vars) if isinstance(child, list) else child
           for child in tree]
+
+
+# ======== actuality classifier injection ========
+#
+# Post-Stage-2 marker on Davidsonian events that have NO modal classifier
+# (capability / typical / necessity / obligation / volition / intention /
+# expectation / speech_act).  Stage 2 deliberately doesn't emit it; the
+# pipeline injects ["actuality", E] so axioms can dispatch on a positive
+# marker rather than on absence-of-classifier.
+#
+# Skip rule for inner content events (E2 in two-event reification): if E
+# appears as the second argument of has_content anywhere in the tree, it
+# describes an action type (wanted / intended / spoken-about), not an
+# actual occurrence — leave it unmarked.
+
+_MODAL_CLASSIFIERS = frozenset({
+  "typical", "capability", "necessity", "obligation",
+  "volition", "intention", "expectation", "speech_act",
+})
+
+
+def _collect_content_inner_vars(tree):
+  """Collect every variable X such that ["has content", _, X] appears
+  anywhere in the tree.  These are inner content events of a two-event
+  reification and must not receive an actuality marker."""
+  out = set()
+  def visit(node):
+    if not isinstance(node, list) or not node:
+      return
+    if (isinstance(node[0], str) and node[0] == "has content"
+        and len(node) >= 3 and isinstance(node[2], str)):
+      out.add(node[2])
+    for child in node:
+      if isinstance(child, list):
+        visit(child)
+  visit(tree)
+  return out
+
+
+def inject_actuality(tree, content_inner=None):
+  """Append ["actuality", E] to every and-block that introduces a
+  Davidsonian event via ["isa","activity",E] and has no modal classifier
+  on E among its direct siblings, provided E is not the inner argument
+  of has_content(_, E) anywhere in the tree.
+
+  Idempotent: a second pass over the same tree adds nothing because the
+  marker counts as a classifier on the next walk only if listed in
+  _MODAL_CLASSIFIERS — actuality isn't, so we additionally guard by
+  scanning for an existing actuality(E) sibling.
+  """
+  if content_inner is None:
+    content_inner = _collect_content_inner_vars(tree)
+  if not isinstance(tree, list) or not tree:
+    return tree
+  op = tree[0] if isinstance(tree[0], str) else None
+  if op == "and":
+    e_vars = []
+    seen_e = set()
+    classified = set()
+    already_actual = set()
+    for child in tree[1:]:
+      if not isinstance(child, list) or not child:
+        continue
+      head = child[0] if isinstance(child[0], str) else None
+      if (head == "isa" and len(child) >= 3 and child[1] == "activity"
+          and isinstance(child[2], str)):
+        if child[2] not in seen_e:
+          e_vars.append(child[2])
+          seen_e.add(child[2])
+      elif (head in _MODAL_CLASSIFIERS
+            and len(child) >= 2 and isinstance(child[1], str)):
+        classified.add(child[1])
+      elif (head == "actuality"
+            and len(child) >= 2 and isinstance(child[1], str)):
+        already_actual.add(child[1])
+    new_children = [inject_actuality(c, content_inner) if isinstance(c, list) else c
+                    for c in tree[1:]]
+    for ev in e_vars:
+      if ev in classified or ev in content_inner or ev in already_actual:
+        continue
+      new_children.append(["actuality", ev])
+    return [tree[0]] + new_children
+  return [inject_actuality(c, content_inner) if isinstance(c, list) else c
+          for c in tree]
 
 
 # ======== normally-through-forall lowering ========

@@ -686,6 +686,13 @@ def _location_entity_name(val, entity_props=None):
   resolved = _resolve_skolem_entity(val)
   if resolved:
     return resolved
+  # Population witness constants ($some_house) — humanise to "the house".
+  if val.startswith("$some_"):
+    cls = val[len("$some_"):]
+    if cls.startswith("not_"):
+      cls = cls[len("not_"):]
+    cls = cls.replace("_", " ").strip()
+    return ("the " + cls) if cls else val
   # URL constants: use entity_name which extracts the last path segment
   if val.startswith("http://") or val.startswith("https://"):
     return entity_name(val, with_url=False)
@@ -805,13 +812,19 @@ def _format_prep_answers(answers, logic=None):
   # showing both "on X" and "at X" is redundant.
   specific_entities = {ek for p, ek, _, _ in entries if p in _SPECIFIC_PREPS}
   parts = []
+  seen_display = set()
   best_conf = 0.0
   for prep, ek, display, conf in entries:
     if prep == "at" and ek in specific_entities:
       continue
-    parts.append(display)
     if conf > best_conf:
       best_conf = conf
+    # Dedup on the rendered string: distinct proof routes to the same
+    # location (e.g. a $some_* witness vs a Skolem) render identically.
+    if display in seen_display:
+      continue
+    seen_display.add(display)
+    parts.append(display)
 
   if not parts:
     return "Unknown."

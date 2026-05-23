@@ -850,6 +850,10 @@ def _render_atom(atom, negated=False):
       return _render_atom(args[1], negated=negated)
     return ""
 
+  # actuality is a pipeline-injected event marker — hide from English output.
+  if pred == "actuality":
+    return ""
+
   # ---- fallback ----
   if negated:
     return "not: " + _render_atom(atom)

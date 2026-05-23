@@ -176,37 +176,34 @@
   //
   // Davidsonian Activity Reification: every event is shape
   //   isa(activity, E, Ctxt) + has_type(E, V, Ctxt) + has_actor(E, X, Ctxt)
-  // with optional arity-1 modal classifiers ["typical", E], ["capability", E],
-  // ["necessity", E], ["obligation", E], ["volition", E], ["intention", E],
-  // ["expectation", E], ["speech_act", E] flagging the event's mode.
+  // with EXACTLY ONE arity-1 modal classifier flagging the event's mode:
+  //   ["actuality", E]   - real event (pipeline-injected, never from Stage 2)
+  //   ["typical", E]     - habitual / generic
+  //   ["capability", E]  - "can / be able to"
+  //   ["necessity", E]   - "must / have to"
+  //   ["obligation", E]  - "should / ought to"
+  //   ["volition", E]    - "want / desire"        (outer of two-event reif.)
+  //   ["intention", E]   - "intend / plan"        (outer of two-event reif.)
+  //   ["expectation", E] - "expect / anticipate"  (outer of two-event reif.)
+  //   ["speech_act", E]  - "say / tell / order"   (outer of two-event reif.)
+  // Inner content events (E2 in two-event reifications) carry no classifier.
 
-  // -- 5.1 Modal Classifier Bridge: event -> capability (defeasible) --
+  // -- 5.1 Modal Classifier Bridge: actuality -> capability (defeasible) --
   //
-  // From any Davidsonian event, derive capability(E) on the SAME event
-  // variable.  Preserves all role atoms (has_target, has_recipient,
-  // has_location, has_time, ...) for the capability reading.
+  // An actual event entails capability for the same actor on the same
+  // verb.  Defeasible: a strict ¬capability(E) (e.g., "Penguins cannot
+  // fly") overrides via $block.
   //
-  // Defeasible: the conclusion carries $block so a strict ¬capability(E)
-  // (e.g., "Penguins cannot fly") can override the inferred capability.
-  //
-  // Inner-content guard: the positive disjunct ["has content", ?:Eo, ?:E]
-  // makes the clause vacuously true when E is the content of some other
-  // event, so the bridge does NOT fire on the inner E2 of two-event
-  // reifications (volition / intention / expectation / speech_act).
-  // Example: "John told Mary to leave" — inner leave event has
-  // has_content(E_tell, E_leave) — A1 skipped — "Can Mary leave?" is
-  // not auto-derived from the telling.
-  //
-  // Note: isa(activity, E) and has_content(E1, E2) are world-invariant
-  // arity-2 forms (no Ctxt).  has_type and has_actor share Ctxt so the
-  // bridge fires per-world.
+  // Gated on actuality(E) — the pipeline-injected marker that fires only
+  // on real events.  Modal events (typical/capability/necessity/...) and
+  // inner content events of two-event reifications carry a different
+  // classifier (or none) and are skipped by construction.
 
-  [["-isa", "activity", "?:E"],
+  [["-actuality", "?:E"],
    ["-has type", "?:E", "?:V", "?:Ctxt"],
    ["-has actor", "?:E", "?:X", "?:Ctxt"],
    ["capability", "?:E"],
-   ["$block", ["bridge_capability", "?:E"], ["$not", ["capability", "?:E"]]],
-   ["$block", ["bridge_capability_content", "?:E"], ["has content", "?:Eo", "?:E"]]],
+   ["$block", ["bridge_capability", "?:E"], ["$not", ["capability", "?:E"]]]],
 
 
   // Movement Results: If X 'go'es to Dest, X is 'at' Dest in the next state [cite: 146, 147]

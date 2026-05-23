@@ -620,6 +620,70 @@ def inject_containment_bridge_axioms(result, axiom_vocab=frozenset()):
   return axioms
 
 
+# ======== beneficiary → "for" preposition bridge ========
+
+
+def _has_predicates_ben_and_for(result):
+  """True iff input clauses contain BOTH a ["has beneficiary", ...] atom
+  AND an ["is rel2", "for", ...] atom (positive or negated)."""
+  saw_ben = [False]
+  saw_for = [False]
+
+  def _walk(frm):
+    if not isinstance(frm, list) or not frm:
+      return
+    first = frm[0]
+    if isinstance(first, list):
+      for atom in frm:
+        _walk(atom)
+      return
+    if isinstance(first, str):
+      if first in ("has beneficiary", "-has beneficiary"):
+        saw_ben[0] = True
+      elif (first in ("is rel2", "-is rel2")
+            and len(frm) >= 2 and frm[1] == "for"):
+        saw_for[0] = True
+    for a in frm[1:]:
+      if isinstance(a, list):
+        _walk(a)
+
+  for obj in result:
+    if isinstance(obj, dict):
+      if "@logic" in obj:
+        _walk(obj["@logic"])
+      if "@question" in obj:
+        _walk(obj["@question"])
+    if saw_ben[0] and saw_for[0]:
+      return True
+  return saw_ben[0] and saw_for[0]
+
+
+def inject_beneficiary_for_bridge(result):
+  """If the input clauses use both ["has beneficiary", ...] (event-style
+  beneficiary role) and ["is rel2", "for", ...] (preposition-relation
+  shape), emit a bridge axiom so event-encoded assertions satisfy
+  for-preposition queries (and vice versa).
+
+  Shape:
+    [-has target ?:E ?:T ?:Ct,
+     -has beneficiary ?:E ?:B ?:Ct,
+     is rel2 "for" ?:T ?:B ?:Ct]
+
+  Closes case 169 on gpt + deepseek — "The chef cooked a meal for the
+  guests. Who was the meal for?" — where the assertion uses
+  has_beneficiary but the query uses the for-relation.
+  """
+  if not _has_predicates_ben_and_for(result):
+    return []
+  ct = _fresh_fv()
+  clause = [
+      ["-has target", "?:E", "?:T", ct],
+      ["-has beneficiary", "?:E", "?:B", ct],
+      ["is rel2", "for", "?:T", "?:B", ct],
+  ]
+  return [{"@name": "frm_ben_for", "@logic": clause}]
+
+
 # ======== carrier vocabulary lift ========
 
 # Carrier nouns: small movable surfaces that "pass through" the on-support

@@ -71,7 +71,7 @@ English text
 - `llmcall.py` — LLM API wrapper (GPT/Claude/Gemini/DeepSeek) with retries and SQLite caching; `call_llm(sysprompt, input_text)`
 - `logconvert.py` — top-level orchestrator for stage-2 JSON → GK clause list; `rawlogic_convert(logic)`; runs structural repair, what-question population, Stage-1 entity bookkeeping, and dispatches per-package processing to `lc_packages`
 - `lc_packages.py` — per-`@id` package processing: `extract_package_ctx`, `convert_id_package`, `_process_question`/`_process_assertion`, raw wh-word probes, confidence distribution
-- `lc_rewrites.py` — pre-clausification formula rewrites: meta-predicate normalization (incl. `is_rel2("time of")`→`has_time`), tense-valued `has_time` filtering (narrowed 2026-05-14: KEEPS the canonical Davidsonian shape `["has time", E, "past"|"present"|"future", "in"]` when E is an event var introduced by `isa(activity, E)`, STRIPS the same shape on non-event vars and always strips in-body `state_time`), degree presuppositions, existential hoisting, polarity flip. The legacy `strip_spurious_can` remains but no longer fires under the new arity-1 capability classifier.
+- `lc_rewrites.py` — pre-clausification formula rewrites: meta-predicate normalization (incl. `is_rel2("time of")`→`has_time`), tense-valued `has_time` filtering (narrowed 2026-05-14: KEEPS the canonical Davidsonian shape `["has time", E, "past"|"present"|"future", "in"]` when E is an event var introduced by `isa(activity, E)`, STRIPS the same shape on non-event vars and always strips in-body `state_time`), `inject_actuality` (2026-05-15: appends `["actuality", E]` to every Davidsonian event lacking a Stage-2 modal classifier and not appearing as `has_content` inner arg), degree presuppositions, existential hoisting, polarity flip. The legacy `strip_spurious_can` remains but no longer fires under the new arity-1 capability classifier.
 - `lc_ctxt.py` — `$ctxt` context injection, time-wrapper stripping, fresh variable generation, predicate classification constants
 - `lc_post_normalize.py` — post-clausification normalising / repair passes: gradable predicate normalization, RELCLASS coercion, isa-entity stripping, possessive `have` inference, `have`→`has_part` bridge for typed body-part nouns, degree stripping, population fact extraction, compound subsumption rules
 - `lc_post_reify.py` — post-clausification reification of definite descriptions and measurements: `$theof1` definite rewrites (global pass, with chain-rewrite guard), `$measure`→`$list` canonical unit conversion for `$measure_of` terms, `less_measure` rewriting for comparison operators on measures, `$theof1` unwrap inside `$measure_of`
@@ -209,20 +209,32 @@ event variables**, attached as the LAST conjunct of the event's outer
 ["capability","E"]
 ```
 
-Eight classifiers map 1:1 with the Stage-1 `mode` enum: `typical`
-(habitual), `capability`, `necessity`, `obligation`, `volition`,
-`intention`, `expectation`, `speech_act`.  The four mental/speech modes
-(volition / intention / expectation / speech_act) use **two-event
-reification**: an outer event E1 with the classifier and a nested
-inner event E2 linked by `["has content","E1","E2"]`.
+Eight Stage-2 classifiers map 1:1 with the Stage-1 `mode` enum:
+`typical` (habitual), `capability`, `necessity`, `obligation`,
+`volition`, `intention`, `expectation`, `speech_act`.  The four
+mental/speech modes (volition / intention / expectation / speech_act)
+use **two-event reification**: an outer event E1 with the classifier
+and a nested inner event E2 linked by `["has content","E1","E2"]`.
+
+A ninth classifier — `actuality(E)` — marks real events and is
+**injected by the pipeline** in `lc_rewrites.inject_actuality` after
+Stage-2 parses but before clausification.  Stage 2 deliberately does
+not emit it.  Injection rule: every `and`-block introducing
+`isa(activity, E)` gets `["actuality", E]` appended unless (a) one of
+the eight Stage-2 classifiers already applies to E or (b) E appears as
+the second argument of `has_content` anywhere (i.e., E is an inner
+content event of a two-event reification).  `actuality` is hidden from
+English rendering (`proof_english._render_atom`) since it is pipeline
+metadata.
 
 Phase-4 axiom support is one defeasible bridge in `axioms_std.js` §5.1
-that derives `capability(E)` on any Davidsonian event, gated by two
-`$block`s: a strict `¬capability(E)` override (penguin negations) and
-a `has_content(?:Eo, E)` guard (prevents inner content events from
-auto-deriving capability).  All Track-1 atomic predicates (`can`,
-`typically`) and the old §8 modal-bridge zoo have been removed.  See
-`MEMO_2026_05_14_modal_rework.md` for the full design.
+that derives `capability(E)` from `actuality(E)`, gated by a single
+`$block` for strict `¬capability(E)` overrides (penguin negations).
+Modal events and inner content events carry no `actuality` marker, so
+the bridge does not fire on them by construction.  All Track-1 atomic
+predicates (`can`, `typically`) and the old §8 modal-bridge zoo have
+been removed.  See `MEMO_2026_05_14_modal_rework.md` for the original
+design and `MEMO_2026_05_15_actuality.md` for the actuality refinement.
 
 Grammatical tense on Davidsonian events lives on the event itself via
 `["has time", E, "past"|"present"|"future", "in"]` (Plan A
