@@ -19,10 +19,7 @@
 
 # ==== standard libraries ====
 
-from multiprocessing import context
 import sys
-
-from requests import get
 
 # ==== import other source files ====
 

@@ -50,7 +50,7 @@ geminiversion = "gemini-2.5-flash"
 deepseekversion = "deepseek-chat"          # V3.2; use "deepseek-reasoner" for thinking
 
 # API key files (absolute paths relative to llmpipe/)
-_secrets_dir = os.path.join(_root, "../secrets")
+_secrets_dir = os.path.normpath(os.path.join(_root, "..", "secrets"))
 gpt_secrets_file = os.path.join(_secrets_dir, "gpt_secrets.txt")
 claude_secrets_file = os.path.join(_secrets_dir, "claude_secrets.txt")
 gemini_secrets_file = os.path.join(_secrets_dir, "gemini_secrets.txt")
@@ -129,6 +129,9 @@ def call_llm(sysprompt, input_text, llm=None, version=None, max_tokens=None, thi
         result = call_gpt(ver, input_text, sysprompt, max_tokens, think=think)
     except KeyboardInterrupt:
       raise
+    except MissingApiKeyError as e:
+      # Permanent configuration error — do not retry.
+      return llm_error(str(e))
     except Exception as e:
       return llm_error("unexpected error calling LLM: " + str(e))
     if result is not None and result.strip():
@@ -168,14 +171,31 @@ def _store_llm_cached(llm, ver, max_tokens, think, sysprompt, input_text, result
 
 # ======== shared helpers ========
 
+class MissingApiKeyError(Exception):
+  """Raised when an LLM provider's secrets file is missing or unreadable.
+  Used by call_llm to abort retrying on a permanent configuration error."""
+  pass
+
+
 def _read_api_key(filepath, provider):
-  """Read an API key from a plain-text file. Returns the key or None on error."""
+  """Read an API key from a plain-text file.
+  Raises MissingApiKeyError if the file is missing, unreadable, or empty.
+  Callers should not catch this — let call_llm handle it to avoid useless retries."""
   try:
     with open(filepath, "r") as f:
-      return f.read().strip()
-  except:
-    llm_error("Could not read " + provider + " API key file: " + str(filepath))
-    return None
+      key = f.read().strip()
+  except FileNotFoundError:
+    raise MissingApiKeyError(
+      provider + " API key file not found: " + str(filepath) +
+      "\n  Create it with your provider key. See ../secrets/README.txt for details."
+    )
+  except OSError as e:
+    raise MissingApiKeyError(
+      "Could not read " + provider + " API key file: " + str(filepath) + " (" + str(e) + ")"
+    )
+  if not key:
+    raise MissingApiKeyError(provider + " API key file is empty: " + str(filepath))
+  return key
 
 
 def _post_with_retry(host, url, body, headers, provider):

@@ -44,20 +44,25 @@ Further documentation
 Installation
 ------------
 
-The system requires Linux and Python 3.10+.
+The system requires Linux on x86-64 (the bundled `gk` binary is a
+statically-linked Linux x86-64 ELF) and Python 3.10+.
 The external dependencies are:
 
 * **Stanza** -- the Stanford NLP package https://stanfordnlp.github.io/stanza/
   converting English to a [UD](https://universaldependencies.org/) parse tree.
-  Tested with Stanza versions 1.3 through 1.11.
+  Tested with Stanza versions 1.3 through 1.12.
+* **transformers** -- required by Stanza 1.10+ for the dependency-parser model.
 * **gk** -- the reasoner binary, included in the system.
 
-Install Stanza (venv recommended):
+Install into a venv (recommended — avoids polluting the system Python):
 
-    python -m venv my-venv
-    my-venv/bin/pip install stanza
-    source my-venv/bin/activate
-    python3 -c 'import stanza; stanza.download("en")'
+    python3 -m venv ../my-venv
+    ../my-venv/bin/pip install -r requirements.txt
+    ../my-venv/bin/python3 -c 'import stanza; stanza.download("en")'
+    source ../my-venv/bin/activate
+
+The first `import stanza; stanza.download("en")` downloads ~525 MB of model
+files into `~/.cache/stanza/`. Once cached, the server starts in a few seconds.
 
 The `gk` reasoner binary along with taxonomy data files is included in the ../gk folder. 
 It is based on

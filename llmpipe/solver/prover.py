@@ -267,7 +267,7 @@ def call_prover(logic, s1_json=None):
     except KeyboardInterrupt:
       raise  
     except:
-      return "Error: prover gk is not available or crashed: check nlpgobals.py for gk path."  
+      return "Error: prover gk is not available or crashed: check globals.py for the gk path."
     sres=calc.decode('ascii')
     # High printlevel produces debug output before the result JSON.
     # The final result is preceded by "= showing final result =".
