@@ -81,14 +81,19 @@ def _scan_for_eq_functions(tree):
   return False
 
 
+_MANY_WORLDS_THRESHOLD = 5
+
+
 def _auto_strategy(logic, opts):
   """Build a strategy JSON string based on clause analysis.
 
-  When equalities with function terms are present, uses the unit strategy
-  which is better at equational reasoning via paramodulation on unit clauses.
-  Otherwise returns the default negative_pref/posunitpara strategy, which
-  handles complex multi-existential queries with many frame/synonym axioms
-  better than negative_pref/knuthbendix_pref.
+  - When equalities with function terms are present, use the unit strategy
+    (better at equational reasoning via paramodulation on unit clauses).
+  - When the world-state count is large (>= _MANY_WORLDS_THRESHOLD), use
+    the unit strategy.  The default negative_pref/posunitpara saturates on
+    duplicated past-world migration / frame / bridge resolvents (see
+    case 198 analysis) and fails to reach answers it can find with unit.
+  - Otherwise return the default negative_pref/posunitpara strategy.
   """
   if not logic or not isinstance(logic, list):
     return None
@@ -96,6 +101,9 @@ def _auto_strategy(logic, opts):
   if _has_eq_functions(logic):
     strategy = {"strategy": ["unit"], "query_preference": 0}
     reason = "eq functions detected"
+  elif _count_worlds(logic) >= _MANY_WORLDS_THRESHOLD:
+    strategy = {"strategy": ["unit"], "query_preference": 1}
+    reason = f">= {_MANY_WORLDS_THRESHOLD} worlds ({_count_worlds(logic)} present)"
   else:
     strategy = {"strategy": ["negative_pref", "posunitpara"],
                 "query_preference": 1}

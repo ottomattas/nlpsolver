@@ -327,6 +327,17 @@ and not appearing as the inner argument of `has_content`.  The
 `axioms_std.js` §5.1 capability bridge is gated on `actuality(E)` so it
 fires only on real events.  `actuality` is hidden from English rendering.
 
+Added 2026-05-23: `axioms_std.js` §5.2 — factive content bridges for
+assertive speech-act verbs.  For each verb V in {say, claim, report,
+state, announce}, a defeasible axiom `speech_act(E1) ∧ has_content(E1,E2)
+∧ has_type(E1,V,Ct) → actuality(E2)` (confidence 0.9, with `$block`
+guard on `¬actuality(E2)`) makes the inner content event actual.  Closes
+case 159 ("John said that Mary left. Mary left?") → Probably true on all
+4 LLMs.  Per-verb gating keeps directive (ask/order), commissive
+(promise/threaten), and dual-sense `tell` out of scope.  Defeasibility
+verified by the contradiction case "John said that Mary left.  Mary did
+not leave.  Mary left?" → False on all 4.
+
 **Predicate selection rule for adjectives** (mandatory):
 
 - If a word appears in `ASU.adjectives` → use `has degree property` (or `has degree rel2` for
@@ -1028,6 +1039,7 @@ the same LLM.  See §7.8 for the retry-loop semantics and motivation.
 | `_check_stage2_dropped_specific_noun` | `dropped_specific_noun` | Query `exists VAR, (and ... isa(CAT, VAR) ...)` where Stage-1 has a unique generic entity with `category=CAT` and `id != CAT` — the query lost the specific noun. | Case 136 |
 | `_check_stage2_arities` | `wrong_arity` | Atom whose arity disagrees with the declared Stage-2 signature (whitelist of 27 predicates: `isa/2`, `has property/2`, `has type/2`, `has actor/2`, `has part/2`, `is rel2/3`, `has degree property/4`, `has degree rel2/5`, `typical/1`, etc.). | Scattered |
 | `_check_stage2_event_shapes` | `event_missing_activity_isa` / `event_missing_role` | Event variable E used as first arg of `has_type(E, VERB)` must have `isa("activity", E)` AND at least one thematic-role atom (any of `has_actor`, `has_target`, `has_recipient`, `has_source`, `has_destination`, `has_location`, `has_instrument`, `has_manner`, `has_direction`, `has_time`, `has_beneficiary`, `has_accompaniment`, `has_path`, `has_result`, `has_topic`, `has_cause`, `typical`) in the same `and` conjunction.  Either missing item is its own issue. | — |
+| `_check_stage2_inner_content_event_time` | `inner_content_event_missing_time` | 5-gate criterion: var V appears as 2nd arg of `["has content", E1, V]` AND has a `has_type` atom AND has no `has_time` atom AND has no modal classifier (capability/typical/necessity/obligation/volition/intention/expectation/speech_act) AND the Stage-1 unit containing this `@id` has `time` set to past/present/future.  Catches gemini's intermittent omission of `has_time` on inner content events of speech-act reifications, which would prevent the `axioms_std.js` §5.2 factive bridge from unifying the derived `actuality(E2)` with the question's tensed event.  Skips modal-classified and tenseless-unit cases. | Case 159 — gemini |
 | `_check_stage2_missing_question` | `missing_question` | A Stage-1 unit is a query (either `unit.type == "query"` or its parent package's `raw` text contains `?`) but the matching `@id` in Stage-2 has no `question`/`ask` wrapper anywhere in its body — covers both whole-package truncations and `holds`-where-`question`-was-expected. | LLM truncation on multi-sentence inputs |
 | `_check_stage2_entity_id_typos` | `entity_id_typo` | An entity ID `XYZ N` whose first word has a stray prefix that is itself a prefix of another ID's first word in the same problem (max 4 extra chars).  Catches gemini's "fr fridge 3" vs "fridge 3" pattern where one mention picks up a stray article/preposition fragment. | Case 152 |
 

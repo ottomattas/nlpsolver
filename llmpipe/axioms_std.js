@@ -206,6 +206,60 @@
    ["$block", ["bridge_capability", "?:E"], ["$not", ["capability", "?:E"]]]],
 
 
+  // -- 5.2 Factive content bridge for assertive speech acts (defeasible) --
+  //
+  // For an outer speech_act event E1 whose verb is one of the assertive
+  // verbs (say/claim/report/state/announce), the inner content event E2
+  // (linked by has_content) is defeasibly actual.  Closes case 159:
+  // "John said that Mary left.  Mary left?" -> Probably true (~0.9).
+  //
+  // Per-verb gating (instead of "?:V" free) keeps directive verbs
+  // (ask/order/request), commissive verbs (promise/threaten/vow), and
+  // expressive verbs (apologize/thank) out of scope -- those do NOT entail
+  // their content.  Excludes "tell" because Stage-2 reifies both
+  // "told that X" (assertive) and "told to V" (directive) as
+  // speech_act + has_content + has_type=tell with no syntactic distinction.
+  //
+  // Confidence 0.9 with the standard $block guard so a contradicting
+  // assertion can defeat the inference ("John lied that Mary left.").
+
+  { "@confidence": 0.9, "@logic": [
+    ["-speech_act", "?:E1"],
+    ["-has content", "?:E1", "?:E2"],
+    ["-has type", "?:E1", "say", "?:Ct"],
+    ["actuality", "?:E2"],
+    ["$block", 0, ["$not", ["actuality", "?:E2"]]]
+  ] },
+  { "@confidence": 0.9, "@logic": [
+    ["-speech_act", "?:E1"],
+    ["-has content", "?:E1", "?:E2"],
+    ["-has type", "?:E1", "claim", "?:Ct"],
+    ["actuality", "?:E2"],
+    ["$block", 0, ["$not", ["actuality", "?:E2"]]]
+  ] },
+  { "@confidence": 0.9, "@logic": [
+    ["-speech_act", "?:E1"],
+    ["-has content", "?:E1", "?:E2"],
+    ["-has type", "?:E1", "report", "?:Ct"],
+    ["actuality", "?:E2"],
+    ["$block", 0, ["$not", ["actuality", "?:E2"]]]
+  ] },
+  { "@confidence": 0.9, "@logic": [
+    ["-speech_act", "?:E1"],
+    ["-has content", "?:E1", "?:E2"],
+    ["-has type", "?:E1", "state", "?:Ct"],
+    ["actuality", "?:E2"],
+    ["$block", 0, ["$not", ["actuality", "?:E2"]]]
+  ] },
+  { "@confidence": 0.9, "@logic": [
+    ["-speech_act", "?:E1"],
+    ["-has content", "?:E1", "?:E2"],
+    ["-has type", "?:E1", "announce", "?:Ct"],
+    ["actuality", "?:E2"],
+    ["$block", 0, ["$not", ["actuality", "?:E2"]]]
+  ] },
+
+
   // Movement Results: If X 'go'es to Dest, X is 'at' Dest in the next state [cite: 146, 147]
   // Result tense is "present" (at the new world), not copied from the source event.
   // Uses variable worlds with next(?:W, ?:W2) precondition.

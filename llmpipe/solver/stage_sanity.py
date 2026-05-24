@@ -605,6 +605,167 @@ def _check_stage2_event_shapes(logic):
   return issues
 
 
+# ======== Stage-2 inner-content-event missing has_time check ========
+#
+# In a two-event reification (speech_act / volition / intention /
+# expectation), the OUTER event E1 carries the modal classifier and a
+# has_time atom, while the INNER content event E2 (linked via
+# ["has content", E1, E2]) carries its own Davidsonian roles -- including
+# its own has_time, since the embedded clause has independent tense.
+#
+# Gemini intermittently omits has_time on the inner content event of
+# speech_act reifications (e.g., "John said that Mary left." -> the inner
+# leave-event lacks has_time(E2, "past", "in")).  The axioms_std.js §5.2
+# factive bridge then derives actuality(E2) but the question's tensed
+# event ["has time", E_q, "past", "in"] fails to unify with E2.
+#
+# The check fires only when ALL of the following hold (5-gate criterion):
+#   1. V appears as the 2nd argument of ["has content", E1, V] (V is an
+#      inner content event).
+#   2. V has a ["has type", V, ...] atom in its exists-scope (V is a
+#      Davidsonian event, not a stative or propositional content).
+#   3. V has NO ["has time", V, ...] atom in its exists-scope.
+#   4. V has NO modal classifier in its exists-scope -- capability,
+#      typical, necessity, obligation, volition, intention, expectation,
+#      or speech_act (events that carry a classifier are intentionally
+#      tenseless and shouldn't require has_time).
+#   5. The Stage-1 unit containing this @id has its "time" field set
+#      (past / present / future) -- evidence that the input is
+#      tense-anchored at the matrix level.  Skips generic / tenseless
+#      inputs where missing has_time on the inner event is fine.
+
+_INNER_EVENT_MODAL_CLASSIFIERS = frozenset({
+  "capability", "typical", "necessity", "obligation",
+  "volition", "intention", "expectation", "speech_act",
+})
+
+
+def _collect_inner_content_vars(node, found):
+  """Collect every string V that appears as the 2nd argument of an atom
+  whose head is 'has content' anywhere in the tree."""
+  if not isinstance(node, list) or not node:
+    return
+  head = node[0] if isinstance(node[0], str) else None
+  if head == "has content" and len(node) >= 3 and isinstance(node[2], str):
+    found.add(node[2])
+  for c in node:
+    if isinstance(c, list):
+      _collect_inner_content_vars(c, found)
+
+
+def _has_modal_classifier_for_var(body, var):
+  """True if `body` (typically an `and` block) contains any classifier
+  atom of arity 1 referencing var, e.g. ["capability", var]."""
+  if not isinstance(body, list) or not body:
+    return False
+  if body[0] == "and":
+    children = body[1:]
+  else:
+    children = [body]
+  for c in children:
+    if (isinstance(c, list) and len(c) == 2
+        and isinstance(c[0], str)
+        and c[0] in _INNER_EVENT_MODAL_CLASSIFIERS
+        and c[1] == var):
+      return True
+  return False
+
+
+def _unit_id_has_tense(s1_json, unit_id):
+  """True if Stage-1 contains a unit with the given unit_id whose `time`
+  field is set to past/present/future."""
+  if not isinstance(s1_json, list):
+    return False
+  for item in s1_json:
+    if not isinstance(item, dict):
+      continue
+    for u in item.get("units", []) or []:
+      if not isinstance(u, dict):
+        continue
+      if u.get("unit_id") != unit_id:
+        continue
+      t = u.get("time")
+      if isinstance(t, str) and t.lower() in ("past", "present", "future"):
+        return True
+      return False
+  return False
+
+
+def _scan_inner_event_time(node, inner_vars, s1_json, current_id,
+                           issues, path):
+  if not isinstance(node, list) or not node or not isinstance(node[0], str):
+    return
+  op = node[0]
+
+  # Track which @id we're inside (gate 5 needs this for Stage-1 lookup).
+  if op == "@id" and len(node) >= 3 and isinstance(node[1], str):
+    new_id = node[1]
+    for child in node[2:]:
+      if isinstance(child, list):
+        _scan_inner_event_time(child, inner_vars, s1_json, new_id,
+                               issues, path + "/@id:" + new_id)
+    return
+
+  if op == "exists" and len(node) == 3 and isinstance(node[1], str):
+    var = node[1]
+    body = node[2]
+    if var in inner_vars:
+      atoms = _collect_atoms_for_var_in_and(body, var)
+      has_type_seen = any(
+        isinstance(a, list) and len(a) >= 3
+        and a[0] == "has type" and a[1] == var
+        for a in atoms)
+      has_time_seen = any(
+        isinstance(a, list) and len(a) >= 3
+        and a[0] == "has time" and a[1] == var
+        for a in atoms)
+      has_classifier = _has_modal_classifier_for_var(body, var)
+      unit_is_tensed = (current_id is not None
+                       and _unit_id_has_tense(s1_json, current_id))
+      if (has_type_seen and not has_time_seen and not has_classifier
+          and unit_is_tensed):
+        issues.append(Issue(
+          kind="inner_content_event_missing_time",
+          location=path + "/exists:" + var,
+          description=(
+            "Inner content event '" + var + "' (linked by has_content) "
+            "has a 'has type' atom and no modal classifier, but no "
+            "'has time' atom -- yet the Stage-1 unit '"
+            + str(current_id) + "' is tense-anchored. Embedded clauses "
+            "carry their own tense, so the inner event needs a "
+            "has_time atom (e.g., "
+            "[\"has time\", \"" + var + "\", \"past\", \"in\"]) matching "
+            "the embedded clause's tense, so modal-bridge axioms can "
+            "unify it with a tensed query event."),
+          evidence=_safe_json(body),
+        ))
+    if isinstance(body, list):
+      _scan_inner_event_time(body, inner_vars, s1_json, current_id,
+                             issues, path + "/exists:" + var)
+    return
+
+  for child in node[1:]:
+    if isinstance(child, list):
+      _scan_inner_event_time(child, inner_vars, s1_json, current_id,
+                             issues, path + "/" + op)
+
+
+def _check_stage2_inner_content_event_time(logic, s1_json=None):
+  """Flag inner content events (referenced by has_content) that have a
+  has_type atom but no has_time atom in their exists-scope, AND no modal
+  classifier, AND the surrounding Stage-1 unit is tense-anchored.
+  See the section comment above for the 5-gate criterion."""
+  if not isinstance(logic, list):
+    return []
+  inner_vars = set()
+  _collect_inner_content_vars(logic, inner_vars)
+  if not inner_vars:
+    return []
+  issues = []
+  _scan_inner_event_time(logic, inner_vars, s1_json, None, issues, "")
+  return issues
+
+
 # ======== Stage-2 entity-ID prefix-typo check ========
 #
 # Detects entity IDs like "fr fridge 3" that are an existing entity ID
@@ -928,6 +1089,7 @@ def check_stage2(logic, s1_json=None):
   issues.extend(_check_stage2_dropped_specific_noun(logic, s1_json))
   issues.extend(_check_stage2_arities(logic))
   issues.extend(_check_stage2_event_shapes(logic))
+  issues.extend(_check_stage2_inner_content_event_time(logic, s1_json))
   issues.extend(_check_stage2_missing_question(logic, s1_json))
   issues.extend(_check_stage2_entity_id_typos(logic))
   return issues
