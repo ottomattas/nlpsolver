@@ -128,7 +128,7 @@ JSON shows different entity IDs, types, or metadata.
 | Wrong world assignment | Descriptive info creating unnecessary new world state | Stage-1 `pre_state`/`next_state` |
 | Conjunctive query split | "Is X red and big?" split into separate queries | Should be one query ASU |
 
-**Fix:** Edit `prompts/stage1_instructions.txt` or `prompts/stage1_examples.txt`.
+**Fix:** Edit `prompts/stage1_instructions_full.txt` or `prompts/stage1_examples.txt`.
 After changing prompts, run with `-nollmcache`.
 
 ### 3.2 Stage-2 Logic Errors
@@ -143,7 +143,7 @@ After changing prompts, run with `-nollmcache`.
 | Variable collision | Two `exists E` blocks sharing the same `E` | Stage-2 variable names |
 | Wrong entity type | `isa(person,X)` instead of `isa(man,X)` | Stage-2 isa predicates |
 
-**Fix:** Edit `prompts/stage2_instructions.txt` or `prompts/stage2_examples.txt`.
+**Fix:** Edit `prompts/stage2_instructions_full.txt` or `prompts/stage2_examples.txt`.
 The pipeline has a safety-net stative rewriter (`semnormalize.rewrite_stative_events`)
 for event-reified statives.
 

@@ -231,10 +231,7 @@ Phase-4 axiom support is one defeasible bridge in `axioms_std.js` §5.1
 that derives `capability(E)` from `actuality(E)`, gated by a single
 `$block` for strict `¬capability(E)` overrides (penguin negations).
 Modal events and inner content events carry no `actuality` marker, so
-the bridge does not fire on them by construction.  All Track-1 atomic
-predicates (`can`, `typically`) and the old §8 modal-bridge zoo have
-been removed.  See `MEMO_2026_05_14_modal_rework.md` for the original
-design and `MEMO_2026_05_15_actuality.md` for the actuality refinement.
+the bridge does not fire on them by construction.
 
 Grammatical tense on Davidsonian events lives on the event itself via
 `["has time", E, "past"|"present"|"future", "in"]` (Plan A
