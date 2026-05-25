@@ -931,7 +931,8 @@ def _extract_location_name(target):
 
 def build_population_facts(classes, has_props, deg_props,
                            compound_witnesses=None,
-                           concrete_intersections=None):
+                           concrete_intersections=None,
+                           needed_neg=None):
   """Build the list of @logic population entries from collected scan data.
 
   For each key, emits a positive and/or negative synthetic clause, skipping
@@ -941,9 +942,19 @@ def build_population_facts(classes, has_props, deg_props,
   concrete_intersections: optional set of (TYPE, PRED, ATTR, INT, RC) keys
   that are already satisfied by a real ground entity in the input. Adjective
   intersection witnesses for these keys are suppressed as redundant.
+
+  needed_neg: optional triple (cls_set, prop_set, degprop_set) identifying
+  the classes / properties whose `$some_not_*` witness may participate in
+  a proof.  When given, negative witnesses for any key NOT in the
+  corresponding set are suppressed (positive witnesses are unaffected).
+  When None, all negative witnesses are emitted (legacy behaviour).
   """
   if concrete_intersections is None:
     concrete_intersections = set()
+  if needed_neg is None:
+    neg_cls = neg_prop = neg_deg = None      # None means "no filter"
+  else:
+    neg_cls, neg_prop, neg_deg = needed_neg
   result = []
 
   for cls, info in classes.items():
@@ -952,7 +963,7 @@ def build_population_facts(classes, has_props, deg_props,
     if not info["has_pos"]:
       result.append({"@name": name, "@sourcetype": "populate",
                      "@logic": ["isa", cls, "$some_" + cn]})
-    if not info["has_neg"]:
+    if not info["has_neg"] and (neg_cls is None or cls in neg_cls):
       result.append({"@name": name, "@sourcetype": "populate",
                      "@logic": ["-isa", cls, "$some_not_" + cn]})
 
@@ -962,7 +973,7 @@ def build_population_facts(classes, has_props, deg_props,
     if not info["has_pos"]:
       result.append({"@name": name, "@sourcetype": "populate",
                      "@logic": ["has property", prop, "$some_" + cn]})
-    if not info["has_neg"]:
+    if not info["has_neg"] and (neg_prop is None or prop in neg_prop):
       result.append({"@name": name, "@sourcetype": "populate",
                      "@logic": ["-has property", prop, "$some_not_" + cn]})
 
@@ -984,7 +995,7 @@ def build_population_facts(classes, has_props, deg_props,
         # Companion isa: $some_PROP_CLASS is by construction a member of CLASS.
         result.append({"@name": name, "@sourcetype": "populate",
                        "@logic": ["isa", relclass, "$some_" + cn]})
-    if not info["has_neg"]:
+    if not info["has_neg"] and (neg_deg is None or (prop, relclass) in neg_deg):
       result.append({"@name": name, "@sourcetype": "populate",
                      "@logic": ["-has degree property", prop, "$some_not_" + cn,
                                 "none", relclass]})

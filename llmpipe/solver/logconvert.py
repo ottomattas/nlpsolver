@@ -97,7 +97,6 @@ from lc_post_inject import (
   inject_exclusion_axioms as _inject_exclusion_axioms,
   inject_isa_cross_group_axioms as _inject_isa_cross_group_axioms,
   inject_verb_mutex_axioms as _inject_verb_mutex_axioms,
-  inject_containment_bridge_axioms as _inject_containment_bridge_axioms,
   inject_beneficiary_for_bridge as _inject_beneficiary_for_bridge,
   inject_kinship_mutex_axioms as _inject_kinship_mutex_axioms,
   inject_carrier_lifts as _inject_carrier_lifts,
@@ -734,10 +733,9 @@ def rawlogic_convert(logic, s1_json=None):
                   + _inject_exclusion_axioms(result, _axiom_vocab)
                   + _inject_isa_cross_group_axioms(result, _axiom_vocab)
                   + _inject_verb_mutex_axioms(result, _axiom_vocab)
-                  + _inject_containment_bridge_axioms(result, _axiom_vocab)
                   + _inject_beneficiary_for_bridge(result)
                   + _inject_kinship_mutex_axioms(result, _axiom_vocab)
-                  + _inject_carrier_lifts(result, _axiom_vocab))
+                  + _inject_carrier_lifts(result))
 
   # Append population facts, synonym axioms, and exclusion axioms after
   # all sentence clauses (assertions + questions come first).

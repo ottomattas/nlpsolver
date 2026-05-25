@@ -165,13 +165,15 @@ def format_sentences_to_clauses(logic, s1_json, json_mode=False):
     # Determine header text
     if base in asu_map:
       header = asu_map[base]
+    elif base == "pop_what":
+      header = "[population: class witnesses for what-query]"
     else:
       header = "[generated: " + base + "]"
     lines.append(header)
     _append_clause_lines(lines, clauses, json_mode)
 
   if pop_clauses:
-    lines.append("[generated: population facts]")
+    lines.append("[population: from input]")
     _append_clause_lines(lines, pop_clauses, json_mode)
 
   return "\n".join(lines)
@@ -216,9 +218,11 @@ def clause_list_to_json_commented(clauselist, s1_json=None):
     # Insert comment when the group or population status changes
     if base != prev_base or is_pop != prev_is_pop:
       if is_pop and not prev_is_pop:
-        reslst.append("// [population facts]")
+        reslst.append("// [population: from input]")
       elif base in asu_map:
         reslst.append("// " + asu_map[base])
+      elif base == "pop_what":
+        reslst.append("// [population: class witnesses for what-query]")
       elif base:
         reslst.append("// [generated: " + base + "]")
       prev_base = base

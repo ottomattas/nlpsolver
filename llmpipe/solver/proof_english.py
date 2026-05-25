@@ -22,7 +22,7 @@
 import json
 import re
 
-from lc_clausify import is_skolem_const, is_skolem_fn
+from lc_clausify import is_skolem_const, is_skolem_fn, looks_like_var, is_world_constant
 
 from linguistics import (
   indef_article  as _indef_article,
@@ -35,7 +35,7 @@ from linguistics import (
 
 from proof_utils import (
   entity_name, _ctx, _degree_parts, _is_var_display,
-  _ans_display_args, _SAFE_LETTERS,
+  _ans_display_args, _SAFE_LETTERS, _skolem_fn_short_name,
 )
 
 import globals as _g
@@ -193,12 +193,81 @@ def clause_to_str(clause):
   if bridge == "wrap":
     return "technical answer wrap step"
 
+  # Install a clause-level rendering context (sets up "some X" / "a situation V"
+  # / "an event E" intros), and pre-scan to identify event/world variables.
+  global _RENDER_CTX
+  prev_ctx = _RENDER_CTX
+  _RENDER_CTX = _ClauseRenderCtx()
+  _scan_clause_vars(clause, _RENDER_CTX)
+  try:
+    result = _clause_to_str_body(clause)
+  finally:
+    _RENDER_CTX = prev_ctx
+  # Capitalize the first ALPHA character so each proof step reads as a
+  # sentence — skip leading quote / bracket chars so "'in the box'..." ->
+  # "'In the box'..." at sentence start.
+  # Exception: when the leading word is a Skolem-fn identifier ("sk0",
+  # "sk1_house", ...) keep it lowercase — these are not English words.
+  m = re.match(r'^[^A-Za-z]*([A-Za-z][A-Za-z0-9_]*)', result)
+  if m and re.match(r'^sk\d', m.group(1)):
+    return result
+  for i, ch in enumerate(result):
+    if ch.isalpha():
+      if ch.islower():
+        result = result[:i] + ch.upper() + result[i+1:]
+      break
+  return result
+
+
+def _is_tautological_isa(base_atom):
+  """True for ['isa', TYPE, 'TYPE N'] where the entity id's noun matches TYPE.
+
+  These literals carry no information when other literals in the clause
+  refer to the same entity — Stage-1 numbers constants by their type name.
+  """
+  if len(base_atom) < 3:
+    return False
+  typ = base_atom[1]
+  ent = base_atom[2]
+  if not (isinstance(typ, str) and isinstance(ent, str)):
+    return False
+  raw = ent[2:] if ent.startswith("#:") else ent
+  m = re.match(r'^(.*\S)\s+\d+$', raw)
+  return bool(m) and m.group(1).lower() == typ.lower()
+
+
+def _clause_to_str_body(clause):
   conditions    = []   # positively-rendered negated atoms -> "if ..."
   neg_atoms     = []   # base atoms (pred without "-") for pure-negative rendering
   consequences  = []   # (english_str, is_normally) pairs for positive atoms
   raw_pos_atoms = []   # raw positive atoms (for $block matching)
   block_atoms   = []   # raw $block atoms
   blocker_texts = []   # "except when ..." rendered from unmatched $block atoms
+
+  multi_literal = isinstance(clause, list) and len(clause) > 1
+
+  # ---- Pass 1: classify literals (no rendering yet) ----
+  neg_specs = []   # base atoms — conditions to render (positive form)
+  pos_specs = []   # (kind, atom) where kind in {"pos","ans"}
+  ctx = _RENDER_CTX
+
+  # Decide whether isa-bundling applies for this clause.  Bundling absorbs
+  # an isa(TYPE, var) literal into the variable's intro ("some penguin X").
+  # We only apply this in PURE-NEGATIVE clauses — when there is a positive
+  # literal the clause already has an explicit if-then structure and the
+  # "X is a TYPE" antecedent should stay visible.
+  has_positive_atom = any(
+      isinstance(a, list) and a and isinstance(a[0], str)
+      and a[0] not in ("$block", "$ans")
+      and not a[0].startswith("-")
+      for a in clause
+  )
+  bundling_active = (not has_positive_atom) and ctx is not None
+  # If bundling is off, clear the type-hint map so _intro won't emit
+  # "some penguin X" while the isa atom is also rendered as "X is a bird"
+  # (would read redundantly).
+  if not bundling_active and ctx is not None:
+    ctx.isa_type_hint = {}
 
   for atom in clause:
     if not isinstance(atom, list) or not atom:
@@ -207,21 +276,72 @@ def clause_to_str(clause):
     if pred == "$block":
       block_atoms.append(atom)
     elif pred == "$ans":
+      pos_specs.append(("ans", atom))
+    elif pred.startswith("-"):
+      base = [pred[1:]] + list(atom[1:])
+      # R1: in multi-literal clauses, drop "X is a TYPE" when entity is "TYPE N".
+      if multi_literal and base[0] == "isa" and _is_tautological_isa(base):
+        continue
+      # isa-bundling: drop -isa(TYPE, var) literals whose type-hint will be
+      # absorbed into the variable's introduction in another atom.  Only
+      # active in pure-negative clauses (see comment above).
+      if (bundling_active and multi_literal and base[0] == "isa"
+          and len(base) >= 3 and isinstance(base[2], str)
+          and base[2] in ctx.isa_type_hint
+          and ctx.isa_type_hint[base[2]] == base[1]
+          and base[2] in ctx.used_in_other):
+        continue
+      neg_specs.append(base)
+    else:
+      # R1: same tautology filter for positive isa.
+      if multi_literal and pred == "isa" and _is_tautological_isa(atom):
+        continue
+      pos_specs.append(("pos", atom))
+
+  # In pure-negative clauses (no positive atoms), the existing "if A1..An-1
+  # then ¬An" formatter uses the LAST literal as the consequent.  Prefer a
+  # modal-classifier literal (capability/typical/necessity/...) as the
+  # consequent when one is present — the modal claim is usually the
+  # informative conclusion ("X is not a capability" reads better than
+  # "X is not a penguin").
+  _MODAL_CONSEQUENT_PREDS = frozenset({
+    "capability", "typical", "necessity", "obligation", "volition",
+    "intention", "expectation", "speech_act", "actuality",
+  })
+  if neg_specs and not pos_specs:
+    for i in range(len(neg_specs) - 1):
+      if neg_specs[i] and neg_specs[i][0] in _MODAL_CONSEQUENT_PREDS:
+        neg_specs.append(neg_specs.pop(i))
+        break
+
+  # ---- Pass 2: render conditions FIRST so variables get introduced in the
+  # antecedent ("some X" / "an event E"), then consequents reuse them bare.
+  # This matters because the assembled output reads "if <conds> then <cons>",
+  # so the first VISUAL mention of any variable lives in the antecedent.
+  for base in neg_specs:
+    rendered = _atom_to_english(base)
+    # Theme 2: skip empty renderings (e.g. suppressed `actuality` literal)
+    # so they don't leave a dangling " and " in the joined output.
+    if not rendered:
+      continue
+    conditions.append(rendered)
+    neg_atoms.append(base)
+  for kind, atom in pos_specs:
+    if kind == "ans":
       meaningful = _ans_display_args(atom[1:])
       if len(meaningful) >= 2:
-        bracket = "[" + ", ".join(entity_name(a, with_url=True) for a in meaningful) + "]"
-        consequences.append((bracket + " is an answer", False))
+        phrase = _prep_answer_phrase(meaningful)
+        consequences.append((phrase + " is an answer", False))
       elif meaningful:
         consequences.append((entity_name(meaningful[0]) + " is an answer", False))
       else:
         consequences.append((ans_atom_name(atom) + " is an answer", False))
       raw_pos_atoms.append(atom)
-    elif pred.startswith("-"):
-      base = [pred[1:]] + list(atom[1:])
-      conditions.append(_atom_to_english(base))
-      neg_atoms.append(base)
     else:
-      consequences.append((_atom_to_english(atom), False))
+      rendered = _atom_to_english(atom)
+      if not rendered:
+        continue
+      consequences.append((rendered, False))
       raw_pos_atoms.append(atom)
 
   # Detect standard defeasible pattern: $block body matches a positive conclusion.
@@ -273,6 +393,11 @@ def clause_to_str(clause):
   elif blocker_texts:
     # Clause is purely $block atoms — outstanding exception(s) still to be ruled out.
     return "outstanding exception: " + " and ".join(blocker_texts)
+  elif clause and any(isinstance(a, list) and a and str(a[0]) in ("actuality", "@id", "@p", "@definite") for a in clause):
+    # Clause contains only suppressed-from-English internal markers
+    # (actuality / @id / @p / @definite).  Return an empty step rather than
+    # the placeholder "(empty)" string.
+    return ""
   else:
     result = "(empty)"
 
@@ -280,6 +405,261 @@ def clause_to_str(clause):
     result += ", except when " + " and ".join(blocker_texts)
 
   return result
+
+
+# ======== clause-level variable rendering context (R3 + R4-revised) ========
+#
+# Variables are rendered with a contextual prefix on FIRST mention inside a
+# single clause:
+#   - World variable / constant     → "a situation V" / "the situation W0"
+#   - Event variable / Skolem       → "an event E" / "the event act1"
+#   - Bare entity variable          → "some X"
+# Subsequent mentions of the same variable inside the same clause are bare.
+# Constants outside the world/event families render unchanged.
+
+class _ClauseRenderCtx:
+  """Per-clause rendering state used to give the first mention of each
+  variable a natural-language introduction ("some X", "a situation E3", ...).
+  """
+  __slots__ = ("seen", "event_vars", "world_vars", "event_consts",
+               "has_type_vars", "isa_type_hint", "used_in_other",
+               "absorbed_isa_ids")
+  def __init__(self):
+    self.seen = set()             # raw arg names already introduced
+    self.event_vars = set()       # vars known to be events from clause scan
+    self.world_vars = set()       # vars known to be worlds from clause scan
+    self.event_consts = set()     # Skolem constants known to be events
+    self.has_type_vars = set()    # event vars whose has_type(.,V) appears
+                                  # in the SAME clause — these introduce
+                                  # themselves via "X is a V event" and
+                                  # don't need an extra "an event X" prefix
+    self.isa_type_hint = {}       # var → TYPE (from isa(TYPE, var) in clause)
+    self.used_in_other = set()    # vars that appear in non-isa atoms
+    self.absorbed_isa_ids = set() # ids of isa atoms absorbed into a type
+                                  # prefix; skipped during rendering
+
+_RENDER_CTX = None   # module-level slot; clause_to_str owns the lifetime
+
+
+def _looks_like_var_arg(arg):
+  """True if arg is a variable that should get an intro prefix on first mention."""
+  return isinstance(arg, str) and looks_like_var(arg)
+
+
+def _looks_like_world_const(arg):
+  return isinstance(arg, str) and is_world_constant(arg)
+
+
+def _is_event_skolem(arg):
+  """Skolem constant that names an event (e.g. sk0_activity)."""
+  if not isinstance(arg, str) or not is_skolem_const(arg):
+    return False
+  typ = _ctx.skolem_types.get(arg)
+  return typ == "activity"
+
+
+def _scan_clause_vars(clause, ctx):
+  """Identify which variables in the clause are events vs worlds.
+
+  Event: a variable that appears as the first arg of has_type / has_actor /
+  has_target / has_destination / has_recipient / etc., OR as the entity arg
+  of isa("activity", X) / capability(X) / typical(X) / actuality(X) / ... .
+  Also marks Skolem constants of type "activity" as event constants.
+
+  World: a variable that appears in next/before/moved/is_past_world positions.
+  """
+  _EVENT_ROLE_PREDS = frozenset({
+    "has type", "has actor", "has target", "has destination",
+    "has recipient", "has location", "has instrument", "has manner",
+    "has direction", "has time", "has source", "has beneficiary",
+    "has accompaniment", "has path", "has result", "has topic",
+    "has cause", "has content",
+  })
+  _MODAL_PREDS = frozenset({
+    "actuality", "capability", "typical", "necessity", "obligation",
+    "volition", "intention", "expectation", "speech_act",
+  })
+  _WORLD_PREDS = frozenset({"next", "before", "moved", "is_past_world"})
+
+  def _record_event(arg):
+    if _looks_like_var_arg(arg):
+      ctx.event_vars.add(arg)
+    elif _is_event_skolem(arg):
+      ctx.event_consts.add(arg)
+
+  def _record_world(arg):
+    if _looks_like_var_arg(arg):
+      ctx.world_vars.add(arg)
+
+  def _scan(atom):
+    if not isinstance(atom, list) or not atom:
+      return
+    pred = str(atom[0])
+    base = pred[1:] if pred.startswith("-") else pred
+    args = atom[1:]
+    if base in _EVENT_ROLE_PREDS and args:
+      _record_event(args[0])
+      if base == "has type" and _looks_like_var_arg(args[0]):
+        ctx.has_type_vars.add(args[0])
+      # All other args of role-predicates count as "used in a non-isa atom"
+      # — this gates isa-bundling (we only absorb isa(TYPE, var) when var
+      # also appears as a role somewhere we can attach the type prefix).
+      for a in args[1:]:
+        if _looks_like_var_arg(a):
+          ctx.used_in_other.add(a)
+    elif base in _MODAL_PREDS and args:
+      _record_event(args[0])
+      for a in args[1:]:
+        if _looks_like_var_arg(a):
+          ctx.used_in_other.add(a)
+    elif base == "isa" and len(args) >= 2:
+      type_name = args[0]
+      var_arg = args[1]
+      if type_name == "activity":
+        _record_event(var_arg)
+      # Record type-hint for isa-bundling: applies when type is a string
+      # AND target arg is a variable.  We skip "activity" (already covered
+      # by has_type) and skip the bundling for event/world vars to avoid
+      # double-typing.
+      if (isinstance(type_name, str) and type_name != "activity"
+          and _looks_like_var_arg(var_arg)):
+        ctx.isa_type_hint.setdefault(var_arg, type_name)
+    elif base in _WORLD_PREDS:
+      for a in args:
+        _record_world(a)
+        if _looks_like_var_arg(a):
+          ctx.used_in_other.add(a)
+    else:
+      # Any other predicate also counts as "used in a non-isa atom".
+      for a in args:
+        if _looks_like_var_arg(a):
+          ctx.used_in_other.add(a)
+    # $ctxt term inside any atom: arg[1] is world slot.
+    for a in args:
+      if (isinstance(a, list) and a and isinstance(a[0], str)
+          and a[0] == "$ctxt" and len(a) >= 3):
+        _record_world(a[2])
+
+  if isinstance(clause, list):
+    for atom in clause:
+      _scan(atom)
+
+
+_COMMON_NOUN_CONST_RE = re.compile(r'^[a-z].*\s\d+$')
+
+
+def _prep_answer_phrase(args):
+  """Render a multi-arg `$ans` / `$defq*` payload.
+
+  Where/when-answers come out of `lc_questions` as
+  [PREP, VALUE, ...] (e.g. ["in", "box 2"], ["on", "table 3"], ["before", ...]).
+  When the first arg is a preposition, render it inline and wrap the whole
+  phrase in single quotes — "'in <rest>'" — so the answer fragment is
+  visually demarcated as a unit ("'In the box' is the answer").
+  Other multi-arg payloads keep the bracket form.
+  """
+  if args and isinstance(args[0], str) and args[0].lower() in _PREPOSITIONS:
+    prep = args[0]
+    rest = " ".join(_intro(a) for a in args[1:])
+    return "'" + prep + " " + rest + "'"
+  return "[" + ", ".join(entity_name(a, with_url=True) for a in args) + "]"
+
+
+def _is_common_noun_const(arg):
+  """True for entity ids like 'head 2', 'box 2', 'stone 3' — lowercase
+  noun with a numeric suffix.  These are not proper nouns and read better
+  with a "the" article in proof prose."""
+  if not isinstance(arg, str):
+    return False
+  raw = arg[2:] if arg.startswith("#:") else arg
+  return bool(_COMMON_NOUN_CONST_RE.match(raw))
+
+
+def _intro(arg, role_hint=None):
+  """Render an argument inside the current clause with the right article /
+  prefix.  Tracks first vs subsequent mentions via _RENDER_CTX.seen.
+
+  - World constants (W0/W1/…):     "the situation W0"
+  - Event Skolems (sk0_activity):  "the event act1" first / "the act1" later
+  - Skolem function terms:         full "the flying event sk0 of Mike" first /
+                                   short "sk0 of Mike" later
+  - Common-noun constants:         "the head B" (always, every mention)
+  - Variable, world-typed:         "a situation V" first / bare later
+  - Variable, event-typed:         "an event E" first / bare later
+  - Variable with isa(TYPE,X) in clause: "some <TYPE> X" first / bare later
+  - Variable with role hint:       "a/an <ROLE> X" first / bare later
+  - Bare entity variable:          "some X" first / bare later
+  - Everything else:               plain entity_name() rendering
+  """
+  ctx = _RENDER_CTX
+  # Skolem function list-terms: track first vs subsequent mentions and
+  # render shorter ("sk0 of Mike") on later mentions to avoid repeating
+  # the full "the flying event sk0 of Mike" noun phrase.
+  if ctx is not None and isinstance(arg, list) and is_skolem_fn(arg):
+    # Also mark any VARIABLE args of the Skolem fn as already-seen so
+    # that a later standalone _intro on the same variable in this clause
+    # returns bare "X" instead of introducing it as "some X" — the X
+    # already appeared inside "sk1 of X".
+    for sub in arg[1:]:
+      if isinstance(sub, str) and looks_like_var(sub):
+        ctx.seen.add(sub)
+    key = "skfn:" + str(arg)
+    if key in ctx.seen:
+      return _skolem_fn_short_name(arg)
+    ctx.seen.add(key)
+    return entity_name(arg, with_url=True, proof_mode=True)
+  if ctx is None or not isinstance(arg, str):
+    return entity_name(arg, with_url=True, proof_mode=True)
+
+  # World constants (W0, W1, ...) — always "the situation".
+  if is_world_constant(arg):
+    return "the situation " + arg
+
+  # Event Skolem constants (sk0_activity, ...). Bypass entity_name's own
+  # "some activity actN" intro so we don't double up.  Mark the Skolem as
+  # introduced so any later entity_name() call elsewhere returns the bare
+  # display name; we'll add "the" ourselves.
+  if _is_event_skolem(arg):
+    bare = _ctx.skolem_display.get(arg, arg)
+    _ctx.skolem_introduced.add(arg)
+    if arg in ctx.seen:
+      return "the " + bare
+    ctx.seen.add(arg)
+    return "the event " + bare
+
+  # Common-noun constants ("head 2", "box 2") — always "the noun".
+  if _is_common_noun_const(arg):
+    return "the " + entity_name(arg, with_url=True, proof_mode=True)
+
+  # Variables — introduce with a-prefix on first mention only.
+  if looks_like_var(arg):
+    if arg in ctx.seen:
+      return entity_name(arg, with_url=True, proof_mode=True)
+    ctx.seen.add(arg)
+    name = entity_name(arg, with_url=True, proof_mode=True)
+    if arg in ctx.world_vars:
+      return "a situation " + name
+    if arg in ctx.event_vars:
+      # When the same clause's has_type literal already introduces this
+      # event ("X is a fly event"), drop the "an event" prefix here so
+      # we don't double-up.  Bare X reads cleanly.
+      if arg in ctx.has_type_vars:
+        return name
+      return "an event " + name
+    # isa-bundling: if the same clause has an isa(TYPE, var) literal AND
+    # var appears in some other (non-isa) atom we can attach the type to,
+    # render as "some <TYPE> X".  The isa atom itself is suppressed during
+    # clause rendering.
+    isa_type = ctx.isa_type_hint.get(arg)
+    if isa_type and arg in ctx.used_in_other:
+      return "some " + isa_type + " " + name  # "some penguin X"
+    if role_hint:
+      art = "an" if role_hint[0].lower() in "aeiou" else "a"
+      return art + " " + role_hint + " " + name
+    return "some " + name
+
+  # Proper-noun constants and others: pass through.
+  return entity_name(arg, with_url=True, proof_mode=True)
 
 
 # ======== atom-to-English converters ========
@@ -305,6 +685,12 @@ def _isa_neg(e, args):
   return ent + " is not " + _indef_article(typ) + " " + typ
 
 def _is_rel2_pos(e, args):
+  rel_raw = args[0] if args else ""
+  # Variable-relation case: read as "Y is/was/will-be in relation X to Z
+  # <context-from-$ctxt>".  Surfaces the tense and world so two atoms in
+  # the same clause that differ only in $ctxt render distinguishably.
+  if isinstance(rel_raw, str) and looks_like_var(rel_raw):
+    return _is_rel2_var_rel_render(e, args, neg=False)
   rel = e(0)
   last = rel.split()[-1].lower() if rel else ""
   if rel.lower() in _PREPOSITIONS or last in _PREPOSITIONS or last == "of":
@@ -314,6 +700,9 @@ def _is_rel2_pos(e, args):
   return e(1) + " is " + rel + " of " + e(2)
 
 def _is_rel2_neg(e, args):
+  rel_raw = args[0] if args else ""
+  if isinstance(rel_raw, str) and looks_like_var(rel_raw):
+    return _is_rel2_var_rel_render(e, args, neg=True)
   rel = e(0)
   last = rel.split()[-1].lower() if rel else ""
   if rel.lower() in _PREPOSITIONS or last in _PREPOSITIONS or last == "of":
@@ -321,6 +710,41 @@ def _is_rel2_neg(e, args):
   if _looks_like_verb(rel):
     return e(1) + " does not " + rel + " " + e(2)
   return e(1) + " is not " + rel + " of " + e(2)
+
+
+def _is_rel2_var_rel_render(e, args, neg=False):
+  """Render is_rel2 when the relation arg is a variable (axiom case).
+
+  Form: '<Y> is/was/will-be in relation <X> to <Z>'
+        + optional ' before/in/after <world>' suffix from the $ctxt term.
+  Surfaces the tense and world from $ctxt so two such atoms with
+  different contexts render distinguishably in the same clause.
+  """
+  # Relation arg: render bare (it's a relation name, not an instance);
+  # bypass _intro so it doesn't get a "some" prefix.
+  rel  = entity_name(args[0], with_url=True, proof_mode=True)
+  subj = e(1)
+  obj  = e(2)
+  tense_verb = "is not" if neg else "is"
+  context_suffix = ""
+  ctxt = args[3] if len(args) >= 4 else None
+  if (isinstance(ctxt, list) and len(ctxt) >= 3
+      and isinstance(ctxt[0], str) and ctxt[0] == "$ctxt"):
+    tense = ctxt[1]
+    world_arg = ctxt[2]
+    if isinstance(tense, str) and tense in ("past", "present", "future"):
+      if neg:
+        verb_map = {"past": "was not", "present": "is not",
+                    "future": "will not be"}
+      else:
+        verb_map = {"past": "was", "present": "is",
+                    "future": "will be"}
+      tense_verb = verb_map[tense]
+      world_word = {"past": "before ", "present": "in ",
+                    "future": "after "}[tense]
+      # Render the world via _intro (handles "the situation W" / "a situation V").
+      context_suffix = " " + world_word + _intro(world_arg)
+  return subj + " " + tense_verb + " in relation " + rel + " to " + obj + context_suffix
 
 def _has_degree_property_render(e, args, neg=False):
   prop = e(0); ent = e(1)
@@ -651,6 +1075,99 @@ def _render_equals(e, args, negated):
 
 # Predicate dispatch table: pred -> (min_args, pos_fn, neg_fn)
 # pos_fn / neg_fn signature: (e, args) -> str
+# ======== custom predicate-render helpers ========
+
+
+def _event_arg_is_specific(arg):
+  """True if the event arg (first arg of an event-role atom) refers to a
+  specific event (Skolem) rather than a free variable.  Used to pick
+  between 'the recipient/destination of <evt>' vs 'a recipient/...'."""
+  if isinstance(arg, str) and is_skolem_const(arg):
+    return True
+  if isinstance(arg, list) and is_skolem_fn(arg):
+    return True
+  return False
+
+
+def _has_type_render(e, args, neg=False):
+  """Render `has_type(E, V)` as 'E is a V event' / 'E is not a V event'.
+
+  When E is a Skolem fn term, use the SHORT form 'sk0 of X' (no
+  gerund/event-noun prefix) because the predicate already asserts the
+  event type — "the flying event sk0 of X is a fly event" would be
+  redundant.  Marks the Skolem fn as seen so other atoms in the same
+  clause use the short form too.
+  """
+  first = args[0] if args else None
+  verb = args[1] if len(args) > 1 else "?"
+  if isinstance(first, list) and is_skolem_fn(first):
+    subj = _skolem_fn_short_name(first)
+    if _RENDER_CTX is not None:
+      _RENDER_CTX.seen.add("skfn:" + str(first))
+      # Mark variable args of the Skolem fn as seen too, so a later
+      # standalone mention of the same variable in the clause renders
+      # bare instead of being re-introduced as "some X".
+      for sub in first[1:]:
+        if isinstance(sub, str) and looks_like_var(sub):
+          _RENDER_CTX.seen.add(sub)
+  else:
+    subj = e(0)
+  if neg:
+    return subj + " is not a " + str(verb) + " event"
+  return subj + " is a " + str(verb) + " event"
+
+
+def _has_recipient_render(e, args, neg=False):
+  """Pivot rendering: '<recipient> is the/a recipient of <event>'."""
+  evt_arg = args[0]
+  evt   = e(0)
+  recip = e(1)
+  art   = "the" if _event_arg_is_specific(evt_arg) else "a"
+  if neg:
+    return recip + " is not " + art + " recipient of " + evt
+  return recip + " is " + art + " recipient of " + evt
+
+
+def _has_destination_render(e, args, neg=False):
+  """Pivot rendering: '<destination> is the/a destination of <event>'.
+  Drops the preposition slot from the English (it's an internal
+  Skolem-bound variable in axioms and noise in concrete steps)."""
+  evt_arg = args[0]
+  evt  = e(0)
+  dest = e(1)
+  art  = "the" if _event_arg_is_specific(evt_arg) else "a"
+  if neg:
+    return dest + " is not " + art + " destination of " + evt
+  return dest + " is " + art + " destination of " + evt
+
+
+def _has_time_render(e, args, neg=False):
+  """Render has_time with the past/present/future verb matching the tense.
+
+  Stage-2 canonical shape: ['has time', E, TENSE, PREP] where TENSE is
+  'past'/'present'/'future' and PREP is the temporal preposition (usually
+  'in').  Render with the matching English verb form."""
+  evt  = e(0)
+  tense = args[1] if len(args) > 1 else None
+  prep_arg = args[2] if len(args) > 2 else None
+  # When the tense slot itself is a variable, fall back to the original form.
+  if not (isinstance(tense, str) and tense in ("past", "present", "future")):
+    prep = e(2) if len(args) > 2 else ""
+    suffix = ("time " if _is_var_raw(args, 1) else "") + e(1)
+    if neg:
+      return evt + " does not happen " + prep + " " + suffix
+    return evt + " happens " + prep + " " + suffix
+  # Tense is a literal string — pick a natural verb.
+  verb = {"past":    ("happened",     "did not happen"),
+          "present": ("happens",      "does not happen"),
+          "future":  ("will happen",  "will not happen")}[tense]
+  v = verb[1] if neg else verb[0]
+  # Drop the variable preposition slot in axioms; keep concrete ones.
+  if isinstance(prep_arg, str) and not looks_like_var(prep_arg):
+    return evt + " " + v + " " + prep_arg + " the " + tense
+  return evt + " " + v + " in the " + tense
+
+
 _PRED_TABLE = {
   # core predicates
   "has property":       (2, lambda e,a: e(1)+" is "+e(0),
@@ -669,8 +1186,8 @@ _PRED_TABLE = {
   "has degree rel2":    (4, lambda e,a: _has_degree_rel2_render(e, a, neg=False),
                             lambda e,a: _has_degree_rel2_render(e, a, neg=True)),
   # event reification predicates
-  "has type":           (2, lambda e,a: e(0)+" is a "+e(1)+" event",
-                            lambda e,a: e(0)+" is not a "+e(1)+" event"),
+  "has type":           (2, lambda e,a: _has_type_render(e, a, neg=False),
+                            lambda e,a: _has_type_render(e, a, neg=True)),
   "has actor":          (2, lambda e,a: e(1)+" performs "+e(0),
                             lambda e,a: e(1)+" does not perform "+e(0)),
   "has target":         (2, lambda e,a: e(0)+" targets "+e(1),
@@ -683,10 +1200,10 @@ _PRED_TABLE = {
                             lambda e,a: e(0)+" does not happen in a "+e(1)+" manner"),
   "has direction":      (2, lambda e,a: e(0)+" goes towards "+e(1),
                             lambda e,a: e(0)+" does not go towards "+e(1)),
-  "has destination":    (3, lambda e,a: e(0)+" goes "+e(2)+" "+e(1),
-                            lambda e,a: e(0)+" does not go "+e(2)+" "+e(1)),
-  "has recipient":      (2, lambda e,a: e(0)+" is given to "+e(1),
-                            lambda e,a: e(0)+" is not given to "+e(1)),
+  "has destination":    (3, lambda e,a: _has_destination_render(e, a, neg=False),
+                            lambda e,a: _has_destination_render(e, a, neg=True)),
+  "has recipient":      (2, lambda e,a: _has_recipient_render(e, a, neg=False),
+                            lambda e,a: _has_recipient_render(e, a, neg=True)),
   "has source":         (2, lambda e,a: e(0)+" comes from "+e(1),
                             lambda e,a: e(0)+" does not come from "+e(1)),
   "has beneficiary":    (2, lambda e,a: e(0)+" is for "+e(1),
@@ -701,15 +1218,22 @@ _PRED_TABLE = {
                             lambda e,a: e(0)+" is not about "+e(1)),
   "has cause":          (2, lambda e,a: e(0)+" is caused by "+e(1),
                             lambda e,a: e(0)+" is not caused by "+e(1)),
-  "has time":           (3, lambda e,a: e(0)+" happens "+e(2)+" "+("time " if _is_var_raw(a,1) else "")+e(1),
-                            lambda e,a: e(0)+" does not happen "+e(2)+" "+("time " if _is_var_raw(a,1) else "")+e(1)),
+  "has time":           (3, lambda e,a: _has_time_render(e, a, neg=False),
+                            lambda e,a: _has_time_render(e, a, neg=True)),
   # state / world predicates
   "next":               (2, lambda e,a: e(0)+" is followed by "+e(1),
                             lambda e,a: e(0)+" is not followed by "+e(1)),
-  "before":             (2, lambda e,a: e(0)+" is before "+e(1),
-                            lambda e,a: e(0)+" is not before "+e(1)),
+  "before":             (2, lambda e,a: e(0)+" is earlier than "+e(1),
+                            lambda e,a: e(0)+" is not earlier than "+e(1)),
   "state time":         (2, lambda e,a: "at time "+e(1),         None),
   "state location":     (2, lambda e,a: "at location "+e(1),     None),
+  # helper predicates from axioms_std.js — render with situation-aware text.
+  "moved":              (2, lambda e,a: e(0)+" moved in "+e(1),
+                            lambda e,a: e(0)+" did not move in "+e(1)),
+  "transferred":        (2, lambda e,a: e(0)+" was transferred in "+e(1),
+                            lambda e,a: e(0)+" was not transferred in "+e(1)),
+  "is_past_world":      (1, lambda e,a: e(0)+" is in the past",
+                            lambda e,a: e(0)+" is not in the past"),
   # set predicates
   "is set of":          (2, lambda e,a: e(1)+" is a set of "+e(0),
                             lambda e,a: e(1)+" is not a set of "+e(0)),
@@ -745,8 +1269,8 @@ _PRED_TABLE = {
   # ---- modal classifiers (arity-1, attach to a Davidsonian event variable) ----
   # Atom-level forms; clause-level rendering ("X can V" from sibling
   # has_type+has_actor) is deferred to Phase 6.
-  "capability":         (1, lambda e,a: e(0)+" is possible",
-                            lambda e,a: e(0)+" is not possible"),
+  "capability":         (1, lambda e,a: e(0)+" is a capability",
+                            lambda e,a: e(0)+" is not a capability"),
   "volition":           (1, lambda e,a: e(0)+" is wanted",
                             lambda e,a: e(0)+" is not wanted"),
   "intention":          (1, lambda e,a: e(0)+" is intended",
@@ -778,9 +1302,15 @@ def _render_atom(atom, negated=False):
   args = atom[1:]
 
   def e(i):
-    """Display name of args[i] — proof_mode for simpler common-noun names."""
+    """Display name of args[i].
+
+    When a clause-rendering context is active (see _intro / _RENDER_CTX),
+    the first mention of a variable / world-constant / event-skolem in the
+    clause gets a contextual prefix ("some X", "a situation V",
+    "the event act1").  Otherwise falls back to entity_name() proof-mode.
+    """
     if i >= len(args): return "?"
-    return entity_name(args[i], with_url=True, proof_mode=True)
+    return _intro(args[i])
 
   # ---- table-driven dispatch ----
   entry = _PRED_TABLE.get(pred)
@@ -841,8 +1371,8 @@ def _render_atom(atom, negated=False):
       return "the answer does not hold" if negated else "answer holds"
     if len(args) == 1:
       return (e(0) + " is not the answer") if negated else (e(0) + " is the answer")
-    bracket = "[" + ", ".join(entity_name(a, with_url=True) for a in args) + "]"
-    return (bracket + " is not the answer") if negated else (bracket + " is the answer")
+    phrase = _prep_answer_phrase(args)
+    return (phrase + " is not the answer") if negated else (phrase + " is the answer")
 
   # ---- traceability (skip in English) ----
   if pred in ("@id", "@p", "@definite"):

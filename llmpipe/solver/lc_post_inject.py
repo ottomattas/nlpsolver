@@ -8,10 +8,21 @@
 #   - shared helpers      _collect_eligible_words, _eligible_word
 #   - inject_soft_synonyms          (Tier B synonym biconditionals)
 #   - inject_exclusion_axioms       (excl_a.txt mutual-exclusion groups)
+#   - inject_isa_cross_group_axioms (cross-group noun mutex)
 #   - inject_verb_mutex_axioms      (cross-event verb mutex, e.g. pass↔fail)
 #   - inject_kinship_mutex_axioms   (gender-paired role mutex)
-#   - inject_containment_bridge_axioms (filled-with/contain → "is rel2 in")
+#   - inject_beneficiary_for_bridge (has_beneficiary ↔ "for" preposition)
+#   - inject_carrier_lifts          (plate/tray/... → isa(carrier, X))
+#   - inject_verb_result_state_axioms (destroy/break/... → has property "destroyed"/...)
 #   - inject_world_geometry         (minimal next chain over present worlds)
+#
+# Gate policy:
+#   - inject_soft_synonyms keeps a loose gate (a pair fires if both sides are
+#     in input OR axiom_vocab) so axiom-vocab synonyms can complete chains.
+#   - All other injectors below require AT LEAST ONE side of the pair (or
+#     the single trigger word) to appear in the actual user input.  Axiom-
+#     vocab presence alone is not enough — without an input mention, the
+#     emitted axiom would only duplicate static content or sit idle.
 #
 #-----------------------------------------------------------------
 # Copyright 2026 Tanel Tammet (tanel.tammet@gmail.com)
@@ -236,14 +247,16 @@ def inject_exclusion_axioms(result, axiom_vocab=frozenset()):
   exclusion clauses for groups with 2+ members present. Returns list of
   new clause dicts.
 
-  When REQUIRE_BOTH_SIDES is True, a group member counts as "present" if it
-  appears in either the input clauses or axiom_vocab.
+  Each emitted pair requires at least ONE side in the actual input
+  (axiom_vocab membership alone is not enough — the other side may come
+  from axiom_vocab).
   """
   words = _collect_eligible_words(result)
   if not words:
     return []
 
-  all_known = set(words) | axiom_vocab if REQUIRE_BOTH_SIDES else set(words)
+  input_lc = set(words)
+  all_known = input_lc | axiom_vocab if REQUIRE_BOTH_SIDES else input_lc
 
   # Find which groups have 2+ members present in all_known.
   group_members = {}  # gid → set of original-case words
@@ -274,6 +287,11 @@ def inject_exclusion_axioms(result, axiom_vocab=frozenset()):
     for i in range(len(present_list)):
       for j in range(i + 1, len(present_list)):
         w1, w2 = present_list[i], present_list[j]
+        # Require at least one side to be in the actual input.  Both-from-
+        # axiom-vocab pairs add no value (they cannot fire on a proof that
+        # mentions neither word).
+        if w1.lower() not in input_lc and w2.lower() not in input_lc:
+          continue
         if isa_group:
           # Noun mutex within the same group. isa is 3-arg in this pipeline
           # (no Ctxt slot), so axioms use 3-position atoms.
@@ -385,7 +403,8 @@ def inject_isa_cross_group_axioms(result, axiom_vocab=frozenset()):
   axiom_vocab membership.
   """
   words = _collect_eligible_words(result)
-  all_known = set(words) | axiom_vocab if REQUIRE_BOTH_SIDES else set(words)
+  input_lc = set(words)
+  all_known = input_lc | axiom_vocab if REQUIRE_BOTH_SIDES else input_lc
 
   # Build word -> group_id (only for _ISA_EXCL_GROUPS entries)
   word_to_group = {}
@@ -413,6 +432,9 @@ def inject_isa_cross_group_axioms(result, axiom_vocab=frozenset()):
       g1, g2 = word_to_group[w1], word_to_group[w2]
       if g1 == g2:
         continue                      # within-group handled by Layer 1
+      # Require at least one side to be in the actual input.
+      if w1 not in input_lc and w2 not in input_lc:
+        continue
       pair = (w1, w2) if w1 < w2 else (w2, w1)
       if pair in emitted_pairs:
         continue
@@ -470,10 +492,14 @@ def inject_verb_mutex_axioms(result, axiom_vocab=frozenset()):
   words = _collect_eligible_words(result)
   if not words:
     return []
-  all_known = set(words) | axiom_vocab if REQUIRE_BOTH_SIDES else set(words)
+  input_lc = set(words)
+  all_known = input_lc | axiom_vocab if REQUIRE_BOTH_SIDES else input_lc
   axioms = []
   for v1, v2 in _VERB_MUTEX_PAIRS:
     if v1 not in all_known or v2 not in all_known:
+      continue
+    # Require at least one side in the actual input.
+    if v1 not in input_lc and v2 not in input_lc:
       continue
     for (left, right) in ((v1, v2), (v2, v1)):
       ct = _fresh_fv()
@@ -536,7 +562,8 @@ def inject_kinship_mutex_axioms(result, axiom_vocab=frozenset()):
   Mike?" — expected False).
   """
   words = _collect_eligible_words(result)
-  all_known = set(words) | axiom_vocab
+  input_lc = set(words)
+  all_known = input_lc | axiom_vocab
   axioms = []
   for a, b in _KINSHIP_MUTEX_PAIRS:
     # Accept either the bare role noun ("sister") OR the relation form
@@ -546,6 +573,11 @@ def inject_kinship_mutex_axioms(result, axiom_vocab=frozenset()):
     a_present = (a in all_known) or ((a + " of") in all_known)
     b_present = (b in all_known) or ((b + " of") in all_known)
     if not (a_present and b_present):
+      continue
+    # Require at least one side in the actual input.
+    a_in_input = (a in input_lc) or ((a + " of") in input_lc)
+    b_in_input = (b in input_lc) or ((b + " of") in input_lc)
+    if not (a_in_input or b_in_input):
       continue
     # Category-level mutex: isa atoms are 3-arg, no $ctxt.
     axioms.append({"@name": "frm_kin_excl",
@@ -577,47 +609,10 @@ def inject_kinship_mutex_axioms(result, axiom_vocab=frozenset()):
   return axioms
 
 
-# Containment relations that bridge to canonical "in" with arguments swapped.
-# "X is filled with Y" / "X contains Y" → "Y is in X".
-# "in" is treated as universally available (it appears as a first-class
-# preposition throughout axioms_std.js §7c/§7e), so the bridge is gated only
-# on the source relation appearing in the input or in axiom_vocab.
-# "holding" is NOT in this list — semantically "X is holding Y" = "X has Y",
-# not "Y is in X" (e.g. "the woman holding a lamp" doesn't mean lamp-in-woman).
-_CONTAINMENT_BRIDGES = (
-    "filled with",
-    "contain",
-    "containing",
-    "contains",
-)
-
-
-def inject_containment_bridge_axioms(result, axiom_vocab=frozenset()):
-  """For each containment relation in _CONTAINMENT_BRIDGES that appears in
-  the input clauses or axiom_vocab, emit a static bridge axiom mapping it
-  to "is rel2 in" with arguments swapped.
-
-  Shape:
-    [-is rel2 SRC X Y Ct, is rel2 in Y X Ct]
-
-  Closes case 84 ("The cup filled with water fell. The cup contained
-  water?") on deepseek and claude — the assertion uses "filled with" while
-  the question uses "contain"/"in"; both resolve through "in" via these
-  bridges.
-  """
-  words = _collect_eligible_words(result)
-  all_known = set(words) | axiom_vocab
-  axioms = []
-  for rel in _CONTAINMENT_BRIDGES:
-    if rel not in all_known:
-      continue
-    ct = _fresh_fv()
-    clause = [
-        ["-is rel2", rel, "?:X", "?:Y", ct],
-        ["is rel2", "in", "?:Y", "?:X", ct],
-    ]
-    axioms.append({"@name": "frm_contain", "@logic": clause})
-  return axioms
+# Containment-bridge injector removed: `axioms_std.js` already includes the
+# static `contains ↔ in` biconditional axioms, so dynamic emission only
+# duplicates them.  "filled with" / "containing" are handled at the
+# axiom-file level (or via paraphrase normalization upstream).
 
 
 # ======== beneficiary → "for" preposition bridge ========
@@ -700,16 +695,21 @@ _CARRIER_NOUNS = frozenset({
 
 def inject_carrier_lifts(result, axiom_vocab=frozenset()):
   """Scan clause list for carrier nouns; emit one isa-to-carrier
-  lifting clause per noun present in input or axiom_vocab.
+  lifting clause per noun present in the input.
 
   Shape (per noun N):
     [-isa N ?:X ?:Ctxt, isa "carrier" ?:X ?:Ctxt]
+
+  Gated on input presence only — without a carrier-noun mention in the
+  problem there is no Skolem to lift, so axiom_vocab presence alone
+  would emit dead axioms.  ``axiom_vocab`` is kept in the signature for
+  call-site uniformity.
   """
+  del axiom_vocab  # unused; see docstring
   words = _collect_eligible_words(result)
-  all_known = set(words) | axiom_vocab
   axioms = []
   for noun in _CARRIER_NOUNS:
-    if noun not in all_known:
+    if noun not in words:
       continue
     ct = _fresh_fv()
     clause = [
@@ -735,17 +735,18 @@ _VERB_RESULT_STATES = (
     ("destroy",  "destroyed"),
     ("break",    "broken"),
     ("damage",   "damaged"),
-    ("finish",   "finished"),
     ("complete", "completed"),
     ("kill",     "killed"),
     ("repair",   "repaired"),
+    # (finish, finished) is covered by a static axiom in axioms_std.js;
+    # adding it here would duplicate that.
 )
 
 
 def inject_verb_result_state_axioms(result, axiom_vocab=frozenset()):
   """For each (verb, property) pair in _VERB_RESULT_STATES whose verb
-  appears in the input clauses or axiom_vocab, emit a defeasible
-  result-state bridge axiom.
+  appears in the actual input clauses, emit a defeasible result-state
+  bridge axiom.
 
   Shape:
     [-has type E V Ct, -has target E X CtFull, -next W W2,
@@ -754,15 +755,18 @@ def inject_verb_result_state_axioms(result, axiom_vocab=frozenset()):
   where CtFull is the full $ctxt and W comes from its world slot;
   CtNext is the present-tense $ctxt at W2 with the same L/K vars.
 
+  Gated on input presence only.  ``axiom_vocab`` is kept in the
+  signature for call-site uniformity.
+
   Closes case 156 ("The city was destroyed. Is the city destroyed?")
   and case 157 ("...Is the city intact?") via the destroy → destroyed
   result-state plus the destroyed/intact mutex (data_exclusions.py).
   """
+  del axiom_vocab  # unused; see docstring
   words = _collect_eligible_words(result)
-  all_known = set(words) | axiom_vocab
   axioms = []
   for verb, prop in _VERB_RESULT_STATES:
-    if verb not in all_known:
+    if verb not in words:
       continue
     # Bridge A: event-based encoding (gemini/deepseek style).
     #   has type E V Ct  +  has target E X Ct  +  next W W2

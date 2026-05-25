@@ -535,8 +535,14 @@ def _format_who_answers(answers, logic=None):
         v = rendered
       elif not isinstance(v, str):
         continue
-      # Filter $-prefixed constants (population, metadata)
-      if v.startswith("$"):
+      # Filter internal $-markers ($defq*, $arc, $narc, ...).  Keep
+      # $some_* / $some_not_* population witnesses — they only reach
+      # this point when no concrete or Skolem answer exists (the tier
+      # filter would otherwise have eliminated them), and entity_name
+      # already renders them as natural English ("a penguin" /
+      # "a non-bird"), letting "Who can't fly?" → "A penguin." instead
+      # of falsely returning "Unknown."
+      if v.startswith("$") and not v.startswith("$some_"):
         continue
       if v in seen:
         continue

@@ -357,50 +357,69 @@ def _degree_parts(degree):
 
 # ======== entity naming ========
 
+def _skolem_fn_arg_display(arg):
+  """Render a Skolem fn argument keeping the raw entity id so "Mike 1"
+  stays "Mike 1" (not trimmed to "Mike") — the Skolem fn term identifies
+  a specific instance and the number disambiguates it.  Variables are
+  stripped of "?:" prefix; UNA `#:` prefix is also stripped.
+  """
+  if isinstance(arg, str):
+    if arg.startswith("#:"): return arg[2:]
+    if arg.startswith("?:"): return arg[2:]
+    return arg
+  return entity_name(arg)
+
+
+def _skolem_fn_short_name(term):
+  """Short identifier-style rendering of a Skolem fn for later mentions:
+  "sk0 of Mike 1" / "sk0 of X" / bare "sk0" when there are no args.  Used
+  on second-and-after mentions inside the same clause to avoid repeating
+  the full noun-phrase form.
+  """
+  if not isinstance(term, list) or not term:
+    return "the event"
+  fn_name = term[0] if isinstance(term[0], str) else str(term[0])
+  if len(term) > 1:
+    return fn_name + " of " + ", ".join(_skolem_fn_arg_display(a)
+                                        for a in term[1:])
+  return fn_name
+
+
 def _skolem_fn_to_name(term):
   """Render a Skolem function term ["sk0", arg1, arg2, ...] as English.
 
-  Uses _ctx.skolem_fn_verbs / _ctx.skolem_fn_actors / _ctx.skolem_fn_targets
-  (populated by compute_skolem_types) to describe the reified event.  Falls
-  back to _ctx.skolem_fn_types (keyed by function name) for non-event objects.
+  Always shows the function-name + ground args so the term's identity is
+  visible in the proof (e.g. "sk0 of Mike 1").  Uses the verb-gerund as a
+  noun-phrase prefix when known: "the flying event sk0 of Mike 1".
 
-  Examples (event Skolem):
-    ["sk0","Greg 2","Mike 1"]  -> "the eating by Greg of Mike"
-    ["sk0","?:X","Mike 1"]     -> "the eating of Mike"
-    ["sk0","?:X","?:Y"]        -> "the eating event"
+  Examples (event Skolem, verb known):
+    ["sk0","Mike 1"]           -> "the flying event sk0 of Mike 1"
+    ["sk0","?:X"]              -> "the flying event sk0"
   Examples (object Skolem, type="roof"):
-    ["sk0","$some_car"]        -> "the roof of some car"
-    ["sk0","?:X"]              -> "a roof"
-    (no type found)            -> "the event"
+    ["sk0","$some_car"]        -> "the roof sk0 of some car"
+    ["sk0","?:X"]              -> "the roof sk0"
+  Examples (no type info):
+    ["sk0","Mike 1"]           -> "the event sk0 of Mike 1"
+    ["sk0"]                    -> "the event sk0"
   """
-  key  = str(term)
-  verb = _ctx.skolem_fn_verbs.get(key)
-  if not verb:
-    # Not a reified event — try object-type lookup keyed by function name.
-    fn_name = term[0] if isinstance(term, list) and term else ""
-    obj_type = _ctx.skolem_fn_types.get(fn_name)
-    if obj_type:
-      arg = term[1] if len(term) > 1 else None
-      if arg is None or (isinstance(arg, str) and arg.startswith("?:")):
-        return _indef_article(obj_type) + " " + obj_type
-      return "the " + obj_type + " of " + entity_name(arg)
+  if not isinstance(term, list) or not term:
     return "the event"
-  gerund = _to_gerund(verb)
+  fn_name = term[0] if isinstance(term[0], str) else str(term[0])
+  fn_args = term[1:]
+  if fn_args:
+    args_str = ", ".join(_skolem_fn_arg_display(a) for a in fn_args)
+    suffix = " " + fn_name + " of " + args_str
+  else:
+    suffix = " " + fn_name
 
-  actor_raw  = _ctx.skolem_fn_actors.get(key, "")
-  target_raw = _ctx.skolem_fn_targets.get(key, "")
-
-  # Only use ground (non-variable) actor/target in the description
-  actor  = actor_raw  if actor_raw  and not actor_raw.startswith("?:") else ""
-  target = target_raw if target_raw and not target_raw.startswith("?:") else ""
-
-  if actor and target:
-    return "the " + gerund + " by " + entity_name(actor) + " of " + entity_name(target)
-  if actor:
-    return "the " + gerund + " by " + entity_name(actor)
-  if target:
-    return "the " + gerund + " of " + entity_name(target)
-  return "the " + gerund + " event"
+  key = str(term)
+  verb = _ctx.skolem_fn_verbs.get(key)
+  if verb:
+    return "the " + _to_gerund(verb) + " event" + suffix
+  obj_type = _ctx.skolem_fn_types.get(fn_name)
+  if obj_type:
+    return "the " + obj_type + suffix
+  return "the event" + suffix
 
 
 def entity_name(val, with_url=False, proof_mode=False):

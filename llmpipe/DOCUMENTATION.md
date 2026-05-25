@@ -670,7 +670,7 @@ Converts the Stage-2 nested JSON formula into a flat GK clause list:
     │    exclusion injector below)                                       [lc_post_inject]
     ├─ inject_soft_synonyms / inject_exclusion_axioms /
     │    inject_isa_cross_group_axioms / inject_verb_mutex_axioms /
-    │    inject_kinship_mutex_axioms / inject_containment_bridge_axioms /
+    │    inject_kinship_mutex_axioms /
     │    inject_beneficiary_for_bridge / inject_carrier_lifts            [lc_post_inject]
     ├─ add_possessive_have / add_haspart_for_typed_have                  [lc_post_normalize]
     ├─ normalize_gradable_predicates()    [lc_post_normalize]
@@ -859,8 +859,156 @@ Per-proof mutable state (entity map, ambiguous names, Skolem type annotations) i
 Atom-to-English rendering in `proof_english.py` is table-driven via `_PRED_TABLE`, a dict mapping
 predicate names to `(arity, pos_renderer, neg_renderer)` tuples.
 
-See `PROOF_RENDERING.md` for a detailed description of the rendering principles,
-entity naming rules, clause rendering, and proof explanation structure with examples.
+See `PROOF_RENDERING.md` for the original principles, entity naming rules,
+and proof explanation structure with examples.
+
+#### Per-clause rendering state (`_ClauseRenderCtx`)
+
+`clause_to_str` installs a per-clause `_ClauseRenderCtx` (module-level
+`_RENDER_CTX` slot, scoped via try/finally) that tracks:
+
+- `seen` — raw arg names (and `"skfn:"+str(skfn)`) already introduced;
+  consulted by `_intro` to decide between full and bare rendering.
+- `event_vars` / `event_consts` — variables / Skolem constants identified
+  as Davidsonian events (via `isa("activity", X)`, `has_type(X,V)`, or a
+  modal classifier on X in the same clause).
+- `world_vars` — variables identified as worlds (via `next`/`before`/
+  `moved`/`is_past_world` positions, or the world slot of `$ctxt`).
+- `has_type_vars` — event vars whose `has_type(X,V)` literal appears in
+  the same clause; `_intro` drops the `"an event X"` prefix for these
+  because the predicate already introduces the type.
+- `isa_type_hint` — map `var → TYPE` from `isa(TYPE, var)` literals
+  (skipping `"activity"` to avoid event-marker conflicts).
+- `used_in_other` — variables that appear in some non-isa atom; the
+  isa-bundling absorption only fires when this is true.
+- `absorbed_isa_ids` — bookkeeping for the isa-bundling pass.
+
+`_scan_clause_vars(clause, ctx)` populates these fields in a single pre-pass
+before any rendering happens.
+
+#### `_intro(arg, role_hint=None)`
+
+Central helper that decides the article/prefix for an argument on its first
+mention in the current clause.  In priority order:
+
+1. Skolem fn list-term → first time full ("the flying event sk0 of Mike 1");
+   on later mentions short ("sk0 of Mike 1").  Also marks any variable args
+   of the Skolem fn as `seen`.
+2. World constant (`W0`, `W1`, …) → `"the situation W0"` (always).
+3. Event Skolem (`sk0_activity`) → `"the event act1"` first, `"the act1"` later.
+4. Common-noun constant (`"head 2"` / `"box B"` — lowercase + suffix) → always
+   `"the head 2"`.
+5. Variable, world-typed → `"a situation V"` first, bare later.
+6. Variable, event-typed → `"an event E"` first; SKIPPED when the variable
+   is in `has_type_vars` (returns bare `X` so `"X is a fly event"` reads
+   cleanly instead of `"an event X is a fly event"`).
+7. Variable with `isa_type_hint` and `used_in_other` (isa-bundling) →
+   `"some <TYPE> X"`.  The matching `isa(TYPE, X)` atom is suppressed from
+   the clause rendering.
+8. Variable with explicit `role_hint` → `"a/an <ROLE> X"` (currently unused
+   from the per-predicate lambdas; reserved for future role-aware bundling).
+9. Bare entity variable → `"some X"`.
+
+All paths add the arg to `seen` so subsequent calls in the same clause
+return bare.
+
+#### Two-pass clause rendering (`_clause_to_str_body`)
+
+Pass 1 classifies every literal into `neg_specs` (conditions), `pos_specs`
+(consequents incl. `$ans`), or `block_atoms`.  Applies:
+
+- R1 (drop tautological `isa(TYPE, "TYPE N")` in multi-literal clauses).
+- isa-bundling absorption (negative form): gated on `bundling_active`,
+  which is `True` only for pure-negative clauses (no positive literals
+  to anchor an explicit if-then structure).
+- Modal-classifier reorder: in pure-negative clauses, any literal whose
+  predicate is in `_MODAL_CONSEQUENT_PREDS` (`capability` / `typical` /
+  `necessity` / `obligation` / `volition` / `intention` / `expectation` /
+  `speech_act` / `actuality`) is moved to the END of `neg_specs` so it
+  becomes the consequent — the modal claim is usually the informative
+  conclusion ("X is not a capability" reads better than "X is not a
+  penguin").
+
+Pass 2 renders conditions FIRST (in clause order), then consequents (in
+clause order).  This places variable intros in the antecedent visually,
+where readers expect them — without this re-ordering an `is_rel2`
+consequent rendered first would consume the variable's first-mention
+prefix and the antecedent would read with bare `X`.
+
+After joining with " and " / " or " / "if … then …", a final pass
+capitalises the first alpha character (skipping leading quotes/brackets)
+to make each step read as a sentence — but it skips Skolem-fn identifiers
+(`sk0`, `sk1_house`, …) which are not English words.
+
+#### Custom per-predicate render helpers
+
+Several `_PRED_TABLE` entries call dedicated helpers instead of inline lambdas:
+
+- `_has_type_render` — when the first arg is a Skolem fn, uses the SHORT
+  form (no "the flying event" prefix) because `has_type` already asserts
+  the event type; would otherwise read "the flying event sk0 of X is a
+  fly event" (redundant).  Also marks the Skolem fn's variable args as
+  seen to avoid re-introducing them later in the same clause.
+- `_has_time_render` — picks past/present/future verb form from the
+  literal-tense slot (`"happened in the past"` instead of `"happens in
+  past"`).  Falls back to the generic form when the tense slot is itself
+  a variable.
+- `_has_recipient_render`, `_has_destination_render` — pivot to
+  `"<X> is the/a recipient/destination of <E>"`.  Article picked by
+  whether the event arg is a Skolem (concrete → "the") or a variable
+  (axiom → "a").  Drops the prep slot of `has_destination` since it's
+  usually a noisy auxiliary variable.
+- `_is_rel2_var_rel_render` — invoked from `_is_rel2_pos/_neg` when the
+  relation arg is a variable.  Renders `"<Y> is/was/will-be in relation
+  <X> to <Z>"` and surfaces the `$ctxt` tense + world ("in <world>" /
+  "before <world>" / "after <world>") so two such atoms with different
+  contexts in the same clause render distinguishably.
+- `_prep_answer_phrase` — `$ans`/`$defq*` payloads of the form
+  `[PREP, VALUE, …]` (from where/when-queries) render as `'in the box'`
+  (single-quoted) instead of the bracket form `[in, the box]`.  Other
+  multi-arg payloads keep the bracket form.
+
+#### Helper-predicate templates
+
+`_PRED_TABLE` includes situation-aware renderings for axiom helper
+predicates that previously fell through to the fallback:
+
+- `next(W, W2)` → `"the situation W is followed by the situation W2"`
+- `before(W, W2)` → `"the situation W is earlier than the situation W2"`
+- `moved(X, W)` → `"X moved in the situation W"`
+- `transferred(O, W)` → `"O was transferred in the situation W"`
+- `is_past_world(W)` → `"the situation W is in the past"`
+
+#### Skolem function naming
+
+`proof_utils._skolem_fn_to_name` always includes the function name and
+ground args, prefixed by the verb-gerund (when known) or object type:
+
+| Input | Output |
+|---|---|
+| `["sk0","Mike 1"]` + verb fly | `"the flying event sk0 of Mike 1"` |
+| `["sk0","?:X"]` + verb fly | `"the flying event sk0 of X"` |
+| `["sk0","Mike 1"]` (no verb, type roof) | `"the roof sk0 of Mike 1"` |
+| `["sk0","Mike 1"]` (nothing known) | `"the event sk0 of Mike 1"` |
+
+`_skolem_fn_short_name` returns just `"sk0 of Mike 1"` / `"sk0 of X"` /
+`"sk0"`; used for subsequent mentions within a clause via the seen-tracker
+in `_intro`.  `_skolem_fn_arg_display` keeps raw entity ids
+(`"Mike 1"`, not `"Mike"`) so the Skolem-fn term displays the specific
+instance unambiguously.
+
+#### Extension guide
+
+When adding a new predicate to `_PRED_TABLE`:
+
+- Use `e(i)` (which calls `_intro`) for entity / variable args so that
+  variable tracking, article injection, and isa-bundling all work.
+- Use the raw `args[i]` (bypassing `_intro`) only when the predicate
+  contributes the introduction itself (as `has_type` does) — and in that
+  case manually mark relevant vars in `_RENDER_CTX.seen` to keep later
+  mentions bare.
+- For new modal classifiers, add the name to `_MODAL_CONSEQUENT_PREDS`
+  to get the "preferred consequent" treatment in pure-negative clauses.
 
 **Public API** (all importable from `proof_render.py`):
 
@@ -1332,8 +1480,7 @@ bridge representation gaps.
 | Entity UNA wrapping | `lc_post_una.apply_una` | After all post-processing: `is_rel2(on, "pizza 2", "table 3", …)` → `is_rel2(on, "#:pizza 2", "#:table 3", …)` | Wraps every Stage-1 numbered entity with `#:` prefix so `gk` treats distinct entity constants as definitely unequal. See §7.13 for the three-step criterion. Required by axioms_std.js §7g (X2 direct-support uniqueness). |
 | World-graph geometry | `lc_post_inject.inject_world_geometry` | "Mary slept. Mary is awake. Was Mary awake?" → emits `next(W0,W1)` | Dynamic injection of the minimal `next(Wi,Wi+1)` chain spanning the concrete world constants actually present in the clause list. Replaces the static `W0..W12` chain that used to live in `axioms_std.js` §11. Skips emission entirely when ≤1 world is present (most single-tense problems); otherwise fills any gaps in `[min_idx, max_idx]` so `before` transitivity still closes. Keeps the `before` derivation graph small. |
 | Verb mutex injection | `lc_post_inject.inject_verb_mutex_axioms` | "Did everyone pass the exam? — No, Mary failed." → for each entity with both `pass` and `fail` events on it, emits a defeasible mutex preventing the same event from being both | Dynamic, cross-event mutex (distinct from `inject_exclusion_axioms`, which mutexes adjective properties on a single entity).  Pair table `_VERB_MUTEX_PAIRS` currently lists `(pass, fail)`.  Each pair emits a defeasible 0.85 axiom with `$block` so that an explicit positive can override.  Atom shape uses `has_type` event predicates plus shared `?:E` and `?:Ctxt`.  Does not fire unless both verbs of the pair appear in the input clauses. |
-| Containment bridge injection | `lc_post_inject.inject_containment_bridge_axioms` | "The cup filled with water fell" → emits `is rel2 in <swapped args>` | Dynamic bridge from container-language predicates to canonical `is rel2 in`.  Source relations: `filled with`, `contain`, `containing`, `contains`.  Treats `in` as always-axiomatic (no axiom-vocab gating).  Emitted only when the source relation appears in input clauses.  Args are swapped: `filled with(cup, water)` → `is rel2 in (water, cup)`.  Resolves the case-84 family where a containment fact is asserted with one phrasing but queried with another. |
-| Verb-result-state injection | `lc_post_inject.inject_verb_result_state_axioms` | "The city was destroyed" → emits bridges to `has property "destroyed" #:city @ present @ next-world` | For each `(verb, past_participle)` pair in `_VERB_RESULT_STATES = {(destroy, destroyed), (break, broken), (damage, damaged), (finish, finished), (complete, completed), (kill, killed), (repair, repaired)}` whose verb appears in input or axiom_vocab, emits TWO defeasible (0.9) bridge axioms covering both Stage-2 encodings. Bridge A (event-based, gemini/deepseek): `has type E V Ct + has target E X Ct + next W W2 → has property <pp> X [present W2 ...]`. Bridge B (stative property-name, claude): `has property V X [_ W _ _ _] + next W W2 → has property <pp> X [present W2 ...]`. Both target the same `present @ next-world` slot so mutex axioms fire on the question's present-tense reading regardless of LLM encoding. Wired into `rawlogic_convert` BEFORE `inject_exclusion_axioms` so the result-state words become eligible for the exclusion injector's REQUIRE_BOTH_SIDES check (e.g. enables `destroyed/intact` mutex when "destroy" is in the input). |
+| Verb-result-state injection | `lc_post_inject.inject_verb_result_state_axioms` | "The city was destroyed" → emits bridges to `has property "destroyed" #:city @ present @ next-world` | For each `(verb, past_participle)` pair in `_VERB_RESULT_STATES = {(destroy, destroyed), (break, broken), (damage, damaged), (complete, completed), (kill, killed), (repair, repaired)}` whose verb appears in the input, emits TWO defeasible (0.9) bridge axioms covering both Stage-2 encodings. Bridge A (event-based, gemini/deepseek): `has type E V Ct + has target E X Ct + next W W2 → has property <pp> X [present W2 ...]`. Bridge B (stative property-name, claude): `has property V X [_ W _ _ _] + next W W2 → has property <pp> X [present W2 ...]`. Both target the same `present @ next-world` slot so mutex axioms fire on the question's present-tense reading regardless of LLM encoding. Wired into `rawlogic_convert` BEFORE `inject_exclusion_axioms` so the result-state words become eligible for the exclusion injector (e.g. enables `destroyed/intact` mutex when "destroy" is in the input). `(finish, finished)` is intentionally omitted because `axioms_std.js` covers it statically. |
 | Kinship mutex injection | `lc_post_inject.inject_kinship_mutex_axioms` | "Sara is the sister of Mike. Is Sara the brother of Mike?" → emits `isa(sister,X) ∧ isa(brother,X) → false` (and the matching `is_rel2 "X of"` mutex) | Dynamic gender-paired role mutex covering 16 pairs: kinship (sister/brother, daughter/son, mother/father, wife/husband, aunt/uncle, niece/nephew), grand- (grandmother/grandfather, granddaughter/grandson), step- (step{mother,father,daughter,son,sister,brother}), god- (godmother/godfather), status (widow/widower, bride/groom), royalty (queen/king, princess/prince).  Each pair emits two atom shapes: `isa` 3-arg (no `$ctxt`) and `is rel2 "X of"` 5-arg with shared `$ctxt`.  Interacts with the `$theof1` chain-rewrite guard above — without that guard, two definites carrying both kinship roles for the same entity would chain-collapse and the mutex would never fire. |
 | `@sourcetype` stripping | Serialisation (`clause_list_to_json`) | Population facts carry `@sourcetype:"populate"` internally for processing — stripped before the prover sees them | Internal `@sourcetype` tags are excluded from prover input |
 
@@ -1998,14 +2145,15 @@ exclusion would overshoot.
 
 *Verb-result-state bridges* (`inject_verb_result_state_axioms`):
 - Pair table `_VERB_RESULT_STATES = {(destroy, destroyed), (break, broken),
-  (damage, damaged), (finish, finished), (complete, completed),
-  (kill, killed), (repair, repaired)}`.
-- For each pair whose verb appears in input or `axiom_vocab`, emits two
-  defeasible (0.9) bridges (event-based and stative property-name) targeting
+  (damage, damaged), (complete, completed), (kill, killed), (repair, repaired)}`.
+  `(finish, finished)` is intentionally omitted — `axioms_std.js` covers it
+  statically.
+- For each pair whose verb appears in the input, emits two defeasible (0.9)
+  bridges (event-based and stative property-name) targeting
   `present @ next-world` so mutex axioms fire on the question's present-tense
   reading.
 - Run before `inject_exclusion_axioms` so result-state words become eligible
-  for the exclusion injector's REQUIRE_BOTH_SIDES check.
+  for the exclusion injector.
 
 *Verb mutex* (`inject_verb_mutex_axioms`):
 - Pair table `_VERB_MUTEX_PAIRS` (currently `(pass, fail)`).  Emits a
@@ -2017,11 +2165,6 @@ exclusion would overshoot.
 - 16 gender-paired role pairs (sister/brother, mother/father, queen/king, …).
   Each pair emits two atom shapes: `isa` 3-arg (no `$ctxt`) and
   `is rel2 "X of"` 5-arg (with `$ctxt`).
-
-*Containment bridge* (`inject_containment_bridge_axioms`):
-- Source relations `{filled with, contain, containing, contains}` → canonical
-  `is rel2 in` with swapped args.  Treats `in` as always-axiomatic (no
-  axiom-vocab gating).  Fires only when the source relation is in the input.
 
 *Beneficiary ↔ "for"* (`inject_beneficiary_for_bridge`):
 - Bridge axiom unifying `has beneficiary E X` with the prepositional form
