@@ -47,8 +47,11 @@ Installation
 **Requirements**
 
 * Linux on x86-64 (the bundled `gk/gk` reasoner binary is a statically-linked
-  Linux x86-64 ELF; users on other platforms must build `gk` from source —
-  see [gkc](https://github.com/tammet/gkc)).
+  Linux x86-64 ELF), **or** macOS on Apple Silicon (ARM64) — a macOS ARM64
+  build of the reasoner is bundled as `gk/gk-macos-ARM64.zip`; unzip it and
+  use the extracted `gk` binary in place of `gk/gk`.  Note that the
+  `llmpipe` and `udppipe` pipelines have only been tested on Linux —
+  running them on macOS has not been verified and may need small tweaks.
 * Python 3.8 or later (tested up to 3.12). No `pip` packages are required at
   runtime — the pipeline uses only the Python standard library.
 * For `udppipe`: the [Stanford Stanza](https://stanfordnlp.github.io/stanza/)
@@ -74,7 +77,7 @@ python3 -m venv ../nlpsolver-venv
 source ../nlpsolver-venv/bin/activate   # or use ../nlpsolver-venv/bin/python3 directly
 
 # Smoke-test the install without spending any LLM credits:
-python3 llmpipe/smoketest.py
+python3 smoketest.py
 
 # Run a real query (uses your API key):
 cd llmpipe
@@ -102,7 +105,7 @@ cd udppipe
 # -> True.
 ```
 
-The subfolders `gui` and `amr` contain experimental code in development, and
+The subfolders `gui` and `amr` contain experimental code, and
 are not currently used by either pipeline.
 
 The installation and use of both pipelines is described in the corresponding

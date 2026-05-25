@@ -4,8 +4,8 @@ GK Tutorial
 GK is a commonsense reasoner for first-order logic enhanced with
 confidence values, default rules with exceptions, and word similarities.
 
-This tutorial assumes you have compiled gk (see README.md for instructions)
-and have the `gk` binary in the top folder.
+Run from this folder — the bundled Linux x86-64 `gk` binary is already
+executable.
 
 See also https://logictools.org/gk/ and https://logictools.org/gk/tutorial.html
 for an online version with additional examples.
@@ -22,6 +22,10 @@ GK is built in three layers:
     for facts and rules, combining evidence from multiple derivations
   * **gk** (top layer): adds default rules with exceptions (blockers),
     word similarity matching, and large knowledge graph integration
+
+The shipped `gk` binary already includes all three layers — you do not need
+to clone or build gkc separately to use it.  The gkc repo is only relevant
+if you want to build gk from source on another platform.
 
 GK accepts input in JSON-LD-LOGIC format (files use the `.js` extension).
 See `Doc/json_ld_logic.md` for the format specification.
@@ -84,14 +88,17 @@ GK derives that tweety flies by applying the rule to the fact.
 
 ### Example: Finding answers with variables
 
-Use the `$ans` predicate to collect variable bindings:
+Any free variable in a `@question` is collected as an answer binding:
 
     [
       ["bird","tweety"],
       ["bird","polly"],
       ["fish","nemo"],
-      {"@question": ["-bird","?:X"], "$ans": ["?:X"]}
+      {"@question": ["bird","?:X"]}
     ]
+
+GK returns two answers: tweety and polly.  In the output, each binding
+appears as `[["$ans", VALUE]]`.
 
 GK will return multiple answers: tweety and polly.
 
@@ -109,7 +116,7 @@ Part 2: Confidence Values
 This section describes the confidence system presented in:
 T. Tammet, D. Draheim, P. Jarv: "Confidences for commonsense reasoning",
 CADE 2021. Comparison studies with ProbLog and Alchemy are at
-https://logictools.org/confer/ (see also `study/` folder).
+https://logictools.org/confer/.
 
 Real-world knowledge is uncertain. GK handles this with numeric
 confidence values between 0 and 1.
@@ -231,9 +238,9 @@ general one (e.g., "birds fly"):
                    ["$block", 1, ["$not", ["flies","?:X"]]]]},
 
       {"@logic": [["-penguin","?:X"],["-flies","?:X"],
-                   ["$block", 2, ["flies","?:X"]]]]},
+                   ["$block", 2, ["flies","?:X"]]]},
 
-      {"@question": ["flies","?:X"], "$ans": ["?:X"]}
+      {"@question": ["flies","?:X"]}
     ]
 
 The penguin rule (strength 2) overrides the bird rule (strength 1).
@@ -250,19 +257,16 @@ This requires two files in the current directory (or in the `-datafolder` path):
   * `gk_name_number.txt`: maps words to taxonomy class numbers
   * `gk_taxonomy_packed.txt`: the packed taxonomy graph
 
+Both files are bundled at the top of the gk folder, and an example-local
+copy lives in `Examples/exceptions/`.  Pre-built variants for larger
+knowledge bases are available at https://logictools.org/gk/.
+
 With taxonomy-based strengths, you write:
 
     ["$block", ["$", "penguin"], ["$not", ["flies","?:X"]]]
 
 and GK automatically knows that "penguin" is more specific than "bird"
 because penguin is a subclass of bird in WordNet.
-
-These files can be created using the utilities in the `Utils/` folder:
-
-    cd Utils
-    ./wngraph.py wn_graph.json
-    ./taxonomy.py -p ../gk_taxonomy_packed.txt wn_graph.json
-    ./name_sort_from_graph.py wn_graph.json > ../gk_name_number.txt
 
 ### How blocker checking works
 
@@ -456,13 +460,10 @@ These are loaded as shared memory databases:
     ./gk multisource.js -readkb -defaults -mbsize 10000
     ./gk query.js -usekb
 
-The `Utils/` folder contains tools for building knowledge bases from
-various sources. See `Utils/README.md` for details on:
-
-  * Building KBs from plain text (via relation extraction)
-  * Filtering and converting Quasimodo data
-  * Creating WordNet taxonomy files
-  * Generating default logic KBs with taxonomies
+The tooling used to build these KBs from sources like Quasimodo, WordNet
+taxonomies, and plain-text relation extraction is not bundled with this
+distribution.  See https://logictools.org/gk/ for the pre-built KB files
+and the upstream tooling.
 
 
 Part 9: Input Format
@@ -483,10 +484,8 @@ Further Reading
 ---------------
 
   * `Examples/README.md` - Examples guide organized by category (core, confidences, exceptions)
-  * `demo/README.md` - Commonsense reasoning examples with confidences and defaults
   * `Doc/json_ld_logic.md` - JSON-LD-LOGIC input format specification
   * `Doc/cli_reference.md` - Complete command-line reference
   * `Doc/strategy_reference.md` - Strategy file parameter reference
-  * `ARCHITECTURE.md` - System architecture and module overview
   * https://logictools.org/gk/ - Online documentation and downloads
   * https://logictools.org/gk/tutorial.html - Online tutorial

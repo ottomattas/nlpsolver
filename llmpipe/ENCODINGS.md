@@ -110,6 +110,26 @@ annotated with the `"actions"` field:
   `manner`, `recipient`, plus `content` for two-event reification (see
   below)
 
+**Mode → Stage-2 classifier.**  Stage-2 attaches an arity-1 classifier
+to every Davidsonian event.  The mapping is:
+
+| Stage-1 `mode` | Stage-2 classifier predicate | Source |
+|----------------|------------------------------|--------|
+| `event` | `actuality` | injected by the pipeline (not Stage 2) |
+| `habitual` | `typical` | Stage 2 |
+| `capability` | `capability` | Stage 2 |
+| `necessity` | `necessity` | Stage 2 |
+| `obligation` | `obligation` | Stage 2 |
+| `volition` | `volition` | Stage 2 (outer event of two-event reification) |
+| `intention` | `intention` | Stage 2 (outer event) |
+| `expectation` | `expectation` | Stage 2 (outer event) |
+| `speech_act` | `speech_act` | Stage 2 (outer event) |
+
+`event` is the only mode whose classifier is supplied by the pipeline
+rather than the LLM — see §2.4 *Modal Classifiers* for the injection
+rule.  Inner content events (E2 in a two-event reification) carry no
+classifier at all.
+
 **Two-event reification (volition / intention / expectation / speech_act).**
 These four modes describe an EXPERIENCER (or speaker) related to an
 EMBEDDED event.  Stage-1 emits this as a nested action object in
@@ -158,9 +178,7 @@ Each entry is `[word, intensity, relclass]`:
 This field is critical: Stage 2 uses it to decide between `has degree property` and
 `has property`.
 
-### 1.7 World States and Time
-
-#### World states
+### 1.7 World States
 
 World states (W0, W1, W2, ...) represent successive states of the world as the
 story or situation evolves.  A state change occurs when an event modifies the
@@ -187,6 +205,8 @@ State changes are triggered by:
 
 Descriptive information (adjectives, relative clauses) does NOT create new states
 — "The car is red and expensive" stays in the same world.
+
+### 1.8 Time
 
 #### Relative tense
 
@@ -217,10 +237,9 @@ present-tense formula), Stage-2 encodes it directly on the event:
 
 The preposition is literally `"in"` for grammatical tenses.  This is the
 canonical shape and is preserved through clausification.  Non-Davidsonian
-predicates (`have`, `is rel2`, `has part`, `has property`, …) still receive
+predicates (`have`, `is rel2`, `has part`, `has property`, …) receive
 tense through the `$ctxt` mechanism or via the `["@time", TENSE, ATOM]`
-wrapper.  See `MEMO_2026_05_14_modal_rework.md` (Plan A section) and the
-narrowed `strip_tense_has_time` in `solver/lc_rewrites.py`.
+wrapper.  See `strip_tense_has_time` in `solver/lc_rewrites.py`.
 
 #### Explicit time values (dated world states)
 
@@ -367,7 +386,11 @@ The predicate inventory is a closed whitelist — no invented predicates.
 | `have` | OWNER, OWNED | `["have", "John 1", "car 2"]` |
 | `has part` | WHOLE, PART | `["has part", "bird 1", "tail 2"]` |
 | `is rel2` | REL, E1, E2 | `["is rel2", "near", "A", "B"]` |
-| `can` | ENTITY, ACTION | `["can", "X", "fly"]` |
+
+Modal information (ability, obligation, intention, …) is NOT a top-level
+predicate.  It is carried by arity-1 classifier predicates attached to the
+event variable — see the *Event Reification* and *Modal Classifiers* sections
+below.
 
 #### Gradable Predicates
 
@@ -435,12 +458,6 @@ injects `actuality`.  Inner content events (E2 in two-event reification)
 carry no classifier.  See `axioms_std.js` §5.1 for the defeasible
 actuality→capability bridge.
 
-Removed in the 2026-05-14 modal rework (see
-`MEMO_2026_05_14_modal_rework.md`): the old Track-1 atomic predicates
-`["can", X, V, Ctxt]` and `["typically", X, V, Ctxt]`, along with the
-arity-2 `["typical", E, Ctxt]` form.  Stage-2 no longer emits these.
-The `actuality` classifier was added 2026-05-15 — see
-`MEMO_2026_05_15_actuality.md`.
 
 #### Structural Predicates
 
@@ -516,10 +533,16 @@ The conversion also generates:
 
 ```json
 ["forall", "X", ["implies", ["isa", "bird", "X"],
-  ["normally", ["can", "X", "fly"]]]]
+  ["normally",
+    ["exists", "E", ["and",
+      ["isa", "activity", "E"],
+      ["has type", "E", "fly"],
+      ["has actor", "E", "X"],
+      ["capability", "E"]]]]]]
 ```
 
-"Birds can fly."
+"Birds can fly." — capability events are reified with the arity-1
+`capability` classifier.
 
 **Situations** use concrete constants:
 
@@ -560,7 +583,8 @@ used within its scope.
 
 ### 2.7 Complete Stage-2 Examples
 
-**"Birds can fly."** (normal_rule, capability, Track 1):
+**"Birds can fly."** (normal_rule, capability — the `capability`
+classifier marks the event as an ability rather than an actuality):
 
 ```json
 ["and",
@@ -568,10 +592,15 @@ used within its scope.
     ["holds","W0",
       ["forall","X",
         ["implies", ["isa","bird","X"],
-          ["normally", ["can","X","fly"]]]]]]]
+          ["normally",
+            ["exists","E", ["and",
+              ["isa","activity","E"],
+              ["has type","E","fly"],
+              ["has actor","E","X"],
+              ["capability","E"]]]]]]]]]
 ```
 
-**"John smiled."** (situation, event, Track 2):
+**"John smiled."** (situation, event):
 
 ```json
 ["and",
@@ -582,9 +611,12 @@ used within its scope.
           ["isa","activity","E"],
           ["has type","E","smile"],
           ["has actor","E","John 1"],
-          ["has time","E","past"]]]],
+          ["has time","E","past","in"]]]],
       ["next","W0","W1"]]]]
 ```
+
+(The pipeline injects `["actuality", "E"]` as the last conjunct here —
+see §2.4 *Modal Classifiers* — so Stage 2 does not emit it.)
 
 **"Bears eat red berries in a forest."** (normal_rule, habitual, Track 2 with roles):
 
@@ -651,11 +683,11 @@ conjunctive normal form (CNF) suitable for the GK theorem prover.
 
 ```json
 [
-  {"@name": "sent_S1", "@logic": ["isa", "bird", "tweety 1"]},
+  {"@name": "sent_S1", "@logic": ["isa", "elephant", "John 1"]},
   {"@name": "sent_S2", "@logic": [
-    ["-isa", "bird", "?:X"], ["can", "?:X", "fly"]
+    ["-isa", "elephant", "?:X"], ["isa", "animal", "?:X"]
   ]},
-  {"@name": "sent_S3", "@question": ["can", "tweety 1", "fly"]}
+  {"@name": "sent_S3", "@question": ["isa", "animal", "John 1"]}
 ]
 ```
 
@@ -670,7 +702,8 @@ Each dict has exactly one content key:
 - **Negated atom**: `["-pred", arg1, ...]` — the `-` prefix negates
 
 A disjunctive clause with negative atoms encodes an implication:
-`["-isa","bird","?:X"], ["can","?:X","fly"]` means `isa(bird,X) => can(X,fly)`.
+`["-isa","elephant","?:X"], ["isa","animal","?:X"]` means
+`isa(elephant,X) => isa(animal,X)`.
 
 ### 3.3 Variables
 
@@ -747,32 +780,38 @@ tense bridge axioms from leaking historical facts into present-tense queries
 
 #### Eligible predicates
 
-Receive `$ctxt`: `has property`, `have`, `has part`, `can`, `is rel2`,
-`has degree property`, `has degree rel2`, event predicates, `typical`, `typically`.
+Receive `$ctxt`: `has property`, `have`, `has part`, `is rel2`,
+`has degree property`, `has degree rel2`, all event role predicates
+(`has type`, `has actor`, `has target`, `has time`, `has location`, …).
 
-Do NOT receive `$ctxt`: `isa`, `holds`, `next`, `state *`, `kb *`, `@*`, `$*`, `=`, `<`, `>`.
+Do NOT receive `$ctxt`: `isa`, `holds`, `next`, `state *`, `kb *`,
+the modal classifiers (`actuality`, `capability`, `typical`,
+`necessity`, `obligation`, `volition`, `intention`, `expectation`,
+`speech_act`), `@*`, `$*`, `=`, `<`, `>`.
 
 ### 3.5 Defeasible Reasoning ($block)
 
-Normal rules produce defeasible clauses with a `$block` literal:
+Normal rules produce defeasible clauses with a `$block` literal.  For
+example, "Birds have wings" — a default that admits exceptions — becomes:
 
 ```json
-["-isa","bird","?:X"], ["can","?:X","fly"],
-  ["$block", ["$","bird",1], ["$not", ["can","?:X","fly"]]]
+["-isa","bird","?:X"], ["has part","?:X","wing", CTXT],
+  ["$block", ["$","bird",1], ["$not", ["has part","?:X","wing", CTXT]]]
 ```
 
-This means: "birds can fly, but this conclusion can be defeated by a more specific
-rule."
+This means: "birds have wings, but this conclusion can be defeated by a more
+specific rule."
 
 **Priority mechanism:** The priority `["$","bird",1]` has the form `["$", CLASS, N]`
 where CLASS is the subject class and N is a specificity count.  A rule with more
 conditions gets a higher N.  For example:
 
-- "Birds can fly" → priority `["$","bird",1]` (1 isa condition)
-- "Penguins cannot fly" → priority `["$","bird",2]` (isa penguin + isa bird = more specific)
+- "Birds have wings" → priority `["$","bird",1]` (1 isa condition)
+- "Plucked birds do not have wings" → priority `["$","bird",2]`
+  (isa plucked bird + isa bird = more specific)
 
 When the prover finds conflicting conclusions for the same head atom, the rule
-with higher N wins — penguins override the general bird rule.  This implements
+with higher N wins — the exception overrides the general default.  This implements
 the specificity preference in defeasible reasoning.
 
 GK extends the [GKC theorem prover](https://logictools.org/gk/) with
@@ -1012,21 +1051,18 @@ The prover also loads `axioms_std.js` containing background knowledge:
 - **Carrier transparency (§7f)**: defeasible (0.85) — `isa(carrier, C) ∧ on(X, C) ∧ on(C, S) → on(X, S)`. Carrier tag injected dynamically per-noun by `inject_carrier_lifts` for nouns in `_CARRIER_NOUNS = {plate, tray, saucer, dish, newspaper, napkin, tablecloth, mat, rug, carpet}`. Handles "pizza on plate, plate on table → pizza on table".
 - **Direct-support uniqueness — X2 (§7g)**: strict — `on(X,Y1) ∧ on(X,Y2) → Y1=Y2`, with four `$block` escapes for stacked / part-of configurations. Combined with entity UNA via `#:` (lc_post_una.py), forces contradiction when two distinct Stage-1 entities are claimed as `on`-targets of the same X. Closes case 148 ("pizza on table, ask pizza on floor?" → False).
 - **Persistence (frame problem)**: facts persist across world states unless blocked
-  (defeasible for have, has property, has degree property, has part, is rel2;
-  variable worlds via `next(?:W, ?:W2)`). Note: prior to the 2026-05-14 modal
-  rework `can` was also in this set; with the migration to the arity-1
-  `capability(E)` classifier the frame propagation lives on the event's role
-  atoms (which already participate in the existing per-predicate frame).
+  (defeasible for `have`, `has property`, `has degree property`, `has part`,
+  `is rel2`; variable worlds via `next(?:W, ?:W2)`).  Modal capability is carried
+  by the arity-1 `capability(E)` classifier, so its frame propagation lives on
+  the event's role atoms, which already participate in the per-predicate frame.
 - **Modal classifier bridge (§5.1)**: defeasible actuality→capability — for any
   real Davidsonian event `actuality(E) + has_type(E,V,Ctxt) + has_actor(E,X,Ctxt)`,
   derive `capability(E)` on the SAME event variable, gated by one `$block`
   for strict `¬capability(E)` overrides (e.g., "Penguins cannot fly" blocks
-  the inferred capability for a penguin event). Modal events (typical /
+  the inferred capability for a penguin event).  Modal events (typical /
   capability / necessity / ...) and inner content events of two-event
-  reifications carry no `actuality` marker — they were never injected by
-  the pipeline — so the bridge cannot fire on them by construction (no
-  has_content guard needed). See `MEMO_2026_05_14_modal_rework.md` for the
-  original design and `MEMO_2026_05_15_actuality.md` for the actuality refinement.
+  reifications carry no `actuality` marker, so the bridge cannot fire on
+  them by construction.
 - **Movement axioms**: `has_actor(E,X) + has_type(E,go) + has_destination(E,Dest,Prep) +
   next(W,W2) → is_rel2(at, X, Dest, $ctxt(present, W2, ...))`.  Result tense is
   always "present" at the new world.  The `has_destination` predicate is 4-arg
@@ -1073,14 +1109,12 @@ The prover also loads `axioms_std.js` containing background knowledge:
   Entity arguments are pinned to those mentioned in the question (free variables
   in the question become fresh variables in the bridge), so the bridge only fires
   on past-tense (or present-tense) facts about those specific entities.  This
-  replaces the global Section 6a same-world tense bridges (now disabled in
-  `axioms_std.js`) and avoids search-space explosion.  Stative predicates
-  covered: `have`, `has part`, `has property`, `has degree property`,
-  `is rel2`, `has degree rel2`.  Built by `lc_ctxt.build_question_tense_bridges`.
-  (`can` was previously in this set; with the 2026-05-14 migration to the
-  arity-1 `capability(E)` classifier it no longer participates — capability
-  questions are answered via the event's role atoms which already use these
-  bridges.)
+  avoids the search-space explosion that a global same-world tense bridge would
+  cause.  Stative predicates covered: `have`, `has part`, `has property`,
+  `has degree property`, `is rel2`, `has degree rel2`.  Built by
+  `lc_ctxt.build_question_tense_bridges`.  Capability questions are answered
+  via the event's role atoms (which already use these bridges), so the modal
+  classifier `capability(E)` does not participate directly.
 - **Prover seconds auto-estimation**: `prover.py` counts distinct world constants
   in the clause list and scales the prover time limit accordingly (empirical table
   with 2x safety multiplier).  CLI `-seconds N` overrides the estimate.

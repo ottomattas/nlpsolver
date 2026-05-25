@@ -177,17 +177,16 @@ Blank nodes (JSON-LD style) use `_:` prefix: `"_:node1"`.
 Special Predicates
 ------------------
 
-### $ans - Answer collection
+### Answer variables in `@question`
 
-The `$ans` predicate marks which variable bindings to report:
+Any free variable inside a `@question` clause is collected as an answer
+binding:
 
-    ["-bird","?:X"], ["$ans","?:X"]
+    {"@question": ["bird","?:X"]}
 
-This asks "what X is a bird?" and reports the bindings found.
-
-In annotated form:
-
-    {"@question": ["-bird","?:X"], "$ans": ["?:X"]}
+asks "what X is a bird?" and gk reports each binding in its output as
+`[["$ans", VALUE]]` — `$ans` is a gk-generated marker on the OUTPUT
+side and should NOT be written into the input clauses.
 
 ### $block - Default rule exceptions
 
@@ -335,8 +334,8 @@ A file combining facts, rules, defaults, and a question:
       {"@logic": [["-penguin","?:X"], ["-flies","?:X"],
                    ["$block", 2, ["flies","?:X"]]]},
 
-      // Question: what flies?
-      {"@question": ["-flies","?:X"], "$ans": ["?:X"]}
+      // Question: what flies? (free variable ?:X collects answers)
+      {"@question": ["flies","?:X"]}
     ]
 
 Running:

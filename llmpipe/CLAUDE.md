@@ -244,10 +244,12 @@ canonicalisation).  Non-Davidsonian atoms still receive tense via
 ### Prompt Files (`prompts/`)
 
 ```
-prompts/stage1_instructions.txt   -- Stage 1 system prompt instructions
-prompts/stage1_examples.txt       -- Stage 1 few-shot examples
-prompts/stage2_instructions.txt   -- Stage 2 system prompt instructions
-prompts/stage2_examples.txt       -- Stage 2 few-shot examples
+prompts/stage1_instructions_full.txt   -- Stage 1 system prompt instructions
+prompts/stage1_checklist_full.txt      -- Stage 1 procedural checklist
+prompts/stage1_examples.txt            -- Stage 1 few-shot examples
+prompts/stage2_instructions_full.txt   -- Stage 2 system prompt instructions
+prompts/stage2_checklist_full.txt      -- Stage 2 procedural checklist
+prompts/stage2_examples.txt            -- Stage 2 few-shot examples
 ```
 
 `prompts/tmparchive/` holds historical prompt versions.
@@ -289,14 +291,14 @@ Full solver data: http://logictools.org/data/nlpsolver_data.tar.gz
 
 ## Debug Case Workflow
 
-When the user says **"Debug case N"** (where N is a case number in `testfixlog_april.txt`):
+When the user says **"Debug case N"** (where N is a case number in `testfixlog_may.txt`):
 
-1. **Run `python3 examine.py N`** — this looks up Case N in `testfixlog_april.txt`, runs all five
+1. **Run `python3 examine.py N`** — this looks up Case N in `testfixlog_may.txt`, runs all five
    solvers (gemini, claude, gpt, deepseek, udp) in parallel with `-debug -json`, and writes
    logs to `eN_gemini.txt`, `eN_claude.txt`, `eN_gpt.txt`, `eN_deepseek.txt`, `eN_udp.txt`.
    The `-json` flag ensures logic is shown in raw JSON for cross-referencing with prover I/O.
 
-2. **Read `testfixlog_april.txt` entry for Case N** — note the `Input:` text and `Expected:` value.
+2. **Read `testfixlog_may.txt` entry for Case N** — note the `Input:` text and `Expected:` value.
 
 3. **Explore all five log files** — read them fully, comparing the answers and logic/proof
    output across all LLM providers and the UDP pipeline.
@@ -308,7 +310,7 @@ When the user says **"Debug case N"** (where N is a case number in `testfixlog_a
    Both stages must be correct, not just the final answer.
 
 5. **Assess the Expected value** — form an independent opinion on whether the `Expected:`
-   value in testfixlog_april.txt is the correct answer under a normal interpretation of the input,
+   value in testfixlog_may.txt is the correct answer under a normal interpretation of the input,
    or whether it should be changed, or whether there are good alternatives.
    Assume the UDP pipeline answer is correct in most (but not all) cases.
 
@@ -342,7 +344,7 @@ When the user says **"Debug case N"** (where N is a case number in `testfixlog_a
 When the user says **"Register fix for case N"** — assuming the debug analysis was done,
 a fix was implemented, and it has been verified to work:
 
-1. **Read the Case N entry in `testfixlog_april.txt`** to see its current state.
+1. **Read the Case N entry in `testfixlog_may.txt`** to see its current state.
 2. **Add brief `Conclusion:`, `Cause:`, and `Fixes:` fields** to the case entry, following
    the style and brevity of existing entries in the file. Keep all text short — one or two
    lines per field. If a comment would be long, shorten it to the essential point.

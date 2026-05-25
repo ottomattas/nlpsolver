@@ -14,17 +14,24 @@ Run an example:
 GK reads a JSON file containing facts, rules, and a question,
 then searches for proofs and prints answers with confidence values.
 
-The output looks like:
+The output is one flat JSON document (newline-separated, not indented).
+For the `grandfather.js` example you get something like:
 
     {"result": "answer found",
+
     "answers": [
     {
     "answer": [["$ans","mark"]],
     "confidence": 0.684,
     "positive proof":
     [
-    [1, ["in", "frm_3", "axiom", 0.95], [["-father","?:X","?:Y"], ...]],
-    ...
+    [1, ["in", "frm_3", "axiom", 0.95], [["-father","?:X","?:Y"], ["-father","?:Z","?:X"], ["grandfather","?:Z","?:Y"]]],
+    [2, ["in", "frm_2", "axiom", 0.8], [["father","pete","mark"]]],
+    [3, ["mp", 1, 2, "fromaxiom", 0.76], [["-father","?:X","pete"], ["grandfather","?:X","mark"]]],
+    [4, ["in", "frm_1", "axiom", 0.9], [["father","john","pete"]]],
+    [5, ["mp", 3, 4, "fromaxiom", 0.684], [["grandfather","john","mark"]]],
+    [6, ["in", "frm_4", "goal", 1], [["-grandfather","john","?:X"], ["$ans","?:X"]]],
+    [7, ["mp", 5, 6, "fromgoal", 0.684], [["$ans","mark"]]]
     ]}
     ]}
 
@@ -33,6 +40,22 @@ The key fields are:
   * `"answer"` — the answer term(s)
   * `"confidence"` — confidence value (0.0 to 1.0)
   * `"positive proof"` — the derivation steps
+
+
+Platforms
+---------
+
+Two prebuilt binaries ship with this folder:
+
+  * `gk` — statically-linked Linux x86-64 ELF, ready to run.
+  * `gk-macos-ARM64.zip` — macOS on Apple Silicon (ARM64) build.  Unzip
+    it and use the extracted `gk` binary in place of the Linux one.
+
+The `nlpsolver` pipelines (`llmpipe` and `udppipe`) that drive `gk` have
+only been tested on Linux; running them on macOS has not been verified
+and may need small tweaks.  For other platforms, build from
+[gkc](https://github.com/tammet/gkc) — the gkc-based source that
+`gk` is built on.
 
 
 What GK Does
@@ -67,9 +90,10 @@ Variables start with `?:` (e.g., `?:X`, `?:Name`).
 
     {"@question": ["flies","tweety"]}
 
-Or with answer variables:
+Or with answer variables — any free variable in the question is
+collected as an answer binding:
 
-    {"@question": ["-flies","?:X"], "$ans": ["?:X"]}
+    {"@question": ["flies","?:X"]}
 
 ### Confidence values
 
@@ -124,7 +148,8 @@ exceptions.
 
     ./gk Examples/exceptions/trivial.js           # simplest default
     ./gk Examples/exceptions/bird_penguin.js       # birds fly, penguins don't
-    ./gk Examples/exceptions/penguin2.js           # deep taxonomy hierarchy
+    ./gk Examples/exceptions/penguin2.js           # deep hierarchy, integer priorities
+    ./gk Examples/exceptions/penguin3.js -defaults -datafolder Examples/exceptions    # same hierarchy, taxonomy-based priorities
     ./gk Examples/exceptions/classify.js           # classification
     ./gk Examples/exceptions/nixon.js              # competing equal-strength defaults
     ./gk Examples/exceptions/people_room.js        # situation calculus
@@ -259,8 +284,8 @@ Create a `.js` file with this structure:
       {"@logic": [["-bird","?:X"],["flies","?:X"],
                    ["$block", 1, ["$not", ["flies","?:X"]]]]},
 
-      // Question
-      {"@question": ["flies","?:X"], "$ans": ["?:X"]}
+      // Question (free variable ?:X collects answers)
+      {"@question": ["flies","?:X"]}
     ]
 
 Run it:

@@ -190,12 +190,10 @@ When using `-defaults`, `-similarities`, or `-relatedwords`, GK looks for
 these files in the current directory or the `-datafolder` path:
 
     gk_name_number.txt
-        Maps words to taxonomy class numbers. Created by
-        Utils/name_sort_from_graph.py.
+        Maps words to taxonomy class numbers.
 
     gk_taxonomy_packed.txt
-        Packed WordNet taxonomy hierarchy. Created by
-        Utils/taxonomy.py -p.
+        Packed WordNet taxonomy hierarchy.
 
     gk_similarity.txt
         Word similarity scores, one per line:
@@ -232,6 +230,22 @@ Usage Examples
 ### Direct input from command line
 
     ./gk -jstext '[["bird","tweety"], {"@question": ["bird","tweety"]}]'
+
+Output:
+
+    {"result": "answer found",
+
+    "answers": [
+    {
+    "answer": true,
+    "confidence": 1,
+    "positive proof":
+    [
+    [1, ["in", "frm_2", "goal", 1], [["-bird","tweety"]]],
+    [2, ["in", "frm_1", "axiom", 1], [["bird","tweety"]]],
+    [3, ["simp", 1, 2, "fromgoal", 1], false]
+    ]}
+    ]}
 
 ### Multiple input files
 

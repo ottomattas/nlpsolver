@@ -194,18 +194,9 @@ See also: `Doc/tutorial.md` Part 2 (Confidence Values).
 
 ### Comparison studies (vs ProbLog, Alchemy)
 
-23 comparison studies against ProbLog2 and Alchemy 2 are in the `study/`
-folder. These are described at https://logictools.org/confer/ and form
-the experimental basis for the "Confidences for commonsense reasoning"
-paper (CADE 2021). Key studies:
-
-    study/study1_purecumul.js    - pure cumulation (noisy-OR)
-    study/study3_rulemult.js     - confidence multiplication
-    study/study5_pureneg.js      - negation handling
-    study/study8_smokes1.js      - smoking chain reasoning
-    study/study13_burglary1.js   - Bayesian alarm problem
-    study/study17_semwebproblog.js - semantic web ontology
-    study/study22_penguins.js    - penguin defaults with probabilities
+23 comparison studies against ProbLog2 and Alchemy 2 form the experimental
+basis for the "Confidences for commonsense reasoning" paper (CADE 2021).
+They are described and downloadable at https://logictools.org/confer/.
 
 
 Exception Examples
@@ -345,7 +336,8 @@ of integer strengths) and require the `-defaults` flag with taxonomy files:
         Nixon diamond with taxonomy-based strengths.
 
 The taxonomy data files (`gk_name_number.txt` and `gk_taxonomy_packed.txt`)
-are included in this folder. See `Utils/README.md` for how to create them.
+are included in this folder.  Pre-built variants for larger knowledge
+bases are available at https://logictools.org/gk/.
 
 
 Strategy Examples

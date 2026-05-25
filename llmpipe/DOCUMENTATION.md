@@ -23,21 +23,20 @@ representation so that a developer or LLM can quickly start extending or modifyi
    - 5.1 [solve.py](#51-solvepy)
    - 5.2 [llmparse.py](#52-llmparsepy)
    - 5.3 [llmcall.py](#53-llmcallpy)
-   - 5.4 [logconvert.py](#54-logconvertpy)
+   - 5.4 [logconvert.py and supporting modules](#54-logconvertpy-and-supporting-modules)
    - 5.5 [lc_clausify.py](#55-lc_clausifypy)
    - 5.6 [lc_questions.py](#56-lc_questionspy)
    - 5.7 [lc_sets.py](#57-lc_setspy)
    - 5.8 [procproofs.py](#58-procproofspy)
-   - 5.9 [proof_render.py](#59-proof_renderpy)
+   - 5.9 [Proof rendering modules](#59-proof-rendering-modules) — `proof_render`, `proof_utils`, `proof_english`, `proof_logic`
    - 5.10 [proof_explain.py](#510-proof_explainpy)
-   - 5.9 [proof_explain.py](#59-proof_explainpy)
-   - 5.10 [prover.py](#510-proverpy)
-   - 5.11 [pretty.py](#511-prettypy)
-   - 5.12 [cache.py](#512-cachepy)
-   - 5.13 [globals.py](#513-globalspy)
-   - 5.14 [utils.py](#514-utilspy)
-   - 5.15 [linguistics.py](#515-linguisticspy)
-   - 5.16 [stage_sanity.py](#516-stage_sanitypy)
+   - 5.11 [prover.py](#511-proverpy)
+   - 5.12 [pretty.py](#512-prettypy)
+   - 5.13 [cache.py](#513-cachepy)
+   - 5.14 [globals.py](#514-globalspy)
+   - 5.15 [utils.py](#515-utilspy)
+   - 5.16 [linguistics.py](#516-linguisticspy)
+   - 5.17 [stage_sanity.py](#517-stage_sanitypy)
 6. [Prompt files](#6-prompt-files)
 7. [Key algorithms in logconvert.py and lc_clausify.py](#7-key-algorithms-in-logconvertpy-and-lc_clausifypy)
    - 7.1 [Package extraction](#71-package-extraction)
@@ -49,6 +48,11 @@ representation so that a developer or LLM can quickly start extending or modifyi
    - 7.7 [Stage-2 rewrites and modifications](#77-stage-2-rewrites-and-modifications)
    - 7.8 [Stage sanity checks and corrective retry loop](#78-stage-sanity-checks-and-corrective-retry-loop)
    - 7.9 [Confidence and uncertainty handling](#79-confidence-and-uncertainty-handling)
+   - 7.10 [WH-question handling](#710-wh-question-handling)
+   - 7.11 [Proof deduplication](#711-proof-deduplication)
+   - 7.12 [Typed Skolem constants](#712-typed-skolem-constants)
+   - 7.13 [Entity UNA via `#:` prefix](#713-entity-una-via--prefix)
+   - 7.14 [Frame persistence and motion blocking](#714-frame-persistence-and-motion-blocking)
 8. [Configuration and options](#8-configuration-and-options)
 9. [The mkdata toolkit and solver integration](#9-the-mkdata-toolkit-and-solver-integration)
    - 9.1 [What mkdata produces](#91-what-mkdata-produces)
@@ -157,17 +161,19 @@ llmpipe/
 │   ├── semnormalize.py  Semantic normalization (antonym folding + canonical substitution)
 │   ├── axiom_vocab.py   Axiom file vocabulary extraction and caching
 │   ├── data_canonicals.py  (generated) Tier A rewrite dict (~752 entries)
-│   ├── data_antonyms.py    (generated) Antonym pairs dict (~710 entries; adjective + noun only, verbs excluded)
+│   ├── data_antonyms.py    (generated) ANTONYMS dict — directional `{word: antonym}` pairs (~311 entries)
 │   ├── data_synonyms.py    (generated) Soft synonym index (~12K words)
 │   ├── data_exclusions.py  (generated) Exclusion groups + index
 │   ├── globals.py       Options dict and file paths
 │   ├── utils.py         debug_print, clause_list_to_json
 │   └── gradables.txt    Whitelist of gradable adjectives (~400 entries)
 │
-├── prompts/             LLM system prompts
-│   ├── stage1_instructions.txt
+├── prompts/             LLM system prompts (loaded by llmparse.py)
+│   ├── stage1_instructions_full.txt
+│   ├── stage1_checklist_full.txt
 │   ├── stage1_examples.txt
-│   ├── stage2_instructions.txt
+│   ├── stage2_instructions_full.txt
+│   ├── stage2_checklist_full.txt
 │   └── stage2_examples.txt
 │
 ├── tests/               Test cases
@@ -185,9 +191,18 @@ llmpipe/
 │
 ├── ask.py               Direct LLM call tool (uses solver/llmcall.py)
 ├── test.py              Test runner
+├── examine.py           Debug helper — runs one test case across all four LLMs in parallel
 ├── checkprompt.py       Validate JSON in prompt example files
-└── DOCUMENTATION.md     Full developer documentation
+├── README.md            User-facing overview and installation
+├── DOCUMENTATION.md     Full developer documentation (this file)
+├── ENCODINGS.md         Stage-1 / Stage-2 / GK clause-list encoding reference
+├── DEBUGGING.md         Debugging workflow and failure taxonomy
+├── PROOF_RENDERING.md   How proofs are rendered as English explanations
+└── CLAUDE.md            Guidance for Claude Code agents working in this repo
 ```
+
+The repo-root `smoketest.py` (one level above `llmpipe/`) sanity-checks the
+install — see `README.md`.
 
 ---
 
@@ -311,32 +326,25 @@ Each `PACKAGE` is one of:
 | Traceability | `@id "Sx" FORMULA`, `@p "Sx" P`, `@definite "Sx" W REL ARG VALUE` |
 | Questions | `question F`, `ask VAR F` |
 
-Removed in the 2026-05-14 modal rework (see
-`MEMO_2026_05_14_modal_rework.md`): the Track-1 atomic predicates `can
-ENTITY ACTION` and `typically ENTITY VERB`, and the arity-2
-`typical E Ctxt` form.  Stage-2 no longer emits these.  Modal information
-is now carried exclusively by the arity-1 classifier predicates listed
-above, with role / world / time information living on the event's other
-atoms (which do carry `$ctxt`).
+Modal information is carried exclusively by the arity-1 classifier
+predicates listed above.  Role / world / time information lives on the
+event's other atoms (which do carry `$ctxt`).
 
-Added 2026-05-15 (see `MEMO_2026_05_15_actuality.md`): the arity-1
-`actuality E` marker for real events.  Stage 2 does **not** emit it;
+The arity-1 `actuality E` marker for real events is **pipeline-injected**, not
+emitted by Stage 2;
 `lc_rewrites.inject_actuality` appends `["actuality", E]` to every
 Davidsonian event lacking one of the eight Stage-2 modal classifiers
 and not appearing as the inner argument of `has_content`.  The
 `axioms_std.js` §5.1 capability bridge is gated on `actuality(E)` so it
 fires only on real events.  `actuality` is hidden from English rendering.
 
-Added 2026-05-23: `axioms_std.js` §5.2 — factive content bridges for
-assertive speech-act verbs.  For each verb V in {say, claim, report,
-state, announce}, a defeasible axiom `speech_act(E1) ∧ has_content(E1,E2)
-∧ has_type(E1,V,Ct) → actuality(E2)` (confidence 0.9, with `$block`
-guard on `¬actuality(E2)`) makes the inner content event actual.  Closes
-case 159 ("John said that Mary left. Mary left?") → Probably true on all
-4 LLMs.  Per-verb gating keeps directive (ask/order), commissive
-(promise/threaten), and dual-sense `tell` out of scope.  Defeasibility
-verified by the contradiction case "John said that Mary left.  Mary did
-not leave.  Mary left?" → False on all 4.
+`axioms_std.js` §5.2 — factive content bridges for assertive
+speech-act verbs.  For each verb V in {say, claim, report, state,
+announce}, a defeasible axiom `speech_act(E1) ∧ has_content(E1,E2) ∧
+has_type(E1,V,Ct) → actuality(E2)` (confidence 0.9, with `$block`
+guard on `¬actuality(E2)`) makes the inner content event actual.
+Per-verb gating keeps directive (ask/order), commissive
+(promise/threaten), and dual-sense `tell` out of scope.
 
 **Predicate selection rule for adjectives** (mandatory):
 
@@ -365,11 +373,11 @@ The GK prover expects a JSON array of clause dicts:
 
 ```json
 [
-  {"@name": "sent_S1", "@logic": ["isa","bird","tweety 1"]},
+  {"@name": "sent_S1", "@logic": ["isa","elephant","John 1"]},
   {"@name": "sent_S2", "@logic": [
-    ["-isa","bird","?:X"], ["can","?:X","fly"]
+    ["-isa","elephant","?:X"], ["isa","animal","?:X"]
   ]},
-  {"@name": "sent_S3", "@question": ["can","tweety 1","fly"]}
+  {"@name": "sent_S3", "@question": ["isa","animal","John 1"]}
 ]
 ```
 
@@ -440,29 +448,34 @@ The four `$ctxt` arguments are:
 | location | `ASU.location` from Stage 1, or a fresh free variable |
 | knower | holder of a mental attitude, or a fresh free variable |
 
-Eligible predicates (`CTXT_ELIGIBLE` in `lc_ctxt.py`): `has property`, `have`, `has part`,
-`can`, `is rel2`, `has degree property`, `has degree rel2`, plus all event predicates (`has type`,
-`has actor`, `has target`, …), `typical`, `typically`.  Structural predicates (`isa`, `holds`,
-`state *`, `next`, `kb *`, `@*`, `$*`, `=`, `<`, `>`) are NOT augmented.
+Eligible predicates (`CTXT_ELIGIBLE` in `lc_ctxt.py`): `has property`,
+`have`, `has part`, `is rel2`, `has degree property`, `has degree rel2`,
+plus all event role predicates (`has type`, `has actor`, `has target`,
+`has time`, `has location`, …).  Structural predicates (`isa`, `holds`,
+`state *`, `next`, `kb *`, `@*`, `$*`, `=`, `<`, `>`) and the modal
+classifiers (`actuality`, `capability`, `typical`, `necessity`, `obligation`,
+`volition`, `intention`, `expectation`, `speech_act`) are NOT augmented.
 
 Context injection can be disabled with `-nocontext` (or `-simple`).
 
 ### 4.6 Defeasible reasoning and $block
 
-Normal rules (type `normal_rule` in Stage 1) produce defeasible clauses.  The pattern for a
-typical bird-fly rule is:
+Normal rules (type `normal_rule` in Stage 1) produce defeasible clauses.  The pattern
+for a default about birds having wings is:
 
 ```
 Stage 2 (holds world / forall):
-  ["forall","X",["implies",["isa","bird","X"],["normally",["can","X","fly"]]]]
+  ["forall","X",["implies",["isa","bird","X"],
+    ["normally",["has part","X","wing"]]]]
 
 GK clauses produced by logconvert:
-  ["-isa","bird","?:X"],  ["can","?:X","fly"],  ["$block",["$","bird",1],["$not",["can","?:X","fly"]]]
+  ["-isa","bird","?:X"], ["has part","?:X","wing", CTXT],
+  ["$block",["$","bird",1],["$not",["has part","?:X","wing", CTXT]]]
 ```
 
-The `$block` literal means: *"this conclusion (`can X fly`) can be defeated by a rule with
-priority higher than `["$","bird",1]` for the class `bird`"*.  The penguin exception would carry
-a higher priority and the same head atom, allowing GK to prefer the exception.
+The `$block` literal means: *"this conclusion (`has part X wing`) can be defeated by a rule
+with priority higher than `["$","bird",1]` for the class `bird`"*.  A plucked-bird exception
+would carry a higher priority and the same head atom, allowing GK to prefer the exception.
 
 Defeasible expansion can be disabled with `-noexceptions` (or `-simple`).
 
@@ -538,7 +551,7 @@ The function:
 - If still invalid, makes one LLM retry with error feedback in the prompt.
 - After a successful parse, invokes a per-stage **sanity checker** (`check_stage1` /
   `check_stage2` from `stage_sanity.py`) and, if it reports issues, enters a separate
-  corrective-retry loop via `_maybe_sanity_retry` (see §7.8 and §5.16 for details).
+  corrective-retry loop via `_maybe_sanity_retry` (see §7.8 and §5.17 for details).
 - Tracks all events in the stats dict (`s1_calls`, `s1_json_errors`, `s1_json_fixes`,
   `s1_retry_calls`, `s1_sanity_retries`, `s1_sanity_ok`, `s1_sanity_fail`, etc.).
 
@@ -877,7 +890,7 @@ entity naming rules, clause rendering, and proof explanation structure with exam
 - `ans_display_key(val, askvars=None) -> hashable` — canonical dedup key for an answer value;
   ignores auxiliary world-state arguments
 
-### 5.10 prover.py
+### 5.11 prover.py
 
 **Role:** Interface to the `gk` binary theorem prover.
 
@@ -915,7 +928,7 @@ llmpipe/axioms_std.js          default axiom file
 ../gk/gk_taxonomy_packed.txt   taxonomy data
 ```
 
-### 5.11 pretty.py
+### 5.12 pretty.py
 
 **Role:** Human-readable pretty-printing of JSON structures.
 
@@ -932,7 +945,7 @@ to align with the first.  Consecutive closing-bracket-only lines are merged onto
 **`noquotes` mode** (`pretty.noquotes = True`): suppresses quotation marks and replaces spaces
 in strings with underscores — more readable for debugging.
 
-### 5.12 cache.py
+### 5.13 cache.py
 
 **Role:** SQLite-backed cache for LLM responses and prover results.
 
@@ -946,7 +959,7 @@ Key functions: `get_llm_from_cache`, `add_llm_to_cache`, `get_proof_from_cache`,
 `globals.options["use_llm_cache_flag"]`.  Proof caching is off by default and enabled with
 `-cache`.
 
-### 5.13 globals.py
+### 5.14 globals.py
 
 **Role:** Global configuration, file paths, and the `options` dict.
 
@@ -985,7 +998,7 @@ usekb_prover_params = ["-usekb", "-confidence", "0.1", "-keepconfidence", "0.1"]
 **`set_global_options(newoptions)`** — merge a dict into `options`; called by `solve.py` with
 the parsed CLI flags.
 
-### 5.14 utils.py
+### 5.15 utils.py
 
 **Role:** Shared utility functions used across the pipeline.
 
@@ -998,7 +1011,7 @@ the parsed CLI flags.
 - `clause_list_to_json(logic) -> str` — converts the Python GK clause list to a JSON string
   suitable for passing to the `gk` binary.  Uses `json.dumps` with compact separators.
 
-### 5.15 linguistics.py
+### 5.16 linguistics.py
 
 **Role:** Pure English linguistic heuristics used by `proof_english.py` for human-readable output.
 No dependency on proof state or any other pipeline module.
@@ -1008,7 +1021,7 @@ No dependency on proof state or any other pipeline module.
 - `make_comparative(adj) -> str` — comparative form (`nice` → `nicer`, `beautiful` → `more beautiful`)
 - `to_gerund(verb) -> str` — gerund form (`run` → `running`, `bite` → `biting`)
 
-### 5.16 stage_sanity.py
+### 5.17 stage_sanity.py
 
 **Role:** Structural sanity checks for Stage-1 ASU JSON and Stage-2 logic JSON, used by
 `llmparse._maybe_sanity_retry` to detect LLM output errors that the Stage prompts explicitly
@@ -1080,9 +1093,11 @@ Examples:
 
 | File | Purpose |
 |------|---------|
-| `stage1_instructions.txt` | Full specification of Stage-1 output format; entity rules, type classification, splitting rules, adjective format, scope hints, state tracking, etc. |
+| `stage1_instructions_full.txt` | Full specification of Stage-1 output format; entity rules, type classification, splitting rules, adjective format, scope hints, state tracking, etc. |
+| `stage1_checklist_full.txt` | Short procedural checklist appended to the Stage-1 system prompt |
 | `stage1_examples.txt` | ~30 worked input→output examples for Stage 1; one per `---` separator |
-| `stage2_instructions.txt` | Full specification of Stage-2 output format; entity handling (concrete/generic/kind/wh), quantification rules by ASU type, predicate inventory, property/relation selection rule |
+| `stage2_instructions_full.txt` | Full specification of Stage-2 output format; entity handling (concrete/generic/kind/wh), quantification rules by ASU type, predicate inventory, property/relation selection rule |
+| `stage2_checklist_full.txt` | Short procedural checklist appended to the Stage-2 system prompt |
 | `stage2_examples.txt` | ~40 worked input→output examples for Stage 2; one per `----` separator |
 
 **Editing the prompts** is the primary way to improve Stage-1 and Stage-2 accuracy.  Both
@@ -1169,13 +1184,14 @@ alongside conditions (negative literals `-isa bird ?:X`) and other conclusions.
    - N = number of non-`isa` negative conditions + 1 (more specific rules get higher N)
 4. Append `["$block", priority, ["$not", head]]` to the clause.
 
-Result for `normally(["can","?:X","fly"])` inside `["-isa","bird","?:X"]`:
+Result for `normally(["has part","?:X","wing"])` inside `["-isa","bird","?:X"]`:
 ```
-["-isa","bird","?:X"], ["can","?:X","fly"], ["$block",["$","bird",1],["$not",["can","?:X","fly"]]]
+["-isa","bird","?:X"], ["has part","?:X","wing"],
+["$block",["$","bird",1],["$not",["has part","?:X","wing"]]]
 ```
 
-The penguin exception would generate priority `["$","bird",2]` (higher specificity), which GK
-uses to defeat the bird default.
+A plucked-bird exception would generate priority `["$","bird",2]` (higher specificity), which
+GK uses to defeat the general bird default.
 
 With `-noexceptions`, the `$block` is suppressed and `normally` becomes equivalent to a strict
 implication.
@@ -1301,19 +1317,19 @@ bridge representation gaps.
 | Possessive `have` inference | `lc_post_normalize.add_possessive_have` | "The handle of the fork" — `is_rel2(handle of, fork, handle)` + `isa(handle, handle)` → `have(fork, handle)` | Infers `have(Y,E,CT)` from possessive `is_rel2` patterns.  Handles ground entities, Skolem functions, and `$theof1` terms.  For rule clauses with guard literals (e.g., `[-isa,elephant,?:X]`), generates conditional `have` with the same guard.  Skips `@name=frm_theof` clauses (the universally-quantified per-relation schema axioms) because processing them would regenerate the universal have bridge that was removed for free-variable-witness reasons (see `$theof1` definite rewrite row above). |
 | `have` → `has_part` bridge for typed body-part nouns | `lc_post_normalize.add_haspart_for_typed_have` | Rule "If an animal has a trunk, it is an elephant" Stage-2-encoded with `-has_part(?:X,?:Y,Ctxt)` and `-isa(trunk,?:Y)`; fact "John has a long trunk" Stage-2-encoded as `have(John 1, trunk 1, Ctxt)` + `isa(trunk, trunk 1)` → emit `has_part(John 1, trunk 1, Ctxt)` so the rule fires (case 207). | **Conservative, problem-local bridge.**  Stage-2 LLM is inconsistent: generic universal claims ("Elephants have trunks") use `has_part`, but specific instance claims with adjectives ("John has a long trunk") often use `have` for some LLMs (gemini, gpt) — which then fail to unify with has_part-using rules.  Pass 1 walks rule clauses and collects the set of types T paired with `-has_part(?:X,?:Y)` AND `-isa(T,?:Y)` for the same `?:Y`; if empty, the bridge does nothing.  Pass 2 collects explicit `isa(T, E)` facts for ground/Skolem entities.  Pass 3 walks single-atom positive `have(X, Y, Ctxt)` clauses; for each, looks up Y's type (explicit isa first; else `_parse_entity_name_type` fallback peels off Stage-2's naming convention "trunk 1" → "trunk", "sk0_trunk" → "trunk") and emits `has_part(X, Y, Ctxt)` only when the type intersects the rule-collected set.  Safe under the subtype rule in `axioms_std.js` because that rule requires `isa(Y1, Y2)` where Y1 is a class with subtypes; specific entities are not classes so the inheritance never propagates back to a class. |
 | Misnested existential hoisting | `lc_rewrites.hoist_misnested_exists` | `[exists E, [and, has_actor(E,X), [exists X, isa(bear,X)]]]` → `[exists E, [exists X, [and, has_actor(E,X), isa(bear,X)]]]` | Pre-clausification fix for assertion formulas.  Detects existential variables used free in sibling conjuncts before their `exists` binding, hoists the binding to wrap the entire conjunction.  Only applies in assertion contexts (from `holds`), with collision checks against enclosing bindings. |
-| Tense-valued `has_time` filter | `lc_rewrites.strip_tense_has_time` | `has_time(E, "past", "in")` survives when E is a Davidsonian event variable; same shape on a non-event variable is stripped; in-body `state_time(W, "past")` is always stripped (belongs at the package level) | Pre-clausification narrowing pass. After the 2026-05-14 Plan A canonicalisation, `["has time", E, "past"|"present"|"future", "in"]` is the canonical shape for grammatical tense on Davidsonian events (instructed by Stage-2 §8.1). The pass scans the tree once via `_collect_event_vars` to identify all variables `X` such that `isa(activity, X)` appears, then strips tense-valued `has_time` only when the first argument is NOT one of those event variables. Strips misplaced `state_time(W, TENSE)` from formula bodies unconditionally. Replaces the older blanket-strip behaviour that conflicted with the example file. |
-| `actuality(E)` injection | `lc_rewrites.inject_actuality` | An `and`-block containing `isa(activity, E)` plus any of `has_type`/`has_actor` and no modal classifier on E gets `["actuality", E]` appended.  Stage 2 deliberately does not emit this marker; the pipeline adds it post-Stage-2. | Pre-clausification injection (added 2026-05-15).  Walks the formula tree; for every Davidsonian event variable introduced by `isa(activity, E)`, appends `["actuality", E]` to the same `and`-block unless one of the eight Stage-2 modal classifiers (`typical`, `capability`, `necessity`, `obligation`, `volition`, `intention`, `expectation`, `speech_act`) already attaches to E, OR E appears as the second argument of `has_content` anywhere in the tree (inner content event of a two-event reification).  Idempotent — guards against re-injection on a second pass.  Consumed by the `axioms_std.js` §5.1 actuality→capability bridge, which is gated on `actuality(E)` instead of "any Davidsonian event"; this lets the bridge dispatch positively on real events rather than negating eight other classifier predicates.  See `MEMO_2026_05_15_actuality.md`. |
-| Spurious `can` removal | `lc_rewrites.strip_spurious_can` | (Legacy — no longer fires after the 2026-05-14 modal rework.) Was used to drop a `can(X,E)` literal injected into queries by the old Stage-2 default. With the new arity-1 `capability(E)` classifier, Stage-2 only emits modal markers when Stage-1 specifies the mode — the spurious-default behaviour is gone. The function remains in `lc_rewrites.py` for backwards compatibility with cached responses produced before the rework. |
+| Tense-valued `has_time` filter | `lc_rewrites.strip_tense_has_time` | `has_time(E, "past", "in")` survives when E is a Davidsonian event variable; same shape on a non-event variable is stripped; in-body `state_time(W, "past")` is always stripped (belongs at the package level) | Pre-clausification narrowing pass.  `["has time", E, "past"|"present"|"future", "in"]` is the canonical shape for grammatical tense on Davidsonian events (instructed by Stage-2 §8.1). The pass scans the tree once via `_collect_event_vars` to identify all variables `X` such that `isa(activity, X)` appears, then strips tense-valued `has_time` only when the first argument is NOT one of those event variables.  Strips misplaced `state_time(W, TENSE)` from formula bodies unconditionally. |
+| `actuality(E)` injection | `lc_rewrites.inject_actuality` | An `and`-block containing `isa(activity, E)` plus any of `has_type`/`has_actor` and no modal classifier on E gets `["actuality", E]` appended.  Stage 2 does not emit this marker; the pipeline adds it post-Stage-2. | Pre-clausification injection.  Walks the formula tree; for every Davidsonian event variable introduced by `isa(activity, E)`, appends `["actuality", E]` to the same `and`-block unless one of the eight Stage-2 modal classifiers (`typical`, `capability`, `necessity`, `obligation`, `volition`, `intention`, `expectation`, `speech_act`) already attaches to E, OR E appears as the second argument of `has_content` anywhere in the tree (inner content event of a two-event reification).  Idempotent — guards against re-injection on a second pass.  Consumed by the `axioms_std.js` §5.1 actuality→capability bridge, which is gated on `actuality(E)` instead of "any Davidsonian event", letting the bridge dispatch positively on real events rather than negating eight other classifier predicates. |
+| Spurious `can` cleanup | `lc_rewrites.strip_spurious_can` | Drops a stray `can(X,E)` literal from a Stage-2 formula.  Kept for compatibility with cached LLM responses that still contain the obsolete atomic `can` predicate; on current LLM output it is a no-op. |
 | Meta-predicate normalization | `lc_rewrites.rewrite_meta_predicates` | `["is rel2","is",A,B]` → `["isa",A,B]`; `["is rel2","=",A,B]` → `["=",A,B]`; `["is rel2","located in",A,B]` → `["is rel2","in",A,B]` | Pre-clausification rewrite applied to all formulas.  Normalizes copula (`is` → `isa`), identity (`=`), spatial meta-predicates (`located in/at/on/near/above/under` → bare preposition), movement verbs (travel/journey/move → go), placement verbs (place/set/lay/position/deposit → put), and transfer verb synonyms (hand/pass/send → give).  Also normalizes 3-arg `has_destination(E,Dest)` to 4-arg `has_destination(E,Dest,"at")` for backward compat with stale Stage-2 cache entries. |
 | Perspective verb → dative head normalization | `lc_rewrites.normalize_receive_events` | `["has type",E,"receive"]` + `["has actor",E,X]` → `["has type",E,"give"]` + `["has recipient",E,X]`.  Same pattern for hear→tell, see→show, get→give. | Formula-level rewrite: in `and`-blocks containing a perspective-verb event (receive, get, hear, see), the verb is changed to its dative head (give, tell, show) and the actor role is swapped to recipient.  Single mapping table `_PERSPECTIVE_TO_DATIVE`; function name retained for back-compat.  Asymmetry preserved — the rewrite never adds an actor for events lacking an explicit dative agent, so "Did John receive a book?" still fails when John was the giver.  Allows the give-based transfer axioms in `axioms_std.js` to derive `have(Recipient, Object)` in the next world state, and lets queries about hear/see/get match facts about tell/show/give. |
 | Set existence fact | `lc_sets._walk_for_count` | "Bears ate berries" with `forall/implies/member/$setof` in assertion context → `member("$some_bear", $setof(...))` | Generates a ground set membership fact for assertion-context `forall/member` patterns so the prover can bootstrap resolution through member-guarded clauses.  Skipped when the set already has element instantiation from a count assertion. |
 | Degree stripping | `lc_post_normalize.strip_degree_predicates` | With `-simpleproperties`: `has_degree_property(big,X,none,animal)` → `has_property(big,X)` | (Only with `-simpleproperties`) Replaces degree predicates with simple property predicates |
-| Semantic normalisation | `semnormalize.sem_normalize_clauses` | "The ball is outside the box" → `outside` is antonym of `inside` → flips polarity and substitutes: `-is_rel2(inside,ball,box)` | Antonym resolution (~710 pairs, adjective + noun only: flip polarity + swap word) and canonical substitution (~752 pairs: synonym → canonical form).  Skips `$ctxt` terms.  Polarity-flipping is applied ONLY at the top-level literal — inside nested function terms (`$theof1`, `$measure_of`, Skolem), only canonical substitution runs (flipping `$theof1` to `-$theof1` would produce invalid terms).  Data loaded from generated `data_antonyms.py` and `data_canonicals.py`.  Verb antonyms (`ant_v.txt`) are intentionally excluded from rewriting — most are perspective inversions (give/take, buy/sell), process complementarities (start/stop, come/go), or weak pairs where polarity-flip is wrong, and key verbs collide with axiom-vocab predicates (case 171).  Useful verb subsets (attitude pairs like like/dislike) are scheduled for re-introduction via a defeasible attitude-mutex injector.  `build_antonyms` also skips any pair whose canonical target is itself a CANONICALS key — such chain-through pairs are deferred to `build_exclusions` and emitted as synthetic `ANT_<W1>_<W2>` exclusion groups instead (prevents Pass 2 from chain-substituting the fold target to an unrelated sense, e.g. `open→close→near`). |
+| Semantic normalisation | `semnormalize.sem_normalize_clauses` | "The ball is outside the box" → `outside` is antonym of `inside` → flips polarity and substitutes: `-is_rel2(inside,ball,box)` | Antonym resolution (~311 directional pairs, adjective + noun only: flip polarity + swap word) and canonical substitution (~752 pairs: synonym → canonical form).  Skips `$ctxt` terms.  Polarity-flipping is applied ONLY at the top-level literal — inside nested function terms (`$theof1`, `$measure_of`, Skolem), only canonical substitution runs (flipping `$theof1` to `-$theof1` would produce invalid terms).  Data loaded from generated `data_antonyms.py` and `data_canonicals.py`.  Verb antonyms (`ant_v.txt`) are intentionally excluded from rewriting — most are perspective inversions (give/take, buy/sell), process complementarities (start/stop, come/go), or weak pairs where polarity-flip is wrong, and key verbs collide with axiom-vocab predicates (case 171).  Useful verb subsets (attitude pairs like like/dislike) are scheduled for re-introduction via a defeasible attitude-mutex injector.  `build_antonyms` also skips any pair whose canonical target is itself a CANONICALS key — such chain-through pairs are deferred to `build_exclusions` and emitted as synthetic `ANT_<W1>_<W2>` exclusion groups instead (prevents Pass 2 from chain-substituting the fold target to an unrelated sense, e.g. `open→close→near`). |
 | Soft synonym injection | `lc_post_inject.inject_soft_synonyms` | "The car is red" + axioms mention "crimson" → emits `red(X,Ct) <=> crimson(X,Ct)` biconditional | Dynamic injection of Tier B synonym axioms for words present in both input and axiom vocabulary.  Templates: `has property` (adj), `isa` (noun), `has type` (verb). |
 | Exclusion injection | `lc_post_inject.inject_exclusion_axioms` | "The car is blue. Was it red?" → emits `NOT blue(X,Ct) OR NOT red(X,Ct)` with `$block` | Dynamic injection of mutual-exclusion axioms from `excl_a.txt` and `excl_n.txt` groups.  `needs_blocker=True` groups use defeasible `$block`; `False` groups are hard exclusions. Five atom shapes: default `has_property` (adjective); `_IS_REL2_EXCL_GROUPS` (MONTH/DAY_OF_WEEK/SEASON) — `is_rel2` target at arg 3; `_IS_REL2_PREP_GROUPS` (SPATIAL_*, TEMPORAL_ORDER) — `is_rel2` preposition at arg 1 with two free entity variables; `_HAS_DEGREE_REL2_PREP_GROUPS` (PROXIMITY) — `has_degree_rel2` preposition at arg 1 with two asymmetric axioms per pair; `_ISA_EXCL_GROUPS` (NOUN_*) — concept name at `isa` arg 1, emits both same-entity shortcut `[-isa w1 ?:X, -isa w2 ?:X]` and cross-entity inequality `[-isa w1 ?:X, -isa w2 ?:Y, -=(?:X, ?:Y)]`. Also injects `MANUAL_ANTONYMS` adjective pairs as synthetic `MANUAL_ADJ_<W1>_<W2>` groups, and chain-rejected antonym pairs (from `build_antonyms`) as synthetic `ANT_<W1>_<W2>` defeasible adjective groups. See §9.5 for preposition handling. **Note**: the seven preposition groups in `_STATIC_PREP_EXCL_GROUPS` (SPATIAL_VERTICAL/_OVER_UNDER/_SAGITTAL/_CONTAINMENT/_LATERAL, TEMPORAL_ORDER, PROXIMITY) are skipped here — their mutual-exclusion axioms live statically in `axioms_std.js` §7e because both sides are first-class predicates in the standard ontology. |
 | Cross-group noun mutex | `lc_post_inject.inject_isa_cross_group_axioms` | "John is a car. Is the cat an animal?" → derives John ≠ cat | Layer 2 of noun mutex. For pairs `(w1, w2)` from different `_ISA_EXCL_GROUPS` groups (e.g. `car` in NOUN_VEHICLE, `animal` in NOUN_TOP_LEVEL), emits the same two shapes as the within-group injector. Same REQUIRE_BOTH_SIDES gating. |
 | Carrier vocabulary lift | `lc_post_inject.inject_carrier_lifts` | "pizza on plate" present → emits `[¬isa(plate,X,Ct), isa(carrier,X,Ct)]` | Tags entities of carrier-noun categories so the static carrier-transparency axiom (axioms_std.js §7f) can fire. Carrier list: `_CARRIER_NOUNS = {plate, tray, saucer, dish, newspaper, napkin, tablecloth, mat, rug, carpet}`. |
-| Entity UNA wrapping | `lc_post_una.apply_una` | After all post-processing: `is_rel2(on, "pizza 2", "table 3", …)` → `is_rel2(on, "#:pizza 2", "#:table 3", …)` | Wraps every Stage-1 numbered entity with `#:` prefix so `gk` treats distinct entity constants as definitely unequal. See §7.10 for the three-step criterion. Required by axioms_std.js §7g (X2 direct-support uniqueness). |
+| Entity UNA wrapping | `lc_post_una.apply_una` | After all post-processing: `is_rel2(on, "pizza 2", "table 3", …)` → `is_rel2(on, "#:pizza 2", "#:table 3", …)` | Wraps every Stage-1 numbered entity with `#:` prefix so `gk` treats distinct entity constants as definitely unequal. See §7.13 for the three-step criterion. Required by axioms_std.js §7g (X2 direct-support uniqueness). |
 | World-graph geometry | `lc_post_inject.inject_world_geometry` | "Mary slept. Mary is awake. Was Mary awake?" → emits `next(W0,W1)` | Dynamic injection of the minimal `next(Wi,Wi+1)` chain spanning the concrete world constants actually present in the clause list. Replaces the static `W0..W12` chain that used to live in `axioms_std.js` §11. Skips emission entirely when ≤1 world is present (most single-tense problems); otherwise fills any gaps in `[min_idx, max_idx]` so `before` transitivity still closes. Keeps the `before` derivation graph small. |
 | Verb mutex injection | `lc_post_inject.inject_verb_mutex_axioms` | "Did everyone pass the exam? — No, Mary failed." → for each entity with both `pass` and `fail` events on it, emits a defeasible mutex preventing the same event from being both | Dynamic, cross-event mutex (distinct from `inject_exclusion_axioms`, which mutexes adjective properties on a single entity).  Pair table `_VERB_MUTEX_PAIRS` currently lists `(pass, fail)`.  Each pair emits a defeasible 0.85 axiom with `$block` so that an explicit positive can override.  Atom shape uses `has_type` event predicates plus shared `?:E` and `?:Ctxt`.  Does not fire unless both verbs of the pair appear in the input clauses. |
 | Containment bridge injection | `lc_post_inject.inject_containment_bridge_axioms` | "The cup filled with water fell" → emits `is rel2 in <swapped args>` | Dynamic bridge from container-language predicates to canonical `is rel2 in`.  Source relations: `filled with`, `contain`, `containing`, `contains`.  Treats `in` as always-axiomatic (no axiom-vocab gating).  Emitted only when the source relation appears in input clauses.  Args are swapped: `filled with(cup, water)` → `is rel2 in (water, cup)`.  Resolves the case-84 family where a containment fact is asserted with one phrasing but queried with another. |
@@ -1378,7 +1394,7 @@ LLMs/inputs where the retry doesn't land.
 - Verb-frame decomposition (e.g. `has property "filled with water"`) is not flagged — the
   LLM cannot plausibly rewrite its own output that much on a retry.
 
-The list of checks lives in `stage_sanity.py` (§5.16).  Adding a new check = one new
+The list of checks lives in `stage_sanity.py` (§5.17).  Adding a new check = one new
 `_check_stage<N>_*` function plus a call inside `check_stage<N>`; no change to `llmparse.py`
 is needed.
 
@@ -1620,7 +1636,7 @@ they contain digits (the skolem index).  Now if the Skolem has a known type from
 
 ---
 
-## 7.5. WH-question handling
+### 7.10 WH-question handling
 
 The pipeline handles four types of WH-questions through specialized detection and encoding in `logconvert._process_question` (routing) and `lc_questions` (clause generation), with answer formatting in `procproofs`.
 
@@ -1724,7 +1740,7 @@ only matches present-tense results at the query world, not past-tense bridged fa
 
 ---
 
-## 7.6. Proof deduplication
+### 7.11 Proof deduplication
 
 The prover often returns multiple proofs for the same answer that differ only in temporal/world-navigation paths (e.g., 10 proofs for "in the house" using different world-state axiom routes W0→W1, W0→W1→W2, etc.).
 
@@ -1741,7 +1757,7 @@ Runs after `_filter_by_best_tier` and `_filter_tautological_population_answers`,
 
 ---
 
-## 7.7. Typed Skolem constants
+### 7.12 Typed Skolem constants
 
 Skolem constants generated during clausification embed their type in the name when the type is known from the existential body:
 
@@ -1762,7 +1778,7 @@ Skolem type resolution for rendering (`procproofs._resolve_skolem_entity`):
 
 ---
 
-### 7.10 Entity UNA via `#:` prefix
+### 7.13 Entity UNA via `#:` prefix
 
 The `gk` prover treats two distinct constants as definitely unequal **only when both are
 prefixed with `#:`**.  Without UNA, a clause like `[¬is_rel2(on,X,Y1,C), ¬is_rel2(on,X,Y2,C),
@@ -1794,11 +1810,11 @@ When deepseek emits a Skolem like `sk1_floor` for "the floor" (definite descript
 UNA does NOT wrap it.  The closure path then runs through the noun-mutex axioms in
 §7g instead: `[¬isa(table, X), ¬isa(floor, X)]` (same-entity shortcut emitted by
 `inject_exclusion_axioms` for NOUN_FURNITURE_FIXTURE) plus paramodulation through
-the X2-derived equality.  See §9.6 for the mutex injector.
+the X2-derived equality.  See §9.3 for the mutex injector.
 
 ---
 
-### 7.11 Frame persistence and motion blocking
+### 7.14 Frame persistence and motion blocking
 
 `axioms_std.js` §12 contains the **`is_rel2` tense-migration axiom**: a present-world `is_rel2(P, X, Y, ctx_present_W)` fact propagates to past worlds whenever `before(W_past, W_present)` holds.  This is what lets *"The cup is on the table. Was the cup on the table?"* close to True without an explicit past-tense fact.
 
@@ -1846,7 +1862,7 @@ generates Python dict files in `solver/` that are loaded at runtime.
 |--------|-------|---------|
 | `syn_{a,n,v}_rewrite.txt` | 416 / 218 / 124 entries | Tier A hard rewrites (`member,canonical`) |
 | `syn_{a,n,v}_soft_axioms.txt` | 2496 / 6218 / 4103 pairs | Tier B soft synonym pairs (`word_a,word_b,score`) |
-| `ant_{a,n,v}.txt` | 1483 / 375 / 295 entries | Antonym pairs (directional, polarity-flip) |
+| `ant_{a,n,v}.txt` | ~1500 / 380 / 300 entries | Antonym pairs (directional, polarity-flip).  Most are filtered out during `build_solver_data.py`; the runtime ANTONYMS dict ends up at ~311 entries. |
 | `excl_a.txt` | ~60 groups (+ 4 synthetic from `MANUAL_ANTONYMS`, + 2 synthetic from `MANUAL_GRADABLE_ANTONYMS`, + ~60 synthetic `ANT_*` groups from chain-rejected antonym pairs) | Mutual-exclusion groups (colors, months, nationalities, kinship/gender pairs, spatial/temporal opposites) |
 | `excl_n.txt` | 10 groups (`NOUN_TOP_LEVEL`, `NOUN_FURNITURE_FIXTURE`, `NOUN_VEHICLE`, `NOUN_ANIMAL_KIND`, `NOUN_BODY_OF_WATER`, `NOUN_TERRAIN`, `NOUN_CELESTIAL`, `NOUN_BUILDING`, `NOUN_GARMENT`, `NOUN_TOOL`) | Noun-mutex groups for `isa(category, X)` exclusion. Members curated to avoid hyponym overlap (person/animal, sun/star, desk/table excluded). |
 
@@ -1857,7 +1873,7 @@ Generated by `cd mkdata && python3 build_solver_data.py` (fast, ~1 sec):
 | Generated file | Contents | Used by |
 |----------------|----------|---------|
 | `solver/data_canonicals.py` | `CANONICALS` dict (~752 entries, all POS merged) | `semnormalize.py` |
-| `solver/data_antonyms.py` | `ANTONYMS` dict (~850 directional pairs) | `semnormalize.py` |
+| `solver/data_antonyms.py` | `ANTONYMS` dict (~311 directional pairs) | `semnormalize.py` |
 | `solver/data_synonyms.py` | `SOFT_SYNONYMS` dict (~12K words, bidirectional) | `lc_post_inject.py` |
 | `solver/data_exclusions.py` | `EXCLUSION_GROUPS` + `EXCLUSION_INDEX` (~205 groups, 5 atom shapes — adjective `has_property`, `is_rel2` target, `is_rel2` preposition, `has_degree_rel2` preposition, `isa` noun-mutex) | `lc_post_inject.py` |
 
@@ -1980,8 +1996,51 @@ rewriting that caused the chain bug. `needs_blocker=True` is used because many o
 pairs are gradable (abundant/scarce, hot/cold) where a middle ground exists and a hard
 exclusion would overshoot.
 
+*Verb-result-state bridges* (`inject_verb_result_state_axioms`):
+- Pair table `_VERB_RESULT_STATES = {(destroy, destroyed), (break, broken),
+  (damage, damaged), (finish, finished), (complete, completed),
+  (kill, killed), (repair, repaired)}`.
+- For each pair whose verb appears in input or `axiom_vocab`, emits two
+  defeasible (0.9) bridges (event-based and stative property-name) targeting
+  `present @ next-world` so mutex axioms fire on the question's present-tense
+  reading.
+- Run before `inject_exclusion_axioms` so result-state words become eligible
+  for the exclusion injector's REQUIRE_BOTH_SIDES check.
+
+*Verb mutex* (`inject_verb_mutex_axioms`):
+- Pair table `_VERB_MUTEX_PAIRS` (currently `(pass, fail)`).  Emits a
+  defeasible 0.85 axiom per pair with `$block`, mutex'ing the two `has_type`
+  event predicates on a shared event variable.  Fires only when both verbs of
+  the pair appear in input clauses.
+
+*Kinship mutex* (`inject_kinship_mutex_axioms`):
+- 16 gender-paired role pairs (sister/brother, mother/father, queen/king, …).
+  Each pair emits two atom shapes: `isa` 3-arg (no `$ctxt`) and
+  `is rel2 "X of"` 5-arg (with `$ctxt`).
+
+*Containment bridge* (`inject_containment_bridge_axioms`):
+- Source relations `{filled with, contain, containing, contains}` → canonical
+  `is rel2 in` with swapped args.  Treats `in` as always-axiomatic (no
+  axiom-vocab gating).  Fires only when the source relation is in the input.
+
+*Beneficiary ↔ "for"* (`inject_beneficiary_for_bridge`):
+- Bridge axiom unifying `has beneficiary E X` with the prepositional form
+  `is rel2 "for" E X` so queries written either way match assertions written
+  the other.
+
+*Carrier lift* — see *Carrier vocabulary lift* above.
+
+*World-graph geometry* (`inject_world_geometry`):
+- Emits the minimal `next(Wi, Wi+1)` chain spanning the concrete world
+  constants actually present.  Skips emission entirely when ≤1 world is
+  present; otherwise fills any gaps in `[min_idx, max_idx]` so `before`
+  transitivity still closes.
+
 *Axiom-vocab predicate-root blocklist* (`AXIOM_VOCAB_ROOTS`):
-A frozenset of ~50 verb/noun roots used as predicate names in `axioms_std.js` (e.g. `give`, `have`, `move`, `own`).  `build_antonyms` drops any pair where either side's root is in this set, preventing semnormalize from rewriting through axiom-vocab words and breaking proof chains.  Reduced ANTONYMS from ~850 to ~621 entries.
+A frozenset of ~50 verb/noun roots used as predicate names in `axioms_std.js`
+(e.g. `give`, `have`, `move`, `own`).  `build_antonyms` drops any pair where
+either side's root is in this set, preventing semnormalize from rewriting
+through axiom-vocab words and breaking proof chains.
 
 *Axiom vocabulary cache* (`axiom_vocab.py`):
 - Extracts content words from axiom files (e.g. `axioms_std.js`), caches in `.vocab` sibling file
@@ -2167,7 +2226,7 @@ front of the house?":
 
 ### Adding new predicates
 
-1. Add the predicate to the whitelist table in `prompts/stage2_instructions.txt` (section
+1. Add the predicate to the whitelist table in `prompts/stage2_instructions_full.txt` (section
    `== 5. PREDICATE INVENTORY ==`).
 2. Add examples to `prompts/stage2_examples.txt` showing the new predicate in context.
 3. If the predicate should receive `$ctxt`, add it to `CTXT_ELIGIBLE` in `lc_ctxt.py`.
@@ -2176,7 +2235,7 @@ front of the house?":
 
 ### Modifying Stage-1 parsing behaviour
 
-Edit `prompts/stage1_instructions.txt` and add/update examples in `prompts/stage1_examples.txt`.
+Edit `prompts/stage1_instructions_full.txt` and add/update examples in `prompts/stage1_examples.txt`.
 The most impactful sections are:
 - `== 4. TYPE CLASSIFICATION ==` — when to use `real`/`situation`/`strict_rule`/`normal_rule`
 - `== 12. ADJECTIVES ==` — the adjectives field format
@@ -2184,7 +2243,7 @@ The most impactful sections are:
 
 ### Modifying Stage-2 compilation behaviour
 
-Edit `prompts/stage2_instructions.txt` and `prompts/stage2_examples.txt`.  The most impactful
+Edit `prompts/stage2_instructions_full.txt` and `prompts/stage2_examples.txt`.  The most impactful
 sections are:
 - `== 4. QUANTIFICATION RULES ==` — how each ASU type is compiled to FOL
 - The Property and Relation Predicate Selection Rule — `has degree property` vs `has property`

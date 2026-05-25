@@ -7,7 +7,16 @@
 # expected value, and reports a summary.
 #
 # Default test file: tests/tests_core.py
-# Run with -help to see all options.
+#
+# All command-line flags are documented in the `helptext` string below
+# (search for "======== helptext ========"); the same text is printed by
+# `python3 test.py -help`.
+#
+# Auto-resume: by default, results are appended to test_output.txt and
+# re-parsed on the next run, so tests already in the log are skipped and
+# only new ones execute. Pass -restart to wipe the log and rerun
+# everything; pass -logfile PATH to use a different log; or delete
+# test_output.txt manually.
 #
 #-----------------------------------------------------------------
 # Copyright 2026 Tanel Tammet (tanel.tammet@gmail.com)
@@ -275,6 +284,12 @@ def run_file(path, solver_opts):
   if resume_count > 0:
     _print(f"Resuming: skipping {resume_count} already completed tests "
            f"({resumed_passed} passed, {resumed_failed} failed)")
+    if resume_count >= len(tests):
+      _print()
+      _print(f"All {len(tests)} tests in {path} are already recorded in "
+             f"{log_file_path}. Nothing new to run.")
+      _print("Use -restart to wipe the log and rerun from scratch, "
+             "or -help for other options.")
   if show_verbose:
     _print()
 

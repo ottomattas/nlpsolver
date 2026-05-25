@@ -11,14 +11,14 @@ Checks, in order:
 Exits 0 on success, non-zero on the first hard failure.
 
 Run from anywhere; resolves repo paths relative to this script's location:
-    python3 llmpipe/smoketest.py
+    python3 smoketest.py
 """
 
 import os
 import subprocess
 import sys
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 def step(msg):
@@ -105,20 +105,67 @@ def check_secrets():
     ok("found key file(s): " + ", ".join(found))
 
 
+def _discover_python_interpreters(udppipe):
+  """Return a list of candidate python3 paths likely to host stanza.
+
+  Order: current interpreter, $VIRTUAL_ENV, any venv-shaped directory found
+  in conventional locations. A directory counts as a venv if it contains
+  pyvenv.cfg (so naming — .venv / venv / my-venv / custom — doesn't matter)."""
+  seen = []
+  def add(py):
+    # Use abspath, NOT realpath: a venv's bin/python3 is a symlink that
+    # resolves to the system python, but the venv path is what activates
+    # the venv's site-packages. Dedup by location, not inode.
+    py = os.path.abspath(py)
+    if os.path.isfile(py) and py not in seen:
+      seen.append(py)
+  add(sys.executable)
+  venv_env = os.environ.get("VIRTUAL_ENV")
+  if venv_env:
+    add(os.path.join(venv_env, "bin", "python3"))
+  search_roots = [REPO_ROOT, udppipe, os.path.join(REPO_ROOT, "llmpipe"),
+                  os.path.expanduser("~/.virtualenvs")]
+  for root in search_roots:
+    if not os.path.isdir(root):
+      continue
+    try:
+      entries = os.listdir(root)
+    except OSError:
+      continue
+    for name in entries:
+      cand = os.path.join(root, name)
+      if (os.path.isfile(os.path.join(cand, "pyvenv.cfg"))
+          and os.path.isfile(os.path.join(cand, "bin", "python3"))):
+        add(os.path.join(cand, "bin", "python3"))
+  return seen
+
+
 def check_udppipe():
   print("[6/6] udppipe stanza availability (optional)")
   udppipe = os.path.join(REPO_ROOT, "udppipe")
   if not os.path.isdir(udppipe):
     warn("udppipe/ not found — skipping")
     return
-  try:
-    import stanza  # noqa: F401
-  except ImportError:
-    warn("stanza not installed — udppipe will not run.")
-    warn("To enable: pip install -r udppipe/requirements.txt && "
-         "python3 -c 'import stanza; stanza.download(\"en\")'")
-    return
-  ok("stanza importable — udppipe is ready (start with ./udppipe/nlpserver.py)")
+  # udppipe is typically run from its own venv (per udppipe/README.md), so
+  # the interpreter running this script may not be the one that has stanza.
+  # Auto-discover any venv-shaped directory rather than hard-coding names.
+  candidates = _discover_python_interpreters(udppipe)
+  for py in candidates:
+    try:
+      r = subprocess.run([py, "-c", "import stanza; print(stanza.__version__)"],
+                         capture_output=True, timeout=15)
+    except Exception:
+      continue
+    if r.returncode == 0:
+      version = r.stdout.decode().strip()
+      where = "current interpreter" if py == os.path.abspath(sys.executable) else py
+      ok("stanza " + version + " importable (" + where +
+         ") — udppipe is ready (start with ./udppipe/nlpserver.py)")
+      return
+  warn("stanza not installed in any discovered interpreter — udppipe will not run (llmpipe does not need it).")
+  warn("Checked: " + ", ".join(candidates))
+  warn("To enable, follow the venv recipe in " +
+       os.path.join(udppipe, "README.md") + " (Installation section).")
 
 
 def main():
@@ -131,7 +178,8 @@ def main():
   check_udppipe()
   print()
   print("All smoke-test checks passed.")
-  print("Next step: python3 llmpipe/solver/solve.py \"YOUR QUESTION\"")
+  print("Next step: cd " + os.path.join(REPO_ROOT, "llmpipe") +
+        " && python3 solver/solve.py \"YOUR QUESTION\"")
 
 
 if __name__ == "__main__":
