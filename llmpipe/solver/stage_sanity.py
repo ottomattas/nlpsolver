@@ -464,6 +464,44 @@ def _collect_question_ids_from_logic(node, found):
       _collect_question_ids_from_logic(child, found)
 
 
+def _check_stage2_multiple_questions(logic):
+  """Detect when Stage-2 emits more than one @id package whose body
+  contains a `question` or `ask` wrapper.  The gk prover accepts only
+  one @question per call; multiple questions cause "several questions
+  given" errors and the pipeline cannot dispatch them.
+
+  Triggered when a single conditional yes/no like "If A and B, does C?"
+  is broken into separate sub-questions instead of a single conditional
+  question with antecedent (A & B) and consequent C.
+  """
+  if not isinstance(logic, list):
+    return []
+  found = set()
+  _collect_question_ids_from_logic(logic, found)
+  if len(found) < 2:
+    return []
+  sids = sorted(found)
+  return [Issue(
+    kind="multiple_questions",
+    location=", ".join("@id:" + s for s in sids),
+    description=("Stage-2 emitted " + str(len(sids)) + " separate "
+                 "question/ask packages (@ids " + ", ".join(sids) + "). "
+                 "The downstream prover accepts at most ONE query per "
+                 "input, so multiple question packages cannot be answered "
+                 "together.  If the source sentence is a single "
+                 "conditional yes/no (e.g. \"If A and B, does C?\") or a "
+                 "single factive (e.g. \"Does X know that Y?\"), encode "
+                 "the whole question as ONE package whose body wraps the "
+                 "complete formula — e.g. [\"question\", [\"implies\", "
+                 "[\"and\", A, B], C]] for the conditional, or "
+                 "[\"question\", [\"and\", knows-A, fact-Y]] for the "
+                 "factive embedding.  Assertions extracted from question "
+                 "presuppositions belong in their own assertion packages "
+                 "(no question/ask wrapper), not as separate queries."),
+    evidence="question @ids: " + ", ".join(sids),
+  )]
+
+
 def _check_stage2_missing_question(logic, s1_json):
   """Detect Stage-1 query units that have no corresponding question/ask
   package in Stage-2.  Triggered when either unit.type == "query" or the
@@ -476,14 +514,23 @@ def _check_stage2_missing_question(logic, s1_json):
       continue
     raw = pkg.get("raw", "") if isinstance(pkg.get("raw", ""), str) else ""
     raw_has_q = "?" in raw
-    for unit in pkg.get("units", []) or []:
+    units = pkg.get("units", []) or []
+    # If any unit in the package is already query-typed, trust Stage-1's
+    # split: only flag query-typed units.  Otherwise (no explicit query
+    # type) fall back to the raw-has-"?" hail-mary so a totally missing
+    # query type doesn't go unnoticed.
+    has_query_unit = any(
+      isinstance(u, dict) and u.get("type") == "query" for u in units)
+    for unit in units:
       if not isinstance(unit, dict):
         continue
       uid = unit.get("unit_id")
       if not isinstance(uid, str):
         continue
       utype = unit.get("type")
-      if utype == "query" or raw_has_q:
+      if utype == "query":
+        expected.append((uid, raw))
+      elif raw_has_q and not has_query_unit:
         expected.append((uid, raw))
   if not expected:
     return []
@@ -1091,6 +1138,7 @@ def check_stage2(logic, s1_json=None):
   issues.extend(_check_stage2_event_shapes(logic))
   issues.extend(_check_stage2_inner_content_event_time(logic, s1_json))
   issues.extend(_check_stage2_missing_question(logic, s1_json))
+  issues.extend(_check_stage2_multiple_questions(logic))
   issues.extend(_check_stage2_entity_id_typos(logic))
   return issues
 

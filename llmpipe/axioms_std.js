@@ -938,17 +938,10 @@ Does John 1 have two cars?
 // The is_rel2 PERSISTENCE axiom (above, §6) already blocks on moved(?:X,?:W)
 // for the same reason — this brings tense-migration in line.
 //
-// RISKS / KNOWN LIMITATIONS:
-//   * Past-location queries about moved entities ("Was Sandra at the
-//     kitchen?" asked at W2) lose this migration path. They must fall
-//     back to a direct past-tense assertion or the same-world
-//     question_bridge.
-//   * The default prover strategy (negative_pref/posunitpara) suffers
-//     a search-space slowdown when there are 4+ motion events with the
-//     same actor — case 198 (8 events, multiple actors) goes from
-//     wrong-but-derivable to "no answers found" within the time budget.
-//     Investigation deferred. Workaround: -strategy query_focus closes
-//     4-event same-actor cases.
+// LIMITATION: Past-location queries about moved entities ("Was Sandra
+// at the kitchen?" asked at W2) lose this migration path. They fall
+// back to a direct past-tense assertion or the same-world
+// question_bridge.
 //
 // SCOPE: only is_rel2 — the other §12 migration axioms (has_property,
 // have, has_part, can, has_degree_*, has_actor, has_target, ...) describe
