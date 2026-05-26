@@ -66,6 +66,8 @@ _STOP_WORDS = frozenset({
   "near", "above", "below", "beside", "behind", "before", "after",
   "during", "around", "along", "across", "against", "among", "within",
   "then", "than", "as", "not", "no",
+  # Focus particles (not pre-nominal adjectives; "Only John" must render as "John")
+  "only", "just", "even", "also", "merely", "too",
   # Relative pronouns / wh-words (prevent "whom Eve" or "which car" as qualifiers)
   "who", "whom", "whose", "which", "where", "what",
 }) | IRREGULAR_PAST_VERBS

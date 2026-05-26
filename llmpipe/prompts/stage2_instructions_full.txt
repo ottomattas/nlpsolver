@@ -659,6 +659,48 @@ Do NOT add isa type constraints to a rule unless they are essential to the logic
 Relation-Only Rules: If a rule relates two entities (e.g., "If X is a grandfather of Y..."),
 use only the relationship predicate (is rel2). Do NOT add categorical checks like isa(person, X) or isa(grandfather, X).
 
+--- 5.11 Focus Particle "Only" / "Just" on the Subject ---
+
+When ASU.text starts with "Only" or "Just" before a subject entity
+(e.g., "Only John 1 bought a car 2."), emit TWO @id packages with
+the SAME sid as the parent ASU (do NOT invent a new sid like
+"S1_only" — the pipeline handles same-sid duplicates):
+  (a) the positive fact, encoded as without "Only";
+  (b) an exclusivity rule of the shape:
+        forall X, E, Y, ...:
+          (activity(E) ∧ has_type(E, VERB) ∧ has_actor(E, X) ∧
+           has_target(E, Y) ∧ isa(TARGET_TYPE, Y) ∧ ...)
+          →  X = NAMED_SUBJECT
+
+Critical shape rules for (b):
+- The actor MUST be a forall-bound variable X in the antecedent
+  (via has_actor(E, X)), NOT the named subject directly.
+- The conclusion MUST be an equality ["=", "X", "NAMED_SUBJECT"]
+  — not a positive [has actor, E, NAMED_SUBJECT] atom (the prover
+  needs the equality to refute via UNA).
+- Non-subject participants MUST be introduced as forall variables
+  with isa-type constraints (forall Y + isa(car, Y)), NOT as
+  references to the concrete Stage-1 entity id (e.g., "car 2").
+
+--- 5.12 Focus Particle "Only" / "Just" on the Object / Verb Phrase ---
+
+When "only" or "just" sits between the subject and the verb (e.g.,
+"John 1 only eats apples."), focus is on the object / verb complement.
+Emit TWO @id packages with the SAME sid:
+  (a) the positive fact, with the verb's normal modal classifier
+      (use "typical" for habituals like "eats apples");
+  (b) an object-exclusivity rule of the shape:
+        forall E, V, ...:
+          (activity(E) ∧ has_type(E, VERB) ∧ has_actor(E, SUBJECT) ∧
+           has_target(E, V) ∧ MODAL(E))
+          →  isa(OBJECT_TYPE, V)
+
+The rule body MUST repeat the positive fact's modal classifier, like
+typical(E) for habituals, if present.
+
+Same rule as §5.11: do NOT reference concrete Stage-1 entity ids
+inside the exclusivity rule; use forall + isa(TYPE, V) instead.
+
 
 == 6. ACTION COMPILATION ==
 

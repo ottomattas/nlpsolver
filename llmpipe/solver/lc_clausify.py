@@ -165,17 +165,44 @@ def _strip_typical_from_antecedent(frm):
   (e.g. "if X eats berries" → exists E. isa(activity,E) ∧ typical(E) ∧ ...).
   Specific events never carry typical, so the conditional never fires.
   Strip typical from the antecedent only — it's a valid guard in consequents.
+
+  Exception: §5.12 object-exclusivity rules of the exact shape
+    implies(and(... has_target(E,V) ... typical(E) ...), isa(TYPE, V))
+  preserve typical, since the rule body needs it to unify with habitual
+  queries.  Detection is narrow: consequent must be a bare isa atom and
+  its second-arg variable must appear in the antecedent's has_target slot.
   """
   if not isinstance(frm, list) or not frm:
     return frm
   op = frm[0]
   if op == "implies" and len(frm) == 3:
-    ant = _drop_typical_conjuncts(frm[1])
+    if _is_object_exclusivity_shape(frm[1], frm[2]):
+      ant = frm[1]
+    else:
+      ant = _drop_typical_conjuncts(frm[1])
     con = _strip_typical_from_antecedent(frm[2])
     return [op, ant, con]
   if op in connectives or op in _opaque_wrappers:
     return [op] + [_strip_typical_from_antecedent(el) for el in frm[1:]]
   return frm
+
+
+def _is_object_exclusivity_shape(ant, con):
+  """True if (ant, con) matches §5.12 object-exclusivity:
+    consequent is a bare ["isa", TYPE, V] atom, and V appears as the
+    second arg of ["has target", E, V] within the antecedent.
+  """
+  if (not isinstance(con, list) or len(con) != 3 or con[0] != "isa"
+      or not isinstance(con[2], str)):
+    return False
+  v = con[2]
+  if not isinstance(ant, list) or not ant or ant[0] != "and":
+    return False
+  for conj in ant[1:]:
+    if (isinstance(conj, list) and len(conj) >= 3
+        and conj[0] == "has target" and conj[2] == v):
+      return True
+  return False
 
 
 def _drop_typical_conjuncts(frm):

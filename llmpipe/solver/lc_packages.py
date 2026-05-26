@@ -552,6 +552,8 @@ def convert_id_package(item, asu_index=None, uid_suffix=None, set_el_by_sid=None
     return []
 
   s1_time_value = None  # set below if Stage 1 has explicit time expression
+  s1_time_prep = None   # set below from asu_index[sid].time_prep
+  s1_state_tense = None # set below from asu_index[sid].state_tense
 
   # Override $ctxt parameters with Stage-1 ASU data when available.
   # Stage-1 "time", "pre_state", "location" are more reliable than scanning

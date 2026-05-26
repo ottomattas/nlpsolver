@@ -419,9 +419,21 @@ def _build_membership_axiom(setof_info):
   gen_conds = []
   rhs_atoms = []
 
+  _LOGICAL_OPS = {"exists", "forall", "and", "or", "not", "implies",
+                  "normally", "$and", "$or", "$not"}
+
   for cond in cond_list:
     if not isinstance(cond, list) or len(cond) < 2:
       gen_conds.append(copy.deepcopy(cond))
+      continue
+    # Skip logical operators (LLM-emitted nested quantifiers / connectives
+    # inside $setof conditions). Stage-2 §9.4 says events go OUTSIDE as a
+    # distributive forall/member block, but LLMs sometimes nest exists/and.
+    if cond[0] in _LOGICAL_OPS:
+      continue
+    # Skip atoms whose args contain compound terms — the membership-axiom
+    # builder only handles atoms with scalar (string/number) args.
+    if any(isinstance(a, list) for a in cond[1:]):
       continue
     gen_cond = [cond[0]]
     rhs_atom_pred = _unprefix_pred(cond[0])

@@ -239,6 +239,7 @@ _ISA_EXCL_GROUPS = frozenset({
     "NOUN_BUILDING",
     "NOUN_GARMENT",
     "NOUN_TOOL",
+    "NOUN_FRUIT",
 })
 
 
