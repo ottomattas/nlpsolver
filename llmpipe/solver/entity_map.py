@@ -65,6 +65,7 @@ _STOP_WORDS = frozenset({
   "into", "onto", "upon", "over", "under", "between", "through",
   "near", "above", "below", "beside", "behind", "before", "after",
   "during", "around", "along", "across", "against", "among", "within",
+  "outside", "inside", "beyond", "underneath", "beneath", "atop", "opposite",
   "then", "than", "as", "not", "no",
   # Focus particles (not pre-nominal adjectives; "Only John" must render as "John")
   "only", "just", "even", "also", "merely", "too",

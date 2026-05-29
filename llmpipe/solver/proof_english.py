@@ -1097,6 +1097,11 @@ def _has_type_render(e, args, neg=False):
   event type — "the flying event sk0 of X is a fly event" would be
   redundant.  Marks the Skolem fn as seen so other atoms in the same
   clause use the short form too.
+
+  When V is a variable, fall back to '<subj> has type V' (no "?:V
+  event" leak) and mark V as seen so a later atom in the same clause
+  referencing V (e.g. $defq0) renders bare instead of being
+  re-introduced as "some V".
   """
   first = args[0] if args else None
   verb = args[1] if len(args) > 1 else "?"
@@ -1112,6 +1117,13 @@ def _has_type_render(e, args, neg=False):
           _RENDER_CTX.seen.add(sub)
   else:
     subj = e(0)
+  if isinstance(verb, str) and looks_like_var(verb):
+    if _RENDER_CTX is not None:
+      _RENDER_CTX.seen.add(verb)
+    verb_name = entity_name(verb, with_url=True, proof_mode=True)
+    if neg:
+      return subj + " does not have type " + verb_name
+    return subj + " has type " + verb_name
   if neg:
     return subj + " is not a " + str(verb) + " event"
   return subj + " is a " + str(verb) + " event"

@@ -373,6 +373,8 @@ _ARITY_TABLE = {
   "has time": 3,
   "typical": 1,
   "typically": 2,
+  "=": 2,
+  "!=": 2,
 }
 
 

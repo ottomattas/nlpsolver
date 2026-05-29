@@ -86,6 +86,7 @@ from lc_post_normalize import (
   strip_isa_entity as _strip_isa_entity,
   add_possessive_have as _add_possessive_have,
   add_haspart_for_typed_have as _add_haspart_for_typed_have,
+  inject_have_to_haspart_axioms as _inject_have_to_haspart_axioms,
   strip_degree_predicates as _strip_degree_predicates,
 )
 from lc_post_reify import (
@@ -765,6 +766,11 @@ def rawlogic_convert(logic, s1_json=None):
   # Bridge have(X,Y,CT) -> has_part(X,Y,CT) when a rule uses has_part on the
   # same noun type (case 207: "John has a long trunk" + has_part-typed rule).
   _add_haspart_for_typed_have(result)
+
+  # Forward bridge axiom (have -> has_part), type-gated, to complement
+  # axioms_std.js §2 (has_part -> have).  Closes case 6: assertion with
+  # -has_part and query with -have on the same body-part type.
+  _inject_have_to_haspart_axioms(result)
 
   # Normalize has property / has degree property based on the gradable whitelist.
   # Must run before _coerce_relclass so relclass coercion sees the correct predicate.

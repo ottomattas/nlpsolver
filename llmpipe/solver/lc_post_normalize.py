@@ -986,6 +986,72 @@ def add_haspart_for_typed_have(result):
     result.insert(first_q + i, fact)
 
 
+def inject_have_to_haspart_axioms(result):
+  """Bridge axiom: for body-part-typed Y, have(X, Y, Ctxt) -> has_part(X, Y, Ctxt).
+
+  axioms_std.js §2 ships the converse (has_part -> have).  The forward
+  direction is needed for case 6: assertion "Elephants do not have wings"
+  encodes as -has_part(X, Y, Ctxt); query "Who does not have a wing?"
+  encodes as -have(X, Y, Ctxt).  Without a forward bridge the prover
+  can't link the two; contrapositive of the new axiom
+  (isa(T,Y) ∧ -has_part(X,Y) -> -have(X,Y)) closes the gap.
+
+  Type-gated: emits one axiom per type T that appears as a has_part
+  premise (-isa(T, Y) + -has_part(_, Y, _)) in some rule clause — same
+  gate as add_haspart_for_typed_have.  Unconditional have == has_part
+  would over-generalise ("John has a book" -> book is structural part).
+
+  Defeasible at 0.9 confidence (no $block).  A $block(0, $not(has_part))
+  guard would circularly self-block in case 6: the proof needs the
+  bridge's positive has_part to combine with the rule body's
+  -has_part, but that very -has_part is independently derivable, so
+  the block would suppress the bridge before it can fire.  Confidence
+  weighting alone (0.9 × rule confidence) is enough to demote the
+  bridged conclusion below a directly-asserted contradicting fact.
+  """
+  def _is_var(s):
+    return isinstance(s, str) and s.startswith("?:")
+
+  rule_haspart_types = set()
+  for obj in result:
+    if not isinstance(obj, dict) or "@logic" not in obj:
+      continue
+    clause = obj["@logic"]
+    if not (isinstance(clause, list) and clause and isinstance(clause[0], list)):
+      continue
+    haspart_vars = set()
+    for atom in clause:
+      if (isinstance(atom, list) and len(atom) >= 3
+          and atom[0] == "-has part" and _is_var(atom[2])):
+        haspart_vars.add(atom[2])
+    if not haspart_vars:
+      continue
+    for atom in clause:
+      if (isinstance(atom, list) and len(atom) >= 3
+          and atom[0] == "-isa"
+          and isinstance(atom[1], str)
+          and atom[2] in haspart_vars):
+        rule_haspart_types.add(atom[1])
+
+  if not rule_haspart_types:
+    return
+
+  first_q = next((i for i, o in enumerate(result) if "@question" in o), len(result))
+  axioms = []
+  for t in sorted(rule_haspart_types):
+    axioms.append({
+      "@name": "sent_haspart_bridge",
+      "@logic": [
+        ["-isa", t, "?:Y"],
+        ["-have", "?:X", "?:Y", "?:Ctxt"],
+        ["has part", "?:X", "?:Y", "?:Ctxt"],
+      ],
+      "@confidence": 0.9,
+    })
+  for i, ax in enumerate(axioms):
+    result.insert(first_q + i, ax)
+
+
 # ======== degree-predicate stripping (noproptypes_flag) ========
 
 def strip_degree_predicates(result):

@@ -267,41 +267,50 @@ def call_gemini(version, sentences, sysprompt, max_tokens, think=False):
   key = _read_api_key(gemini_secrets_file, "Gemini")
   if key is None: return None
 
-  genconfig = {
-    "maxOutputTokens": max_tokens,
-    "temperature": temperature
-  }
-  if think and _gemini_supports_thinking(version):
-    budget = think if isinstance(think, int) else 8000
-    genconfig["thinkingConfig"] = {"thinkingBudget": budget}
-  call = {
-    "contents": [{"parts": [{"text": sentences}]}],
-    "generationConfig": genconfig
-  }
-  if sysprompt:
-    call["system_instruction"] = {"parts": [{"text": sysprompt}]}
+  def _attempt(budget):
+    genconfig = {
+      "maxOutputTokens": budget,
+      "temperature": temperature
+    }
+    if think and _gemini_supports_thinking(version):
+      tbudget = think if isinstance(think, int) else 8000
+      genconfig["thinkingConfig"] = {"thinkingBudget": tbudget}
+    call = {
+      "contents": [{"parts": [{"text": sentences}]}],
+      "generationConfig": genconfig
+    }
+    if sysprompt:
+      call["system_instruction"] = {"parts": [{"text": sysprompt}]}
 
-  utils.debug_print("gemini call", call, flag=calldebug)
-  url = "/v1beta/models/" + version + ":generateContent"
-  data = _post_with_retry("generativelanguage.googleapis.com", url,
-                          json.dumps(call),
-                          {"content-Type": "application/json", "x-goog-api-key": key},
-                          "Gemini")
-  if data is None: return None
+    utils.debug_print("gemini call", call, flag=calldebug)
+    url = "/v1beta/models/" + version + ":generateContent"
+    data = _post_with_retry("generativelanguage.googleapis.com", url,
+                            json.dumps(call),
+                            {"content-Type": "application/json", "x-goog-api-key": key},
+                            "Gemini")
+    if data is None:
+      return None, None
+    if "candidates" not in data:
+      return llm_error("Gemini response has no candidates: " + str(data)), None
+    cand = data["candidates"][0]
+    if "content" not in cand:
+      return llm_error("Gemini response has no content: " + str(cand)), None
+    if "parts" not in cand["content"]:
+      return llm_error("Gemini response has no parts: " + str(cand)), None
+    utils.debug_print("gemini response:", data, flag=debug)
+    res = ""
+    for el in cand["content"]["parts"]:
+      if "text" in el:
+        res += el["text"].strip()
+    return res, cand.get("finishReason")
 
-  if "candidates" not in data:
-    return llm_error("Gemini response has no candidates: " + str(data))
-  cand = data["candidates"][0]
-  if "content" not in cand:
-    return llm_error("Gemini response has no content: " + str(cand))
-  if "parts" not in cand["content"]:
-    return llm_error("Gemini response has no parts: " + str(cand))
-
-  utils.debug_print("gemini response:", data, flag=debug)
-  res = ""
-  for el in cand["content"]["parts"]:
-    if "text" in el:
-      res += el["text"].strip()
+  res, finish = _attempt(max_tokens)
+  # gemini-2.5+ has built-in thinking that counts against maxOutputTokens, so a
+  # verbose answer can be truncated mid-formula (finishReason MAX_TOKENS). The
+  # downstream JSON repair then closes the fragment into a malformed atom. Retry
+  # once with a larger output budget so the answer has room beyond the thinking.
+  if finish == "MAX_TOKENS":
+    res, finish = _attempt(max(max_tokens * 2, 16000))
   return res
 
 

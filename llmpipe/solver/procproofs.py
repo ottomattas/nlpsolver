@@ -554,18 +554,17 @@ def _format_who_answers(answers, logic=None):
   non_self = [(v, s, c) for v, s, c in all_vals if not s]
   self_only = [(v, s, c) for v, s, c in all_vals if s]
 
-  # Decide which answer set to render.  Three mutually-exclusive cases:
+  # Decide which answer set to render.
   #   - non_self non-empty: prover found real answers; render those.
-  #   - non_self empty + prop_names exist: render only the injected
-  #     properties below; self_only would be tautological.
-  #   - both empty: keep self_only as a fallback (the isa_types injection
-  #     below may replace it for case 236-style queries).
+  #   - otherwise: drop self_only entirely.  A bare "Who is John?" → "John."
+  #     restatement is tautological and worse than "Unknown."  When the fact
+  #     base supplies isa_types or prop_names, the injection in
+  #     _classify_use_vals below surfaces them; if nothing is known, the
+  #     final answer falls through to "Unknown."
   if non_self:
     use_vals = non_self
-  elif prop_names:
-    use_vals = []
   else:
-    use_vals = self_only
+    use_vals = []
 
   types, properties, equalities, surviving_values = _classify_use_vals(
     use_vals, isa_types, prop_names, who_entity, non_self, self_only, seen,
