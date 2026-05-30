@@ -508,6 +508,17 @@ def _format_who_answers(answers, logic=None):
   # leaks within the same proof.
   all_vals = []  # (value, is_self_ref, confidence)
   seen = set()
+  # Disjunctive answer detection: a single answer object whose val carries
+  # 2+ $ans atoms is a multi-witness disjunctive residual from a clause-
+  # level proof (e.g. case-analysis on "X or Y is …").  Render with "or"
+  # instead of "and" — see also _format_answers line ~921 which already
+  # handles this for the non-who-query path.
+  is_disjunctive = any(
+    isinstance(a.get("answer"), list)
+    and sum(1 for x in a["answer"]
+            if isinstance(x, list) and len(x) >= 2 and x[0] == "$ans") > 1
+    for a in answers
+  )
 
   for ans in answers:
     val = ans.get("answer")
@@ -613,7 +624,8 @@ def _format_who_answers(answers, logic=None):
 
   result = parts[0]
   if len(parts) > 1:
-    result = ", ".join(parts[:-1]) + " and " + parts[-1]
+    join_word = " or " if is_disjunctive else " and "
+    result = ", ".join(parts[:-1]) + join_word + parts[-1]
 
   # Qualitative confidence prefix based on the MINIMUM confidence across
   # the surviving answer set (the weakest link in the claim):

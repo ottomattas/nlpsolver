@@ -115,12 +115,12 @@ Usage:
   python test.py [options] [testfile ...]
 
 Test files are Python files containing a single list literal of
-[input, expected] pairs, e.g.:
+[id, input, expected] triples, e.g.:
   [
-    ["Elephants are animals. John is an elephant. John is an animal?", True],
-    ["Elephants are animals. Who is an animal?", "An elephant."],
-    ["John has a car?", None],   # None means "Unknown" is the expected answer
-    ["John gave a book to Mary. What did Mary receive?", ["A book.", "The book."]],
+    [1, "Elephants are animals. John is an elephant. John is an animal?", True],
+    [2, "Elephants are animals. Who is an animal?", "An elephant."],
+    [3, "John has a car?", None],   # None means "Unknown" is the expected answer
+    [4, "John gave a book to Mary. What did Mary receive?", ["A book.", "The book."]],
   ]
 When expected is a list, the test passes if the received answer matches
 ANY element of the list.
@@ -181,11 +181,14 @@ def _load_progress(log_path):
     return (0, 0, 0, [])
 
   i = 0
+  cur_case = None
   cur_input = None
   cur_expected = None
   while i < len(lines):
     line = lines[i].rstrip("\n")
-    if line.startswith("Input:    "):
+    if line.startswith("Case:     "):
+      cur_case = line[len("Case:     "):]
+    elif line.startswith("Input:    "):
       cur_input = line[len("Input:    "):]
     elif line.startswith("Expected: "):
       cur_expected = line[len("Expected: "):]
@@ -203,7 +206,8 @@ def _load_progress(log_path):
           if rline.startswith("Received: "):
             received = rline[len("Received: "):]
             break
-        errors.append(([cur_input, cur_expected], received))
+        errors.append(([cur_case, cur_input, cur_expected], received))
+      cur_case = None
       cur_input = None
       cur_expected = None
     i += 1
@@ -311,12 +315,13 @@ def run_file(path, solver_opts):
       continue
     if limit and (ran - resume_count) >= limit:
       break
-    if filter_pattern and filter_pattern not in test[0]:
+    if filter_pattern and filter_pattern not in test[1]:
       continue
 
     ran += 1
-    inp      = test[0]
-    expected = test[1]
+    case_id  = test[0]
+    inp      = test[1]
+    expected = test[2]
 
     # --- run solver ---
     try:
@@ -334,6 +339,7 @@ def run_file(path, solver_opts):
     if show_compact:
       _print("." if ok else "F", end="", flush=True)
       # Always write structured lines to log for resume support
+      _log_write("Case:    ", case_id)
       _log_write("Input:   ", inp)
       _log_write("Expected:", _display(expected))
       _log_write("Received:", received)
@@ -341,6 +347,7 @@ def run_file(path, solver_opts):
       _log_write()
     elif show_quiet:
       # No console output, but write structured lines to log
+      _log_write("Case:    ", case_id)
       _log_write("Input:   ", inp)
       _log_write("Expected:", _display(expected))
       _log_write("Received:", received)
@@ -350,6 +357,7 @@ def run_file(path, solver_opts):
       if ok and show_failures_only:
         pass  # suppress passing tests on console
       else:
+        _print("Case:    ", case_id)
         _print("Input:   ", inp)
         _print("Expected:", _display(expected))
         _print("Received:", received)
@@ -357,6 +365,7 @@ def run_file(path, solver_opts):
         _print()
       # If suppressed on console, still write to log for resume
       if ok and show_failures_only:
+        _log_write("Case:    ", case_id)
         _log_write("Input:   ", inp)
         _log_write("Expected:", _display(expected))
         _log_write("Received:", received)
@@ -630,8 +639,9 @@ def _print_summary(ran, passed, failed, elapsed, errors):
     _print()
     _print("Failed tests:")
     for test, received in errors:
-      _print("  Input:   ", test[0])
-      _print("  Expected:", _display(test[1]))
+      _print("  Case:    ", test[0])
+      _print("  Input:   ", test[1])
+      _print("  Expected:", _display(test[2]))
       _print("  Received:", received)
       _print()
 

@@ -66,6 +66,9 @@ options={
   "json_flag": False,   # if True, show logic in raw JSON; if False, use traditional syntax
   "show_details_flag": False, # if True, show stage-1/2 JSON and prover input/output
   "gkin_file": None,          # if set, save GK input to this file
+  # runtests artifact collector: when set, populated with gk_command etc.
+  # Not user-facing; set by english_to_answer(collect=...).
+  "_collect": None,
 }
 
 # cache

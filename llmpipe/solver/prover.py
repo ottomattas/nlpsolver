@@ -260,6 +260,13 @@ def call_prover(logic, s1_json=None):
     except Exception as e:
       print("Warning: could not write GK input file " + gkin_file + ": " + str(e))
 
+  # runtests collector: capture the gk command line with a placeholder for
+  # the temp infile so it stays reproducible.
+  collect = options.get("_collect")
+  if collect is not None:
+    cmd_params = [p if p != infilename else "<gk-input>" for p in params]
+    collect["gk_command"] = " ".join(cmd_params)
+
   sres=get_proof_from_cache(None,params)
   if not sres:
     try:

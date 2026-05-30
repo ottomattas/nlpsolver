@@ -47,7 +47,7 @@ use_llm = "gemini"
 gptversion = "gpt-5.1"
 claudeversion = "claude-sonnet-4-6"
 geminiversion = "gemini-2.5-flash"
-deepseekversion = "deepseek-chat"          # V3.2; use "deepseek-reasoner" for thinking
+deepseekversion = "deepseek-v4-flash"      # V4-flash (deepseek-chat alias was V3.2, deprecated); "deepseek-reasoner" for thinking
 
 # API key files (absolute paths relative to llmpipe/)
 _secrets_dir = os.path.normpath(os.path.join(_root, "..", "secrets"))

@@ -110,7 +110,7 @@ def main():
   print(result)
 
 
-def english_to_answer(text, options=None):
+def english_to_answer(text, options=None, collect=None):
   """Full pipeline: English -> LLM parse -> logic convert -> prove -> answer.
 
   LLM calls within this pipeline are cached by default (controlled by
@@ -121,10 +121,22 @@ def english_to_answer(text, options=None):
   Arguments:
     text    -- English text containing statements and a question (string)
     options -- optional dict of option overrides (keys as in globals.options)
+    collect -- optional dict that, if provided, is populated with pipeline
+               artifacts for downstream analysis: stage1, stage2,
+               stage_1_fixes, stage_2_fixes, stage_1_retries, stage_2_retries,
+               clauses (list of clause dicts with @nl injected), gk_command,
+               proof, answer, nl_proof.  Keys with empty/null values are
+               omitted.  Setting collect forces the prover-explain pass on so
+               the English proof explanation is captured.
 
   Returns the answer string.  On any error returns a string starting with
   "Error:" rather than raising an exception or calling sys.exit().
   """
+  if options is None:
+    options = {}
+  if collect is not None:
+    options["_collect"] = collect
+    options["prover_explain_flag"] = True
   if options:
     globals.set_global_options(options)
 
@@ -142,6 +154,19 @@ def english_to_answer(text, options=None):
   s1_json, s2_json, parse_stats = llmparse.parse_text(
     text, llm=llm, version=llm_version, tokens=max_tokens, think=think_flag
   )
+
+  if collect is not None:
+    if s1_json is not None:
+      collect["stage1"] = s1_json
+    if s2_json is not None:
+      collect["stage2"] = s2_json
+    for stage_key, out_key in (("s1_fixes", "stage_1_fixes"),
+                                ("s2_fixes", "stage_2_fixes"),
+                                ("s1_retries", "stage_1_retries"),
+                                ("s2_retries", "stage_2_retries")):
+      val = parse_stats.get(stage_key) or []
+      if val:
+        collect[out_key] = list(val)
 
   if debug:
     llmparse.print_stats(parse_stats)
@@ -170,6 +195,9 @@ def english_to_answer(text, options=None):
 
   if logic is None:
     return "Error: rawlogic_convert returned None."
+
+  if collect is not None:
+    collect["clauses"] = _build_clauses_with_nl(logic, s1_json)
 
   # --- show "sentences mapped to clauses" block ---
   if show_logic or debug:
@@ -211,7 +239,56 @@ def english_to_answer(text, options=None):
   # --- process_proof: post-process prover output into final answer (procproofs.py) ---
   answer = process_proof(proof_result, text=text, s1_json=s1_json, s2_json=s2_json, logic=logic, options=options)
 
+  if collect is not None:
+    # process_proof appends "\n\n<explanation>" when prover_explain_flag is on.
+    # Split so the JSON output has separate `answer` and `nl_proof` fields.
+    if isinstance(answer, str) and "\n\n" in answer:
+      short, expl = answer.split("\n\n", 1)
+      collect["answer"] = short
+      if expl.strip():
+        collect["nl_proof"] = expl
+    else:
+      collect["answer"] = answer
+    if isinstance(proof_result, str) and proof_result.strip():
+      # gk returns JSON; store as parsed object so the dump doesn't drown
+      # in \" escapes.  Fall back to the raw string if parsing fails (e.g.
+      # error messages, "Error: ..." returns).
+      try:
+        collect["proof"] = json.loads(proof_result)
+      except Exception:
+        collect["proof"] = proof_result
+
   return answer
+
+
+def _build_clauses_with_nl(logic, s1_json):
+  """Return a copy of the clause list with an @nl key on each clause whose
+  value is the source English (from build_asu_text_map), or a synthetic
+  bracket-tag for population / generated clauses.  Used only for the
+  runtests JSON output — the gk-bound serializer keeps its own // comments.
+  """
+  from utils import build_asu_text_map, _name_base
+  asu_map = build_asu_text_map(s1_json) if s1_json else {}
+  out = []
+  for clause in logic:
+    if not isinstance(clause, dict):
+      out.append(clause)
+      continue
+    name = clause.get("@name", "")
+    base = _name_base(name)
+    is_pop = clause.get("@sourcetype") == "populate"
+    if is_pop:
+      nl = "[population: from input]"
+    elif base in asu_map:
+      nl = asu_map[base]
+    elif base == "pop_what":
+      nl = "[population: class witnesses for what-query]"
+    else:
+      nl = "[generated: " + base + "]"
+    c = dict(clause)
+    c["@nl"] = nl
+    out.append(c)
+  return out
 
 
 def _show_simplified_to(text, s1_json):

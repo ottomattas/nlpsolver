@@ -205,6 +205,7 @@ def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, think, sta
   if fixes:
     _debug_write("Fixes applied: " + ", ".join(fixes))
     stats[key + "_json_fixes"] += len(fixes)
+    _record_fixes(stats, key, fixes)
     parsed, err = _try_parse(fixed)
     if parsed is not None:
       _debug_write("Fixed JSON parsed OK")
@@ -214,6 +215,7 @@ def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, think, sta
 
   # --- LLM retry ---
   stats[key + "_retry_calls"] += 1
+  stats[key + "_retries"].append("json-fail retry: " + (err or "parse error"))
   retry_input = _build_retry_prompt(input_text, raw)
   _debug_write("Retrying stage " + str(stage_nr) + " with error feedback...")
 
@@ -237,6 +239,7 @@ def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, think, sta
   if fixes2:
     _debug_write("Retry fixes applied: " + ", ".join(fixes2))
     stats[key + "_json_fixes"] += len(fixes2)
+    _record_fixes(stats, key, fixes2)
     parsed, err = _try_parse(fixed2)
     if parsed is not None:
       stats[key + "_retry_ok"] += 1
@@ -287,6 +290,14 @@ def _maybe_sanity_retry(stage_nr, input_text, parsed, raw, check_fn,
     stats[key + "_sanity_retries"] += 1
     _debug_write("Stage " + str(stage_nr) + " sanity retry #" + str(attempt)
                  + " with " + str(len(current_issues)) + " issue(s)")
+    # Record a short message summarising why the retry fired.
+    issue_msgs = []
+    for it in current_issues:
+      kind = getattr(it, "kind", "") or ""
+      desc = getattr(it, "description", "") or ""
+      m = (kind + ": " + desc) if kind and desc else (kind or desc or str(it))
+      issue_msgs.append(m if len(m) < 120 else m[:117] + "...")
+    stats[key + "_retries"].append("sanity #" + str(attempt) + ": " + "; ".join(issue_msgs))
     suffix = _format_retry_suffix(current_issues, current_parsed)
     retry_input = input_text + suffix
 
@@ -306,6 +317,7 @@ def _maybe_sanity_retry(stage_nr, input_text, parsed, raw, check_fn,
       fixed_new, fixes_new = fix_json(raw_new)
       if fixes_new:
         stats[key + "_json_fixes"] += len(fixes_new)
+        _record_fixes(stats, key, fixes_new)
         parsed_new, perr = _try_parse(fixed_new)
         if parsed_new is not None:
           raw_final = fixed_new
@@ -639,7 +651,26 @@ def _make_stats():
     "s2_retry_calls", "s2_retry_ok", "s2_retry_fail",
     "s2_sanity_retries", "s2_sanity_ok", "s2_sanity_fail",
   ]
-  return {k: 0 for k in keys}
+  d = {k: 0 for k in keys}
+  # Detail lists for runtests: fix names actually applied and retry messages.
+  # "stripped markdown fence" is excluded from fix lists per spec.
+  d["s1_fixes"] = []
+  d["s2_fixes"] = []
+  d["s1_retries"] = []
+  d["s2_retries"] = []
+  return d
+
+
+_SKIP_FIX_NAMES = {"stripped markdown fence"}
+
+
+def _record_fixes(stats, key, fixes):
+  """Append non-skipped fix names to the stage's fix list."""
+  if not fixes:
+    return
+  for f in fixes:
+    if f not in _SKIP_FIX_NAMES:
+      stats[key + "_fixes"].append(f)
 
 
 def print_stats(stats):
