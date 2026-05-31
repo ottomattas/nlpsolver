@@ -54,6 +54,14 @@ options={
   # sysprompt and input text, so a cached result is only reused when every
   # call parameter is identical.  Set to False or pass -nollmcache to disable.
   "use_llm_cache_flag": True,
+  # Gemini context caching: OFF by default.
+  # When enabled, sysprompts >= 16K chars are uploaded once to Google's
+  # cachedContents service and referenced by handle on each call, which
+  # dodges the per-request input-token cap that triggers instant 429s.
+  # Note: cached tokens still count against per-minute TPM, so caching
+  # helps with large-prompt bursts but doesn't unblock sustained throughput.
+  # Set to True or pass -geminicache to enable.
+  "use_gemini_cache_flag": False,
   # Semantic normalisation: ON by default.
   # Applies antonym folding and canonical word substitution to GK clauses
   # before they are passed to the prover.  Set to True or pass -nosemnormal

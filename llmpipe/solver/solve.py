@@ -375,6 +375,12 @@ def _parse_cmd_line():
     elif el in ["-nollmcache", "--nollmcache"]:
       # LLM response caching is ON by default; this disables it for this run
       opts["use_llm_cache_flag"] = False
+    elif el in ["-geminicache", "--geminicache"]:
+      # Gemini context caching (cachedContents API) is OFF by default;
+      # this enables uploading the sysprompt once and referencing it on
+      # each call, which dodges the per-request input-token cap on large
+      # prompts that triggers instant 429s.
+      opts["use_gemini_cache_flag"] = True
     elif el in ["-nosemnormal", "--nosemnormal"]:
       opts["nosemnormal_flag"] = True
     elif el in ["-nosolve", "--nosolve"]:
@@ -519,6 +525,7 @@ other:
 LLM caching (ON by default — cached per provider, version, all parameters and input):
  -nollmcache  : disable LLM response caching for this run
  -clearcache  : clear all caches (LLM, proof, parse) and exit
+ -geminicache : enable Gemini context caching (cachedContents) for large sysprompts
 
 semantic normalisation (ON by default):
  -nosemnormal : disable antonym folding and canonical word substitution

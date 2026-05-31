@@ -23,6 +23,8 @@ import time
 import sys
 import json
 import os
+import random
+import hashlib
 import http.client
 
 # Absolute path to llmpipe/ so secrets files are found from any working directory.
@@ -198,9 +200,18 @@ def _read_api_key(filepath, provider):
   return key
 
 
+_rate_limit_max_retries = 7   # 429: exponential backoff goes 2,4,8,16,32,64,128s
+
+
 def _post_with_retry(host, url, body, headers, provider):
-  """POST JSON body to host/url with retries. Returns parsed response dict or None."""
+  """POST JSON body to host/url with retries. Returns parsed response dict or None.
+
+  Two retry tracks:
+    - 429 (rate limit): exponential backoff with jitter, _rate_limit_max_retries
+      attempts. Quota windows are typically per-minute, so short retries don't help.
+    - Other HTTP / connection failures: linear backoff, max_retries attempts."""
   trycount = 0
+  rate_tries = 0
   while True:
     conn = http.client.HTTPSConnection(host, timeout=timeout)
     try:
@@ -215,6 +226,27 @@ def _post_with_retry(host, url, body, headers, provider):
         return llm_error(provider + " connection failed after " + str(max_retries) + " retries")
       print(provider + " connection failure, retrying...")
       time.sleep(sleepseconds * trycount)
+      continue
+    if response.status == 429:
+      # Rate-limited: exponential backoff with jitter. Provider quota
+      # windows are typically per-minute, so we wait long enough for the
+      # quota to refresh rather than burning through short retries.
+      message = ""
+      try:
+        data = json.loads(response.read())
+        if "error" in data and "message" in data["error"]:
+          message = ": " + data["error"]["message"]
+      except:
+        pass
+      if conn: conn.close()
+      rate_tries += 1
+      if rate_tries > _rate_limit_max_retries:
+        return llm_error(provider + " API rate-limited (429) after " + str(_rate_limit_max_retries) + " retries" + message)
+      base = 2 ** rate_tries                       # 2, 4, 8, 16, 32, 64, 128
+      delay = base + random.uniform(0, base * 0.25)
+      print(provider + " rate-limited (429), waiting " + str(round(delay, 1)) +
+            "s before retry " + str(rate_tries) + "/" + str(_rate_limit_max_retries))
+      time.sleep(delay)
       continue
     if response.status != 200 or response.reason != "OK":
       message = ""
@@ -246,6 +278,80 @@ def _post_with_retry(host, url, body, headers, provider):
 # ======== gemini ========
 
 # https://ai.google.dev/gemini-api/docs/text-generation
+# https://ai.google.dev/gemini-api/docs/caching   (context caching)
+
+# Context-caching state.  Keyed by (model, sha256(sysprompt)) → (cache_name,
+# expire_ts).  Per-process — multiprocessing workers each maintain their
+# own map.  Gemini enforces a tight per-request input-token cap above which
+# large prompts get instant 429 even on the paid tier; caching shifts the
+# sysprompt onto Google's server and removes that weight from the request.
+_gemini_cache_map = {}
+_GEMINI_CACHE_TTL = 1800        # seconds (30 min) — extendable per call
+_GEMINI_CACHE_GRACE = 30        # treat cache as expired 30s before TTL ends
+_GEMINI_CACHE_MIN_CHARS = 16000 # ~4096 tokens; gemini's minimum cacheable size
+
+
+def _gemini_cache_key(model, sysprompt):
+  h = hashlib.sha256(sysprompt.encode("utf-8")).hexdigest()
+  return (model, h)
+
+
+def _gemini_should_cache(sysprompt):
+  if not sysprompt or len(sysprompt) < _GEMINI_CACHE_MIN_CHARS:
+    return False
+  try:
+    import globals as _globals
+    return bool(_globals.options.get("use_gemini_cache_flag", True))
+  except Exception:
+    return True   # default ON when running stand-alone
+
+
+def _gemini_invalidate_cache(model, sysprompt):
+  _gemini_cache_map.pop(_gemini_cache_key(model, sysprompt), None)
+
+
+def _gemini_get_or_create_cache(model, sysprompt, api_key):
+  """Return a live cachedContents name for this (model, sysprompt), creating
+  one if no live entry exists.  Returns None on failure (caller should
+  fall back to inline system_instruction)."""
+  ckey = _gemini_cache_key(model, sysprompt)
+  now = time.time()
+  entry = _gemini_cache_map.get(ckey)
+  if entry and entry[1] > now + _GEMINI_CACHE_GRACE:
+    return entry[0]
+
+  body = {
+    "model": "models/" + model,
+    "contents": [{"role": "user", "parts": [{"text": sysprompt}]}],
+    "ttl": str(_GEMINI_CACHE_TTL) + "s",
+  }
+  host = "generativelanguage.googleapis.com"
+  conn = http.client.HTTPSConnection(host, timeout=timeout)
+  try:
+    conn.request("POST", "/v1beta/cachedContents", json.dumps(body),
+                 headers={"content-Type": "application/json",
+                          "x-goog-api-key": api_key})
+    resp = conn.getresponse()
+    raw = resp.read().decode()
+    if resp.status != 200:
+      print("Gemini cache creation failed (" + str(resp.status) + " " +
+            str(resp.reason) + "): " + raw[:300])
+      return None
+    data = json.loads(raw)
+  except KeyboardInterrupt:
+    raise
+  except Exception as e:
+    print("Gemini cache creation error: " + str(e))
+    return None
+  finally:
+    conn.close()
+
+  name = data.get("name")
+  if not name:
+    return None
+  _gemini_cache_map[ckey] = (name, now + _GEMINI_CACHE_TTL)
+  return name
+
 
 def _gemini_supports_thinking(version):
   """Return True if this Gemini model version supports thinkingConfig.
@@ -267,7 +373,13 @@ def call_gemini(version, sentences, sysprompt, max_tokens, think=False):
   key = _read_api_key(gemini_secrets_file, "Gemini")
   if key is None: return None
 
-  def _attempt(budget):
+  # Context-caching path: shift large sysprompts off the wire to dodge
+  # the per-request input-token ceiling that triggers instant 429s.  The
+  # cache stays alive for ~30 min and is reused across calls.
+  use_cache = _gemini_should_cache(sysprompt)
+  cache_name = _gemini_get_or_create_cache(version, sysprompt, key) if use_cache else None
+
+  def _attempt(budget, with_cache):
     genconfig = {
       "maxOutputTokens": budget,
       "temperature": temperature
@@ -279,7 +391,9 @@ def call_gemini(version, sentences, sysprompt, max_tokens, think=False):
       "contents": [{"parts": [{"text": sentences}]}],
       "generationConfig": genconfig
     }
-    if sysprompt:
+    if with_cache:
+      call["cachedContent"] = with_cache
+    elif sysprompt:
       call["system_instruction"] = {"parts": [{"text": sysprompt}]}
 
     utils.debug_print("gemini call", call, flag=calldebug)
@@ -304,13 +418,25 @@ def call_gemini(version, sentences, sysprompt, max_tokens, think=False):
         res += el["text"].strip()
     return res, cand.get("finishReason")
 
-  res, finish = _attempt(max_tokens)
+  res, finish = _attempt(max_tokens, cache_name)
+  # If the cache was missing server-side (e.g. evicted between our
+  # creation and use), _attempt returns None.  Drop the cache entry,
+  # recreate, retry once; on second failure, fall back to inline
+  # system_instruction (which will hit the input-token cap but at
+  # least surfaces a useful error rather than silently failing).
+  if res is None and cache_name:
+    _gemini_invalidate_cache(version, sysprompt)
+    new_cache = _gemini_get_or_create_cache(version, sysprompt, key)
+    if new_cache:
+      res, finish = _attempt(max_tokens, new_cache)
+    if res is None:
+      res, finish = _attempt(max_tokens, None)
   # gemini-2.5+ has built-in thinking that counts against maxOutputTokens, so a
   # verbose answer can be truncated mid-formula (finishReason MAX_TOKENS). The
   # downstream JSON repair then closes the fragment into a malformed atom. Retry
   # once with a larger output budget so the answer has room beyond the thinking.
   if finish == "MAX_TOKENS":
-    res, finish = _attempt(max(max_tokens * 2, 16000))
+    res, finish = _attempt(max(max_tokens * 2, 16000), cache_name)
   return res
 
 

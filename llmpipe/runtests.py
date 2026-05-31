@@ -476,6 +476,8 @@ def main():
                   help="Re-run cases whose existing JSON has an 'error' key")
   ap.add_argument("-redo", action="store_true",
                   help="Re-run all cases (overwrite existing JSON files)")
+  ap.add_argument("-geminicache", action="store_true",
+                  help="Enable Gemini context caching (off by default)")
   args = ap.parse_args()
 
   llms = [s.strip() for s in args.llms.split(",") if s.strip()]
@@ -509,6 +511,8 @@ def main():
 
   # Solver options — keep cache on per project rules.
   run_opts = {}
+  if args.geminicache:
+    run_opts["use_gemini_cache_flag"] = True
 
   # Per-case parallel: one worker per (case, llm).  Pool size = len(llms).
   ctx = get_context("fork")
@@ -550,6 +554,13 @@ def main():
       # Update per-LLM summary.json after each case so it's live.
       for llm in llms:
         update_summary(os.path.join(outroot, llm), llm)
+
+      # Throttle solo gemini runs: free-tier RPM is tight, and back-to-back
+      # Stage-1 + Stage-2 calls + no parallelism across LLMs make 429s easy
+      # to hit.  When other LLMs share the loop, their wall time naturally
+      # spaces gemini's calls, so no throttle is applied.
+      if llms == ["gemini"]:
+        time.sleep(3.0)
 
   elapsed = time.time() - start
   print()
