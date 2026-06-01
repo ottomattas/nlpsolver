@@ -190,8 +190,8 @@ llmpipe/
 ├── cache.db             SQLite cache (auto-created; not committed)
 │
 ├── ask.py               Direct LLM call tool (uses solver/llmcall.py)
-├── test.py              Test runner
-├── examine.py           Debug helper — runs one test case across all four LLMs in parallel
+├── test.py              Test runner (single-LLM, resumable text output)
+├── runtests.py          Batch runner — every case × N LLMs in parallel, one JSON per (case, llm)
 ├── checkprompt.py       Validate JSON in prompt example files
 ├── README.md            User-facing overview and installation
 ├── DOCUMENTATION.md     Full developer documentation (this file)
@@ -494,10 +494,16 @@ All Python source lives in `solver/`.  All scripts are run from `llmpipe/`.
 
 **Role:** CLI entry point and library facade.
 
-**Key function:** `english_to_answer(text, options=None) -> str`
+**Key function:** `english_to_answer(text, options=None, collect=None) -> str`
 Orchestrates the complete pipeline.  Calls `llmparse.parse_text`, then `rawlogic_convert`,
 then `prover.call_prover`, then `process_proof`.  Returns the answer string; on any error
 returns a string starting with `"Error:"` rather than raising.
+
+If `collect` is a dict, the pipeline fills it in place with the intermediate artifacts of
+the run — `stage1`, `stage2`, `clauses`, `gk_command`, `proof`, `nl_proof`, `answer` (it is
+stored as `globals.options["_collect"]` and populated as each stage completes).  This is the
+hook `runtests.py` uses to capture per-case JSON without re-running the pipeline; ordinary CLI
+and library callers leave it `None`.
 
 `main()` parses `sys.argv`, builds an options dict, and calls `english_to_answer`.
 
@@ -523,6 +529,7 @@ Output format and other flags:
 -nosolve           Parse only; do not call the prover
 -nollmcache        Disable LLM response caching for this run
 -clearcache        Clear all caches and exit
+-geminicache       Enable Gemini server-side context caching (off by default; see §5.3)
 -seconds N         Prover time limit (default 2)
 -simple            No context, no exceptions, simple properties
 ```
@@ -587,6 +594,28 @@ cache key encodes: provider, version, temperature, seed, max_tokens, think, sysp
 If a match is found, the cached response is returned immediately.  The result of every new LLM
 call is stored in the cache before returning.  Caching is controlled by
 `globals.options["use_llm_cache_flag"]` (default `True`).
+
+**Rate-limit (429) backoff:** In addition to the generic HTTP retry, `_post_with_retry`
+gives 429 (Too Many Requests) responses their own exponential-backoff loop, capped at
+`_rate_limit_max_retries = 7` attempts.  The delay doubles each attempt (2, 4, 8, … 128s)
+with up to 25% random jitter, so a burst that exhausts a per-minute quota window waits long
+enough for it to refill instead of hammering the endpoint.  429s do not count against the
+ordinary `max_retries` budget.  This matters most for Gemini, whose free/low tiers have tight
+per-minute request and token caps.
+
+**Gemini context caching (opt-in):** Gemini's lower tiers also impose a per-request
+input-token cap that the ~25–30K-token Stage-1/Stage-2 sysprompts can exceed, triggering an
+instant 429.  When `globals.options["use_gemini_cache_flag"]` is `True` (set via `-geminicache`;
+**default `False`**) and the sysprompt is at least `_GEMINI_CACHE_MIN_CHARS` (16K chars, ~4K
+tokens), `call_gemini` uploads the sysprompt once to Google's `cachedContents` service and
+references it by handle on each subsequent call, dodging the per-request cap.  Handles are kept
+in the module-level `_gemini_cache_map` with a `_GEMINI_CACHE_TTL` of 1800s; an expired-handle
+404 transparently recreates the cache, and a second failure falls back to inlining the prompt
+as a normal `system_instruction`.  Caveat: cached tokens still count toward the per-minute TPM
+budget, so this helps with large single prompts but not with sustained throughput — for that the
+429 backoff above does the real work.  The cache is transport-only and does **not** affect the
+SQLite cache key, so a cached and a non-cached Gemini call with identical parameters share the
+same `cache.db` entry.
 
 **Debug output:** Uses `utils.debug_print` with module-level `debug` and `calldebug` flags:
 - `debug = True` logs each provider's raw response
@@ -1997,6 +2026,12 @@ english_to_answer(text, {"prover_seconds": 5, "nocontext_flag": True})
 english_to_answer(text, {"use_llm_cache_flag": False})
 ```
 
+**To enable Gemini server-side context caching** (off by default — only needed on Gemini
+tiers with a tight per-request input-token cap; see §5.3):
+```python
+english_to_answer(text, {"use_gemini_cache_flag": True})   # or pass -geminicache on the CLI
+```
+
 ---
 
 ## 9. The mkdata toolkit and solver integration
@@ -2412,12 +2447,50 @@ following the pattern of `call_claude`, `call_gpt`, or `call_deepseek`, then dis
 
 ### Running tests
 
+There are two runners.  Both read the same test files, but each test file is now a list of
+`[id, input, expected]` triples (the leading integer `id` is required — it is the stable case
+number used across the runners and `testfixlog_may.txt`).
+
+**`test.py` — single LLM, human-readable, resumable.**  Writes a flat `test_output.txt`
+and re-uses prior results unless `-restart` is passed.
+
 ```bash
 python3 test.py                         # run all tests with the default LLM
 python3 test.py tests/tests_core.py -llm claude
+python3 test.py tests/tests_core.py -filter penguin -limit 20
 ```
 
-Each test is a `[text, expected_answer]` pair.  Add new tests to `tests/tests_core.py`.
+**`runtests.py` — every case × N LLMs in parallel, machine-readable.**  For each case it
+runs the requested LLMs concurrently (one worker per LLM) and writes one JSON file per
+`(case, llm)` to `testresults/<testname>/<llm>/case_NNNN.json`, where `<testname>` is derived
+from the test filename (`tests/tests_core.py` → `core`).  After every case it rebuilds each
+LLM's `summary.json` (pass/fail/error counts plus a `failed_or_errored` list), so progress is
+live and a run can be inspected or interrupted at any point.
+
+```bash
+# default: all four LLMs (gpt, claude, gemini, deepseek) over tests/tests_core.py
+python3 runtests.py
+
+# pick LLMs and a test file
+python3 runtests.py -llms claude,gpt tests/tests_core.py
+python3 runtests.py -llms gemini tests/tests_core_100.py -geminicache
+
+# selection
+python3 runtests.py -ids 11,15,18          # only these case ids
+python3 runtests.py -limit 50              # first 50 cases
+python3 runtests.py -filter penguin        # cases whose input contains "penguin"
+```
+
+**Resumption:** a `(case, llm)` is skipped if its JSON already exists.  Re-running therefore
+continues where a quota-exhausted or interrupted run stopped.  Pass `-redo-errors` to also
+re-run cases whose JSON contains an `"error"` key, or `-redo` to overwrite everything.  A
+solo-Gemini run (`-llms gemini`) inserts a small per-case throttle, since without other LLMs
+sharing the loop its back-to-back Stage-1/Stage-2 calls hit per-minute rate limits easily;
+pair it with `-geminicache` (and see §5.3) on tiers with a tight per-request input cap.
+
+The per-case JSON holds the full collected artifact set — `stage1`, `stage2`, `clauses`,
+`gk_command`, `proof`, `nl_proof`, `answer`, `correctness` — so failures can be triaged
+without re-running the pipeline.
 
 To regenerate the logconvert pretty-print check file after changes to `logconvert.py`:
 ```bash

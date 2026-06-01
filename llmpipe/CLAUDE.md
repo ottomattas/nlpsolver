@@ -46,6 +46,7 @@ Other:
 -llm NAME        LLM provider: gpt, claude, gemini, or deepseek
 -version VER     Model version string, e.g. claude-sonnet-4-6
 -nollmcache      Disable LLM response caching for this run
+-geminicache     Enable Gemini server-side context caching (off by default)
 -cache           Enable GK prover result caching (off by default)
 -nosolve         Parse to logic only, do not run the prover
 -seconds N       Give the prover N seconds (default 2)
@@ -370,6 +371,10 @@ a fix was implemented, and it has been verified to work:
 
 ### Other Top-Level Scripts
 
+- `runtests.py` — batch runner: every `[id,input,expected]` case × N LLMs in parallel, one
+  JSON per (case, llm) under `testresults/<name>/<llm>/case_NNNN.json`, with a live
+  `summary.json`. Resumes by skipping existing files; `-redo`/`-redo-errors` override. See
+  DOCUMENTATION.md §10.
 - `nlpsimplecollect.py` — collect LLM parsing results for a test file
 - `nlpsimpleconv.py` — parse and clean raw collected results
 - `collectmultillmconv.py` — orchestrate multiple LLM providers in one collection run

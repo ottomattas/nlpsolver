@@ -9,7 +9,9 @@ Installation
 ------------
 
 **Prerequisites:**
-- Linux on x86-64 (the bundled `../gk/gk` binary is a static Linux x86-64 ELF)
+- Linux on x86-64 (the bundled `../gk/gk` binary is a static Linux x86-64 ELF), or macOS on
+  Apple Silicon — unzip `../gk/gk-macos-ARM64.zip` and use the extracted `gk` in its place
+  (the llmpipe pipeline itself is only tested on Linux)
 - Python 3.10+ (only the standard library is required for llmpipe itself; no `pip install`)
 - An LLM API key from at least one of: Gemini, OpenAI, Anthropic, or DeepSeek
 
@@ -78,7 +80,6 @@ llmpipe/
 ├── axioms_std.js       Default background-knowledge axioms loaded by the gk prover
 ├── ask.py              Direct LLM call tool (uses solver/llmcall.py)
 ├── test.py             Test runner
-├── examine.py          Debug helper — runs one test case across all four LLMs
 ├── DOCUMENTATION.md    Developer documentation (full pipeline reference)
 ├── ENCODINGS.md        Stage-1 / Stage-2 / GK clause-list encoding reference
 ├── DEBUGGING.md        Debugging workflow + failure taxonomy
