@@ -353,7 +353,6 @@ ANTONYMS={
 "nascent":"dying",
 "native":"foreign",
 "nay":"yea",
-"near":"far",
 "nominal":"real",
 "nonexistent":"existent",
 "nonviolent":"violent",

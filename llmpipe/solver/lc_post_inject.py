@@ -680,6 +680,108 @@ def inject_beneficiary_for_bridge(result):
   return [{"@name": "frm_ben_for", "@logic": clause}]
 
 
+# ======== measure_of -> "<noun> of" relational bridge ========
+
+def inject_measure_relation_bridges(result):
+  """Dynamic measure_of -> "<noun> of" relational bridge.
+
+  For each measure noun N that appears in the problem BOTH as the first
+  argument of a $measure_of term AND as the relation "N of" of an is_rel2
+  atom, emit one bridge axiom:
+
+    [ ["-=", ["$measure_of", N, "?:S", "?:W"], "?:V"],
+      ["is rel2", N + " of", "?:V", "?:S", "?:Ctxt"] ]
+
+  Read: if the N of S equals V, then V is the "N of" S relationally
+  (E1=value, E2=subject — matching how stage-2 emits is_rel2 "<noun> of").
+  This lets a relationally-phrased measure question (ask X: is_rel2 "N of" X S)
+  reach the measure value V instead of only the definite description.
+
+  Replaces the former static per-noun block in axioms_std.js.  Gated on BOTH
+  forms being present so the bridge is added only when it can actually connect
+  a measure fact to a relational query — and generalises to any measure noun
+  (length / price / weight / height / ...), not a hard-coded list.
+  """
+  measure_nouns = set()  # N from ["$measure_of", N, ...]
+  rel_nouns = set()      # N from ["is rel2", "N of", ...]
+
+  def _walk(frm):
+    if not isinstance(frm, list) or not frm:
+      return
+    if isinstance(frm[0], list):
+      for atom in frm:
+        _walk(atom)
+      return
+    head = frm[0]
+    if head == "$measure_of" and len(frm) >= 2 and isinstance(frm[1], str):
+      measure_nouns.add(frm[1])
+    elif head in ("is rel2", "-is rel2") and len(frm) >= 2 \
+            and isinstance(frm[1], str) and frm[1].endswith(" of"):
+      rel_nouns.add(frm[1][:-len(" of")])
+    for arg in frm[1:]:
+      if isinstance(arg, list):
+        _walk(arg)
+
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    if "@logic" in obj:
+      _walk(obj["@logic"])
+    if "@question" in obj:
+      _walk(obj["@question"])
+
+  axioms = []
+  for noun in sorted(measure_nouns & rel_nouns):
+    clause = [
+        ["-=", ["$measure_of", noun, "?:S", "?:W"], "?:V"],
+        ["is rel2", noun + " of", "?:V", "?:S", "?:Ctxt"],
+    ]
+    axioms.append({"@name": "frm_measure_rel_bridge", "@logic": clause})
+  return axioms
+
+
+# ======== negative implicative bridge (refuse/decline) ========
+
+# Negative implicative verbs: "X refused/declined to V (Y)" entails X did NOT
+# actually V (Y).
+_NEG_IMPLICATIVE_VERBS = ("refuse", "decline")
+
+
+def inject_negative_implicative_bridges(result):
+  """Dynamic negative-implicative bridge for refuse/decline.
+
+  For each verb in _NEG_IMPLICATIVE_VERBS present in the input, emit:
+
+    refuse(E1) & has_content(E1,E2) & E2 = V(X,Y)
+      ->  no ACTUAL event E3 = V(X,Y)
+
+  so "Tom refused to eat the soup. Tom ate the soup?" proves False rather than
+  Unknown (the refused content event carries no actuality, so the query for an
+  actual eat fails; this constraint additionally forbids any other actual eat
+  of the same actor/target).  Mirror of the §5.2 factive bridge, negative
+  direction.  Replaces the former static axioms_std.js §5.2b block; emitted
+  only when "refuse"/"decline" actually appears (case 1597).
+  """
+  words = _collect_eligible_words(result)
+  axioms = []
+  for verb in _NEG_IMPLICATIVE_VERBS:
+    if verb not in words:
+      continue
+    clause = [
+        ["-has type",    "?:E1", verb,  "?:Ct1"],
+        ["-has content", "?:E1", "?:E2"],
+        ["-has type",    "?:E2", "?:V", "?:Ct2"],
+        ["-has actor",   "?:E2", "?:X", "?:Ct2"],
+        ["-has target",  "?:E2", "?:Y", "?:Ct2"],
+        ["-has type",    "?:E3", "?:V", "?:Ct3"],
+        ["-has actor",   "?:E3", "?:X", "?:Ct3"],
+        ["-has target",  "?:E3", "?:Y", "?:Ct3"],
+        ["-actuality",   "?:E3"],
+    ]
+    axioms.append({"@name": "frm_neg_implicative", "@logic": clause})
+  return axioms
+
+
 # ======== carrier vocabulary lift ========
 
 # Carrier nouns: small movable surfaces that "pass through" the on-support

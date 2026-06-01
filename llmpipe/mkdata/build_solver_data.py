@@ -44,6 +44,11 @@ MANUAL_ANTONYMS = {
     "unfinished": "finished",
     "incomplete": "complete",
     "undone":     "done",
+    "open":       "closed",     # case 235 — adjective state mutex.
+                                # "open" is in BLOCKED_ANTONYM_WORDS (verb sense),
+                                # so it can't go through the hard fold path;
+                                # the has_property exclusion only fires on the
+                                # adjectival reading when both words appear.
 }
 
 # Gradable adjective pairs whose mutual exclusion should be DEFEASIBLE
@@ -106,6 +111,10 @@ BLOCKED_ANTONYM_WORDS = frozenset({
     "top", "bottom", "front", "back", "left", "right",
     "rear", "head", "tail", "here", "there",
     "north", "south", "east", "west",
+    # Proximity — folding near->¬far rewrites the is_rel2/$defq0 "near"
+    # relation out from under the "Where is X?" where-query (case 1242 cluster).
+    # Handled instead by the PROXIMITY exclusion group (near / far_from).
+    "near", "far",
     # Temporal sequence — mutually exclusive at a time, not antonyms.
     "day", "night", "sunrise", "sunset",
     "waning", "waxing", "waking", "sleeping",

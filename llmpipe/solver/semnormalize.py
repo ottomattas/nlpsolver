@@ -67,6 +67,16 @@ def _eligible(s):
 
 # ======== atom-level normalisation ========
 
+# Predicate base name -> index of its degree-intensity slot (a closed enum
+# none/low/medium/high/more/less that must be left untouched by both passes).
+#   has degree property: [pred, PROPERTY, ENTITY, DEGREE, RELCLASS, CTXT]
+#   has degree rel2:     [pred, REL, E1, E2, DEGREE, RELCLASS, CTXT]
+_DEGREE_SLOT = {
+  "has degree property": 3,
+  "has degree rel2": 4,
+}
+
+
 def _normalize_atom(atom, allow_flip=True):
   """Normalise a single atom (list) in place; return change count.
 
@@ -92,7 +102,16 @@ def _normalize_atom(atom, allow_flip=True):
   changes = 0
   pred = atom[0]
   negated = isinstance(pred, str) and pred.startswith("-")
+  # The degree-intensity slot of degree predicates is a closed enum
+  # (none/low/medium/high/more/less), not lexical content.  It must never be
+  # antonym-folded or canonicalised — e.g. "low" is an ANTONYMS key mapping to
+  # "high", which would flip "somewhat big (low)" into "¬(big high)" and break
+  # the low→none intensity bridge (axioms_std.js §9).
+  base = pred[1:] if negated else pred
+  degree_slot = _DEGREE_SLOT.get(base)
   for i in range(1, len(atom)):
+    if i == degree_slot:
+      continue
     arg = atom[i]
     if isinstance(arg, list):
       # Skip $ctxt terms — these are context markers, not semantic content.

@@ -440,3 +440,63 @@ case-76 design note would do the work; see Case 76 entry above).
 ### Status
 Removed from `tests/tests_core.py` and `tests/tests_core_100.py`
 on 2026-05-30.  TODO: re-add once either (1) or (2) lands.
+
+---
+
+## Case 1610 — "knows who broke" ⊢ "knows it is broken"  (REMOVE, 2026-06-01)
+
+### Problem
+"John knows who broke the vase. Does John know that the vase is broken?"
+Expected **True**.  All four LLMs answer **Unknown**.
+
+The inference is epistemic **knowledge closure** combined with a
+result-state bridge:
+  knows[ ∃X. break(X, vase) ]   +   break(_, vase) ⊢ broken(vase)
+  ⟹  knows[ broken(vase) ].
+
+### How the four LLMs encode it (case_1610.json)
+All four use the knowledge-base machinery: `["kb", K, John, "knowledge", W]`,
+`["kb force", K, "factive"]`, `["kb holds", K, CONTENT]`.
+
+- **claude**: asserts the breaking in W0; `kb holds(K_S2,
+  [∃X∃E break(X,vase) ∧ actuality])` in W1.  Query: `kb holds(K_S3,
+  [isa(artifact,vase) ∧ broken(vase)])` in W1.
+- **gemini**: knowledge in W1 throughout; content `∃X isa(person,X) ∧
+  break(X,vase)`; query content `broken(vase)`.
+- **gpt**: nests an `["ask", X, …]` *inside* `kb holds` (a wh-knowledge
+  term), world W0.
+- **deepseek**: assertion knowledge in W0, query knowledge in W1 — world
+  mismatch.
+
+### Why it's hard (root cause, verified from the clause list)
+The `kb holds` **content is an opaque nested term** — the whole formula
+sits as the third argument of `kb holds` and is never clausified into
+provable atoms:
+```
+kb holds(K_S2, [∃X∃E: break(X,vase) ∧ actuality(E)])      ← known
+kb holds(K_S3, [isa(artifact,vase) ∧ broken(vase)])        ← queried
+```
+So:
+1. The `break → broken` result-state bridge (`frm_verb_result`, §verb-
+   result-state) operates on ordinary `has_property` atoms.  It **cannot
+   reach inside** the opaque `kb holds` term, so `knows[break]` never
+   becomes `knows[broken]`.
+2. There is no **knowledge-closure** mechanism: nothing rewrites
+   `kb holds(K, [break(X,Y)])` into `kb holds(K, [broken(Y)])`.  Doing so
+   needs structural pattern-matching + transformation of a deeply-nested
+   term, which gk does not do.
+3. Even with closure, the four encodings would not line up — different
+   worlds (W0 vs W1), gpt's nested `ask`, deepseek's world mismatch.
+
+### Why REMOVE (not postpone)
+A real fix is a bespoke epistemic knowledge-closure feature over opaque
+`kb holds` terms (apply selected world axioms — here break→broken — inside
+the knowledge scope), plus Stage-2 encoding normalisation so the known
+content and queried content share worlds/shape.  That is a substantial
+reasoning subsystem, well beyond a targeted axiom or pipeline pass, and is
+not justified by a single test case.
+
+### Status
+Logged REMOVE in `testfixlog_june.txt` (2026-06-01).  TODO: delete from
+`tests/tests_core.py` when the test set is next edited from the fixlog
+action tags.  Re-add only if a knowledge-closure mechanism is built.

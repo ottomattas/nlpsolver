@@ -27,7 +27,7 @@ representation so that a developer or LLM can quickly start extending or modifyi
    - 5.5 [lc_clausify.py](#55-lc_clausifypy)
    - 5.6 [lc_questions.py](#56-lc_questionspy)
    - 5.7 [lc_sets.py](#57-lc_setspy)
-   - 5.8 [procproofs.py](#58-procproofspy)
+   - 5.8 [procproofs.py + proof_answer_select.py + proof_answer_format.py](#58-procproofspy--proof_answer_selectpy--proof_answer_formatpy)
    - 5.9 [Proof rendering modules](#59-proof-rendering-modules) — `proof_render`, `proof_utils`, `proof_english`, `proof_logic`
    - 5.10 [proof_explain.py](#510-proof_explainpy)
    - 5.11 [prover.py](#511-proverpy)
@@ -116,7 +116,7 @@ prover.call_prover()               [solver/prover.py]
     │   Returns raw JSON result string
     │
     ▼
-procproofs.process_proof()         [solver/procproofs.py + proof_render.py + proof_explain.py]
+procproofs.process_proof()         [procproofs.py → proof_answer_select.py + proof_answer_format.py + proof_render.py + proof_explain.py]
     │   Parses prover JSON
     │   Selects best proof, formats answer
     │   Optionally renders step-by-step explanation
@@ -148,7 +148,9 @@ llmpipe/
 │   ├── lc_clausify.py   FOL → CNF clausification
 │   ├── lc_questions.py  Wh-question encoding and population facts
 │   ├── lc_sets.py       Set/counting: $setof rewriting, membership axioms, element instantiation
-│   ├── procproofs.py    Prover output → answer string
+│   ├── procproofs.py    Prover output → answer string (orchestrator)
+│   ├── proof_answer_select.py  Answer selection/filtering: tiers, measure pref, dedup
+│   ├── proof_answer_format.py  Answer rendering: who/what/where/when/bool formatters
 │   ├── proof_render.py  Proof rendering facade (re-exports from proof_utils/english/logic)
 │   ├── proof_utils.py   Entity naming, Skolem resolution, render context
 │   ├── proof_english.py Atom/clause → English rendering (table-driven)
@@ -645,7 +647,7 @@ list pipeline.  The computation is split across several files:
 
 | Module | Responsibility |
 |--------|---------------|
-| `logconvert.py` | Top-level orchestration: `rawlogic_convert` entry point, structural repair, what-question population, Stage-1 entity bookkeeping |
+| `logconvert.py` | Top-level orchestration: `rawlogic_convert` entry point, structural repair, what-question population, Stage-1 entity bookkeeping, phantom-isa-guard stripping (`_strip_phantom_query_guards`: drop an orphan `isa(C,E)` guard from a query body when E is a Stage-1 entity never asserted and used nowhere else in the query — a leaked definite-description referent that would otherwise make the whole conjunctive query unprovable) |
 | `lc_packages.py` | Per-`@id` package processing: `extract_package_ctx`, `convert_id_package`, `_process_question`/`_process_assertion`, raw wh-word probes, confidence distribution |
 | `lc_rewrites.py` | Pre-clausification formula rewrites (meta-predicate normalization incl. `"time of"`→`has_time`, tense-valued `has_time` stripping, verb normalization: travel/journey/move→go, hand/pass/send→give, receive→give with actor↔recipient swap, perspective-relation lift `["is rel2", got/received/saw/heard, X, Y]` → Davidsonian event, existential hoisting, spurious `can` removal, polarity flip) |
 | `lc_ctxt.py` | `$ctxt` injection, time-wrapper stripping, fresh variable generation |
@@ -840,9 +842,21 @@ Configurable via `globals.options["set_element_limit"]` (default 3).
 - `_instantiate_distributive_events(formula, setof_term, elements, source_name)` —
   create per-element event instances from forall/implies/member blocks
 
-### 5.8 procproofs.py
+### 5.8 procproofs.py + proof_answer_select.py + proof_answer_format.py
 
 **Role:** Post-processing of raw prover output into a human-readable answer.
+
+`procproofs.py` is the orchestrator; the two heavy halves live in sibling modules:
+
+| Module | Role |
+|--------|------|
+| `procproofs.py` | `process_proof` — the pipeline: parse prover JSON, strip the `#:` UNA prefix, drive selection then formatting, dispatch explanation. Plus `_parse_result`, `_strip_una_prefix`. |
+| `proof_answer_select.py` | Decides WHICH bindings survive: tier ranking, measure preference, unbound/leak/tautology filters, proof dedup. |
+| `proof_answer_format.py` | Renders the surviving bindings into English: who/what/where/when/bool formatters + the `@…_query`/`@askvars` shape probes. |
+
+The dependency graph is acyclic: `proof_answer_select` ← `proof_answer_format` ← `procproofs`.
+`proof_answer_format` imports just `_extract_class_names` and `_ans_object_tier` from
+`proof_answer_select`; selection imports nothing from formatting.
 
 **Key function:** `process_proof(proof_result, text=None, s1_json=None, logic=None, options=None) -> str`
 
@@ -850,8 +864,32 @@ Configurable via `globals.options["set_element_limit"]` (default 3).
 2. Checks for `"result": "answer found"`.  Returns `"Unknown."` if not found.
 3. Sorts answers by `_answer_goodness` (confidence desc, proof length asc).
 4. Filters to the best object-type tier: concrete entities > Skolem constants > population facts.
-   For `@what_query`: prefers population (class) over concrete (instance).
+   For `@what_query` the population-vs-concrete preference is split by query shape
+   (`_what_query_is_relational`, classifying by the answer variable's role and looking
+   through any `$defq` wrapper):
+   - **Relational** what-query — the answer variable is a relatum of an `is_rel2` /
+     `has_degree_rel2` atom (e.g. "What is X afraid of?" → `is_rel2("afraid of", X, ?)`).
+     The *kind* is the natural answer, so the population class beats a real concrete
+     instance (`population_beats_concrete=True` in `_filter_by_best_tier`): "A cat.",
+     not the incidental "Emily." (and not "Gertrude and Winona" when several instances
+     exist).
+   - **Classification** what-query — the answer variable is the entity of an `isa` atom
+     ("What is an Estonian city?" → `isa(estonian_city, ?X)`).  A real concrete entity
+     still wins: `Tallinn` beats "a city in Estonia" (cases 1258/1259).
    Resolves Skolem function answers to class names via `get_skolem_fn_type`.
+4a. **Unbound-answer filter** (`_answer_all_unbound`): drops answers whose `$ans`
+   answer-positions are entirely unbound `?:` variables.  These arise when a goal
+   is proved without ever instantiating the answer variable — e.g. a relationally
+   phrased query closed via a reflexive `$theof1` axiom, binding the definite
+   description but leaving `$ans` free — and would otherwise leak the bare
+   variable name (`"X3."`).  An unbound answer var is never a real binding.
+4b. **`$list` value-preference** (`_prefer_measure_value_answers`): when any answer
+   binds a measure value (`$list`, possibly nested in a `$get_world`/`$ctxt`
+   wrapper), keep only the `$list` answers.  This collapses the two-answer set the
+   `measure_of→"<noun> of"` bridge (§9.3) produces for a relational measure
+   question — *"the length of car A and 80000 meters"* → *"80000 meters"*.  No-op
+   when no answer carries a `$list`, so non-measure queries and reverse
+   *"what is 80 km long?"* entity answers are untouched.
 5. Formats the answer string via `_format_answers`:
    - Boolean `True`/`False` → `"True"` / `"False"`
    - Named entities → display name (strips numbering when unambiguous, strips URL when
@@ -860,17 +898,25 @@ Configurable via `globals.options["set_element_limit"]` (default 3).
 6. Optionally renders a step-by-step proof explanation (via `proof_explain.format_explanation`)
    when `-explain` is used.
 
-**Internal helpers:**
+**Internal helpers** (in `proof_answer_format.py`):
 
 - `_join_and_finish(parts)` — join a list of answer strings with "and", capitalise, add period;
-  shared by `_format_where_answers` and `_format_answers`
+  shared by `_format_prep_answers` and `_format_answers`
+
+Steps 3–4b above (`_answer_goodness`, `_filter_by_best_tier`, `_what_query_is_relational`,
+`_answer_all_unbound`, `_prefer_measure_value_answers`, the tautology/leak filters and
+`_deduplicate_proofs`) live in `proof_answer_select.py`; the `_format_*` renderers and
+query-shape probes (step 5) live in `proof_answer_format.py`.
 
 **Ambiguity handling:** Before formatting, `compute_ambiguity` (from `proof_render.py`) scans
 the full logic list to find entity names that appear with more than one number (e.g. `"John 1"`
 and `"John 3"`).  Such names keep their distinguishing number in output.
 
-**Imports from proof_render.py:** `compute_ambiguity`, `entity_name`, `ans_atom_name`
-**Imports from proof_explain.py:** `format_explanation`, `build_sentence_map`, `ans_display_key`
+**Imports:** `procproofs` imports `compute_ambiguity`/`compute_skolem_types`/`entity_name`/
+`set_entity_map` from `proof_render.py`, `format_explanation`/`build_sentence_map` from
+`proof_explain.py`, plus the selection/formatting entry points from the two sibling modules.
+`proof_answer_format` additionally imports `ans_atom_name`/`get_skolem_type`/`get_skolem_fn_type`/
+`get_entity_display` from `proof_render.py` and `ans_display_key` from `proof_explain.py`.
 
 ### 5.9 Proof rendering modules
 
@@ -1512,6 +1558,8 @@ bridge representation gaps.
 | World-graph geometry | `lc_post_inject.inject_world_geometry` | "Mary slept. Mary is awake. Was Mary awake?" → emits `next(W0,W1)` | Dynamic injection of the minimal `next(Wi,Wi+1)` chain spanning the concrete world constants actually present in the clause list. Replaces the static `W0..W12` chain that used to live in `axioms_std.js` §11. Skips emission entirely when ≤1 world is present (most single-tense problems); otherwise fills any gaps in `[min_idx, max_idx]` so `before` transitivity still closes. Keeps the `before` derivation graph small. |
 | Verb mutex injection | `lc_post_inject.inject_verb_mutex_axioms` | "Did everyone pass the exam? — No, Mary failed." → for each entity with both `pass` and `fail` events on it, emits a defeasible mutex preventing the same event from being both | Dynamic, cross-event mutex (distinct from `inject_exclusion_axioms`, which mutexes adjective properties on a single entity).  Pair table `_VERB_MUTEX_PAIRS` currently lists `(pass, fail)`.  Each pair emits a defeasible 0.85 axiom with `$block` so that an explicit positive can override.  Atom shape uses `has_type` event predicates plus shared `?:E` and `?:Ctxt`.  Does not fire unless both verbs of the pair appear in the input clauses. |
 | Verb-result-state injection | `lc_post_inject.inject_verb_result_state_axioms` | "The city was destroyed" → emits bridges to `has property "destroyed" #:city @ present @ next-world` | For each `(verb, past_participle)` pair in `_VERB_RESULT_STATES = {(destroy, destroyed), (break, broken), (damage, damaged), (complete, completed), (kill, killed), (repair, repaired)}` whose verb appears in the input, emits TWO defeasible (0.9) bridge axioms covering both Stage-2 encodings. Bridge A (event-based, gemini/deepseek): `has type E V Ct + has target E X Ct + next W W2 → has property <pp> X [present W2 ...]`. Bridge B (stative property-name, claude): `has property V X [_ W _ _ _] + next W W2 → has property <pp> X [present W2 ...]`. Both target the same `present @ next-world` slot so mutex axioms fire on the question's present-tense reading regardless of LLM encoding. Wired into `rawlogic_convert` BEFORE `inject_exclusion_axioms` so the result-state words become eligible for the exclusion injector (e.g. enables `destroyed/intact` mutex when "destroy" is in the input). `(finish, finished)` is intentionally omitted because `axioms_std.js` covers it statically. |
+| Measure→relation bridge | `lc_post_inject.inject_measure_relation_bridges` | "The length of the car is 80 km. What is the length of the car?" (relational `is_rel2 "length of"` query) → emits `=($measure_of(length,S,W), V) → is_rel2("length of", V, S, Ct)` | Dynamic, per measure noun N. Emitted ONLY when the clause list contains BOTH a `$measure_of(N,...)` term AND an `is_rel2 "N of"` atom (so the bridge can connect a measure fact to a relational query, and only then). Generalises to any measure noun (length / price / weight / height / …) — N is read from the clauses, not a hard-coded list. Clause is `value=E1, subject=E2`, matching how Stage 2 emits `is_rel2 "<noun> of"`. Replaces a former static per-noun block in `axioms_std.js`. Lets a relationally-phrased measure question reach the `$list` value rather than only the definite description; the resulting two-answer set (description + value) is collapsed to the value by the `$list` answer-preference in `procproofs` (see §5.8, step 4b). |
+| Negative-implicative bridge | `lc_post_inject.inject_negative_implicative_bridges` | "Tom refused to eat the soup. Tom ate the soup?" → emits `refuse(E1) ∧ has_content(E1,E2=V(X,Y)) → ¬(actual E3 = V(X,Y))` | Dynamic, one clause per verb in `refuse`/`decline`, emitted only when the verb appears. Mirror of the §5.2 factive bridge in the negative direction: a refused action did not actually happen. The refused inner content event carries no actuality (so it never matches an "actual event" query); this constraint additionally forbids any other actual event of the same verb/actor/target, so the query proves **False** (not just Unknown). Replaces a former static `axioms_std.js §5.2b` block. |
 | Kinship mutex injection | `lc_post_inject.inject_kinship_mutex_axioms` | "Sara is the sister of Mike. Is Sara the brother of Mike?" → emits `isa(sister,X) ∧ isa(brother,X) → false` (and the matching `is_rel2 "X of"` mutex) | Dynamic gender-paired role mutex covering 16 pairs: kinship (sister/brother, daughter/son, mother/father, wife/husband, aunt/uncle, niece/nephew), grand- (grandmother/grandfather, granddaughter/grandson), step- (step{mother,father,daughter,son,sister,brother}), god- (godmother/godfather), status (widow/widower, bride/groom), royalty (queen/king, princess/prince).  Each pair emits two atom shapes: `isa` 3-arg (no `$ctxt`) and `is rel2 "X of"` 5-arg with shared `$ctxt`.  Interacts with the `$theof1` chain-rewrite guard above — without that guard, two definites carrying both kinship roles for the same entity would chain-collapse and the mutex would never fire. |
 | `@sourcetype` stripping | Serialisation (`clause_list_to_json`) | Population facts carry `@sourcetype:"populate"` internally for processing — stripped before the prover sees them | Internal `@sourcetype` tags are excluded from prover input |
 
@@ -1727,7 +1775,7 @@ above 0.1 for typical probability inputs (`p ≥ 0.6` maps to `e ≥ 0.2`).
 #### Answer rendering with confidence
 
 The reported answer string carries a verbal qualifier derived from the proved confidence
-(`_format_bool_answer` in `procproofs.py:588`):
+(`_format_bool_answer` in `proof_answer_format.py`):
 
 | Boolean | `conf ≥` | Rendered |
 |---|---|---|
@@ -1781,7 +1829,7 @@ Questions starting or containing "what" / "which" get an `@what_query` marker se
 `_process_question` (via `_raw_has_what_word` which matches the wh-word as a whole
 word anywhere in the query text, not only at the start — case 243's "John smokes
 what?" is correctly detected).  For such queries, `_resolve_what_skolem_answers`
-(`procproofs.py`) replaces Skolem-typed answer values with population constants of the
+(`proof_answer_format.py`) replaces Skolem-typed answer values with population constants of the
 corresponding class:
 
 - Skolem **constant** like `"sk1_tobacco"` with an `isa(tobacco, sk1_tobacco)` fact
@@ -1808,7 +1856,8 @@ they contain digits (the skolem index).  Now if the Skolem has a known type from
 | `solver/logconvert.py` | `_process_assertion`, `_distribute_clause_confidence`, `_clause_has_block`, `_clause_has_skolem`, `_has_explicit_negation_at_top` (double-encoding safety net), `_raw_has_what_word`, `_raw_has_who_word`, `_has_what_query` |
 | `solver/lc_rewrites.py` | `negate_consequent` (used by polarity flip) |
 | `solver/lc_clausify.py` | `is_skolem_const`, `is_skolem_fn` (reused by the distribution) |
-| `solver/procproofs.py` | `_format_bool_answer`, `_format_answers`, `_format_who_answers` (qualitative prefix), `_resolve_what_skolem_answers`, `_extract_class_names`, `_filter_class_name_leaks` |
+| `solver/proof_answer_format.py` | `_format_bool_answer`, `_format_answers`, `_format_who_answers` (qualitative prefix), `_resolve_what_skolem_answers` |
+| `solver/proof_answer_select.py` | `_extract_class_names`, `_filter_class_name_leaks` |
 | `solver/globals.py` | prover confidence thresholds (`-confidence 0.1`, `-keepconfidence 0.1`) |
 | `prompts/stage1_instructions_full.txt` | PART 4 of `--- confidence ---`: explicit-negation-marker rule |
 
@@ -1894,7 +1943,7 @@ name string** (e.g. `"elephant"`) via a population fact like
 `isa(elephant, $some_elephant)`.  The resulting `$ans("elephant")` is not
 an entity answer — it's a leak from the meta-variable in the axiom.
 
-`_filter_class_name_leaks` in `procproofs.py` drops answers whose every
+`_filter_class_name_leaks` in `proof_answer_select.py` drops answers whose every
 `$ans` atom binds to a class name (computed by `_extract_class_names`:
 the set of first-arg strings from all `isa(CLASS, *)` atoms in the
 problem's clause list).  The filter fires only for generic
@@ -1922,7 +1971,7 @@ only matches present-tense results at the query world, not past-tense bridged fa
 
 The prover often returns multiple proofs for the same answer that differ only in temporal/world-navigation paths (e.g., 10 proofs for "in the house" using different world-state axiom routes W0→W1, W0→W1→W2, etc.).
 
-`_deduplicate_proofs(answers)` in `procproofs.py` eliminates redundant shadow proofs:
+`_deduplicate_proofs(answers)` in `proof_answer_select.py` eliminates redundant shadow proofs:
 
 1. **Group** answers by conclusion value (deep-equal) AND content fingerprint (frozenset of `sent_*` sources used in the proof).
 2. **Within each group** (same answer + same content sentences), proof A dominates proof B if ALL of:
@@ -1948,7 +1997,7 @@ Helper functions in `lc_clausify.py`:
 - `is_skolem_fn(val)` — matches list Skolem functions
 - `skolem_type_from_name(name)` — extracts type: `"sk0_house"` → `"house"`, `"sk0"` → `None`
 
-Skolem type resolution for rendering (`procproofs._resolve_skolem_entity`):
+Skolem type resolution for rendering (`proof_answer_format._resolve_skolem_entity`):
 1. **Fast path**: extract type from name via `skolem_type_from_name`
 2. **Fallback**: look up type from `compute_skolem_types` clause-list scan (handles old-format names and Skolem functions)
 
@@ -2208,6 +2257,16 @@ exclusion would overshoot.
   `is rel2 "for" E X` so queries written either way match assertions written
   the other.
 
+*Measure→relation bridge* (`inject_measure_relation_bridges`):
+- Per measure noun N, emits `=($measure_of(N,S,W), V) → is_rel2("N of", V, S, Ct)`
+  (value=E1, subject=E2) — only when the clauses contain BOTH a `$measure_of(N,…)`
+  fact and an `is_rel2 "N of"` atom.  Surfaces the `$list` measure value as an
+  answer to a relationally-phrased measure question (deepseek "what is the length
+  of X?").  N is read from the clauses, so it generalises to any measure noun;
+  replaces a former static per-noun block in `axioms_std.js`.  The resulting
+  description+value double answer is collapsed to the value by the `$list`
+  value-preference in `procproofs` (§5.8, step 4b).
+
 *Carrier lift* — see *Carrier vocabulary lift* above.
 
 *World-graph geometry* (`inject_world_geometry`):
@@ -2410,7 +2469,7 @@ front of the house?":
    `== 5. PREDICATE INVENTORY ==`).
 2. Add examples to `prompts/stage2_examples.txt` showing the new predicate in context.
 3. If the predicate should receive `$ctxt`, add it to `CTXT_ELIGIBLE` in `lc_ctxt.py`.
-4. If `procproofs.py` needs to render the predicate in an explanation, add an entry to
+4. If the predicate needs to render in an explanation, add an entry to
    `_PRED_TABLE` in `proof_render.py` (or a special-case handler in `_render_atom`).
 
 ### Modifying Stage-1 parsing behaviour
@@ -2440,10 +2499,11 @@ following the pattern of `call_claude`, `call_gpt`, or `call_deepseek`, then dis
 
 ### Improving proof post-processing
 
-`procproofs.py` is where answer extraction and explanation rendering live.  Key extension points:
+`procproofs.py` orchestrates answer post-processing; selection lives in
+`proof_answer_select.py` and rendering in `proof_answer_format.py`.  Key extension points:
 - `proof_explain.format_explanation` — generates the step-by-step English proof
-- `_answer_goodness` in `procproofs.py` — the sorting key for ranking multiple candidate answers
-- `_filter_by_best_tier` in `procproofs.py` — selects among concrete, Skolem, and population answers
+- `_answer_goodness` in `proof_answer_select.py` — the sorting key for ranking multiple candidate answers
+- `_filter_by_best_tier` in `proof_answer_select.py` — selects among concrete, Skolem, and population answers
 
 ### Running tests
 

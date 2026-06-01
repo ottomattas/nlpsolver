@@ -394,6 +394,50 @@ def run_file(path, solver_opts):
 
 # ======== result comparison ========
 
+# Unit conversion factors to a canonical base unit, grouped by dimension.
+# Singular unit names; the parser strips a trailing plural "s".
+_UNIT_FACTORS = {
+  # length -> meters
+  "millimeter": ("length", 0.001), "centimeter": ("length", 0.01),
+  "meter": ("length", 1.0), "kilometer": ("length", 1000.0),
+  # mass -> grams
+  "milligram": ("mass", 0.001), "gram": ("mass", 1.0),
+  "kilogram": ("mass", 1000.0), "ton": ("mass", 1000000.0),
+  "tonne": ("mass", 1000000.0),
+}
+
+_MEASURE_RE = re.compile(r'^\s*([0-9]*\.?[0-9]+)\s+([a-zA-Z]+?)s?\s*\.?\s*$')
+
+
+def _parse_measure(s):
+  """Parse "80 kilometers" / "3.5 kg" -> (dimension, value_in_base) or None."""
+  if type(s) != str:
+    return None
+  m = _MEASURE_RE.match(s)
+  if not m:
+    return None
+  unit = m.group(2).lower()
+  if unit not in _UNIT_FACTORS:
+    return None
+  dim, factor = _UNIT_FACTORS[unit]
+  try:
+    return (dim, float(m.group(1)) * factor)
+  except ValueError:
+    return None
+
+
+def _measures_match(expected, received):
+  """True if both sides are measurements of the same dimension and equal
+  magnitude after unit conversion (e.g. "80 kilometers" == "80000 meters")."""
+  a = _parse_measure(expected)
+  b = _parse_measure(received)
+  if a is None or b is None:
+    return False
+  if a[0] != b[0]:
+    return False
+  return abs(a[1] - b[1]) < 1e-6
+
+
 def _result_matches(expected, received, input_text=""):
   """Return True if received is an acceptable answer for expected.
 
@@ -454,6 +498,12 @@ def _result_matches_single(expected, received, input_text=""):
   # Standardised comparison: ignore punctuation, sort words
   if _standardize(expected) == _standardize(cleaned):
     return True
+
+  # Measurement comparison: "80 kilometers" == "80000 meters",
+  # "2 kilograms" == "2000 grams", etc. (length and mass unit conversion).
+  if type(expected) == str and type(cleaned) == str:
+    if _measures_match(expected, cleaned):
+      return True
 
   # Confidence-qualifier comparison.
   # Default (non-strict): strip leading certainty adverbs from both sides and

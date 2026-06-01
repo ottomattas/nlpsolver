@@ -461,11 +461,16 @@ def build_defq_question(name, ask_var, body, where_prep=None,
 
 # ======== "Where/When is X?" query builders ========
 
-def _find_prep_query_atom(body, ask_var, pred_set):
+def _find_prep_query_atom(body, ask_var, pred_set, pred_prefixes=()):
   """Find and return a preposition-query atom within body, or None.
 
   Matches atoms of the form  ["is rel2", pred, entity, ask_var]  where
-  pred is in pred_set and ask_var appears as the LAST positional argument.
+  pred is in pred_set (or starts with one of pred_prefixes) and ask_var
+  appears as the LAST positional argument.
+
+  pred_prefixes catches non-standard location meta-predicates an LLM may
+  invent, e.g. gpt's "located in or near" for "Where is X?" — any pred
+  starting with "located" is a where-query trigger (case 1252).
 
   Handles forms:
     Simple:      ["is rel2", pred, entity, ask_var]
@@ -476,20 +481,23 @@ def _find_prep_query_atom(body, ask_var, pred_set):
   if not isinstance(body, list) or not body:
     return None
   if (body[0] == "is rel2" and len(body) in (4, 5) and body[3] == ask_var
-      and body[1] in pred_set):
+      and (body[1] in pred_set
+           or (isinstance(body[1], str) and pred_prefixes
+               and body[1].startswith(pred_prefixes)))):
     return body
   if body[0] == "and":
     for item in body[1:]:
-      found = _find_prep_query_atom(item, ask_var, pred_set)
+      found = _find_prep_query_atom(item, ask_var, pred_set, pred_prefixes)
       if found is not None:
         return found
   if body[0] in ("exists", "forall") and len(body) >= 3:
-    return _find_prep_query_atom(body[2], ask_var, pred_set)
+    return _find_prep_query_atom(body[2], ask_var, pred_set, pred_prefixes)
   return None
 
 def find_where_atom(body, ask_var):
   """Find a where-query atom (spatial meta-pred or preposition) in body."""
-  return _find_prep_query_atom(body, ask_var, _WHERE_META_PREDS | WHERE_SPATIAL_PREPS)
+  return _find_prep_query_atom(body, ask_var, _WHERE_META_PREDS | WHERE_SPATIAL_PREPS,
+                               pred_prefixes=("located",))
 
 def find_when_atom(body, ask_var):
   """Find a when-query atom (temporal meta-pred or preposition) in body."""

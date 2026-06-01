@@ -827,6 +827,22 @@ def _normalize_measure(val, unit_name):
   return val, unit_name
 
 
+def _measure_phrase(val, unit_name):
+  """Render "<val> <unit>" with a pluralised unit for numeric val != 1.
+
+  "80000", "meter" -> "80000 meters";  1, "dollar" -> "1 dollar".
+  Leaves an already-plural unit untouched.
+  """
+  unit_name = str(unit_name)
+  num = val
+  if isinstance(num, float) and num.is_integer():
+    num = int(num)
+  pluralise = (not isinstance(num, (int, float))) or num != 1
+  if pluralise and unit_name and not unit_name.endswith("s"):
+    unit_name = unit_name + "s"
+  return str(num) + " " + unit_name
+
+
 def render_term_english(term, proof_mode=True):
   """Render a complex list term (nested function/predicate) as English.
 
@@ -865,16 +881,22 @@ def render_term_english(term, proof_mode=True):
 
   # $measure -> "80 kilometers" (original form, before canonicalization)
   if op == "$measure" and len(term) == 3:
-    return str(term[1]) + " " + str(term[2]) + "s"
+    return _measure_phrase(term[1], term[2])
 
-  # $list with number + #:unit -> "80000 meters"
+  # $list with number + unit -> "80000 meters".  The unit may carry the UNA
+  # `#:` prefix (proof-step path) or not (answer path, where the prover echoes
+  # the constant with `#:` already stripped).  Handle both: pluralise the unit
+  # for numeric values either way.  Promotion to a larger unit is only applied
+  # when the canonical `#:`-prefixed form is present.
   if op == "$list" and len(term) == 3:
     val = term[1]
     unit = term[2]
     if isinstance(unit, str) and unit.startswith("#:"):
       unit_name = unit[2:]  # strip #: prefix
       val, unit_name = _normalize_measure(val, unit_name)
-      return str(val) + " " + unit_name + "s"
+      return _measure_phrase(val, unit_name)
+    if isinstance(unit, str):
+      return _measure_phrase(val, unit)
     return str(val) + " " + str(unit)
 
   # $count -> "the number of ..."

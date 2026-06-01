@@ -177,7 +177,7 @@ is definitely a $ctxt mismatch — not a logic or axiom problem.
 | Missing tense bridge | Present at W0 doesn't match past at W1 | `axioms_std.js` tense bridging |
 | Missing bridge axiom | Event relation can't match direct predicate | `axioms_std.js` event bridges |
 | Timeout | Complex biconditional | Try `-seconds 10` |
-| Tautological population answer | Population constant proves its own existence | `procproofs.py` filters |
+| Tautological population answer | Population constant proves its own existence | `proof_answer_select.py` filters |
 
 **Fix:** Add axioms to `axioms_std.js` or increase prover time.
 

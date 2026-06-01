@@ -70,18 +70,20 @@ English text
 - `solve.py` — CLI entry point and `english_to_answer(text, options)` function
 - `llmparse.py` — two-stage LLM parser; `parse_text(text)` → `(s1_json, s2_json, stats)`; includes entity ID case normalization between stages; runs `stage_sanity.check_stage{1,2}` after each parse and re-calls the LLM with a corrective prompt (max 2 retries per stage) if issues are found
 - `llmcall.py` — LLM API wrapper (GPT/Claude/Gemini/DeepSeek) with retries and SQLite caching; `call_llm(sysprompt, input_text)`
-- `logconvert.py` — top-level orchestrator for stage-2 JSON → GK clause list; `rawlogic_convert(logic)`; runs structural repair, what-question population, Stage-1 entity bookkeeping, and dispatches per-package processing to `lc_packages`
+- `logconvert.py` — top-level orchestrator for stage-2 JSON → GK clause list; `rawlogic_convert(logic)`; runs structural repair, what-question population, Stage-1 entity bookkeeping, phantom-isa-guard stripping (`_strip_phantom_query_guards` — drops an orphan `isa(C,E)` guard from a query body when E is a Stage-1 entity that is never asserted and is used nowhere else in the query, e.g. a leaked definite-description referent that would make the whole query unprovable), and dispatches per-package processing to `lc_packages`
 - `lc_packages.py` — per-`@id` package processing: `extract_package_ctx`, `convert_id_package`, `_process_question`/`_process_assertion`, raw wh-word probes, confidence distribution
 - `lc_rewrites.py` — pre-clausification formula rewrites: meta-predicate normalization (incl. `is_rel2("time of")`→`has_time`), tense-valued `has_time` filtering (narrowed 2026-05-14: KEEPS the canonical Davidsonian shape `["has time", E, "past"|"present"|"future", "in"]` when E is an event var introduced by `isa(activity, E)`, STRIPS the same shape on non-event vars and always strips in-body `state_time`), `inject_actuality` (2026-05-15: appends `["actuality", E]` to every Davidsonian event lacking a Stage-2 modal classifier and not appearing as `has_content` inner arg), degree presuppositions, existential hoisting, polarity flip. The legacy `strip_spurious_can` remains but no longer fires under the new arity-1 capability classifier.
 - `lc_ctxt.py` — `$ctxt` context injection, time-wrapper stripping, fresh variable generation, predicate classification constants
 - `lc_post_normalize.py` — post-clausification normalising / repair passes: gradable predicate normalization, RELCLASS coercion, isa-entity stripping, possessive `have` inference, `have`→`has_part` fact bridge for typed body-part nouns (`add_haspart_for_typed_have`), `have`→`has_part` axiom bridge (`inject_have_to_haspart_axioms`, defeasible 0.9, type-gated by rule premise scan — complements axioms_std.js §2 by supplying the contrapositive `¬has_part ⊢ ¬have` needed when a query uses `have` and the asserting rule uses `has_part`), degree stripping, population fact extraction, compound subsumption rules
 - `lc_post_reify.py` — post-clausification reification of definite descriptions and measurements: `$theof1` definite rewrites (global pass, with chain-rewrite guard), `$measure`→`$list` canonical unit conversion for `$measure_of` terms, `less_measure` rewriting for comparison operators on measures, `$theof1` unwrap inside `$measure_of`
-- `lc_post_inject.py` — post-clausification dynamic axiom injection: soft synonym axioms, mutual-exclusion axioms (incl. noun-mutex via `_ISA_EXCL_GROUPS` and gradable adjective antonyms via `MANUAL_ADJ_GRAD_*`), cross-group isa-mutex (`inject_isa_cross_group_axioms`), verb mutex (pass↔fail), kinship mutex (16 gender-paired roles), carrier vocabulary lift (`inject_carrier_lifts` — plate/tray/etc. → `isa(carrier,X)`), verb-result-state bridges (`inject_verb_result_state_axioms` — destroy/break/etc. → has property "destroyed"/"broken"/etc. with two bridges A and B for event-based and stative encodings; runs BEFORE inject_exclusion_axioms so result-state words become eligible for the exclusion injector), world-graph geometry (next-chain over present worlds).  Gate policy: `inject_soft_synonyms` fires on any pair where both sides are in input ∪ axiom_vocab; all other injectors require AT LEAST ONE side of the pair (or the single trigger word) to appear in the actual input — axiom-vocab-only triggers would either duplicate static axioms or sit idle.
+- `lc_post_inject.py` — post-clausification dynamic axiom injection: soft synonym axioms, mutual-exclusion axioms (incl. noun-mutex via `_ISA_EXCL_GROUPS` and gradable adjective antonyms via `MANUAL_ADJ_GRAD_*`), cross-group isa-mutex (`inject_isa_cross_group_axioms`), verb mutex (pass↔fail), kinship mutex (16 gender-paired roles), carrier vocabulary lift (`inject_carrier_lifts` — plate/tray/etc. → `isa(carrier,X)`), verb-result-state bridges (`inject_verb_result_state_axioms` — destroy/break/etc. → has property "destroyed"/"broken"/etc. with two bridges A and B for event-based and stative encodings; runs BEFORE inject_exclusion_axioms so result-state words become eligible for the exclusion injector), measure_of→"<noun> of" relational bridges (`inject_measure_relation_bridges` — per measure noun N, emitted only when both a `$measure_of(N,...)` fact and an `is_rel2 "N of"` atom appear; lets a relationally-phrased measure query "what is the length of X?" reach the `$list` value. Paired with the `$list` value-preference in `proof_answer_select._prefer_measure_value_answers`), negative-implicative bridges (`inject_negative_implicative_bridges` — refuse/decline; "Tom refused to eat the soup" → no actual eat(Tom,soup) → "Tom ate the soup?" is False; emitted only when refuse/decline appears), world-graph geometry (next-chain over present worlds).  Gate policy: `inject_soft_synonyms` fires on any pair where both sides are in input ∪ axiom_vocab; all other injectors require AT LEAST ONE side of the pair (or the single trigger word) to appear in the actual input — axiom-vocab-only triggers would either duplicate static axioms or sit idle.
 - `lc_post_una.py` — post-clausification entity UNA wrapping: prefix every Stage-1 numbered entity with `#:` so the gk prover treats distinct entity constants as definitely unequal. Three-step criterion: surface-form regex + Stage-1 entity-set membership + not-Skolem-shaped. Required by axioms_std.js §7g (X2 direct-support uniqueness). Render-time strip in `proof_utils.entity_name`, `proof_logic._logic_name`, `procproofs.process_proof`
 - `lc_clausify.py` — FOL-to-CNF compiler: implies/xor/equivalent elimination, NNF push, normally expansion, Skolemization, distribution, clause extraction.  Also provides Skolem identification helpers (`is_skolem_const`, `is_skolem_fn`, `skolem_type_from_name`), typed Skolem constant naming (`sk0_house`), `is_world_constant` (W0/W1 excluded from variable detection)
 - `lc_questions.py` — question wrapping (`ask`/`question` → `@question`/`@askvars`), population fact injection, and WH-question builders: `build_where_question`/`build_when_question` (preposition expansion), `build_who_question` (isa + equality biconditionals), `build_defq_question` (general $defq).  Also `hoist_generic_yn_subject` — bare-plural-generic yes/no rewrite: detects `forall X, isa(C,X) → normally(BODY)` (Stage-2 §7.4(a)), hoists `isa(C, skq_S<qid>_<C>)` as a fact, and rewrites the question body to `BODY[X ← skq…]` so the defeasible rule fires on a fresh skolem (UDP-shaped). Avoids both the strict-collapse bug of pure `forall` and the John-shortcut bug of pure `exists` for queries like "Cars have trunks?"
 - `lc_sets.py` — set/counting: `$setof` rewriting to canonical form, membership axiom generation, element instantiation, set existence fact generation
-- `procproofs.py` — post-processes prover output; formats answers (bool, who/what, where/when), confidence labels, proof deduplication, Skolem resolution, proof explanation dispatch; `@what_query` class-preference (population over concrete, Skolem-to-class resolution)
+- `procproofs.py` — orchestrator for prover-output post-processing; `process_proof` parses the prover JSON, strips the `#:` UNA prefix, then drives answer selection (`proof_answer_select`) and formatting (`proof_answer_format`), and dispatches proof explanation (`proof_explain`). The two heavy halves live in sibling modules:
+- `proof_answer_select.py` — decides WHICH answer bindings survive: tier ranking (`_ans_object_tier`/`_filter_by_best_tier`: concrete > Skolem > population), `$list` measure-value preference (`_prefer_measure_value_answers`), unbound-var drop, class-name-leak and tautological-population filters, and proof deduplication (`_deduplicate_proofs`). `@what_query` preference is split by query shape (`_what_query_is_relational`): a RELATIONAL what-query (answer var is a relatum of `is_rel2`/`has_degree_rel2`, e.g. "What is X afraid of?") prefers the class over a concrete instance (`population_beats_concrete` in `_filter_by_best_tier`) → "A cat." not "Emily."; a CLASSIFICATION what-query (answer var is the entity of `isa`, "What is an Estonian city?") keeps the concrete (`Tallinn`).
+- `proof_answer_format.py` — renders the surviving bindings into English: bool (`_format_bool_answer`), who/what (`_format_who_answers`), where/when (`_format_prep_answers`), generic value join (`_format_answers`), confidence labels, Skolem-to-class resolution (`_resolve_what_skolem_answers`), plus the query-shape probes (`_is_who_query`/`_is_what_query`/`_is_prep_query`/`_extract_askvars`) that `process_proof` dispatches on
 - `proof_explain.py` — generates English proof explanations from prover proof steps
 - `proof_render.py` — facade module re-exporting from `proof_utils`, `proof_english`, `proof_logic`
 - `proof_utils.py` — entity naming, Skolem type resolution, render context state, ambiguity detection
@@ -285,34 +287,52 @@ Full solver data: http://logictools.org/data/nlpsolver_data.tar.gz
 
 ### Test Data
 
-- `tests/tests_core.py` — list of `[text, expected_answer]` pairs for the core pipeline
+- `tests/tests_core.py` — list of `[id, input, expected]` triples for the core pipeline
+- `testresults/core/<llm>/case_NNNN.json` — latest batch results per LLM (input, expected,
+  answer, correctness, stage1/stage2/clauses/gk_command/proof); the primary debug input
+- `testresults/core/all4_failed.txt`, `failed_cases.txt` — triage lists of failing cases
 
 ## Debug Case Workflow
 
-When the user says **"Debug case N"** (where N is a case number in `testfixlog_may.txt`):
+When the user says **"Debug case N"** (where N is a case id in `testfixlog_june.txt` or in the
+`testresults/core/all4_failed.txt` / `failed_cases.txt` lists):
 
-1. **Run `python3 examine.py N`** — this looks up Case N in `testfixlog_may.txt`, runs all five
-   solvers (gemini, claude, gpt, deepseek, udp) in parallel with `-debug -json`, and writes
-   logs to `eN_gemini.txt`, `eN_claude.txt`, `eN_gpt.txt`, `eN_deepseek.txt`, `eN_udp.txt`.
-   The `-json` flag ensures logic is shown in raw JSON for cross-referencing with prover I/O.
+1. **Read the four batch result files** for Case N — one per LLM:
+   `testresults/core/{claude,gpt,gemini,deepseek}/case_NNNN.json` (zero-padded to 4 digits,
+   e.g. `case_0033.json`). Each JSON already contains `input_text`, `expected_answer`,
+   `answer`, `correctness`, and the full pipeline artifacts: `stage1`, `stage2`, `clauses`,
+   `gk_command`, `proof`. This is the primary input — no need to re-run the solver to inspect
+   the parse and proof. (These come straight from the SQLite LLM cache, so they match what a
+   fresh `solve.py` run would produce.)
 
-2. **Read `testfixlog_may.txt` entry for Case N** — note the `Input:` text and `Expected:` value.
+   For fuller `-debug -explain -logic` logs (raw trace, prover params), run
+   `python3 examine.py N`: it looks up case N in `tests/tests_core.py`, runs all four LLMs
+   **sequentially** (cache-served, so fast; no UDP), and writes
+   `debug/eN_{gemini,claude,gpt,deepseek}.txt`. These logs live under `debug/`, outside
+   `testresults/core/`, so they never disturb the batch results.
 
-3. **Explore all five log files** — read them fully, comparing the answers and logic/proof
-   output across all LLM providers and the UDP pipeline.
+2. **Note the `Input:` text and `Expected:` value** — from the JSON (`input_text`,
+   `expected_answer`) and/or the `testfixlog_june.txt` entry if one exists.
+
+3. **Compare across all four LLMs** — read the JSONs (or the `debug/eN_*.txt` logs) fully,
+   comparing answers and the logic/proof output. If you need the raw LLM responses or prover
+   params, the `examine.py` logs have them, or run `python3 solver/solve.py -debug -json -llm
+   NAME "..."`. For a UDP-pipeline reference answer (not collected in the batch and not run by
+   `examine.py`), run the udppipe solver manually — include it per the standing "always
+   include UDP" guidance when it is informative.
 
 4. **Examine Stage 1 and Stage 2 outputs** — a correct final answer is not sufficient.
-   Compare the Stage 1 and Stage 2 raw outputs across all LLMs. Minor stylistic differences
+   Compare the `stage1` and `stage2` JSON across all LLMs. Minor stylistic differences
    between LLMs are OK, but report any major conceptual differences (e.g., wrong entity
    types, missing isa guards, flat vs nested quantifier structure, dropped conditions).
    Both stages must be correct, not just the final answer.
 
 5. **Assess the Expected value** — form an independent opinion on whether the `Expected:`
-   value in testfixlog_may.txt is the correct answer under a normal interpretation of the input,
-   or whether it should be changed, or whether there are good alternatives.
-   Assume the UDP pipeline answer is correct in most (but not all) cases.
+   value is the correct answer under a normal interpretation of the input, or whether it
+   should be changed, or whether there are good alternatives. (We may remove or fix the test
+   case itself.) A UDP-pipeline answer, when obtained, is correct in most but not all cases.
 
-6. **Analyze errors** — if any LLM pipeline log files give an incorrect or suboptimal answer,
+6. **Analyze errors** — if any LLM pipeline gives an incorrect or suboptimal answer,
    analyze the root cause (stage-1 parse, stage-2 logic, logconvert, prover input, proof
    post-processing, etc.).
 
@@ -337,12 +357,18 @@ When the user says **"Debug case N"** (where N is a case number in `testfixlog_m
 10. **Write analysis and fix plan** — summarize the root cause(s) of any errors and propose a
    concrete plan for fixing. Do **not** write any code or modify any files at this stage.
 
+**Fix scope (current campaign):** fixes go into **pipeline code, axioms, or test criteria**
+(including removing or correcting a bad test case). **Leave the prompt files unchanged.** If a
+case cannot be fixed without modifying `prompts/`, postpone it — record the diagnosis in
+`testfixlog_june.txt` and move on rather than touching a prompt.
+
 ## Register Fix Workflow
 
 When the user says **"Register fix for case N"** — assuming the debug analysis was done,
 a fix was implemented, and it has been verified to work:
 
-1. **Read the Case N entry in `testfixlog_may.txt`** to see its current state.
+1. **Read the Case N entry in `testfixlog_june.txt`** to see its current state. If the case has
+   no entry yet, create one (Case / Input / Expected / Received, matching the file's style).
 2. **Add brief `Conclusion:`, `Cause:`, and `Fixes:` fields** to the case entry, following
    the style and brevity of existing entries in the file. Keep all text short — one or two
    lines per field. If a comment would be long, shorten it to the essential point.

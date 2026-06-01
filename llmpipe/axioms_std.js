@@ -126,6 +126,14 @@
     ["-less_measure", "?:M2", "?:M1"]
   ],
 
+  // measure_of -> "<noun> of" relational bridge: now injected DYNAMICALLY,
+  // per measure noun, by lc_post_inject.inject_measure_relation_bridges — one
+  // bridge is added only when BOTH a $measure_of(<noun>,...) fact and an
+  // is_rel2 "<noun> of" atom appear in the problem, instead of carrying a
+  // static bridge for every measure noun here.  The former static block was:
+  //   [ ["-=", ["$measure_of", "length", "?:S", "?:W"], "?:V"],
+  //     ["is rel2", "length of", "?:V", "?:S", "?:Ctxt"] ]   (and price/weight/height)
+
   // event -> "is rel2" bridge for "like"
   /*
   [
@@ -205,6 +213,18 @@
    ["capability", "?:E"],
    ["$block", ["bridge_capability", "?:E"], ["$not", ["capability", "?:E"]]]],
 
+  // -- 5.1b Modal Classifier Bridge: typical -> capability (strict) --
+  //
+  // A habitual/generic event entails capability (if X habitually eats berries,
+  // X can eat berries).  Contrapositively, ¬capability(E) defeats typical(E):
+  // "Baby bears cannot eat berries" (strict ¬capability) overrides the generic
+  // default "Bears eat berries" (defeasible typical) for a baby bear, so a baby
+  // bear is excluded from "Who eats berries?" (case 1476).  Strict so the
+  // capability negation beats the defeasible typical default.
+  // typical carries a $ctxt (arity 2); capability is arity 1.
+  [["-typical", "?:E", "?:Ctxt"],
+   ["capability", "?:E"]],
+
 
   // -- 5.2 Factive content bridge for assertive speech acts (defeasible) --
   //
@@ -258,6 +278,19 @@
     ["actuality", "?:E2"],
     ["$block", 0, ["$not", ["actuality", "?:E2"]]]
   ] },
+
+  // -- 5.2b Negative implicative bridge: refuse/decline to V -> ¬(actual V) --
+  // Now injected DYNAMICALLY by lc_post_inject.inject_negative_implicative_bridges
+  // (one clause per verb, only when "refuse"/"decline" appears in the problem),
+  // instead of carrying a static clause here.  The former static block was:
+  //   [ ["-has type", "?:E1", "refuse", "?:Ct1"],
+  //     ["-has content", "?:E1", "?:E2"],
+  //     ["-has type",   "?:E2", "?:V", "?:Ct2"], ["-has actor",  "?:E2", "?:X", "?:Ct2"],
+  //     ["-has target", "?:E2", "?:Y", "?:Ct2"],
+  //     ["-has type",   "?:E3", "?:V", "?:Ct3"], ["-has actor",  "?:E3", "?:X", "?:Ct3"],
+  //     ["-has target", "?:E3", "?:Y", "?:Ct3"], ["-actuality",  "?:E3"] ]
+  // i.e. "Tom refused to eat the soup" -> there is no actual eat(Tom,soup) -> the
+  // query "Tom ate the soup?" is False (not just Unknown); case 1597.
 
 
   // Movement Results: If X 'go'es to Dest, X is 'at' Dest in the next state [cite: 146, 147]
@@ -437,6 +470,31 @@
       ["-has target", "?:E", "?:Y", "?:Ctxt"],
       ["is rel2", "?:P", "?:Y", "?:L", "?:Ctxt"],
       ["$block", 0, ["$not", ["is rel2", "?:P", "?:Y", "?:L", "?:Ctxt"]]]
+    ]
+  },
+  // Bridge: event location implies ACTOR location for containment/proximity
+  // prepositions (in / at).  "The children playing in the garden" → the
+  // children were in the garden; "Mike ate berries in the forest" → Mike was
+  // in the forest.  Restricted to in/at: with support prepositions (on/under)
+  // the location attaches to the target, not the actor ("ate the pizza on the
+  // table" does NOT put John on the table — that case is handled by the target
+  // bridge above).  Two sibling axioms, one per safe preposition.
+  {
+    "@confidence": 0.9,
+    "@logic": [
+      ["-has location", "?:E", "?:L", "in", "?:Ctxt"],
+      ["-has actor", "?:E", "?:X", "?:Ctxt"],
+      ["is rel2", "in", "?:X", "?:L", "?:Ctxt"],
+      ["$block", 0, ["$not", ["is rel2", "in", "?:X", "?:L", "?:Ctxt"]]]
+    ]
+  },
+  {
+    "@confidence": 0.9,
+    "@logic": [
+      ["-has location", "?:E", "?:L", "at", "?:Ctxt"],
+      ["-has actor", "?:E", "?:X", "?:Ctxt"],
+      ["is rel2", "at", "?:X", "?:L", "?:Ctxt"],
+      ["$block", 0, ["$not", ["is rel2", "at", "?:X", "?:L", "?:Ctxt"]]]
     ]
   },
 
