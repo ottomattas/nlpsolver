@@ -933,6 +933,186 @@ def _check_stage2_entity_id_typos(logic):
   return issues
 
 
+# ======== Stage-2 possessive-without-ownership check ========
+#
+# A possessive in the source ("the students brought THEIR books", "his car")
+# asserts ownership and must surface as a `have` (or `has part` for a
+# part-whole / body-part relation) predicate.  Some LLMs drop the possessive
+# determiner entirely — e.g. gpt on case 154 encodes "brought their books"
+# as only the bring event (has_actor / has_target), with no ownership atom —
+# so a later "Whose books?" / "who owns X?" query (which DOES become a have
+# goal) matches nothing and the answer is Unknown.
+#
+# The cue is read from the Stage-1 unit `text` (what Stage-2 consumes), so an
+# LLM that already resolved the possessive into a separate ownership unit
+# (gemini rewrites S1 to "brought the books" + a distinct "students own
+# books" unit) still shows the cue but supplies the ownership elsewhere.  So
+# the "is it handled?" test is GLOBAL over the assertion side (all packages
+# outside the question), and accepts relational genitives too: `is rel2 "X
+# of"` ("sister of", "head of") plus `have` / `has part` / ownership verbs.
+# The check fires only when (a) a "Whose X?" wh-question solves for an owner,
+# (b) a possessive cue is present, and (c) the assertion side carries NO
+# ownership-bearing atom at all — i.e. the possessive was genuinely dropped.
+
+# Possessive determiners, matched only when followed by a noun (a word that is
+# not an article/determiner) so the dative object pronoun "her" in "gave her
+# the book" / "Mary saw her." does not trigger, while "her books" does.
+_POSSESSIVE_RE = re.compile(
+  r"\b(their|his|her|its|our|your|my)\s+"
+  r"(?!(?:the|a|an|this|that|these|those|some|any|no)\b)\w",
+  re.IGNORECASE)
+
+# Genitive "'s" possessive ("the students' books", "John's car", "students 1's
+# books") followed by a noun.  Stage-1 text expands "is"/"has" contractions
+# ("the car's red" → "the car is red"), so a genitive here is reliably
+# possessive; the contraction-stem blocklist below is belt-and-suspenders.
+_GENITIVE_RE = re.compile(r"(\w+)'s\s+\w", re.IGNORECASE)
+_CONTRACTION_STEMS = frozenset({
+  "it", "that", "what", "who", "there", "here", "he", "she", "let", "this",
+})
+
+# is_rel2 relatums that already denote ownership (canonicalised to `have`
+# later in lc_rewrites); counting them as ownership-present avoids retrying a
+# parse that encoded the possessive as a relation rather than bare `have`.
+_OWNERSHIP_REL2 = frozenset({
+  "belonged to", "belongs to", "belong to", "owned by", "possessed by",
+  "owns", "own", "owned", "possesses", "possess", "possessed",
+})
+
+
+def _text_has_possessive(text):
+  """Return the matched possessive cue (lowercased) in `text`, or None.
+
+  Matches a possessive determiner (their/his/...) or a genitive "'s"
+  followed by a noun, skipping genitives whose stem is a contraction word
+  (it's / that's / he's ...)."""
+  if not isinstance(text, str):
+    return None
+  m = _POSSESSIVE_RE.search(text)
+  if m:
+    return m.group(1).lower()
+  for g in _GENITIVE_RE.finditer(text):
+    if g.group(1).lower() not in _CONTRACTION_STEMS:
+      return g.group(0).strip().lower()
+  return None
+
+
+def _assertion_has_ownership(node):
+  """True if the assertion side of `node` carries any ownership-bearing atom:
+  `have` / `has part`, an `is rel2` with an ownership relatum (belonged to /
+  owns / ...), or a relational genitive `is rel2 "X of"` ("sister of", "head
+  of").  Subtrees under `ask` / `question` are skipped — the question's own
+  ownership goal must not count as the assertion supplying it."""
+  if not isinstance(node, list) or not node:
+    return False
+  head = node[0]
+  if isinstance(head, str):
+    if head in ("ask", "question"):
+      return False  # do not look inside the question
+    base = head[1:] if head.startswith("-") else head
+    if base in ("have", "has part"):
+      return True
+    if base == "is rel2" and len(node) >= 2 and isinstance(node[1], str):
+      rel = node[1]
+      if rel in _OWNERSHIP_REL2 or rel.endswith(" of"):
+        return True
+  return any(_assertion_has_ownership(c) for c in node if isinstance(c, list))
+
+
+def _ownership_atom_with_var(node, var):
+  """True if some ownership atom (have / has part / ownership-is_rel2) under
+  node has `var` as one of its arguments."""
+  if not isinstance(node, list) or not node:
+    return False
+  head = node[0]
+  if isinstance(head, str):
+    base = head[1:] if head.startswith("-") else head
+    if base in ("have", "has part") and var in node[1:]:
+      return True
+    if (base == "is rel2" and len(node) >= 2 and node[1] in _OWNERSHIP_REL2
+        and var in node[2:]):
+      return True
+  return any(_ownership_atom_with_var(c, var) for c in node if isinstance(c, list))
+
+
+def _logic_has_ownership_wh_question(logic):
+  """True if logic has an `["ask", VAR, BODY]` whose answer variable VAR sits
+  in an ownership atom in BODY — i.e. a "Whose X?" / "Who owns X?" question
+  that is solving FOR the owner.
+
+  This is the only shape where a dropped assertion-side possessive yields a
+  wrong answer.  Incidental possessives in yes/no questions ("Did John see
+  Mary's head?", "John's brother has a car?") and non-ownership wh-questions
+  are deliberately excluded — they parse correctly without a retry."""
+  found = []
+
+  def walk(node):
+    if found or not isinstance(node, list) or not node:
+      return
+    if (isinstance(node[0], str) and node[0] == "ask" and len(node) >= 3
+        and _ownership_atom_with_var(node[2], node[1])):
+      found.append(True)
+      return
+    for child in node:
+      walk(child)
+
+  walk(logic)
+  return bool(found)
+
+
+def _first_possessive_unit(s1_json):
+  """Return (unit_id, text, cue) for the first Stage-1 unit whose text carries
+  a possessive cue, or None."""
+  for pkg in s1_json:
+    if not isinstance(pkg, dict):
+      continue
+    for unit in pkg.get("units", []) or []:
+      if not isinstance(unit, dict):
+        continue
+      text = unit.get("text", "")
+      cue = _text_has_possessive(text)
+      if cue:
+        return (unit.get("unit_id", "?"), text, cue)
+  return None
+
+
+def _check_stage2_possessive_without_ownership(logic, s1_json):
+  """Flag a parse with a "Whose X?" wh-question and a possessive cue whose
+  assertion side carries no ownership-bearing atom at all (the possessive was
+  dropped — see case 154).  Triggers a corrective Stage-2 retry asking for an
+  explicit `have`."""
+  if not isinstance(logic, list) or not isinstance(s1_json, list):
+    return []
+  # (a) a "Whose X?" / "who owns X?" wh-question solving for the owner.
+  if not _logic_has_ownership_wh_question(logic):
+    return []
+  # (b) a possessive cue is present in the Stage-1 text.
+  cued = _first_possessive_unit(s1_json)
+  if cued is None:
+    return []
+  # (c) the assertion side supplies no ownership relation (have / has part /
+  #     ownership verb / relational genitive) — so the possessive was dropped.
+  if _assertion_has_ownership(logic):
+    return []
+  uid, text, cue = cued
+  return [Issue(
+    kind="possessive_without_ownership",
+    location="@id:" + str(uid),
+    description=("The text (\"" + text + "\") contains the possessive \""
+                 + cue + "\", which asserts ownership, and the question asks "
+                 "who owns / whose — but the assertion side emits no `have` "
+                 "(or `has part`) predicate, so the owner is never stated. "
+                 "Add an explicit ownership atom: resolve the possessive to "
+                 "its referent OWNER and emit [\"have\", OWNER, THING] (e.g. "
+                 "\"the students brought their books\" → also assert "
+                 "[\"have\", \"students 1\", BOOKS]). Use [\"has part\", "
+                 "WHOLE, PART] instead only when the possessive is a part-"
+                 "whole / body-part relation (\"his arm\" → [\"has part\", "
+                 "\"John 1\", ARM])."),
+    evidence=_safe_json(text),
+  )]
+
+
 # ======== small helpers ========
 
 def _safe_json(obj):
@@ -987,6 +1167,43 @@ def _has_wh_placeholder(unit):
     return False
   for ent in unit.get("entities", []) or []:
     if isinstance(ent, dict) and ent.get("wh_placeholder"):
+      return True
+  return False
+
+
+def _leading_word(text):
+  """Lowercased first word of `text`, punctuation/quotes stripped, or ""."""
+  if not isinstance(text, str):
+    return ""
+  s = text.strip()
+  for sep in (" ", "\t", "\n"):
+    idx = s.find(sep)
+    if idx > 0:
+      s = s[:idx]
+      break
+  return s.strip(".,!?;:'\"()[]{}").lower()
+
+
+# Auxiliaries that lead a yes/no question.  A query starting with one of
+# these expects a yes/no answer, so it must NOT carry a wh_placeholder.
+_YESNO_LEAD_AUX = frozenset({
+    "did", "does", "do", "is", "are", "was", "were", "has", "have", "had",
+    "can", "could", "will", "would", "shall", "should", "may", "might",
+    "must",
+})
+
+_WH_ANY_WORDS = _WH_LEAD_WORDS | frozenset({"whom"})
+
+
+def _contains_wh_word(text):
+  """True if any token in `text` is a wh-word.  Catches wh-questions whose
+  wh-word is internal after a Stage-1 rewrite, e.g. "Is Ellen afraid of
+  which entity?" — which leads with the auxiliary "Is" but is still a
+  wh-question."""
+  if not isinstance(text, str):
+    return False
+  for tok in text.replace("?", " ").replace(",", " ").split():
+    if tok.strip(".,!?;:'\"()[]{}").lower() in _WH_ANY_WORDS:
       return True
   return False
 
@@ -1116,6 +1333,134 @@ def _check_stage1_entity_used_as_location(s1_json):
   return issues
 
 
+# ======== Stage-1 pronoun-as-class check ========
+#
+# An indefinite person-pronoun ("someone", "anybody", ...) is NOT a noun /
+# class — it denotes an (existentially or universally quantified) person.
+# Some LLMs (gpt on case 626) declare it as a Stage-1 entity with id
+# "someone", which Stage-2 then turns into a phantom `isa("someone", X)`
+# class atom that nothing ever populates -> the question is unprovable.
+# The fix is to retry Stage-1 asking for the common noun "person" instead;
+# this leaves both stages clean (vs. patching the leaked class downstream).
+#
+# Scope: the six PERSON pronouns only.  Thing-pronouns (something/anything)
+# are excluded — they map to "thing", which is not a populated class, so a
+# retry to "thing" would relocate the same dead-end.  Negative pronouns
+# (nobody/nothing) are excluded too — they carry polarity.
+
+_PRONOUN_CLASS_PERSON = frozenset({
+    "someone", "somebody", "anyone", "anybody", "everyone", "everybody",
+})
+
+_ENTITY_NUM_SUFFIX_RE = re.compile(r"\s*\d+$")
+
+
+def _entity_id_base(eid):
+  """Lowercase an entity id with any trailing number stripped:
+  "someone 1" -> "someone", "Someone" -> "someone"."""
+  if not isinstance(eid, str):
+    return ""
+  return _ENTITY_NUM_SUFFIX_RE.sub("", eid).strip().lower()
+
+
+def _check_stage1_pronoun_as_class(s1_json):
+  """Flag a Stage-1 QUERY unit that declares an entity whose id is an
+  indefinite person-pronoun used as a class (case 626 gpt).  Triggers a
+  corrective retry asking the LLM to type the entity as "person".
+
+  Restricted to query units: in a question ("Did someone go?") the pronoun
+  is an existential person and the leaked class makes the query unprovable.
+  In an assertion/rule it is usually the bound variable of a universal
+  ("If someone is X then Y") where renaming the class is unnecessary and a
+  retry can damage the rule (regressed cases 1390/1608)."""
+  if not isinstance(s1_json, list):
+    return []
+  issues = []
+  for pkg in s1_json:
+    if not isinstance(pkg, dict):
+      continue
+    for unit in pkg.get("units", []) or []:
+      if not isinstance(unit, dict):
+        continue
+      if unit.get("type") != "query":
+        continue
+      for ent in unit.get("entities", []) or []:
+        if not isinstance(ent, dict):
+          continue
+        base = _entity_id_base(ent.get("id", ""))
+        if base in _PRONOUN_CLASS_PERSON:
+          uid = unit.get("unit_id", "?")
+          issues.append(Issue(
+            kind="pronoun_as_class",
+            location="@id:" + str(uid),
+            description=("Unit " + str(uid) + " declares an entity with id "
+                         "\"" + str(ent.get("id", "")) + "\", but \"" + base
+                         + "\" is an indefinite pronoun, not a noun / class. "
+                         "It denotes a PERSON (someone/somebody/anyone/"
+                         "anybody/everyone/everybody all mean \"a person\"). "
+                         "Re-declare the entity as a generic person: use the "
+                         "common noun \"person\" as the entity id/category "
+                         "(type \"generic\"), not the pronoun. Keep the "
+                         "existential/universal reading via the question "
+                         "form / quantification, not by naming the class "
+                         "after the pronoun."),
+            evidence=_safe_json(ent),
+          ))
+          break                       # one issue per unit
+  return issues
+
+
+# ======== Stage-1 spurious-wh-placeholder check ========
+#
+# The converse of _check_stage1_missing_wh_placeholder: a YES/NO query
+# (leading auxiliary "Did"/"Is"/...) that wrongly carries a wh_placeholder
+# entity, marking it as a wh-question.  Stage-2 then encodes it as an
+# `ask X` (askvars) query solving FOR the placeholder, which needs a
+# determinate witness — so an indefinite/disjunctive subject yields no
+# binding (case 626 claude: "Did someone go?" -> ask X -> Unknown).  Retry
+# asking for a plain yes/no encoding without the wh-target.
+
+def _check_stage1_spurious_wh_placeholder(s1_json):
+  """Flag a yes/no query unit (leading auxiliary) that carries a
+  wh_placeholder entity, and retry asking for a yes/no encoding."""
+  if not isinstance(s1_json, list):
+    return []
+  issues = []
+  for pkg in s1_json:
+    if not isinstance(pkg, dict):
+      continue
+    for unit in pkg.get("units", []) or []:
+      if not isinstance(unit, dict):
+        continue
+      if unit.get("type") != "query":
+        continue
+      if not _has_wh_placeholder(unit):
+        continue
+      text = unit.get("text") or pkg.get("raw", "")
+      if _leading_word(text) not in _YESNO_LEAD_AUX:
+        continue                      # genuine wh-question, leave alone
+      if _contains_wh_word(text):
+        continue                      # wh-word present (e.g. "... which
+                                      # entity?") -> real wh-question
+      uid = unit.get("unit_id", "?")
+      issues.append(Issue(
+        kind="spurious_wh_placeholder",
+        location="@id:" + str(uid),
+        description=("Unit " + str(uid) + " (\"" + str(text) + "\") is a "
+                     "YES/NO question — it begins with the auxiliary \""
+                     + _leading_word(text) + "\" and expects a yes/no "
+                     "answer. But it declares a wh_placeholder entity, "
+                     "marking it as a wh-question (who/what/which). Remove "
+                     "the wh_placeholder flag and do NOT rewrite the text "
+                     "into a \"Which ...\" form; encode it as a plain yes/no "
+                     "question. An indefinite subject like \"someone\" is an "
+                     "existentially quantified person (\"a person\"), not a "
+                     "wh-target to solve for."),
+        evidence=_safe_json(unit),
+      ))
+  return issues
+
+
 # ======== public API ========
 
 def check_stage1(s1_json):
@@ -1124,6 +1469,8 @@ def check_stage1(s1_json):
   issues = []
   issues.extend(_check_stage1_missing_wh_placeholder(s1_json))
   issues.extend(_check_stage1_entity_used_as_location(s1_json))
+  issues.extend(_check_stage1_pronoun_as_class(s1_json))
+  issues.extend(_check_stage1_spurious_wh_placeholder(s1_json))
   return issues
 
 
@@ -1142,6 +1489,7 @@ def check_stage2(logic, s1_json=None):
   issues.extend(_check_stage2_missing_question(logic, s1_json))
   issues.extend(_check_stage2_multiple_questions(logic))
   issues.extend(_check_stage2_entity_id_typos(logic))
+  issues.extend(_check_stage2_possessive_without_ownership(logic, s1_json))
   return issues
 
 

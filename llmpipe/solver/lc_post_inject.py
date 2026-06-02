@@ -242,6 +242,22 @@ _ISA_EXCL_GROUPS = frozenset({
     "NOUN_FRUIT",
 })
 
+# NOUN_TOP_LEVEL words are HYPERNYM categories that SUBSUME the concrete
+# noun groups (a store is a place AND an artifact; a bird is an animal).
+# Cross-group mutex between such a hypernym and a word from a group it
+# subsumes is unsound, so inject_isa_cross_group_axioms skips those pairs.
+# Map: top-level word -> set of concrete groups it subsumes.  Pairs NOT in
+# this map stay mutex (place x car, animal x vehicle, building x vehicle...).
+_TOP_LEVEL_SUBSUMES = {
+    "artifact": frozenset({"NOUN_BUILDING", "NOUN_VEHICLE",
+                           "NOUN_FURNITURE_FIXTURE", "NOUN_GARMENT",
+                           "NOUN_TOOL"}),
+    "place":    frozenset({"NOUN_BUILDING", "NOUN_BODY_OF_WATER",
+                           "NOUN_TERRAIN"}),
+    "animal":   frozenset({"NOUN_ANIMAL_KIND"}),
+    "plant":    frozenset({"NOUN_FRUIT"}),
+}
+
 
 def inject_exclusion_axioms(result, axiom_vocab=frozenset()):
   """Scan clause list for words in exclusion groups; emit pairwise mutual-
@@ -433,6 +449,12 @@ def inject_isa_cross_group_axioms(result, axiom_vocab=frozenset()):
       g1, g2 = word_to_group[w1], word_to_group[w2]
       if g1 == g2:
         continue                      # within-group handled by Layer 1
+      # Skip hypernym/hyponym pairs: a NOUN_TOP_LEVEL word that subsumes the
+      # other side's group is NOT mutex with it (store IS a place/artifact).
+      if g2 in _TOP_LEVEL_SUBSUMES.get(w1, ()):
+        continue
+      if g1 in _TOP_LEVEL_SUBSUMES.get(w2, ()):
+        continue
       # Require at least one side to be in the actual input.
       if w1 not in input_lc and w2 not in input_lc:
         continue
@@ -915,6 +937,85 @@ def inject_verb_result_state_axioms(result, axiom_vocab=frozenset()):
     axioms.append({"@name": "frm_verb_result",
                     "@logic": clause_b,
                     "@confidence": 0.9})
+  return axioms
+
+
+# ======== acquire → have bridges (case 1163) ========
+#
+# Acquisition verbs: the ACTOR ends up POSSESSING the target, acquired from an
+# unnamed source.  Contrast with give→have (axioms_std.js §5b), which keys on
+# the RECIPIENT and strips the giver's possession via `transferred`: an
+# acquisition has no named party that loses the object, so Bridge A keys on
+# the actor and needs no transferred-block.  Closes case 1163 ("Susan bought
+# herself a new car. Who owns a new car?" → Susan): every LLM parse carries
+# has_actor(E, Susan) even though the "herself" role is encoded
+# inconsistently (has_beneficiary / has_recipient / dropped).
+
+# Bridge A: actor acquires -> actor has.  Clean acquisition verbs only;
+# take/get are excluded as too polysemous ("take a walk", "get tired").
+_ACQUIRE_VERBS = ("buy", "purchase", "acquire", "obtain")
+
+# Bridge B: benefactive ditransitive ("X bought/got Y a Z") -> the
+# beneficiary / recipient owns it.  A buy-specific frame — you cannot
+# "obtain Bill a car" — so the verb set is much narrower than Bridge A.
+_ACQUIRE_BENEFACTIVE = ("buy", "get")
+
+
+def inject_acquire_have_axioms(result, axiom_vocab=frozenset()):
+  """Emit buy/acquire → have bridges (case 1163), modeled on axioms_std.js
+  §5b give→have and on inject_verb_result_state_axioms (fresh free-vars,
+  next-world present result).
+
+  Bridge A — for each verb in _ACQUIRE_VERBS present in input: the actor of
+  an acquisition event has the target in the next world (defeasible).
+
+  Bridge B — for each verb in _ACQUIRE_BENEFACTIVE present in input: the
+  beneficiary and the recipient have the target in the next world (the gift
+  reading).
+
+  Gated on input presence only.  ``axiom_vocab`` kept for call-site
+  uniformity.
+  """
+  del axiom_vocab  # unused; input-presence gating
+  words = _collect_eligible_words(result)
+  axioms = []
+
+  def _have_clause(role, verb):
+    t  = _fresh_fv()
+    w  = _fresh_fv()
+    w2 = _fresh_fv()
+    l  = _fresh_fv()
+    k  = _fresh_fv()
+    full_ct = ["$ctxt", t, w, l, k]
+    next_ct = ["$ctxt", "present", w2, l, k]
+    clause = [
+        ["-has type",   "?:E", verb,      full_ct],
+        ["-" + role,    "?:E", "?:Owner", full_ct],
+        ["-has target", "?:E", "?:Obj",   full_ct],
+        ["-next", w, w2],
+        ["have", "?:Owner", "?:Obj", next_ct],
+    ]
+    return clause, next_ct
+
+  # Bridge A: actor owns (defeasible).
+  for verb in _ACQUIRE_VERBS:
+    if verb not in words:
+      continue
+    clause, next_ct = _have_clause("has actor", verb)
+    clause.append(["$block", 0, ["$not", ["have", "?:Owner", "?:Obj", next_ct]]])
+    axioms.append({"@name": "frm_acquire_have",
+                    "@logic": clause,
+                    "@confidence": 0.9})
+
+  # Bridge B: beneficiary / recipient owns (benefactive ditransitive).
+  for verb in _ACQUIRE_BENEFACTIVE:
+    if verb not in words:
+      continue
+    for role in ("has beneficiary", "has recipient"):
+      clause, _ = _have_clause(role, verb)
+      axioms.append({"@name": "frm_acquire_have",
+                      "@logic": clause,
+                      "@confidence": 0.95})
   return axioms
 
 

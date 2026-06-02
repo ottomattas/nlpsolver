@@ -203,10 +203,53 @@ def _collect_stative_signatures(atom, sigs):
   sigs.add((base, tuple(arg_sigs), tense))
 
 
+def _collect_question_goal_signatures(frm, sigs):
+  """Walk a direct ["@question", FORMULA] goal and collect signatures for
+  POSITIVE stative literals (the goal `have(X, present)` becomes the negative
+  `-have(X, present)` once the prover negates it for refutation, so it needs
+  the same past->present bridge a $defq-wrapped question gets via its negative
+  body literal).  Recurses into and/or; a $defq reference (guarded question)
+  is not stative and is skipped — its bridge comes from the @logic clauses.
+  """
+  if not isinstance(frm, list) or not frm:
+    return
+  pred = frm[0]
+  if not isinstance(pred, str):
+    return
+  if pred in ("and", "or"):
+    for sub in frm[1:]:
+      _collect_question_goal_signatures(sub, sigs)
+    return
+  if pred.startswith("-"):
+    return
+  if pred not in STATIVE_BRIDGE_CONFIDENCE:
+    return
+  ctxt = frm[-1]
+  if not (isinstance(ctxt, list) and len(ctxt) >= 2 and ctxt[0] == "$ctxt"):
+    return
+  tense = ctxt[1]
+  if tense not in ("present", "past"):
+    return
+  arg_sigs = []
+  for a in frm[1:-1]:
+    s = _arg_signature(a)
+    if s is None:
+      return
+    arg_sigs.append(s)
+  sigs.add((pred, tuple(arg_sigs), tense))
+
+
 def build_question_tense_bridges(question_objs, name):
   """For each unique (predicate, ground-args) combination appearing as a
   present-tense stative literal in the question clauses, emit a specialized
   past->present bridge axiom with $block.
+
+  Covers both question shapes: a $defq-wrapped question exposes the stative
+  goal as a NEGATIVE literal in its `@logic` biconditional clauses, while a
+  direct question carries it as a POSITIVE literal under `@question`.  Both
+  must get the bridge, otherwise an unguarded stative question (e.g. "who
+  does the backpack belong to?" -> direct @question have(X, present)) misses
+  the past->present persistence a guarded one receives.
 
   Returns a list of clause dicts (may be empty).
   """
@@ -215,14 +258,15 @@ def build_question_tense_bridges(question_objs, name):
     if not isinstance(obj, dict):
       continue
     clause = obj.get("@logic")
-    if clause is None:
-      continue
-    if isinstance(clause, list) and clause:
+    if clause is not None and isinstance(clause, list) and clause:
       if isinstance(clause[0], list):
         for atom in clause:
           _collect_stative_signatures(atom, sigs)
       else:
         _collect_stative_signatures(clause, sigs)
+    q = obj.get("@question")
+    if q is not None:
+      _collect_question_goal_signatures(q, sigs)
 
   bridges = []
   fv_counter = [0]

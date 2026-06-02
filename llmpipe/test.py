@@ -518,6 +518,15 @@ def _result_matches_single(expected, received, input_text=""):
       return True
     if _standardize(norm_expected) == _standardize(norm_cleaned):
       return True
+    # Combine the confidence strip with the preposition-permissive and
+    # measurement comparisons, so a hedged location/measure answer matches
+    # too: "Probably at the office." (→ "at the office.") matches "office" /
+    # "In the office." just as the unhedged "At the office." does.
+    if type(norm_expected) == str and type(norm_cleaned) == str:
+      if _phrases_match(norm_expected, norm_cleaned):
+        return True
+      if _measures_match(norm_expected, norm_cleaned):
+        return True
 
   # Adjective-prepend: "The nice mother" matches "The mother" if "nice" is in the input text
   if type(expected) == str and type(cleaned) == str and input_text:

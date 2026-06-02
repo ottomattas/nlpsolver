@@ -129,6 +129,58 @@ def _singularize(word):
   return word
 
 
+# Class names whose plural-looking form is singular or a distinct sense; do
+# NOT strip the trailing 's' when singularizing isa class names.  (Prototype
+# list — extend as real cases appear.)  The `-us` / `-is` / `-ss` / `-es` /
+# `-cs` suffix guards below catch the regular latinate/non-plural and `-es`/
+# `-cs` cases (bus, analysis, class, series, physics, potatoes); this set is
+# for the irregulars they miss.
+_SINGULARIZE_EXCEPTIONS = frozenset({
+  "news", "means", "scissors", "pants", "trousers", "stairs", "goods",
+  "lens", "pyjamas", "pajamas",
+})
+
+
+def _safe_singularize_class(cls):
+  """Singularize a class name for isa-class normalization, skipping forms the
+  crude trailing-'s' heuristic would mangle: proper nouns (capitalized, e.g.
+  "Paris"), latinate/non-plural `-us` / `-is` / `-ss` endings (bus, analysis,
+  class), and a small irregular/mass-noun exception set.  Multi-word classes
+  are gated on their head (last) word."""
+  if not isinstance(cls, str) or not cls:
+    return cls
+  if cls in _SINGULARIZE_EXCEPTIONS:
+    return cls
+  if cls[:1].isupper():
+    return cls                      # proper noun — leave intact
+  head = cls.rsplit(" ", 1)[-1]     # last word carries the number
+  if head in _SINGULARIZE_EXCEPTIONS:
+    return cls
+  if head.endswith(("us", "is", "ss", "es", "cs")):
+    # bus / virus / analysis / class / series / potatoes / physics — the crude
+    # trailing-'s' strip mangles these (and "-es" needs proper -e/-o handling),
+    # so leave them intact.
+    return cls
+  return _singularize(cls)
+
+
+def singularize_isa_classes_in_node(node):
+  """Recursively normalize the CLASS argument (index 1) of every `isa` / `-isa`
+  atom to its singular form, so a bare-plural generic (`isa("animals", X)`)
+  unifies with the singular form used elsewhere and with the injected
+  population witness `isa("animal", $some_animal)`.  Leaves all other
+  predicates and arguments untouched."""
+  if not isinstance(node, list) or not node:
+    return node
+  head = node[0]
+  if (isinstance(head, str) and head in ("isa", "-isa")
+      and len(node) >= 2 and isinstance(node[1], str)):
+    return [head, _safe_singularize_class(node[1])] + [
+      singularize_isa_classes_in_node(x) for x in node[2:]]
+  return [singularize_isa_classes_in_node(x) if isinstance(x, list) else x
+          for x in node]
+
+
 def _expand_generic_objects(frm):
   """Replace bare plural type names in object positions with fresh vars + isa.
 
@@ -488,15 +540,19 @@ def _push_normally_inside(frm, blocker_class=None):
     tag = ["normally", frm, blocker_class] if blocker_class else ["normally", frm]
     return tag
   op = frm[0]
-  if op == "implies":
+  # Length guards: a malformed binder/implication from the LLM (e.g.
+  # deepseek dropping a rule's consequent -> ["implies", ANTECEDENT] with no
+  # consequent, case 1418) must NOT crash on frm[2]; it falls through to the
+  # default wrap below and is treated as an opaque atom.
+  if op == "implies" and len(frm) >= 3:
     # normally(A -> B) -> A -> normally(B)  (recursively into consequent)
     # Extract subject class from the antecedent before pushing deeper.
     if blocker_class is None:
       blocker_class = _extract_subject_class(frm[1])
     return ["implies", frm[1], _push_normally_inside(frm[2], blocker_class)]
-  if op == "exists":
+  if op == "exists" and len(frm) >= 3:
     return ["exists", frm[1], _push_normally_inside(frm[2], blocker_class)]
-  if op == "forall":
+  if op == "forall" and len(frm) >= 3:
     return ["forall", frm[1], _push_normally_inside(frm[2], blocker_class)]
   if op == "and":
     if len(frm) > 2:

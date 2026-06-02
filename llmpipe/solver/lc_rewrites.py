@@ -34,6 +34,24 @@ for _p in ("in", "at", "on", "near", "above", "under"):
   _LOCATED_PREFIX_MAP["located " + _p] = _p
 
 
+# Possession/ownership relations → canonical have(owner, thing).
+# An LLM sometimes encodes possession as a generic binary `is rel2` relation
+# ("belonged to" / "owned by" / "owns") instead of the canonical `have`
+# predicate.  Those never unify with possessive-have facts or has_part
+# inferences, so a "whose / who owns" query and a possessive assertion miss
+# each other.  Canonicalise both surface families to have:
+#   passive ("belonged to", owner at arg 3)  → swap to have(owner, thing)
+#   active  ("owns", owner already at arg 2)  → have(owner, thing)
+_OWN_REL_SWAP = frozenset({          # ["is rel2", REL, THING, OWNER]
+  "belonged to", "belongs to", "belong to",
+  "owned by", "possessed by",
+})
+_OWN_REL_NOSWAP = frozenset({        # ["is rel2", REL, OWNER, THING]
+  "owns", "own", "owned",
+  "possesses", "possess", "possessed",
+})
+
+
 # Preposition canonicalisation — pure surface-form variants mapped to the
 # canonical form used by the exclusion/subsumption axioms. Handled as
 # rewriting (not axioms) because the variants are the SAME concept, just
@@ -119,6 +137,11 @@ def rewrite_meta_predicates(tree):
       # Temporal meta-predicate: "time of" → has_time with default prep
       if rel == "time of" and len(tree) >= 4:
         return [pfx + "has time", tree[2], tree[3], "in"]
+      # Possession/ownership meta-predicate → canonical have(owner, thing).
+      if rel in _OWN_REL_SWAP:
+        return [pfx + "have", tree[3], tree[2]]
+      if rel in _OWN_REL_NOSWAP:
+        return [pfx + "have", tree[2], tree[3]]
       # Spatial meta-predicates: "located in" → "in", etc.
       canonical = _LOCATED_PREFIX_MAP.get(rel)
       if canonical:
@@ -351,6 +374,51 @@ def strip_tense_has_time(tree, event_vars=None):
           for child in tree]
 
 
+# ======== strip redundant negative tense-agreement has_time ========
+#
+# A clause-level pass (runs AFTER clausification, on the final clause list).
+# A negative literal of the form
+#   ["-has time", E, T, Prep, ["$ctxt", T, ...]]
+# where T is a grammatical tense EQUAL to the $ctxt tense slot is a vacuous
+# query escape: the event's tense is already carried (and normalised to past
+# for past worlds) by the $ctxt slot via the axioms_std.js "Context Tense
+# Normalization" (D) block.  Requiring it over-constrains a yes/no question
+# whose matching assertion expresses time through a temporal MODIFIER instead
+# (e.g. "written in June" -> has_time(E, "June", ...)): the modifier value
+# never unifies with the tense value "past", so the proof fails (case 709).
+# Removing the negative literal drops the escape and lets the question match.
+# The POSITIVE counterpart ["has time", E, T, Prep, ["$ctxt", T, ...]] is
+# left intact -- it is a redundant-but-true fact, not an over-constraint.
+
+
+def _is_neg_tense_agreement_literal(lit):
+  """True for ["-has time", E, T, Prep, ["$ctxt", T, ...]] with T a
+  grammatical tense equal to the $ctxt tense slot."""
+  if not (isinstance(lit, list) and len(lit) >= 5 and lit[0] == "-has time"):
+    return False
+  val, ctxt = lit[2], lit[4]
+  return (isinstance(val, str) and val in _GRAMMATICAL_TENSES
+          and isinstance(ctxt, list) and len(ctxt) >= 2
+          and ctxt[0] == "$ctxt" and ctxt[1] == val)
+
+
+def strip_neg_tense_agreement_in_clause(logic):
+  """Remove negative tense-agreement has_time literals from a single clause's
+  @logic / @question (a disjunction of literals).  Positive has_time literals
+  are kept.  Single-literal (unit) clauses and clauses that would be emptied
+  are returned unchanged."""
+  if not isinstance(logic, list) or not logic:
+    return logic
+  # Only a disjunction (every element a literal-list) can hold the goal
+  # escape; a single literal has a string head and is left alone.
+  if not all(isinstance(lit, list) for lit in logic):
+    return logic
+  kept = [lit for lit in logic if not _is_neg_tense_agreement_literal(lit)]
+  if kept and len(kept) != len(logic):
+    return kept
+  return logic
+
+
 # ======== actuality classifier injection ========
 #
 # Post-Stage-2 marker on Davidsonian events that have NO modal classifier
@@ -369,18 +437,53 @@ _MODAL_CLASSIFIERS = frozenset({
   "volition", "intention", "expectation", "speech_act",
 })
 
+# CAUSATIVE verbs whose `has_content` inner event ACTUALLY occurs: "Tom HAD
+# the mechanic fix the car", "MADE/LET/FORCED/GOT him fix it".  The embedded
+# event really happens, so its E2 must still receive actuality (case 1616).
+# Everything else that reifies content via `has_content` -- the four mental/
+# speech modes (want/intend/expect/say) AND non-factive verbs like "try"/
+# "attempt"/"hope"/"fail" -- has a NON-actual inner event, so E2 is skipped.
+# This is a WHITELIST (only known causatives un-skip) rather than a mode
+# blacklist, because non-factive verbs like "try" carry no modal classifier
+# yet their content is not actual ("John tried to open the door" =/=> opened).
+_CAUSATIVE_CONTENT_VERBS = frozenset({
+  "have", "make", "let", "force", "cause", "get",
+})
+
 
 def _collect_content_inner_vars(tree):
-  """Collect every variable X such that ["has content", _, X] appears
-  anywhere in the tree.  These are inner content events of a two-event
-  reification and must not receive an actuality marker."""
+  """Collect inner content event variables E2 from `["has content", E1, E2]`
+  that must NOT receive an actuality marker.
+
+  E2 is collected (actuality suppressed) UNLESS the outer event E1's verb is a
+  known CAUSATIVE (_CAUSATIVE_CONTENT_VERBS), whose embedded event actually
+  occurs.  So intention/speech content (want/say/...) and non-factive verbs
+  (try/attempt/...) keep E2 non-actual, while a causative "had the mechanic
+  fix the car" leaves E2 eligible for actuality (case 1616)."""
+  # First pass: map every event var to its has_type verb.
+  verb_of = {}
+  def collect_verbs(node):
+    if not isinstance(node, list) or not node:
+      return
+    if (isinstance(node[0], str) and node[0] == "has type"
+        and len(node) >= 3 and isinstance(node[1], str)
+        and isinstance(node[2], str)):
+      verb_of.setdefault(node[1], node[2])
+    for child in node:
+      collect_verbs(child)
+  collect_verbs(tree)
+
+  # Second pass: collect E2 unless its outer event E1 is a causative verb.
   out = set()
   def visit(node):
     if not isinstance(node, list) or not node:
       return
     if (isinstance(node[0], str) and node[0] == "has content"
         and len(node) >= 3 and isinstance(node[2], str)):
-      out.add(node[2])
+      e1 = node[1] if isinstance(node[1], str) else None
+      if not (e1 is not None
+              and verb_of.get(e1) in _CAUSATIVE_CONTENT_VERBS):
+        out.add(node[2])
     for child in node:
       if isinstance(child, list):
         visit(child)
@@ -388,11 +491,33 @@ def _collect_content_inner_vars(tree):
   return out
 
 
-def inject_actuality(tree, content_inner=None):
+def _collect_classified_vars(tree):
+  """Collect every event variable E carrying a modal classifier
+  (typical / capability / ...) ANYWHERE in the tree — not just as a direct
+  sibling of isa(activity, E).  Some LLMs nest the classifier one level
+  deeper inside the event's own and-block (case 1418, claude: ["typical", E]
+  lives inside the strong-fish ∃Y sub-block), where inject_actuality's
+  direct-sibling scan would miss it and wrongly inject actuality(E) — making
+  a rule antecedent require actuality while the matching fact only carries
+  typical."""
+  out = set()
+  def visit(node):
+    if not isinstance(node, list) or not node:
+      return
+    if (isinstance(node[0], str) and node[0] in _MODAL_CLASSIFIERS
+        and len(node) >= 2 and isinstance(node[1], str)):
+      out.add(node[1])
+    for child in node:
+      visit(child)
+  visit(tree)
+  return out
+
+
+def inject_actuality(tree, content_inner=None, classified=None):
   """Append ["actuality", E] to every and-block that introduces a
   Davidsonian event via ["isa","activity",E] and has no modal classifier
-  on E among its direct siblings, provided E is not the inner argument
-  of has_content(_, E) anywhere in the tree.
+  on E anywhere in the tree, provided E is not the inner argument of
+  has_content(_, E) anywhere in the tree.
 
   Idempotent: a second pass over the same tree adds nothing because the
   marker counts as a classifier on the next walk only if listed in
@@ -401,13 +526,16 @@ def inject_actuality(tree, content_inner=None):
   """
   if content_inner is None:
     content_inner = _collect_content_inner_vars(tree)
+  if classified is None:
+    # Tree-wide classifier scan (not just direct siblings) so a classifier
+    # nested inside the event's own and-block still suppresses actuality.
+    classified = _collect_classified_vars(tree)
   if not isinstance(tree, list) or not tree:
     return tree
   op = tree[0] if isinstance(tree[0], str) else None
   if op == "and":
     e_vars = []
     seen_e = set()
-    classified = set()
     already_actual = set()
     for child in tree[1:]:
       if not isinstance(child, list) or not child:
@@ -418,20 +546,19 @@ def inject_actuality(tree, content_inner=None):
         if child[2] not in seen_e:
           e_vars.append(child[2])
           seen_e.add(child[2])
-      elif (head in _MODAL_CLASSIFIERS
-            and len(child) >= 2 and isinstance(child[1], str)):
-        classified.add(child[1])
       elif (head == "actuality"
             and len(child) >= 2 and isinstance(child[1], str)):
         already_actual.add(child[1])
-    new_children = [inject_actuality(c, content_inner) if isinstance(c, list) else c
+    new_children = [inject_actuality(c, content_inner, classified) if isinstance(c, list) else c
                     for c in tree[1:]]
     for ev in e_vars:
+      # `classified` is the tree-wide classifier set, so a typical/capability
+      # nested deeper in this event's and-block still suppresses actuality.
       if ev in classified or ev in content_inner or ev in already_actual:
         continue
       new_children.append(["actuality", ev])
     return [tree[0]] + new_children
-  return [inject_actuality(c, content_inner) if isinstance(c, list) else c
+  return [inject_actuality(c, content_inner, classified) if isinstance(c, list) else c
           for c in tree]
 
 

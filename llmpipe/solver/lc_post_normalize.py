@@ -422,18 +422,28 @@ def _coerce_atom(atom, const_classes, prop_relclasses=None, is_question=False,
           new_atom = list(atom)
           new_atom[relclass_idx] = _fresh_fv()
           return new_atom
-        # "has degree property": free variable only when relclass was spuriously
-        # derived from the entity's category AND no matching rule exists.
+        # "has degree property": replace the relclass with a free variable
+        # when stage-1 put a spurious entity-category in the relclass slot.
         if (base == "has degree property" and
             isinstance(relclass, str) and not relclass.startswith("?") and
             entity and is_ground_term(entity) and
-            entity in const_classes and
-            relclass in const_classes[entity] and
-            relclass not in (prop_relclasses or {}).get(
-                atom[1] if len(atom) > 1 else "", set())):
-          new_atom = list(atom)
-          new_atom[relclass_idx] = _fresh_fv()
-          return new_atom
+            entity in const_classes):
+          prop = atom[1] if len(atom) > 1 else ""
+          prop_existing  = (prop_relclasses or {}).get(str(prop), set())
+          entity_classes = const_classes[entity]
+          # case_a: relclass IS a known class of the entity but no rule uses it
+          #   as a relclass for this property (spurious category, no match).
+          case_a = (relclass in entity_classes and relclass not in prop_existing)
+          # case_b: relclass is NOT a known class of the entity, but one of the
+          #   entity's actual classes IS used as a relclass for this property by
+          #   a rule -- the question used a super/sibling category (e.g.
+          #   "animal" while the rule's consequent uses "bear"; case 1418).
+          case_b = (relclass not in entity_classes and
+                    any(c in prop_existing for c in entity_classes))
+          if case_a or case_b:
+            new_atom = list(atom)
+            new_atom[relclass_idx] = _fresh_fv()
+            return new_atom
       elif assertion_multi_class:
         # Assertion-side RELCLASS coercion. Fires in two situations:
         # (a) Entity has multiple isa classes and the relclass is one of them,

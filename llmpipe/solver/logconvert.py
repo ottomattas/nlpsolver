@@ -50,7 +50,8 @@ from globals import options as _g_options
 import lc_clausify
 import lc_questions
 
-from lc_clausify import clausify, is_skolem_const, is_skolem_fn
+from lc_clausify import (clausify, is_skolem_const, is_skolem_fn,
+                         singularize_isa_classes_in_node)
 
 from lc_questions import (
   simplify_contradictory_and,
@@ -104,6 +105,7 @@ from lc_post_inject import (
   inject_kinship_mutex_axioms as _inject_kinship_mutex_axioms,
   inject_carrier_lifts as _inject_carrier_lifts,
   inject_verb_result_state_axioms as _inject_verb_result_state_axioms,
+  inject_acquire_have_axioms as _inject_acquire_have_axioms,
   inject_world_geometry as _inject_world_geometry,
 )
 
@@ -134,6 +136,7 @@ from lc_rewrites import (
   rewrite_perspective_relations as _rewrite_perspective_relations,
   normalize_receive_events as _normalize_receive_events,
   strip_tense_has_time as _strip_tense_has_time,
+  strip_neg_tense_agreement_in_clause as _strip_neg_tense_agreement_in_clause,
   inject_actuality as _inject_actuality,
   inject_degree_presuppositions as _inject_degree_presuppositions,
   hoist_misnested_exists as _hoist_misnested_exists,
@@ -213,6 +216,31 @@ def _hoist_nested_ids(logic):
   if len(final_items) == 1:
     return final_items[0]
   return ["and"] + final_items
+
+
+def _repair_misnested_normally_implies(logic):
+  """Repair a rule consequent misplaced onto `normally`.
+
+  Some LLMs (deepseek, case 1418) treat `normally` as a binary operator and
+  emit ["normally", ["implies", A], C] — hanging the rule's consequent C off
+  `normally` instead of inside the `implies`, which is left consequent-less
+  (len 2) and would otherwise crash / lose the consequent.  Rewrite to
+  ["normally", ["implies", A, C]] so the rule recovers its consequent.
+
+  Discriminator vs the legitimate tagged form ["normally", FRM, CLASS]: the
+  malformation's 3rd arg is a FORMULA (list), not a class-name string, and the
+  1st arg is specifically a 2-element (consequent-less) `implies`.  A 2-element
+  `implies` is always malformed, so the rewrite is unambiguous.  Recursive.
+  """
+  if not isinstance(logic, list) or not logic:
+    return logic
+  if (logic[0] == "normally" and len(logic) == 3
+      and isinstance(logic[1], list) and len(logic[1]) == 2
+      and logic[1][0] == "implies"
+      and isinstance(logic[2], list)):
+    logic = ["normally", ["implies", logic[1][1], logic[2]]]
+  return [_repair_misnested_normally_implies(c) if isinstance(c, list) else c
+          for c in logic]
 
 
 # ======== @definite tag stripping ========
@@ -642,6 +670,11 @@ def rawlogic_convert(logic, s1_json=None):
   # auto-fix.  @id blocks are never legitimately nested.
   logic = _hoist_nested_ids(logic)
 
+  # Repair a rule consequent that an LLM hung off `normally` as a 2nd arg
+  # instead of inside the `implies` (case 1418, deepseek): rewrite
+  # ["normally", ["implies", A], C] -> ["normally", ["implies", A, C]].
+  logic = _repair_misnested_normally_implies(logic)
+
   # Lower outer `normally` into the consequent of forall...implies bodies:
   # ["normally", ["forall", X, ["implies", A, B]]] →
   # ["forall", X, ["implies", A, ["normally", B]]].
@@ -839,7 +872,8 @@ def rawlogic_convert(logic, s1_json=None):
                   + _inject_verb_mutex_axioms(result, _axiom_vocab)
                   + _inject_beneficiary_for_bridge(result)
                   + _inject_kinship_mutex_axioms(result, _axiom_vocab)
-                  + _inject_carrier_lifts(result))
+                  + _inject_carrier_lifts(result)
+                  + _inject_acquire_have_axioms(result))
 
   # Append population facts, synonym axioms, and exclusion axioms after
   # all sentence clauses (assertions + questions come first).
@@ -904,6 +938,29 @@ def rawlogic_convert(logic, s1_json=None):
   # Emit a minimal `next` chain over the concrete worlds actually present.
   # Replaces the static W0..W12 chain that used to live in axioms_std.js §11.
   result.extend(_inject_world_geometry(result))
+
+  # Class-number normalization: singularize the class argument of every isa
+  # atom across the final clause list (LLM-emitted, population facts, and
+  # injected $defq guards alike), so a bare-plural generic ("animals") unifies
+  # with the singular form and with the population witness isa(animal,
+  # $some_animal).  Runs after all injection so no later pass can reintroduce a
+  # plural class name.
+  for _c in result:
+    if isinstance(_c, dict):
+      for _k in ("@logic", "@question"):
+        if isinstance(_c.get(_k), list):
+          _c[_k] = singularize_isa_classes_in_node(_c[_k])
+
+  # Drop vacuous negative tense-agreement has_time escapes from query goal
+  # clauses (-has time(E, T, _, $ctxt(T, ...)) with the value equal to the
+  # $ctxt tense): the event's tense is already carried by the $ctxt slot, so
+  # the literal only over-constrains a question whose assertion expresses
+  # time via a modifier ("written in June").  Positive has_time facts kept.
+  for _c in result:
+    if isinstance(_c, dict):
+      for _k in ("@logic", "@question"):
+        if isinstance(_c.get(_k), list):
+          _c[_k] = _strip_neg_tense_agreement_in_clause(_c[_k])
 
   # @sourcetype is kept in the clause list so that downstream display code
   # (format_sentences_to_clauses) can distinguish population facts from
