@@ -768,9 +768,17 @@ def inject_measure_relation_bridges(result):
 # actually V (Y).
 _NEG_IMPLICATIVE_VERBS = ("refuse", "decline")
 
+# "forget to V" is also negative-implicative ("Eve forgot to lock the door" ->
+# Eve did NOT lock it), but "forget" is AMBIGUOUS: "forget THAT P" is FACTIVE
+# (-> P is true).  So the forget bridge is gated on the content event sharing
+# the forgetter's actor (same-subject control = "forget TO V"), which excludes
+# the common "X forgot that [OTHER] V'd" factive reading.  refuse/decline are
+# inherently same-subject so they need no such gate.
+_NEG_IMPLICATIVE_CONTROL_VERBS = ("forget",)
+
 
 def inject_negative_implicative_bridges(result):
-  """Dynamic negative-implicative bridge for refuse/decline.
+  """Dynamic negative-implicative bridge for refuse/decline (and forget-to).
 
   For each verb in _NEG_IMPLICATIVE_VERBS present in the input, emit:
 
@@ -783,6 +791,11 @@ def inject_negative_implicative_bridges(result):
   of the same actor/target).  Mirror of the §5.2 factive bridge, negative
   direction.  Replaces the former static axioms_std.js §5.2b block; emitted
   only when "refuse"/"decline" actually appears (case 1597).
+
+  For _NEG_IMPLICATIVE_CONTROL_VERBS ("forget") the same clause is emitted with
+  an extra constraint tying E1's actor to the content actor X (same-subject
+  control), so it fires on "forget to V" but not on the factive "forget that
+  [other] V'd" (case 1599).
   """
   words = _collect_eligible_words(result)
   axioms = []
@@ -801,6 +814,59 @@ def inject_negative_implicative_bridges(result):
         ["-actuality",   "?:E3"],
     ]
     axioms.append({"@name": "frm_neg_implicative", "@logic": clause})
+  for verb in _NEG_IMPLICATIVE_CONTROL_VERBS:
+    if verb not in words:
+      continue
+    clause = [
+        ["-has type",    "?:E1", verb,  "?:Ct1"],
+        ["-has actor",   "?:E1", "?:X", "?:Ct1"],   # same-subject control
+        ["-has content", "?:E1", "?:E2"],
+        ["-has type",    "?:E2", "?:V", "?:Ct2"],
+        ["-has actor",   "?:E2", "?:X", "?:Ct2"],
+        ["-has target",  "?:E2", "?:Y", "?:Ct2"],
+        ["-has type",    "?:E3", "?:V", "?:Ct3"],
+        ["-has actor",   "?:E3", "?:X", "?:Ct3"],
+        ["-has target",  "?:E3", "?:Y", "?:Ct3"],
+        ["-actuality",   "?:E3"],
+    ]
+    axioms.append({"@name": "frm_neg_implicative", "@logic": clause})
+  return axioms
+
+
+# ======== perception-factive bridge (hear/see/watch …) ========
+#
+# Direct perception is FACTIVE: "X was heard/seen to V" (or "X saw Y do V")
+# entails V actually happened — you can only perceive an ACTUAL event. Some
+# LLMs (gpt/deepseek case 1603, claude case 1601) encode it as a two-event
+# reification (hear/see E1 + has_content E2 = the perceived event), and the
+# perceived content event carries no actuality, so "Mary sang?" / "John
+# entered?" is only Unknown instead of True. This is the positive counterpart
+# of the §5.2 assertive factive bridge, but keyed on the PERCEPTION verb (no
+# speech_act classifier) rather than say/claim/…
+_PERCEPTION_FACTIVE_VERBS = ("hear", "see", "watch", "observe", "notice",
+                             "witness")
+
+
+def inject_perception_factive_bridges(result):
+  """For each perception verb present, emit a defeasible bridge making the
+  perceived content event actual:  perceive(E1) ∧ has_content(E1,E2) →
+  actuality(E2), with a $block escape. Fires only on perception OF AN EVENT
+  (has_content), not perception of an object (has_target). See cases
+  1601/1603."""
+  words = _collect_eligible_words(result)
+  axioms = []
+  for verb in _PERCEPTION_FACTIVE_VERBS:
+    if verb not in words:
+      continue
+    clause = [
+        ["-has type",    "?:E1", verb, "?:Ct1"],
+        ["-has content", "?:E1", "?:E2"],
+        ["actuality",    "?:E2"],
+        ["$block", 0, ["$not", ["actuality", "?:E2"]]],
+    ]
+    axioms.append({"@name": "frm_perception_factive",
+                    "@logic": clause,
+                    "@confidence": 0.95})
   return axioms
 
 
@@ -937,6 +1003,334 @@ def inject_verb_result_state_axioms(result, axiom_vocab=frozenset()):
     axioms.append({"@name": "frm_verb_result",
                     "@logic": clause_b,
                     "@confidence": 0.9})
+  return axioms
+
+
+# ======== positional-preposition actor-location bridges (case 670) ========
+#
+# Event location implies ACTOR location for POSITIONAL prepositions. Like the
+# static in/at actor bridges (axioms_std.js §5e), these locate the actor AT a
+# position relative to the landmark, so when an event HAS a location (not a
+# destination) with such a preposition the actor is there: "the car parked
+# behind the house" → the car is behind the house (case 670, has_actor
+# reading). Support prepositions (on/under) are NOT included — they attach to
+# the target (handled by the static target bridge). Injected dynamically: one
+# bridge per positional preposition that actually appears in a has_location
+# atom, so the prover carries only the relevant bridges. The equivalent static
+# axioms are commented out in axioms_std.js §5e with a pointer here.
+_POSITIONAL_PREPS = frozenset({
+    "behind", "in_front_of", "beside", "next_to",
+    "near", "by", "left_of", "right_of",
+})
+
+
+def _collect_has_location_preps(result):
+  """Return the set of positional prepositions appearing in the prep slot
+  (arg 3) of any has_location atom (positive or negated) in the clause list."""
+  found = set()
+
+  def walk(n):
+    if isinstance(n, list) and n and isinstance(n[0], str):
+      base = n[0][1:] if n[0].startswith("-") else n[0]
+      if (base == "has location" and len(n) >= 4
+          and isinstance(n[3], str) and n[3] in _POSITIONAL_PREPS):
+        found.add(n[3])
+      for c in n[1:]:
+        walk(c)
+    elif isinstance(n, list):
+      for c in n:
+        walk(c)
+
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    body = obj.get("@logic")
+    if body is None:
+      body = obj.get("@question")
+    walk(body)
+  return found
+
+
+def inject_positional_actor_bridges(result, axiom_vocab=frozenset()):
+  """For each positional preposition present in a has_location atom, emit one
+  defeasible actor-location bridge:
+    [-has location E L PREP Ct, -has actor E X Ct,
+     is rel2 PREP X L Ct, $block(0, $not(is rel2 PREP X L Ct))]
+  Mirrors the static in/at actor bridges (axioms_std.js §5e); see case 670.
+  Gated on input presence only. ``axiom_vocab`` kept for call-site uniformity."""
+  del axiom_vocab  # unused; gated on has_location prep presence
+  axioms = []
+  for prep in sorted(_collect_has_location_preps(result)):
+    ct = _fresh_fv()
+    clause = [
+        ["-has location", "?:E", "?:L", prep, ct],
+        ["-has actor", "?:E", "?:X", ct],
+        ["is rel2", prep, "?:X", "?:L", ct],
+        ["$block", 0, ["$not", ["is rel2", prep, "?:X", "?:L", ct]]],
+    ]
+    axioms.append({"@name": "frm_positional_actor_loc",
+                    "@logic": clause,
+                    "@confidence": 0.9})
+  return axioms
+
+
+# ======== containment bridges: "filled with"/"full of" → in (case 673) ========
+#
+# "X filled with Y" / "X full of Y" entails that Y is IN X. Some LLMs encode
+# these as a relational predicate (is_rel2 / has_degree_rel2 with relation
+# "filled with") rather than the containment primitive, so a "contained?" / "in?"
+# query is not met (case 673 claude: has_degree_rel2("filled with", cup, water)
+# vs question is_rel2("in", water, cup)). Rather than REWRITE the relation (which
+# would discard the original "filled with"/fullness meaning), inject a one-way
+# BRIDGE that PRESERVES the original atom and ADDS the containment entailment:
+#   filled_with(X, Y) → in(Y, X)
+# Strict (a sound lexical entailment, like the static contains↔in in
+# axioms_std.js). One-directional only — "Y in X" does NOT imply X is full of Y.
+# Injected dynamically: one bridge per (containment relation, predicate form)
+# actually present. The gpt variant that packs the content into the property
+# NAME (has_degree_property "filled with water") is handled separately by
+# stage_sanity._check_stage2_multiword_property (under-decomposition retry).
+_CONTAINMENT_RELS = frozenset({"filled with", "full of"})
+
+
+def inject_containment_bridges(result, axiom_vocab=frozenset()):
+  """For each containment relation ("filled with"/"full of") present as an
+  is_rel2 or has_degree_rel2 atom, inject a strict bridge to is_rel2("in",
+  content, container) that keeps the original atom. See case 673."""
+  del axiom_vocab  # gated on relation presence in the clause list
+  pairs = set()   # (relation, predicate-name)
+
+  def walk(n):
+    if isinstance(n, list) and n and isinstance(n[0], str):
+      base = n[0][1:] if n[0].startswith("-") else n[0]
+      if (base in ("is rel2", "has degree rel2") and len(n) >= 2
+          and isinstance(n[1], str) and n[1] in _CONTAINMENT_RELS):
+        pairs.add((n[1], base))
+      for c in n[1:]:
+        walk(c)
+    elif isinstance(n, list):
+      for c in n:
+        walk(c)
+
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    body = obj.get("@logic")
+    if body is None:
+      body = obj.get("@question")
+    walk(body)
+
+  axioms = []
+  for rel, pred in sorted(pairs):
+    ct = _fresh_fv()
+    if pred == "has degree rel2":
+      antecedent = ["-has degree rel2", rel, "?:X", "?:Y", "?:D", "?:RC", ct]
+    else:
+      antecedent = ["-is rel2", rel, "?:X", "?:Y", ct]
+    clause = [antecedent, ["is rel2", "in", "?:Y", "?:X", ct]]
+    axioms.append({"@name": "frm_containment_in", "@logic": clause})
+  return axioms
+
+
+# ======== attribute property↔relation bridges (case 901) ========
+#
+# A property VALUE that belongs to an attribute family (color/shape/material/
+# taste) is the same fact as the corresponding attribute RELATION: "X is red"
+# (has_property("red", X)) == "the color of X is red" (is_rel2("color of",
+# red, X)) == "X's color is red" (is_rel2("color", X, red)). LLMs split on the
+# encoding: claude/gemini query has_property directly, but gpt/deepseek query
+# the relation (is_rel2 "color of"/"color"), which nothing bridged to the
+# stored property -> Unknown (case 901). This generalises the dead static
+# "red -> color of" stub (axioms_std.js §8, commented out): it covered one
+# colour, in one arg-order, and (fatally) expected has_degree_property while
+# colours normalise to has_property.
+#
+# Value sets are reused from the data_exclusions mutex groups. For each
+# attribute family with a relation name actually QUERIED and a value actually
+# PRESENT as a property, inject both arg-orders of a strict bridge from the
+# (post-normalize) has_property form -- "red is the color of X" and "X's color
+# is red" -- so whichever relation/arg-order the LLM emitted is met.
+
+def _family_words(*group_names):
+  out = set()
+  for gn in group_names:
+    g = EXCLUSION_GROUPS.get(gn)
+    if g:
+      out.update(w for w in g.get("words", []) if isinstance(w, str))
+  return frozenset(out)
+
+
+_ATTRIBUTE_FAMILIES = {
+    "color":    (_family_words("COLOR_BASIC", "COLOR_EXTRA"),
+                 ("color of", "color", "colour of", "colour")),
+    "shape":    (_family_words("SHAPE_BASIC"),
+                 ("shape of", "shape")),
+    "material": (_family_words("MATERIAL_BASIC"),
+                 ("material of", "material", "made of", "made from",
+                  "made out of")),
+    "taste":    (_family_words("TASTE"),
+                 ("taste of", "taste", "flavor of", "flavor",
+                  "flavour of", "flavour")),
+}
+
+
+def inject_attribute_relation_bridges(result, axiom_vocab=frozenset()):
+  """For each attribute family (color/shape/material/taste), bridge a stored
+  property value to the attribute relation when that relation is queried.
+  Injects both arg-orders per (value, relation) actually present. See case 901."""
+  del axiom_vocab  # gated on value + relation presence in the clause list
+  prop_values = set()   # arg1 of has_property / has_degree_property
+  rel_names = set()     # arg1 of is_rel2
+
+  def walk(n):
+    if isinstance(n, list) and n and isinstance(n[0], str):
+      base = n[0][1:] if n[0].startswith("-") else n[0]
+      if (base in ("has property", "has degree property") and len(n) >= 2
+          and isinstance(n[1], str)):
+        prop_values.add(n[1])
+      elif base == "is rel2" and len(n) >= 2 and isinstance(n[1], str):
+        rel_names.add(n[1])
+      for c in n[1:]:
+        walk(c)
+    elif isinstance(n, list):
+      for c in n:
+        walk(c)
+
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    body = obj.get("@logic")
+    if body is None:
+      body = obj.get("@question")
+    walk(body)
+
+  axioms = []
+  for values, relations in _ATTRIBUTE_FAMILIES.values():
+    present_rels = [r for r in relations if r in rel_names]
+    if not present_rels:
+      continue
+    present_vals = sorted(v for v in prop_values if v in values)
+    for v in present_vals:
+      for r in present_rels:
+        ct = _fresh_fv()
+        # value-first:  "<v> is the <r> of X"
+        axioms.append({"@name": "frm_attr_relation",
+                        "@logic": [["-has property", v, "?:X", ct],
+                                   ["is rel2", r, v, "?:X", ct]]})
+        ct2 = _fresh_fv()
+        # entity-first: "X's <r> is <v>"
+        axioms.append({"@name": "frm_attr_relation",
+                        "@logic": [["-has property", v, "?:X", ct2],
+                                   ["is rel2", r, "?:X", v, ct2]]})
+  return axioms
+
+
+# ======== stable-adjective past→present persistence (case 911) ========
+#
+# INDIVIDUAL-LEVEL (stable) adjectives -- height, build, age, mental/character
+# traits, etc. -- describe enduring properties: if X was tall, X is normally
+# still tall. STAGE-LEVEL (temporary) adjectives -- hot/cold, wet/dry,
+# hungry/tired, open/closed, broken, happy/sad -- do not persist that way and
+# are deliberately excluded.
+#
+# The §6 frame persistence in axioms_std.js carries properties across WORLD
+# transitions (next W W2) at the SAME tense; it does NOT bridge the past/present
+# TENSE slot at one world. So when an LLM tenses a present copula as past (case
+# 911: "The man whom John saw is tall" -> tall@past, contaminated by the past
+# relative clause "whom John saw"), a present-tense query ("Is the man short?")
+# never meets it -> Unknown, even though gemini/deepseek (tall@present) refute
+# it via the tall/short mutex.
+#
+# This injects, for each stable adjective present as a property, a defeasible
+# SAME-WORLD past→present persistence axiom (with a $not block override), so a
+# past stable property reaches the present-tense reading. Dynamic: one pair of
+# axioms per stable adjective actually present.
+_STABLE_ADJS = frozenset({
+    # physical dimension / size / build (stable for an object or person)
+    "tall", "short", "big", "small", "large", "huge", "tiny", "little",
+    "long", "wide", "narrow", "thick", "thin", "deep", "shallow", "high",
+    "low", "broad", "flat", "heavy", "light", "fat", "slim", "skinny",
+    "lean", "muscular", "bald", "round", "square",
+    # age (only increases; past→present holds). "new" excluded (newness fades).
+    "old", "young", "ancient", "elderly",
+    # strength / physique trait
+    "strong", "weak",
+    # mental / ability (individual-level)
+    "intelligent", "smart", "clever", "wise", "stupid", "dumb", "foolish",
+    "brilliant", "talented", "skilled", "gifted", "educated",
+    # character traits
+    "kind", "cruel", "mean", "honest", "dishonest", "brave", "courageous",
+    "cowardly", "generous", "selfish", "polite", "rude", "lazy", "shy",
+    "friendly", "gentle", "loyal",
+    # beauty (fairly stable)
+    "beautiful", "pretty", "handsome", "ugly", "attractive", "plain",
+    # value / quality / material hardness (property of the object)
+    "expensive", "cheap", "valuable", "precious", "rare", "famous",
+    "important", "dangerous", "poisonous", "rich", "poor", "hard", "soft",
+})
+
+# Colours, shapes, and materials are likewise INHERENT, individual-level
+# attributes (a red car stays red, a wooden table stays wooden, a round table
+# stays round), so they persist past→present too. Value sets are reused from
+# the attribute families above. Taste is excluded -- it is gradable and a
+# substance's taste can change (spoilage), so it is not treated as stable.
+_STABLE_PERSIST_PROPS = (_STABLE_ADJS
+                         | _ATTRIBUTE_FAMILIES["color"][0]
+                         | _ATTRIBUTE_FAMILIES["shape"][0]
+                         | _ATTRIBUTE_FAMILIES["material"][0])
+
+
+def inject_stable_adjective_persistence(result, axiom_vocab=frozenset()):
+  """For each STABLE (individual-level) adjective present as a property, inject
+  a defeasible same-world past→present persistence axiom (has_property and
+  has_degree_property forms), so a past stable property reaches a present-tense
+  query. See case 911."""
+  del axiom_vocab  # gated on stable-adjective presence in the clause list
+  present_adjs = set()
+
+  def walk(n):
+    if isinstance(n, list) and n and isinstance(n[0], str):
+      base = n[0][1:] if n[0].startswith("-") else n[0]
+      if (base in ("has property", "has degree property") and len(n) >= 2
+          and isinstance(n[1], str) and n[1] in _STABLE_PERSIST_PROPS):
+        present_adjs.add(n[1])
+      for c in n[1:]:
+        walk(c)
+    elif isinstance(n, list):
+      for c in n:
+        walk(c)
+
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    body = obj.get("@logic")
+    if body is None:
+      body = obj.get("@question")
+    walk(body)
+
+  axioms = []
+  for adj in sorted(present_adjs):
+    # has_property form
+    w, l, k = _fresh_fv(), _fresh_fv(), _fresh_fv()
+    past_ct = ["$ctxt", "past", w, l, k]
+    pres_ct = ["$ctxt", "present", w, l, k]
+    pres_atom = ["has property", adj, "?:X", pres_ct]
+    axioms.append({"@name": "frm_stable_persist",
+                    "@logic": [["-has property", adj, "?:X", past_ct],
+                               pres_atom,
+                               ["$block", 0, ["$not", pres_atom]]],
+                    "@confidence": 0.95})
+    # has_degree_property form
+    w2, l2, k2 = _fresh_fv(), _fresh_fv(), _fresh_fv()
+    past_ct2 = ["$ctxt", "past", w2, l2, k2]
+    pres_ct2 = ["$ctxt", "present", w2, l2, k2]
+    pres_atom2 = ["has degree property", adj, "?:X", "?:D", "?:RC", pres_ct2]
+    axioms.append({"@name": "frm_stable_persist",
+                    "@logic": [["-has degree property", adj, "?:X", "?:D",
+                                "?:RC", past_ct2],
+                               pres_atom2,
+                               ["$block", 0, ["$not", pres_atom2]]],
+                    "@confidence": 0.95})
   return axioms
 
 

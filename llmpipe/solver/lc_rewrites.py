@@ -189,6 +189,18 @@ _PERSPECTIVE_TO_DATIVE = {
 }
 
 
+def _collect_content_holders(node, out):
+  """Add the first arg of every has_content atom (the perceiving/embedding
+  event var) to out, recursively."""
+  if isinstance(node, list) and node:
+    if (isinstance(node[0], str) and node[0] in ("has content", "-has content")
+        and len(node) >= 2 and isinstance(node[1], str)):
+      out.add(node[1])
+    for c in node[1:]:
+      if isinstance(c, list):
+        _collect_content_holders(c, out)
+
+
 def normalize_receive_events(tree):
   """Rewrite perspective-verb events (receive/get/hear/see) to their dative
   head (give/tell/show) with swapped actor→recipient.
@@ -205,12 +217,19 @@ def normalize_receive_events(tree):
   op = tree[0] if isinstance(tree[0], str) else None
   # Look for ["and", ...] blocks containing a perspective-verb event.
   if op == "and" and len(tree) >= 2:
+    # Perception OF AN EVENT ("Mary was heard to sing" → hear E1 + has_content
+    # E1 E2) is NOT a dative — it is factive perception (handled by
+    # inject_perception_factive_bridges). Skip the dative rewrite for any event
+    # var that holds a has_content, so "hear"/"see" survive for that bridge.
+    content_holders = set()
+    _collect_content_holders(tree, content_holders)
     # event-var → dative-head verb (only events whose type is a perspective verb)
     persp_evars = {}
     for item in tree[1:]:
       if (isinstance(item, list) and len(item) >= 3
           and isinstance(item[0], str) and item[0] in ("has type", "-has type")
-          and isinstance(item[2], str) and item[2] in _PERSPECTIVE_TO_DATIVE):
+          and isinstance(item[2], str) and item[2] in _PERSPECTIVE_TO_DATIVE
+          and item[1] not in content_holders):
         persp_evars[item[1]] = _PERSPECTIVE_TO_DATIVE[item[2]]
     if persp_evars:
       result = [tree[0]]

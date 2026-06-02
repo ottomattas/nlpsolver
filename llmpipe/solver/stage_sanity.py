@@ -504,6 +504,378 @@ def _check_stage2_multiple_questions(logic):
   )]
 
 
+# ======== Stage-2 vacuous-tautology-assertion check ========
+#
+# Detects an ASSERTION (non-question) package whose formula is an
+# ["implies", A, B] with A structurally identical to B -- a vacuous
+# tautology "if P then P".  No declarative sentence asserts such a thing;
+# it is the signature of a conditional QUESTION mis-segmented on its comma
+# into an asserted tautology plus a separate question of only the
+# consequent (gpt case 384: "If John has three cars, John has three
+# cars?" -> holds(implies(P,P)) + question(P)).  The whole conditional is
+# then never asked, so the answer is Unknown.
+#
+# Fires only when (a) a vacuous held implies(A,A) exists on the assertion
+# side AND (b) the output also contains a question/ask package, so
+# re-encoding "as a single conditional question" is the right advice.
+# The CORRECT encoding question(implies(P,P)) (claude/deepseek) is never
+# flagged: the scan does not descend into question/ask bodies.
+
+def _scan_vacuous_implies(node, issues, path):
+  if not isinstance(node, list) or not node or not isinstance(node[0], str):
+    return
+  op = node[0]
+  # The correct home for a tautology question; never flag inside it.
+  if op in ("question", "ask"):
+    return
+  if op == "implies" and len(node) >= 3 and node[1] == node[2]:
+    issues.append(Issue(
+      kind="vacuous_tautology_assertion",
+      location=path + "/implies",
+      description=("This package contains [\"implies\", A, B] whose "
+                   "antecedent and consequent are IDENTICAL -- a vacuous "
+                   "tautology \"if P then P\" that carries no information "
+                   "and is never what a declarative sentence ASSERTS. This "
+                   "is the signature of a conditional QUESTION (e.g. \"If "
+                   "P, P?\") that was wrongly split, on its comma, into an "
+                   "assertion plus a separate question of only the "
+                   "consequent. The whole sentence is ONE yes/no question. "
+                   "Your corrected output must contain EXACTLY ONE @id "
+                   "package, and that package's body must be "
+                   "[\"question\", [\"implies\", ANTECEDENT, CONSEQUENT]] "
+                   "wrapping the complete \"if ... then ...\" formula. "
+                   "DELETE every other package -- in particular delete any "
+                   "[\"holds\", ...] assertion of the implication AND any "
+                   "separate [\"question\", CONSEQUENT] that asks only part "
+                   "of the conditional. Do NOT assert the implication, do "
+                   "NOT emit a second question, and do NOT keep a "
+                   "bare-consequent question alongside the conditional one."),
+      evidence=_safe_json(node),
+    ))
+    return
+  for child in node[1:]:
+    if isinstance(child, list):
+      _scan_vacuous_implies(child, issues, path + "/" + op)
+
+
+def _check_stage2_vacuous_tautology_assertion(logic):
+  """Flag an assertion-side ["implies", A, B] with A structurally equal to
+  B, when the output also contains a question/ask package.  See the
+  section comment above (gpt case 384)."""
+  if not isinstance(logic, list):
+    return []
+  if not _contains_question_or_ask(logic):
+    return []
+  issues = []
+  _scan_vacuous_implies(logic, issues, "")
+  return issues
+
+
+# ======== Stage-2 measure-vs-degree_rel2 conflict check ========
+#
+# For a MEASURABLE property the consistent encoding is $measure_of(P, E, W)
+# compared with = / > / <.  When Stage-2 uses BOTH $measure_of(P, ...) AND
+# has_degree_rel2(P, ...) for the SAME property P, the equality and the
+# comparison land in two disconnected representations that never reason
+# together -- no axiom bridges has_degree_rel2 to $measure_of (claude case
+# 555: premise =($measure_of(tall,John), $measure_of(tall,Bill)), question
+# has_degree_rel2(tall, John, Bill, high, person) -> Unknown).
+#
+# Narrow: fires only when the SAME property string appears as arg1 of both a
+# $measure_of term and a has_degree_rel2 atom.  The presence of $measure_of(P)
+# is itself the "P is measurable" signal, so no separate measurability list is
+# needed.  Spatial has_degree_rel2 (arg1 a preposition like "in") never
+# overlaps a $measure_of property, so PROXIMITY etc. are untouched.
+
+def _collect_measure_props(node, out):
+  """Add arg1 of every ["$measure_of", P, ...] term to out."""
+  if not isinstance(node, list) or not node:
+    return
+  if node[0] == "$measure_of" and len(node) >= 2 and isinstance(node[1], str):
+    out.add(node[1])
+  for c in node:
+    if isinstance(c, list):
+      _collect_measure_props(c, out)
+
+
+def _collect_degree_rel2_props(node, out):
+  """Add arg1 of every has_degree_rel2 atom (positive or negated) to out."""
+  if not isinstance(node, list) or not node or not isinstance(node[0], str):
+    return
+  head = node[0][1:] if node[0].startswith("-") else node[0]
+  if head == "has degree rel2" and len(node) >= 2 and isinstance(node[1], str):
+    out.add(node[1])
+  for c in node[1:]:
+    if isinstance(c, list):
+      _collect_degree_rel2_props(c, out)
+
+
+def _check_stage2_measure_vs_degree_rel2(logic):
+  """Flag a property encoded BOTH as $measure_of(P,...) and as
+  has_degree_rel2(P,...) in one Stage-2 output.  See case 555 (claude)."""
+  if not isinstance(logic, list):
+    return []
+  mprops = set()
+  rprops = set()
+  _collect_measure_props(logic, mprops)
+  _collect_degree_rel2_props(logic, rprops)
+  overlap = sorted(mprops & rprops)
+  issues = []
+  for p in overlap:
+    issues.append(Issue(
+      kind="measure_degree_rel2_conflict",
+      location="property:" + p,
+      description=("Stage-2 encodes the property \"" + p + "\" BOTH as "
+                   "[\"$measure_of\", \"" + p + "\", ...] (a measure value) "
+                   "AND as [\"has degree rel2\", \"" + p + "\", ...] (a "
+                   "gradable comparative). \"" + p + "\" is measurable -- you "
+                   "already used $measure_of for it -- so ALL of its "
+                   "comparisons must live on the SAME measure scale to reason "
+                   "together; nothing connects has_degree_rel2 to "
+                   "$measure_of. Replace the has_degree_rel2(\"" + p + "\", A, "
+                   "B, INTENSITY, ...) atom with the matching $measure_of "
+                   "comparison, reusing the SAME property name \"" + p + "\" "
+                   "and world W: \"A is as " + p + " as B\" -> [\"=\", "
+                   "[\"$measure_of\",\"" + p + "\",A,W], [\"$measure_of\",\""
+                   + p + "\",B,W]]; \"A is more " + p + " / " + p + "-er than "
+                   "B\" -> [\">\", [\"$measure_of\",\"" + p + "\",A,W], "
+                   "[\"$measure_of\",\"" + p + "\",B,W]]; \"less " + p + "\" "
+                   "-> [\"<\", ...]. Do NOT use has_degree_rel2 for \"" + p
+                   + "\"."),
+      evidence="$measure_of and has_degree_rel2 both use property: " + p,
+    ))
+  return issues
+
+
+# ======== Stage-2 comparative-as-degree_property check ========
+#
+# A comparative construction ("as P as", "P-er than", "more/less P than")
+# compares TWO entities on a measurable property P, so it is inherently
+# binary.  has_degree_property(P, ENTITY, degree) is UNARY (one entity, an
+# absolute degree) and cannot express the comparison -- the relation between
+# the two entities is simply lost (gpt case 555: "John is as tall as Bill" ->
+# has_degree_property(tall,John,none) + has_degree_property(tall,Bill,none),
+# so the equality is gone and "taller?" is unprovable -> Unknown).
+#
+# Narrow: fires only when (a) the Stage-1 text contains a comparative cue for
+# adjective P, (b) Stage-2 encodes P with has_degree_property, and (c) Stage-2
+# has NO two-argument comparison for P ($measure_of or has_degree_rel2) -- i.e.
+# the comparison was genuinely dropped, not merely encoded elsewhere.
+
+_AS_AS_RE = re.compile(r"\bas\s+(\w+)\s+as\b", re.IGNORECASE)
+_MORE_LESS_THAN_RE = re.compile(r"\b(?:more|less)\s+(\w+)\s+than\b", re.IGNORECASE)
+_ER_THAN_RE = re.compile(r"\b(\w+?)(er|ier)\s+than\b", re.IGNORECASE)
+
+# Adjectives denoting an OBJECTIVE measurable dimension -- a scale with a unit
+# (length, weight, speed, age, price, temperature, ...).  ONLY these may be
+# pushed onto the $measure_of scale by the comparative retry: a gradable but
+# non-measurable adjective ("interesting", "beautiful", "important") has no
+# unit and must NOT be measured (case 559 -- "more interesting than" is not
+# measurable).  Base (positive) forms only; the comparative regexes reduce
+# "-er than" to the base.  This gate applies to comparative_as_degree_property,
+# where WE choose the $measure_of encoding; measure_vs_degree_rel2 is not gated
+# because there the LLM already chose $measure_of (its own measurability call).
+_MEASURABLE_ADJS = frozenset({
+    # length / height / width / depth / size / distance
+    "tall", "short", "long", "wide", "narrow", "deep", "shallow", "high",
+    "low", "thick", "thin", "big", "large", "small", "huge", "tiny",
+    "far", "near", "close", "broad", "fat", "slim",
+    # weight
+    "heavy", "light",
+    # speed
+    "fast", "slow", "quick", "rapid", "swift",
+    # age / recency
+    "old", "young", "new",
+    # price / cost / value
+    "expensive", "cheap", "costly", "pricey",
+    # temperature
+    "hot", "cold", "warm", "cool",
+    # loudness / brightness (decibel / lumen scales)
+    "loud", "quiet", "bright", "dim",
+    # strength
+    "strong", "weak",
+})
+
+
+def _comparative_adjs_from_text(text):
+  """Return candidate comparative adjectives (lowercased base forms) found in
+  text.  Best-effort de-suffixing for the '-er than' form adds a few harmless
+  noise candidates that simply fail to intersect the parse's properties."""
+  out = set()
+  if not isinstance(text, str):
+    return out
+  for m in _AS_AS_RE.finditer(text):
+    out.add(m.group(1).lower())
+  for m in _MORE_LESS_THAN_RE.finditer(text):
+    out.add(m.group(1).lower())
+  for m in _ER_THAN_RE.finditer(text):
+    stem, suf = m.group(1).lower(), m.group(2).lower()
+    out.add(stem)
+    if suf == "ier":
+      out.add(stem + "y")           # heav(ier) -> heavy
+    if len(stem) >= 2 and stem[-1] == stem[-2]:
+      out.add(stem[:-1])            # bigg(er) -> big
+  return out
+
+
+def _collect_degree_property_props(node, out):
+  """Add arg1 of every has_degree_property atom (positive or negated)."""
+  if not isinstance(node, list) or not node or not isinstance(node[0], str):
+    return
+  head = node[0][1:] if node[0].startswith("-") else node[0]
+  if head == "has degree property" and len(node) >= 2 and isinstance(node[1], str):
+    out.add(node[1])
+  for c in node[1:]:
+    if isinstance(c, list):
+      _collect_degree_property_props(c, out)
+
+
+def _check_stage2_comparative_as_degree_property(logic, s1_json):
+  """Flag a comparative property (cue in Stage-1 text) encoded as the unary
+  has_degree_property with no two-argument comparison.  See case 555 (gpt)."""
+  if not isinstance(logic, list):
+    return []
+  comp_adjs = set()
+  if isinstance(s1_json, list):
+    for pkg in s1_json:
+      if not isinstance(pkg, dict):
+        continue
+      comp_adjs |= _comparative_adjs_from_text(pkg.get("raw", ""))
+      for u in pkg.get("units", []) or []:
+        if isinstance(u, dict):
+          comp_adjs |= _comparative_adjs_from_text(u.get("text", ""))
+  if not comp_adjs:
+    return []
+  dp_props = set()
+  _collect_degree_property_props(logic, dp_props)
+  twoarg = set()
+  _collect_measure_props(logic, twoarg)
+  _collect_degree_rel2_props(logic, twoarg)
+  issues = []
+  for p in sorted(comp_adjs & dp_props):
+    if p in twoarg:
+      continue                      # comparison already encoded for P
+    if p in _MEASURABLE_ADJS:
+      # Measurable dimension -> route the comparison onto the $measure_of scale.
+      issues.append(Issue(
+        kind="comparative_as_degree_property",
+        location="property:" + p,
+        description=("The source text compares TWO entities on the measurable "
+                     "property \"" + p + "\" (\"as " + p + " as\" / \"" + p
+                     + "-er than\" / \"more|less " + p + " than\"). A "
+                     "comparison is binary, but Stage-2 encoded \"" + p + "\" "
+                     "with has_degree_property(\"" + p + "\", ENTITY, ...), "
+                     "which is UNARY (one entity, an absolute degree) and "
+                     "cannot relate the two entities -- the comparison is "
+                     "lost. Encode it on a measure scale with $measure_of, "
+                     "using the SAME measure property name and world W for "
+                     "BOTH entities AND for every other clause comparing the "
+                     "same dimension (so a premise and its question share one "
+                     "scale): \"A is as " + p + " as B\" -> [\"=\", "
+                     "[\"$measure_of\",\"" + p + "\",A,W], [\"$measure_of\",\""
+                     + p + "\",B,W]]; \"A is more " + p + " / " + p + "-er "
+                     "than B\" -> [\">\", ...]; \"A is less " + p + " than "
+                     "B\" -> [\"<\", ...]. Do NOT use has_degree_property for "
+                     "a comparative."),
+        evidence="measurable comparative cue for '" + p + "' encoded as has_degree_property",
+      ))
+    else:
+      # Gradable but NON-measurable (no objective unit) -> route the comparison
+      # onto the binary gradable-comparative has_degree_rel2 (case 559).
+      issues.append(Issue(
+        kind="comparative_as_degree_property_nonmeasurable",
+        location="property:" + p,
+        description=("The source text compares TWO entities on the gradable "
+                     "property \"" + p + "\" (\"more " + p + " than\" / \"" + p
+                     + "-er than\" / \"less " + p + " than\" / \"as " + p
+                     + " as\"). A comparison is binary, but Stage-2 encoded \""
+                     + p + "\" with the UNARY has_degree_property(\"" + p
+                     + "\", ENTITY, ...), losing the relation between the two "
+                     "entities. \"" + p + "\" has no objective unit (it is NOT "
+                     "measurable), so encode the comparison with the binary "
+                     "gradable-comparative predicate has_degree_rel2(R, X, Y, "
+                     "INTENSITY, RELCLASS): \"X is more " + p + " / " + p
+                     + "-er than Y\" -> [\"has degree rel2\", \"" + p + "\", "
+                     "X, Y, \"high\", RELCLASS]; \"X is less " + p + " than "
+                     "Y\" -> [\"has degree rel2\", \"" + p + "\", Y, X, "
+                     "\"high\", RELCLASS] (Y is more " + p + " than X). "
+                     "RELCLASS is the comparison class (the noun, e.g. the "
+                     "entity's category, or \"entity\"). If the question omits "
+                     "the entity being compared against (e.g. \"Is that one "
+                     "more " + p + "?\"), supply the implicit referent from "
+                     "the preceding sentence as Y. Do NOT use "
+                     "has_degree_property for a comparative."),
+        evidence="non-measurable comparative cue for '" + p + "' encoded as has_degree_property",
+      ))
+  return issues
+
+
+# ======== Stage-2 multi-word property check ========
+#
+# The property name (first argument) of has_property / has_degree_property is
+# meant to be a single adjective. When it is a phrase of MORE THAN TWO words it
+# usually collapses several meaning components into one opaque adjective -- a
+# relation plus its argument(s) packed into a string. gpt case 673:
+# has_degree_property("filled with water", cup) -- the containment relation and
+# its content "water" are baked into the property name, so nothing connects to
+# the question's is_rel2("in", water, cup) -> Unknown. The relatum cannot be
+# recovered downstream because it was never a real argument. The retry asks the
+# LLM to split the phrase into its meaning components and represent the input
+# with more detail (the embedded noun as a separate entity, the relation as the
+# appropriate predicate). A two-word compound ("dark blue", "light green") is
+# left alone -- only > 2 words are flagged.
+
+_MULTIWORD_PROP_PREDS = frozenset({"has property", "has degree property"})
+
+
+def _check_stage2_multiword_property(logic):
+  """Flag has_property / has_degree_property atoms whose property name (first
+  argument) is a phrase of more than two words. See gpt case 673."""
+  if not isinstance(logic, list):
+    return []
+  found = []
+
+  def walk(n):
+    if isinstance(n, list) and n and isinstance(n[0], str):
+      base = n[0][1:] if n[0].startswith("-") else n[0]
+      if (base in _MULTIWORD_PROP_PREDS and len(n) >= 2
+          and isinstance(n[1], str) and len(n[1].split()) > 2):
+        found.append((base, n[1], n))
+      for c in n[1:]:
+        walk(c)
+    elif isinstance(n, list):
+      for c in n:
+        walk(c)
+
+  walk(logic)
+  issues = []
+  seen = set()
+  for base, prop, atom in found:
+    if prop in seen:
+      continue
+    seen.add(prop)
+    issues.append(Issue(
+      kind="multiword_property",
+      location="property:" + prop,
+      description=("The property name \"" + prop + "\" in this " + base
+                   + " atom is a phrase of more than two words. A multi-word "
+                   "property like this usually packs SEVERAL meaning "
+                   "components into one opaque adjective -- typically a "
+                   "relation together with its argument(s) (e.g. \"filled with "
+                   "water\" = a containment relation between the entity and "
+                   "\"water\"). It should probably be CONCEPTUALLY SPLIT into "
+                   "its meaning components, and the input represented with more "
+                   "detail: introduce the embedded noun(s) as their own "
+                   "entities and encode the relation with the appropriate "
+                   "predicate (is_rel2 / has_part / a Davidsonian event / a "
+                   "single adjective in the degree slot / etc.), rather than "
+                   "collapsing the whole phrase into one property name. "
+                   "Re-represent \"" + prop + "\" compositionally."),
+      evidence=_safe_json(atom),
+    ))
+  return issues
+
+
 def _check_stage2_missing_question(logic, s1_json):
   """Detect Stage-1 query units that have no corresponding question/ask
   package in Stage-2.  Triggered when either unit.type == "query" or the
@@ -1461,6 +1833,81 @@ def _check_stage1_spurious_wh_placeholder(s1_json):
   return issues
 
 
+# ======== Stage-1 split-conditional (comma mis-segmentation) check ========
+#
+# A single conditional / adverbial sentence "If A, B?" (or "When A, B.")
+# must be ONE Stage-1 package, but some LLMs (gpt case 384) split it at the
+# internal comma into two packages -- a dangling subordinate-clause
+# fragment whose raw ends in a comma ("If John has three cars,") plus the
+# main clause in the next package ("John has three cars?").  Stage-2 then
+# encodes the fragment as a (vacuous) rule and the main clause as a
+# separate query, so the real conditional question is never asked ->
+# Unknown.
+#
+# Detection (all must hold):
+#   1. A package whose raw, stripped, ENDS WITH a comma.
+#   2. Its first word is a subordinating conjunction (if/when/while/...) --
+#      it introduces an adverbial clause that needs a main clause.
+#   3. There is a following package (the split-off main clause).
+# The retry asks Stage-1 to keep the comma-joined clauses in ONE package.
+
+_SUBORDINATORS = frozenset({
+    "if", "when", "whenever", "while", "unless", "although", "though",
+    "because", "since", "after", "before", "until", "once", "provided",
+    "whether", "as", "even", "supposing", "assuming",
+})
+
+
+def _check_stage1_split_conditional(s1_json):
+  """Flag a Stage-1 package that is a dangling subordinate clause (raw ends
+  in a comma, first word a subordinating conjunction) with a following
+  package holding the main clause -- a single conditional/adverbial
+  sentence wrongly split at its internal comma.  See case 384 (gpt)."""
+  if not isinstance(s1_json, list):
+    return []
+  issues = []
+  n = len(s1_json)
+  for idx, pkg in enumerate(s1_json):
+    if not isinstance(pkg, dict):
+      continue
+    raw = pkg.get("raw", "")
+    if not isinstance(raw, str):
+      continue
+    stripped = raw.strip()
+    if not stripped.endswith(","):
+      continue
+    parts = stripped.split(None, 1)
+    if not parts:
+      continue
+    first = parts[0].strip(".,!?;:'\"()[]{}").lower()
+    if first not in _SUBORDINATORS:
+      continue
+    if idx + 1 >= n:
+      continue                          # no following package to merge with
+    nxt = s1_json[idx + 1]
+    nxt_raw = nxt.get("raw", "") if isinstance(nxt, dict) else ""
+    issues.append(Issue(
+      kind="split_conditional_sentence",
+      location="package[" + str(idx) + "]",
+      description=("Stage-1 split the input at an internal comma: this "
+                   "package's raw text (\"" + stripped + "\") is a dangling "
+                   "subordinate clause that ends in a comma and has no main "
+                   "clause, while the following package (\"" + str(nxt_raw)
+                   + "\") holds the main clause. A subordinating conjunction "
+                   "like \"if\" / \"when\" / \"while\" introduces an "
+                   "adverbial clause that belongs to the SAME sentence as "
+                   "its main clause -- they must NOT be split into separate "
+                   "packages. Re-segment so the comma-joined clauses form "
+                   "ONE package. If that sentence is a conditional QUESTION "
+                   "(it ends with '?'), put both clauses in a SINGLE query "
+                   "unit covering the whole \"If ... , ... ?\" conditional "
+                   "(one question over the if-then), NOT a separate rule "
+                   "package plus a separate query package."),
+      evidence=_safe_json([stripped, "+", nxt_raw]),
+    ))
+  return issues
+
+
 # ======== public API ========
 
 def check_stage1(s1_json):
@@ -1471,6 +1918,7 @@ def check_stage1(s1_json):
   issues.extend(_check_stage1_entity_used_as_location(s1_json))
   issues.extend(_check_stage1_pronoun_as_class(s1_json))
   issues.extend(_check_stage1_spurious_wh_placeholder(s1_json))
+  issues.extend(_check_stage1_split_conditional(s1_json))
   return issues
 
 
@@ -1488,6 +1936,10 @@ def check_stage2(logic, s1_json=None):
   issues.extend(_check_stage2_inner_content_event_time(logic, s1_json))
   issues.extend(_check_stage2_missing_question(logic, s1_json))
   issues.extend(_check_stage2_multiple_questions(logic))
+  issues.extend(_check_stage2_vacuous_tautology_assertion(logic))
+  issues.extend(_check_stage2_measure_vs_degree_rel2(logic))
+  issues.extend(_check_stage2_comparative_as_degree_property(logic, s1_json))
+  issues.extend(_check_stage2_multiword_property(logic))
   issues.extend(_check_stage2_entity_id_typos(logic))
   issues.extend(_check_stage2_possessive_without_ownership(logic, s1_json))
   return issues

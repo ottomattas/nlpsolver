@@ -497,6 +497,26 @@
       ["$block", 0, ["$not", ["is rel2", "at", "?:X", "?:L", "?:Ctxt"]]]
     ]
   },
+  // Bridge: event location implies ACTOR location for POSITIONAL prepositions
+  // (behind / in_front_of / beside / next_to / near / by / left_of / right_of).
+  // Like in/at, these locate the actor AT a position relative to the landmark,
+  // so when an event HAS a location (not a destination) with such a preposition
+  // the actor is there: "the car parked behind the house" → the car is behind
+  // the house (case 670, has_actor reading). Support preps (on/under) attach to
+  // the target instead, so they are excluded.
+  //
+  // These are now injected DYNAMICALLY — one bridge per positional preposition
+  // that actually appears in a has_location atom — by
+  // lc_post_inject.inject_positional_actor_bridges (wired in logconvert), so
+  // the prover only carries the relevant ones. The static forms are kept here,
+  // commented out, as documentation of the canonical shape:
+  //
+  // for PREP in {behind, in_front_of, beside, next_to, near, by, left_of, right_of}:
+  //   { "@confidence": 0.9, "@logic": [
+  //       ["-has location", "?:E", "?:L", PREP, "?:Ctxt"],
+  //       ["-has actor", "?:E", "?:X", "?:Ctxt"],
+  //       ["is rel2", PREP, "?:X", "?:L", "?:Ctxt"],
+  //       ["$block", 0, ["$not", ["is rel2", PREP, "?:X", "?:L", "?:Ctxt"]]] ] }
 
   // == 6. PERSISTENCE (FRAME PROBLEM) ==
   // Default persistence across world states using variable worlds with next(?:W, ?:W2).
@@ -916,10 +936,18 @@ Does John 1 have two cars?
   [["isa", "price", ["$theof1", "price", "?:O", "?:Ctxt"]]],
   [["isa", "length", ["$theof1", "length", "?:O", "?:Ctxt"]]],
   // Property to Attribute Mapping
-  [
-    ["-has degree property", "red", "?:X", "none", "?:Rel", "?:Ctxt"],
-    ["is rel2", "color of", "red", "?:X", "?:Ctxt"]
-  ],
+  //
+  // The single static "red -> color of" stub below is REPLACED by the dynamic
+  // lc_post_inject.inject_attribute_relation_bridges (wired in logconvert),
+  // which bridges a stored property VALUE to its attribute RELATION for the
+  // color / shape / material / taste families (value sets from
+  // data_exclusions), in both arg-orders, and -- crucially -- from the
+  // has_property form (the stub expected has_degree_property, but colours
+  // normalise to has_property, so the stub never fired). Case 901. The stub is
+  // kept here commented out as documentation of the canonical shape:
+  //
+  // [ ["-has degree property", "red", "?:X", "none", "?:Rel", "?:Ctxt"],
+  //   ["is rel2", "color of", "red", "?:X", "?:Ctxt"] ],
   
   // == 11. WORLD GRAPH GEOMETRY ==
 

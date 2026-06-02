@@ -838,3 +838,322 @@ landed.  If revisited: the put->location result bridge is the cleaner, more
 general half (a placement-verb analogue of inject_verb_result_state_axioms,
 emitting is_rel2(<prep>, target, destination) in the next world); the name->man
 half is the genuinely hard part and would likely stay a prompt/ontology issue.
+
+
+## Case 367 — conflicting-modifier coreference ("the small wheelbarrow")  (REMOVE, 2026-06-02)
+
+### Problem
+Case 367 (REMOVED from the test set): "A blue hand of a man moved a wheel of a
+LARGE wheelbarrow. The SMALL wheelbarrow had a wheel?"  Expected *None*
+(Unknown -- no small wheelbarrow was ever mentioned).
+
+### How the four LLMs handle it (testresults/core/*/case_0367.json)
+- **gpt / deepseek** ✓ (Unknown) -- they do NOT corefer the definite "the small
+  wheelbarrow" with "a large wheelbarrow" (the modifiers conflict), so "the
+  small wheelbarrow" is a distinct, unmentioned entity -> nothing known ->
+  Unknown.
+- **claude / gemini** ✗ (False) -- Stage-1 binds "the SMALL wheelbarrow" to the
+  only wheelbarrow in scope, the "LARGE wheelbarrow" (single entity
+  `wheelbarrow 4`).  That entity then carries BOTH `has_degree_property(small,
+  wheelbarrow 4)` AND `has_degree_property(large, wheelbarrow 4)`.  The gradable
+  large/small antonym mutex fires (`large => not small`), the "small
+  wheelbarrow" premise becomes contradictory, and the query resolves to False.
+
+### Root cause
+A definite description with a CONFLICTING gradable modifier ("the **small** …")
+should not coreference an antecedent bearing the OPPOSITE modifier ("a
+**large** …").  claude/gemini bind it anyway, and the antonym mutex flips the
+answer to False.  This is a Stage-1 entity-resolution decision (prompt
+territory).
+
+### On "is False defensible?"
+False is defensible ONLY under a Russellian theory of descriptions ("the F is
+G" = there EXISTS a unique F that is G) PLUS a closed-world assumption
+("unmentioned => nonexistent"): then "no small wheelbarrow exists" makes the
+existential claim false.  The solver is OPEN-world (unmentioned => Unknown, not
+False) and uses presupposition-style definites, so Unknown is the consistent
+answer.  Crucially, the claude/gemini False does NOT arise from that Russellian
+reasoning -- it is a coreference + antonym-mutex artifact that merely coincides
+with the same letter.
+
+### Why removed
+Two tangled problems: (1) a conflicting-modifier coreference bug (Stage-1,
+prompt-level), and (2) genuine definite-description ambiguity (Strawsonian
+Unknown vs Russellian+CWA False).  A pipeline guard -- suppress coreference, or
+suppress the antonym mutex, when an entity acquires conflicting antonym
+modifiers via coreference -- is possible but risky and does not resolve the
+underlying ambiguity.
+
+### Status
+REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
+landed.  If revisited: the cleanest lever is a Stage-1 rule "do not coref a
+definite to an antecedent with a conflicting gradable modifier"; the
+ambiguity half stays a test-design question.
+
+---
+
+## Case 1074 — Factive stative content ("explain that the road was closed")
+
+**Input:** "The guide explained that the road was closed. The road was closed?"
+**Expected:** True.  **Status: REMOVE (too hard).**
+
+### What happens
+Factive "explain that P" entails P, so "the road was closed?" should be True.
+Result: claude/gemini True; gpt/deepseek Unknown (2/4).
+
+The question is the STATE `has_degree_property("closed", road2)`.  The four LLMs
+encode the factive content "the road was closed" at different depths:
+- **claude / gemini** emit the closed STATE — `has_degree_property("closed",
+  road2)` — as a ground fact inside `holds W0` (claude also adds a direct S2
+  assertion + `kb holds`).  A ground stative fact matches the stative question
+  → True.
+- **deepseek** emits a `close` EVENT (`has_type close`, `has_target road2`) with
+  the `speech_act` classifier, but NO closed-state property.
+- **gpt** emits a `be_closed` EVENT (the copula+participle mashed into one verb)
+  AND drops the `speech_act` classifier entirely.
+
+### Why it's hard (three tangled causes)
+1. **Eventive-vs-stative divergence** (the core issue): "was closed" is a passive
+   STATIVE; claude/gemini read it as the closed state, gpt/deepseek as a close
+   EVENT.  The stative question can't match an event.  This is a Stage-2
+   (prompt-level) reading choice.
+2. **Factive-verb gap:** the §5.2 factive-content bridge is gated to
+   say/claim/report/state/announce and OMITS "explain".  So even the content
+   event's `actuality` is not derived for "explain that".
+3. **No close-event → closed-property bridge:** even with "explain" added and
+   `actuality(close-event)` derived, deepseek's actual `close` event does not
+   yield `has_degree_property("closed", road)` — `close`/`closed` is not in
+   `_VERB_RESULT_STATES`, and adding it is risky (open/close polysemy, "open" is
+   also an adjective).  gpt additionally lacks `speech_act` and uses `be_closed`.
+
+The sister case **1075** ("…Was the road open?") is Unknown on **all four** —
+the open/closed mutex needs the closed STATE, which is not reliably derived —
+confirming the factive-content-state reasoning is generally weak for "explain".
+
+### Worth landing independently (does NOT fix 1074)
+Adding **"explain" to the §5.2 factive verb list** is a genuine, low-risk
+correctness fix — "explain that P" is factive like report/state — and would help
+factive-explain cases whose content is EVENTIVE and queried eventively (e.g.
+"…explained that Mary left. Mary left?").  It does not flip 1074 because of the
+event/state gap and gpt's missing classifier.
+
+### Status
+REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
+landed.  If revisited: (a) add "explain" to §5.2; (b) a Stage-2 nudge to read a
+passive "was <participle>" as a stative `has_degree_property` when it is factive
+content; (c) optionally a guarded close→closed result-state bridge.
+
+---
+
+## Case 1190 — "What was X doing?" (do-proverb question)
+
+**Input:** "Mary was reading a book when the phone rang. What was Mary doing?"
+**Expected:** ['Reading a book.', 'Read.']  **Status: REMOVE (too hard).**
+
+### What happens
+claude/gpt → "Read." (correct); gemini/deepseek → Unknown (2/4).
+
+The pro-verb "doing" is encoded two ways in the question (S3):
+- **claude / gpt**: `ask X: exists E (isa(activity,E) ∧ has_type(E, X) ∧
+  has_actor(E, Mary) ∧ has_time(E, past))` — X is the activity TYPE → binds the
+  premise's `read` event → "Read."
+- **gemini / deepseek**: `ask X: exists E (isa(activity,E) ∧ has_type(E, "do") ∧
+  has_actor(E, Mary) ∧ has_target(E, X) ∧ …)` — "do/doing" taken LITERALLY as a
+  verb whose target is the answer.  Mary's event is `read`, not `do`, so nothing
+  matches → Unknown.
+
+### Why it's hard
+The fix is a do-proverb question rewrite: `has_type(E,"do") + has_target(E,X)` →
+`has_type(E, X)` (drop the target).  But it cannot fire unconditionally — a
+LITERAL `do` event ("Mary did her homework.  What did Mary do?" → "Homework")
+has the SAME question shape, and the rewrite would wrongly turn it into a
+type-ask (binding "do").  Disambiguation requires gating on whether a
+`has_type(_, "do")` event actually appears on the ASSERTION side (literal) or
+not (pro-verb) — a parse-quality heuristic that is correct for the common case
+but fragile.  Part of the broader "What was X doing?" class (task #103,
+gerund-enriched answers — the expected even prefers "Reading a book.").
+
+### Status
+REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
+landed.  If revisited: implement the gated do-proverb rewrite (only when no
+`do`-typed event exists on the assertion side), and fold into task #103 for the
+gerund-enriched answer form ("Reading a book.").
+
+---
+
+## Case 1361 — Dropped wh-class noun (empty class)
+
+**Input:** "Squirrels can fly. Foxes cannot fly. Squirrels and foxes are
+animals. Which table can fly?"  **Expected:** None (Unknown).
+**Status: REMOVE (too hard).**
+
+### What happens
+claude/gemini → Unknown (correct); gpt/deepseek → "A squirrel." (2/4).
+
+"Which table can fly?" asks about an EMPTY, incompatible class — no table is
+mentioned and tables can't fly. The wh-question (Stage-1 captures the
+wh_placeholder `{"id":"table","type":"generic","category":"artifact",
+"wh_placeholder":true}`) should constrain the answer to tables:
+- **claude / gemini**: `ask X (isa("table", X) ∧ … fly … capability)` → no table
+  exists → Unknown.
+- **gpt / deepseek**: `ask X (… fly … capability)` — they DROP `isa("table",X)`
+  entirely → the answer var is unconstrained → any flier → "A squirrel."
+
+### Why it's hard
+A "dropped wh-class" Stage-2 sanity check was prototyped: a `wh_placeholder` that
+is `type="generic"` denotes a class (common noun, not a concrete object like
+"John"), and the check fires when that class noun is absent from the ask query.
+But it ABANDONED for over-firing:
+- Across the test set, ~31 case-files "drop" the wh-class — and **only 1361
+  actually fails**. The rest PASS, because dropping the class is HARMLESS when
+  the class has instances (e.g. "Who is a nice man?" — dropping `isa(man,X)`
+  still yields the nice men) or another constraint (a property, a count)
+  disambiguates.
+- 1361 fails ONLY because "table" is an **empty + incompatible** class. Isolating
+  that needs ~4 stacked heuristics (concrete category, single-word, no `isa`
+  instances of the class anywhere, not a how-many/value question), and even then
+  it would trigger retries on ~30 passing cases (waste + regression risk) to fix
+  one.
+
+So the principled reading: gpt/deepseek give a defensible (if pragmatically odd)
+answer to a degenerate query; the cost of a precise check far exceeds the value.
+
+### Status
+REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
+landed (the prototype check was reverted).  If revisited: the only sound signal
+is "the queried wh-class has zero instances in the problem" → the answer must be
+Unknown; but that is really a closed-world emptiness check, not a parse fix.
+
+---
+
+## Case 1551 — Nested negation scope ("It is not true that some…are…")
+
+**Input:** "It is not true that some big yellow cats are strong. All big yellow
+cats are not strong?"  **Expected:** True.  **Status: REMOVE (too hard).**
+
+### What happens
+gemini/deepseek → True (correct); claude/gpt → Unknown (2/4).
+
+The premise is logically equivalent to the question:
+`¬∃x(cat x ∧ strong x)` ≡ `∀x(cat x → ¬strong x)` = "All big yellow cats are not
+strong". So it should be True.
+
+| LLM | premise encoding | meaning |
+|-----|------------------|---------|
+| gemini / deepseek | `∀X (big-yellow-cat X → ¬strong X)` | no cat strong ✓ |
+| claude | `∃X (big-yellow-cat X ∧ ¬strong X)` | SOME cat not strong (∃¬) ✗ |
+| gpt | `¬∃X (big-yellow-cat X ∧ ¬strong X)` | = ∀(cat → strong): all cats ARE strong ✗ |
+
+gemini/deepseek apply the ¬∃→∀¬ equivalence themselves and emit the universal
+form, which matches the question. claude/gpt mis-scope the nested negation:
+- **claude**: collapses "not true that SOME are strong" into "SOME are not
+  strong" (`∃¬` instead of `¬∃`) — a weaker, inequivalent statement.
+- **gpt**: keeps the outer ¬ but ALSO negates "strong" inside
+  (`¬∃(cat ∧ ¬strong)`), double-negating into "all cats ARE strong" — the
+  opposite.
+
+### Why it's hard
+Both failures are Stage-2 **negation-scope / quantifier** parse errors on the
+"It is not true that some … are …" construction — a logically tricky
+double-negation-vs-quantifier interaction. The premise the LLM produces is
+simply WRONG (not a missing inference), so no pipeline/axiom pass can recover
+it; the prover would derive the ¬∃→∀¬ equivalence on its own IF the premise were
+encoded correctly. The fix is the LLM scoping the negation correctly — a
+prompt-level matter, out of campaign scope. Not ambiguous (one logical reading);
+just hard to parse.
+
+### Status
+REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
+landed.  If revisited: a Stage-2 prompt example for "It is not true that
+some/all …" → ¬∃ / ¬∀ canonical forms; possibly a Stage-2 sanity check that a
+"it is not true that" matrix wraps the WHOLE proposition in a single outer
+negation (no inner property negation), but detecting the intended scope from the
+parse is itself the hard part.
+
+---
+
+## Case 1613 — Donkey sentence (donkey anaphora + conditional question)
+
+**Input:** "Every farmer who owns a donkey beats it. If John is a farmer and
+owns a donkey, does he beat it?"  **Expected:** True.
+**Status: REMOVE (too hard).**
+
+### What happens
+claude/gpt → True (correct); gemini/deepseek → Unknown (2/4).
+
+The donkey sentence's correct form is `∀X (farmer X → ∀Y (donkey Y ∧ own(X,Y) →
+beat(X,Y)))` — the "it" is the universally-bound donkey in the antecedent. The
+question "If John is a farmer and owns a donkey, does he beat it?" is a
+CONDITIONAL: assume John is a farmer owning donkey Y, derive he beats Y → True by
+modus ponens.
+
+| LLM | encoding | result |
+|-----|----------|--------|
+| claude / gpt | rule ∀∀(...→beat); question conditional (assume → beat) | True ✓ |
+| gemini | rule correct, but QUESTION = `farmer(John) ∧ ∃Y(donkey Y ∧ own(John,Y) ∧ beat)` — existential to PROVE, not a conditional to assume | Unknown ✗ |
+| deepseek | question correct, but RULE = `∀X ∃Y((farmer∧donkey∧own)→beat)` — ∃Y over the implication, vacuously satisfiable | Unknown ✗ |
+
+### Why it's hard
+Two DISTINCT Stage-2 quantifier-scoping errors on the canonical donkey-anaphora
+construction plus a conditional question:
+- **gemini** drops the conditional ("if … does he") and makes it an existential
+  ASSERTION question — it tries to prove John actually owns and beats a donkey
+  (never asserted) instead of assuming the hypothesis.
+- **deepseek** mis-scopes the rule's donkey as `∃Y` over the conditional rather
+  than universally in the antecedent.
+
+Both produce the WRONG logical form (not a missing inference), so no
+pipeline/axiom pass can recover it — the prover proves it fine when the form is
+correct (claude/gpt). The fix is correct Stage-2 quantifier scoping of donkey
+anaphora + conditional questions — a prompt-level matter and a classic hard
+problem in formal semantics. Not ambiguous; the expected True is right.
+
+### Status
+REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
+landed.  If revisited: a Stage-2 prompt example for donkey anaphora ("Every N
+who Rs a M Vs it" → ∀∀(N∧M∧R→V)) and for "If <hyp>, does he <q>?" as a
+conditional question (assume the hyp, query the consequent).
+
+---
+
+## Case 1618 — Exhaustive cleft ("It was the red car that won")
+
+**Input:** "It was the red car that won. Did the blue car win?"
+**Expected:** False.  **Status: REMOVE (too hard).**
+
+### What happens
+claude/gpt → False (correct); gemini/deepseek → Unknown (2/4).
+
+An exhaustive cleft "It was X that V'd" means "the V-er IS X" — exhaustivity:
+`∀Z (Z won → Z = the_red_car)`. With the blue car a distinct entity, "Did the
+blue car win?" → False.
+
+All four emit a uniqueness clause `∀X (… win … → X = car1)`, differing only in
+the antecedent:
+
+| LLM | uniqueness antecedent | effect |
+|-----|-----------------------|--------|
+| claude / gpt | `car X ∧ win-event by X → X = car1` | any winner = the red car → blue car2 ≠ car1 (UNA) → False ✓ |
+| gemini / deepseek | `car X ∧ RED X ∧ win by X → X = car1` | uniqueness restricted to RED winners → a BLUE winner is not excluded → Unknown ✗ |
+
+### Why it's hard
+A Stage-2 cleft-exhaustivity SCOPING error: gemini/deepseek copy the focus's
+descriptive property `red(X)` INTO the uniqueness quantifier's antecedent. That
+weakens it to "red winners are the red car" — saying nothing about a blue
+winner. The "red" belongs to the IDENTIFIED entity (car1), not as a restriction
+on the quantified winner X. claude/gpt leave the antecedent general, so the
+exhaustivity excludes any non-car1 winner.
+
+The failing parse is simply the wrong (too weak) logical form, not a missing
+inference — the prover gets False when the exhaustivity is general (claude/gpt).
+The fix is correct Stage-2 scoping of cleft exhaustivity (do not restrict the
+quantified variable by the focus's own properties) — a prompt-level matter.
+Expected False is right under the standard exhaustive-cleft reading.
+
+### Status
+REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
+landed.  If revisited: a Stage-2 prompt example for clefts — "It was the <ADJ N>
+that V'd" → `V(the_ADJ_N) ∧ ∀Z(Z V'd → Z = the_ADJ_N)`, with the exhaustivity
+antecedent quantifying over ALL V-ers (only the isa class, not the focus's
+adjectives). A pipeline strip of a focus-property literal from a `→ X = K`
+uniqueness antecedent is possible but a narrow, risky heuristic for one case.

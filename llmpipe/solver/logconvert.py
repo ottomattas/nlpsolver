@@ -102,10 +102,15 @@ from lc_post_inject import (
   inject_beneficiary_for_bridge as _inject_beneficiary_for_bridge,
   inject_measure_relation_bridges as _inject_measure_relation_bridges,
   inject_negative_implicative_bridges as _inject_negative_implicative_bridges,
+  inject_perception_factive_bridges as _inject_perception_factive_bridges,
   inject_kinship_mutex_axioms as _inject_kinship_mutex_axioms,
   inject_carrier_lifts as _inject_carrier_lifts,
   inject_verb_result_state_axioms as _inject_verb_result_state_axioms,
   inject_acquire_have_axioms as _inject_acquire_have_axioms,
+  inject_positional_actor_bridges as _inject_positional_actor_bridges,
+  inject_containment_bridges as _inject_containment_bridges,
+  inject_attribute_relation_bridges as _inject_attribute_relation_bridges,
+  inject_stable_adjective_persistence as _inject_stable_adjective_persistence,
   inject_world_geometry as _inject_world_geometry,
 )
 
@@ -873,7 +878,11 @@ def rawlogic_convert(logic, s1_json=None):
                   + _inject_beneficiary_for_bridge(result)
                   + _inject_kinship_mutex_axioms(result, _axiom_vocab)
                   + _inject_carrier_lifts(result)
-                  + _inject_acquire_have_axioms(result))
+                  + _inject_acquire_have_axioms(result)
+                  + _inject_positional_actor_bridges(result)
+                  + _inject_containment_bridges(result)
+                  + _inject_attribute_relation_bridges(result)
+                  + _inject_stable_adjective_persistence(result))
 
   # Append population facts, synonym axioms, and exclusion axioms after
   # all sentence clauses (assertions + questions come first).
@@ -889,6 +898,9 @@ def rawlogic_convert(logic, s1_json=None):
   # Dynamic negative-implicative bridge for refuse/decline (replaces the former
   # static axioms_std.js §5.2b block).  Emitted only when the verb appears.
   result.extend(_inject_negative_implicative_bridges(result))
+
+  # Dynamic perception-factive bridge (hear/see/… → perceived event is actual).
+  result.extend(_inject_perception_factive_bridges(result))
 
   # For "what" questions: generate extra population witnesses for classes
   # that have concrete unconditional isa facts.  This lets the prover find

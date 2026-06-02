@@ -71,6 +71,12 @@ _STOP_WORDS = frozenset({
   "only", "just", "even", "also", "merely", "too",
   # Relative pronouns / wh-words (prevent "whom Eve" or "which car" as qualifiers)
   "who", "whom", "whose", "which", "where", "what",
+  # Containment / spatial transitive verbs whose canonical Stage-2 relation
+  # name differs from the surface form (e.g. "Earth contains Europe" →
+  # is_rel2("in", …)), so _collect_action_verbs never sees the surface verb and
+  # it would otherwise leak as a pre-nominal qualifier ("the contains Europe").
+  "contain", "contains", "include", "includes", "comprise", "comprises",
+  "surround", "surrounds", "hold", "holds",
 }) | IRREGULAR_PAST_VERBS
 
 
