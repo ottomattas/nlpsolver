@@ -478,6 +478,10 @@ def main():
                   help="Re-run all cases (overwrite existing JSON files)")
   ap.add_argument("-geminicache", action="store_true",
                   help="Enable Gemini context caching (off by default)")
+  ap.add_argument("-sequential", action="store_true",
+                  help="Run the requested LLMs SEQUENTIALLY in-process (no "
+                       "parallel Pool). Best for cache-served reruns where the "
+                       "LLM calls hit the local SQLite cache.")
   args = ap.parse_args()
 
   llms = [s.strip() for s in args.llms.split(",") if s.strip()]
@@ -520,7 +524,12 @@ def main():
   total_skipped = 0
   start = time.time()
 
-  with ctx.Pool(processes=max(1, len(llms))) as pool:
+  # -sequential: run the per-(case,llm) tasks one at a time in this process,
+  # no worker Pool. Otherwise the requested LLMs for one case run concurrently.
+  pool = None if args.sequential else ctx.Pool(processes=max(1, len(llms)))
+  if args.sequential:
+    print("Mode: SEQUENTIAL (in-process, one LLM at a time).")
+  try:
     for case_id, input_text, expected in tests:
       # Build the per-LLM task list, skipping those that already exist.
       tasks = []
@@ -534,7 +543,8 @@ def main():
         continue
 
       t0 = time.time()
-      results = pool.map(_worker, tasks)
+      results = ([_worker(t) for t in tasks] if args.sequential
+                 else pool.map(_worker, tasks))
       dt = time.time() - t0
 
       # Write per-case files
@@ -561,6 +571,10 @@ def main():
       # spaces gemini's calls, so no throttle is applied.
       if llms == ["gemini"]:
         time.sleep(3.0)
+  finally:
+    if pool is not None:
+      pool.close()
+      pool.join()
 
   elapsed = time.time() - start
   print()

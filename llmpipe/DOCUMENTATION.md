@@ -902,6 +902,22 @@ The dependency graph is acyclic: `proof_answer_select` ← `proof_answer_format`
    question — *"the length of car A and 80000 meters"* → *"80000 meters"*.  No-op
    when no answer carries a `$list`, so non-measure queries and reverse
    *"what is 80 km long?"* entity answers are untouched.
+4c. **Tautological-population / class-name-leak filters**
+   (`_filter_tautological_population_answers`, `_filter_class_name_leaks`): drop a
+   `$some_*` population witness that merely restates the queried property/class.
+   Two detection paths, both used:
+   - *Proof-scan* (`_is_tautological_population_answer`): the witness is proved
+     directly via the single-atom population clause that asserts the queried
+     property/class (`some big elephant is big because some big elephant is big`).
+   - *Clause-scan* (`_defined_property_witnesses`): collects every `$some_*`
+     constant whose **defining** population clause `[PRED, PROP, const, …]` matches
+     a question pop key, and drops ALL bindings to it **regardless of proof
+     route**.  This catches a property witness reached by a second, non-circular
+     route — `$some_nice_car` answering "what is nice?" not via its own clause but
+     via "it is a car, and cars are nice" (cases 1434 / 1487).  The queried-CLASS
+     witness (`$some_car`, defined by `isa`, not the property key) is never
+     collected, so the correct generic answer ("A car.", "An elephant.") survives.
+   Both fire even when no non-tautological alternative remains (→ "Unknown").
 5. Formats the answer string via `_format_answers`:
    - Boolean `True`/`False` → `"True"` / `"False"`
    - Named entities → display name (strips numbering when unambiguous, strips URL when
@@ -1309,6 +1325,7 @@ the same LLM.  See §7.8 for the retry-loop semantics and motivation.
 | `_check_stage2_measure_vs_degree_rel2` | `measure_degree_rel2_conflict` | The same property string is encoded BOTH as `$measure_of(P,…)` and `has_degree_rel2(P,…)` in one output — the equality/comparison split across two disconnected representations (no axiom bridges `has_degree_rel2` to `$measure_of`).  Retry asks to put the comparison on the measure scale (`=`/`>`/`<` on `$measure_of`).  Not measurability-gated (the LLM already chose `$measure_of`). | Case 555 — claude |
 | `_check_stage2_comparative_as_degree_property` | `comparative_as_degree_property` / `comparative_as_degree_property_nonmeasurable` | A comparative cue in the Stage-1 text (`"as P as"` / `"P-er than"` / `"more\|less P than"`) where `P` is in a UNARY `has_degree_property` with no two-argument encoding — the binary comparison was lost.  Splits on `_MEASURABLE_ADJS`: a MEASURABLE dimension (tall/heavy/long/…) → retry to `$measure_of` `=`/`>`/`<` (case 555 gpt); a gradable but NON-measurable property (interesting/…) → retry to the binary `has_degree_rel2(P,A,B,…)` (case 559 gpt, refuted by the `has_degree_rel2` asymmetry axiom; asks to resolve an elliptical question's implicit referent). | Cases 555 / 559 — gpt |
 | `_check_stage2_multiword_property` | `multiword_property` | A `has property`/`has degree property` whose first argument (the property name) is a phrase of MORE THAN two words — e.g. `"filled with water"`, `"afraid of mice"` — collapsing a relation + its argument(s) into one opaque adjective.  Retry says to conceptually split it into meaning components and represent the input with more detail (embedded noun as its own entity, relation as the right predicate).  Two-word compounds ("dark blue") are left alone. | Cases 673 / 1620 — gpt |
+| `_check_stage2_either_or_not_xor` | `either_or_not_xor` | The source text uses "either" (detected in `s1_json` raw/unit text) AND the Stage-2 disjunction is NOT a bare strict `xor` — i.e. an inclusive `["or", A, B]` (loses exclusivity) or any `["or"\|"xor"]` nested under `["normally", …]` (a defeasible xor whose "not both" clause self-blocks).  Retry asks to encode "either A or B" as strict `["xor", A, B]` — never inclusive `or`, never wrapped in `normally`.  A bare top-level `xor` (claude/gpt) does not fire. | Case 571 — gemini (inclusive or) / deepseek (`normally(xor)`) |
 
 **Registered Stage-1 checks:**
 
@@ -2125,7 +2142,14 @@ the X2-derived equality.  See §9.3 for the mutex injector.
 
 `axioms_std.js` §12 contains the **`is_rel2` tense-migration axiom**: a present-world `is_rel2(P, X, Y, ctx_present_W)` fact propagates to past worlds whenever `before(W_past, W_present)` holds.  This is what lets *"The cup is on the table. Was the cup on the table?"* close to True without an explicit past-tense fact.
 
-The migration is **gated by `$block(0, moved(?:E1, ?:W_old))`**: if the entity has moved between the two worlds, the present-world fact must not be back-propagated as if nothing changed.  `moved(X, W)` is itself derived in `axioms_std.js` from `has_actor(E, X) + has_type(E, "go")` (the canonical movement event), so any motion event with `X` as actor blocks the frame inference for `X` over its enclosing world transition.
+The migration is **gated by two `$block`s**:
+- `$block(0, moved(?:E1, ?:W_old))` — the entity moved AT the source world `W_old`.
+- `$block(0, moved_between(?:E1, ?:W_old, ?:W_new))` — the entity moved at some
+  INTERMEDIATE world strictly between `W_old` and `W_new`.
+
+`moved(X, W)` is derived in `axioms_std.js` from `has_actor(E, X) + has_type(E, "go")` (the canonical movement event). `moved_between(X, W_old, W_new)` is derived from `moved(X, Wmid) + before(W_old, Wmid) + before(Wmid, W_new)`.
+
+The source-world block alone is insufficient when the locatum's overriding move happens at a world *after* its present-location world but *before* the query world. In case 1327 ("Sandra travelled to the kitchen. Sandra travelled to the hallway. **Mary went to the bathroom.** Sandra moved to the garden. Where is Sandra?"), Sandra is at hallway at present-world W2, and her overriding move to garden is at W3 — an intermediate world. Because *Mary* (not Sandra) moved at W2, the source-world block didn't fire, so the stale hallway migrated to the W4 query and leaked into the answer ("At the garden **and at the hallway**"). The `moved_between` block catches the intermediate move (Sandra moved at W3, W2 < W3 < W4) and suppresses the migration. Non-movement relations (e.g. "afraid of") never derive `moved`, so they are unaffected.
 
 **Known limitation:** with 4+ same-actor motion events in one problem (case 198), the prover's default strategy (`negative_pref` + `posunitpara`) struggles to enumerate the answer set within the 2-second budget.  The block is correct — the search blowup is a strategy issue, not an axiom issue.  Switching to `unit` or `query_focus` strategy can close such proofs but is not currently the default; see the *Prover-timeout suspected?* step in `CLAUDE.md` for diagnosis.
 
@@ -2214,6 +2238,32 @@ skip `$ctxt` terms, and handle disjunctive clauses (list-of-lists). Controlled b
 - Uses a single free variable for context (unifies with any `$ctxt` term)
 - Two-side restriction (`REQUIRE_BOTH_SIDES = True` in `lc_post_inject.py`): only emits if
   the other side also appears in the input clauses or axiom file vocabulary
+
+*Verb soft-synonym taxonomy* (`_GENERAL_VERBS` / `_BLOCKED_VERB_PAIRS` in
+`lc_post_inject.py`) — refinement of the verb (`has type`) template only:
+
+- **Unidirectional general-verb pairs.** Verbs in `_GENERAL_VERBS =
+  {go, give, have, put, present}` are hypernyms (less-specific superordinates).
+  When a verb pair has EXACTLY ONE side in this set, only the
+  specific→general implication is emitted (`fly→go`, `run→go`, `drive→go`,
+  `swim→go`, `pass→go`, `hand→give`, `tip→give`, `pass→give`, `receive→have`,
+  `park→put`, `introduce→present`) and the general→specific clause is dropped.
+  A bidirectional pair let the prover chain two synonyms transitively —
+  `run ↔ go ↔ fly` made "John runs" defeasibly imply "John flies", which tripped
+  the baby-bird ¬fly rule and produced a spurious "Probably false" (case 1451).
+  A fly/run/drive event IS a going event, but a going event is NOT a flying
+  event, so the implication must be one-way. Pairs where neither or both sides
+  are general stay bidirectional.
+- **Blocked pairs.** `_BLOCKED_VERB_PAIRS` is a curated set of verb pairs that
+  are simply wrong (polysemy / POS confusion) — `go↔live`, `go↔work`, `go↔sit`,
+  `chase↔dog`, `dog↔tail`, `say↔have`, `be↔present`, `make↔pass`, `come↔near`,
+  `break↔give`, `put↔sit`, `give↔leave`. No axiom is emitted in either
+  direction for these.
+- **Effect** (validated across the 254 cases whose axioms contain a modified
+  verb pair, all four LLMs): fixes 1451 (×4) and 1498 (gpt/gemini, the spurious
+  `swim→fly` negative removed). The unmasked "regressions" 1500/1501 and 1616
+  (claude) were passing only because a bad chain coincidentally produced the
+  expected answer — see DEBUGGING / testfixlog 1451.
 
 *Exclusion axioms* (`inject_exclusion_axioms`):
 - Scans the clause list for words appearing in `EXCLUSION_INDEX`

@@ -191,12 +191,17 @@ def english_to_answer(text, options=None, collect=None):
 
   # --- rawlogic_convert: improve / adjust the parsed logic (logconvert.py) ---
 
-  logic = rawlogic_convert(s2_json, s1_json)
+  lc_fixes = []
+  logic = rawlogic_convert(s2_json, s1_json, fixes=lc_fixes)
 
   if logic is None:
     return "Error: rawlogic_convert returned None."
 
   if collect is not None:
+    # Surface logconvert structural clause-repairs alongside the Stage-2 JSON
+    # fixes (they repair the same Stage-2 output, just later in the pipeline).
+    if lc_fixes:
+      collect["stage_2_fixes"] = list(collect.get("stage_2_fixes", [])) + lc_fixes
     collect["clauses"] = _build_clauses_with_nl(logic, s1_json)
 
   # --- show "sentences mapped to clauses" block ---

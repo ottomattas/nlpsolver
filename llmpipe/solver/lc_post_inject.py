@@ -126,6 +126,22 @@ _SOFT_SYN_TEMPLATES = {
     ],
 }
 
+# Verb soft-synonym taxonomy. These are GENERAL (hypernym) verbs. When a verb
+# pair has EXACTLY ONE side here, only the specific->general direction is
+# emitted ("a fly/run/drive event IS a going event", not the reverse). This
+# prevents invalid transitive chains like run->go->fly that coerced an
+# unrelated event into "fly" and tripped the baby-bird ¬fly rule (case 1451).
+_GENERAL_VERBS = frozenset({"go", "give", "have", "put", "present"})
+
+# Verb soft-synonym pairs that are simply wrong (polysemy / POS confusion).
+# Suppressed entirely — no axiom emitted in either direction.
+_BLOCKED_VERB_PAIRS = frozenset({
+    frozenset({"go", "live"}), frozenset({"go", "work"}), frozenset({"go", "sit"}),
+    frozenset({"chase", "dog"}), frozenset({"dog", "tail"}), frozenset({"say", "have"}),
+    frozenset({"be", "present"}), frozenset({"make", "pass"}), frozenset({"come", "near"}),
+    frozenset({"break", "give"}), frozenset({"put", "sit"}), frozenset({"give", "leave"}),
+})
+
 
 def inject_soft_synonyms(result, axiom_vocab=frozenset()):
   """Scan clause list for words with soft synonym pairs; emit biconditional
@@ -155,6 +171,20 @@ def inject_soft_synonyms(result, axiom_vocab=frozenset()):
       emitted.add(pair_key)
       template = _SOFT_SYN_TEMPLATES.get(pos)
       if not template:
+        continue
+      # Suppress known-bad verb pairs entirely (no axiom in either direction).
+      if pair_key in _BLOCKED_VERB_PAIRS:
+        continue
+      # Verb taxonomy: when exactly one side is a general (hypernym) verb, emit
+      # only the specific->general implication and drop the reverse.
+      if pos == "v" and len(pair_key & _GENERAL_VERBS) == 1:
+        if other in _GENERAL_VERBS:        # orig_word is specific, other general
+          clause = template(orig_word, other, _fresh_fv())
+        else:                              # orig_word is general, other specific
+          clause = template(other, orig_word, _fresh_fv())
+        axioms.append({"@name": "frm_syn",
+                        "@logic": clause,
+                        "@confidence": score})
         continue
       ct = _fresh_fv()
       clause1 = template(orig_word, other, ct)

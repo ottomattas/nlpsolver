@@ -1157,3 +1157,251 @@ that V'd" → `V(the_ADJ_N) ∧ ∀Z(Z V'd → Z = the_ADJ_N)`, with the exhaust
 antecedent quantifying over ALL V-ers (only the isa class, not the focus's
 adjectives). A pipeline strip of a focus-property literal from a `→ X = K`
 uniqueness antecedent is possible but a narrow, risky heuristic for one case.
+
+---
+
+## Case 613 — "What did the cat do?" pro-verb action query  (REMOVE, 2026-06-03)
+
+### Problem
+Input:  `The dog barked and the cat ran away. What did the cat do?`
+Expected: `Ran away.`
+
+Sibling of case 145 ("what happened to X") and of task-tracker #103
+("What was X doing?"). "What did X do?" is a PRO-VERB question: "do" stands
+in for the action, so the query must solve for the VERB TYPE of X's event and
+render it as an English VP including its modifiers ("ran away", not "run").
+
+### How the four LLMs encode it (case_0613.json)
+All four parse S1/S2 correctly (dog barked @ W0; cat ran-away, has_direction
+"away", @ W1). They diverge on the QUESTION:
+- **claude** -> `Run and go.` (closest). Asks `ask X, exists E(activity E,
+  has_type E X, has_actor E cat2, past)` — solves for the verb type X. Right
+  shape, but two faults: (1) drops the `has_direction away` modifier, so "run"
+  not "ran away"; (2) the run<->go movement-synonym adds a second binding -> the
+  answer leaks both stems "Run and go."
+- **gpt** -> `Unknown.` Degenerate `ask X, X` (no event constraint at all).
+- **gemini / deepseek** -> `Unknown.` Model "do" as a LITERAL verb:
+  `has_type E "do", has_target E X` — asks for the target of a "do" event that
+  never exists. "do" is a pro-verb, not an action.
+
+### Why it's hard
+Two compounding problems, neither in the current campaign's scope:
+1. **Stage-2 (prompt-level):** "What did X do?" must be a fixed pattern that
+   solves for `has_type` of X's actor-event (claude's shape) and NOT treat "do"
+   as a literal verb with a target (gemini/deepseek). Three of four get the
+   logical form wrong; recovering it needs a Stage-2 prompt example.
+2. **Answer rendering:** even the correct binding (type=run, direction=away) must
+   render as the past-tense VP "Ran away." — verb stem -> past tense PLUS
+   re-attaching the direction/particle modifier, and suppressing the movement-
+   synonym (go) leak. This is the same gerund/VP-enrichment work parked as
+   task #103.
+
+### Status
+REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
+landed.  Revisit alongside task #103 (VP-enriched answers for "What was X
+doing?") and case 145 ("what happened to X") — same action-query family.
+
+---
+
+## Cases 1500 / 1501 / 1498 — defeasible disjunctive syllogism  (REMOVE, 2026-06-03)
+
+### Problem
+1500: `Birds fly or do not swim. John is a bird. John does not fly. John swims?`  Expected: False
+1501: `Birds fly or do not swim. John is a bird. John never flies. John swims?`  Expected: False
+1498: `Birds fly or swim. John is a bird. John does not fly. John swims?`         Expected: True
+
+The intended inference is a disjunctive syllogism over a defeasible generic:
+bird(John) -> normally(fly OR not swim); John does not fly; therefore not swim;
+so "John swims?" -> False.
+
+**1498 is the POSITIVE-question sibling**: rule `normally(fly OR swim)` +
+not-fly => swim, so "John swims?" -> True. Same machinery, opposite polarity.
+After the verb-taxonomy change removed the spurious swim->go->fly chain (which
+had made all three "Probably false" by luck), 1498 sits at 2/4: gpt/gemini fire
+the syllogism weakly ("Possibly true (0.32)", accepted as True), while
+claude/deepseek do not fire it at all -> Unknown. Exactly the firing condition
+documented below (modality OVER the disjunction + a non-defeasible side); the
+confidence model also charges the `normally` block once per Skolem sub-clause,
+capping even the firing parses at ~0.32. Same root cause, REMOVE with 1500/1501.
+
+### History
+Both were GREEN in the stored baseline ("Probably false." x4 / x2) but only by
+LUCK: the answer came from the spurious soft-synonym chain swim->go->fly (proof
+verified to use the frm_syn go->fly + swim->go clauses), which made "John swims"
+imply "John flies", clashing with "John does not fly" -> not swim. That is
+nonsense reasoning ("swimming is flying") that happened to land on the expected
+False. The 2026-06-03 verb soft-synonym taxonomy change (case 1451) removed
+go->fly, so the crutch is gone and the LEGITIMATE disjunctive syllogism must now
+carry the proof — and it usually does not fire.
+
+### Firing condition (verified)
+The legitimate syllogism fires ONLY when BOTH:
+  (a) the rule is `normally(or(fly, not swim))` — `normally` OVER the whole
+      disjunction, not distributed into the disjuncts; AND
+  (b) `not fly` is STRICT (not wrapped in `normally`).
+Existence proof: deepseek on 1501 encodes (a) + strict `not fly` ("never" ->
+strict) and answers "Likely false." at confidence 0.9 via the real disjunction
+(no synonym). Every other LLM/case wraps `not fly` in `normally` (defeasible),
+so the defeasible `fly` disjunct cannot be strictly eliminated -> nothing
+concludes `not swim` -> Unknown. gpt additionally distributes the modality as
+`or(normally(fly), normally(not swim))`, breaking (a) too.
+
+| LLM / case        | rule (S1)                          | not-fly (S3)     | answer        |
+|-------------------|------------------------------------|------------------|---------------|
+| claude 1500/1501  | normally(or(fly, ¬swim))           | normally(¬fly)   | Unknown       |
+| gemini 1500/1501  | normally(or(fly, ¬swim))           | normally(¬fly)   | Unknown       |
+| gpt 1500/1501     | or(normally(fly), normally(¬swim)) | normally(¬fly)   | Unknown       |
+| deepseek 1501     | normally(or(fly, ¬swim))           | STRICT ¬fly      | Likely false ✓|
+
+### Root cause
+Stage-2 OVER-DEFEASIBILIZATION: "John does not fly" / "John never flies" is a
+categorical fact about a NAMED individual, but most LLMs wrap it in `normally`.
+A specific-individual negation should be strict; only generic rules ("birds
+fly") deserve `normally`. Plus gpt's modality-distribution inconsistency.
+
+### Why REMOVE (not a quick fix)
+Two candidate IN-SCOPE pipeline rewrites exist but each is broad and risky:
+  - Rewrite A: strip `normally` from a negated event fact whose actor is a
+    specific named constant (not a forall-bound var) -> makes ¬fly strict.
+  - Rewrite B: normalize `or(normally(A), normally(B))` -> `normally(or(A,B))`.
+Both change defeasibility semantics across the whole suite and would need their
+own validation sweep; not justified for two near-duplicate cases. The honest fix
+is correct Stage-2 modality placement (strict individual negation; modality over
+the disjunction) — a prompt-level matter, out of the current campaign.
+
+### Status
+REMOVE all three (1500, 1501, 1498).  Logged in testfixlog_june.txt.  The
+verb-taxonomy change that unmasked 1500/1501 (and fixed 1498's problem 1) is
+correct and kept (case 1451) — do NOT revert it to re-green these. Revisit with
+the defeasible disjunctive syllogism work: a prover confidence model that
+charges a `normally` block once per rule application (not per Skolem sub-clause),
+plus a Stage-2 individual-negation strictness pass (strict `not fly`, modality
+OVER the disjunction).
+
+---
+
+## Cases 807 / 1305 — relative-clause coreference through a defeasible habitual  (REMOVE, 2026-06-03)
+
+### Problem
+807:  `John lives in a nice car which was red and was bought by Mike. John lives in a car which was bought by Mike?`  Expected: True
+1305: `John lives in a red car bought by Mary. Mary bought the car where John lives?`  Expected: True
+
+Near-duplicates. In both, the car John lives in IS the car Mary/Mike bought (one
+entity, car2), so the answer is True. 807 asks it from John's side ("John lives
+in a car which was bought by Mike?"), 1305 from Mary's side ("Mary bought the
+car where John lives?"); both reduce to proving buy(Mary/Mike, car2) AND
+live(John, car2).
+
+### How the four LLMs handle it
+- **deepseek -> True.** Encodes "lives in" as a PLAIN relation
+  `is rel2("lives in", John, car2)` (no normally/typical). The question repeats
+  the same relation -> trivially matches.
+- **gpt -> True.** Wraps "live" in `normally(typical ...)` but the QUESTION
+  existentially re-binds the car: `exists Y: car(Y) and buy(Mike,Y) and
+  normally(live(John,Y))` -> Y = car2 -> matches.
+- **claude -> Unknown.** Grounds the question directly on car2 but encodes
+  "live" as `normally(exists E: live..., typical)`. The question's fresh
+  `typical`-live skolem must unify with the assertion's defeasible `typical`-live
+  skolem through the `$block`, and that defeasible-event match does not close ->
+  prover result "no information".
+- **gemini -> Unknown.** Over-structures with `state_time` + separate worlds:
+  buy at W0/past, live at W1/present. The question conjoins buy AND live, which
+  cannot be satisfied in one consistent world/tense.
+
+### 1305 — same root cause, different incidental winner
+On 1305 ALL four encode "lives in" as the `normally(typical)` event (no
+`is rel2` shortcut), and only gpt -> True; claude/gemini/deepseek -> Unknown.
+gpt closes here for a DIFFERENT incidental reason than on 807: it bundles live
+AND buy into ONE block `normally(and(live(John,car2,typical), buy(Mary,car2)))`,
+so the question matches the whole block as a unit with the `typical` `$block` as
+the only defeasible step (proof "answer found"). claude/gemini/deepseek keep
+live's `normally` SEPARATE from buy, so the question's `typical`-live skolem must
+independently match the assertion's through the `$block` -> "no information"
+(gemini again also splits state_time worlds). So across 807 + 1305 there are
+THREE different incidental things that make a parse close (deepseek's plain
+`is rel2`, gpt's existential re-binding on 807, gpt's single-block bundling on
+1305) and the failing parses each miss whichever one their structure needed --
+strong evidence the case family is too structure-sensitive to fix per-case.
+
+### Why it's hard
+The phrase "John lives in a car" is encoded by claude/gpt as a DEFEASIBLE
+habitual (`normally` + `typical` Davidsonian event). The relative-clause
+coreference ("a car which was bought by Mike" = the same car2) then has to be
+matched THROUGH that defeasible event. The two passing parses sidestep it
+entirely -- deepseek with a plain `is rel2` relation, gpt with an existential
+re-binding of the car -- while the two failing parses try to match the
+`normally(typical)` live-event directly (claude) or across split state_time
+worlds (gemini), and neither closes. It is not one bug but an interaction of
+three independently-reasonable Stage-2 choices (habitual modality, world/tense
+split, direct-vs-existential question grounding) that only lines up for two of
+four LLMs.
+
+Confirmed NOT a soft-synonym artifact: the 2026-06-03 verb-taxonomy change
+removed the `live<->go` pair (live frm_syn clauses now 0) and claude/gemini are
+still Unknown -- the synonym was never load-bearing here.
+
+### Candidate fixes (none landed, all out of scope or risky)
+- Normalize "lives in X" (and similar stative location verbs) to a plain
+  `is rel2`/`has location` relation instead of a `normally(typical)` event --
+  a pipeline rewrite, but it changes habitual semantics broadly and needs its
+  own validation sweep.
+- Make the question's existential-over-the-relatum the default question shape
+  for "X Vs a N which ..." (gpt's winning move) -- a Stage-2 prompt matter.
+- A typical-event question-matching relaxation in the prover -- deep, risky.
+
+### Status
+REMOVE both 807 and 1305 (siblings, same root cause).  Logged in
+testfixlog_june.txt.  No code landed.  Revisit with a stative-location
+normalization pass (shared with other "lives in / sits in / stands in"
+habituals) if/when that work is taken on.
+
+---
+
+## Case 466 — "what is the price of X?" measure-value question  (REMOVE, 2026-06-03)
+
+### Problem
+Input:  `The price of the car is 3 dollars. The bike is as expensive as the car. What is the price of the bike?`
+Expected: `3 dollars`
+
+price(car)=3 dollars; bike as expensive as car -> price(bike)=price(car)=3
+dollars; "What is the price of the bike?" -> 3 dollars.
+
+### How the four LLMs handle it
+- **claude / gemini -> "3 dollars."** (correct). Encode the question as a direct
+  measure-VALUE query: `=($measure_of(price, bike), $measure(?v, dollar))` /
+  `=($measure_of(price, bike), ?v)` -> solve for the value.
+- **gpt -> "The car and the bike."** (wrong). Encodes `=($measure_of(price,bike),
+  $measure_of(price, X))` -- the answer var X is the ENTITY arg of a second
+  $measure_of, so it enumerates entities with the bike's price -> bike (reflexive)
+  + car (via "as expensive as"). The value $list(3,dollar) IS derived but never
+  binds X.
+- **deepseek -> "Unknown."** (wrong). Reifies "the price of the bike" as a
+  definite description $theof1(price,bike) and asks it RELATIONALLY
+  `is_rel2("price of", $theof1(price,bike), bike)`. The ask var is replaced by the
+  definite term (no free variable), and $theof1 is never equated to the
+  $measure_of value, so the value (3, via bike=car) never reaches the answer.
+
+### Why it's hard
+Both wrong parses mis-encode "What is the &lt;measurable-N&gt; of X?": it must be a
+measure-VALUE query `=($measure_of(N,X), $measure(?v,UNIT))`, not a solve-for-
+entity-with-equal-measure (gpt) and not a definite-description is_rel2 query
+(deepseek). The two failures are DIFFERENT shapes, so no single rewrite fixes
+both; the only in-scope lever is a Stage-2 measure-value-question sanity check +
+retry (cf. the comparative checks 555/559) that recognises a measure-noun
+"what is the N of X?" question and flags BOTH the entity-arg-of-$measure_of form
+and the $theof1/is_rel2 definite form, retrying for the value query. That is a
+real but non-trivial check needing its own design + regression -- more than two
+of four LLMs being wrong on one case warrants right now.
+
+### Candidate fix (designed, NOT landed)
+A `_check_stage2_measure_value_question(logic, s1_json)` sanity check:
+- Trigger: a "what is the N of X?" wh-question where N is a measure noun AND the
+  asserted facts carry `$measure_of(N, ...)`.
+- Flag when the ask-var is the ENTITY arg of a `$measure_of` (gpt) or resolves to
+  a `$theof1(N, ...)` definite asked via `is_rel2 "N of"` (deepseek).
+- Retry: encode as `=($measure_of(N, X), $measure(?v, UNIT))`.
+
+### Status
+REMOVE.  Logged in testfixlog_june.txt.  Currently 2/4 (claude/gemini correct).
+No code landed.  Revisit with the measure-value-question sanity check above
+(general win for relational/entity-equality measure questions, not just 466).

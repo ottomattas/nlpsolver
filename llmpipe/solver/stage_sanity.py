@@ -876,6 +876,80 @@ def _check_stage2_multiword_property(logic):
   return issues
 
 
+# ======== Stage-2 "either ... or ..." exclusivity check ========
+#
+# The "either A or B" construction is an EXCLUSIVE disjunction: exactly one of
+# the two alternatives holds, not both. The exclusivity is what licenses the
+# downstream inference (case 571: "Elephants and sparrows are either animals or
+# birds. ... Sparrows are birds. John is not an animal?" -> True, because bird
+# excludes animal). Two Stage-2 mis-encodings lose it:
+#   * inclusive ["or", A, B]            (gemini 571) -> bird does not exclude
+#     animal -> Unknown.
+#   * ["normally", [... xor/or ...]]    (deepseek 571) -> the defeasible xor's
+#     "not both" clause carries a $block gated on one disjunct, so the
+#     exclusivity self-defeats exactly when it is needed -> Unknown.
+# The correct encoding is a bare strict ["xor", A, B] (claude/gpt 571 -> True).
+# This check fires only when the source text uses "either" AND the Stage-2
+# disjunction is NOT already a bare strict xor.
+
+_EITHER_RE = re.compile(r"\beither\b", re.IGNORECASE)
+
+
+def _text_has_either(s1_json):
+  """True if any Stage-1 package raw text (or unit text) uses 'either'."""
+  if not isinstance(s1_json, list):
+    return False
+  for pkg in s1_json:
+    if not isinstance(pkg, dict):
+      continue
+    if _EITHER_RE.search(pkg.get("raw", "") or ""):
+      return True
+    for u in pkg.get("units", []) or []:
+      if isinstance(u, dict) and _EITHER_RE.search(u.get("text", "") or ""):
+        return True
+  return False
+
+
+def _check_stage2_either_or_not_xor(logic, s1_json):
+  """Flag an 'either ... or ...' source disjunction encoded as inclusive `or`
+  or wrapped in `normally`, instead of a bare strict `xor`.  See case 571."""
+  if not isinstance(logic, list) or not _text_has_either(s1_json):
+    return []
+  bad = {"inclusive_or": False, "defeasible_disj": False}
+
+  def walk(n, under_normally):
+    if not isinstance(n, list):
+      return
+    head = n[0] if (n and isinstance(n[0], str)) else None
+    if head == "or":
+      bad["inclusive_or"] = True
+    if head in ("or", "xor") and under_normally:
+      bad["defeasible_disj"] = True
+    child_under = under_normally or (head == "normally")
+    for c in (n[1:] if head else n):
+      walk(c, child_under)
+
+  walk(logic, False)
+  if not (bad["inclusive_or"] or bad["defeasible_disj"]):
+    return []   # already a bare strict xor (claude/gpt) -> nothing to fix
+  return [Issue(
+    kind="either_or_not_xor",
+    location="connective:either-or",
+    description=("The source text uses the \"either ... or ...\" construction, "
+                 "which is an EXCLUSIVE disjunction: exactly ONE of the two "
+                 "alternatives holds, never both. Encode \"X is either A or B\" "
+                 "as a STRICT exclusive-or [\"xor\", A, B]. Do NOT use "
+                 "[\"or\", A, B] -- inclusive or admits both alternatives at "
+                 "once, so it cannot exclude one when the other is known. Do "
+                 "NOT wrap the disjunction in [\"normally\", ...] -- a "
+                 "definitional \"either ... or ...\" is strict, not defeasible. "
+                 "For a generic rule \"Ns are either A or B\", encode it as "
+                 "forall X ([\"implies\", [\"isa\", N, X], [\"xor\", A_of_X, "
+                 "B_of_X]]) with the xor NOT inside a \"normally\"."),
+    evidence="'either' in source text with non-xor disjunction encoding",
+  )]
+
+
 def _check_stage2_missing_question(logic, s1_json):
   """Detect Stage-1 query units that have no corresponding question/ask
   package in Stage-2.  Triggered when either unit.type == "query" or the
@@ -1940,6 +2014,7 @@ def check_stage2(logic, s1_json=None):
   issues.extend(_check_stage2_measure_vs_degree_rel2(logic))
   issues.extend(_check_stage2_comparative_as_degree_property(logic, s1_json))
   issues.extend(_check_stage2_multiword_property(logic))
+  issues.extend(_check_stage2_either_or_not_xor(logic, s1_json))
   issues.extend(_check_stage2_entity_id_typos(logic))
   issues.extend(_check_stage2_possessive_without_ownership(logic, s1_json))
   return issues

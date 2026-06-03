@@ -499,6 +499,44 @@ def _is_tautological_population_answer(ans, question_pop_keys, class_names=froze
   return False
 
 
+def _defined_property_witnesses(logic, question_pop_keys):
+  """Return the set of $some_* population constants whose DEFINING clause
+  asserts the very property being queried.
+
+  A "what/who is ADJ?" question populates a witness $some_<adj>_<class> defined
+  by a single-atom clause [PRED, PROP, $some_..., ...] with (PRED, PROP) equal
+  to a question pop key (e.g. has_degree_property("good", $some_nice_car, ...)
+  for "What is nice?").  Such a witness is intrinsically the property witness —
+  ANY binding of it to the question is tautological, even when the binding's
+  own proof reaches it via a different route ("$some_nice_car is a car, and
+  cars are nice").  This is the gap the proof-scan-only
+  _is_tautological_population_answer misses (cases 1434 / 1487).
+
+  Only POSITIVE property keys count: the queried-CLASS witness ($some_car via
+  isa) is never collected here, because question_pop_keys carries the property
+  predicate, not isa.
+  """
+  if not question_pop_keys or not isinstance(logic, list):
+    return frozenset()
+  qkeys = {(p, c) for (p, c) in question_pop_keys}
+  witnesses = set()
+  for obj in logic:
+    if not isinstance(obj, dict) or "@logic" not in obj:
+      continue
+    atom = obj["@logic"]
+    # single-atom population clause: [PRED, PROP, const, ...]
+    if (not isinstance(atom, list) or len(atom) < 3
+        or not isinstance(atom[0], str) or isinstance(atom[1], list)):
+      continue
+    const = atom[2]
+    if not (isinstance(const, str) and const.startswith("$some_")
+            and not const.startswith("$some_not_")):
+      continue
+    if (atom[0], str(atom[1])) in qkeys:
+      witnesses.add(const)
+  return frozenset(witnesses)
+
+
 def _filter_tautological_population_answers(answers, logic, class_names=frozenset()):
   """Remove tautological population / class-label answers.
 
@@ -506,15 +544,28 @@ def _filter_tautological_population_answers(answers, logic, class_names=frozense
     - A $some_* constant proved solely via the population clause that
       asserts the very property/class being queried ('some big elephant is
       big because some big elephant is big').
+    - A $some_* constant whose DEFINING population clause asserts the queried
+      property, regardless of which proof route this binding used (the witness
+      is intrinsically the property witness; cases 1434 / 1487).
     - A bare class-label string that matches the class being queried
       ('Who is an elephant? -> elephant').
   Such answers are always filtered out, even when no non-tautological
   alternatives exist (producing "Unknown").
   """
   question_pop_keys = _extract_question_pop_keys(logic)
-  tautological = [a for a in answers
-                  if _is_tautological_population_answer(a, question_pop_keys,
-                                                       class_names)]
+  defined_witnesses = _defined_property_witnesses(logic, question_pop_keys)
+
+  def _is_taut(a):
+    if _is_tautological_population_answer(a, question_pop_keys, class_names):
+      return True
+    val = a.get("answer")
+    if (defined_witnesses and isinstance(val, list) and val
+        and isinstance(val[0], list) and len(val[0]) >= 2
+        and val[0][1] in defined_witnesses):
+      return True
+    return False
+
+  tautological = [a for a in answers if _is_taut(a)]
   if not tautological:
     return answers
   return [a for a in answers if a not in tautological]

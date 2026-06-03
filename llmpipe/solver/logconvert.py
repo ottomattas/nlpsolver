@@ -652,16 +652,22 @@ def _build_entity_category_clauses(s1_json, skip_entities=frozenset()):
   return clauses
 
 
-def rawlogic_convert(logic, s1_json=None):
+def rawlogic_convert(logic, s1_json=None, fixes=None):
   """Convert stage-2 LLM output to a GK-compatible clause list.
 
   Input:  stage-2 list ["and", ["@id","S1",PACKAGE], ...]
           s1_json -- Stage-1 JSON from llmparse.parse_text(), used for
                      programmatic $ctxt injection (tense, world, location)
                      and entity category isa injection.
+          fixes   -- optional list; when a structural clause-repair pass
+                     actually rewrites the logic, a short "logconvert: <name>"
+                     marker is appended (surfaced as stage_2_fixes).
   Output: list of {"@name":..., "@logic":CLAUSE} / {"@name":..., "@question":F}
   Returns None on fatal error.
   """
+  def _note_repair(before, after, name):
+    if fixes is not None and after != before:
+      fixes.append("logconvert: " + name)
   lc_ctxt._fv_nr = 0             # reset once for the whole conversion
   lc_clausify._skolem_nr = 0
   lc_clausify._gobj_nr   = 0
@@ -673,12 +679,16 @@ def rawlogic_convert(logic, s1_json=None):
   # Hoist nested @id blocks to top level.  LLM JSON errors sometimes cause
   # a closing bracket to be dropped, nesting one @id inside another after
   # auto-fix.  @id blocks are never legitimately nested.
+  _b = logic
   logic = _hoist_nested_ids(logic)
+  _note_repair(_b, logic, "hoist nested @ids")
 
   # Repair a rule consequent that an LLM hung off `normally` as a 2nd arg
   # instead of inside the `implies` (case 1418, deepseek): rewrite
   # ["normally", ["implies", A], C] -> ["normally", ["implies", A, C]].
+  _b = logic
   logic = _repair_misnested_normally_implies(logic)
+  _note_repair(_b, logic, "repair misnested normally/implies")
 
   # Lower outer `normally` into the consequent of forall...implies bodies:
   # ["normally", ["forall", X, ["implies", A, B]]] →
@@ -735,7 +745,9 @@ def rawlogic_convert(logic, s1_json=None):
   # presupposition (isa on a Stage-1 entity that nothing asserts) makes the
   # whole conjunctive query unprovable.  Removing the dead guard is a sound
   # simplification (see _strip_phantom_query_guards).
+  _b = logic
   logic = _strip_phantom_query_guards(logic, _collect_stage1_entities(s1_json))
+  _note_repair(_b, logic, "strip phantom query guard")
 
   # Rewrite $setof terms to canonical form (replaces ?:X with $arg1,
   # extracts anchors, $-prefixes internal predicates, generates membership

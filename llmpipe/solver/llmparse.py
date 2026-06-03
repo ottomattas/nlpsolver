@@ -145,7 +145,7 @@ def parse_text(text, llm=None, version=None, tokens=None, think=None):
     return (None, None, stats)
 
   # Normalize entity IDs that differ only by sentence-start capitalization.
-  _normalize_entity_id_case(s1_json)
+  _normalize_entity_id_case(s1_json, stats)
 
   # --- stage 2 ---
   s2_input = json.dumps(s1_json)
@@ -215,7 +215,7 @@ def _run_stage(stage_nr, input_text, sysprompt, llm, version, tokens, think, sta
 
   # --- LLM retry ---
   stats[key + "_retry_calls"] += 1
-  stats[key + "_retries"].append("json-fail retry: " + (err or "parse error"))
+  stats[key + "_retries"].append("json-fail retry: " + (err or "parse error")[:60])
   retry_input = _build_retry_prompt(input_text, raw)
   _debug_write("Retrying stage " + str(stage_nr) + " with error feedback...")
 
@@ -290,14 +290,10 @@ def _maybe_sanity_retry(stage_nr, input_text, parsed, raw, check_fn,
     stats[key + "_sanity_retries"] += 1
     _debug_write("Stage " + str(stage_nr) + " sanity retry #" + str(attempt)
                  + " with " + str(len(current_issues)) + " issue(s)")
-    # Record a short message summarising why the retry fired.
-    issue_msgs = []
-    for it in current_issues:
-      kind = getattr(it, "kind", "") or ""
-      desc = getattr(it, "description", "") or ""
-      m = (kind + ": " + desc) if kind and desc else (kind or desc or str(it))
-      issue_msgs.append(m if len(m) < 120 else m[:117] + "...")
-    stats[key + "_retries"].append("sanity #" + str(attempt) + ": " + "; ".join(issue_msgs))
+    # Record a short message summarising why the retry fired: the issue KINDS
+    # only (descriptions are long and live in the corrective prompt / debug log).
+    kinds = [(getattr(it, "kind", "") or "issue") for it in current_issues]
+    stats[key + "_retries"].append("sanity #" + str(attempt) + ": " + ", ".join(kinds))
     suffix = _format_retry_suffix(current_issues, current_parsed)
     retry_input = input_text + suffix
 
@@ -556,7 +552,7 @@ import re as _re
 
 _ID_WITH_NUMBER_RE = _re.compile(r'^(.+)\s+(\d+)$')
 
-def _normalize_entity_id_case(s1_json):
+def _normalize_entity_id_case(s1_json, stats=None):
   """Normalize entity IDs that differ only by sentence-start capitalization.
 
   When the same entity appears as "Car 1" (sentence start) and "car 1"
@@ -610,6 +606,8 @@ def _normalize_entity_id_case(s1_json):
 
   # Apply replacements throughout all entities, definites, actions, etc.
   _replace_ids_in_s1(s1_json, replacements)
+  if stats is not None:
+    stats["s1_fixes"].append("entity-id case normalized")
 
 
 def _replace_ids_in_s1(obj, replacements):
@@ -661,16 +659,24 @@ def _make_stats():
   return d
 
 
-_SKIP_FIX_NAMES = {"stripped markdown fence"}
+# Cosmetic wrapper-stripping fixes that are NOT registered (LLM-output noise,
+# not a structural repair): the markdown fence and the preamble before the JSON
+# header.  Everything else from fix_json IS registered (prefixed "json: ").
+_SKIP_FIX_NAMES = {
+    "stripped markdown fence",
+    "stripped preamble before fence",
+    "stripped preamble before JSON",
+}
 
 
 def _record_fixes(stats, key, fixes):
-  """Append non-skipped fix names to the stage's fix list."""
+  """Append non-skipped JSON fix names (prefixed "json: ") to the stage's
+  fix list.  All fixes here originate from fix_json (JSON-syntax repairs)."""
   if not fixes:
     return
   for f in fixes:
     if f not in _SKIP_FIX_NAMES:
-      stats[key + "_fixes"].append(f)
+      stats[key + "_fixes"].append("json: " + f)
 
 
 def print_stats(stats):

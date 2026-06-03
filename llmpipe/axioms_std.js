@@ -334,6 +334,18 @@
   [["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
    ["-has type", "?:E", "go", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
    ["moved", "?:X", "?:W"]],
+
+  // Derive moved_between(X, W_old, W_new): X performed a movement at some world
+  // strictly between W_old and W_new. Used to block §12 is_rel2 tense-migration
+  // of a present-tense location when the actor moved AGAIN after the source
+  // world (the existing moved(X,W_old) block only catches a move AT the source).
+  // Case 1327: Sandra is at hallway (present W2), then moves to garden at W3;
+  // without this, the stale hallway migrated to past W4 and leaked into the
+  // "Where is Sandra?" answer alongside the correct garden.
+  [["-moved", "?:X", "?:Wmid"],
+   ["-before", "?:W_old", "?:Wmid"],
+   ["-before", "?:Wmid", "?:W_new"],
+   ["moved_between", "?:X", "?:W_old", "?:W_new"]],
   /*
   // Redundant with pipeline normalization in lc_rewrites.py:
   [["-has actor", "?:E", "?:X", ["$ctxt", "?:T", "?:W", "?:L", "?:K"]],
@@ -1038,7 +1050,8 @@ Does John 1 have two cars?
     ["-is rel2", "?:R", "?:E1", "?:E2", ["$ctxt", "present", "?:W_old", "?:L", "?:K"]],
     ["-before", "?:W_old", "?:W_new"],
     ["is rel2", "?:R", "?:E1", "?:E2", ["$ctxt", "past", "?:W_new", "?:L", "?:K"]],
-    ["$block", 0, ["moved", "?:E1", "?:W_old"]]
+    ["$block", 0, ["moved", "?:E1", "?:W_old"]],
+    ["$block", 0, ["moved_between", "?:E1", "?:W_old", "?:W_new"]]
   ]
 },
 
