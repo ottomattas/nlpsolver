@@ -7,6 +7,8 @@ It contains two independent pipelines:
 
 * **llmpipe** — the newer LLM-based pipeline (GPT, Claude, Gemini) that replaces the Stanza
   parser with a two-stage LLM semantic parser. See the `llmpipe/` folder and its README.
+  Test cases, recorded multi-LLM results, and analysis for this pipeline are published
+  separately in [nlformtasks](https://github.com/tammet/nlformtasks).
 
 * **udppipe** — the older Stanza/UD-based semantic parser pipeline, described in the paper
   [An Experimental Pipeline for Automated Reasoning in Natural Language](https://link.springer.com/chapter/10.1007/978-3-031-38499-8_29).
