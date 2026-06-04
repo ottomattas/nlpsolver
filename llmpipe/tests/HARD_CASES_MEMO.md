@@ -79,8 +79,7 @@ rule equating any manager-holder to Anna.
 
 ### Experiment result
 Tested by bypassing the LLM (monkeypatch `llmparse.parse_text` to return
-hand-written s1/s2 JSON, then run the real `english_to_answer` pipeline —
-harness reproduced in the appendix).
+hand-written s1/s2 JSON, then run the real `english_to_answer` pipeline).
 
 Result: **`False.`**, confidence 1. Clean 5-step proof:
 1. uniqueness rule:  `-hasprop(manager,X,present) | X = Anna 1`
@@ -196,51 +195,6 @@ Arguments around Option 4:
 Whether the matching **Stage-1** rule (two-entity parse, role as property) is
 worth adding, and whether "unique definite role in a closed scene" recurs enough
 to justify the machinery.
-
-### Appendix — test harness (no LLM call)
-`/tmp/test_case76.py` (temporary; reproduce if gone):
-```python
-import sys
-sys.path.insert(0, "/opt/nlpsolver/llmpipe/solver")
-import llmparse, solve
-
-TEXT = "The manager, Anna, called Eve. Eve is the manager?"
-s1_json = [
-  {"raw":"The manager, Anna, called Eve.","units":[
-    {"unit_id":"S1","text":"Anna 1 called Eve 2.","type":"situation",
-     "entities":[{"id":"Anna 1","type":"concrete","category":"person"},
-                 {"id":"Eve 2","type":"concrete","category":"person"}],
-     "actions":[{"root":"call","mode":"event",
-                 "roles":{"actor":"Anna 1","recipient":"Eve 2"}}],
-     "time":"past"},
-    {"unit_id":"S2","text":"Anna 1 is the manager.","type":"situation",
-     "entities":[{"id":"Anna 1","type":"concrete","category":"person"},
-                 {"id":"manager","type":"generic","category":"person"}],
-     "time":"present"}]},
-  {"raw":"Eve is the manager?","units":[
-    {"unit_id":"S3","text":"Is Eve 2 the manager?","type":"query",
-     "entities":[{"id":"Eve 2","type":"concrete","category":"person"},
-                 {"id":"manager","type":"generic","category":"person"}],
-     "time":"present"}]},
-]
-s2_json = ["and",
-  ["@id","S1",["holds","W0",["and",
-    ["isa","person","Anna 1"],["isa","person","Eve 2"],
-    ["exists","E",["and",["isa","activity","E"],["has type","E","call"],
-      ["has actor","E","Anna 1"],["has recipient","E","Eve 2"],
-      ["has time","E","past","in"]]]]]],
-  ["@id","S2",["holds","W0",["and",
-    ["has property","manager","Anna 1"],
-    ["forall","X",["implies",["has property","manager","X"],
-      ["=","X","Anna 1"]]]]]],
-  ["@id","S3",["question",["has property","manager","Eve 2"]]]]
-
-llmparse.parse_text = lambda *a, **k: (s1_json, s2_json, {})
-opts = {"show_details_flag":True,"show_logic_flag":True,"show_prover_flag":True,
-        "prover_explain_flag":True,"json_flag":True,"prover_seconds":2}
-print(solve.english_to_answer(TEXT, opts))
-```
-
 ---
 
 ## collective "together" vs "alone"
@@ -273,8 +227,8 @@ explicitly:
   (S2b: "Mary did not lift the piano alone.")
 
 The query "Did John lift the piano alone?" then directly contradicts S2 →
-False.  Verified in a /tmp harness: **False, confidence 1** — no new axioms,
-reuses the existing negation/contradiction handling.  Requires "alone" to be
+False.  Verified by a parse-bypass harness: **False, confidence 1** — no new
+axioms, reuses the existing negation/contradiction handling.  Requires "alone" to be
 encoded identically (`has manner E "alone"`, same world/tense) in S2 and the
 query — guaranteed since both come from the same Stage-1 phrasing.
 
@@ -292,47 +246,6 @@ The decomposition works and is faithful, but it bakes in the pragmatic
 single-event reading (as the habitual cases did): "Did John lift it alone?" is
 only False if the described joint lift is THE relevant lifting — a pragmatic,
 not strictly logical, closure.
-
-### Appendix — test harness
-```python
-import sys
-sys.path.insert(0, "/opt/nlpsolver/llmpipe/solver")
-import llmparse, solve
-
-TEXT = "John and Mary lifted the piano together. Did John lift the piano alone?"
-s1 = [
-  {"raw":"John and Mary lifted the piano together.","units":[
-    {"unit_id":"S1","text":"John 1 and Mary 2 lifted the piano 3 together.","type":"situation",
-     "entities":[{"id":"John 1","type":"concrete","category":"person"},
-                 {"id":"Mary 2","type":"concrete","category":"person"},
-                 {"id":"piano 3","type":"concrete","category":"artifact"}],"time":"past"},
-    {"unit_id":"S2","text":"John 1 did not lift the piano 3 alone.","type":"situation",
-     "entities":[{"id":"John 1","type":"concrete","category":"person"},
-                 {"id":"piano 3","type":"concrete","category":"artifact"}],"time":"past"}]},
-  {"raw":"Did John lift the piano alone?","units":[
-    {"unit_id":"S3","text":"Did John 1 lift the piano 3 alone?","type":"query",
-     "entities":[{"id":"John 1","type":"concrete","category":"person"},
-                 {"id":"piano 3","type":"concrete","category":"artifact"}],"time":"past"}]},
-]
-s2 = ["and",
-  ["@id","S1",["holds","W0",["and",
-    ["isa","person","John 1"],["isa","person","Mary 2"],["isa","piano","piano 3"],
-    ["exists","E",["and",["isa","activity","E"],["has type","E","lift"],
-      ["has actor","E","John 1"],["has accompaniment","E","Mary 2"],
-      ["has target","E","piano 3"],["has time","E","past","in"]]]]]],
-  ["@id","S2",["holds","W0",["not",["exists","E",["and",["isa","activity","E"],
-    ["has type","E","lift"],["has actor","E","John 1"],["has target","E","piano 3"],
-    ["has manner","E","alone"],["has time","E","past","in"]]]]]],
-  ["@id","S3",["question",["exists","E",["and",["isa","activity","E"],
-    ["has type","E","lift"],["has actor","E","John 1"],["has target","E","piano 3"],
-    ["has manner","E","alone"],["has time","E","past","in"]]]]]]
-
-llmparse.parse_text = lambda *a, **k: (s1, s2, {})
-opts = {"prover_seconds":2,"show_prover_flag":True,"prover_explain_flag":True,
-        "show_logic_flag":True,"json_flag":True}
-print(solve.english_to_answer(TEXT, opts))
-```
-
 ---
 
 ## Residual cases
