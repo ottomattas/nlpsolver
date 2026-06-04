@@ -16,18 +16,6 @@ English text and `expected` is the expected answer.  Run with
 - **`tests_core_100.py`** — a 100-case representative subset of
   `tests_core.py`, for fast smoke runs across all LLMs.
 
-- **`tests_extra.py`** — extended linguistic regression suite
-  (~400 cases): argument structure, passive, coordination, ellipsis,
-  relative clauses, modification, comparatives, anaphora, tense,
-  appositives, participials, possessives, ditransitives, control verbs.
-  Curated from Gemini/GPT suggestions in `suggested_examples.txt`.
-
-- **`tests_medium_core.py`** — a mid-sized subset of `tests_core.py`
-  suitable for medium-length regression runs.
-
-- **`tests_small.py`** — three tests; intended for quick
-  experimentation and smoke testing of pipeline changes.
-
 ## Running
 
 ```bash
@@ -38,7 +26,7 @@ python3 test.py
 python3 test.py tests/tests_core.py -llm claude
 
 # subset
-python3 test.py tests/tests_extra.py -limit 20
+python3 test.py tests/tests_core_100.py -limit 20
 python3 test.py tests/tests_core.py -filter "penguin"
 ```
 
