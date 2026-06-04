@@ -40,7 +40,6 @@ Subfolders
 * secrets: empty folder for files with LLM api secrets.
 * gk: the gk commonsense reasoner used in both pipelines
 * exparchive: archive of data from experiments
-* amr: standalone experimental amr-based parser
 
 
 Installation
@@ -106,9 +105,6 @@ cd udppipe
 ../../nlpsolver-venv/bin/python3 nlpsolver.py "Elephants are animals. John is an elephant. Is John an animal?"
 # -> True.
 ```
-
-The subfolders `gui` and `amr` contain experimental code, and
-are not currently used by either pipeline.
 
 The installation and use of both pipelines is described in the corresponding
 separate READMEs: [`llmpipe/README.md`](llmpipe/README.md) and
