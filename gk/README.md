@@ -15,9 +15,7 @@ Two prebuilt binaries ship with this folder:
 
 The `nlpsolver` pipelines (`llmpipe` and `udppipe`) that drive `gk` have
 only been tested on Linux; running them on macOS has not been verified
-and may need small tweaks.  For other platforms, build from
-[gkc](https://github.com/tammet/gkc) — the gkc-based source that
-`gk` is built on.
+and may need small tweaks.
 
 
 What GK Does
