@@ -8,6 +8,9 @@ English text and `expected` is the expected answer.  Run with
 `python3 test.py <file>` (single LLM) or `python3 runtests.py <file>`
 (all LLMs in parallel) from the parent directory.
 
+These test sets and their recorded multi-LLM results are also published, with
+analysis, in the [nlformtasks](https://github.com/tammet/nlformtasks) repository.
+
 ## Files
 
 - **`tests_core.py`** — the current main test suite (~1600 cases).

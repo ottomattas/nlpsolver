@@ -5,12 +5,11 @@ right answer is clear but the *encoding path* to get there is non-obvious or
 unresolved. Each entry preserves the problem, what we tried, the proposed
 solution, and the open arguments, so we can pick the thread back up later.
 
-No code is committed for any "OPEN" entry below unless noted; these are
-design notes, not landed fixes.
+These are design notes, not landed fixes.
 
 ---
 
-## Case 76 — "the manager, Anna" / unique definite role  (OPEN, 2026-05-29)
+## "the manager, Anna" / unique definite role
 
 ### Problem
 Input:  `The manager, Anna, called Eve. Eve is the manager?`
@@ -25,7 +24,7 @@ Verbal form of the key constraint:
 > *In this situation, if somebody has the manager role/property, then that
 > entity is Anna.*
 
-### How the four LLMs handle it today (from elogs/failing_2026_05_26/e76_*)
+### How the four LLMs handle it today
 - **gpt**  → `True` (WRONG). Stage-1 is fine (apposition captured), but Stage-2
   drops the identity and emits two trivial `isa person` atoms for both the
   assertion and the query → both trivially true.
@@ -193,17 +192,10 @@ Arguments around Option 4:
   cases.
 - Con: implicit behavior → needs a DOCUMENTATION/CLAUDE note.
 
-### Decision
-None yet (2026-05-29). User: "I do not have a good solution in mind right now."
-Revisit. The full answer also depends on whether the matching **Stage-1** rule
-(two-entity parse, role as property) is worth adding, and whether
-"unique definite role in a closed scene" recurs enough to justify the machinery.
-
-### Status of related work
-- Earlier-drafted prompt rules for this case (Stage-1 apposition + Stage-2
-  concrete-identity, the three-entity equality route) were **reverted** at user
-  request — the two-entity / property route above supersedes them.
-- No pipeline code changed for this case.
+### Open question
+Whether the matching **Stage-1** rule (two-entity parse, role as property) is
+worth adding, and whether "unique definite role in a closed scene" recurs enough
+to justify the machinery.
 
 ### Appendix — test harness (no LLM call)
 `/tmp/test_case76.py` (temporary; reproduce if gone):
@@ -251,7 +243,7 @@ print(solve.english_to_answer(TEXT, opts))
 
 ---
 
-## Case 263 — collective "together" vs "alone"  (WONTFIX / REMOVE, 2026-05-29)
+## collective "together" vs "alone"
 
 ### Problem
 Input:  `John and Mary lifted the piano together. Did John lift the piano alone?`
@@ -260,9 +252,9 @@ Expected: `False.`
 The collective "together" entails John did NOT lift it alone (Mary co-lifted).
 The hard part is proving a NEGATIVE: the query posits a lifting event by John
 with manner "alone", and proving "no such event exists" normally needs
-event-uniqueness / closed-world — the same wall as Case 76.
+event-uniqueness / closed-world — the same wall as the manager/Anna uniqueness case.
 
-### How the solvers handle it (debug/e263_*)
+### How the solvers handle it
 - **claude / deepseek** → `True` (WRONG): Stage-2 DROPS "alone" from the query,
   so it collapses to "did John lift the piano?", trivially entailed by the
   joint event.
@@ -292,18 +284,16 @@ plus `has_accompaniment(E,_) ⇒ ¬alone(E)` — does NOT reach False: the query
 event is a fresh existential, so the axiom only shows the *asserted* joint event
 is not alone, not that *no* solo lift exists.  You would still be at Unknown
 unless you also add event-uniqueness ("the lifting of the piano by John is
-unique") — the heavy Case-76-style machinery.  The Stage-1 decomposition
+unique") — the heavy Case-79-style machinery.  The Stage-1 decomposition
 sidesteps that by asserting the entailment directly.
 
-### Decision: WONTFIX / REMOVE (2026-05-29)
-Not landed.  The decomposition works and is faithful, but it bakes in the
-pragmatic single-event reading (as 162/180 did for habituals): "Did John lift
-it alone?" is only False if the described joint lift is THE relevant lifting —
-a pragmatic, not strictly logical, closure.  Judged too complicated to justify
-a dedicated Stage-1 rule for one case.  Logged for removal from the test set
-(testfixlog Status 2026-05-29).
+### Why it's hard
+The decomposition works and is faithful, but it bakes in the pragmatic
+single-event reading (as the habitual cases did): "Did John lift it alone?" is
+only False if the described joint lift is THE relevant lifting — a pragmatic,
+not strictly logical, closure.
 
-### Appendix — test harness (/tmp/test_263.py)
+### Appendix — test harness
 ```python
 import sys
 sys.path.insert(0, "/opt/nlpsolver/llmpipe/solver")
@@ -345,14 +335,12 @@ print(solve.english_to_answer(TEXT, opts))
 
 ---
 
-## C / D / E / H residual cases — WONTFIX / REMOVE (2026-05-29)
+## Residual cases
 
-These five remained after Clusters A/B/F were fixed (and 262 closed, 263 parked).
 Each needs a distinct, fairly heavy semantic mechanism — not worth a dedicated
-rule for one case each. All logged for removal from the test set (testfixlog
-Status 2026-05-29). Root-cause notes for if we revisit.
+rule for one case each. Root-cause notes below.
 
-### Case 255 — exceptive "everyone except X"
+### exceptive "everyone except X"
 `Everyone except John arrived. Did Mary arrive?`  Expected: True.
 - claude gets it right: strict universal `forall Y: isa(person,Y) & Y!=John -> arrived(Y)`
   plus the bystander fact `isa(person, Mary)`; Mary!=John (UNA) -> Mary arrived -> True.
@@ -362,50 +350,49 @@ Status 2026-05-29). Root-cause notes for if we revisit.
 - Missing piece: a reliable Stage-1/2 convention forcing the strict, isa-restricted
   universal AND keeping the bystander entity fact. Doable but LLM-consistency-fragile.
 
-### Case 249 — deontic "must" vs "allowed"
+### deontic "must" vs "allowed"
 `John must leave the room. Is John allowed to stay?`  Expected: False.
 - Needs deontic duality (obligation to leave => not permitted to stay) plus leave/stay
   opposition. The modal-classifier system marks `obligation` but has no
   obligation<->permission inference and no leave/stay antonym bridge.
 
-### Case 261 — implicative "too ADJ to V"
+### implicative "too ADJ to V"
 `The box is too heavy for Mary to lift. Did Mary lift the box?`  Expected: False.
 - "too heavy for Mary to lift" implies Mary did NOT lift it (negative implicative).
   The pipeline has no "too ADJ for X to V => not V(X)" construction; the embedded
   infinitival is not turned into a negated event.
 
-### Case 158 — passive role reversal
+### passive role reversal
 `The mouse was chased by the cat. Did the mouse chase the cat?`  Expected: False.
 - Passive "mouse was chased by cat" = chase(actor=cat, target=mouse). Query "did the
   mouse chase the cat?" = chase(actor=mouse, target=cat) -- reversed roles. Answering
   False needs event/role uniqueness (the only chase has cat as actor) -- the same
-  negative-proof / closed-world wall as Case 76 / 263. (Bundle with task #74: 155
-  passive->have.)
+  negative-proof / closed-world wall as the manager/Anna and together/alone cases.
 
-### Case 145 — "what happened to X" event query
+### "what happened to X" event query
 `The old wooden bridge collapsed yesterday. What happened to the bridge?`  Expected: 'It collapsed.'
 - Two faults: (1) role mismatch -- "happen TO the bridge" is encoded with
   `has_target`/`has_recipient`(bridge), but intransitive "collapsed" stores the bridge
   as `has_actor`, so claude/gpt/gemini -> Unknown (only deepseek used has_actor and
   matched). (2) soft-synonym noise -- a `collapse<->give` (conf 0.86) soft-synonym
   bridged the open answer var, giving deepseek "Collapse, give and receive".
-- PARTIAL fix landed 2026-05-29: removed `give,collapse` from
+- PARTIAL fix: removed `give,collapse` from
   mkdata/syn_v_soft_axioms.txt + rebuilt data_synonyms.py, so deepseek now answers just
   "Collapse." The role mismatch (Unknown on the other 3) is unfixed -- "what happened to
   X" must match the event on ANY thematic role of X, which is the remaining hard part.
 
 ---
 
-## Case 639 — "Anna, the manager" / who-is-the-manager apposition  (OPEN, 2026-05-30)
+## "Anna, the manager" / who-is-the-manager apposition
 
 ### Problem
 Input:  `Anna, the manager, called Eve. Who is the manager?`
 Expected: `Anna.`
 
-Sibling of case 76 (same apposition shape, opposite question polarity).
-Case 76 asks `Eve is the manager?` and wants `False`; case 639 asks
-`Who is the manager?` and wants `Anna.`  Both rely on the same parse of
-the apposition `Anna, the manager`.
+Sibling of the manager/Anna case (same apposition shape, opposite question
+polarity). That case asks `Eve is the manager?` and wants `False`; this one asks
+`Who is the manager?` and wants `Anna.`  Both rely on the same parse of the
+apposition `Anna, the manager`.
 
 ### How the four LLMs handle it
 - **gpt** -> `Anna.` (correct).  Encodes the apposition as
@@ -424,26 +411,22 @@ Two routes are possible, neither lands cleanly today:
 1. **Stage-2 prompt rule** -- "X, the ROLE" appositive should encode as
    `isa(role, X)` directly on the referenced entity (Anna), not as a
    separate role-entity + `=`.  Same encoding gpt already produces.
-   Risk: this also affects case 76 (where the third-entity encoding is
-   how claude currently produces the correct False answer via UNA), so
-   the prompt change would have to be coordinated with case 76's plan.
+   Risk: this also affects the manager/Anna case (where the third-entity
+   encoding is how claude currently produces the correct False answer via UNA),
+   so the prompt change would have to be coordinated with that case's plan.
 2. **Renderer fix** in `_format_who_answers` -- when the surviving
    answer equals `@who_entity`, also chase equality `=` chains and
    surface the non-who-entity side as the answer.  More general,
    helps any future appositive variant, but adds renderer complexity
    and a paramodulation pass at answer-extraction time.
 
-Recommend doing (1) and re-running case 76 to confirm the new
-encoding still produces False there (the uniqueness rule from the
-case-76 design note would do the work; see Case 76 entry above).
-
-### Status
-Removed from `tests/tests_core.py` and `tests/tests_core_100.py`
-on 2026-05-30.  TODO: re-add once either (1) or (2) lands.
+Recommend doing (1) and re-running the manager/Anna case to confirm the new
+encoding still produces False there (the uniqueness rule from that design note
+would do the work; see the entry above).
 
 ---
 
-## Case 1610 — "knows who broke" ⊢ "knows it is broken"  (REMOVE, 2026-06-01)
+## "knows who broke" ⊢ "knows it is broken"
 
 ### Problem
 "John knows who broke the vase. Does John know that the vase is broken?"
@@ -454,7 +437,7 @@ result-state bridge:
   knows[ ∃X. break(X, vase) ]   +   break(_, vase) ⊢ broken(vase)
   ⟹  knows[ broken(vase) ].
 
-### How the four LLMs encode it (case_1610.json)
+### How the four LLMs encode it
 All four use the knowledge-base machinery: `["kb", K, John, "knowledge", W]`,
 `["kb force", K, "factive"]`, `["kb holds", K, CONTENT]`.
 
@@ -488,7 +471,7 @@ So:
 3. Even with closure, the four encodings would not line up — different
    worlds (W0 vs W1), gpt's nested `ask`, deepseek's world mismatch.
 
-### Why REMOVE (not postpone)
+### Why it's hard
 A real fix is a bespoke epistemic knowledge-closure feature over opaque
 `kb holds` terms (apply selected world axioms — here break→broken — inside
 the knowledge scope), plus Stage-2 encoding normalisation so the known
@@ -496,14 +479,9 @@ content and queried content share worlds/shape.  That is a substantial
 reasoning subsystem, well beyond a targeted axiom or pipeline pass, and is
 not justified by a single test case.
 
-### Status
-Logged REMOVE in `testfixlog_june.txt` (2026-06-01).  TODO: delete from
-`tests/tests_core.py` when the test set is next edited from the fixlog
-action tags.  Re-add only if a knowledge-closure mechanism is built.
-
 ---
 
-## Stative tense-persistence bridges — coverage gap (OPEN, 2026-06-01)
+## Stative tense-persistence bridges — coverage gap
 
 ### Problem
 Stative predicates (`have`, `has part`, `has property`, `has degree
@@ -524,7 +502,7 @@ have(present)` axiom migrates every stative fact across worlds and blows up
 the prover search (see `prover.py:94` note on duplicated frame resolvents).
 The per-need approach keeps the blast radius to literals that actually occur.
 
-### What is landed (2026-06-01)
+### What is landed
 The bridge builder is invoked only under the `is_question` gate
 (`lc_packages.py` ~692) and originally scanned only the question's `@logic`
 clauses for **negative** stative literals (the body→`$defq` direction).  Two
@@ -535,8 +513,8 @@ extensions landed:
 - **Direct-`@question` goals** (`lc_ctxt._collect_question_goal_signatures`):
   the builder now also scans the *positive* stative literal in a direct
   `["@question", FORMULA]` goal (an unguarded question that did not become a
-  `$defq` biconditional).  Closed case **152** ("The boy lost his backpack.
-  Who does the backpack belong to?") on gpt/deepseek — they had
+  `$defq` biconditional).  Closed the "The boy lost his backpack. Who does the
+  backpack belong to?" case on gpt/deepseek — they had
   `have(boy,backpack,past)` but, lacking the `$defq` wrapper, never got the
   forward bridge that gemini/claude received.
 
@@ -579,25 +557,16 @@ that got §6a disabled.  Any implementation must be followed by a prover-
 **timing** regression sweep over the rule-heavy / defeasible cases, not just
 a correctness check.
 
-### Status
-OPEN.  The question-side work (ownership canonicalisation, possessive-without-
-ownership Stage-2 check + retry, direct-`@question` bridge) is landed and
-logged under cases 152/154.  The rule-premise + blocker generalisation is
-**not** landed — implement as its own change with a timing sweep when a
-concrete failing case appears.  Entry point: `build_question_tense_bridges`
-and the `is_question` gate at `lc_packages.py` ~692.
-
-
-## Case 464 — comparative-measure question "which is cheaper?"  (REMOVE, 2026-06-02)
+## comparative-measure question "which is cheaper?"
 
 ### Problem
-Case 464 (REMOVED from the test set): "The red car has the price three
+Input: "The red car has the price three
 dollars. The blue car costs two dollars. Which car is cheaper?"  Expected:
 *The blue car*.  Both prices are stated as
 `$measure_of("price", car, W0) = $measure(N, "dollar")`; "cheaper" should pick
 the car with the smaller price.
 
-### How the four LLMs encode it (debug/e464_*)
+### How the four LLMs encode it
 - **gemini** ✓ — pairwise disjunction of `<` over `$measure_of price`:
   `(X=car1 ∧ price(car1)<price(car2)) ∨ (X=car2 ∧ price(car2)<price(car1))`.
   The `<` is rewritten to `less_measure`; prover computes 2<3 → blue.
@@ -627,60 +596,49 @@ the car with the smaller price.
      "already measure-based" gate excludes it).
    Net 1/4 → 2/4; the check was **reverted**.
 
-### Why removed
+### Why it's hard
 The correct encoding is "the candidate whose `$measure_of` value is minimal
 (cheaper/shorter/lighter) / maximal (longer/heavier/taller) among all
 candidates."  The LLMs do not produce this consistently, and the divergence
 (bare degree atom vs. equality vs. single-reference `<`) is too wide to
-normalise in the pipeline without prompt changes (out of campaign scope).
+normalise in the pipeline without prompt changes.
 A reliable fix belongs in the Stage-2 prompt (teach the min/max-over-
 candidates comparison shape directly), not in post-hoc axioms or retries.
 
-### Status
-REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No
-code landed.  Revisit only as part of a Stage-2 prompt revision covering
-comparative/superlative measure questions.  Case 465 below is the same class.
-
-
-## Case 465 — comparative-measure question "which is longer?"  (REMOVE, 2026-06-02)
+## comparative-measure question "which is longer?"
 
 ### Problem
-Case 465 (REMOVED from the test set): "The length of the red car is 3 meters.
+Input: "The length of the red car is 3 meters.
 The length of the black car is 5 meters. Which car is longer?"  Expected *The
-black car* (5 > 3).  Same class as Case 464 above — see it for the full
-analysis of the comparative-measure encoding problem.
+black car* (5 > 3).  Same class as the cheaper-car case above — see it for the
+full analysis of the comparative-measure encoding problem.
 
-### How the four LLMs encode it (debug/e465_*)
+### How the four LLMs encode it
 - **gemini / claude / deepseek** ✗ — bare gradable degree atom
   `has_degree_property("long", X, "high", "car")`, divorced from the stated
   `$measure_of length` facts → goal unsatisfiable → Unknown.
 - **gpt** ✓ (fragile) — single-reference comparison
   `length(X) > length(car 2)` where `car 2` is the RED car (3 m), so black
   (5 > 3) answers → correct, but only by a lucky reference choice; referencing
-  the black car instead would give Unknown (cf. claude in 464).
+  the black car instead would give Unknown (cf. claude's single-reference miss
+  on the cheaper-car case).
 
-### Why removed
-Identical to Case 464: the LLMs do not consistently produce the correct
-"maximal `$measure_of` value among candidates" encoding, and the divergence is
-too wide to normalise in the pipeline without prompt changes (out of campaign
-scope).
+### Why it's hard
+Identical to the cheaper-car case: the LLMs do not consistently produce the
+correct "maximal `$measure_of` value among candidates" encoding, and the
+divergence is too wide to normalise in the pipeline without prompt changes.
 
-### Status
-REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No
-code landed.  Same prompt-side fix as Case 464.
-
-
-## Case 557 — relational-comparative question "which is lower?"  (REMOVE, 2026-06-02)
+## relational-comparative question "which is lower?"
 
 ### Problem
-Case 557 (REMOVED from the test set): "The mountain is higher than the hill.
-Which is lower, the mountain or the hill?"  Expected *The hill.*  Unlike
-464/465 there are **no explicit measures** — "higher than" is a bare
+Input: "The mountain is higher than the hill.
+Which is lower, the mountain or the hill?"  Expected *The hill.*  Unlike the two
+measure cases above there are **no explicit measures** — "higher than" is a bare
 relational comparative, and the question asks the converse ("lower").  The
-question itself is unambiguous (mountain higher ⟹ hill is the lower one), so
-unlike 547/548 a surface reformulation does not help.
+question itself is unambiguous (mountain higher ⟹ hill is the lower one), so a
+surface reformulation does not help.
 
-### How the four LLMs encode it (debug/e557_*)
+### How the four LLMs encode it
 - **gemini** ✓ — invents an abstract `$measure_of("height", …)` and compares:
   assertion `> (height(mtn), height(hill))`, question a disjunctive `<` on
   `$measure_of height`.  Rewrites to `less_measure`; prover answers hill.
@@ -703,34 +661,27 @@ unlike 547/548 a surface reformulation does not help.
    claude/gpt's absolute-degree question consume the relational assertion.
    Semantically loose — "A is lower than B" does not imply "A is low" in
    general (only for the "which is the X-er one" reading) — so it carries the
-   same regression risk that got 464/465 removed.
+   same regression risk that ruled out the two measure cases above.
 
-### Why removed
-Same family as 464/465: the comparative encoding scatters across LLMs (measure
+### Why it's hard
+Same family as the two measure cases above: the comparative encoding scatters across LLMs (measure
 vs relational-both vs relational/absolute-mismatch), and the bridging axioms
 needed to unify them are either out of scope (the converse axiom is principled
 but only partial) or too risky (the rel2→property bridge).  A reliable fix
 belongs in the Stage-2 prompt (a single canonical comparative encoding), not
 in post-hoc axioms.
 
-### Status
-REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No
-code landed.  If revisited, the converse-comparative axiom (piece 1) is the
-clean, principled part worth landing on its own; the rel2→property bridge
-(piece 2) needs a Stage-2 prompt decision instead.
-
-
-## Case 1014 — PP-attachment ambiguity "in his pyjamas"  (REMOVE, 2026-06-02)
+## PP-attachment ambiguity "in his pyjamas"
 
 ### Problem
-Case 1014 (REMOVED from the test set): "John shot an elephant in his pyjamas.
+Input: "John shot an elephant in his pyjamas.
 The elephant was in his pyjamas?"  Expected *None* (Unknown).  The canonical
 Groucho-Marx prepositional-phrase attachment ambiguity: "in his pyjamas" can
 attach to **John** (the shooter was in his pyjamas) or to the **elephant**;
 "his" is independently ambiguous (John's vs the elephant's pyjamas).  The
 question is unanswerable without disambiguation.
 
-### How the four LLMs resolve it (debug/e1014_*)
+### How the four LLMs resolve it
 - **gpt** ✓ (Unknown, accidentally) — DROPS the PP entirely: the assertion
   encodes only the shooting event, never attaching "in his pyjamas" to anyone.
   The question `is_rel2("in", elephant, pyjamas)` finds no info → Unknown.
@@ -741,28 +692,23 @@ question is unanswerable without disambiguation.
   sent_S2 → sent_S4) → True.
 - **claude** ✗ (Probably true) — same elephant attachment, defeasibly.
 
-### Why removed
+### Why it's hard
 PP-attachment is decided during PARSING (Stage-1/Stage-2); there is no sound
 post-parse pipeline or axiom fix — a clause set that has already attached the
 PP to the elephant simply proves True.  The only lever is the prompt (teach the
-parser to flag/avoid committing on ambiguous attachment), which is out of
-campaign scope.  The expected `None` is correct and the sentence is the
-textbook example of irreducible syntactic ambiguity.
+parser to flag/avoid committing on ambiguous attachment).  The expected `None`
+is correct and the sentence is the textbook example of irreducible syntactic
+ambiguity.
 
-### Status
-REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No
-code landed.  Same class as the other ambiguity removals (14, 578).
-
-
-## Case 1612 — kb epistemic-modal factive inference "found out where → knows location"  (REMOVE, 2026-06-02)
+## kb epistemic-modal factive inference "found out where → knows location"
 
 ### Problem
-Case 1612 (REMOVED from the test set): "Tom found out where the key was. Does
+Input: "Tom found out where the key was. Does
 Tom know the location of the key?"  Expected *True* — finding out where the key
 is = knowing its location.  A factive/epistemic inference: `found out` ⟹ `know`,
 and `where X is` ⟹ `the location of X`.
 
-### How the four LLMs encode it (debug/e1612_*)
+### How the four LLMs encode it
 - **deepseek** ✓ — simple RELATIONAL encoding: it pre-computes the inference in
   Stage 2, asserting `is_rel2("knows", Tom, location2)` in W1 (and a `find_out`
   event in W0).  The question `is_rel2("knows", Tom, location2)` matches the
@@ -773,7 +719,7 @@ and `where X is` ⟹ `the location of X`.
   - Question:  `kb holds (at(key, location2))` — "Tom knows the key is AT
     location2."
 
-### Why removed
+### Why it's hard
 The `kb` modal **survives to the gk clause list but is inert**: the only
 pipeline handling is knower-extraction (`lc_packages`, the `["kb",K,HOLDER,…]`
 read) and English rendering (`proof_english`).  There are **no reasoning
@@ -786,26 +732,17 @@ So gemini/claude/gpt's `kb` atoms carry no inferential weight → Unknown.
 (gemini additionally mis-parses the question content as `isa("important", key)`,
 a second blocker.)  Supporting this properly is a substantial epistemic-modal
 reasoning framework — disproportionate for one case — and the only lighter
-alternative is a Stage-2 prompt redirect to deepseek's relational form (out of
-campaign scope).
+alternative is a Stage-2 prompt redirect to deepseek's relational form.
 
-### Status
-REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
-landed.  If the `kb` epistemic-modal framework is ever built out, this case (and
-the broad class of "knows where / knows that / found out" factives) becomes the
-natural target — note it would need prompt + axiom co-design, since 3 of 4 LLMs
-already emit the `kb` shape but nothing consumes it.
-
-
-## Case 1614 — put-result location + name->man  (REMOVE, 2026-06-02)
+## put-result location + name->man
 
 ### Problem
-Case 1614 (REMOVED from the test set): "If a man has a coin, he puts it in the
+Input: "If a man has a coin, he puts it in the
 box. John has a coin. Where is the coin?"  Expected *In the box.*  The intended
 chain: man(John) ∧ have(John,coin) -> put(John,coin,in box) -> the coin is in
 the box -> "In the box."
 
-### How the four LLMs handle it (debug/e1614_*)
+### How the four LLMs handle it
 - **gpt** ✓ (by a Stage-1 artifact) — its STAGE-1 over-generates an extra unit
   "John 1 puts the coin 2 in a box 3." (it applied the rule to John during
   parsing), so the conclusion is asserted outright; a put-destination ->
@@ -826,28 +763,19 @@ the box -> "In the box."
    axiom (cf. the verb-result-STATE bridges destroy->destroyed, which are about
    properties, not locations).
 
-### Why removed
+### Why it's hard
 The case needs BOTH a name->gender->man inference (risky, generally
 unsupported) AND a put-X-in-Y -> X-is-in-Y placement-result bridge.  The only
 LLM that "passes" does so via a Stage-1 parsing over-generation, not reasoning.
-Too complicated for the campaign.
 
-### Status
-REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
-landed.  If revisited: the put->location result bridge is the cleaner, more
-general half (a placement-verb analogue of inject_verb_result_state_axioms,
-emitting is_rel2(<prep>, target, destination) in the next world); the name->man
-half is the genuinely hard part and would likely stay a prompt/ontology issue.
-
-
-## Case 367 — conflicting-modifier coreference ("the small wheelbarrow")  (REMOVE, 2026-06-02)
+## conflicting-modifier coreference ("the small wheelbarrow")
 
 ### Problem
-Case 367 (REMOVED from the test set): "A blue hand of a man moved a wheel of a
+Input: "A blue hand of a man moved a wheel of a
 LARGE wheelbarrow. The SMALL wheelbarrow had a wheel?"  Expected *None*
 (Unknown -- no small wheelbarrow was ever mentioned).
 
-### How the four LLMs handle it (testresults/core/*/case_0367.json)
+### How the four LLMs handle it
 - **gpt / deepseek** ✓ (Unknown) -- they do NOT corefer the definite "the small
   wheelbarrow" with "a large wheelbarrow" (the modifiers conflict), so "the
   small wheelbarrow" is a distinct, unmentioned entity -> nothing known ->
@@ -876,7 +804,7 @@ answer.  Crucially, the claude/gemini False does NOT arise from that Russellian
 reasoning -- it is a coreference + antonym-mutex artifact that merely coincides
 with the same letter.
 
-### Why removed
+### Why it's hard
 Two tangled problems: (1) a conflicting-modifier coreference bug (Stage-1,
 prompt-level), and (2) genuine definite-description ambiguity (Strawsonian
 Unknown vs Russellian+CWA False).  A pipeline guard -- suppress coreference, or
@@ -884,18 +812,12 @@ suppress the antonym mutex, when an entity acquires conflicting antonym
 modifiers via coreference -- is possible but risky and does not resolve the
 underlying ambiguity.
 
-### Status
-REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
-landed.  If revisited: the cleanest lever is a Stage-1 rule "do not coref a
-definite to an antecedent with a conflicting gradable modifier"; the
-ambiguity half stays a test-design question.
-
 ---
 
-## Case 1074 — Factive stative content ("explain that the road was closed")
+## Factive stative content ("explain that the road was closed")
 
 **Input:** "The guide explained that the road was closed. The road was closed?"
-**Expected:** True.  **Status: REMOVE (too hard).**
+**Expected:** True.
 
 ### What happens
 Factive "explain that P" entails P, so "the road was closed?" should be True.
@@ -926,29 +848,23 @@ encode the factive content "the road was closed" at different depths:
    `_VERB_RESULT_STATES`, and adding it is risky (open/close polysemy, "open" is
    also an adjective).  gpt additionally lacks `speech_act` and uses `be_closed`.
 
-The sister case **1075** ("…Was the road open?") is Unknown on **all four** —
+The sister "…Was the road open?" case is Unknown on **all four** —
 the open/closed mutex needs the closed STATE, which is not reliably derived —
 confirming the factive-content-state reasoning is generally weak for "explain".
 
-### Worth landing independently (does NOT fix 1074)
+### Worth landing independently (does not fix this case)
 Adding **"explain" to the §5.2 factive verb list** is a genuine, low-risk
 correctness fix — "explain that P" is factive like report/state — and would help
 factive-explain cases whose content is EVENTIVE and queried eventively (e.g.
-"…explained that Mary left. Mary left?").  It does not flip 1074 because of the
-event/state gap and gpt's missing classifier.
-
-### Status
-REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
-landed.  If revisited: (a) add "explain" to §5.2; (b) a Stage-2 nudge to read a
-passive "was <participle>" as a stative `has_degree_property` when it is factive
-content; (c) optionally a guarded close→closed result-state bridge.
+"…explained that Mary left. Mary left?").  It does not flip this case because of
+the event/state gap and gpt's missing classifier.
 
 ---
 
-## Case 1190 — "What was X doing?" (do-proverb question)
+## "What was X doing?" (do-proverb question)
 
 **Input:** "Mary was reading a book when the phone rang. What was Mary doing?"
-**Expected:** ['Reading a book.', 'Read.']  **Status: REMOVE (too hard).**
+**Expected:** ['Reading a book.', 'Read.']
 
 ### What happens
 claude/gpt → "Read." (correct); gemini/deepseek → Unknown (2/4).
@@ -970,23 +886,15 @@ has the SAME question shape, and the rewrite would wrongly turn it into a
 type-ask (binding "do").  Disambiguation requires gating on whether a
 `has_type(_, "do")` event actually appears on the ASSERTION side (literal) or
 not (pro-verb) — a parse-quality heuristic that is correct for the common case
-but fragile.  Part of the broader "What was X doing?" class (task #103,
-gerund-enriched answers — the expected even prefers "Reading a book.").
-
-### Status
-REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
-landed.  If revisited: implement the gated do-proverb rewrite (only when no
-`do`-typed event exists on the assertion side), and fold into task #103 for the
-gerund-enriched answer form ("Reading a book.").
+but fragile.  Part of the broader "What was X doing?" class (gerund-enriched
+answers — the expected even prefers "Reading a book.").
 
 ---
 
-## Case 1361 — Dropped wh-class noun (empty class)
+## Dropped wh-class noun (empty class)
 
 **Input:** "Squirrels can fly. Foxes cannot fly. Squirrels and foxes are
 animals. Which table can fly?"  **Expected:** None (Unknown).
-**Status: REMOVE (too hard).**
-
 ### What happens
 claude/gemini → Unknown (correct); gpt/deepseek → "A squirrel." (2/4).
 
@@ -1004,12 +912,12 @@ A "dropped wh-class" Stage-2 sanity check was prototyped: a `wh_placeholder` tha
 is `type="generic"` denotes a class (common noun, not a concrete object like
 "John"), and the check fires when that class noun is absent from the ask query.
 But it ABANDONED for over-firing:
-- Across the test set, ~31 case-files "drop" the wh-class — and **only 1361
+- Across the test set, ~31 case-files "drop" the wh-class — and **only this one
   actually fails**. The rest PASS, because dropping the class is HARMLESS when
   the class has instances (e.g. "Who is a nice man?" — dropping `isa(man,X)`
   still yields the nice men) or another constraint (a property, a count)
   disambiguates.
-- 1361 fails ONLY because "table" is an **empty + incompatible** class. Isolating
+- This case fails ONLY because "table" is an **empty + incompatible** class. Isolating
   that needs ~4 stacked heuristics (concrete category, single-word, no `isa`
   instances of the class anywhere, not a how-many/value question), and even then
   it would trigger retries on ~30 passing cases (waste + regression risk) to fix
@@ -1018,18 +926,12 @@ But it ABANDONED for over-firing:
 So the principled reading: gpt/deepseek give a defensible (if pragmatically odd)
 answer to a degenerate query; the cost of a precise check far exceeds the value.
 
-### Status
-REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
-landed (the prototype check was reverted).  If revisited: the only sound signal
-is "the queried wh-class has zero instances in the problem" → the answer must be
-Unknown; but that is really a closed-world emptiness check, not a parse fix.
-
 ---
 
-## Case 1551 — Nested negation scope ("It is not true that some…are…")
+## Nested negation scope ("It is not true that some…are…")
 
 **Input:** "It is not true that some big yellow cats are strong. All big yellow
-cats are not strong?"  **Expected:** True.  **Status: REMOVE (too hard).**
+cats are not strong?"  **Expected:** True.
 
 ### What happens
 gemini/deepseek → True (correct); claude/gpt → Unknown (2/4).
@@ -1059,25 +961,15 @@ double-negation-vs-quantifier interaction. The premise the LLM produces is
 simply WRONG (not a missing inference), so no pipeline/axiom pass can recover
 it; the prover would derive the ¬∃→∀¬ equivalence on its own IF the premise were
 encoded correctly. The fix is the LLM scoping the negation correctly — a
-prompt-level matter, out of campaign scope. Not ambiguous (one logical reading);
+prompt-level matter. Not ambiguous (one logical reading);
 just hard to parse.
-
-### Status
-REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
-landed.  If revisited: a Stage-2 prompt example for "It is not true that
-some/all …" → ¬∃ / ¬∀ canonical forms; possibly a Stage-2 sanity check that a
-"it is not true that" matrix wraps the WHOLE proposition in a single outer
-negation (no inner property negation), but detecting the intended scope from the
-parse is itself the hard part.
 
 ---
 
-## Case 1613 — Donkey sentence (donkey anaphora + conditional question)
+## Donkey sentence (donkey anaphora + conditional question)
 
 **Input:** "Every farmer who owns a donkey beats it. If John is a farmer and
 owns a donkey, does he beat it?"  **Expected:** True.
-**Status: REMOVE (too hard).**
-
 ### What happens
 claude/gpt → True (correct); gemini/deepseek → Unknown (2/4).
 
@@ -1108,18 +1000,12 @@ correct (claude/gpt). The fix is correct Stage-2 quantifier scoping of donkey
 anaphora + conditional questions — a prompt-level matter and a classic hard
 problem in formal semantics. Not ambiguous; the expected True is right.
 
-### Status
-REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
-landed.  If revisited: a Stage-2 prompt example for donkey anaphora ("Every N
-who Rs a M Vs it" → ∀∀(N∧M∧R→V)) and for "If <hyp>, does he <q>?" as a
-conditional question (assume the hyp, query the consequent).
-
 ---
 
-## Case 1618 — Exhaustive cleft ("It was the red car that won")
+## Exhaustive cleft ("It was the red car that won")
 
 **Input:** "It was the red car that won. Did the blue car win?"
-**Expected:** False.  **Status: REMOVE (too hard).**
+**Expected:** False.
 
 ### What happens
 claude/gpt → False (correct); gemini/deepseek → Unknown (2/4).
@@ -1150,28 +1036,20 @@ The fix is correct Stage-2 scoping of cleft exhaustivity (do not restrict the
 quantified variable by the focus's own properties) — a prompt-level matter.
 Expected False is right under the standard exhaustive-cleft reading.
 
-### Status
-REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
-landed.  If revisited: a Stage-2 prompt example for clefts — "It was the <ADJ N>
-that V'd" → `V(the_ADJ_N) ∧ ∀Z(Z V'd → Z = the_ADJ_N)`, with the exhaustivity
-antecedent quantifying over ALL V-ers (only the isa class, not the focus's
-adjectives). A pipeline strip of a focus-property literal from a `→ X = K`
-uniqueness antecedent is possible but a narrow, risky heuristic for one case.
-
 ---
 
-## Case 613 — "What did the cat do?" pro-verb action query  (REMOVE, 2026-06-03)
+## "What did the cat do?" pro-verb action query
 
 ### Problem
 Input:  `The dog barked and the cat ran away. What did the cat do?`
 Expected: `Ran away.`
 
-Sibling of case 145 ("what happened to X") and of task-tracker #103
-("What was X doing?"). "What did X do?" is a PRO-VERB question: "do" stands
+Sibling of the "what happened to X" case and of the "What was X doing?" class.
+"What did X do?" is a PRO-VERB question: "do" stands
 in for the action, so the query must solve for the VERB TYPE of X's event and
 render it as an English VP including its modifiers ("ran away", not "run").
 
-### How the four LLMs encode it (case_0613.json)
+### How the four LLMs encode it
 All four parse S1/S2 correctly (dog barked @ W0; cat ran-away, has_direction
 "away", @ W1). They diverge on the QUESTION:
 - **claude** -> `Run and go.` (closest). Asks `ask X, exists E(activity E,
@@ -1185,7 +1063,7 @@ All four parse S1/S2 correctly (dog barked @ W0; cat ran-away, has_direction
   never exists. "do" is a pro-verb, not an action.
 
 ### Why it's hard
-Two compounding problems, neither in the current campaign's scope:
+Two compounding problems:
 1. **Stage-2 (prompt-level):** "What did X do?" must be a fixed pattern that
    solves for `has_type` of X's actor-event (claude's shape) and NOT treat "do"
    as a literal verb with a target (gemini/deepseek). Three of four get the
@@ -1193,36 +1071,32 @@ Two compounding problems, neither in the current campaign's scope:
 2. **Answer rendering:** even the correct binding (type=run, direction=away) must
    render as the past-tense VP "Ran away." — verb stem -> past tense PLUS
    re-attaching the direction/particle modifier, and suppressing the movement-
-   synonym (go) leak. This is the same gerund/VP-enrichment work parked as
-   task #103.
-
-### Status
-REMOVE.  Logged in testfixlog_june.txt (Action: REMOVE FROM TEST SET).  No code
-landed.  Revisit alongside task #103 (VP-enriched answers for "What was X
-doing?") and case 145 ("what happened to X") — same action-query family.
+   synonym (go) leak. This is the same gerund/VP-enrichment work parked under the
+   "What was X doing?" class.
 
 ---
 
-## Cases 1500 / 1501 / 1498 — defeasible disjunctive syllogism  (REMOVE, 2026-06-03)
+## defeasible disjunctive syllogism
 
 ### Problem
-1500: `Birds fly or do not swim. John is a bird. John does not fly. John swims?`  Expected: False
-1501: `Birds fly or do not swim. John is a bird. John never flies. John swims?`  Expected: False
-1498: `Birds fly or swim. John is a bird. John does not fly. John swims?`         Expected: True
+Three variants:
+- `Birds fly or do not swim. John is a bird. John does not fly. John swims?`  Expected: False
+- `Birds fly or do not swim. John is a bird. John never flies. John swims?`  Expected: False
+- `Birds fly or swim. John is a bird. John does not fly. John swims?`  Expected: True
 
 The intended inference is a disjunctive syllogism over a defeasible generic:
 bird(John) -> normally(fly OR not swim); John does not fly; therefore not swim;
 so "John swims?" -> False.
 
-**1498 is the POSITIVE-question sibling**: rule `normally(fly OR swim)` +
-not-fly => swim, so "John swims?" -> True. Same machinery, opposite polarity.
-After the verb-taxonomy change removed the spurious swim->go->fly chain (which
-had made all three "Probably false" by luck), 1498 sits at 2/4: gpt/gemini fire
-the syllogism weakly ("Possibly true (0.32)", accepted as True), while
+The third (positive) variant is the opposite-polarity sibling: rule
+`normally(fly OR swim)` + not-fly => swim, so "John swims?" -> True. After the
+verb-taxonomy change removed the spurious swim->go->fly chain (which had made all
+three "Probably false" by luck), the positive variant sits at 2/4: gpt/gemini
+fire the syllogism weakly ("Possibly true (0.32)", accepted as True), while
 claude/deepseek do not fire it at all -> Unknown. Exactly the firing condition
 documented below (modality OVER the disjunction + a non-defeasible side); the
 confidence model also charges the `normally` block once per Skolem sub-clause,
-capping even the firing parses at ~0.32. Same root cause, REMOVE with 1500/1501.
+capping even the firing parses at ~0.32. Same root cause across all three.
 
 ### History
 Both were GREEN in the stored baseline ("Probably false." x4 / x2) but only by
@@ -1230,8 +1104,8 @@ LUCK: the answer came from the spurious soft-synonym chain swim->go->fly (proof
 verified to use the frm_syn go->fly + swim->go clauses), which made "John swims"
 imply "John flies", clashing with "John does not fly" -> not swim. That is
 nonsense reasoning ("swimming is flying") that happened to land on the expected
-False. The 2026-06-03 verb soft-synonym taxonomy change (case 1451) removed
-go->fly, so the crutch is gone and the LEGITIMATE disjunctive syllogism must now
+False. The verb soft-synonym taxonomy change removed go->fly, so the crutch is
+gone and the LEGITIMATE disjunctive syllogism must now
 carry the proof — and it usually does not fire.
 
 ### Firing condition (verified)
@@ -1239,19 +1113,19 @@ The legitimate syllogism fires ONLY when BOTH:
   (a) the rule is `normally(or(fly, not swim))` — `normally` OVER the whole
       disjunction, not distributed into the disjuncts; AND
   (b) `not fly` is STRICT (not wrapped in `normally`).
-Existence proof: deepseek on 1501 encodes (a) + strict `not fly` ("never" ->
+Existence proof: deepseek on the "never flies" variant encodes (a) + strict `not fly` ("never" ->
 strict) and answers "Likely false." at confidence 0.9 via the real disjunction
 (no synonym). Every other LLM/case wraps `not fly` in `normally` (defeasible),
 so the defeasible `fly` disjunct cannot be strictly eliminated -> nothing
 concludes `not swim` -> Unknown. gpt additionally distributes the modality as
 `or(normally(fly), normally(not swim))`, breaking (a) too.
 
-| LLM / case        | rule (S1)                          | not-fly (S3)     | answer        |
-|-------------------|------------------------------------|------------------|---------------|
-| claude 1500/1501  | normally(or(fly, ¬swim))           | normally(¬fly)   | Unknown       |
-| gemini 1500/1501  | normally(or(fly, ¬swim))           | normally(¬fly)   | Unknown       |
-| gpt 1500/1501     | or(normally(fly), normally(¬swim)) | normally(¬fly)   | Unknown       |
-| deepseek 1501     | normally(or(fly, ¬swim))           | STRICT ¬fly      | Likely false ✓|
+| LLM                  | rule (S1)                          | not-fly (S3)     | answer        |
+|----------------------|------------------------------------|------------------|---------------|
+| claude               | normally(or(fly, ¬swim))           | normally(¬fly)   | Unknown       |
+| gemini               | normally(or(fly, ¬swim))           | normally(¬fly)   | Unknown       |
+| gpt                  | or(normally(fly), normally(¬swim)) | normally(¬fly)   | Unknown       |
+| deepseek (never var) | normally(or(fly, ¬swim))           | STRICT ¬fly      | Likely false ✓|
 
 ### Root cause
 Stage-2 OVER-DEFEASIBILIZATION: "John does not fly" / "John never flies" is a
@@ -1259,7 +1133,7 @@ categorical fact about a NAMED individual, but most LLMs wrap it in `normally`.
 A specific-individual negation should be strict; only generic rules ("birds
 fly") deserve `normally`. Plus gpt's modality-distribution inconsistency.
 
-### Why REMOVE (not a quick fix)
+### Why it's hard
 Two candidate IN-SCOPE pipeline rewrites exist but each is broad and risky:
   - Rewrite A: strip `normally` from a negated event fact whose actor is a
     specific named constant (not a forall-bound var) -> makes ¬fly strict.
@@ -1267,29 +1141,21 @@ Two candidate IN-SCOPE pipeline rewrites exist but each is broad and risky:
 Both change defeasibility semantics across the whole suite and would need their
 own validation sweep; not justified for two near-duplicate cases. The honest fix
 is correct Stage-2 modality placement (strict individual negation; modality over
-the disjunction) — a prompt-level matter, out of the current campaign.
-
-### Status
-REMOVE all three (1500, 1501, 1498).  Logged in testfixlog_june.txt.  The
-verb-taxonomy change that unmasked 1500/1501 (and fixed 1498's problem 1) is
-correct and kept (case 1451) — do NOT revert it to re-green these. Revisit with
-the defeasible disjunctive syllogism work: a prover confidence model that
-charges a `normally` block once per rule application (not per Skolem sub-clause),
-plus a Stage-2 individual-negation strictness pass (strict `not fly`, modality
-OVER the disjunction).
+the disjunction) — a prompt-level matter.
 
 ---
 
-## Cases 807 / 1305 — relative-clause coreference through a defeasible habitual  (REMOVE, 2026-06-03)
+## relative-clause coreference through a defeasible habitual
 
 ### Problem
-807:  `John lives in a nice car which was red and was bought by Mike. John lives in a car which was bought by Mike?`  Expected: True
-1305: `John lives in a red car bought by Mary. Mary bought the car where John lives?`  Expected: True
+Two near-duplicate variants:
+- `John lives in a nice car which was red and was bought by Mike. John lives in a car which was bought by Mike?`  Expected: True
+- `John lives in a red car bought by Mary. Mary bought the car where John lives?`  Expected: True
 
-Near-duplicates. In both, the car John lives in IS the car Mary/Mike bought (one
-entity, car2), so the answer is True. 807 asks it from John's side ("John lives
-in a car which was bought by Mike?"), 1305 from Mary's side ("Mary bought the
-car where John lives?"); both reduce to proving buy(Mary/Mike, car2) AND
+In both, the car John lives in IS the car Mary/Mike bought (one entity, car2), so
+the answer is True. The first asks it from John's side ("John lives in a car
+which was bought by Mike?"), the second from Mary's side ("Mary bought the car
+where John lives?"); both reduce to proving buy(Mary/Mike, car2) AND
 live(John, car2).
 
 ### How the four LLMs handle it
@@ -1308,20 +1174,21 @@ live(John, car2).
   buy at W0/past, live at W1/present. The question conjoins buy AND live, which
   cannot be satisfied in one consistent world/tense.
 
-### 1305 — same root cause, different incidental winner
-On 1305 ALL four encode "lives in" as the `normally(typical)` event (no
-`is rel2` shortcut), and only gpt -> True; claude/gemini/deepseek -> Unknown.
-gpt closes here for a DIFFERENT incidental reason than on 807: it bundles live
-AND buy into ONE block `normally(and(live(John,car2,typical), buy(Mary,car2)))`,
-so the question matches the whole block as a unit with the `typical` `$block` as
-the only defeasible step (proof "answer found"). claude/gemini/deepseek keep
-live's `normally` SEPARATE from buy, so the question's `typical`-live skolem must
-independently match the assertion's through the `$block` -> "no information"
-(gemini again also splits state_time worlds). So across 807 + 1305 there are
-THREE different incidental things that make a parse close (deepseek's plain
-`is rel2`, gpt's existential re-binding on 807, gpt's single-block bundling on
-1305) and the failing parses each miss whichever one their structure needed --
-strong evidence the case family is too structure-sensitive to fix per-case.
+### The second variant — same root cause, different incidental winner
+On the second variant ALL four encode "lives in" as the `normally(typical)` event
+(no `is rel2` shortcut), and only gpt -> True; claude/gemini/deepseek -> Unknown.
+gpt closes here for a DIFFERENT incidental reason than on the first variant: it
+bundles live AND buy into ONE block `normally(and(live(John,car2,typical),
+buy(Mary,car2)))`, so the question matches the whole block as a unit with the
+`typical` `$block` as the only defeasible step (proof "answer found").
+claude/gemini/deepseek keep live's `normally` SEPARATE from buy, so the question's
+`typical`-live skolem must independently match the assertion's through the
+`$block` -> "no information" (gemini again also splits state_time worlds). So
+across both variants there are THREE different incidental things that make a parse
+close (deepseek's plain `is rel2`, gpt's existential re-binding on the first
+variant, gpt's single-block bundling on the second) and the failing parses each
+miss whichever one their structure needed -- strong evidence the case family is
+too structure-sensitive to fix per-case.
 
 ### Why it's hard
 The phrase "John lives in a car" is encoded by claude/gpt as a DEFEASIBLE
@@ -1336,11 +1203,11 @@ three independently-reasonable Stage-2 choices (habitual modality, world/tense
 split, direct-vs-existential question grounding) that only lines up for two of
 four LLMs.
 
-Confirmed NOT a soft-synonym artifact: the 2026-06-03 verb-taxonomy change
-removed the `live<->go` pair (live frm_syn clauses now 0) and claude/gemini are
-still Unknown -- the synonym was never load-bearing here.
+Confirmed NOT a soft-synonym artifact: the verb-taxonomy change removed the
+`live<->go` pair (live frm_syn clauses now 0) and claude/gemini are still
+Unknown -- the synonym was never load-bearing here.
 
-### Candidate fixes (none landed, all out of scope or risky)
+### Candidate fixes
 - Normalize "lives in X" (and similar stative location verbs) to a plain
   `is rel2`/`has location` relation instead of a `normally(typical)` event --
   a pipeline rewrite, but it changes habitual semantics broadly and needs its
@@ -1349,15 +1216,9 @@ still Unknown -- the synonym was never load-bearing here.
   for "X Vs a N which ..." (gpt's winning move) -- a Stage-2 prompt matter.
 - A typical-event question-matching relaxation in the prover -- deep, risky.
 
-### Status
-REMOVE both 807 and 1305 (siblings, same root cause).  Logged in
-testfixlog_june.txt.  No code landed.  Revisit with a stative-location
-normalization pass (shared with other "lives in / sits in / stands in"
-habituals) if/when that work is taken on.
-
 ---
 
-## Case 466 — "what is the price of X?" measure-value question  (REMOVE, 2026-06-03)
+## "what is the price of X?" measure-value question
 
 ### Problem
 Input:  `The price of the car is 3 dollars. The bike is as expensive as the car. What is the price of the bike?`
@@ -1387,7 +1248,7 @@ measure-VALUE query `=($measure_of(N,X), $measure(?v,UNIT))`, not a solve-for-
 entity-with-equal-measure (gpt) and not a definite-description is_rel2 query
 (deepseek). The two failures are DIFFERENT shapes, so no single rewrite fixes
 both; the only in-scope lever is a Stage-2 measure-value-question sanity check +
-retry (cf. the comparative checks 555/559) that recognises a measure-noun
+retry (cf. the comparative checks 551/554) that recognises a measure-noun
 "what is the N of X?" question and flags BOTH the entity-arg-of-$measure_of form
 and the $theof1/is_rel2 definite form, retrying for the value query. That is a
 real but non-trivial check needing its own design + regression -- more than two
@@ -1400,8 +1261,3 @@ A `_check_stage2_measure_value_question(logic, s1_json)` sanity check:
 - Flag when the ask-var is the ENTITY arg of a `$measure_of` (gpt) or resolves to
   a `$theof1(N, ...)` definite asked via `is_rel2 "N of"` (deepseek).
 - Retry: encode as `=($measure_of(N, X), $measure(?v, UNIT))`.
-
-### Status
-REMOVE.  Logged in testfixlog_june.txt.  Currently 2/4 (claude/gemini correct).
-No code landed.  Revisit with the measure-value-question sanity check above
-(general win for relational/entity-equality measure questions, not just 466).

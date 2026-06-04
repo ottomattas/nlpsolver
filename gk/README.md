@@ -4,6 +4,34 @@ GK User Guide
 GK is a commonsense reasoner for first-order logic enhanced with
 confidence values and default rules with exceptions.
 
+Platforms
+---------
+
+Two prebuilt binaries ship with this folder:
+
+  * `gk` — statically-linked Linux x86-64 ELF, ready to run.
+  * `gk-macos-ARM64.zip` — macOS on Apple Silicon (ARM64) build.  Unzip
+    it and use the extracted `gk` binary in place of the Linux one.
+
+The `nlpsolver` pipelines (`llmpipe` and `udppipe`) that drive `gk` have
+only been tested on Linux; running them on macOS has not been verified
+and may need small tweaks.  For other platforms, build from
+[gkc](https://github.com/tammet/gkc) — the gkc-based source that
+`gk` is built on.
+
+
+What GK Does
+------------
+
+GK answers questions about knowledge expressed as logical rules and facts.
+It handles three kinds of reasoning:
+
+  1. **Classical logic**: derive conclusions from facts and rules
+  2. **Uncertain reasoning**: track confidence values through derivations
+  3. **Default reasoning**: apply rules that are "typically true" but
+     can have exceptions (e.g., "birds fly, but penguins don't")
+
+
 Quick Start
 -----------
 
@@ -40,34 +68,6 @@ The key fields are:
   * `"answer"` — the answer term(s)
   * `"confidence"` — confidence value (0.0 to 1.0)
   * `"positive proof"` — the derivation steps
-
-
-Platforms
----------
-
-Two prebuilt binaries ship with this folder:
-
-  * `gk` — statically-linked Linux x86-64 ELF, ready to run.
-  * `gk-macos-ARM64.zip` — macOS on Apple Silicon (ARM64) build.  Unzip
-    it and use the extracted `gk` binary in place of the Linux one.
-
-The `nlpsolver` pipelines (`llmpipe` and `udppipe`) that drive `gk` have
-only been tested on Linux; running them on macOS has not been verified
-and may need small tweaks.  For other platforms, build from
-[gkc](https://github.com/tammet/gkc) — the gkc-based source that
-`gk` is built on.
-
-
-What GK Does
-------------
-
-GK answers questions about knowledge expressed as logical rules and facts.
-It handles three kinds of reasoning:
-
-  1. **Classical logic**: derive conclusions from facts and rules
-  2. **Uncertain reasoning**: track confidence values through derivations
-  3. **Default reasoning**: apply rules that are "typically true" but
-     can have exceptions (e.g., "birds fly, but penguins don't")
 
 
 Input Format
