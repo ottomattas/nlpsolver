@@ -1,0 +1,89 @@
+{
+  "test_name": "core_100",
+  "case_id": 22,
+  "input_text": "John is glad. If John is glad, then Mike is not glad. Is Mike glad?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "False.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["has degree property","glad","John 1","none","person"]]],
+    ["@id","S2",
+      ["holds","W0",
+        ["implies",
+          ["has degree property","glad","John 1","none","person"],
+          ["not", ["has degree property","glad","Mike 2","none","person"]]
+        ]
+      ]
+    ],
+    ["@id", "S3", ["question", ["has degree property","glad","Mike 2","none","person"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["has property", "glad", "John 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@logic": [["-has property", "glad", "John 1", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+            ["-has property", "glad", "Mike 2", ["$ctxt","present","W0","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "glad", "Mike 2", ["$ctxt","present","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-has property", "glad", "Mike 2", ["$ctxt","present","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$defq0"]
+           ],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@question": ["$defq0"],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "glad", "Mike 2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "glad", "Mike 2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "glad", "Mike 2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "[generated: sent_S3]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S2","assumption",1], [["-has property", "glad", "Mike 2", ["$ctxt","present","W0","?:X","?:Y"]], ["-has property", "glad", "John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [2, ["in","sent_S3","assumption",1], [["-$defq0"], ["has property", "glad", "Mike 2", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has property", "glad", "Mike 2", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["mp",1,4,"fromga",1], [["-has property", "glad", "John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [6, ["in","sent_S1","assumption",1], [["has property", "glad", "John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [7, ["mp",5,6,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) sent_S1",
+"  (2) sent_S2",
+"  (3) sent_S3",
+"Proof steps (by contradiction):",
+"  (1) If Mike is glad then John is not glad  [sentence 2]",
+"  (2) If answer holds then Mike is glad  [sentence 3]",
+"  (3) Answer holds  [assumption]",
+"  (4) Mike is glad  [from steps 2, 3]",
+"  (5) John is not glad  [from steps 1, 4]",
+"  (6) John is glad  [sentence 1]",
+"  (7) Contradiction  [from steps 5, 6]"
+],
+  "timestamp": "2026-06-09T11:45:21Z"
+}

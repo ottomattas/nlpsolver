@@ -1,0 +1,235 @@
+{
+  "test_name": "core_100",
+  "case_id": 1375,
+  "input_text": "If an animal is cool and defeated then it is green.\n   John is an animal. John is cool.\n   Mike is an animal. Mike is cool. John is defeated. John is not green?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "If an animal is cool and defeated then it is green.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "If an animal is cool and defeated, the animal is green.",
+          "type": "strict_rule",
+          "entities": [{"id": "animal", "type": "generic", "category": "animal"}],
+          "adjectives": [["cool","none","animal"], ["defeated","none","animal"], ["green","none","animal"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is an animal.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 is an animal.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "John is cool.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 1 is cool.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["cool","none","animal"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is an animal.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mike 2 is an animal.",
+          "type": "situation",
+          "entities": [{"id": "Mike 2", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is cool.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Mike 2 is cool.",
+          "type": "situation",
+          "entities": [{"id": "Mike 2", "type": "concrete", "category": "animal"}],
+          "adjectives": [["cool","none","animal"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is defeated.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "John 1 is defeated.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["defeated","none","animal"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is not green?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Is John 1 not green?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["green","none","animal"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["and",
+              ["isa","animal","X"],
+              ["has degree property","cool","X","none","animal"],
+              ["has degree property","defeated","X","none","animal"]
+            ],
+            ["has degree property","green","X","none","animal"]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S2", ["holds", "W0", ["isa","animal","John 1"]]],
+    ["@id", "S3", ["holds", "W0", ["has degree property","cool","John 1","none","animal"]]],
+    ["@id", "S4", ["holds", "W0", ["isa","animal","Mike 2"]]],
+    ["@id", "S5", ["holds", "W0", ["has degree property","cool","Mike 2","none","animal"]]],
+    ["@id", "S6", ["holds", "W0", ["has degree property","defeated","John 1","none","animal"]]],
+    ["@id", "S7", ["question", ["not", ["has degree property","green","John 1","none","animal"]]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","animal","?:X"],
+            ["-has degree property", "cool", "?:X", "none", "animal", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has property", "defeated", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["has property", "green", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "If an animal is cool and defeated, the animal is green."},
+{"@name": "sent_S2",
+ "@logic": ["isa","animal","#:John 1"],
+ "@nl": "John 1 is an animal."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "cool", "#:John 1", "none", "animal", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "John 1 is cool."},
+{"@name": "sent_S4",
+ "@logic": ["isa","animal","#:Mike 2"],
+ "@nl": "Mike 2 is an animal."},
+{"@name": "sent_S5",
+ "@logic": ["has degree property", "cool", "#:Mike 2", "none", "animal", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mike 2 is cool."},
+{"@name": "sent_S6",
+ "@logic": ["has property", "defeated", "#:John 1", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John 1 is defeated."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-has property", "green", "#:John 1", ["$ctxt","present","?:Fv17","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Is John 1 not green?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["has property", "green", "#:John 1", ["$ctxt","present","?:Fv17","?:Fv15","?:Fv16"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 not green?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 not green?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "green", "#:John 1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "green", "#:John 1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 not green?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cool", "$some_not_cool_animal", "none", "animal", ["$ctxt","?:Fv32","?:Fv29","?:Fv30","?:Fv31"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "defeated", "$some_not_defeated_animal", ["$ctxt","?:Fv36","?:Fv33","?:Fv34","?:Fv35"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "green", "$some_green_animal", ["$ctxt","?:Fv40","?:Fv37","?:Fv38","?:Fv39"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_green_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "green", "$some_not_green_animal", ["$ctxt","?:Fv48","?:Fv45","?:Fv46","?:Fv47"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "green", "?:X", ["$ctxt","past","?:Fv19","?:Fv20","?:Fv21"]],
+            ["has property", "green", "?:X", ["$ctxt","present","?:Fv19","?:Fv20","?:Fv21"]],
+            ["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Fv19","?:Fv20","?:Fv21"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "green", "?:X", ["$ctxt","past","?:Fv22","?:Fv23","?:Fv24"]],
+            ["has property", "green", "?:X", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]],
+            ["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S1","assumption",1], [["-has degree property", "cool", "?:X", "none", "animal", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has property", "defeated", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["has property", "green", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","animal","?:X"]]],
+          [2, ["in","sent_S3","assumption",1], [["has degree property", "cool", "#:John 1", "none", "animal", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp",1,2,"fromassumption",1], [["-isa","animal","#:John 1"], ["-has property", "defeated", "#:John 1", ["$ctxt","present","W0","?:X3","?:Y3"]], ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]],
+          [4, ["in","sent_S2","assumption",1], [["isa","animal","#:John 1"]]],
+          [5, ["simp",3,4,"fromassumption",1], [["-has property", "defeated", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]], ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [6, ["in","sent_S6","assumption",1], [["has property", "defeated", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [7, ["mp",5,6,"fromassumption",1], [["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [8, ["in","sent_S7","assumption",1], [["-$defq0"], ["-has property", "green", "#:John 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [9, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [10, ["mp", 7, [8,1], 9, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) If an animal is cool and defeated then it is green.",
+"  (2) John is an animal.",
+"  (3) John is cool.",
+"  (4) John is defeated.",
+"  (5) John is not green?",
+"Proof steps (by contradiction):",
+"  (1) If some X is a cool animal and X is defeated and X is an animal then X is green  [sentence 1]",
+"  (2) John is a cool animal  [sentence 3]",
+"  (3) If John is an animal and John is defeated then John is green  [from steps 1, 2]",
+"  (4) John is an animal  [sentence 2]",
+"  (5) If John is defeated then John is green  [from steps 3, 4]",
+"  (6) John is defeated  [sentence 4]",
+"  (7) John is green  [from steps 5, 6]",
+"  (8) If answer holds then John is not green  [sentence 5]",
+"  (9) Answer holds  [assumption]",
+"  (10) Contradiction  [from steps 7, 8, 9]"
+],
+  "timestamp": "2026-06-09T11:34:31Z"
+}

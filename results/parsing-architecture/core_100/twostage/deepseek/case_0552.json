@@ -1,0 +1,130 @@
+{
+  "test_name": "core_100",
+  "case_id": 552,
+  "input_text": "John is as tall as Bill. Is John's height equal to Bill's?",
+  "expected_answer": true,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is as tall as Bill.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1's height 3 is equal to Bill 2's height 4.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Bill 2", "type": "concrete", "category": "person"},
+            {"id": "height 3", "type": "concrete", "text": "height", "category": "abstract"},
+            {"id": "height 4", "type": "concrete", "text": "height", "category": "abstract"}
+          ],
+          "definites": [["height of","height 3","John 1"], ["height of","height 4","Bill 2"]]
+        }
+      ]
+    },
+    {
+      "raw": "Is John's height equal to Bill's?",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Is John 1's height 3 equal to Bill 2's height 4?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Bill 2", "type": "concrete", "category": "person"},
+            {"id": "height 3", "type": "concrete", "text": "height", "category": "abstract"},
+            {"id": "height 4", "type": "concrete", "text": "height", "category": "abstract"}
+          ],
+          "definites": [["height of","height 3","John 1"], ["height of","height 4","Bill 2"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","person","Bill 2"],
+          ["=", ["$measure_of","height","John 1","W0"], ["$measure_of","height","Bill 2","W0"]]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["question",
+        ["=", ["$measure_of","height","John 1","W0"], ["$measure_of","height","Bill 2","W0"]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","abstract","#:height 3"],
+ "@nl": "John 1's height 3 is equal to Bill 2's height 4."},
+{"@name": "entity_S1",
+ "@logic": ["isa","height","#:height 3"],
+ "@nl": "John 1's height 3 is equal to Bill 2's height 4."},
+{"@name": "entity_S1",
+ "@logic": ["isa","abstract","#:height 4"],
+ "@nl": "John 1's height 3 is equal to Bill 2's height 4."},
+{"@name": "entity_S1",
+ "@logic": ["isa","height","#:height 4"],
+ "@nl": "John 1's height 3 is equal to Bill 2's height 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1's height 3 is equal to Bill 2's height 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Bill 2"],
+ "@nl": "John 1's height 3 is equal to Bill 2's height 4."},
+{"@name": "sent_S1",
+ "@logic": ["=", ["$measure_of","height","#:John 1","W0"], ["$measure_of","height","#:Bill 2","W0"]],
+ "@nl": "John 1's height 3 is equal to Bill 2's height 4."},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["=", ["$measure_of","height","#:John 1","W0"], ["$measure_of","height","#:Bill 2","W0"]]
+           ],
+ "@nl": "Is John 1's height 3 equal to Bill 2's height 4?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-=", ["$measure_of","height","#:John 1","W0"], ["$measure_of","height","#:Bill 2","W0"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1's height 3 equal to Bill 2's height 4?"},
+{"@name": "sent_S2",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1's height 3 equal to Bill 2's height 4?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","height","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "height", ["$measure_of","height","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S2","assumption",1], [["-=", ["$measure_of","height","#:John 1","W0"], ["$measure_of","height","#:Bill 2","W0"]], ["$defq0"]]],
+          [2, ["in","sent_S2","goal",1], [["-$defq0"]]],
+          [3, ["mp", [1,1], 2, "fromga", 1], [["-=", ["$measure_of","height","#:John 1","W0"], ["$measure_of","height","#:Bill 2","W0"]]]],
+          [4, ["in","sent_S1","assumption",1], [["=", ["$measure_of","height","#:John 1","W0"], ["$measure_of","height","#:Bill 2","W0"]]]],
+          [5, ["simp",3,4,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John is as tall as Bill.",
+"  (2) Is John's height equal to Bill's?",
+"Proof steps (by contradiction):",
+"  (1) If the height of John equals the height of Bill then answer holds  [sentence 2]",
+"  (2) assume for contradiction: the answer is no  [from question]",
+"  (3) The height of John does not equal the height of Bill  [from steps 1, 2]",
+"  (4) The height of John equals the height of Bill  [sentence 1]",
+"  (5) Contradiction  [from steps 3, 4]"
+],
+  "timestamp": "2026-06-09T09:14:35Z"
+}

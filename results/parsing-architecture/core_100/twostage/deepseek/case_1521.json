@@ -1,0 +1,130 @@
+{
+  "test_name": "core_100",
+  "case_id": 1521,
+  "input_text": "It is not probable that John is a child of Mike. John is a child of Mike?",
+  "expected_answer": "Probably false.",
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Probably false.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "It is not probable that John is a child of Mike.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a child of Mike 2.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Mike 2", "type": "concrete", "category": "person"}
+          ],
+          "confidence": 0.2
+        }
+      ]
+    },
+    {
+      "raw": "John is a child of Mike?",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Is John 1 a child of Mike 2?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Mike 2", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["isa","person","Mike 2"],
+            ["is rel2","child of","John 1","Mike 2"]
+          ]
+        ],
+        ["@p","S1",0.2]
+      ]
+    ],
+    ["@id", "S2", ["question", ["is rel2","child of","John 1","Mike 2"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:Mike 2"],
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","person","#:John 1"],
+            ["-isa","person","#:Mike 2"],
+            ["-is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Is John 1 a child of Mike 2?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 a child of Mike 2?"},
+{"@name": "sent_S2",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 a child of Mike 2?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 a child of Mike 2?"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 0.6,
+        "negative proof": [[1, ["in","sent_S1","assumption",0.6], [["-isa","person","#:Mike 2"], ["-isa","person","#:John 1"], ["-is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [2, ["in","sent_S2","assumption",1], [["-$defq0"], ["is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["mp", [1,2], 4, "fromga", 0.6], [["-isa","person","#:Mike 2"], ["-isa","person","#:John 1"]]],
+          [6, ["in","entity_S1","assumption",1], [["isa","person","#:Mike 2"]]],
+          [7, ["mp",5,6,"fromga",0.6], [["-isa","person","#:John 1"]]],
+          [8, ["in","entity_S1","assumption",1], [["isa","person","#:John 1"]]],
+          [9, ["simp",7,8,"fromga",0.6], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 60%.",
+"Sentences used:",
+"  (1) It is not probable that John is a child of Mike.",
+"  (2) John is a child of Mike?",
+"Knowledge used:",
+"  Mike is a person. Why: assumed basic knowledge.",
+"  John is a person. Why: assumed basic knowledge.",
+"Proof steps (by contradiction):",
+"  (1) If Mike is a person and John is a person then John is not child of Mike  [sentence 1, confidence 60%]",
+"  (2) If answer holds then John is child of Mike  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) John is child of Mike  [from steps 2, 3]",
+"  (5) If Mike is a person then John is not a person  [from steps 1, 4, confidence 60%]",
+"  (6) Mike is a person  [background knowledge]",
+"  (7) John is not a person  [from steps 5, 6, confidence 60%]",
+"  (8) John is a person  [background knowledge]",
+"  (9) Contradiction  [from steps 7, 8, confidence 60%]"
+],
+  "timestamp": "2026-06-09T10:05:51Z"
+}

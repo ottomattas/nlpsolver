@@ -1,0 +1,238 @@
+{
+  "test_name": "core_100",
+  "case_id": 979,
+  "input_text": "John works at the hospital every day. Where does John work?",
+  "expected_answer": "At the hospital.",
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "At the hospital.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John works at the hospital every day.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 works at the hospital 2 every day.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "hospital 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "work",
+              "mode": "habitual",
+              "roles": {"location": "hospital 2", "location_prep": "at"}
+            }
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Where does John work?",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Which entity does John 1 work at?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "John 1", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "work",
+              "mode": "habitual",
+              "roles": {"location": "entity", "location_prep": "at"}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["isa","place","hospital 2"],
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","work"],
+                  ["has actor","E","John 1"],
+                  ["has location","E","hospital 2","at"],
+                  ["typical","E"]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id","S2",
+      ["ask","X",
+        ["and",
+          ["isa","person","John 1"],
+          ["normally",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","work"],
+                ["has actor","E","John 1"],
+                ["has location","E","X","at"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","hospital","#:hospital 2"],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S1",
+ "@logic": ["isa","place","#:hospital 2"],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "work", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:John 1", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S1",
+ "@logic": ["has location", "sk0_activity", "#:hospital 2", "at", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S1",
+ "@logic": [["typical", "sk0_activity", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","$generic",1], ["$not", ["typical", "sk0_activity", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"], ["isa","person","#:John 1"]],
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"], ["isa", "activity", ["sk1","?:X","?:_Prep"]]],
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["has type", ["sk1","?:X","?:_Prep"], "work", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["has actor", ["sk1","?:X","?:_Prep"], "#:John 1", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["has location", ["sk1","?:X","?:_Prep"], "?:X", "?:_Prep", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["typical", ["sk1","?:X","?:_Prep"], ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:John 1"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "work", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-has actor", "?:E", "#:John 1", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-has location", "?:E", "?:X", "?:_Prep", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$defq0","?:_Prep","?:X"]
+           ],
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S2",
+ "@question": ["$defq0","?:Rel","?:X"],
+ "@askvars": 2,
+ "@where_query": true,
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","hospital","$some_hospital"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","place","$some_place"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","at","#:hospital 2"]],
+        "blockers": [["$block", ["$","$generic",1], ["$not", ["typical", "sk0_activity", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]]
+        ],
+        "confidence": 0.98,
+        "positive proof": [[1, ["in","sent_S2","assumption",1], [["-isa","person","#:John 1"], ["-has location", "?:X", "?:Y", "?:Z", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["-has type", "?:X", "work", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["-has actor", "?:X", "#:John 1", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["-typical", "?:X", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["-isa","activity","?:X"], ["$defq0","?:Z","?:Y"]]],
+          [2, ["in","sent_S1","assumption",1], [["isa","person","#:John 1"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["-has location", "?:X", "?:Y", "?:Z", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["-has type", "?:X", "work", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["-has actor", "?:X", "#:John 1", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["-typical", "?:X", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["-isa","activity","?:X"], ["$defq0","?:Z","?:Y"]]],
+          [4, ["in","sent_S1","assumption",1], [["has type", "sk0_activity", "work", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [5, ["mp", [3,1], 4, "fromassumption", 1], [["-isa","activity","sk0_activity"], ["-has location", "sk0_activity", "?:X3", "?:Y3", ["$ctxt","?:Z3","?:U3","?:V3","?:W3"]], ["-has actor", "sk0_activity", "#:John 1", ["$ctxt","?:Z3","?:U3","?:V3","?:W3"]], ["-typical", "sk0_activity", ["$ctxt","?:Z3","?:U3","?:V3","?:W3"]], ["$defq0","?:Y3","?:X3"]]],
+          [6, ["in","sent_S1","assumption",1], [["isa","activity","sk0_activity"]]],
+          [7, ["simp",5,6,"fromassumption",1], [["-has location", "sk0_activity", "?:X", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-has actor", "sk0_activity", "#:John 1", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-typical", "sk0_activity", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["$defq0","?:Y","?:X"]]],
+          [8, ["in","sent_S1","assumption",1], [["has actor", "sk0_activity", "#:John 1", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [9, ["mp", [7,1], 8, "fromassumption", 1], [["-has location", "sk0_activity", "?:X", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-typical", "sk0_activity", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["$defq0","?:Y","?:X"]]],
+          [10, ["in","sent_S1","assumption",1], [["has location", "sk0_activity", "#:hospital 2", "at", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [11, ["mp",9,10,"fromassumption",1], [["$defq0","at","#:hospital 2"], ["-typical", "sk0_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [12, ["in","sent_S1","assumption",0.98], [["$block", ["$","$generic",1], ["$not", ["typical", "sk0_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["typical", "sk0_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [13, ["mp", [11,1], [12,1], "fromassumption", 0.98], [["$defq0","at","#:hospital 2"], ["$block", ["$","$generic",1], ["$not", ["typical", "sk0_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]]]],
+          [14, ["in","sent_S2","goal",1], [["-$defq0","?:X","?:Y"], ["$ans","?:X","?:Y"]]],
+          [15, ["mp",13,14,"fromga",0.98], [["$block", ["$","$generic",1], ["$not", ["typical", "sk0_activity", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]], ["$ans","at","#:hospital 2"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 98%.",
+"Sentences used:",
+"  (1) John works at the hospital every day.",
+"  (2) Where does John work?",
+"Proof steps:",
+"  (1) If John is a person and X takes place some Z some Y and X is a work event and John performs X and X is typical and X is an activity then [Z, Y] is the answer  [sentence 2]",
+"  (2) John is a person  [sentence 1]",
+"  (3) If X takes place some Z some Y and X is a work event and John performs X and X is typical and X is an activity then [Z, Y] is the answer  [from steps 1, 2]",
+"  (4) The event act1 is a work event  [sentence 1]",
+"  (5) If the event act1 is an activity and the act1 takes place some Y3 some X3 and John performs the act1 and the act1 is typical then [Y3, X3] is the answer  [from steps 3, 4]",
+"  (6) The event act1 is an activity  [sentence 1]",
+"  (7) If the event act1 takes place some Y some X and John performs the act1 and the act1 is typical then [Y, X] is the answer  [from steps 5, 6]",
+"  (8) John performs the event act1  [sentence 1]",
+"  (9) If the event act1 takes place some Y some X and the act1 is typical then [Y, X] is the answer  [from steps 7, 8]",
+"  (10) The event act1 takes place at the hospital B  [sentence 1]",
+"  (11) If the event act1 is typical then 'at the hospital B' is the answer  [from steps 9, 10]",
+"  (12) Normally the event act1 is typical  [sentence 1, confidence 98%]",
+"  (13) 'At the hospital B' is the answer, except when the event act1 is not typical  [from steps 11, 12, confidence 98%]",
+"  (14) technical answer unwrap step  [from question]",
+"  (15) 'At the hospital B' is an answer, except when the event act1 is not typical  [from steps 13, 14, confidence 98%]",
+"Exceptions checked and not holding:",
+"  act1 is not typical"
+],
+  "timestamp": "2026-06-09T09:33:39Z"
+}

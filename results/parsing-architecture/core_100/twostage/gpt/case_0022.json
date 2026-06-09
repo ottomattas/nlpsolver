@@ -1,0 +1,171 @@
+{
+  "test_name": "core_100",
+  "case_id": 22,
+  "input_text": "John is glad. If John is glad, then Mike is not glad. Is Mike glad?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Likely false.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is glad.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is glad.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["glad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "If John is glad, then Mike is not glad.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "If John 1 is glad, Mike 2 is not glad.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Mike 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["glad","none","person"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "Is Mike glad?",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Is Mike 2 glad?",
+          "type": "query",
+          "entities": [{"id": "Mike 2", "type": "concrete", "category": "person"}],
+          "adjectives": [["glad","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["has degree property","glad","John 1","none","person"]]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["normally",
+            ["implies",
+              ["and",
+                ["isa","person","John 1"],
+                ["has degree property","glad","John 1","none","person"]
+              ],
+              ["and",
+                ["isa","person","Mike 2"],
+                ["not", ["has degree property","glad","Mike 2","none","person"]]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.95]
+      ]
+    ],
+    ["@id","S3",
+      ["question",
+        ["and", ["isa","person","Mike 2"], ["has degree property","glad","Mike 2","none","person"]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is glad."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "glad", "#:John 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is glad."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","person","#:John 1"],
+            ["-has property", "glad", "#:John 1", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["isa","person","#:Mike 2"]
+           ],
+ "@nl": "If John 1 is glad, Mike 2 is not glad."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","person","#:John 1"],
+            ["-has property", "glad", "#:John 1", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-has property", "glad", "#:Mike 2", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$block", ["$","person",2], ["has property", "glad", "#:Mike 2", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "If John 1 is glad, Mike 2 is not glad."},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:Mike 2"]],
+ "@nl": "Is Mike 2 glad?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "glad", "#:Mike 2", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Is Mike 2 glad?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:Mike 2"],
+            ["-has property", "glad", "#:Mike 2", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is Mike 2 glad?"},
+{"@name": "sent_S3",
+ "@question": ["$defq0"],
+ "@nl": "Is Mike 2 glad?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "glad", "#:Mike 2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "glad", "#:Mike 2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "glad", "#:Mike 2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is Mike 2 glad?"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "blockers": [["$block", ["$","person",2], ["has property", "glad", "#:Mike 2", ["$ctxt","present","W0","?:X3","?:Y3"]]]
+        ],
+        "confidence": 0.9,
+        "negative proof": [[1, ["in","sent_S2","assumption",0.9], [["-isa","person","#:John 1"], ["$block", ["$","person",2], ["has property", "glad", "#:Mike 2", ["$ctxt","?:X","?:Y","?:Z","?:U"]]], ["-has property", "glad", "#:Mike 2", ["$ctxt","?:X","?:Y","?:Z","?:U"]], ["-has property", "glad", "#:John 1", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [2, ["in","sent_S3","assumption",1], [["-$defq0"], ["has property", "glad", "#:Mike 2", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has property", "glad", "#:Mike 2", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["mp", [1,2], 4, "fromga", 0.9], [["-isa","person","#:John 1"], ["$block", ["$","person",2], ["has property", "glad", "#:Mike 2", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]], ["-has property", "glad", "#:John 1", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]],
+          [6, ["in","sent_S1","assumption",1], [["isa","person","#:John 1"]]],
+          [7, ["simp",5,6,"fromga",0.9], [["$block", ["$","person",2], ["has property", "glad", "#:Mike 2", ["$ctxt","present","?:X","?:Y","?:Z"]]], ["-has property", "glad", "#:John 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [8, ["in","sent_S1","assumption",1], [["has property", "glad", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [9, ["mp", [7,1], 8, "fromga", 0.9], [["$block", ["$","person",2], ["has property", "glad", "#:Mike 2", ["$ctxt","present","W0","?:X3","?:Y3"]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 90%.",
+"Sentences used:",
+"  (1) John is glad.",
+"  (2) If John is glad, then Mike is not glad.",
+"  (3) Is Mike glad?",
+"Proof steps:",
+"  (1) If John is a person and Mike is glad then John is not glad, except when Mike is glad  [sentence 2, confidence 90%]",
+"  (2) If answer holds then Mike is glad  [sentence 3]",
+"  (3) Answer holds  [assumption]",
+"  (4) Mike is glad  [from steps 2, 3]",
+"  (5) If John is a person then John is not glad, except when Mike is glad  [from steps 1, 4, confidence 90%]",
+"  (6) John is a person  [sentence 1]",
+"  (7) John is not glad, except when Mike is glad  [from steps 5, 6, confidence 90%]",
+"  (8) John is glad  [sentence 1]",
+"  (9) Outstanding exception: Mike is glad  [from steps 7, 8, confidence 90%]",
+"Exceptions checked and not holding:",
+"  Mike is glad"
+],
+  "timestamp": "2026-06-09T11:15:32Z"
+}

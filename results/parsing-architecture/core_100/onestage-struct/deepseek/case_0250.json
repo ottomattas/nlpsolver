@@ -1,0 +1,134 @@
+{
+  "test_name": "core_100",
+  "case_id": 250,
+  "input_text": "The bicycle of Tom was new. Was the bicycle old?",
+  "expected_answer": false,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "False.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","bicycle","bicycle 1"],
+            ["isa","person","Tom 1"],
+            ["have","Tom 1","bicycle 1"],
+            ["has degree property","new","bicycle 1","none","bicycle"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S2",
+      ["question", ["@time", "past", ["has degree property","old","bicycle 1","none","bicycle"]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","bicycle","bicycle 1"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","Tom 1"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["have", "Tom 1", "bicycle 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "new", "bicycle 1", "none", "bicycle", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-has degree property", "new", "bicycle 1", "none", "?:Fv16", ["$ctxt","past","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["has degree property", "new", "bicycle 1", "none", "?:Fv17", ["$ctxt","past","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$defq0"]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@question": ["$defq0"],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["has degree property", "new", "bicycle 1", "none", "bicycle", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["-has degree property", "new", "bicycle 1", "none", "bicycle", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "old", "bicycle 1", "none", "bicycle", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "new", "?:X", "none", "?:Fv13", ["$ctxt","past","?:Fv7","?:Fv8","?:Fv9"]],
+            ["-has degree property", "new", "?:X", "none", "?:Fv14", ["$ctxt","present","?:Fv7","?:Fv8","?:Fv9"]],
+            ["$block", 0, ["$not", ["has degree property", "old", "?:X", "none", "?:Fv15", ["$ctxt","present","?:Fv7","?:Fv8","?:Fv9"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "new", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv10","?:Fv11","?:Fv12"]],
+            ["-has degree property", "new", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv10","?:Fv11","?:Fv12"]],
+            ["$block", 0, ["$not", ["has degree property", "old", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv10","?:Fv11","?:Fv12"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "blockers": [["$block", 0, ["$not", ["has degree property", "old", "bicycle 1", "none", "bicycle", ["$ctxt","present","W0","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.95,
+        "negative proof": [[1, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has degree property", "old", "?:X", "?:Y", "?:Z", ["$ctxt","present","?:U","?:V","?:W"]]]], ["-has degree property", "new", "?:X", "?:Y", "?:Z", ["$ctxt","present","?:U","?:V","?:W"]], ["has degree property", "new", "?:X", "?:Y", "?:Z", ["$ctxt","past","?:U","?:V","?:W"]]]],
+          [2, ["in","sent_S1","assumption",1], [["has degree property", "new", "bicycle 1", "none", "bicycle", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 0.95], [["$block", 0, ["$not", ["has degree property", "old", "bicycle 1", "none", "bicycle", ["$ctxt","present","W0","?:X","?:Y"]]]], ["has degree property", "new", "bicycle 1", "none", "bicycle", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [4, ["in","sent_S2","assumption",1], [["-$defq0"], ["-has degree property", "new", "bicycle 1", "none", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]]]],
+          [5, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [6, ["mp", [3,1], [4,1], 5, "fromga", 0.95], [["$block", 0, ["$not", ["has degree property", "old", "bicycle 1", "none", "bicycle", ["$ctxt","present","W0","?:X3","?:Y3"]]]]]]
+        ]
+      },
+      {
+        "answer": false,
+        "blockers": [["$block", 0, ["$not", ["has degree property", "old", "bicycle 1", "none", "?:X3", ["$ctxt","present","W0","?:Y3","?:Z3"]]]]
+        ],
+        "confidence": 0.965833,
+        "negative proof": [[1, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has degree property", "old", "?:X", "?:Y", "?:Z", ["$ctxt","present","?:U","?:V","?:W"]]]], ["-has degree property", "new", "?:X", "?:Y", "?:Z", ["$ctxt","present","?:U","?:V","?:W"]], ["has degree property", "new", "?:X", "?:Y", "?:Z", ["$ctxt","past","?:U","?:V","?:W"]]]],
+          [2, ["in","sent_S1","assumption",1], [["has degree property", "new", "bicycle 1", "none", "bicycle", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 0.95], [["$block", 0, ["$not", ["has degree property", "old", "bicycle 1", "none", "bicycle", ["$ctxt","present","W0","?:X","?:Y"]]]], ["has degree property", "new", "bicycle 1", "none", "bicycle", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [4, ["in","sent_S2","assumption",1], [["-$defq0"], ["-has degree property", "new", "bicycle 1", "none", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]]]],
+          [5, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [6, ["mp", [3,1], [4,1], 5, "fromga", 0.95], [["$block", 0, ["$not", ["has degree property", "old", "bicycle 1", "none", "bicycle", ["$ctxt","present","W0","?:X3","?:Y3"]]]]]],
+          [7, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has degree property", "old", "?:X", "none", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]]]], ["-has degree property", "new", "?:X", "none", "?:W", ["$ctxt","present","?:Z","?:U","?:V"]], ["has degree property", "new", "?:X", "none", "?:2006", ["$ctxt","past","?:Z","?:U","?:V"]]]],
+          [8, ["mp", [7,1], 2, "fromassumption", 0.95], [["$block", 0, ["$not", ["has degree property", "old", "bicycle 1", "none", "?:X", ["$ctxt","present","W0","?:Y","?:Z"]]]], ["has degree property", "new", "bicycle 1", "none", "?:U", ["$ctxt","past","W0","?:Y","?:Z"]]]],
+          [9, ["mp", [8,1], [4,1], 5, "fromga", 0.95], [["$block", 0, ["$not", ["has degree property", "old", "bicycle 1", "none", "?:X3", ["$ctxt","present","W0","?:Y3","?:Z3"]]]]]],
+          [10, ["cumul",6,9,"fromga",0.965833], [["$block", 0, ["$not", ["has degree property", "old", "bicycle 1", "none", "?:X3", ["$ctxt","present","W0","?:Y3","?:Z3"]]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 95%.",
+"Sentences used:",
+"  (1) sent_S1",
+"  (2) sent_S2",
+"Knowledge used:",
+"  If some X is some y new then X is y new, except when X is not y old. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If some X is some y new then X is y new, except when X is not y old  [background knowledge, confidence 95%]",
+"  (2) The bicycle A is new  [sentence 1]",
+"  (3) The bicycle A is new, except when the bicycle A is not old  [from steps 1, 2, confidence 95%]",
+"  (4) If answer holds then the bicycle A is not new  [sentence 2]",
+"  (5) Answer holds  [assumption]",
+"  (6) Outstanding exception: the bicycle A is not old  [from steps 3, 4, 5, confidence 95%]",
+"Exceptions checked and not holding:",
+"  bicycle A is not old"
+],
+  "timestamp": "2026-06-09T10:48:17Z"
+}

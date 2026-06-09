@@ -1,0 +1,184 @@
+{
+  "test_name": "core_100",
+  "case_id": 975,
+  "input_text": "Mary visited London in September. Did Mary visit Paris?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Mary visited London in September.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mary 1 visited London 2 in September.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {
+              "id": "London 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/London"
+            }
+          ],
+          "actions": [{"root": "visit", "mode": "event", "roles": {"target": "London 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "September",
+          "time_prep": "in",
+          "state_tense": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Did Mary visit Paris?",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Did Mary 1 visit Paris 3?",
+          "type": "query",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {
+              "id": "Paris 3",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Paris"
+            }
+          ],
+          "actions": [{"root": "visit", "mode": "event", "roles": {"target": "Paris 3"}}],
+          "pre_state": "W1",
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 1"],
+            ["isa","place","https://en.wikipedia.org/wiki/London"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","visit"],
+                ["has actor","E","Mary 1"],
+                ["has target","E","https://en.wikipedia.org/wiki/London"],
+                ["has time","E","September","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","visit"],
+            ["has actor","E","Mary 1"],
+            ["has target","E","https://en.wikipedia.org/wiki/Paris"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:London 2"],
+ "@nl": "Mary 1 visited London 2 in September."},
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:Paris 3"],
+ "@nl": "Did Mary 1 visit Paris 3?"},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 visited London 2 in September."},
+{"@name": "sent_S1",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/London"],
+ "@nl": "Mary 1 visited London 2 in September."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Mary 1 visited London 2 in September."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "visit", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1 visited London 2 in September."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Mary 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1 visited London 2 in September."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "https://en.wikipedia.org/wiki/London", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1 visited London 2 in September."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "September", "in", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1 visited London 2 in September."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Mary 1 visited London 2 in September."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Mary 1 visited London 2 in September."},
+{"@name": "sent_S1",
+ "@logic": ["=", ["$theof1","time","W0","?:Fv3"], ["$datetime","September"]],
+ "@nl": "Mary 1 visited London 2 in September."},
+{"@name": "sent_S1",
+ "@logic": ["is_past_world","W0"],
+ "@nl": "Mary 1 visited London 2 in September."},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk1_activity"]],
+ "@nl": "Did Mary 1 visit Paris 3?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk1_activity", "visit", ["$ctxt","past","?:Fv9","?:Fv4","?:Fv5"]]
+           ],
+ "@nl": "Did Mary 1 visit Paris 3?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk1_activity", "#:Mary 1", ["$ctxt","past","?:Fv11","?:Fv4","?:Fv5"]]
+           ],
+ "@nl": "Did Mary 1 visit Paris 3?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk1_activity", "https://en.wikipedia.org/wiki/Paris", ["$ctxt","past","?:Fv13","?:Fv4","?:Fv5"]]
+           ],
+ "@nl": "Did Mary 1 visit Paris 3?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk1_activity"]],
+ "@nl": "Did Mary 1 visit Paris 3?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "visit", ["$ctxt","past","?:Fv17","?:Fv4","?:Fv5"]],
+            ["-has actor", "?:E", "#:Mary 1", ["$ctxt","past","?:Fv19","?:Fv4","?:Fv5"]],
+            ["-has target", "?:E", "https://en.wikipedia.org/wiki/Paris", ["$ctxt","past","?:Fv21","?:Fv4","?:Fv5"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Mary 1 visit Paris 3?"},
+{"@name": "sent_S2",
+ "@question": ["$defq0"],
+ "@nl": "Did Mary 1 visit Paris 3?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "timestamp": "2026-06-09T11:24:44Z"
+}

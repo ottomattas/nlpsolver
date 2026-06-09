@@ -1,0 +1,209 @@
+{
+  "test_name": "core_100",
+  "case_id": 561,
+  "input_text": "Elephants, foxes and rabbits are neither birds nor small fish. John is a rabbit. John is not a bird?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Elephants, foxes and rabbits are neither birds nor small fish.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Elephants are not birds or small fish.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"},
+            {"id": "small fish", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S2",
+          "text": "Foxes are not birds or small fish.",
+          "type": "strict_rule",
+          "entities": [{"id": "foxes", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"},
+            {"id": "small fish", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S3",
+          "text": "Rabbits are not birds or small fish.",
+          "type": "strict_rule",
+          "entities": [{"id": "rabbits", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"},
+            {"id": "small fish", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is a rabbit.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "John 1 is a rabbit.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "rabbit", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is not a bird?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Is John 1 not a bird?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "bird", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","elephant","X"],
+            ["and", ["not", ["isa","bird","X"]], ["not", ["isa","small fish","X"]]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","fox","X"],
+            ["and", ["not", ["isa","bird","X"]], ["not", ["isa","small fish","X"]]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","rabbit","X"],
+            ["and", ["not", ["isa","bird","X"]], ["not", ["isa","small fish","X"]]]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S4", ["holds", "W0", ["isa","rabbit","John 1"]]],
+    ["@id", "S5", ["question", ["not", ["isa","bird","John 1"]]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Elephants are not birds or small fish."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"], ["-isa","small fish","?:X"]],
+ "@nl": "Elephants are not birds or small fish."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","fox","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Foxes are not birds or small fish."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","fox","?:X"], ["-isa","small fish","?:X"]],
+ "@nl": "Foxes are not birds or small fish."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","rabbit","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Rabbits are not birds or small fish."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","rabbit","?:X"], ["-isa","small fish","?:X"]],
+ "@nl": "Rabbits are not birds or small fish."},
+{"@name": "sent_S4",
+ "@logic": ["isa","rabbit","#:John 1"],
+ "@nl": "John 1 is a rabbit."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","bird","#:John 1"]],
+ "@nl": "Is John 1 not a bird?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["isa","bird","#:John 1"], ["$defq0"]],
+ "@nl": "Is John 1 not a bird?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 not a bird?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","small fish","$some_small_fish"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","small fish","$some_not_small_fish"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fox","$some_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","fox","$some_not_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","rabbit","$some_not_rabbit"],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","small fish","?:X"], ["isa","fish","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","small","?:X"], ["-isa","fish","?:X"], ["isa","small fish","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S3","assumption",1], [["-isa","rabbit","?:X"], ["-isa","bird","?:X"]]],
+          [2, ["in","sent_S4","assumption",1], [["isa","rabbit","#:John 1"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["-isa","bird","#:John 1"]]],
+          [4, ["in","sent_S5","assumption",1], [["isa","bird","#:John 1"], ["$defq0"]]],
+          [5, ["in","sent_S5","goal",1], [["-$defq0"]]],
+          [6, ["mp",3,4,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Elephants, foxes and rabbits are neither birds nor small fish.",
+"  (2) John is a rabbit.",
+"  (3) John is not a bird?",
+"Proof steps (by contradiction):",
+"  (1) If some X is a rabbit then X is not a bird  [sentence 1]",
+"  (2) John is a rabbit  [sentence 2]",
+"  (3) John is not a bird  [from steps 1, 2]",
+"  (4) John is a bird or answer holds  [sentence 3]",
+"  (5) assume for contradiction: the answer is no  [from question]",
+"  (6) Contradiction  [from steps 3, 4, 5]"
+],
+  "timestamp": "2026-06-09T11:18:28Z"
+}

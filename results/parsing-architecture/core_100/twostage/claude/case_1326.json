@@ -1,0 +1,70 @@
+{
+  "test_name": "core_100",
+  "case_id": 1326,
+  "input_text": "Ellen is fond of John. Who is Ellen afraid of?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Ellen is fond of John.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Ellen 1 is fond of John 2.",
+          "type": "real",
+          "entities": [{"id": "Ellen 1", "type": "concrete", "category": "person"},
+            {"id": "John 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["fond of","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Who is Ellen afraid of?",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Which entity is Ellen 1 afraid of?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "Ellen 1", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["afraid of","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["has degree rel2","fond of","Ellen 1","John 2","none","person"]]],
+    ["@id", "S2", ["ask", "X", ["has degree rel2","afraid of","Ellen 1","X","none","person"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:Ellen 1"],
+ "@nl": "Ellen 1 is fond of John 2."},
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "Ellen 1 is fond of John 2."},
+{"@name": "sent_S1",
+ "@logic": ["is rel2", "fond of", "#:Ellen 1", "#:John 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Ellen 1 is fond of John 2."},
+{"@name": "sent_S2",
+ "@question": ["is rel2", "afraid of", "#:Ellen 1", "?:X", ["$ctxt","present","?:Fv5","?:Fv3","?:Fv4"]],
+ "@askvars": 1,
+ "@nl": "Which entity is Ellen 1 afraid of?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "afraid of", "#:Ellen 1", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "afraid of", "#:Ellen 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "afraid of", "#:Ellen 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Ellen 1 afraid of?"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no answers found"},
+  "timestamp": "2026-06-09T11:31:37Z"
+}

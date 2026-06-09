@@ -1,0 +1,231 @@
+{
+  "test_name": "core_100",
+  "case_id": 541,
+  "input_text": "The red square has a nail. A blue square has a hole. A blue square has a hole?",
+  "expected_answer": true,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The red square has a nail.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The red square 1 has a nail 2.",
+          "type": "situation",
+          "entities": [{"id": "square 1", "type": "concrete", "category": "artifact"},
+            {"id": "nail 2", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["red","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "A blue square has a hole.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "A blue square 3 has a hole 4.",
+          "type": "situation",
+          "entities": [{"id": "square 3", "type": "concrete", "category": "artifact"},
+            {"id": "hole 4", "type": "concrete", "category": "abstract"}
+          ],
+          "adjectives": [["blue","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "A blue square has a hole?",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Does a blue square have a hole?",
+          "type": "query",
+          "entities": [{"id": "square", "type": "generic", "category": "artifact"},
+            {"id": "hole", "type": "generic", "category": "abstract"}
+          ],
+          "adjectives": [["blue","none","none"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","square","square 1"],
+          ["isa","nail","nail 2"],
+          ["has degree property","red","square 1","none","none"],
+          ["have","square 1","nail 2"]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","square","square 3"],
+          ["isa","hole","hole 4"],
+          ["has degree property","blue","square 3","none","none"],
+          ["have","square 3","hole 4"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["question",
+        ["exists","X",
+          ["exists","Y",
+            ["and",
+              ["isa","square","X"],
+              ["has degree property","blue","X","none","none"],
+              ["isa","hole","Y"],
+              ["have","X","Y"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["-isa","round","#:square 1"],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","nail","#:nail 2"],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "red", "#:square 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S1",
+ "@logic": ["have", "#:square 1", "#:nail 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S2",
+ "@logic": ["-isa","round","#:square 3"],
+ "@nl": "A blue square 3 has a hole 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","hole","#:hole 4"],
+ "@nl": "A blue square 3 has a hole 4."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "blue", "#:square 3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A blue square 3 has a hole 4."},
+{"@name": "sent_S2",
+ "@logic": ["have", "#:square 3", "#:hole 4", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A blue square 3 has a hole 4."},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","round","sk0"]],
+ "@nl": "Does a blue square have a hole?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "blue", "sk0", ["$ctxt","?:Fv12","?:Fv11","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Does a blue square have a hole?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","hole","sk1_hole"]],
+ "@nl": "Does a blue square have a hole?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["have", "sk0", "sk1_hole", ["$ctxt","present","?:Fv15","?:Fv5","?:Fv6"]]],
+ "@nl": "Does a blue square have a hole?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["isa","round","?:X"],
+            ["-has property", "blue", "?:X", ["$ctxt","?:Fv19","?:Fv18","?:Fv5","?:Fv6"]],
+            ["-isa","hole","?:Y"],
+            ["-have", "?:X", "?:Y", ["$ctxt","present","?:Fv22","?:Fv5","?:Fv6"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does a blue square have a hole?"},
+{"@name": "sent_S3",
+ "@question": ["$defq0"],
+ "@nl": "Does a blue square have a hole?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "?:Br1", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Does a blue square have a hole?"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv23"],
+            ["-has property","red","?:X","?:Fv23"],
+            ["$block", 0, ["has property","red","?:X","?:Fv23"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv24"],
+            ["-has property","red","?:X","?:Fv24"],
+            ["$block", 0, ["has property","blue","?:X","?:Fv24"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv25","?:Fv26","?:Fv27"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv25","?:Fv26","?:Fv27"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv25","?:Fv26","?:Fv27"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv28","?:Fv29","?:Fv30"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv28","?:Fv29","?:Fv30"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv28","?:Fv29","?:Fv30"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv31","?:Fv32","?:Fv33"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv31","?:Fv32","?:Fv33"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv31","?:Fv32","?:Fv33"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv34","?:Fv35","?:Fv36"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv34","?:Fv35","?:Fv36"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv34","?:Fv35","?:Fv36"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S3","assumption",1], [["$defq0"], ["-has property", "blue", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-have", "?:X", "?:W", ["$ctxt","present","?:2006","?:U","?:V"]], ["-isa","hole","?:W"], ["isa","round","?:X"]]],
+          [2, ["in","sent_S2","assumption",1], [["has property", "blue", "#:square 3", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S3","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,1], 2, 3, "fromga", 1], [["isa","round","#:square 3"], ["-have", "#:square 3", "?:X3", ["$ctxt","present","?:Y3","?:Z3","?:U3"]], ["-isa","hole","?:X3"]]],
+          [5, ["in","sent_S2","assumption",1], [["-isa","round","#:square 3"]]],
+          [6, ["simp",4,5,"fromga",1], [["-have", "#:square 3", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-isa","hole","?:X"]]],
+          [7, ["in","sent_S2","assumption",1], [["have", "#:square 3", "#:hole 4", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [8, ["mp",6,7,"fromga",1], [["-isa","hole","#:hole 4"]]],
+          [9, ["in","sent_S2","assumption",1], [["isa","hole","#:hole 4"]]],
+          [10, ["simp",8,9,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) A blue square has a hole.",
+"  (2) A blue square has a hole?",
+"Proof steps (by contradiction):",
+"  (1) If some X is blue and X has some W and W is a hole then answer holds or X is a round  [sentence 2]",
+"  (2) The the blue square is blue  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) If the the blue square has some X3 and X3 is a hole then the the blue square is a round  [from steps 1, 2, 3]",
+"  (5) The the blue square is not a round  [sentence 1]",
+"  (6) The the blue square does not have X  [from steps 4, 5]",
+"  (7) The the blue square has the hole D  [sentence 1]",
+"  (8) The hole D is not a hole  [from steps 6, 7]",
+"  (9) The hole D is a hole  [sentence 1]",
+"  (10) Contradiction  [from steps 8, 9]"
+],
+  "timestamp": "2026-06-09T11:19:25Z"
+}

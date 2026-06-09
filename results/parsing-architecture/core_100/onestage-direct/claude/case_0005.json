@@ -1,0 +1,82 @@
+{
+  "test_name": "core_100",
+  "case_id": 5,
+  "input_text": "Elephants are not birds. John is an elephant. John is a bird?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "False.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall", "X", ["implies", ["isa","elephant","X"], ["not", ["isa","bird","X"]]]]
+      ]
+    ],
+    ["@id", "S2", ["holds", "W0", ["isa","elephant","John 1"]]],
+    ["@id", "S3", ["question", ["isa","bird","John 1"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@logic": ["isa","elephant","John 1"],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","bird","John 1"]],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-isa","bird","John 1"], ["$defq0"]],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@question": ["$defq0"],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S1","assumption",1], [["-isa","elephant","?:X"], ["-isa","bird","?:X"]]],
+          [2, ["in","sent_S2","assumption",1], [["isa","elephant","John 1"]]],
+          [3, ["in","sent_S3","assumption",1], [["-$defq0"], ["isa","bird","John 1"]]],
+          [4, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [5, ["mp",3,4,"fromga",1], [["isa","bird","John 1"]]],
+          [6, ["mp",1,2,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) sent_S1",
+"  (2) sent_S2",
+"  (3) sent_S3",
+"Proof steps (by contradiction):",
+"  (1) If some X is an elephant then X is not a bird  [sentence 1]",
+"  (2) John is an elephant  [sentence 2]",
+"  (3) If answer holds then John is a bird  [sentence 3]",
+"  (4) Answer holds  [assumption]",
+"  (5) John is a bird  [from steps 3, 4]",
+"  (6) Contradiction  [from steps 1, 2, 5]"
+],
+  "timestamp": "2026-06-09T08:54:12Z"
+}

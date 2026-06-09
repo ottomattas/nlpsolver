@@ -1,0 +1,136 @@
+{
+  "test_name": "core_100",
+  "case_id": 553,
+  "input_text": "The mountain is higher than the hill. Is the hill higher than the mountain?",
+  "expected_answer": false,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The mountain is higher than the hill.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The mountain 1 is higher than the hill 2.",
+          "type": "real",
+          "entities": [{"id": "mountain 1", "type": "concrete", "category": "place"},
+            {"id": "hill 2", "type": "concrete", "category": "place"}
+          ],
+          "adjectives": [["high","high","place"]]
+        }
+      ]
+    },
+    {
+      "raw": "Is the hill higher than the mountain?",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Is the hill 2 higher than the mountain 1?",
+          "type": "query",
+          "entities": [{"id": "hill 2", "type": "concrete", "category": "place"},
+            {"id": "mountain 1", "type": "concrete", "category": "place"}
+          ],
+          "adjectives": [["high","high","place"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","mountain","mountain 1"],
+          ["isa","hill","hill 2"],
+          [">", ["$measure_of","height","mountain 1","W0"], ["$measure_of","height","hill 2","W0"]]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["question",
+        ["and",
+          ["isa","hill","hill 2"],
+          ["isa","mountain","mountain 1"],
+          [">", ["$measure_of","height","hill 2","W0"], ["$measure_of","height","mountain 1","W0"]]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","mountain","#:mountain 1"],
+ "@nl": "The mountain 1 is higher than the hill 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","hill","#:hill 2"],
+ "@nl": "The mountain 1 is higher than the hill 2."},
+{"@name": "sent_S1",
+ "@logic": ["less_measure", ["$measure_of","height","#:hill 2","W0"], ["$measure_of","height","#:mountain 1","W0"]],
+ "@nl": "The mountain 1 is higher than the hill 2."},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","hill","#:hill 2"]],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","mountain","#:mountain 1"]],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["less_measure", ["$measure_of","height","#:mountain 1","W0"], ["$measure_of","height","#:hill 2","W0"]]
+           ],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-isa","hill","#:hill 2"],
+            ["-isa","mountain","#:mountain 1"],
+            ["not",
+             ["less_measure", ["$measure_of","height","#:mountain 1","W0"], ["$measure_of","height","#:hill 2","W0"]]
+            ],
+            ["$defq0"]
+           ],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S2",
+ "@question": ["$defq0"],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","height","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "height", ["$measure_of","height","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S2","assumption",1], [["-$defq0"], ["less_measure", ["$measure_of","height","#:mountain 1","W0"], ["$measure_of","height","#:hill 2","W0"]]]],
+          [2, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [3, ["mp",1,2,"fromga",1], [["less_measure", ["$measure_of","height","#:mountain 1","W0"], ["$measure_of","height","#:hill 2","W0"]]]],
+          [4, ["in","frm_17","axiom",1], [["-less_measure","?:X","?:Y"], ["-less_measure","?:Y","?:X"]]],
+          [5, ["mp", 3, [4,1], "fromga", 1], [["-less_measure", ["$measure_of","height","#:hill 2","W0"], ["$measure_of","height","#:mountain 1","W0"]]]],
+          [6, ["in","sent_S1","assumption",1], [["less_measure", ["$measure_of","height","#:hill 2","W0"], ["$measure_of","height","#:mountain 1","W0"]]]],
+          [7, ["simp",5,6,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) The mountain is higher than the hill.",
+"  (2) Is the hill higher than the mountain?",
+"Knowledge used:",
+"  If some X is less than some Y then Y is not less than X. Why: assumed basic knowledge.",
+"Proof steps (by contradiction):",
+"  (1) If answer holds then the height of mountain A is less than the height of hill B  [sentence 2]",
+"  (2) Answer holds  [assumption]",
+"  (3) The height of mountain A is less than the height of hill B  [from steps 1, 2]",
+"  (4) If some X is less than some Y then Y is not less than X  [background knowledge]",
+"  (5) The height of hill B is not less than the height of mountain A  [from steps 3, 4]",
+"  (6) The height of hill B is less than the height of mountain A  [sentence 1]",
+"  (7) Contradiction  [from steps 5, 6]"
+],
+  "timestamp": "2026-06-09T09:24:51Z"
+}

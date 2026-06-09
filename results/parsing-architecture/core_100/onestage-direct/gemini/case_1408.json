@@ -1,0 +1,209 @@
+{
+  "test_name": "core_100",
+  "case_id": 1408,
+  "input_text": "Penguins are birds. Penguins do not fly. Birds fly. John is a penguin. John flies?",
+  "expected_answer": false,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "False.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","penguin","X"], ["isa","bird","X"]]]]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","fly"],
+                    ["has actor","E","X"],
+                    ["capability","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S3",0.95]
+      ]
+    ],
+    ["@id", "S4", ["holds", "W0", ["isa","penguin","John 1"]]],
+    ["@id","S5",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","fly"],
+            ["has actor","E","John 1"],
+            ["capability","E"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","penguin","?:X"], ["isa","bird","?:X"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk0","?:X"]]],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk0","?:X"], "fly", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk0","?:X"], "?:X", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"],
+            ["capability", ["sk0","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk0","?:X"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S4",
+ "@logic": ["isa","penguin","John 1"],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk1_activity"]],
+ "@nl": "[generated: sent_S5]"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk1_activity", "fly", ["$ctxt","?:Fv22","?:Fv21","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "[generated: sent_S5]"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk1_activity", "John 1", ["$ctxt","?:Fv24","?:Fv23","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "[generated: sent_S5]"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["capability","sk1_activity"]],
+ "@nl": "[generated: sent_S5]"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv28","?:Fv27","?:Fv15","?:Fv16"]],
+            ["-has actor", "?:E", "John 1", ["$ctxt","?:Fv30","?:Fv29","?:Fv15","?:Fv16"]],
+            ["-capability","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "[generated: sent_S5]"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "[generated: sent_S5]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv31"], ["has type","?:E","go","?:Fv31"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S2","assumption",1], [["-has type", "?:X", "fly", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "?:X", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","penguin","?:W"], ["-isa","activity","?:X"], ["-capability","?:X"]]],
+          [2, ["in","sent_S5","assumption",1], [["-$defq0"], ["has type", "sk1_activity", "fly", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has type", "sk1_activity", "fly", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [5, ["in","sent_S5","assumption",1], [["-$defq0"], ["isa","activity","sk1_activity"]]],
+          [6, ["mp",5,3,"fromga",1], [["isa","activity","sk1_activity"]]],
+          [7, ["in","sent_S5","assumption",1], [["-$defq0"], ["capability","sk1_activity"]]],
+          [8, ["mp",7,3,"fromga",1], [["capability","sk1_activity"]]],
+          [9, ["mp",1,4,6,8,"fromga",1], [["-has actor", "sk1_activity", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","penguin","?:X"]]],
+          [10, ["in","sent_S5","assumption",1], [["-$defq0"], ["has actor", "sk1_activity", "John 1", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [11, ["mp",10,3,"fromga",1], [["has actor", "sk1_activity", "John 1", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [12, ["mp",9,11,"fromga",1], [["-isa","penguin","John 1"]]],
+          [13, ["in","sent_S4","assumption",1], [["isa","penguin","John 1"]]],
+          [14, ["simp",12,13,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) sent_S2",
+"  (2) sent_S4",
+"  (3) sent_S5",
+"Proof steps (by contradiction):",
+"  (1) If X is a fly event and some penguin W performs X and X is an activity then X is not a capability  [sentence 1]",
+"  (2) If answer holds then the event act1 is a fly event  [sentence 3]",
+"  (3) Answer holds  [assumption]",
+"  (4) The event act1 is a fly event  [from steps 2, 3]",
+"  (5) If answer holds then the event act1 is an activity  [sentence 3]",
+"  (6) The event act1 is an activity  [from steps 5, 3]",
+"  (7) If answer holds then the event act1 is a capability  [sentence 3]",
+"  (8) The event act1 is a capability  [from steps 7, 3]",
+"  (9) X does not perform the act1  [from steps 1, 4, 6, 8]",
+"  (10) If answer holds then John performs the event act1  [sentence 3]",
+"  (11) John performs the event act1  [from steps 10, 3]",
+"  (12) John is not a penguin  [from steps 9, 11]",
+"  (13) John is a penguin  [sentence 2]",
+"  (14) Contradiction  [from steps 12, 13]"
+],
+  "timestamp": "2026-06-09T10:27:22Z"
+}

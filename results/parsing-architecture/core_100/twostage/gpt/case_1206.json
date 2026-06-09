@@ -1,0 +1,312 @@
+{
+  "test_name": "core_100",
+  "case_id": 1206,
+  "input_text": "John stopped smoking. Does John smoke now?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John stopped smoking.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 stopped smoking.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "stop",
+              "mode": "event",
+              "roles": {
+                "actor": "John 1",
+                "content": {"root": "smoke", "mode": "habitual", "roles": {"actor": "John 1"}}
+              }
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "John 1 smoked.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 1"}}],
+          "pre_state": "W0",
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "John 1 does not smoke.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 1"}}],
+          "pre_state": "W1",
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Does John smoke now?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Does John 1 smoke now?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 1"}}],
+          "pre_state": "W1",
+          "time": "present"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["exists","E1",
+              ["and",
+                ["isa","activity","E1"],
+                ["has type","E1","stop"],
+                ["has actor","E1","John 1"],
+                ["has time","E1","past","in"],
+                ["exists","E2",
+                  ["and",
+                    ["has content","E1","E2"],
+                    ["isa","activity","E2"],
+                    ["has type","E2","smoke"],
+                    ["has actor","E2","John 1"],
+                    ["typical","E2"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["normally",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","smoke"],
+                ["has actor","E","John 1"],
+                ["has time","E","past","in"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W1",
+        ["and",
+          ["isa","person","John 1"],
+          ["not",
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","smoke"],
+                  ["has actor","E","John 1"],
+                  ["has time","E","present","in"],
+                  ["typical","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["normally",
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","smoke"],
+              ["has actor","E","John 1"],
+              ["has time","E","present","in"],
+              ["typical","E"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "stop", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S1",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk1_activity", "smoke", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk1_activity", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S1",
+ "@logic": ["typical", "sk1_activity", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 smoked."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "John 1 smoked."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk2_activity", "smoke", ["$ctxt","past","?:Fv5","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 smoked."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk2_activity", "#:John 1", ["$ctxt","past","?:Fv5","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 smoked."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","?:Fv5","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 smoked."},
+{"@name": "sent_S2",
+ "@logic": [["typical", "sk2_activity", ["$ctxt","past","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$block", ["$","$generic",1], ["$not", ["typical", "sk2_activity", ["$ctxt","past","?:Fv5","?:Fv3","?:Fv4"]]]]
+           ],
+ "@nl": "John 1 smoked."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 does not smoke."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "smoke", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-has actor", "?:E", "#:John 1", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-typical", "?:E", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$block", ["$","$generic",1], ["$not", ["or", ["-isa","activity","?:E"], ["-has type", "?:E", "smoke", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]], ["-has actor", "?:E", "#:John 1", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]], ["-has time", "?:E", "present", "in", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]], ["-typical", "?:E", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]]]]]
+           ],
+ "@nl": "John 1 does not smoke."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk3_activity"]],
+ "@nl": "Does John 1 smoke now?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk3_activity", "smoke", ["$ctxt","present","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Does John 1 smoke now?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk3_activity", "#:John 1", ["$ctxt","present","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Does John 1 smoke now?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk3_activity", "present", "in", ["$ctxt","present","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Does John 1 smoke now?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["typical", "sk3_activity", ["$ctxt","present","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Does John 1 smoke now?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "smoke", ["$ctxt","present","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "#:John 1", ["$ctxt","present","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-typical", "?:E", ["$ctxt","present","?:Fv13","?:Fv11","?:Fv12"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 1 smoke now?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Does John 1 smoke now?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "blockers": [["$block", ["$","$generic",1], ["$not", ["or", ["-isa","activity","sk3_activity"], ["-has type", "sk3_activity", "smoke", ["$ctxt","present","?:X3","?:Y3","?:Z3"]], ["-has actor", "sk3_activity", "#:John 1", ["$ctxt","present","?:X3","?:Y3","?:Z3"]], ["-has time", "sk3_activity", "present", "in", ["$ctxt","present","?:X3","?:Y3","?:Z3"]], ["-typical", "sk3_activity", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]]]
+        ],
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S3","assumption",1], [["$block", ["$","$generic",1], ["$not", ["or", ["-isa","activity","?:X"], ["-has type", "?:X", "smoke", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-has actor", "?:X", "#:John 1", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-has time", "?:X", "present", "in", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-typical", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]]], ["-has type", "?:X", "smoke", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-has actor", "?:X", "#:John 1", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-typical", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-isa","activity","?:X"]]],
+          [2, ["in","sent_S4","assumption",1], [["-$defq0"], ["has type", "sk3_activity", "smoke", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has type", "sk3_activity", "smoke", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["in","sent_S4","assumption",1], [["-$defq0"], ["has actor", "sk3_activity", "#:John 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [6, ["mp",5,3,"fromga",1], [["has actor", "sk3_activity", "#:John 1", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]],
+          [7, ["in","sent_S4","assumption",1], [["-$defq0"], ["typical", "sk3_activity", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [8, ["mp",7,3,"fromga",1], [["typical", "sk3_activity", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]],
+          [9, ["in","sent_S4","assumption",1], [["-$defq0"], ["isa","activity","sk3_activity"]]],
+          [10, ["mp",9,3,"fromga",1], [["isa","activity","sk3_activity"]]],
+          [11, ["mp", [1,1], 4, 6, 8, 10, "fromga", 1], [["$block", ["$","$generic",1], ["$not", ["or", ["-isa","activity","sk3_activity"], ["-has type", "sk3_activity", "smoke", ["$ctxt","present","?:X3","?:Y3","?:Z3"]], ["-has actor", "sk3_activity", "#:John 1", ["$ctxt","present","?:X3","?:Y3","?:Z3"]], ["-has time", "sk3_activity", "present", "in", ["$ctxt","present","?:X3","?:Y3","?:Z3"]], ["-typical", "sk3_activity", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John stopped smoking.",
+"  (2) Does John smoke now?",
+"Proof steps:",
+"  (1) If X is a smoke event and John performs X and X is an activity then X is not typical, except when not: or(-isa(activity, X), -has type(X, smoke, $ctxt(present, Y, Z, U)), -has actor(X, John, $ctxt(present, Y, Z, U)), -has time(X, present, in, $ctxt(present, Y, Z, U)), -typical(X, $ctxt(present, Y, Z, U)))  [sentence 1]",
+"  (2) If answer holds then the event act4 is a smoke event  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) The event act4 is a smoke event  [from steps 2, 3]",
+"  (5) If answer holds then John performs the event act4  [sentence 2]",
+"  (6) John performs the event act4  [from steps 5, 3]",
+"  (7) If answer holds then the event act4 is typical  [sentence 2]",
+"  (8) The event act4 is typical  [from steps 7, 3]",
+"  (9) If answer holds then the event act4 is an activity  [sentence 2]",
+"  (10) The event act4 is an activity  [from steps 9, 3]",
+"  (11) Outstanding exception: not: or(-isa(activity, act4), -has type(act4, smoke, $ctxt(present, X3, Y3, Z3)), -has actor(act4, John, $ctxt(present, X3, Y3, Z3)), -has time(act4, present, in, $ctxt(present, X3, Y3, Z3)), -typical(act4, $ctxt(present, X3, Y3, Z3)))  [from steps 1, 4, 6, 8, 10]",
+"Exceptions checked and not holding:",
+"  not: or(-isa(activity, act4), -has type(act4, smoke, $ctxt(present, X3, Y3, Z3)), -has actor(act4, John, $ctxt(present, X3, Y3, Z3)), -has time(act4, present, in, $ctxt(present, X3, Y3, Z3)), -typical(act4, $ctxt(present, X3, Y3, Z3)))"
+],
+  "timestamp": "2026-06-09T11:22:28Z"
+}

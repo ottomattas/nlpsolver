@@ -1,0 +1,229 @@
+{
+  "test_name": "core_100",
+  "case_id": 1365,
+  "input_text": "If X1 is a father of Y1, Y1 is a child of X1.\n      If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.\n      John is a father of Mike and Mickey. Luke is a father of John.\n      If X1 is a grandfather of Y1, Y1 is a grandchild of X1.\n      If X1 is male and X1 is a grandchild of Y1, X1 is a grandson of Y1.\n      Mike or Mickey is not female. Any person is male or female.\n      Who is a grandson of Luke?",
+  "expected_answer": "Mike or Mickey.",
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies", ["is rel2","father of","X1","Y1"], ["is rel2","child of","Y1","X1"]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["forall","Z1",
+              ["implies",
+                ["and", ["is rel2","father of","X1","Y1"], ["is rel2","father of","Y1","Z1"]],
+                ["is rel2","grandfather of","X1","Z1"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","person","Mike 2"],
+          ["is rel2","father of","John 1","Mike 2"]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","person","Mickey 3"],
+          ["is rel2","father of","John 1","Mickey 3"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Luke 4"],
+          ["isa","person","John 1"],
+          ["is rel2","father of","Luke 4","John 1"]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies",
+              ["is rel2","grandfather of","X1","Y1"],
+              ["is rel2","grandchild of","Y1","X1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies",
+              ["and",
+                ["has degree property","male","X1","none","entity"],
+                ["is rel2","grandchild of","X1","Y1"]
+              ],
+              ["is rel2","grandson of","X1","Y1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mike 2"],
+          ["isa","person","Mickey 3"],
+          ["or",
+            ["not", ["has degree property","female","Mike 2","none","person"]],
+            ["not", ["has degree property","female","Mickey 3","none","person"]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["forall","X",
+          ["implies", ["isa","person","X"], ["or", ["isa","male","X"], ["isa","female","X"]]]
+        ]
+      ]
+    ],
+    ["@id", "S10", ["ask", "X", ["is rel2","grandson of","X","Luke 4"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-is rel2", "father of", "?:X1", "?:Y1", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["is rel2", "child of", "?:Y1", "?:X1", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@logic": [["-is rel2", "father of", "?:X1", "?:Y1", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-is rel2", "father of", "?:Y1", "?:Z1", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["is rel2", "grandfather of", "?:X1", "?:Z1", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","John 1"],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","Mike 2"],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@logic": ["is rel2", "father of", "John 1", "Mike 2", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","John 1"],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","Mickey 3"],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "sent_S4",
+ "@logic": ["is rel2", "father of", "John 1", "Mickey 3", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","Luke 4"],
+ "@nl": "[generated: sent_S5]"},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","John 1"],
+ "@nl": "[generated: sent_S5]"},
+{"@name": "sent_S5",
+ "@logic": ["is rel2", "father of", "Luke 4", "John 1", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "[generated: sent_S5]"},
+{"@name": "sent_S6",
+ "@logic": [["-is rel2", "grandfather of", "?:X1", "?:Y1", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]],
+            ["is rel2", "grandchild of", "?:Y1", "?:X1", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "[generated: sent_S6]"},
+{"@name": "sent_S7",
+ "@logic": [["-has property", "male", "?:X1", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]],
+            ["-is rel2", "grandchild of", "?:X1", "?:Y1", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]],
+            ["is rel2", "grandson of", "?:X1", "?:Y1", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "[generated: sent_S7]"},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","Mike 2"],
+ "@nl": "[generated: sent_S8]"},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","Mickey 3"],
+ "@nl": "[generated: sent_S8]"},
+{"@name": "sent_S8",
+ "@logic": [["-has property", "female", "Mike 2", ["$ctxt","present","W0","?:Fv23","?:Fv24"]],
+            ["-has property", "female", "Mickey 3", ["$ctxt","present","W0","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "[generated: sent_S8]"},
+{"@name": "sent_S9",
+ "@logic": [["-isa","person","?:X"], ["isa","male","?:X"], ["isa","female","?:X"]],
+ "@nl": "[generated: sent_S9]"},
+{"@name": "sent_S10",
+ "@question": ["is rel2", "grandson of", "?:X", "Luke 4", ["$ctxt","present","?:Fv31","?:Fv29","?:Fv30"]],
+ "@askvars": 1,
+ "@nl": "[generated: sent_S10]"},
+{"@name": "sent_S10",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "grandson of", "?:Br1", "Luke 4", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "grandson of", "?:Br1", "Luke 4", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "grandson of", "?:Br1", "Luke 4", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "[generated: sent_S10]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","person","$some_not_person"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","male","$some_male"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","male","$some_not_male"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","female","$some_female"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","female","$some_not_female"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "male", "$some_male_entity", ["$ctxt","?:Fv57","?:Fv54","?:Fv55","?:Fv56"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "male", "$some_not_male_entity", ["$ctxt","?:Fv65","?:Fv62","?:Fv63","?:Fv64"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "female", "$some_female_person", ["$ctxt","?:Fv69","?:Fv66","?:Fv67","?:Fv68"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["isa","person","$some_female_person"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","female","?:X","?:Fv33"], ["-has property","male","?:X","?:Fv33"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no answers found"},
+  "timestamp": "2026-06-09T11:27:30Z"
+}

@@ -1,0 +1,78 @@
+{
+  "test_name": "core_100",
+  "case_id": 6,
+  "input_text": "Elephants are animals. Who is an animal?",
+  "expected_answer": "An elephant.",
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "An elephant.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id", "S2", ["ask", "X", ["isa","animal","X"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@question": ["isa","animal","?:X"],
+ "@askvars": 1,
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","$some_elephant"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S1","assumption",1], [["-isa","elephant","?:X"], ["isa","animal","?:X"]]],
+          [2, ["in","sent_S1","assumption",1], [["isa","elephant","$some_elephant"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["isa","animal","$some_elephant"]]],
+          [4, ["in","sent_S2","goal",1], [["-isa","animal","?:X"], ["$ans","?:X"]]],
+          [5, ["mp",3,4,"fromga",1], [["$ans","$some_elephant"]]]
+        ]
+      },
+      {
+        "answer": [["$ans","$some_animal"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S1","assumption",1], [["isa","animal","$some_animal"]]],
+          [2, ["in","sent_S2","goal",1], [["-isa","animal","?:X"], ["$ans","?:X"]]],
+          [3, ["mp",1,2,"fromga",1], [["$ans","$some_animal"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) sent_S1",
+"  (2) sent_S2",
+"Proof steps:",
+"  (1) If some X is an elephant then X is an animal  [sentence 1]",
+"  (2) An elephant is an elephant  [sentence 1]",
+"  (3) An elephant is an animal  [from steps 1, 2]",
+"  (4) X is an answer  [from question]",
+"  (5) An elephant is an answer  [from steps 3, 4]"
+],
+  "timestamp": "2026-06-09T10:29:36Z"
+}

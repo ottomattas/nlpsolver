@@ -1,0 +1,365 @@
+{
+  "test_name": "core_100",
+  "case_id": 470,
+  "input_text": "The length of the red car is 3 meters. The length of the black car is 5 meters.\n      The length of the red car is less than the length of the black car?",
+  "expected_answer": true,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The length of the red car is 3 meters.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The length 1 of the car 2 is 3 meters.",
+          "type": "real",
+          "entities": [{"id": "length 1", "type": "concrete", "text": "length", "category": "abstract"},
+            {"id": "car 2", "type": "concrete", "category": "artifact"},
+            {"id": "3 meters", "type": "concrete", "category": "measure"}
+          ],
+          "adjectives": [["red","none","none"]],
+          "definites": [["length of","length 1","car 2"]]
+        },
+        {
+          "unit_id": "S2",
+          "text": "The length 1 is the length of the car 2.",
+          "type": "real",
+          "entities": [{"id": "length 1", "type": "concrete", "text": "length", "category": "abstract"},
+            {"id": "car 2", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["red","none","none"]],
+          "definites": [["length of","length 1","car 2"]]
+        }
+      ]
+    },
+    {
+      "raw": "The length of the black car is 5 meters.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The length 3 of the car 4 is 5 meters.",
+          "type": "real",
+          "entities": [{"id": "length 3", "type": "concrete", "text": "length", "category": "abstract"},
+            {"id": "car 4", "type": "concrete", "category": "artifact"},
+            {"id": "5 meters", "type": "concrete", "category": "measure"}
+          ],
+          "adjectives": [["black","none","none"]],
+          "definites": [["length of","length 3","car 4"]]
+        },
+        {
+          "unit_id": "S4",
+          "text": "The length 3 is the length of the car 4.",
+          "type": "real",
+          "entities": [{"id": "length 3", "type": "concrete", "text": "length", "category": "abstract"},
+            {"id": "car 4", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["black","none","none"]],
+          "definites": [["length of","length 3","car 4"]]
+        }
+      ]
+    },
+    {
+      "raw": "The length of the red car is less than the length of the black car?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Is the length 1 of the car 2 less than the length 3 of the car 4?",
+          "type": "query",
+          "entities": [{"id": "length 1", "type": "concrete", "text": "length", "category": "abstract"},
+            {"id": "car 2", "type": "concrete", "category": "artifact"},
+            {"id": "length 3", "type": "concrete", "text": "length", "category": "abstract"},
+            {"id": "car 4", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["red","none","none"], ["black","none","none"]],
+          "definites": [["length of","length 1","car 2"], ["length of","length 3","car 4"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 1"],
+            ["isa","car","car 2"],
+            ["has degree property","red","car 2","none","none"],
+            ["=", ["$measure_of","length","car 2","W0"], ["$measure",3,"meter"]]
+          ]
+        ],
+        ["@definite","S1","W0","length of","car 2","length 1"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 1"],
+            ["isa","car","car 2"],
+            ["has degree property","red","car 2","none","none"]
+          ]
+        ],
+        ["@definite","S2","W0","length of","car 2","length 1"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 3"],
+            ["isa","car","car 4"],
+            ["has degree property","black","car 4","none","none"],
+            ["=", ["$measure_of","length","car 4","W0"], ["$measure",5,"meter"]]
+          ]
+        ],
+        ["@definite","S3","W0","length of","car 4","length 3"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 3"],
+            ["isa","car","car 4"],
+            ["has degree property","black","car 4","none","none"]
+          ]
+        ],
+        ["@definite","S4","W0","length of","car 4","length 3"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["question",
+          ["and",
+            ["isa","length","length 1"],
+            ["isa","car","car 2"],
+            ["has degree property","red","car 2","none","none"],
+            ["isa","length","length 3"],
+            ["isa","car","car 4"],
+            ["has degree property","black","car 4","none","none"],
+            ["<", ["$measure_of","length","car 2","W0"], ["$measure_of","length","car 4","W0"]]
+          ]
+        ],
+        ["@definite","S5","W0","length of","car 2","length 1"],
+        ["@definite","S5","W0","length of","car 4","length 3"]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","measure","3 meters"],
+ "@nl": "The length 1 of the car 2 is 3 meters."},
+{"@name": "entity_S3",
+ "@logic": ["isa","measure","5 meters"],
+ "@nl": "The length 3 of the car 4 is 5 meters."},
+{"@name": "sent_S1",
+ "@logic": ["isa","length","#:length 1"],
+ "@nl": "The length 1 of the car 2 is 3 meters."},
+{"@name": "sent_S1",
+ "@logic": ["isa","car","#:car 2"],
+ "@nl": "The length 1 of the car 2 is 3 meters."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "red", "#:car 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The length 1 of the car 2 is 3 meters."},
+{"@name": "sent_S1",
+ "@logic": ["=", ["$measure_of","length","#:car 2","W0"], ["$list",3,"#:meter"]],
+ "@nl": "The length 1 of the car 2 is 3 meters."},
+{"@name": "sent_S2",
+ "@logic": ["isa","length","#:length 1"],
+ "@nl": "The length 1 is the length of the car 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","car","#:car 2"],
+ "@nl": "The length 1 is the length of the car 2."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "red", "#:car 2", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The length 1 is the length of the car 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","length","#:length 3"],
+ "@nl": "The length 3 of the car 4 is 5 meters."},
+{"@name": "sent_S3",
+ "@logic": ["isa","car","#:car 4"],
+ "@nl": "The length 3 of the car 4 is 5 meters."},
+{"@name": "sent_S3",
+ "@logic": ["has property", "black", "#:car 4", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The length 3 of the car 4 is 5 meters."},
+{"@name": "sent_S3",
+ "@logic": ["=", ["$measure_of","length","#:car 4","W0"], ["$list",5,"#:meter"]],
+ "@nl": "The length 3 of the car 4 is 5 meters."},
+{"@name": "sent_S4",
+ "@logic": ["isa","length","#:length 3"],
+ "@nl": "The length 3 is the length of the car 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","car","#:car 4"],
+ "@nl": "The length 3 is the length of the car 4."},
+{"@name": "sent_S4",
+ "@logic": ["has property", "black", "#:car 4", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The length 3 is the length of the car 4."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","length","#:length 1"]],
+ "@nl": "Is the length 1 of the car 2 less than the length 3 of the car 4?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","car","#:car 2"]],
+ "@nl": "Is the length 1 of the car 2 less than the length 3 of the car 4?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "red", "#:car 2", ["$ctxt","present","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Is the length 1 of the car 2 less than the length 3 of the car 4?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","length","#:length 3"]],
+ "@nl": "Is the length 1 of the car 2 less than the length 3 of the car 4?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","car","#:car 4"]],
+ "@nl": "Is the length 1 of the car 2 less than the length 3 of the car 4?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "black", "#:car 4", ["$ctxt","present","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Is the length 1 of the car 2 less than the length 3 of the car 4?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["less_measure", ["$measure_of","length","#:car 2","W0"], ["$measure_of","length","#:car 4","W0"]]
+           ],
+ "@nl": "Is the length 1 of the car 2 less than the length 3 of the car 4?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-isa","length","#:length 1"],
+            ["-isa","car","#:car 2"],
+            ["-has property", "red", "#:car 2", ["$ctxt","present","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-isa","length","#:length 3"],
+            ["-isa","car","#:car 4"],
+            ["-has property", "black", "#:car 4", ["$ctxt","present","?:Fv11","?:Fv9","?:Fv10"]],
+            ["not",
+             ["less_measure", ["$measure_of","length","#:car 2","W0"], ["$measure_of","length","#:car 4","W0"]]
+            ],
+            ["$defq0"]
+           ],
+ "@nl": "Is the length 1 of the car 2 less than the length 3 of the car 4?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "Is the length 1 of the car 2 less than the length 3 of the car 4?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "black", "#:car 4", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "black", "#:car 4", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "black", "#:car 4", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the length 1 of the car 2 less than the length 3 of the car 4?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "red", "#:car 2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "red", "#:car 2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "red", "#:car 2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the length 1 of the car 2 less than the length 3 of the car 4?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","black","?:X","?:Fv29"],
+            ["-has property","red","?:X","?:Fv29"],
+            ["$block", 0, ["has property","red","?:X","?:Fv29"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","black","?:X","?:Fv30"],
+            ["-has property","red","?:X","?:Fv30"],
+            ["$block", 0, ["has property","black","?:X","?:Fv30"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "black", "?:X", ["$ctxt","past","?:Fv31","?:Fv32","?:Fv33"]],
+            ["has property", "black", "?:X", ["$ctxt","present","?:Fv31","?:Fv32","?:Fv33"]],
+            ["$block", 0, ["$not", ["has property", "black", "?:X", ["$ctxt","present","?:Fv31","?:Fv32","?:Fv33"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "black", "?:X", ["$ctxt","past","?:Fv34","?:Fv35","?:Fv36"]],
+            ["has property", "black", "?:X", ["$ctxt","present","?:Fv34","?:Fv35","?:Fv36"]],
+            ["$block", 0, ["$not", ["has property", "black", "?:X", ["$ctxt","present","?:Fv34","?:Fv35","?:Fv36"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv37","?:Fv38","?:Fv39"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv37","?:Fv38","?:Fv39"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv37","?:Fv38","?:Fv39"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv40","?:Fv41","?:Fv42"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S5","assumption",1], [["-less_measure", ["$measure_of","length","#:car 2","W0"], ["$measure_of","length","#:car 4","W0"]], ["-isa","length","#:length 1"], ["-isa","car","#:car 4"], ["-isa","car","#:car 2"], ["-isa","length","#:length 3"], ["$defq0"], ["-has property", "red", "#:car 2", ["$ctxt","present","?:0","?:1","?:2"]], ["-has property", "black", "#:car 4", ["$ctxt","present","?:0","?:1","?:2"]]]],
+          [2, ["in","sent_S1","assumption",1], [["=", ["$measure_of","length","#:car 2","W0"], ["$list",3,"#:meter"]]]],
+          [3, ["in","sent_S3","assumption",1], [["=", ["$measure_of","length","#:car 4","W0"], ["$list",5,"#:meter"]]]],
+          [4, ["simp",1,2,3,"fromassumption",1], [["-less_measure", ["$list",3,"#:meter"], ["$list",5,"#:meter"]], ["-isa","length","#:length 1"], ["-isa","car","#:car 4"], ["-isa","car","#:car 2"], ["-isa","length","#:length 3"], ["$defq0"], ["-has property", "red", "#:car 2", ["$ctxt","present","?:X","?:Y","?:Z"]], ["-has property", "black", "#:car 4", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["in","sent_S2","assumption",1], [["has property", "red", "#:car 2", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [6, ["in","sent_S5","goal",1], [["-$defq0"]]],
+          [7, ["mp", [4,6], 5, 6, "fromga", 1], [["-less_measure", ["$list",3,"#:meter"], ["$list",5,"#:meter"]], ["-isa","length","#:length 1"], ["-isa","car","#:car 4"], ["-isa","car","#:car 2"], ["-isa","length","#:length 3"], ["-has property", "black", "#:car 4", ["$ctxt","present","W0","?:X3","?:Y3"]]]],
+          [8, ["in","sent_S1","assumption",1], [["isa","length","#:length 1"]]],
+          [9, ["in","sent_S3","assumption",1], [["isa","car","#:car 4"]]],
+          [10, ["in","sent_S2","assumption",1], [["isa","car","#:car 2"]]],
+          [11, ["in","sent_S4","assumption",1], [["isa","length","#:length 3"]]],
+          [12, ["simp",7,8,9,10,11,"fromga",1], [["-less_measure", ["$list",3,"#:meter"], ["$list",5,"#:meter"]], ["-has property", "black", "#:car 4", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [13, ["in","sent_S4","assumption",1], [["has property", "black", "#:car 4", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [14, ["mp", [12,1], 13, "fromga", 1], [["-less_measure", ["$list",3,"#:meter"], ["$list",5,"#:meter"]]]],
+          [15, ["in","frm_128","axiom",1], [["less_measure", ["$list","?:X","?:Y"], ["$list","?:Z","?:Y"]], ["-$less","?:X","?:Z"]]],
+          [16, ["mp",14,15,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) The length of the red car is 3 meters.",
+"  (2) The length of the black car is 5 meters.",
+"  (3) The length of the red car is less than the length of the black car?",
+"Knowledge used:",
+"  If some X is less than some Z then ?:X ?:Ys is less than ?:Z ?:Ys. Why: assumed basic knowledge.",
+"Proof steps (by contradiction):",
+"  (1) If the length of the red car is less than the length of the black red car and the the red car is red and the the black red car is black then answer holds  [sentence 3]",
+"  (2) The length of the red car equals 3 meters  [sentence 1]",
+"  (3) The length of the black red car equals 5 meters  [sentence 2]",
+"  (4) If 3 meters is less than 5 meters and the the red car is red and the the black red car is black then answer holds  [from steps 1, 2, 3]",
+"  (5) The the red car is red  [sentence 1]",
+"  (6) assume for contradiction: the answer is no  [from question]",
+"  (7) If 3 meters is less than 5 meters then the the black red car is not black  [from steps 4, 5, 6]",
+"  (8) The length 1 is a length  [sentence 1]",
+"  (9) The the black red car is a car  [sentence 2]",
+"  (10) The the red car is a car  [sentence 1]",
+"  (11) The length 3 is a length  [sentence 2]",
+"  (12) If 3 meters is less than 5 meters then the the black red car is not black  [from steps 7, 8, 9, 10, 11]",
+"  (13) The the black red car is black  [sentence 2]",
+"  (14) 3 Meters is not less than 5 meters  [from steps 12, 13]",
+"  (15) If some X is less than some Z then ?:X ?:Ys is less than ?:Z ?:Ys  [background knowledge]",
+"  (16) Contradiction  [from steps 14, 15]"
+],
+  "timestamp": "2026-06-09T09:10:17Z"
+}

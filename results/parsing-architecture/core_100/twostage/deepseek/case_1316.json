@@ -1,0 +1,112 @@
+{
+  "test_name": "core_100",
+  "case_id": 1316,
+  "input_text": "John is nice. Is it true that John is nice?",
+  "expected_answer": true,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is nice.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is nice.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Is it true that John is nice?",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Is John 1 nice?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["has degree property","nice","John 1","none","person"]]
+      ]
+    ],
+    ["@id","S2",
+      ["question",
+        ["and", ["isa","person","John 1"], ["has degree property","nice","John 1","none","person"]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is nice."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is nice."},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:John 1"]],
+ "@nl": "Is John 1 nice?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Is John 1 nice?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:John 1"],
+            ["-has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 nice?"},
+{"@name": "sent_S2",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 nice?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "good", "#:John 1", "none", "person", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 nice?"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S2","assumption",1], [["-isa","person","#:John 1"], ["$defq0"], ["-has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [2, ["in","sent_S1","assumption",1], [["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S2","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,2], 2, 3, "fromga", 1], [["-isa","person","#:John 1"]]],
+          [5, ["in","sent_S1","assumption",1], [["isa","person","#:John 1"]]],
+          [6, ["simp",4,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John is nice.",
+"  (2) Is it true that John is nice?",
+"Proof steps (by contradiction):",
+"  (1) If John is a person and John is a good person then answer holds  [sentence 2]",
+"  (2) John is a good person  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) John is not a person  [from steps 1, 2, 3]",
+"  (5) John is a person  [sentence 1]",
+"  (6) Contradiction  [from steps 4, 5]"
+],
+  "timestamp": "2026-06-09T09:48:08Z"
+}

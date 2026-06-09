@@ -1,0 +1,278 @@
+{
+  "test_name": "core_100",
+  "case_id": 248,
+  "input_text": "Mary's uncle arrived. Who has an uncle?",
+  "expected_answer": "Mary.",
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "Mary.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Mary's uncle arrived.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mary 1's uncle 2 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "uncle 2", "type": "concrete", "text": "uncle", "category": "person"}
+          ],
+          "actions": [{"root": "arrive", "mode": "event", "roles": {"actor": "uncle 2"}}],
+          "definites": [["uncle of","uncle 2","Mary 1"]],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "Uncle 2 is the uncle of Mary 1.",
+          "type": "situation",
+          "entities": [{"id": "uncle 2", "type": "concrete", "text": "uncle", "category": "person"},
+            {"id": "Mary 1", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["uncle of","uncle 2","Mary 1"]],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Who has an uncle?",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Which entity has an uncle?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "uncle", "type": "generic", "scope": "dependent", "category": "person"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 1"],
+            ["isa","uncle","uncle 2"],
+            ["is rel2","uncle of","uncle 2","Mary 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","arrive"],
+                ["has actor","E","uncle 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","uncle","uncle 2"],
+            ["isa","person","Mary 1"],
+            ["is rel2","uncle of","uncle 2","Mary 1"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S3",
+      ["ask", "X", ["exists", "Y", ["and", ["isa","uncle","Y"], ["is rel2","uncle of","Y","X"]]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","uncle","#:uncle 2"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["isa", "uncle", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "arrive", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["isa", "uncle", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]]],
+ "@nl": "Uncle 2 is the uncle of Mary 1."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Uncle 2 is the uncle of Mary 1."},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["isa", "uncle", ["$theof1", "uncle", "?:X", ["$ctxt","present","W1","?:Fv5","?:Fv6"]]]
+           ],
+ "@nl": "Which entity has an uncle?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["is rel2", "uncle of", ["$theof1", "uncle", "?:X", ["$ctxt","present","W1","?:Fv5","?:Fv6"]], "?:X", ["$ctxt","present","W1","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Which entity has an uncle?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-isa","uncle","?:Y"],
+            ["-is rel2", "uncle of", "?:Y", "?:X", ["$ctxt","present","W1","?:Fv5","?:Fv6"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which entity has an uncle?"},
+{"@name": "sent_S3",
+ "@logic": [["-$defq0","?:X"],
+            ["have", "?:X", ["$theof1", "uncle", "?:X", ["$ctxt","present","W1","?:Fv5","?:Fv6"]], ["$ctxt","present","W1","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Which entity has an uncle?"},
+{"@name": "sent_S3",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@nl": "Which entity has an uncle?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "uncle of", "?:Br1", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "uncle of", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "uncle of", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity has an uncle?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:Mary 1", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "?:X", ["$theof1", "uncle", "?:X", ["$ctxt","present","W1","?:Fv5","?:Fv6"]], ["$ctxt","present","W1","?:Fv5","?:Fv6"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "uncle of", ["$theof1","uncle","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "uncle", ["$theof1","uncle","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","uncle","$some_uncle"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","?:X3"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S3","assumption",1], [["-is rel2", "uncle of", "?:X", "?:Y", ["$ctxt","present","W1","?:Z","?:U"]], ["-isa","uncle","?:X"], ["$defq0","?:Y"]]],
+          [2, ["in","frm_theof","assumption",1], [["is rel2", "uncle of", ["$theof1","uncle","?:X","?:Y"], "?:X", "?:Y"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["-isa", "uncle", ["$theof1", "uncle", "?:X", ["$ctxt","present","W1","?:Y","?:Z"]]], ["$defq0","?:X"]]],
+          [4, ["in","frm_theof","assumption",1], [["isa", "uncle", ["$theof1","uncle","?:X","?:Y"]]]],
+          [5, ["mp",3,4,"fromassumption",1], [["$defq0","?:X"]]],
+          [6, ["in","sent_S3","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [7, ["mp",5,6,"fromga",1], [["$ans","?:X3"]]]
+        ]
+      },
+      {
+        "answer": [["$ans","#:Mary 1"]],
+        "blockers": [["$block", 0, ["$not", ["is rel2", "uncle of", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:X3","?:Y3"]], "#:Mary 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]],
+          ["$block", 0, ["moved", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:X3","?:Y3"]], "W0"]]
+        ],
+        "confidence": 0.9405,
+        "positive proof": [[1, ["in","frm_54","axiom",0.99], [["-is rel2", "?:X", "?:Y", "?:Z", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["is rel2", "?:X", "?:Y", "?:Z", ["$ctxt","?:U","?:2007","?:W","?:2006"]], ["$block", 0, ["moved","?:Y","?:V"]], ["-next","?:V","?:2007"]]],
+          [2, ["in","sent_S3","assumption",0.95], [["$block", 0, ["$not", ["is rel2", "uncle of", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]]]], ["-is rel2", "uncle of", "?:X", "?:Y", ["$ctxt","past","?:Z","?:U","?:V"]], ["is rel2", "uncle of", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]]]],
+          [3, ["in","frm_theof","assumption",1], [["is rel2", "uncle of", ["$theof1","uncle","?:X","?:Y"], "?:X", "?:Y"]]],
+          [4, ["mp", [2,1], 3, "fromassumption", 0.95], [["$block", 0, ["$not", ["is rel2", "uncle of", ["$theof1", "uncle", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["is rel2", "uncle of", ["$theof1", "uncle", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [5, ["mp", 1, [4,1], "fromassumption", 0.9405], [["$block", 0, ["$not", ["is rel2", "uncle of", ["$theof1", "uncle", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["is rel2", "uncle of", ["$theof1", "uncle", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], "?:X", ["$ctxt","present","?:V","?:Z","?:U"]], ["$block", 0, ["moved", ["$theof1", "uncle", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], "?:Y"]], ["-next","?:Y","?:V"]]],
+          [6, ["in","sent_S1","assumption",1], [["next","W0","W1"]]],
+          [7, ["mp", [5,3], 6, "fromassumption", 0.9405], [["$block", 0, ["$not", ["is rel2", "uncle of", ["$theof1", "uncle", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]], "?:X", ["$ctxt","present","W0","?:Y","?:Z"]]]], ["is rel2", "uncle of", ["$theof1", "uncle", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]], "?:X", ["$ctxt","present","W1","?:Y","?:Z"]], ["$block", 0, ["moved", ["$theof1", "uncle", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]], "W0"]]]],
+          [8, ["in","sent_S3","assumption",1], [["-is rel2", "uncle of", "?:X", "?:Y", ["$ctxt","present","W1","?:Z","?:U"]], ["-isa","uncle","?:X"], ["$defq0","?:Y"]]],
+          [9, ["mp", [7,1], 8, "fromassumption", 0.9405], [["$block", 0, ["$not", ["is rel2", "uncle of", ["$theof1", "uncle", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]], "?:X", ["$ctxt","present","W0","?:Y","?:Z"]]]], ["$block", 0, ["moved", ["$theof1", "uncle", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]], "W0"]], ["-isa", "uncle", ["$theof1", "uncle", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]]], ["$defq0","?:X"]]],
+          [10, ["in","sent_S2","assumption",1], [["isa", "uncle", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:X","?:Y"]]]]],
+          [11, ["mp", [9,2], 10, "fromassumption", 0.9405], [["$defq0","#:Mary 1"], ["$block", 0, ["$not", ["is rel2", "uncle of", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:X","?:Y"]], "#:Mary 1", ["$ctxt","present","W0","?:X","?:Y"]]]], ["$block", 0, ["moved", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:X","?:Y"]], "W0"]]]],
+          [12, ["in","sent_S3","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [13, ["mp",11,12,"fromga",0.9405], [["$block", 0, ["$not", ["is rel2", "uncle of", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:X3","?:Y3"]], "#:Mary 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$block", 0, ["moved", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:X3","?:Y3"]], "W0"]], ["$ans","#:Mary 1"]]]
+        ]
+      },
+      {
+        "answer": [["$ans","#:Mary 1"]],
+        "blockers": [["$block", 0, ["$not", ["is rel2", "uncle of", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:X3","?:Y3"]], "#:Mary 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]],
+          ["$block", 0, ["moved", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:X3","?:Y3"]], "W0"]]
+        ],
+        "confidence": 0.9405,
+        "positive proof": [[1, ["in","frm_54","axiom",0.99], [["-is rel2", "?:X", "?:Y", "?:Z", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["is rel2", "?:X", "?:Y", "?:Z", ["$ctxt","?:U","?:2007","?:W","?:2006"]], ["$block", 0, ["moved","?:Y","?:V"]], ["-next","?:V","?:2007"]]],
+          [2, ["in","frm_theof","assumption",1], [["is rel2", "uncle of", ["$theof1","uncle","?:X","?:Y"], "?:X", "?:Y"]]],
+          [3, ["mp",1,2,"fromassumption",0.99], [["is rel2", "uncle of", ["$theof1", "uncle", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], "?:X", ["$ctxt","?:Y","?:W","?:U","?:V"]], ["$block", 0, ["moved", ["$theof1", "uncle", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], "?:Z"]], ["-next","?:Z","?:W"]]],
+          [4, ["in","sent_S1","assumption",1], [["next","W0","W1"]]],
+          [5, ["mp", [3,2], 4, "fromassumption", 0.99], [["is rel2", "uncle of", ["$theof1", "uncle", "?:X", ["$ctxt","?:Y","W0","?:Z","?:U"]], "?:X", ["$ctxt","?:Y","W1","?:Z","?:U"]], ["$block", 0, ["moved", ["$theof1", "uncle", "?:X", ["$ctxt","?:Y","W0","?:Z","?:U"]], "W0"]]]],
+          [6, ["in","sent_S3","assumption",0.95], [["$block", 0, ["$not", ["is rel2", "uncle of", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]]]], ["-is rel2", "uncle of", "?:X", "?:Y", ["$ctxt","past","?:Z","?:U","?:V"]], ["is rel2", "uncle of", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]]]],
+          [7, ["mp", 5, [6,1], "fromassumption", 0.9405], [["$block", 0, ["$not", ["is rel2", "uncle of", ["$theof1", "uncle", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]], "?:X", ["$ctxt","present","W1","?:Y","?:Z"]]]], ["is rel2", "uncle of", ["$theof1", "uncle", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]], "?:X", ["$ctxt","present","W1","?:Y","?:Z"]], ["$block", 0, ["moved", ["$theof1", "uncle", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]], "W0"]]]],
+          [8, ["in","sent_S3","assumption",1], [["-is rel2", "uncle of", "?:X", "?:Y", ["$ctxt","present","W1","?:Z","?:U"]], ["-isa","uncle","?:X"], ["$defq0","?:Y"]]],
+          [9, ["mp", [7,1], 8, "fromassumption", 0.9405], [["$block", 0, ["$not", ["is rel2", "uncle of", ["$theof1", "uncle", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]], "?:X", ["$ctxt","present","W1","?:Y","?:Z"]]]], ["$block", 0, ["moved", ["$theof1", "uncle", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]], "W0"]], ["-isa", "uncle", ["$theof1", "uncle", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]]], ["$defq0","?:X"]]],
+          [10, ["in","sent_S2","assumption",1], [["isa", "uncle", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:X","?:Y"]]]]],
+          [11, ["mp", [9,2], 10, "fromassumption", 0.9405], [["$defq0","#:Mary 1"], ["$block", 0, ["$not", ["is rel2", "uncle of", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:X","?:Y"]], "#:Mary 1", ["$ctxt","present","W1","?:X","?:Y"]]]], ["$block", 0, ["moved", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:X","?:Y"]], "W0"]]]],
+          [12, ["in","sent_S3","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [13, ["mp",11,12,"fromga",0.9405], [["$block", 0, ["$not", ["is rel2", "uncle of", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:X3","?:Y3"]], "#:Mary 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["moved", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","past","W0","?:X3","?:Y3"]], "W0"]], ["$ans","#:Mary 1"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 94%.",
+"Sentences used:",
+"  (1) Mary's uncle arrived.",
+"  (2) Who has an uncle?",
+"Knowledge used:",
+"  If some Y is in relation X to some Z and a situation V is followed by a situation E2 then Y is in relation X to Z, except when Y moved in V. Why: assumed basic knowledge.",
+"  X's uncle is uncle of some X. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If some Y is in relation X to some Z and a situation V is followed by a situation E2 then Y is in relation X to Z, except when Y moved in V  [background knowledge, confidence 99%]",
+"  (2) If some X is uncle of some Y then normally X is uncle of Y  [sentence 2, confidence 95%]",
+"  (3) X's uncle is uncle of some X  [background knowledge]",
+"  (4) Normally X's uncle is uncle of some X  [from steps 2, 3, confidence 95%]",
+"  (5) If a situation Y is followed by a situation V then X's uncle is uncle of some X, except when X's uncle is not uncle of X and X's uncle moved in Y  [from steps 1, 4, confidence 94%]",
+"  (6) The situation W0 is followed by the situation W1  [sentence 1]",
+"  (7) X's uncle is uncle of some X, except when X's uncle is not uncle of X and X's uncle moved in the situation W0  [from steps 5, 6, confidence 94%]",
+"  (8) If some X is uncle of some Y and X is an uncle then Y is the answer  [sentence 2]",
+"  (9) If X's uncle is an uncle then some X is the answer, except when X's uncle is not uncle of X and X's uncle moved in the situation W0  [from steps 7, 8, confidence 94%]",
+"  (10) Mary's uncle is an uncle  [sentence 1]",
+"  (11) Mary is the answer, except when Mary's uncle is not uncle of Mary and Mary's uncle moved in the situation W0  [from steps 9, 10, confidence 94%]",
+"  (12) technical answer unwrap step  [from question]",
+"  (13) Mary is an answer, except when Mary's uncle is not uncle of Mary and Mary's uncle moved in the situation W0  [from steps 11, 12, confidence 94%]",
+"Exceptions checked and not holding:",
+"  Mary's uncle is not uncle of Mary",
+"  Mary's uncle moved in W0"
+],
+  "timestamp": "2026-06-09T09:17:53Z"
+}

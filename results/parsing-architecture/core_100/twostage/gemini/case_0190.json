@@ -1,0 +1,289 @@
+{
+  "test_name": "core_100",
+  "case_id": 190,
+  "input_text": "Elephants have long grey trunks. John is an elephant. Who has a grey trunk?",
+  "expected_answer": "John.",
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "John.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Elephants have long grey trunks.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Elephants have trunks that are long and grey.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"}
+          ],
+          "adjectives": [["long","none","trunk"], ["grey","none","none"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "John is an elephant.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 is an elephant.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"},
+            {"id": "elephant", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Who has a grey trunk?",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Which entity has a grey trunk?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "trunk", "type": "generic", "scope": "dependent"}
+          ],
+          "adjectives": [["grey","none","none"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally",
+                ["exists","Y",
+                  ["and",
+                    ["isa","trunk","Y"],
+                    ["has part","X","Y"],
+                    ["has degree property","long","Y","none","trunk"],
+                    ["has degree property","grey","Y","none","none"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id", "S2", ["holds", "W0", ["isa","elephant","John 1"]]],
+    ["@id","S3",
+      ["ask","X",
+        ["exists","Y",
+          ["and",
+            ["isa","trunk","Y"],
+            ["has part","X","Y"],
+            ["has degree property","grey","Y","none","none"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk0","?:X"]]],
+ "@nl": "Elephants have trunks that are long and grey."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Elephants have trunks that are long and grey."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has degree property", "long", ["sk0","?:X"], "none", "trunk", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Elephants have trunks that are long and grey."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has property", "grey", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have trunks that are long and grey."},
+{"@name": "sent_S2",
+ "@logic": ["isa","elephant","#:John 1"],
+ "@nl": "John 1 is an elephant."},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "trunk", ["sk1","?:X"]]],
+ "@nl": "Which entity has a grey trunk?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has part", "?:X", ["sk1","?:X"], ["$ctxt","present","?:Fv13","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Which entity has a grey trunk?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has property", "grey", ["sk1","?:X"], ["$ctxt","?:Fv15","?:Fv14","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Which entity has a grey trunk?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-has part", "?:X", "?:Y", ["$ctxt","present","?:Fv18","?:Fv7","?:Fv8"]],
+            ["-has property", "grey", "?:Y", ["$ctxt","?:Fv20","?:Fv19","?:Fv7","?:Fv8"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which entity has a grey trunk?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S3",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@nl": "Which entity has a grey trunk?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has part", "?:Br1", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has part", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has part", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity has a grey trunk?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "long", "$some_long_trunk", "none", "trunk", ["$ctxt","?:Fv48","?:Fv45","?:Fv46","?:Fv47"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_long_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "long", "$some_not_long_trunk", "none", "trunk", ["$ctxt","?:Fv56","?:Fv53","?:Fv54","?:Fv55"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "grey", "$some_grey", ["$ctxt","?:Fv60","?:Fv57","?:Fv58","?:Fv59"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "grey", "$some_not_grey", ["$ctxt","?:Fv64","?:Fv61","?:Fv62","?:Fv63"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "grey", "?:X", ["$ctxt","past","?:Fv21","?:Fv22","?:Fv23"]],
+            ["has property", "grey", "?:X", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]],
+            ["$block", 0, ["$not", ["has property", "grey", "?:X", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "grey", "?:X", ["$ctxt","past","?:Fv24","?:Fv25","?:Fv26"]],
+            ["has property", "grey", "?:X", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]],
+            ["$block", 0, ["$not", ["has property", "grey", "?:X", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "none", "?:Fv65", ["$ctxt","past","?:Fv27","?:Fv28","?:Fv29"]],
+            ["has degree property", "long", "?:X", "none", "?:Fv66", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "none", "?:Fv67", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv30","?:Fv31","?:Fv32"]],
+            ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "pop_what",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","$some_elephant"]],
+        "blockers": [["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","$some_elephant"], ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]]
+        ],
+        "confidence": 0.98,
+        "positive proof": [[1, ["in","pop_what","assumption",1], [["isa","elephant","$some_elephant"]]],
+          [2, ["in","sent_S1","assumption",0.98], [["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","?:X"], ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["has property", "grey", ["sk0","?:X"], ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","elephant","?:X"]]],
+          [3, ["mp", 1, [2,2], "fromassumption", 0.98], [["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","$some_elephant"], ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["has property", "grey", ["sk0","$some_elephant"], ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [4, ["in","sent_S3","assumption",1], [["-has property", "grey", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has part", "?:W", "?:X", ["$ctxt","present","?:2006","?:U","?:V"]], ["-isa","trunk","?:X"], ["$defq0","?:W"]]],
+          [5, ["mp", [3,1], 4, "fromassumption", 0.98], [["-isa", "trunk", ["sk0","$some_elephant"]], ["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","$some_elephant"], ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]], ["-has part", "?:V3", ["sk0","$some_elephant"], ["$ctxt","present","?:W3","?:Z3","?:U3"]], ["$defq0","?:V3"]]],
+          [6, ["in","sent_S1","assumption",1], [["isa", "trunk", ["sk0","?:X"]], ["-isa","elephant","?:X"]]],
+          [7, ["mp", 1, [6,1], "fromassumption", 1], [["isa", "trunk", ["sk0","$some_elephant"]]]],
+          [8, ["simp",5,7,"fromassumption",0.98], [["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","$some_elephant"], ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["-has part", "?:V", ["sk0","$some_elephant"], ["$ctxt","present","?:W","?:Z","?:U"]], ["$defq0","?:V"]]],
+          [9, ["in","sent_S1","assumption",1], [["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","elephant","?:X"]]],
+          [10, ["mp", 1, [9,1], "fromassumption", 1], [["has part", "$some_elephant", ["sk0","$some_elephant"], ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [11, ["mp", [8,1], 10, "fromassumption", 0.98], [["$defq0","$some_elephant"], ["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","$some_elephant"], ["$ctxt","?:X","?:Y","?:Z","?:U"]]]]]],
+          [12, ["in","sent_S3","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [13, ["mp",11,12,"fromga",0.98], [["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","$some_elephant"], ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]], ["$ans","$some_elephant"]]]
+        ]
+      },
+      {
+        "answer": [["$ans","#:John 1"]],
+        "blockers": [["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","#:John 1"], ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]]
+        ],
+        "confidence": 0.98,
+        "positive proof": [[1, ["in","sent_S2","assumption",1], [["isa","elephant","#:John 1"]]],
+          [2, ["in","sent_S1","assumption",0.98], [["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","?:X"], ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["has property", "grey", ["sk0","?:X"], ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","elephant","?:X"]]],
+          [3, ["mp", 1, [2,2], "fromassumption", 0.98], [["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","#:John 1"], ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["has property", "grey", ["sk0","#:John 1"], ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [4, ["in","sent_S3","assumption",1], [["-has property", "grey", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has part", "?:W", "?:X", ["$ctxt","present","?:2006","?:U","?:V"]], ["-isa","trunk","?:X"], ["$defq0","?:W"]]],
+          [5, ["mp", [3,1], 4, "fromassumption", 0.98], [["-isa", "trunk", ["sk0","#:John 1"]], ["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","#:John 1"], ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]], ["-has part", "?:V3", ["sk0","#:John 1"], ["$ctxt","present","?:W3","?:Z3","?:U3"]], ["$defq0","?:V3"]]],
+          [6, ["in","sent_S1","assumption",1], [["isa", "trunk", ["sk0","?:X"]], ["-isa","elephant","?:X"]]],
+          [7, ["mp", 1, [6,1], "fromassumption", 1], [["isa", "trunk", ["sk0","#:John 1"]]]],
+          [8, ["simp",5,7,"fromassumption",0.98], [["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","#:John 1"], ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["-has part", "?:V", ["sk0","#:John 1"], ["$ctxt","present","?:W","?:Z","?:U"]], ["$defq0","?:V"]]],
+          [9, ["in","sent_S1","assumption",1], [["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","elephant","?:X"]]],
+          [10, ["mp", 1, [9,1], "fromassumption", 1], [["has part", "#:John 1", ["sk0","#:John 1"], ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [11, ["mp", [8,1], 10, "fromassumption", 0.98], [["$defq0","#:John 1"], ["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","#:John 1"], ["$ctxt","?:X","?:Y","?:Z","?:U"]]]]]],
+          [12, ["in","sent_S3","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [13, ["mp",11,12,"fromga",0.98], [["$block", ["$","elephant",1], ["$not", ["has property", "grey", ["sk0","#:John 1"], ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]], ["$ans","#:John 1"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 98%.",
+"Sentences used:",
+"  (1) Elephants have long grey trunks.",
+"  (2) John is an elephant.",
+"  (3) Who has a grey trunk?",
+"Proof steps:",
+"  (1) John is an elephant  [sentence 2]",
+"  (2) If some X is an elephant then normally the trunk sk0 of X is grey  [sentence 1, confidence 98%]",
+"  (3) Normally the trunk sk0 of John 1 is grey  [from steps 1, 2, confidence 98%]",
+"  (4) If some X is grey and some W has X as a part and X is a trunk then W is the answer  [sentence 3]",
+"  (5) If the trunk sk0 of John 1 is a trunk and some V3 has sk0 of John 1 as a part then V3 is the answer, except when sk0 of John 1 is not grey  [from steps 3, 4, confidence 98%]",
+"  (6) If some X is an elephant then the trunk sk0 of X is a trunk  [sentence 1]",
+"  (7) The trunk sk0 of John 1 is a trunk  [from steps 1, 6]",
+"  (8) If some V has the trunk sk0 of John 1 as a part then V is the answer, except when sk0 of John 1 is not grey  [from steps 5, 7, confidence 98%]",
+"  (9) If some X is an elephant then X has the trunk sk0 of X as a part  [sentence 1]",
+"  (10) John has the trunk sk0 of John 1 as a part  [from steps 1, 9]",
+"  (11) John is the answer, except when the trunk sk0 of John 1 is not grey  [from steps 8, 10, confidence 98%]",
+"  (12) technical answer unwrap step  [from question]",
+"  (13) John is an answer, except when the trunk sk0 of John 1 is not grey  [from steps 11, 12, confidence 98%]",
+"Exceptions checked and not holding:",
+"  the trunk sk0 of John 1 is not grey"
+],
+  "timestamp": "2026-06-09T09:16:54Z"
+}

@@ -1,0 +1,140 @@
+{
+  "test_name": "core_100",
+  "case_id": 15,
+  "input_text": "John is a tall man and not a tall man?",
+  "expected_answer": false,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is a tall man and not a tall man?",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Is John 1 a tall man and not a tall man?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "man", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["tall","none","man"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["question",
+        ["and",
+          ["and", ["isa","man","John 1"], ["has degree property","tall","John 1","none","man"]],
+          ["not",
+            ["and", ["isa","man","John 1"], ["has degree property","tall","John 1","none","man"]]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","man","#:John 1"]],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S1",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S1",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-isa","man","#:John 1"],
+            ["-has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S1",
+ "@sourcetype": "question",
+ "@logic": [["-isa","man","#:John 1"],
+            ["-has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:Fv3","?:Fv1","?:Fv2"]],
+            ["isa","man","#:John 1"],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S1",
+ "@sourcetype": "question",
+ "@logic": [["-isa","man","#:John 1"],
+            ["-has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:Fv3","?:Fv1","?:Fv2"]],
+            ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S1",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S1",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","tall","?:X","none","?:Fv23","?:Fv15"],
+            ["has degree property","high","?:X","none","?:Fv24","?:Fv15"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","high","?:X","none","?:Fv25","?:Fv16"],
+            ["has degree property","tall","?:X","none","?:Fv26","?:Fv16"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "none", "?:Fv27", ["$ctxt","past","?:Fv17","?:Fv18","?:Fv19"]],
+            ["has degree property", "tall", "?:X", "none", "?:Fv28", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "none", "?:Fv29", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv20","?:Fv21","?:Fv22"]],
+            ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S1","assumption",1], [["-isa","man","#:John 1"], ["-$defq0"], ["-has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [2, ["in","sent_S1","assumption",1], [["-$defq0"], ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["in","sent_S1","assumption",1], [["-$defq0"], ["isa","man","#:John 1"]]],
+          [6, ["mp",5,3,"fromga",1], [["isa","man","#:John 1"]]],
+          [7, ["mp", [1,2], 4, 6, 3, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John is a tall man and not a tall man?",
+"Proof steps (by contradiction):",
+"  (1) If John is a man and answer holds then John is not a tall man  [sentence 1]",
+"  (2) If answer holds then John is a tall man  [sentence 1]",
+"  (3) Answer holds  [assumption]",
+"  (4) John is a tall man  [from steps 2, 3]",
+"  (5) If answer holds then John is a man  [sentence 1]",
+"  (6) John is a man  [from steps 5, 3]",
+"  (7) Contradiction  [from steps 1, 4, 6, 3]"
+],
+  "timestamp": "2026-06-09T08:52:31Z"
+}

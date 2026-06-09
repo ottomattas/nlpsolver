@@ -1,0 +1,242 @@
+{
+  "test_name": "core_100",
+  "case_id": 671,
+  "input_text": "The woman holding a heavy lamp sang. The lamp was light?",
+  "expected_answer": false,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The woman holding a heavy lamp sang.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The woman 1 held a lamp 2.",
+          "type": "situation",
+          "entities": [{"id": "woman 1", "type": "concrete", "category": "person"},
+            {"id": "lamp 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "hold", "mode": "event", "roles": {"target": "lamp 2"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "The lamp 2 was heavy.",
+          "type": "situation",
+          "entities": [{"id": "lamp 2", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["heavy","none","lamp"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "The woman 1 sang.",
+          "type": "situation",
+          "entities": [{"id": "woman 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "sing", "mode": "event"}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The lamp was light?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Was the lamp 2 light?",
+          "type": "query",
+          "entities": [{"id": "lamp 2", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["light","none","lamp"]],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","woman","woman 1"],
+            ["isa","lamp","lamp 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","hold"],
+                ["has actor","E","woman 1"],
+                ["has target","E","lamp 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","lamp","lamp 2"], ["has degree property","heavy","lamp 2","none","lamp"]]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","woman","woman 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","sing"],
+                ["has actor","E","woman 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S4",
+      ["question", ["@time", "past", ["has degree property","light","lamp 2","none","lamp"]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","woman","#:woman 1"],
+ "@nl": "The woman 1 held a lamp 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","lamp","#:lamp 2"],
+ "@nl": "The woman 1 held a lamp 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The woman 1 held a lamp 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "hold", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The woman 1 held a lamp 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:woman 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The woman 1 held a lamp 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:lamp 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The woman 1 held a lamp 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The woman 1 held a lamp 2."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The woman 1 held a lamp 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","lamp","#:lamp 2"],
+ "@nl": "The lamp 2 was heavy."},
+{"@name": "sent_S2",
+ "@logic": ["-has degree property", "light", "#:lamp 2", "none", "lamp", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The lamp 2 was heavy."},
+{"@name": "sent_S3",
+ "@logic": ["isa","woman","#:woman 1"],
+ "@nl": "The woman 1 sang."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The woman 1 sang."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "sing", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 1 sang."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:woman 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 1 sang."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 1 sang."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The woman 1 sang."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "light", "#:lamp 2", "none", "?:Fv37", ["$ctxt","past","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Was the lamp 2 light?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-has degree property", "light", "#:lamp 2", "none", "?:Fv38", ["$ctxt","past","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "Was the lamp 2 light?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Was the lamp 2 light?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "light", "#:lamp 2", "none", "lamp", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["has degree property", "light", "#:lamp 2", "none", "lamp", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "light", "#:lamp 2", "none", "lamp", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Was the lamp 2 light?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "light", "?:X", "none", "?:Fv31", ["$ctxt","past","?:Fv11","?:Fv12","?:Fv13"]],
+            ["-has degree property", "light", "?:X", "none", "?:Fv32", ["$ctxt","present","?:Fv11","?:Fv12","?:Fv13"]],
+            ["$block", 0, ["$not", ["has degree property", "heavy", "?:X", "none", "?:Fv33", ["$ctxt","present","?:Fv11","?:Fv12","?:Fv13"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv14","?:Fv15","?:Fv16"]],
+            ["-has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv14","?:Fv15","?:Fv16"]],
+            ["$block", 0, ["$not", ["has degree property", "heavy", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv14","?:Fv15","?:Fv16"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "light", "?:X", "none", "?:Fv34", ["$ctxt","past","?:Fv17","?:Fv18","?:Fv19"]],
+            ["has degree property", "light", "?:X", "none", "?:Fv35", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]],
+            ["$block", 0, ["$not", ["has degree property", "light", "?:X", "none", "?:Fv36", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv20","?:Fv21","?:Fv22"]],
+            ["has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]],
+            ["$block", 0, ["$not", ["has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S2","assumption",1], [["-has degree property", "light", "#:lamp 2", "none", "lamp", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [2, ["in","sent_S4","assumption",1], [["-$defq0"], ["has degree property", "light", "#:lamp 2", "none", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has degree property", "light", "#:lamp 2", "none", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]]]],
+          [5, ["mp",1,4,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) The woman holding a heavy lamp sang.",
+"  (2) The lamp was light?",
+"Proof steps (by contradiction):",
+"  (1) The lamp B is not light  [sentence 1]",
+"  (2) If answer holds then the lamp B is light  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) The lamp B is light  [from steps 2, 3]",
+"  (5) Contradiction  [from steps 1, 4]"
+],
+  "timestamp": "2026-06-09T09:23:29Z"
+}

@@ -1,0 +1,72 @@
+{
+  "test_name": "core_100",
+  "case_id": 1326,
+  "input_text": "Ellen is fond of John. Who is Ellen afraid of?",
+  "expected_answer": null,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Ellen 1"],
+          ["isa","person","John 1"],
+          ["has degree rel2","fond of","Ellen 1","John 1","none","person"]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["ask","X",
+        ["and",
+          ["isa","person","Ellen 1"],
+          ["has degree rel2","afraid of","Ellen 1","X","none","person"]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","Ellen 1"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","John 1"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["is rel2", "fond of", "Ellen 1", "John 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa","person","Ellen 1"]],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["is rel2", "afraid of", "Ellen 1", "?:X", ["$ctxt","present","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","Ellen 1"],
+            ["-is rel2", "afraid of", "Ellen 1", "?:X", ["$ctxt","present","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "afraid of", "Ellen 1", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "afraid of", "Ellen 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "afraid of", "Ellen 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "[generated: sent_S2]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no answers found"},
+  "timestamp": "2026-06-09T10:24:08Z"
+}

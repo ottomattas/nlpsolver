@@ -1,0 +1,96 @@
+{
+  "test_name": "core_100",
+  "case_id": 36,
+  "input_text": "John is somewhat big. John is big?",
+  "expected_answer": true,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["has degree property","big","John 1","low","person"]]
+      ]
+    ],
+    ["@id", "S2", ["question", ["has degree property","big","John 1","none","person"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","John 1"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "big", "John 1", "low", "person", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "big", "John 1", "none", "person", ["$ctxt","present","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-has degree property", "big", "John 1", "none", "person", ["$ctxt","present","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$defq0"]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@question": ["$defq0"],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "big", "John 1", "none", "person", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "big", "John 1", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "John 1", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv13", ["$ctxt","past","?:Fv7","?:Fv8","?:Fv9"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv14", ["$ctxt","present","?:Fv7","?:Fv8","?:Fv9"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv15", ["$ctxt","present","?:Fv7","?:Fv8","?:Fv9"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv10","?:Fv11","?:Fv12"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv10","?:Fv11","?:Fv12"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv10","?:Fv11","?:Fv12"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","frm_7","axiom",1], [["-has degree property","?:X","?:Y","low","?:Z","?:U"], ["has degree property","?:X","?:Y","none","?:Z","?:U"]]],
+          [2, ["in","sent_S1","assumption",1], [["has degree property", "big", "John 1", "low", "person", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp",1,2,"fromassumption",1], [["has degree property", "big", "John 1", "none", "person", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [4, ["in","sent_S2","assumption",1], [["$defq0"], ["-has degree property", "big", "John 1", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["in","sent_S2","goal",1], [["-$defq0"]]],
+          [6, ["mp", 3, [4,1], 5, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) sent_S1",
+"  (2) sent_S2",
+"Knowledge used:",
+"  If some Y is slightly some X then Y is X. Why: assumed basic knowledge.",
+"Proof steps (by contradiction):",
+"  (1) If some Y is slightly some X then Y is X  [background knowledge]",
+"  (2) John is a slightly big person  [sentence 1]",
+"  (3) John is a big person  [from steps 1, 2]",
+"  (4) If John is a big person then answer holds  [sentence 2]",
+"  (5) assume for contradiction: the answer is no  [from question]",
+"  (6) Contradiction  [from steps 3, 4, 5]"
+],
+  "timestamp": "2026-06-09T10:45:01Z"
+}

@@ -1,0 +1,90 @@
+{
+  "test_name": "core_100",
+  "case_id": 524,
+  "input_text": "John likes all boxers. Mike is a boxer. John likes Mike?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","Y",
+          ["implies", ["isa","boxer","Y"], ["has degree rel2","like","John 1","Y","none","person"]]
+        ]
+      ]
+    ],
+    ["@id", "S2", ["holds", "W0", ["isa","boxer","Mike 2"]]],
+    ["@id", "S3", ["question", ["has degree rel2","like","John 1","Mike 2","none","person"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","boxer","?:Y"],
+            ["has degree rel2", "like", "John 1", "?:Y", "none", "person", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@logic": ["isa","boxer","Mike 2"],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree rel2", "like", "John 1", "Mike 2", "none", "?:Fv15", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-has degree rel2", "like", "John 1", "Mike 2", "none", "?:Fv16", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@question": ["$defq0"],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-has degree rel2", "like", "John 1", "Mike 2", "none", "person", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree rel2", "like", "John 1", "Mike 2", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree rel2", "like", "John 1", "Mike 2", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","boxer","$some_not_boxer"],
+ "@nl": "[population: from input]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S1","assumption",1], [["has degree rel2", "like", "John 1", "?:X", "none", "person", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","boxer","?:X"]]],
+          [2, ["in","sent_S2","assumption",1], [["isa","boxer","Mike 2"]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 1], [["has degree rel2", "like", "John 1", "Mike 2", "none", "person", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [4, ["in","sent_S3","assumption",1], [["$defq0"], ["-has degree rel2", "like", "John 1", "Mike 2", "none", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [5, ["in","sent_S3","goal",1], [["-$defq0"]]],
+          [6, ["mp", 3, [4,1], 5, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) sent_S1",
+"  (2) sent_S2",
+"  (3) sent_S3",
+"Proof steps (by contradiction):",
+"  (1) If some X is a boxer then John is like of X  [sentence 1]",
+"  (2) Mike is a boxer  [sentence 2]",
+"  (3) John is like of Mike  [from steps 1, 2]",
+"  (4) If John is like of Mike then answer holds  [sentence 3]",
+"  (5) assume for contradiction: the answer is no  [from question]",
+"  (6) Contradiction  [from steps 3, 4, 5]"
+],
+  "timestamp": "2026-06-09T11:35:13Z"
+}

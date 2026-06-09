@@ -1,0 +1,192 @@
+{
+  "test_name": "core_100",
+  "case_id": 1315,
+  "input_text": "Eve planned to travel. Eve traveled?",
+  "expected_answer": null,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Eve planned to travel.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Eve 1 planned to travel.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "plan",
+              "mode": "intention",
+              "roles": {
+                "actor": "Eve 1",
+                "content": {"root": "travel", "mode": "event", "roles": {"actor": "Eve 1"}}
+              }
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Eve traveled?",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Did Eve 1 travel?",
+          "type": "query",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "travel", "mode": "event", "roles": {"actor": "Eve 1"}}],
+          "pre_state": "W1",
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Eve 1"],
+            ["exists","E1",
+              ["and",
+                ["isa","activity","E1"],
+                ["has type","E1","plan"],
+                ["has actor","E1","Eve 1"],
+                ["has time","E1","past","in"],
+                ["exists","E2",
+                  ["and",
+                    ["has content","E1","E2"],
+                    ["isa","activity","E2"],
+                    ["has type","E2","travel"],
+                    ["has actor","E2","Eve 1"],
+                    ["has time","E2","past","in"]
+                  ]
+                ],
+                ["intention","E1"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["question",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","travel"],
+              ["has actor","E","Eve 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "plan", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk1_activity", "go", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk1_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["intention","sk0_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:Eve 1"]],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk2_activity"]],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk2_activity", "go", ["$ctxt","past","?:Fv10","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk2_activity", "#:Eve 1", ["$ctxt","past","?:Fv12","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk2_activity", "past", "in", ["$ctxt","past","?:Fv14","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk2_activity"]],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:Eve 1"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "go", ["$ctxt","past","?:Fv20","?:Fv3","?:Fv4"]],
+            ["-has actor", "?:E", "#:Eve 1", ["$ctxt","past","?:Fv22","?:Fv3","?:Fv4"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S2",
+ "@question": ["$defq0"],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv26"], ["has type","?:E","go","?:Fv26"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "timestamp": "2026-06-09T09:45:50Z"
+}

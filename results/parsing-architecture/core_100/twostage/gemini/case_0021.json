@@ -1,0 +1,80 @@
+{
+  "test_name": "core_100",
+  "case_id": 21,
+  "input_text": "John is in Estonia?",
+  "expected_answer": null,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is in Estonia?",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Is John 1 in Estonia 1?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {
+              "id": "Estonia 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["question",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","place","https://en.wikipedia.org/wiki/Estonia"],
+          ["is rel2","in","John 1","https://en.wikipedia.org/wiki/Estonia"]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Estonia 1"],
+ "@nl": "Is John 1 in Estonia 1?"},
+{"@name": "sent_S1",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:John 1"]],
+ "@nl": "Is John 1 in Estonia 1?"},
+{"@name": "sent_S1",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","place","https://en.wikipedia.org/wiki/Estonia"]],
+ "@nl": "Is John 1 in Estonia 1?"},
+{"@name": "sent_S1",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Is John 1 in Estonia 1?"},
+{"@name": "sent_S1",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:John 1"],
+            ["-isa","place","https://en.wikipedia.org/wiki/Estonia"],
+            ["-is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 in Estonia 1?"},
+{"@name": "sent_S1",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 in Estonia 1?"},
+{"@name": "sent_S1",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 in Estonia 1?"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "timestamp": "2026-06-09T09:01:44Z"
+}

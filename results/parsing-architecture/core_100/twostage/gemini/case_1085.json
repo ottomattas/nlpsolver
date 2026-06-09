@@ -1,0 +1,229 @@
+{
+  "test_name": "core_100",
+  "case_id": 1085,
+  "input_text": "A surgeon, Dr. Smith, entered the room. Who entered the room?",
+  "expected_answer": ["Dr. Smith.","A surgeon."],
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "Dr. Smith.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "A surgeon, Dr. Smith, entered the room.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Dr. Smith 1 entered the room 2.",
+          "type": "situation",
+          "entities": [{"id": "Dr. Smith 1", "type": "concrete", "category": "person"},
+            {"id": "room 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "enter",
+              "mode": "event",
+              "roles": {"actor": "Dr. Smith 1", "target": "room 2"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Who entered the room?",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Which entity entered the room 2?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "room 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "enter", "mode": "event", "roles": {"actor": "entity", "target": "room 2"}}],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Dr. Smith 1"],
+            ["isa","room","room 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","enter"],
+                ["has actor","E","Dr. Smith 1"],
+                ["has target","E","room 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["ask","X",
+        ["and",
+          ["isa","room","room 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","enter"],
+              ["has actor","E","X"],
+              ["has target","E","room 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","Dr. Smith 1"],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","room","#:room 2"],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "enter", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "Dr. Smith 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:room 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa","room","#:room 2"]],
+ "@nl": "Which entity entered the room 2?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "activity", ["sk1","?:X"]]],
+ "@nl": "Which entity entered the room 2?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has type", ["sk1","?:X"], "enter", ["$ctxt","past","?:Fv10","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Which entity entered the room 2?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has actor", ["sk1","?:X"], "?:X", ["$ctxt","past","?:Fv12","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Which entity entered the room 2?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has target", ["sk1","?:X"], "#:room 2", ["$ctxt","past","?:Fv14","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Which entity entered the room 2?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has time", ["sk1","?:X"], "past", "in", ["$ctxt","past","?:Fv16","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Which entity entered the room 2?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["actuality", ["sk1","?:X"]]],
+ "@nl": "Which entity entered the room 2?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-isa","room","#:room 2"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "enter", ["$ctxt","past","?:Fv22","?:Fv3","?:Fv4"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","past","?:Fv24","?:Fv3","?:Fv4"]],
+            ["-has target", "?:E", "#:room 2", ["$ctxt","past","?:Fv26","?:Fv3","?:Fv4"]],
+            ["-actuality","?:E"],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which entity entered the room 2?"},
+{"@name": "sent_S2",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@nl": "Which entity entered the room 2?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","room","$some_room"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","Dr. Smith 1"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S2","assumption",1], [["-isa","room","#:room 2"], ["-has type", "?:X", "enter", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has actor", "?:X", "?:V", ["$ctxt","past","?:W","?:Z","?:U"]], ["-has target", "?:X", "#:room 2", ["$ctxt","past","?:2006","?:Z","?:U"]], ["-isa","activity","?:X"], ["-actuality","?:X"], ["$defq0","?:V"]]],
+          [2, ["in","sent_S1","assumption",1], [["has type", "sk0_activity", "enter", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 1], [["-isa","activity","sk0_activity"], ["-isa","room","#:room 2"], ["-actuality","sk0_activity"], ["-has target", "sk0_activity", "#:room 2", ["$ctxt","past","?:V3","?:Z3","?:U3"]], ["-has actor", "sk0_activity", "?:X3", ["$ctxt","past","?:Y3","?:Z3","?:U3"]], ["$defq0","?:X3"]]],
+          [4, ["in","sent_S1","assumption",1], [["isa","room","#:room 2"]]],
+          [5, ["in","sent_S1","assumption",1], [["isa","activity","sk0_activity"]]],
+          [6, ["in","sent_S1","assumption",1], [["actuality","sk0_activity"]]],
+          [7, ["simp",3,4,5,6,"fromassumption",1], [["-has target", "sk0_activity", "#:room 2", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has actor", "sk0_activity", "?:U", ["$ctxt","past","?:V","?:Y","?:Z"]], ["$defq0","?:U"]]],
+          [8, ["in","sent_S1","assumption",1], [["has target", "sk0_activity", "#:room 2", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [9, ["mp",7,8,"fromassumption",1], [["-has actor", "sk0_activity", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["$defq0","?:X"]]],
+          [10, ["in","sent_S1","assumption",1], [["has actor", "sk0_activity", "Dr. Smith 1", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [11, ["mp",9,10,"fromassumption",1], [["$defq0","Dr. Smith 1"]]],
+          [12, ["in","sent_S2","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [13, ["mp",11,12,"fromga",1], [["$ans","Dr. Smith 1"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) A surgeon, Dr. Smith, entered the room.",
+"  (2) Who entered the room?",
+"Proof steps:",
+"  (1) If X is a enter event and some V performs X and X targets the room B and X is an activity then V is the answer  [sentence 2]",
+"  (2) The event act1 is a enter event  [sentence 1]",
+"  (3) If the event act1 is an activity and the act1 targets the room B and some X3 performs the act1 then X3 is the answer  [from steps 1, 2]",
+"  (4) The room B is a room  [sentence 1]",
+"  (5) The event act1 is an activity  [sentence 1]",
+"  (6)   [sentence 1]",
+"  (7) If the event act1 targets the room B and some U performs the act1 then U is the answer  [from steps 3, 4, 5, 6]",
+"  (8) The event act1 targets the room B  [sentence 1]",
+"  (9) If some X performs the event act1 then X is the answer  [from steps 7, 8]",
+"  (10) Dr. Smith performs the event act1  [sentence 1]",
+"  (11) Dr. Smith is the answer  [from steps 9, 10]",
+"  (12) technical answer unwrap step  [from question]",
+"  (13) Dr. Smith is an answer  [from steps 11, 12]"
+],
+  "timestamp": "2026-06-09T09:39:37Z"
+}

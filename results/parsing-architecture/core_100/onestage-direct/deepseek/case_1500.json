@@ -1,0 +1,121 @@
+{
+  "test_name": "core_100",
+  "case_id": 1500,
+  "input_text": "Tallinn is hardly in Latvia. Tallinn is in Latvia?",
+  "expected_answer": "Likely false.",
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Probably false.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["normally",
+            ["and",
+              ["isa","place","https://en.wikipedia.org/wiki/Tallinn"],
+              ["isa","place","https://en.wikipedia.org/wiki/Latvia"],
+              ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+            ]
+          ]
+        ],
+        ["@p","S1",0.2]
+      ]
+    ],
+    ["@id","S2",
+      ["question",
+        ["and",
+          ["isa","place","https://en.wikipedia.org/wiki/Tallinn"],
+          ["isa","place","https://en.wikipedia.org/wiki/Latvia"],
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_fixes": ["json: removed content after top-level close bracket"],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","place","https://en.wikipedia.org/wiki/Tallinn"],
+            ["-isa","place","https://en.wikipedia.org/wiki/Latvia"],
+            ["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","place",1], ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","place","https://en.wikipedia.org/wiki/Tallinn"]],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","place","https://en.wikipedia.org/wiki/Latvia"]],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-isa","place","https://en.wikipedia.org/wiki/Tallinn"],
+            ["-isa","place","https://en.wikipedia.org/wiki/Latvia"],
+            ["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$defq0"]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@question": ["$defq0"],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "[generated: sent_S2]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "blockers": [["$block", ["$","place",1], ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]
+        ],
+        "confidence": 0.6,
+        "negative proof": [[1, ["in","sent_S1","assumption",0.6], [["-isa","place","https://en.wikipedia.org/wiki/Tallinn"], ["-isa","place","https://en.wikipedia.org/wiki/Latvia"], ["$block", ["$","place",1], ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","?:X","?:Y","?:Z","?:U"]]], ["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [2, ["in","sent_S2","assumption",1], [["-$defq0"], ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["in","sent_S2","assumption",1], [["-$defq0"], ["isa","place","https://en.wikipedia.org/wiki/Tallinn"]]],
+          [6, ["mp",5,3,"fromga",1], [["isa","place","https://en.wikipedia.org/wiki/Tallinn"]]],
+          [7, ["in","sent_S2","assumption",1], [["-$defq0"], ["isa","place","https://en.wikipedia.org/wiki/Latvia"]]],
+          [8, ["mp",7,3,"fromga",1], [["isa","place","https://en.wikipedia.org/wiki/Latvia"]]],
+          [9, ["mp", [1,3], 4, 6, 8, "fromga", 0.6], [["$block", ["$","place",1], ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 60%.",
+"Sentences used:",
+"  (1) sent_S1",
+"  (2) sent_S2",
+"Proof steps:",
+"  (1) If Tallinn (https://en.wikipedia.org/wiki/Tallinn) is a place and Latvia (https://en.wikipedia.org/wiki/Latvia) is a place then Tallinn (https://en.wikipedia.org/wiki/Tallinn) is not in Latvia (https://en.wikipedia.org/wiki/Latvia), except when Tallinn (https://en.wikipedia.org/wiki/Tallinn) is in Latvia (https://en.wikipedia.org/wiki/Latvia)  [sentence 1, confidence 60%]",
+"  (2) If answer holds then Tallinn (https://en.wikipedia.org/wiki/Tallinn) is in Latvia (https://en.wikipedia.org/wiki/Latvia)  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) Tallinn (https://en.wikipedia.org/wiki/Tallinn) is in Latvia (https://en.wikipedia.org/wiki/Latvia)  [from steps 2, 3]",
+"  (5) If answer holds then Tallinn (https://en.wikipedia.org/wiki/Tallinn) is a place  [sentence 2]",
+"  (6) Tallinn (https://en.wikipedia.org/wiki/Tallinn) is a place  [from steps 5, 3]",
+"  (7) If answer holds then Latvia (https://en.wikipedia.org/wiki/Latvia) is a place  [sentence 2]",
+"  (8) Latvia (https://en.wikipedia.org/wiki/Latvia) is a place  [from steps 7, 3]",
+"  (9) Outstanding exception: Tallinn (https://en.wikipedia.org/wiki/Tallinn) is in Latvia (https://en.wikipedia.org/wiki/Latvia)  [from steps 1, 4, 6, 8, confidence 60%]",
+"Exceptions checked and not holding:",
+"  Tallinn (https://en.wikipedia.org/wiki/Tallinn) is in Latvia (https://en.wikipedia.org/wiki/Latvia)"
+],
+  "timestamp": "2026-06-09T10:43:04Z"
+}

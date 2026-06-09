@@ -1,0 +1,119 @@
+{
+  "test_name": "core_100",
+  "case_id": 107,
+  "input_text": "A boy saw a girl. He was nice. Who was nice?",
+  "expected_answer": ["The boy","The nice boy"],
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Boy A.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","boy","boy 1"],
+          ["isa","girl","girl 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","see"],
+              ["has actor","E","boy 1"],
+              ["has target","E","girl 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","boy","boy 1"], ["has degree property","nice","boy 1","none","person"]]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S3", ["ask", "X", ["has degree property","nice","X","none","person"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","boy","boy 1"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["isa","girl","girl 2"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "show", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["has recipient", "sk0_activity", "boy 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "girl 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@logic": ["isa","boy","boy 1"],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "good", "boy 1", "none", "person", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S3",
+ "@question": ["has degree property", "good", "?:X", "none", "person", ["$ctxt","present","?:Fv7","?:Fv5","?:Fv6"]],
+ "@askvars": 1,
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "good", "?:Br1", "none", "person", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "good", "?:Br1", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "good", "?:Br1", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","boy","?:X","?:Fv9"], ["-has property","girl","?:X","?:Fv9"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","boy 1","W0","?:X3","?:Y3"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S2","assumption",1], [["has degree property", "good", "boy 1", "none", "person", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [2, ["in","sent_S3","goal",1], [["-has degree property", "good", "?:X", "none", "person", ["$ctxt","present","?:Y","?:Z","?:U"]], ["$ans","?:X","?:Y","?:Z","?:U"]]],
+          [3, ["mp",1,2,"fromga",1], [["$ans","boy 1","W0","?:X3","?:Y3"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) sent_S2",
+"  (2) sent_S3",
+"Proof steps:",
+"  (1) The boy A is a good person  [sentence 1]",
+"  (2) If some X is a good person then X is an answer  [from question]",
+"  (3) Boy A is an answer  [from steps 1, 2]"
+],
+  "timestamp": "2026-06-09T11:34:58Z"
+}

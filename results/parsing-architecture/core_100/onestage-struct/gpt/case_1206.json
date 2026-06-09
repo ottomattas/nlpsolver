@@ -1,0 +1,202 @@
+{
+  "test_name": "core_100",
+  "case_id": 1206,
+  "input_text": "John stopped smoking. Does John smoke now?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": false,
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","stop"],
+              ["has actor","E1","John 1"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","smoke"],
+                  ["has actor","E2","John 1"]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["@id","S2",
+        ["and",
+          ["holds","W0",
+            ["not",
+              ["exists","E2",
+                ["and",
+                  ["isa","activity","E2"],
+                  ["has type","E2","smoke"],
+                  ["has actor","E2","John 1"]
+                ]
+              ]
+            ]
+          ],
+          ["next","W0","W1"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W1",
+          ["not",
+            ["exists","E3",
+              ["and",
+                ["isa","activity","E3"],
+                ["has type","E3","smoke"],
+                ["has actor","E3","John 1"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W1","present"]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["not",
+          ["exists","E4",
+            ["and", ["isa","activity","E4"], ["has type","E4","smoke"], ["has actor","E4","John 1"]]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_fixes": ["logconvert: hoist nested @ids"],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "stop", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "John 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk1_activity", "smoke", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk1_activity", "John 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@logic": [["-isa","activity","?:E2"],
+            ["-has type", "?:E2", "smoke", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+            ["-has actor", "?:E2", "John 1", ["$ctxt","present","W0","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S3",
+ "@logic": [["-isa","activity","?:E3"],
+            ["-has type", "?:E3", "smoke", ["$ctxt","present","W1","?:Fv5","?:Fv6"]],
+            ["-has actor", "?:E3", "John 1", ["$ctxt","present","W1","?:Fv5","?:Fv6"]],
+            ["-actuality","?:E3"]
+           ],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-isa","activity","?:E4"],
+            ["-has type", "?:E4", "smoke", ["$ctxt","?:Fv14","?:Fv13","?:Fv7","?:Fv8"]],
+            ["-has actor", "?:E4", "John 1", ["$ctxt","?:Fv16","?:Fv15","?:Fv7","?:Fv8"]],
+            ["-actuality","?:E4"]
+           ],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["isa","activity","sk2_activity"], ["$defq0"]],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["has type", "sk2_activity", "smoke", ["$ctxt","?:Fv20","?:Fv19","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["has actor", "sk2_activity", "John 1", ["$ctxt","?:Fv22","?:Fv21","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["actuality","sk2_activity"], ["$defq0"]],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S2","assumption",1], [["-has type", "?:X", "smoke", ["$ctxt","present","W0","?:Y","?:Z"]], ["-has actor", "?:X", "John 1", ["$ctxt","present","W0","?:Y","?:Z"]], ["-isa","activity","?:X"]]],
+          [2, ["in","sent_S4","assumption",1], [["$defq0"], ["has type", "sk2_activity", "smoke", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [3, ["in","sent_S4","goal",1], [["-$defq0"]]],
+          [4, ["mp", 1, [2,1], 3, "fromga", 1], [["-isa","activity","sk2_activity"], ["-has actor", "sk2_activity", "John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [5, ["in","sent_S4","assumption",1], [["$defq0"], ["has actor", "sk2_activity", "John 1", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [6, ["mp", [4,1], [5,1], 3, "fromga", 1], [["-isa","activity","sk2_activity"]]],
+          [7, ["in","sent_S4","assumption",1], [["isa","activity","sk2_activity"], ["$defq0"]]],
+          [8, ["mp",6,7,3,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) sent_S2",
+"  (2) sent_S4",
+"Proof steps (by contradiction):",
+"  (1) If X is a smoke event and John performs X then X is not an activity  [sentence 1]",
+"  (2) Answer holds or the event act3 is a smoke event  [sentence 2]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) If the event act3 is an activity then John does not perform the act3  [from steps 1, 2, 3]",
+"  (5) Answer holds or John performs the event act3  [sentence 2]",
+"  (6) The act3 is not an activity  [from steps 4, 5, 3]",
+"  (7) The event act3 is an activity or answer holds  [sentence 2]",
+"  (8) Contradiction  [from steps 6, 7, 3]"
+],
+  "timestamp": "2026-06-09T11:37:35Z"
+}

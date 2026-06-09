@@ -1,0 +1,157 @@
+{
+  "test_name": "core_100",
+  "case_id": 524,
+  "input_text": "John likes all boxers. Mike is a boxer. John likes Mike?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John likes all boxers.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 likes all boxers.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "boxers", "type": "generic", "category": "person"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a boxer.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Mike 2 is a boxer.",
+          "type": "situation",
+          "entities": [{"id": "Mike 2", "type": "concrete", "category": "person"},
+            {"id": "boxer", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John likes Mike?",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Does John 1 like Mike 2?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Mike 2", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies", ["isa","boxer","X"], ["normally", ["has property","like","John 1"]]]
+          ]
+        ],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id", "S2", ["holds", "W0", ["isa","boxer","Mike 2"]]],
+    ["@id", "S3", ["question", ["has property","like","John 1"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 likes all boxers."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","boxer","?:X"],
+            ["has degree property", "like", "#:John 1", "none", "?:Fv15", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","boxer",1], ["$not", ["has degree property", "like", "#:John 1", "none", "?:Fv16", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "John 1 likes all boxers."},
+{"@name": "sent_S2",
+ "@logic": ["isa","boxer","#:Mike 2"],
+ "@nl": "Mike 2 is a boxer."},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "like", "#:John 1", "none", "?:Fv17", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Does John 1 like Mike 2?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-has degree property", "like", "#:John 1", "none", "?:Fv18", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 1 like Mike 2?"},
+{"@name": "sent_S3",
+ "@question": ["$defq0"],
+ "@nl": "Does John 1 like Mike 2?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "like", "#:John 1", "none", "?:Fv19", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "like", "#:John 1", "none", "?:Fv20", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "like", "#:John 1", "none", "?:Fv21", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Does John 1 like Mike 2?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","boxer","$some_not_boxer"],
+ "@nl": "[population: from input]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "blockers": [["$block", ["$","boxer",1], ["$not", ["has degree property", "like", "#:John 1", "none", "?:X3", ["$ctxt","present","?:Y3","?:Z3","?:U3"]]]]
+        ],
+        "confidence": 0.98,
+        "positive proof": [[1, ["in","sent_S1","assumption",0.98], [["$block", ["$","boxer",1], ["$not", ["has degree property", "like", "#:John 1", "none", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["has degree property", "like", "#:John 1", "none", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","boxer","?:2006"]]],
+          [2, ["in","sent_S2","assumption",1], [["isa","boxer","#:Mike 2"]]],
+          [3, ["mp", [1,2], 2, "fromassumption", 0.98], [["$block", ["$","boxer",1], ["$not", ["has degree property", "like", "#:John 1", "none", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["has degree property", "like", "#:John 1", "none", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]],
+          [4, ["in","sent_S3","assumption",1], [["$defq0"], ["-has degree property", "like", "#:John 1", "none", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [5, ["in","sent_S3","goal",1], [["-$defq0"]]],
+          [6, ["mp", [3,1], [4,1], 5, "fromga", 0.98], [["$block", ["$","boxer",1], ["$not", ["has degree property", "like", "#:John 1", "none", "?:X3", ["$ctxt","present","?:Y3","?:Z3","?:U3"]]]]]]
+        ]
+      },
+      {
+        "answer": true,
+        "blockers": [["$block", ["$","boxer",1], ["$not", ["has degree property", "like", "#:John 1", "none", "?:X3", ["$ctxt","past","?:Y3","?:Z3","?:U3"]]]],
+          ["$block", 0, ["$not", ["has degree property", "like", "#:John 1", "none", "?:V3", ["$ctxt","present","?:Y3","?:Z3","?:U3"]]]]
+        ],
+        "confidence": 0.9702,
+        "positive proof": [[1, ["in","sent_S1","assumption",0.98], [["$block", ["$","boxer",1], ["$not", ["has degree property", "like", "#:John 1", "none", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["has degree property", "like", "#:John 1", "none", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","boxer","?:2006"]]],
+          [2, ["in","sent_S2","assumption",1], [["isa","boxer","#:Mike 2"]]],
+          [3, ["mp", [1,2], 2, "fromassumption", 0.98], [["$block", ["$","boxer",1], ["$not", ["has degree property", "like", "#:John 1", "none", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["has degree property", "like", "#:John 1", "none", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]],
+          [4, ["in","sent_S3","assumption",0.99], [["$block", 0, ["$not", ["has degree property", "like", "#:John 1", "none", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["-has degree property", "like", "#:John 1", "none", "?:V", ["$ctxt","past","?:Y","?:Z","?:U"]], ["has degree property", "like", "#:John 1", "none", "?:W", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [5, ["mp", [3,1], [4,1], "fromassumption", 0.9702], [["$block", ["$","boxer",1], ["$not", ["has degree property", "like", "#:John 1", "none", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]]]], ["$block", 0, ["$not", ["has degree property", "like", "#:John 1", "none", "?:V", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["has degree property", "like", "#:John 1", "none", "?:W", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [6, ["in","sent_S3","assumption",1], [["$defq0"], ["-has degree property", "like", "#:John 1", "none", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [7, ["in","sent_S3","goal",1], [["-$defq0"]]],
+          [8, ["mp", [5,2], [6,1], 7, "fromga", 0.9702], [["$block", ["$","boxer",1], ["$not", ["has degree property", "like", "#:John 1", "none", "?:X3", ["$ctxt","past","?:Y3","?:Z3","?:U3"]]]], ["$block", 0, ["$not", ["has degree property", "like", "#:John 1", "none", "?:V3", ["$ctxt","present","?:Y3","?:Z3","?:U3"]]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 98%.",
+"Sentences used:",
+"  (1) John likes all boxers.",
+"  (2) Mike is a boxer.",
+"  (3) John likes Mike?",
+"Proof steps:",
+"  (1) If some E1 is a boxer then John is like, except when John is not like  [sentence 1, confidence 98%]",
+"  (2) The like likes Mike is a boxer  [sentence 2]",
+"  (3) John is like, except when John is not like  [from steps 1, 2, confidence 98%]",
+"  (4) If John is like then answer holds  [sentence 3]",
+"  (5) assume for contradiction: the answer is no  [from question]",
+"  (6) Outstanding exception: John is not like  [from steps 3, 4, 5, confidence 98%]",
+"Exceptions checked and not holding:",
+"  John is not like"
+],
+  "timestamp": "2026-06-09T11:17:14Z"
+}

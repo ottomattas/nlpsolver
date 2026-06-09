@@ -1,0 +1,249 @@
+{
+  "test_name": "core_100",
+  "case_id": 663,
+  "input_text": "The children playing in the garden laughed. The children were in the garden?",
+  "expected_answer": true,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "Probably true.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The children playing in the garden laughed.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The children 1 laughed.",
+          "type": "situation",
+          "entities": [{"id": "children 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "laugh", "mode": "event"}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "The children 1 were playing in the garden 2.",
+          "type": "situation",
+          "entities": [{"id": "children 1", "type": "concrete", "category": "person"},
+            {"id": "garden 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "play",
+              "mode": "event",
+              "roles": {"location": "garden 2", "location_prep": "in"}
+            }
+          ],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The children were in the garden?",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Were the children 1 in the garden 2?",
+          "type": "query",
+          "entities": [{"id": "children 1", "type": "concrete", "category": "person"},
+            {"id": "garden 2", "type": "concrete", "category": "place"}
+          ],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","children","children 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","laugh"],
+                ["has actor","E","children 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","children","children 1"],
+          ["isa","garden","garden 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","play"],
+              ["has actor","E","children 1"],
+              ["has location","E","garden 2","in"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["question",
+        ["and",
+          ["isa","children","children 1"],
+          ["isa","garden","garden 2"],
+          ["@time", "past", ["is rel2","in","children 1","garden 2"]]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","children","#:children 1"],
+ "@nl": "The children 1 laughed."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The children 1 laughed."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "laugh", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The children 1 laughed."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:children 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The children 1 laughed."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The children 1 laughed."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The children 1 laughed."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The children 1 laughed."},
+{"@name": "sent_S2",
+ "@logic": ["isa","children","#:children 1"],
+ "@nl": "The children 1 were playing in the garden 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","garden","#:garden 2"],
+ "@nl": "The children 1 were playing in the garden 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The children 1 were playing in the garden 2."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "play", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The children 1 were playing in the garden 2."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:children 1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The children 1 were playing in the garden 2."},
+{"@name": "sent_S2",
+ "@logic": ["has location", "sk1_activity", "#:garden 2", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The children 1 were playing in the garden 2."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The children 1 were playing in the garden 2."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The children 1 were playing in the garden 2."},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","children","#:children 1"]],
+ "@nl": "Were the children 1 in the garden 2?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","garden","#:garden 2"]],
+ "@nl": "Were the children 1 in the garden 2?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "in", "#:children 1", "#:garden 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Were the children 1 in the garden 2?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-isa","children","#:children 1"],
+            ["-isa","garden","#:garden 2"],
+            ["-is rel2", "in", "#:children 1", "#:garden 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+            ["$defq0"]
+           ],
+ "@nl": "Were the children 1 in the garden 2?"},
+{"@name": "sent_S3",
+ "@question": ["$defq0"],
+ "@nl": "Were the children 1 in the garden 2?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "#:children 1", "#:garden 2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["is rel2", "in", "#:children 1", "#:garden 2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "#:children 1", "#:garden 2", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Were the children 1 in the garden 2?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "blockers": [["$block", 0, ["$not", ["is rel2", "in", "#:children 1", "#:garden 2", ["$ctxt","past","W0","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.915,
+        "positive proof": [[1, ["in","frm_52","axiom",0.9], [["$block", 0, ["$not", ["is rel2","in","?:X","?:Y","?:Z"]]], ["is rel2","in","?:X","?:Y","?:Z"], ["-has location","?:U","?:Y","in","?:Z"], ["-has actor","?:U","?:X","?:Z"]]],
+          [2, ["in","sent_S2","assumption",1], [["has location", "sk1_activity", "#:garden 2", "in", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["mp", [1,2], 2, "fromassumption", 0.9], [["$block", 0, ["$not", ["is rel2", "in", "?:X", "#:garden 2", ["$ctxt","past","W0","?:Y","?:Z"]]]], ["is rel2", "in", "?:X", "#:garden 2", ["$ctxt","past","W0","?:Y","?:Z"]], ["-has actor", "sk1_activity", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]]]],
+          [4, ["in","sent_S2","assumption",1], [["has actor", "sk1_activity", "#:children 1", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [5, ["mp", [3,2], 4, "fromassumption", 0.9], [["$block", 0, ["$not", ["is rel2", "in", "#:children 1", "#:garden 2", ["$ctxt","past","W0","?:X","?:Y"]]]], ["is rel2", "in", "#:children 1", "#:garden 2", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [6, ["in","sent_S3","assumption",1], [["-isa","garden","#:garden 2"], ["-isa","children","#:children 1"], ["$defq0"], ["-is rel2", "in", "#:children 1", "#:garden 2", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [7, ["in","sent_S3","goal",1], [["-$defq0"]]],
+          [8, ["mp", [5,1], [6,3], 7, "fromga", 0.9], [["-isa","garden","#:garden 2"], ["-isa","children","#:children 1"], ["$block", 0, ["$not", ["is rel2", "in", "#:children 1", "#:garden 2", ["$ctxt","past","W0","?:X","?:Y"]]]]]],
+          [9, ["in","sent_S2","assumption",1], [["isa","garden","#:garden 2"]]],
+          [10, ["mp",8,9,"fromga",0.9], [["-isa","children","#:children 1"], ["$block", 0, ["$not", ["is rel2", "in", "#:children 1", "#:garden 2", ["$ctxt","past","W0","?:X","?:Y"]]]]]],
+          [11, ["in","sent_S1","assumption",1], [["isa","children","#:children 1"]]],
+          [12, ["mp",10,11,"fromga",0.9], [["$block", 0, ["$not", ["is rel2", "in", "#:children 1", "#:garden 2", ["$ctxt","past","W0","?:X3","?:Y3"]]]]]],
+          [13, ["in","sent_S2","assumption",1], [["isa","children","#:children 1"]]],
+          [14, ["mp",10,13,"fromga",0.9], [["$block", 0, ["$not", ["is rel2", "in", "#:children 1", "#:garden 2", ["$ctxt","past","W0","?:X3","?:Y3"]]]]]],
+          [15, ["cumul",12,14,"fromga",0.915], [["$block", 0, ["$not", ["is rel2", "in", "#:children 1", "#:garden 2", ["$ctxt","past","W0","?:X3","?:Y3"]]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 92%.",
+"Sentences used:",
+"  (1) The children playing in the garden laughed.",
+"  (2) The children were in the garden?",
+"Knowledge used:",
+"  If an event U takes place in some Y and some X performs U then normally X is in Y. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If an event U takes place in some Y and some X performs U then normally X is in Y  [background knowledge, confidence 90%]",
+"  (2) The event act2 takes place in the garden B  [sentence 1]",
+"  (3) If some X performs the event act2 then normally X is in the garden B  [from steps 1, 2, confidence 90%]",
+"  (4) The children A performs the event act2  [sentence 1]",
+"  (5) Normally the children A is in the garden B  [from steps 3, 4, confidence 90%]",
+"  (6) If the children A is in the garden B then answer holds  [sentence 2]",
+"  (7) assume for contradiction: the answer is no  [from question]",
+"  (8) Outstanding exception: the children A is not in the garden B  [from steps 5, 6, 7, confidence 90%]",
+"  (9) The garden B is a garden  [sentence 1]",
+"  (10) Outstanding exception: the children A is not in the garden B  [from steps 8, 9, confidence 90%]",
+"  (11) The children A is a children  [sentence 1]",
+"  (12) Outstanding exception: the children A is not in the garden B  [from steps 10, 11, confidence 90%]",
+"  (13) The children A is a children  [sentence 1]",
+"  (14) Outstanding exception: the children A is not in the garden B  [from steps 10, 13, confidence 90%]",
+"  (15) Outstanding exception: the children A is not in the garden B  [from steps 12, 14, confidence 92%]",
+"Exceptions checked and not holding:",
+"  children A is not in garden B"
+],
+  "timestamp": "2026-06-09T09:34:09Z"
+}

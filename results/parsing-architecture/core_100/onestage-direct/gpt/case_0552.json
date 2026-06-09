@@ -1,0 +1,77 @@
+{
+  "test_name": "core_100",
+  "case_id": 552,
+  "input_text": "John is as tall as Bill. Is John's height equal to Bill's?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["=", ["$measure_of","height","John 1","W0"], ["$measure_of","height","Bill 2","W0"]]
+      ]
+    ],
+    ["@id","S2",
+      ["question",
+        ["=", ["$measure_of","height","John 1","W0"], ["$measure_of","height","Bill 2","W0"]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["=", ["$measure_of","height","John 1","W0"], ["$measure_of","height","Bill 2","W0"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["=", ["$measure_of","height","John 1","W0"], ["$measure_of","height","Bill 2","W0"]]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-=", ["$measure_of","height","John 1","W0"], ["$measure_of","height","Bill 2","W0"]],
+            ["$defq0"]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@question": ["$defq0"],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","height","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "height", ["$measure_of","height","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S2","assumption",1], [["-=", ["$measure_of","height","John 1","W0"], ["$measure_of","height","Bill 2","W0"]], ["$defq0"]]],
+          [2, ["in","sent_S2","goal",1], [["-$defq0"]]],
+          [3, ["mp", [1,1], 2, "fromga", 1], [["-=", ["$measure_of","height","John 1","W0"], ["$measure_of","height","Bill 2","W0"]]]],
+          [4, ["in","sent_S1","assumption",1], [["=", ["$measure_of","height","John 1","W0"], ["$measure_of","height","Bill 2","W0"]]]],
+          [5, ["simp",3,4,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) sent_S1",
+"  (2) sent_S2",
+"Proof steps (by contradiction):",
+"  (1) If the height of John equals the height of Bill then answer holds  [sentence 2]",
+"  (2) assume for contradiction: the answer is no  [from question]",
+"  (3) The height of John does not equal the height of Bill  [from steps 1, 2]",
+"  (4) The height of John equals the height of Bill  [sentence 1]",
+"  (5) Contradiction  [from steps 3, 4]"
+],
+  "timestamp": "2026-06-09T11:28:58Z"
+}

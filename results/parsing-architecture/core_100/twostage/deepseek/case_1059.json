@@ -1,0 +1,189 @@
+{
+  "test_name": "core_100",
+  "case_id": 1059,
+  "input_text": "Eve reported that Tom arrived. Did Tom depart?",
+  "expected_answer": null,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Eve reported that Tom arrived.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Eve 1 reported that Tom 2 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "Tom 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "report",
+              "mode": "speech_act",
+              "roles": {
+                "actor": "Eve 1",
+                "content": {"root": "arrive", "mode": "event", "roles": {"actor": "Tom 2"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Did Tom depart?",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Did Tom 2 depart?",
+          "type": "query",
+          "entities": [{"id": "Tom 2", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "depart", "mode": "event", "roles": {"actor": "Tom 2"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["isa","person","Tom 2"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","report"],
+              ["has actor","E1","Eve 1"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","arrive"],
+                  ["has actor","E2","Tom 2"],
+                  ["has time","E2","past","in"]
+                ]
+              ],
+              ["speech_act","E1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["question",
+        ["and",
+          ["isa","person","Tom 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","depart"],
+              ["has actor","E","Tom 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Tom 2"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "report", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk1_activity", "arrive", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk1_activity", "#:Tom 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["speech_act","sk0_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:Tom 2"]],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk2_activity"]],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk2_activity", "depart", ["$ctxt","past","?:Fv11","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk2_activity", "#:Tom 2", ["$ctxt","past","?:Fv13","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk2_activity", "past", "in", ["$ctxt","past","?:Fv15","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk2_activity"]],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:Tom 2"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "depart", ["$ctxt","past","?:Fv21","?:Fv3","?:Fv4"]],
+            ["-has actor", "?:E", "#:Tom 2", ["$ctxt","past","?:Fv23","?:Fv3","?:Fv4"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S2",
+ "@question": ["$defq0"],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","report","?:Fv27"], ["has type","?:E","announce","?:Fv27"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","announce","?:Fv28"], ["has type","?:E","report","?:Fv28"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "timestamp": "2026-06-09T09:38:31Z"
+}

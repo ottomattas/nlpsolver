@@ -1,0 +1,120 @@
+{
+  "test_name": "core_100",
+  "case_id": 1318,
+  "input_text": "John Sweeney is a car. John Smith is bad. Who is John Sweeney?",
+  "expected_answer": "A car.",
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "A car.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John Sweeney is a car.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John Sweeney 1 is a car.",
+          "type": "situation",
+          "entities": [{"id": "John Sweeney 1", "type": "concrete", "category": "person"},
+            {"id": "car", "type": "generic", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John Smith is bad.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John Smith 2 is bad.",
+          "type": "situation",
+          "entities": [{"id": "John Smith 2", "type": "concrete", "category": "person"}],
+          "adjectives": [["bad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Who is John Sweeney?",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Which entity is John Sweeney 1?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "John Sweeney 1", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","car","John Sweeney 1"]]],
+    ["@id", "S2", ["holds", "W0", ["has degree property","bad","John Smith 2","none","person"]]],
+    ["@id", "S3", ["ask", "X", ["=","X","John Sweeney 1"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","person","#:John Smith 2"],
+ "@nl": "John Smith 2 is bad."},
+{"@name": "sent_S1",
+ "@logic": ["isa","car","#:John Sweeney 1"],
+ "@nl": "John Sweeney 1 is a car."},
+{"@name": "sent_S2",
+ "@logic": ["-has degree property", "good", "#:John Smith 2", "none", "person", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John Smith 2 is bad."},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-isa","?:X","#:John Sweeney 1"], ["$defq0","?:X"]],
+ "@nl": "Which entity is John Sweeney 1?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa","?:X","#:John Sweeney 1"]],
+ "@nl": "Which entity is John Sweeney 1?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-=","?:X","#:John Sweeney 1"], ["$defq0","?:X"]],
+ "@nl": "Which entity is John Sweeney 1?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["=","?:X","#:John Sweeney 1"]],
+ "@nl": "Which entity is John Sweeney 1?"},
+{"@name": "sent_S3",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@who_entity": "John Sweeney 1",
+ "@who_kind": "who",
+ "@nl": "Which entity is John Sweeney 1?"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","car","$some_car"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","#:John Sweeney 1"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S3","assumption",1], [["-isa","?:X","#:John Sweeney 1"], ["$defq0","?:X"]]],
+          [2, ["in","sent_S1","assumption",1], [["isa","car","#:John Sweeney 1"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["$defq0","car"]]],
+          [4, ["in","sent_S3","assumption",1], [["=","?:X","#:John Sweeney 1"], ["-$defq0","?:X"]]],
+          [5, ["mp", 3, [4,1], "fromassumption", 1], [["=","car","#:John Sweeney 1"]]],
+          [6, ["=", 5, [3,0,1], "fromassumption", 1], [["$defq0","#:John Sweeney 1"]]],
+          [7, ["in","sent_S3","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [8, ["mp",6,7,"fromga",1], [["$ans","#:John Sweeney 1"]]]
+        ]
+      },
+      {
+        "answer": [["$ans","car"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S3","assumption",1], [["-isa","?:X","#:John Sweeney 1"], ["$defq0","?:X"]]],
+          [2, ["in","sent_S1","assumption",1], [["isa","car","#:John Sweeney 1"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["$defq0","car"]]],
+          [4, ["in","sent_S3","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [5, ["mp",3,4,"fromga",1], [["$ans","car"]]]
+        ]
+      }
+    ]
+  },
+  "timestamp": "2026-06-09T11:25:13Z"
+}

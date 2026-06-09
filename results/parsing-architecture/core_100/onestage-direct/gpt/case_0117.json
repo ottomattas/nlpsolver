@@ -1,0 +1,149 @@
+{
+  "test_name": "core_100",
+  "case_id": 117,
+  "input_text": "Americans can not disappear. Mr Dursley is an American. Mr Dursley can disappear?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "False.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","American","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S2", ["holds", "W0", ["isa","American","Mr Dursley 1"]]],
+    ["@id","S3",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","disappear"],
+            ["has actor","E","Mr Dursley 1"],
+            ["capability","E"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","american","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@logic": ["isa","american","Mr Dursley 1"],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk0_activity"]],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk0_activity", "disappear", ["$ctxt","?:Fv14","?:Fv13","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk0_activity", "Mr Dursley 1", ["$ctxt","?:Fv16","?:Fv15","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["capability","sk0_activity"]],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv20","?:Fv19","?:Fv7","?:Fv8"]],
+            ["-has actor", "?:E", "Mr Dursley 1", ["$ctxt","?:Fv22","?:Fv21","?:Fv7","?:Fv8"]],
+            ["-capability","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@question": ["$defq0"],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","American","$some_not_American"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S1","assumption",1], [["-has type", "?:X", "disappear", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "?:X", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","american","?:W"], ["-isa","activity","?:X"], ["-capability","?:X"]]],
+          [2, ["in","sent_S3","assumption",1], [["-$defq0"], ["has type", "sk0_activity", "disappear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has type", "sk0_activity", "disappear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [5, ["in","sent_S3","assumption",1], [["-$defq0"], ["isa","activity","sk0_activity"]]],
+          [6, ["mp",5,3,"fromga",1], [["isa","activity","sk0_activity"]]],
+          [7, ["in","sent_S3","assumption",1], [["-$defq0"], ["capability","sk0_activity"]]],
+          [8, ["mp",7,3,"fromga",1], [["capability","sk0_activity"]]],
+          [9, ["mp",1,4,6,8,"fromga",1], [["-has actor", "sk0_activity", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","american","?:X"]]],
+          [10, ["in","sent_S3","assumption",1], [["-$defq0"], ["has actor", "sk0_activity", "Mr Dursley 1", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [11, ["mp",10,3,"fromga",1], [["has actor", "sk0_activity", "Mr Dursley 1", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [12, ["mp",9,11,"fromga",1], [["-isa","american","Mr Dursley 1"]]],
+          [13, ["in","sent_S2","assumption",1], [["isa","american","Mr Dursley 1"]]],
+          [14, ["simp",12,13,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) sent_S1",
+"  (2) sent_S2",
+"  (3) sent_S3",
+"Proof steps (by contradiction):",
+"  (1) If X is a disappear event and some american W performs X and X is an activity then X is not a capability  [sentence 1]",
+"  (2) If answer holds then the event act1 is a disappear event  [sentence 3]",
+"  (3) Answer holds  [assumption]",
+"  (4) The event act1 is a disappear event  [from steps 2, 3]",
+"  (5) If answer holds then the event act1 is an activity  [sentence 3]",
+"  (6) The event act1 is an activity  [from steps 5, 3]",
+"  (7) If answer holds then the event act1 is a capability  [sentence 3]",
+"  (8) The event act1 is a capability  [from steps 7, 3]",
+"  (9) X does not perform the act1  [from steps 1, 4, 6, 8]",
+"  (10) If answer holds then Mr Dursley performs the event act1  [sentence 3]",
+"  (11) Mr Dursley performs the event act1  [from steps 10, 3]",
+"  (12) Mr Dursley is not an american  [from steps 9, 11]",
+"  (13) Mr Dursley is an american  [sentence 2]",
+"  (14) Contradiction  [from steps 12, 13]"
+],
+  "timestamp": "2026-06-09T11:28:14Z"
+}

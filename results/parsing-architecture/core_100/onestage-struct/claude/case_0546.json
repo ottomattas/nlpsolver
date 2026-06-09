@@ -1,0 +1,157 @@
+{
+  "test_name": "core_100",
+  "case_id": 546,
+  "input_text": "Most bears are big. John is a bear. John is big?",
+  "expected_answer": "Likely true.",
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Likely true.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bear","X"],
+              ["normally", ["has degree property","big","X","none","bear"]]
+            ]
+          ]
+        ],
+        ["@p","S1",0.8]
+      ]
+    ],
+    ["@id", "S2", ["holds", "W0", ["isa","bear","John 1"]]],
+    ["@id", "S3", ["question", ["normally", ["has degree property","big","John 1","none","bear"]]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","bear","?:X"],
+            ["has degree property", "big", "?:X", "none", "bear", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","bear",1], ["$not", ["has degree property", "big", "?:X", "none", "bear", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@logic": ["isa","bear","John 1"],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-has degree property", "big", "John 1", "none", "bear", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@question": ["$defq0"],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "big", "$some_big_bear", "none", "bear", ["$ctxt","?:Fv24","?:Fv21","?:Fv22","?:Fv23"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_big_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "big", "$some_not_big_bear", "none", "bear", ["$ctxt","?:Fv32","?:Fv29","?:Fv30","?:Fv31"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv33", ["$ctxt","past","?:Fv11","?:Fv12","?:Fv13"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv34", ["$ctxt","present","?:Fv11","?:Fv12","?:Fv13"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv35", ["$ctxt","present","?:Fv11","?:Fv12","?:Fv13"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv14","?:Fv15","?:Fv16"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv14","?:Fv15","?:Fv16"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv14","?:Fv15","?:Fv16"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "blockers": [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]]
+        ],
+        "confidence": 0.6,
+        "positive proof": [[1, ["in","sent_S1","assumption",0.6], [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "?:X", "none", "bear", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["has degree property", "big", "?:X", "none", "bear", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","bear","?:X"]]],
+          [2, ["in","sent_S2","assumption",1], [["isa","bear","John 1"]]],
+          [3, ["mp", [1,2], 2, "fromassumption", 0.6], [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [4, ["in","sent_S3","assumption",1], [["$defq0"], ["-has degree property", "big", "John 1", "none", "bear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [5, ["in","sent_S3","goal",1], [["-$defq0"]]],
+          [6, ["mp", [3,1], [4,1], 5, "fromga", 0.6], [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]]]]
+        ]
+      },
+      {
+        "answer": true,
+        "blockers": [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","past","?:X3","?:Y3","?:Z3"]]]],
+          ["$block", 0, ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]]
+        ],
+        "confidence": 0.57,
+        "positive proof": [[1, ["in","sent_S1","assumption",0.6], [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "?:X", "none", "bear", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["has degree property", "big", "?:X", "none", "bear", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","bear","?:X"]]],
+          [2, ["in","sent_S2","assumption",1], [["isa","bear","John 1"]]],
+          [3, ["mp", [1,2], 2, "fromassumption", 0.6], [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [4, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:Y", "?:Z", ["$ctxt","present","?:U","?:V","?:W"]]]], ["-has degree property", "big", "?:X", "?:Y", "?:Z", ["$ctxt","past","?:U","?:V","?:W"]], ["has degree property", "big", "?:X", "?:Y", "?:Z", ["$ctxt","present","?:U","?:V","?:W"]]]],
+          [5, ["mp", [3,1], [4,1], "fromassumption", 0.57], [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","past","?:X","?:Y","?:Z"]]]], ["$block", 0, ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [6, ["in","sent_S3","assumption",1], [["$defq0"], ["-has degree property", "big", "John 1", "none", "bear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [7, ["in","sent_S3","goal",1], [["-$defq0"]]],
+          [8, ["mp", [5,2], [6,1], 7, "fromga", 0.57], [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","past","?:X3","?:Y3","?:Z3"]]]], ["$block", 0, ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]]]]
+        ]
+      },
+      {
+        "answer": true,
+        "blockers": [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","past","?:X3","?:Y3","?:Z3"]]]],
+          ["$block", 0, ["$not", ["has degree property", "big", "John 1", "none", "?:U3", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]]
+        ],
+        "confidence": 0.631275,
+        "positive proof": [[1, ["in","sent_S1","assumption",0.6], [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "?:X", "none", "bear", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["has degree property", "big", "?:X", "none", "bear", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","bear","?:X"]]],
+          [2, ["in","sent_S2","assumption",1], [["isa","bear","John 1"]]],
+          [3, ["mp", [1,2], 2, "fromassumption", 0.6], [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [4, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:Y", "?:Z", ["$ctxt","present","?:U","?:V","?:W"]]]], ["-has degree property", "big", "?:X", "?:Y", "?:Z", ["$ctxt","past","?:U","?:V","?:W"]], ["has degree property", "big", "?:X", "?:Y", "?:Z", ["$ctxt","present","?:U","?:V","?:W"]]]],
+          [5, ["mp", [3,1], [4,1], "fromassumption", 0.57], [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","past","?:X","?:Y","?:Z"]]]], ["$block", 0, ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [6, ["in","sent_S3","assumption",1], [["$defq0"], ["-has degree property", "big", "John 1", "none", "bear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [7, ["in","sent_S3","goal",1], [["-$defq0"]]],
+          [8, ["mp", [5,2], [6,1], 7, "fromga", 0.57], [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","past","?:X3","?:Y3","?:Z3"]]]], ["$block", 0, ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]]]],
+          [9, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]]]], ["-has degree property", "big", "?:X", "none", "?:W", ["$ctxt","past","?:Z","?:U","?:V"]], ["has degree property", "big", "?:X", "none", "?:2006", ["$ctxt","present","?:Z","?:U","?:V"]]]],
+          [10, ["mp", [3,1], [9,1], "fromassumption", 0.57], [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","past","?:X","?:Y","?:Z"]]]], ["$block", 0, ["$not", ["has degree property", "big", "John 1", "none", "?:U", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["has degree property", "big", "John 1", "none", "?:V", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [11, ["mp", [10,2], [6,1], 7, "fromga", 0.57], [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","past","?:X3","?:Y3","?:Z3"]]]], ["$block", 0, ["$not", ["has degree property", "big", "John 1", "none", "?:U3", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]]]],
+          [12, ["cumul",8,11,"fromga",0.631275], [["$block", ["$","bear",1], ["$not", ["has degree property", "big", "John 1", "none", "bear", ["$ctxt","past","?:X3","?:Y3","?:Z3"]]]], ["$block", 0, ["$not", ["has degree property", "big", "John 1", "none", "?:U3", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 60%.",
+"Sentences used:",
+"  (1) sent_S1",
+"  (2) sent_S2",
+"  (3) sent_S3",
+"Proof steps:",
+"  (1) If some X is a bear then normally X is a big bear  [sentence 1, confidence 60%]",
+"  (2) John is a bear  [sentence 2]",
+"  (3) Normally John is a big bear  [from steps 1, 2, confidence 60%]",
+"  (4) If John is a big bear then answer holds  [sentence 3]",
+"  (5) assume for contradiction: the answer is no  [from question]",
+"  (6) Outstanding exception: John is not a big bear  [from steps 3, 4, 5, confidence 60%]",
+"Exceptions checked and not holding:",
+"  John is not a big bear"
+],
+  "timestamp": "2026-06-09T11:47:14Z"
+}

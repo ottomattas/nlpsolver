@@ -1,0 +1,241 @@
+{
+  "test_name": "core_100",
+  "case_id": 1156,
+  "input_text": "The teacher showed the students a map. The students saw a map?",
+  "expected_answer": true,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The teacher showed the students a map.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The teacher 1 showed the students 2 a map 3.",
+          "type": "situation",
+          "entities": [{"id": "teacher 1", "type": "concrete", "category": "person"},
+            {"id": "students 2", "type": "concrete", "category": "person"},
+            {"id": "map 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 1", "recipient": "students 2", "target": "map 3"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The students saw a map?",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Did the students 2 see a map?",
+          "type": "query",
+          "entities": [{"id": "students 2", "type": "concrete", "category": "person"},
+            {"id": "map", "type": "generic", "category": "artifact"}
+          ],
+          "actions": [{"root": "see", "mode": "event", "roles": {"actor": "students 2", "target": "map"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","teacher 1"],
+            ["isa","person","students 2"],
+            ["isa","map","map 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","show"],
+                ["has actor","E","teacher 1"],
+                ["has recipient","E","students 2"],
+                ["has target","E","map 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["question",
+        ["exists","X",
+          ["and",
+            ["isa","map","X"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","see"],
+                ["has actor","E","students 2"],
+                ["has target","E","X"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_fixes": ["json: removed content after top-level close bracket"],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","teacher","#:teacher 1"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "entity_S1",
+ "@logic": ["isa","student","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "entity_S1",
+ "@logic": ["isa","student","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:teacher 1"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","map","#:map 3"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "show", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:teacher 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S1",
+ "@logic": ["has recipient", "sk0_activity", "#:students 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:map 3", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","map","sk1_map"]],
+ "@nl": "Did the students 2 see a map?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk2_activity"]],
+ "@nl": "Did the students 2 see a map?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk2_activity", "show", ["$ctxt","past","?:Fv10","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Did the students 2 see a map?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has recipient", "sk2_activity", "#:students 2", ["$ctxt","past","?:Fv12","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Did the students 2 see a map?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk2_activity", "sk1_map", ["$ctxt","past","?:Fv14","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Did the students 2 see a map?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk2_activity", "past", "in", ["$ctxt","past","?:Fv16","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Did the students 2 see a map?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk2_activity"]],
+ "@nl": "Did the students 2 see a map?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-isa","map","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "show", ["$ctxt","past","?:Fv22","?:Fv3","?:Fv4"]],
+            ["-has recipient", "?:E", "#:students 2", ["$ctxt","past","?:Fv24","?:Fv3","?:Fv4"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","past","?:Fv26","?:Fv3","?:Fv4"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did the students 2 see a map?"},
+{"@name": "sent_S2",
+ "@question": ["$defq0"],
+ "@nl": "Did the students 2 see a map?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S2","assumption",1], [["$defq0"], ["-has recipient", "?:X", "#:students 2", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has type", "?:X", "show", ["$ctxt","past","?:V","?:Z","?:U"]], ["-has target", "?:X", "?:W", ["$ctxt","past","?:2006","?:Z","?:U"]], ["-isa","map","?:W"], ["-isa","activity","?:X"], ["-actuality","?:X"]]],
+          [2, ["in","sent_S1","assumption",1], [["has recipient", "sk0_activity", "#:students 2", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S2","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,1], 2, 3, "fromga", 1], [["-isa","activity","sk0_activity"], ["-actuality","sk0_activity"], ["-has type", "sk0_activity", "show", ["$ctxt","past","?:X3","?:Y3","?:Z3"]], ["-has target", "sk0_activity", "?:U3", ["$ctxt","past","?:V3","?:Y3","?:Z3"]], ["-isa","map","?:U3"]]],
+          [5, ["in","sent_S1","assumption",1], [["isa","activity","sk0_activity"]]],
+          [6, ["in","sent_S1","assumption",1], [["actuality","sk0_activity"]]],
+          [7, ["simp",4,5,6,"fromga",1], [["-has type", "sk0_activity", "show", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has target", "sk0_activity", "?:U", ["$ctxt","past","?:V","?:Y","?:Z"]], ["-isa","map","?:U"]]],
+          [8, ["in","sent_S1","assumption",1], [["has type", "sk0_activity", "show", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [9, ["mp",7,8,"fromga",1], [["-has target", "sk0_activity", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-isa","map","?:X"]]],
+          [10, ["in","sent_S1","assumption",1], [["has target", "sk0_activity", "#:map 3", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [11, ["mp",9,10,"fromga",1], [["-isa","map","#:map 3"]]],
+          [12, ["in","sent_S1","assumption",1], [["isa","map","#:map 3"]]],
+          [13, ["simp",11,12,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) The teacher showed the students a map.",
+"  (2) The students saw a map?",
+"Proof steps (by contradiction):",
+"  (1) If the students B is a recipient of X and X is a show event and X targets some W and W is a map and X is an activity then answer holds  [sentence 2]",
+"  (2) The students B is the recipient of the event act1  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) If the event act1 is an activity and the act1 is a show event then the act1 does not target U3  [from steps 1, 2, 3]",
+"  (5) The event act1 is an activity  [sentence 1]",
+"  (6)   [sentence 1]",
+"  (7) If the event act1 is a show event then the act1 does not target U  [from steps 4, 5, 6]",
+"  (8) The event act1 is a show event  [sentence 1]",
+"  (9) The act1 does not target X  [from steps 7, 8]",
+"  (10) The event act1 targets the map C  [sentence 1]",
+"  (11) The map C is not a map  [from steps 9, 10]",
+"  (12) The map C is a map  [sentence 1]",
+"  (13) Contradiction  [from steps 11, 12]"
+],
+  "timestamp": "2026-06-09T09:39:50Z"
+}

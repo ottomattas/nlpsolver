@@ -1,0 +1,347 @@
+{
+  "test_name": "core_100",
+  "case_id": 562,
+  "input_text": "Elephants, foxes and rabbits are neither birds nor small fish. John is a rabbit. John is a small fish?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Elephants, foxes and rabbits are neither birds nor small fish.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Elephants are not birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S2",
+          "text": "Elephants are not small fish.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "fish", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["small","none","fish"]]
+        },
+        {
+          "unit_id": "S3",
+          "text": "Foxes are not birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "foxes", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S4",
+          "text": "Foxes are not small fish.",
+          "type": "strict_rule",
+          "entities": [{"id": "foxes", "type": "generic", "category": "animal"},
+            {"id": "fish", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["small","none","fish"]]
+        },
+        {
+          "unit_id": "S5",
+          "text": "Rabbits are not birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "rabbits", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S6",
+          "text": "Rabbits are not small fish.",
+          "type": "strict_rule",
+          "entities": [{"id": "rabbits", "type": "generic", "category": "animal"},
+            {"id": "fish", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["small","none","fish"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is a rabbit.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "John 1 is a rabbit.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "John is a small fish?",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Is John 1 a small fish?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"},
+            {"id": "fish", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["small","none","fish"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall", "X", ["implies", ["isa","elephant","X"], ["not", ["isa","bird","X"]]]]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","elephant","X"],
+            ["not",
+              ["exists","Y",
+                ["and",
+                  ["isa","fish","Y"],
+                  ["has degree property","small","Y","none","fish"],
+                  ["=","X","Y"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","fox","X"], ["not", ["isa","bird","X"]]]]]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","fox","X"],
+            ["not",
+              ["exists","Y",
+                ["and",
+                  ["isa","fish","Y"],
+                  ["has degree property","small","Y","none","fish"],
+                  ["=","X","Y"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall", "X", ["implies", ["isa","rabbit","X"], ["not", ["isa","bird","X"]]]]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","rabbit","X"],
+            ["not",
+              ["exists","Y",
+                ["and",
+                  ["isa","fish","Y"],
+                  ["has degree property","small","Y","none","fish"],
+                  ["=","X","Y"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S7", ["holds", "W0", ["isa","rabbit","John 1"]]],
+    ["@id","S8",
+      ["question",
+        ["and", ["isa","fish","John 1"], ["has degree property","small","John 1","none","fish"]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Elephants are not birds."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-isa","fish","?:Y"],
+            ["-has degree property", "small", "?:Y", "none", "fish", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-=","?:X","?:Y"]
+           ],
+ "@nl": "Elephants are not small fish."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","fox","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Foxes are not birds."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","fox","?:X"],
+            ["-isa","fish","?:Y"],
+            ["-has degree property", "small", "?:Y", "none", "fish", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["-=","?:X","?:Y"]
+           ],
+ "@nl": "Foxes are not small fish."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","rabbit","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Rabbits are not birds."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","rabbit","?:X"],
+            ["-isa","fish","?:Y"],
+            ["-has degree property", "small", "?:Y", "none", "fish", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["-=","?:X","?:Y"]
+           ],
+ "@nl": "Rabbits are not small fish."},
+{"@name": "sent_S7",
+ "@logic": ["isa","rabbit","#:John 1"],
+ "@nl": "John 1 is a rabbit."},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","fish","#:John 1"]],
+ "@nl": "Is John 1 a small fish?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "small", "#:John 1", "none", "fish", ["$ctxt","present","?:Fv29","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Is John 1 a small fish?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-isa","fish","#:John 1"],
+            ["-has degree property", "small", "#:John 1", "none", "fish", ["$ctxt","present","?:Fv29","?:Fv27","?:Fv28"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 a small fish?"},
+{"@name": "sent_S8",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 a small fish?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "small", "#:John 1", "none", "fish", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "small", "#:John 1", "none", "fish", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "#:John 1", "none", "fish", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 a small fish?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fish","$some_fish"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","fish","$some_not_fish"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fox","$some_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","fox","$some_not_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","rabbit","$some_not_rabbit"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "small", "$some_small_fish", "none", "fish", ["$ctxt","?:Fv82","?:Fv79","?:Fv80","?:Fv81"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fish","$some_small_fish"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "small", "$some_not_small_fish", "none", "fish", ["$ctxt","?:Fv90","?:Fv87","?:Fv88","?:Fv89"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv91","?:Fv35"],
+            ["-has degree property","high","?:X","none","?:Fv92","?:Fv35"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv93","?:Fv36"],
+            ["has degree property","small","?:X","none","?:Fv94","?:Fv36"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","bird","?:X"], ["-isa","fish","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","bird","?:X"], ["-isa","fish","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv95", ["$ctxt","past","?:Fv37","?:Fv38","?:Fv39"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv96", ["$ctxt","present","?:Fv37","?:Fv38","?:Fv39"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv97", ["$ctxt","present","?:Fv37","?:Fv38","?:Fv39"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv40","?:Fv41","?:Fv42"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S6","assumption",1], [["-has degree property", "small", "?:X", "none", "fish", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","rabbit","?:W"], ["-isa","fish","?:X"], ["-=","?:W","?:X"]]],
+          [2, ["in","sent_S8","assumption",1], [["-$defq0"], ["has degree property", "small", "#:John 1", "none", "fish", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has degree property", "small", "#:John 1", "none", "fish", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["in","sent_S8","assumption",1], [["-$defq0"], ["isa","fish","#:John 1"]]],
+          [6, ["mp",5,3,"fromga",1], [["isa","fish","#:John 1"]]],
+          [7, ["mp",1,4,6,"fromga",1], [["-isa","rabbit","?:X"], ["-=","?:X","#:John 1"]]],
+          [8, ["in","sent_S7","assumption",1], [["isa","rabbit","#:John 1"]]],
+          [9, ["mp",7,8,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Elephants, foxes and rabbits are neither birds nor small fish.",
+"  (2) John is a rabbit.",
+"  (3) John is a small fish?",
+"Proof steps (by contradiction):",
+"  (1) If some fish X is a small fish then W does not equal X  [sentence 1]",
+"  (2) If answer holds then John is a small fish  [sentence 3]",
+"  (3) Answer holds  [assumption]",
+"  (4) John is a small fish  [from steps 2, 3]",
+"  (5) If answer holds then John is a fish  [sentence 3]",
+"  (6) John is a fish  [from steps 5, 3]",
+"  (7) X does not equal John  [from steps 1, 4, 6]",
+"  (8) John is a rabbit  [sentence 2]",
+"  (9) Contradiction  [from steps 7, 8]"
+],
+  "timestamp": "2026-06-09T11:22:10Z"
+}

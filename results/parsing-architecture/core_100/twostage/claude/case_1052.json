@@ -1,0 +1,107 @@
+{
+  "test_name": "core_100",
+  "case_id": 1052,
+  "input_text": "The city was destroyed. Is the city intact?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "The city was destroyed.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The city 1 was destroyed.",
+          "type": "situation",
+          "entities": [{"id": "city 1", "type": "concrete", "category": "place"}],
+          "adjectives": [["destroyed","none","city"]],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Is the city intact?",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Is the city 1 intact?",
+          "type": "query",
+          "entities": [{"id": "city 1", "type": "concrete", "category": "place"}],
+          "adjectives": [["intact","none","city"]],
+          "pre_state": "W1"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","city","city 1"],
+            ["has degree property","destroyed","city 1","none","city"]
+          ]
+        ],
+        ["next","W0","W1"],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S2", ["question", ["has degree property","intact","city 1","none","city"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","city","#:city 1"],
+ "@nl": "The city 1 was destroyed."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "destroyed", "#:city 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The city 1 was destroyed."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The city 1 was destroyed."},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "intact", "#:city 1", ["$ctxt","present","W1","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Is the city 1 intact?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-has property", "intact", "#:city 1", ["$ctxt","present","W1","?:Fv3","?:Fv4"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is the city 1 intact?"},
+{"@name": "sent_S2",
+ "@question": ["$defq0"],
+ "@nl": "Is the city 1 intact?"},
+{"@name": "sent_S2",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "intact", "#:city 1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "intact", "#:city 1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "intact", "#:city 1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the city 1 intact?"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","destroyed","?:X","?:Fv6"],
+            ["-has property","intact","?:X","?:Fv6"],
+            ["$block", 0, ["has property","intact","?:X","?:Fv6"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","destroyed","?:X","?:Fv7"],
+            ["-has property","intact","?:X","?:Fv7"],
+            ["$block", 0, ["has property","destroyed","?:X","?:Fv7"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "timestamp": "2026-06-09T11:26:10Z"
+}

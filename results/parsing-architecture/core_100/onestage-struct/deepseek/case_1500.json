@@ -1,0 +1,121 @@
+{
+  "test_name": "core_100",
+  "case_id": 1500,
+  "input_text": "Tallinn is hardly in Latvia. Tallinn is in Latvia?",
+  "expected_answer": "Likely false.",
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Probably false.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","city","Tallinn 1"],
+            ["isa","country","Latvia 2"],
+            ["is rel2","in","Tallinn 1","Latvia 2"]
+          ]
+        ],
+        ["@p","S1",0.2]
+      ]
+    ],
+    ["@id","S2",
+      ["question",
+        ["and",
+          ["isa","city","Tallinn 1"],
+          ["isa","country","Latvia 2"],
+          ["is rel2","in","Tallinn 1","Latvia 2"]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","city","Tallinn 1"],
+            ["-isa","country","Latvia 2"],
+            ["-is rel2", "in", "Tallinn 1", "Latvia 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","city","Tallinn 1"]],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","country","Latvia 2"]],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "in", "Tallinn 1", "Latvia 2", ["$ctxt","present","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question",
+ "@logic": [["-isa","city","Tallinn 1"],
+            ["-isa","country","Latvia 2"],
+            ["-is rel2", "in", "Tallinn 1", "Latvia 2", ["$ctxt","present","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$defq0"]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@question": ["$defq0"],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "Tallinn 1", "Latvia 2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "in", "Tallinn 1", "Latvia 2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "Tallinn 1", "Latvia 2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","country","?:X"], ["isa","state","?:X"]],
+ "@confidence": 0.92,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","state","?:X"], ["isa","country","?:X"]],
+ "@confidence": 0.92,
+ "@nl": "[generated: frm_syn]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 0.6,
+        "negative proof": [[1, ["in","sent_S1","assumption",0.6], [["-isa","city","Tallinn 1"], ["-isa","country","Latvia 2"], ["-is rel2", "in", "Tallinn 1", "Latvia 2", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [2, ["in","sent_S2","assumption",1], [["-$defq0"], ["is rel2", "in", "Tallinn 1", "Latvia 2", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["is rel2", "in", "Tallinn 1", "Latvia 2", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["in","sent_S2","assumption",1], [["-$defq0"], ["isa","city","Tallinn 1"]]],
+          [6, ["mp",5,3,"fromga",1], [["isa","city","Tallinn 1"]]],
+          [7, ["in","sent_S2","assumption",1], [["-$defq0"], ["isa","country","Latvia 2"]]],
+          [8, ["mp",7,3,"fromga",1], [["isa","country","Latvia 2"]]],
+          [9, ["mp", [1,2], 4, 6, 8, "fromga", 0.6], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 60%.",
+"Sentences used:",
+"  (1) sent_S1",
+"  (2) sent_S2",
+"Proof steps (by contradiction):",
+"  (1) If Tallinn is a city and Latvia is a country then Tallinn is not in Latvia  [sentence 1, confidence 60%]",
+"  (2) If answer holds then Tallinn is in Latvia  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) Tallinn is in Latvia  [from steps 2, 3]",
+"  (5) If answer holds then Tallinn is a city  [sentence 2]",
+"  (6) Tallinn is a city  [from steps 5, 3]",
+"  (7) If answer holds then Latvia is a country  [sentence 2]",
+"  (8) Latvia is a country  [from steps 7, 3]",
+"  (9) Contradiction  [from steps 1, 4, 6, 8, confidence 60%]"
+],
+  "timestamp": "2026-06-09T11:27:45Z"
+}

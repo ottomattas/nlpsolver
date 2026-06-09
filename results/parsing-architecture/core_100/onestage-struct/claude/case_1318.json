@@ -1,0 +1,86 @@
+{
+  "test_name": "core_100",
+  "case_id": 1318,
+  "input_text": "John Sweeney is a car. John Smith is bad. Who is John Sweeney?",
+  "expected_answer": "A car.",
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "A car.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","car","John Sweeney 1"]]],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John Smith 2"],
+          ["has degree property","bad","John Smith 2","none","person"]
+        ]
+      ]
+    ],
+    ["@id", "S3", ["ask", "X", ["isa","X","John Sweeney 1"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","car","John Sweeney 1"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","John Smith 2"],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@logic": ["-has degree property", "good", "John Smith 2", "none", "person", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-isa","?:X","John Sweeney 1"], ["$defq0","?:X"]],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa","?:X","John Sweeney 1"]],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-=","?:X","John Sweeney 1"], ["$defq0","?:X"]],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["=","?:X","John Sweeney 1"]],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@who_entity": "John Sweeney 1",
+ "@who_kind": "who",
+ "@nl": "[generated: sent_S3]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","John Sweeney 1"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S1","assumption",1], [["isa","car","John Sweeney 1"]]],
+          [2, ["in","sent_S3","assumption",1], [["-isa","?:X","John Sweeney 1"], ["$defq0","?:X"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["$defq0","car"]]],
+          [4, ["in","sent_S3","assumption",1], [["=","?:X","John Sweeney 1"], ["-$defq0","?:X"]]],
+          [5, ["mp", 3, [4,1], "fromassumption", 1], [["=","car","John Sweeney 1"]]],
+          [6, ["simp",1,5,"fromassumption",1], [["isa","John Sweeney 1","John Sweeney 1"]]],
+          [7, ["mp",6,2,"fromassumption",1], [["$defq0","John Sweeney 1"]]],
+          [8, ["in","sent_S3","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [9, ["mp",7,8,"fromga",1], [["$ans","John Sweeney 1"]]]
+        ]
+      },
+      {
+        "answer": [["$ans","car"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S1","assumption",1], [["isa","car","John Sweeney 1"]]],
+          [2, ["in","sent_S3","assumption",1], [["-isa","?:X","John Sweeney 1"], ["$defq0","?:X"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["$defq0","car"]]],
+          [4, ["in","sent_S3","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [5, ["mp",3,4,"fromga",1], [["$ans","car"]]]
+        ]
+      }
+    ]
+  },
+  "timestamp": "2026-06-09T11:52:05Z"
+}

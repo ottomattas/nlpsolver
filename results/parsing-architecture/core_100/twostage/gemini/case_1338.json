@@ -1,0 +1,245 @@
+{
+  "test_name": "core_100",
+  "case_id": 1338,
+  "input_text": "John is a nice man. John has an apple. Mike is a nice man. Greg is a bad man. Mike has a pear.\n      Which nice man has an apple and a pear?",
+  "expected_answer": null,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is a nice man.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a nice man.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "man", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["nice","none","man"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "John has an apple.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 has an apple 4.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "apple 4", "type": "concrete", "category": "plant"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a nice man.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Mike 2 is a nice man.",
+          "type": "situation",
+          "entities": [{"id": "Mike 2", "type": "concrete", "category": "person"},
+            {"id": "man", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["nice","none","man"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Greg is a bad man.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Greg 3 is a bad man.",
+          "type": "situation",
+          "entities": [{"id": "Greg 3", "type": "concrete", "category": "person"},
+            {"id": "man", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["bad","none","man"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Mike has a pear.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Mike 2 has a pear 5.",
+          "type": "situation",
+          "entities": [{"id": "Mike 2", "type": "concrete", "category": "person"},
+            {"id": "pear 5", "type": "concrete", "category": "plant"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Which nice man has an apple and a pear?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Which nice man has an apple and a pear?",
+          "type": "query",
+          "entities": [{"id": "man", "type": "generic", "wh_placeholder": true, "category": "person"},
+            {"id": "apple", "type": "generic", "category": "plant"},
+            {"id": "pear", "type": "generic", "category": "plant"}
+          ],
+          "adjectives": [["nice","none","man"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","man","John 1"], ["has degree property","nice","John 1","none","man"]]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["isa","apple","apple 4"], ["have","John 1","apple 4"]]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and", ["isa","man","Mike 2"], ["has degree property","nice","Mike 2","none","man"]]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and", ["isa","man","Greg 3"], ["has degree property","bad","Greg 3","none","man"]]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and", ["isa","person","Mike 2"], ["isa","pear","pear 5"], ["have","Mike 2","pear 5"]]
+      ]
+    ],
+    ["@id","S6",
+      ["ask","X",
+        ["exists","Y",
+          ["exists","Z",
+            ["and",
+              ["has degree property","nice","X","none","man"],
+              ["isa","apple","Y"],
+              ["isa","pear","Z"],
+              ["have","X","Y"],
+              ["have","X","Z"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","man","#:John 1"],
+ "@nl": "John 1 is a nice man."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "good", "#:John 1", "none", "man", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is a nice man."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 has an apple 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","apple","#:apple 4"],
+ "@nl": "John 1 has an apple 4."},
+{"@name": "sent_S2",
+ "@logic": ["have", "#:John 1", "#:apple 4", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 has an apple 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","man","#:Mike 2"],
+ "@nl": "Mike 2 is a nice man."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "good", "#:Mike 2", "none", "man", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mike 2 is a nice man."},
+{"@name": "sent_S4",
+ "@logic": ["isa","man","#:Greg 3"],
+ "@nl": "Greg 3 is a bad man."},
+{"@name": "sent_S4",
+ "@logic": ["-has degree property", "good", "#:Greg 3", "none", "man", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Greg 3 is a bad man."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mike 2"],
+ "@nl": "Mike 2 has a pear 5."},
+{"@name": "sent_S5",
+ "@logic": ["isa","pear","#:pear 5"],
+ "@nl": "Mike 2 has a pear 5."},
+{"@name": "sent_S5",
+ "@logic": ["have", "#:Mike 2", "#:pear 5", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mike 2 has a pear 5."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has degree property", "good", "?:X", "none", "man", ["$ctxt","?:Fv16","?:Fv15","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "apple", ["sk0","?:X"]]],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "pear", ["sk1","?:X"]]],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["have", "?:X", ["sk0","?:X"], ["$ctxt","present","?:Fv21","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["have", "?:X", ["sk1","?:X"], ["$ctxt","present","?:Fv22","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-has degree property", "good", "?:X", "none", "man", ["$ctxt","?:Fv24","?:Fv23","?:Fv11","?:Fv12"]],
+            ["-isa","apple","?:Y"],
+            ["-isa","pear","?:Z"],
+            ["-have", "?:X", "?:Y", ["$ctxt","present","?:Fv29","?:Fv11","?:Fv12"]],
+            ["-have", "?:X", "?:Z", ["$ctxt","present","?:Fv30","?:Fv11","?:Fv12"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@what_query": true,
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "?:Br1", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","apple","?:X"], ["-isa","pear","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","apple","?:X"], ["-isa","pear","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "pop_what",
+ "@logic": ["isa","man","$some_man"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","pear","$some_pear"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","apple","$some_apple"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no answers found"},
+  "timestamp": "2026-06-09T09:50:50Z"
+}

@@ -1,0 +1,171 @@
+{
+  "test_name": "core_100",
+  "case_id": 134,
+  "input_text": "An apple was bad. She was in a room. She was in the room?",
+  "expected_answer": true,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "An apple was bad.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "An apple 1 was bad.",
+          "type": "situation",
+          "entities": [{"id": "apple 1", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["bad","none","apple"]],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "She was in a room.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "She 2 was in a room 3.",
+          "type": "situation",
+          "entities": [{"id": "she 2", "type": "concrete", "category": "person"},
+            {"id": "room 3", "type": "concrete", "category": "place"}
+          ],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "She was in the room?",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Was she 2 in the room 3?",
+          "type": "query",
+          "entities": [{"id": "she 2", "type": "concrete", "category": "person"},
+            {"id": "room 3", "type": "concrete", "category": "place"}
+          ],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","apple","apple 1"], ["has degree property","bad","apple 1","none","apple"]]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","she 2"],
+            ["isa","room","room 3"],
+            ["is rel2","in","she 2","room 3"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S3",
+      ["question",
+        ["and",
+          ["isa","person","she 2"],
+          ["isa","room","room 3"],
+          ["@time", "past", ["is rel2","in","she 2","room 3"]]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","she","#:she 2"],
+ "@nl": "She 2 was in a room 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","apple","#:apple 1"],
+ "@nl": "An apple 1 was bad."},
+{"@name": "sent_S1",
+ "@logic": ["-has degree property", "good", "#:apple 1", "none", "apple", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "An apple 1 was bad."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:she 2"],
+ "@nl": "She 2 was in a room 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","room","#:room 3"],
+ "@nl": "She 2 was in a room 3."},
+{"@name": "sent_S2",
+ "@logic": ["is rel2", "in", "#:she 2", "#:room 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "She 2 was in a room 3."},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:she 2"]],
+ "@nl": "Was she 2 in the room 3?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","room","#:room 3"]],
+ "@nl": "Was she 2 in the room 3?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "in", "#:she 2", "#:room 3", ["$ctxt","past","W0","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Was she 2 in the room 3?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:she 2"],
+            ["-isa","room","#:room 3"],
+            ["-is rel2", "in", "#:she 2", "#:room 3", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+            ["$defq0"]
+           ],
+ "@nl": "Was she 2 in the room 3?"},
+{"@name": "sent_S3",
+ "@question": ["$defq0"],
+ "@nl": "Was she 2 in the room 3?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "#:she 2", "#:room 3", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["is rel2", "in", "#:she 2", "#:room 3", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "#:she 2", "#:room 3", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Was she 2 in the room 3?"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S3","assumption",1], [["-isa","person","#:she 2"], ["-isa","room","#:room 3"], ["$defq0"], ["-is rel2", "in", "#:she 2", "#:room 3", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [2, ["in","sent_S2","assumption",1], [["is rel2", "in", "#:she 2", "#:room 3", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S3","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,3], 2, 3, "fromga", 1], [["-isa","person","#:she 2"], ["-isa","room","#:room 3"]]],
+          [5, ["in","sent_S2","assumption",1], [["isa","person","#:she 2"]]],
+          [6, ["mp",4,5,"fromga",1], [["-isa","room","#:room 3"]]],
+          [7, ["in","sent_S2","assumption",1], [["isa","room","#:room 3"]]],
+          [8, ["simp",6,7,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) She was in a room.",
+"  (2) She was in the room?",
+"Proof steps (by contradiction):",
+"  (1) If the she B is a person and the she B is in the room C then answer holds  [sentence 2]",
+"  (2) The she B is in the room C  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) The she B is not a person  [from steps 1, 2, 3]",
+"  (5) The she B is a person  [sentence 1]",
+"  (6) The room C is not a room  [from steps 4, 5]",
+"  (7) The room C is a room  [sentence 1]",
+"  (8) Contradiction  [from steps 6, 7]"
+],
+  "timestamp": "2026-06-09T09:06:57Z"
+}
