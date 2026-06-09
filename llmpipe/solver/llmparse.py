@@ -47,6 +47,12 @@ stage2_instructions_file = os.path.join(_root, "prompts", "stage2_instructions_f
 stage2_examples_file     = os.path.join(_root, "prompts", "stage2_examples.txt")
 stage2_checklist_file    = os.path.join(_root, "prompts", "stage2_checklist_full.txt")
 
+# One-stage experiment prompts (Conditions B/C): small wrappers that reframe the
+# task as a single English -> logic-JSON step, prepended to the existing Stage-1
+# and Stage-2 specs (reused verbatim as reference knowledge).
+onestage_direct_wrapper_file = os.path.join(_root, "prompts", "onestage_direct_wrapper.txt")
+onestage_struct_wrapper_file = os.path.join(_root, "prompts", "onestage_struct_wrapper.txt")
+
 # Separator inserted between instructions and examples when building a prompt
 examples_separator = "\n\nExamples:\n\n"
 
@@ -68,6 +74,7 @@ debug_file = None      # path to append debug log to, or None to disable
 
 _stage1_sysprompt = None
 _stage2_sysprompt = None
+_onestage_sysprompt = {}   # {"direct": str, "struct": str}
 
 
 def load_prompts():
@@ -77,6 +84,47 @@ def load_prompts():
                                       checklist_file=stage1_checklist_file)
   _stage2_sysprompt = _compose_prompt(stage2_instructions_file, stage2_examples_file, "stage2",
                                       checklist_file=stage2_checklist_file)
+
+
+def _read_prompt_file(path, label):
+  try:
+    with open(path, "r") as f:
+      return f.read().strip()
+  except Exception as e:
+    _print_error("Could not read " + label + " file '" + path + "': " + str(e))
+    return ""
+
+
+def load_onestage_prompt(mode):
+  """Compose and cache the one-stage system prompt for mode 'direct' or 'struct'.
+
+  Reuses the existing Stage-1 and Stage-2 specifications and examples verbatim as
+  reference knowledge, prefixed by a wrapper (onestage_*_wrapper.txt) that
+  redefines the task as a single English -> logic-JSON step.  The baseline
+  two-stage prompts are left untouched so Condition A is unaffected.
+  """
+  wrapper_file = onestage_direct_wrapper_file if mode == "direct" else onestage_struct_wrapper_file
+  wrapper  = _read_prompt_file(wrapper_file, "onestage " + mode + " wrapper")
+  s1_instr = _read_prompt_file(stage1_instructions_file, "stage1 instructions")
+  s2_instr = _read_prompt_file(stage2_instructions_file, "stage2 instructions")
+  s1_ex    = _read_prompt_file(stage1_examples_file, "stage1 examples")
+  s2_ex    = _read_prompt_file(stage2_examples_file, "stage2 examples")
+  s2_check = _read_prompt_file(stage2_checklist_file, "stage2 checklist")
+  parts = [
+    wrapper,
+    "============================================================\n"
+    "REFERENCE SPEC 1 - English to Atomic Semantic Units (ASUs)\n"
+    "============================================================\n\n" + s1_instr,
+    "============================================================\n"
+    "REFERENCE SPEC 2 - ASUs to logic JSON (your OUTPUT format)\n"
+    "============================================================\n\n" + s2_instr,
+    "Reference examples - English to ASUs (the first sub-step):\n\n" + s1_ex,
+    "Reference examples - ASUs to logic JSON (the output format):\n\n" + s2_ex,
+  ]
+  if s2_check:
+    parts.append(s2_check)
+  _onestage_sysprompt[mode] = "\n\n".join(p for p in parts if p)
+  return _onestage_sysprompt[mode]
 
 
 def _compose_prompt(instructions_file, examples_file, label, checklist_file=None):
@@ -158,6 +206,44 @@ def parse_text(text, llm=None, version=None, tokens=None, think=None):
     _debug_write("STAGE 2 OK")
 
   return (s1_json, s2_json, stats)
+
+
+def parse_text_onestage(text, mode="direct", llm=None, version=None, tokens=None, think=None):
+  """One-stage parse: a single LLM call converts English directly to Stage-2
+  logic JSON (the experiment ladder's Condition C 'direct' or B 'struct').
+
+  Returns (None, stage2_json, stats).  s1_json is None by design: the
+  downstream pipeline (logconvert, prover, procproofs) tolerates s1_json=None,
+  losing only cosmetic source-sentence annotations, not answer correctness.
+
+  Stats are recorded under the same s2_* keys as two-stage Stage 2, so the
+  single call gets the identical JSON-fix and sanity-retry machinery as the
+  baseline (no Stage-1 cross-checks, since there is no Stage-1 output).
+  """
+  if mode not in ("direct", "struct"):
+    _print_error("unknown onestage mode '" + str(mode) + "' (expected 'direct' or 'struct')")
+    return (None, None, _make_stats())
+
+  if mode not in _onestage_sysprompt:
+    load_onestage_prompt(mode)
+  sysprompt = _onestage_sysprompt[mode]
+
+  eff_llm     = llm     or use_llm
+  eff_version = version or llm_version
+  eff_tokens  = tokens  or max_tokens
+  eff_think   = think if think is not None else use_think
+
+  stats = _make_stats()
+
+  s2_json, s2_raw, s2_err = _run_stage(2, text, sysprompt,
+                                       eff_llm, eff_version, eff_tokens, eff_think, stats,
+                                       check_fn=lambda parsed: _check_stage2(parsed, None))
+  if s2_err:
+    _debug_write("ONESTAGE (" + mode + ") ERROR: " + s2_err)
+  else:
+    _debug_write("ONESTAGE (" + mode + ") OK")
+
+  return (None, s2_json, stats)
 
 
 # ======== stage runner ========

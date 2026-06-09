@@ -74,6 +74,13 @@ options={
   "json_flag": False,   # if True, show logic in raw JSON; if False, use traditional syntax
   "show_details_flag": False, # if True, show stage-1/2 JSON and prover input/output
   "gkin_file": None,          # if set, save GK input to this file
+  # Parser architecture for the experiment ladder (see wip/plans):
+  #   None     -> two-stage baseline (Condition A): English -> ASUs -> logic
+  #   "direct" -> one-stage direct (Condition C): English -> logic, no ASUs
+  #   "struct" -> one-stage structured (Condition B): English -> logic in one
+  #               call, reasoning through ASUs internally first
+  # One-stage modes run with s1_json=None (the downstream pipeline tolerates it).
+  "onestage_mode": None,
   # runtests artifact collector: when set, populated with gk_command etc.
   # Not user-facing; set by english_to_answer(collect=...).
   "_collect": None,

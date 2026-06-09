@@ -478,6 +478,11 @@ def main():
                   help="Re-run all cases (overwrite existing JSON files)")
   ap.add_argument("-geminicache", action="store_true",
                   help="Enable Gemini context caching (off by default)")
+  ap.add_argument("-onestage", default=None, choices=["direct", "struct"],
+                  help="Parser architecture: omit for two-stage baseline "
+                       "(Condition A); 'direct' = one-call direct (C); "
+                       "'struct' = one-call structured (B). Output is tagged by "
+                       "condition so A/B/C runs never collide.")
   ap.add_argument("-sequential", action="store_true",
                   help="Run the requested LLMs SEQUENTIALLY in-process (no "
                        "parallel Pool). Best for cache-served reruns where the "
@@ -491,9 +496,13 @@ def main():
 
   tests = load_tests(args.testfile)
   testname = testname_from_path(args.testfile)
+  # Condition tag keeps the parsing-architecture experiments (A/B/C) in
+  # separate output trees so their per-case files never overwrite each other.
+  condition = "twostage" if not args.onestage else ("onestage-" + args.onestage)
   print(f"Loaded {len(tests)} cases from {args.testfile} (testname={testname})")
   print(f"LLMs: {llms}")
-  print(f"Output: {os.path.join(args.out, testname)}/<llm>/case_NNNN.json")
+  print(f"Condition: {condition}")
+  print(f"Output: {os.path.join(args.out, testname, condition)}/<llm>/case_NNNN.json")
 
   # ID / limit / filter selection
   if args.ids:
@@ -508,7 +517,7 @@ def main():
   matcher = _import_matcher()
 
   # Prepare outdirs
-  outroot = os.path.join(args.out, testname)
+  outroot = os.path.join(args.out, testname, condition)
   os.makedirs(outroot, exist_ok=True)
   for llm in llms:
     os.makedirs(os.path.join(outroot, llm), exist_ok=True)
@@ -517,6 +526,8 @@ def main():
   run_opts = {}
   if args.geminicache:
     run_opts["use_gemini_cache_flag"] = True
+  if args.onestage:
+    run_opts["onestage_mode"] = args.onestage
 
   # Per-case parallel: one worker per (case, llm).  Pool size = len(llms).
   ctx = get_context("fork")

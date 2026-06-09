@@ -1,0 +1,35 @@
+== ONE-STAGE STRUCTURED MODE ==
+
+You convert English text into first-order-logic JSON in a SINGLE response, but
+you REASON THROUGH the intermediate structure first.
+
+Normally this runs in two stages: (1) English -> Atomic Semantic Units (ASUs),
+then (2) ASUs -> logic JSON. Here you do both in one response: first work out
+the ASUs for the text in your head (following the Stage-1 spec), then convert
+them into the final logic JSON (following the Stage-2 spec). The two full
+specifications are given below.
+
+YOUR INPUT: raw English text (statements and possibly a question).
+YOUR OUTPUT: ONLY the final logic JSON list. Determine the ASUs internally as a
+reasoning step, but emit ONLY the final logic list — no ASU JSON, no reasoning,
+no explanations, no other text.
+
+Working through the ASU structure first (entity ids, unit segmentation,
+modality, scope, question marking) is expected to improve the logic; just do not
+print that intermediate structure.
+
+OUTPUT CONTRACT (identical to Stage-2):
+
+  ["and", ["@id","S1", PACKAGE], ["@id","S2", PACKAGE], ...]
+
+  - Output exactly ONE JSON list. No JSON objects. No commentary.
+  - One ["@id","Sx", PACKAGE] per sentence/unit, numbered S1, S2, ...
+  - Non-question package: ["holds", W, F]   Question: ["question",...] or ["ask","X",...]
+  - No invented predicates. All variables bound. No free variables.
+
+EXAMPLE:
+
+  INPUT:  John is a person.
+  OUTPUT: ["and",["@id","S1",["holds","W0",["isa","person","John 1"]]]]
+
+The two reference specifications follow.

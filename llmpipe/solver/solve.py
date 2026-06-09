@@ -151,9 +151,15 @@ def english_to_answer(text, options=None, collect=None):
     print(text)
 
   think_flag = globals.options.get("think_flag", False)
-  s1_json, s2_json, parse_stats = llmparse.parse_text(
-    text, llm=llm, version=llm_version, tokens=max_tokens, think=think_flag
-  )
+  onestage_mode = globals.options.get("onestage_mode")
+  if onestage_mode:
+    s1_json, s2_json, parse_stats = llmparse.parse_text_onestage(
+      text, mode=onestage_mode, llm=llm, version=llm_version, tokens=max_tokens, think=think_flag
+    )
+  else:
+    s1_json, s2_json, parse_stats = llmparse.parse_text(
+      text, llm=llm, version=llm_version, tokens=max_tokens, think=think_flag
+    )
 
   if collect is not None:
     if s1_json is not None:
@@ -419,6 +425,16 @@ def _parse_cmd_line():
         sys.exit(0)
       llm = params[elpos + 1]
       skippos = 1
+    elif el in ["-onestage", "--onestage"]:
+      if elpos + 1 >= len(params):
+        print("-onestage requires a mode: direct or struct")
+        sys.exit(0)
+      mode = params[elpos + 1]
+      if mode not in ("direct", "struct"):
+        print("-onestage mode must be 'direct' (Condition C) or 'struct' (Condition B)")
+        sys.exit(0)
+      opts["onestage_mode"] = mode
+      skippos = 1
     elif el in ["-version", "--version"]:
       if elpos + 1 >= len(params):
         print("-version requires a model version string")
@@ -534,6 +550,10 @@ LLM caching (ON by default — cached per provider, version, all parameters and 
 
 semantic normalisation (ON by default):
  -nosemnormal : disable antonym folding and canonical word substitution
+
+parser architecture (default: two-stage, English -> ASUs -> logic):
+ -onestage direct : one LLM call, English -> logic directly, no ASUs (Condition C)
+ -onestage struct : one LLM call, reason through ASUs internally then logic (Condition B)
 
 LLM selection:
  -llm NAME    : LLM provider: gpt, claude, gemini, or deepseek (default: from llmcall.py config)
