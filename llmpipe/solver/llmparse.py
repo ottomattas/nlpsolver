@@ -53,6 +53,10 @@ stage2_checklist_file    = os.path.join(_root, "prompts", "stage2_checklist_full
 onestage_direct_wrapper_file = os.path.join(_root, "prompts", "onestage_direct_wrapper.txt")
 onestage_struct_wrapper_file = os.path.join(_root, "prompts", "onestage_struct_wrapper.txt")
 
+# Self-refinement second-pass template (extension X2 / Condition D): the user
+# message for the revising call, with {text} and {logic} placeholders.
+onestage_refine_user_file    = os.path.join(_root, "prompts", "onestage_refine_user.txt")
+
 # Separator inserted between instructions and examples when building a prompt
 examples_separator = "\n\nExamples:\n\n"
 
@@ -75,6 +79,7 @@ debug_file = None      # path to append debug log to, or None to disable
 _stage1_sysprompt = None
 _stage2_sysprompt = None
 _onestage_sysprompt = {}   # {"direct": str, "struct": str}
+_refine_user_template = None   # cached onestage_refine_user.txt
 
 
 def load_prompts():
@@ -244,6 +249,72 @@ def parse_text_onestage(text, mode="direct", llm=None, version=None, tokens=None
     _debug_write("ONESTAGE (" + mode + ") OK")
 
   return (None, s2_json, stats)
+
+
+def parse_text_refine(text, base_mode="direct", llm=None, version=None, tokens=None, think=None):
+  """Self-refinement parse (experiment ladder Condition D / extension X2).
+
+  Two LLM calls, like the two-stage baseline (A), but BOTH calls do the SAME
+  subtask (English -> logic) with NO ASU decomposition:
+
+    pass 1 -- one-stage direct (identical to Condition C): English -> logic JSON;
+    pass 2 -- self-revision: the model is shown its own pass-1 logic and asked to
+              critique and correct it (onestage_refine_user.txt), reusing the same
+              one-stage system prompt as reference.
+
+  This isolates *why* the second round-trip helps in A: is the gain from
+  decomposition (two DIFFERENT subtasks: parse, then encode) or merely from
+  iteration (a second pass over the SAME subtask)?  If pass 2 recovers the A-vs-C
+  gap, the lever is iteration; if it does not, the lever is decomposition.
+
+  Pass 1 reuses the Condition-C system prompt and raw English input verbatim, so
+  with the LLM cache on it hits the existing Condition-C cache entry and only the
+  refine call (pass 2) is newly billed.
+
+  Returns (None, stage2_json_final, stats).  Both passes accrue under the s2_*
+  stat keys, so s2_calls == 2 marks the two round-trips for the cost analysis.
+  """
+  global _refine_user_template
+
+  if base_mode not in ("direct", "struct"):
+    _print_error("unknown refine base_mode '" + str(base_mode) + "' (expected 'direct' or 'struct')")
+    return (None, None, _make_stats())
+
+  if base_mode not in _onestage_sysprompt:
+    load_onestage_prompt(base_mode)
+  sysprompt = _onestage_sysprompt[base_mode]
+
+  eff_llm     = llm     or use_llm
+  eff_version = version or llm_version
+  eff_tokens  = tokens  or max_tokens
+  eff_think   = think if think is not None else use_think
+
+  stats = _make_stats()
+
+  # --- pass 1: one-stage direct (cache-shared with Condition C) ---
+  s2_v1, _v1_raw, v1_err = _run_stage(2, text, sysprompt,
+                                      eff_llm, eff_version, eff_tokens, eff_think, stats,
+                                      check_fn=lambda parsed: _check_stage2(parsed, None))
+  if s2_v1 is None:
+    _debug_write("REFINE pass 1 produced no logic; nothing to refine")
+    return (None, None, stats)
+
+  # --- pass 2: self-revision of pass-1 logic (same subtask, no decomposition) ---
+  if _refine_user_template is None:
+    _refine_user_template = _read_prompt_file(onestage_refine_user_file, "onestage refine user")
+  refine_input = (_refine_user_template
+                  .replace("{text}", text)
+                  .replace("{logic}", json.dumps(s2_v1)))
+
+  s2_v2, _v2_raw, v2_err = _run_stage(2, refine_input, sysprompt,
+                                      eff_llm, eff_version, eff_tokens, eff_think, stats,
+                                      check_fn=lambda parsed: _check_stage2(parsed, None))
+  if v2_err or s2_v2 is None:
+    _debug_write("REFINE pass 2 failed (" + (v2_err or "no output") + "); keeping pass-1 logic")
+    return (None, s2_v1, stats)
+
+  _debug_write("REFINE OK (self-revised)")
+  return (None, s2_v2, stats)
 
 
 # ======== stage runner ========

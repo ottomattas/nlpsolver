@@ -1,0 +1,137 @@
+{
+  "test_name": "core_100",
+  "case_id": 234,
+  "input_text": "The roof of John's house is green. John has a house?",
+  "expected_answer": true,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["isa","house","house 2"], ["have","John 1","house 2"]]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","roof","roof 3"],
+            ["isa","house","house 2"],
+            ["has part","house 2","roof 3"]
+          ]
+        ],
+        ["@definite","S2","W0","roof of","house 2","roof 3"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and", ["isa","roof","roof 3"], ["has degree property","green","roof 3","none","roof"]]
+      ]
+    ],
+    ["@id","S4",
+      ["question", ["exists", "X", ["and", ["isa","house","X"], ["have","John 1","X"]]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","John 1"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["isa","house","house 2"],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S1",
+ "@logic": ["have", "John 1", "house 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: sent_S1]"},
+{"@name": "sent_S2",
+ "@logic": ["isa","roof","roof 3"],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@logic": ["isa","house","house 2"],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S2",
+ "@logic": ["has part", "house 2", "roof 3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: sent_S2]"},
+{"@name": "sent_S3",
+ "@logic": ["isa","roof","roof 3"],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S3",
+ "@logic": ["has property", "green", "roof 3", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "[generated: sent_S3]"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","house","sk0_house"]],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["have", "John 1", "sk0_house", ["$ctxt","present","?:Fv13","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","house","?:X"],
+            ["-have", "John 1", "?:X", ["$ctxt","present","?:Fv16","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "John 1", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "John 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "John 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "[generated: sent_S4]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "green", "?:X", ["$ctxt","past","?:Fv17","?:Fv18","?:Fv19"]],
+            ["has property", "green", "?:X", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]],
+            ["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "green", "?:X", ["$ctxt","past","?:Fv20","?:Fv21","?:Fv22"]],
+            ["has property", "green", "?:X", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]],
+            ["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S4","assumption",1], [["$defq0"], ["-have", "John 1", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-isa","house","?:X"]]],
+          [2, ["in","sent_S1","assumption",1], [["have", "John 1", "house 2", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S4","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,1], 2, 3, "fromga", 1], [["-isa","house","house 2"]]],
+          [5, ["in","sent_S2","assumption",1], [["isa","house","house 2"]]],
+          [6, ["simp",4,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) sent_S1",
+"  (2) sent_S2",
+"  (3) sent_S4",
+"Proof steps (by contradiction):",
+"  (1) If John has some X and X is a house then answer holds  [sentence 3]",
+"  (2) John has the house B  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) The house B is not a house  [from steps 1, 2, 3]",
+"  (5) The house B is a house  [sentence 2]",
+"  (6) Contradiction  [from steps 4, 5]"
+],
+  "timestamp": "2026-06-09T16:39:20Z"
+}

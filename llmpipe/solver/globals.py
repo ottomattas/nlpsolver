@@ -79,7 +79,9 @@ options={
   #   "direct" -> one-stage direct (Condition C): English -> logic, no ASUs
   #   "struct" -> one-stage structured (Condition B): English -> logic in one
   #               call, reasoning through ASUs internally first
-  # One-stage modes run with s1_json=None (the downstream pipeline tolerates it).
+  #   "refine" -> self-refinement (Condition D, extension X2): direct logic, then
+  #               a second self-revision pass over the same task, no ASUs
+  # These modes run with s1_json=None (the downstream pipeline tolerates it).
   "onestage_mode": None,
   # runtests artifact collector: when set, populated with gk_command etc.
   # Not user-facing; set by english_to_answer(collect=...).

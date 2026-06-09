@@ -152,7 +152,11 @@ def english_to_answer(text, options=None, collect=None):
 
   think_flag = globals.options.get("think_flag", False)
   onestage_mode = globals.options.get("onestage_mode")
-  if onestage_mode:
+  if onestage_mode == "refine":
+    s1_json, s2_json, parse_stats = llmparse.parse_text_refine(
+      text, base_mode="direct", llm=llm, version=llm_version, tokens=max_tokens, think=think_flag
+    )
+  elif onestage_mode:
     s1_json, s2_json, parse_stats = llmparse.parse_text_onestage(
       text, mode=onestage_mode, llm=llm, version=llm_version, tokens=max_tokens, think=think_flag
     )
@@ -430,8 +434,8 @@ def _parse_cmd_line():
         print("-onestage requires a mode: direct or struct")
         sys.exit(0)
       mode = params[elpos + 1]
-      if mode not in ("direct", "struct"):
-        print("-onestage mode must be 'direct' (Condition C) or 'struct' (Condition B)")
+      if mode not in ("direct", "struct", "refine"):
+        print("-onestage mode must be 'direct' (C), 'struct' (B), or 'refine' (D, self-refine)")
         sys.exit(0)
       opts["onestage_mode"] = mode
       skippos = 1
@@ -554,6 +558,7 @@ semantic normalisation (ON by default):
 parser architecture (default: two-stage, English -> ASUs -> logic):
  -onestage direct : one LLM call, English -> logic directly, no ASUs (Condition C)
  -onestage struct : one LLM call, reason through ASUs internally then logic (Condition B)
+ -onestage refine : two calls, direct logic then a self-revision pass, no ASUs (Condition D)
 
 LLM selection:
  -llm NAME    : LLM provider: gpt, claude, gemini, or deepseek (default: from llmcall.py config)

@@ -478,11 +478,12 @@ def main():
                   help="Re-run all cases (overwrite existing JSON files)")
   ap.add_argument("-geminicache", action="store_true",
                   help="Enable Gemini context caching (off by default)")
-  ap.add_argument("-onestage", default=None, choices=["direct", "struct"],
+  ap.add_argument("-onestage", default=None, choices=["direct", "struct", "refine"],
                   help="Parser architecture: omit for two-stage baseline "
                        "(Condition A); 'direct' = one-call direct (C); "
-                       "'struct' = one-call structured (B). Output is tagged by "
-                       "condition so A/B/C runs never collide.")
+                       "'struct' = one-call structured (B); 'refine' = direct + "
+                       "self-revision pass (D, extension X2). Output is tagged by "
+                       "condition so runs never collide.")
   ap.add_argument("-sequential", action="store_true",
                   help="Run the requested LLMs SEQUENTIALLY in-process (no "
                        "parallel Pool). Best for cache-served reruns where the "
@@ -498,7 +499,10 @@ def main():
   testname = testname_from_path(args.testfile)
   # Condition tag keeps the parsing-architecture experiments (A/B/C) in
   # separate output trees so their per-case files never overwrite each other.
-  condition = "twostage" if not args.onestage else ("onestage-" + args.onestage)
+  # Condition dir name: 'refine' becomes 'selfrefine' (it is two calls, not one);
+  # 'direct'/'struct' keep the onestage- prefix.
+  _COND_DIR = {"direct": "onestage-direct", "struct": "onestage-struct", "refine": "selfrefine"}
+  condition = "twostage" if not args.onestage else _COND_DIR[args.onestage]
   print(f"Loaded {len(tests)} cases from {args.testfile} (testname={testname})")
   print(f"LLMs: {llms}")
   print(f"Condition: {condition}")
