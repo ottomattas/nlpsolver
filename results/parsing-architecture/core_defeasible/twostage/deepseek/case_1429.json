@@ -1,0 +1,332 @@
+{
+  "test_name": "core_defeasible",
+  "case_id": 1429,
+  "input_text": "Birds fly and eat. Baby birds do not fly. John is a baby bird. Mike is a bird.\n    John does not fly?",
+  "expected_answer": true,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Birds fly and eat.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Birds fly.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "habitual", "roles": {"actor": "birds"}}]
+        },
+        {
+          "unit_id": "S2",
+          "text": "Birds eat.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"actor": "birds"}}]
+        }
+      ]
+    },
+    {
+      "raw": "Baby birds do not fly.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Baby birds do not fly.",
+          "type": "normal_rule",
+          "entities": [{"id": "baby birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "habitual", "roles": {"actor": "baby birds"}}],
+          "adjectives": [["baby","none","bird"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is a baby bird.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "John 1 is a baby bird.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a bird.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Mike 2 is a bird.",
+          "type": "real",
+          "entities": [{"id": "Mike 2", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "John does not fly?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Does John 1 not fly?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "habitual", "roles": {"actor": "John 1"}}]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","bird","X"],
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["typical","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","bird","X"],
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","eat"],
+                  ["has actor","E","X"],
+                  ["typical","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["and", ["isa","bird","X"], ["has degree property","baby","X","none","bird"]],
+            ["normally",
+              ["not",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","fly"],
+                    ["has actor","E","X"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds", "W0", ["and", ["isa","bird","John 1"], ["has property","baby","John 1"]]]
+    ],
+    ["@id", "S5", ["holds", "W0", ["isa","bird","Mike 2"]]],
+    ["@id","S6",
+      ["question",
+        ["normally",
+          ["not",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","fly"],
+                ["has actor","E","John 1"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk0","?:X"]]],
+ "@nl": "Birds fly."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk0","?:X"], "fly", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Birds fly."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk0","?:X"], "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Birds fly."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","bird","?:X"],
+            ["typical", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","bird",1], ["$not", ["typical", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@nl": "Birds fly."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk1","?:X"]]],
+ "@nl": "Birds eat."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk1","?:X"], "eat", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Birds eat."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk1","?:X"], "?:X", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Birds eat."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bird","?:X"],
+            ["typical", ["sk1","?:X"], ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$block", ["$","bird",1], ["$not", ["typical", ["sk1","?:X"], ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]]]
+           ],
+ "@nl": "Birds eat."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"],
+            ["-has property", "baby", "?:X", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","bird",4], ["typical", "?:E", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]
+           ],
+ "@nl": "Baby birds do not fly."},
+{"@name": "sent_S4",
+ "@logic": ["isa","bird","#:John 1"],
+ "@nl": "John 1 is a baby bird."},
+{"@name": "sent_S4",
+ "@logic": ["has property", "baby", "#:John 1", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John 1 is a baby bird."},
+{"@name": "sent_S5",
+ "@logic": ["isa","bird","#:Mike 2"],
+ "@nl": "Mike 2 is a bird."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["-has actor", "?:E", "#:John 1", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Does John 1 not fly?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["isa","activity","sk2_activity"], ["$defq0"]],
+ "@nl": "Does John 1 not fly?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["has type", "sk2_activity", "fly", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 1 not fly?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["has actor", "sk2_activity", "#:John 1", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 1 not fly?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["typical", "sk2_activity", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]], ["$defq0"]],
+ "@nl": "Does John 1 not fly?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Does John 1 not fly?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "baby", "$some_baby_bird", ["$ctxt","?:Fv37","?:Fv34","?:Fv35","?:Fv36"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_baby_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "baby", "$some_not_baby_bird", ["$ctxt","?:Fv45","?:Fv42","?:Fv43","?:Fv44"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_baby_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "baby", "$some_baby_bird", ["$ctxt","?:Fv53","?:Fv50","?:Fv51","?:Fv52"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv21"], ["has type","?:E","go","?:Fv21"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "blockers": [["$block", ["$","bird",4], ["typical", "sk2_activity", ["$ctxt","present","W0","?:X3","?:Y3"]]]
+        ],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S3","assumption",1], [["$block", ["$","bird",4], ["typical", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]]], ["-has property", "baby", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has type", "?:X", "fly", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "?:X", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-typical", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","bird","?:W"], ["-isa","activity","?:X"]]],
+          [2, ["in","sent_S4","assumption",1], [["has property", "baby", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 1], [["-isa","bird","#:John 1"], ["$block", ["$","bird",4], ["typical", "?:X3", ["$ctxt","present","W0","?:Y3","?:Z3"]]], ["-has type", "?:X3", "fly", ["$ctxt","present","W0","?:Y3","?:Z3"]], ["-has actor", "?:X3", "#:John 1", ["$ctxt","present","W0","?:Y3","?:Z3"]], ["-typical", "?:X3", ["$ctxt","present","W0","?:Y3","?:Z3"]], ["-isa","activity","?:X3"]]],
+          [4, ["in","sent_S4","assumption",1], [["isa","bird","#:John 1"]]],
+          [5, ["simp",3,4,"fromassumption",1], [["$block", ["$","bird",4], ["typical", "?:X", ["$ctxt","present","W0","?:Y","?:Z"]]], ["-has type", "?:X", "fly", ["$ctxt","present","W0","?:Y","?:Z"]], ["-has actor", "?:X", "#:John 1", ["$ctxt","present","W0","?:Y","?:Z"]], ["-typical", "?:X", ["$ctxt","present","W0","?:Y","?:Z"]], ["-isa","activity","?:X"]]],
+          [6, ["in","sent_S6","assumption",1], [["$defq0"], ["has type", "sk2_activity", "fly", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [7, ["in","sent_S6","goal",1], [["-$defq0"]]],
+          [8, ["mp", [5,1], [6,1], 7, "fromga", 1], [["-isa","activity","sk2_activity"], ["$block", ["$","bird",4], ["typical", "sk2_activity", ["$ctxt","present","W0","?:X","?:Y"]]], ["-has actor", "sk2_activity", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]], ["-typical", "sk2_activity", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [9, ["in","sent_S6","assumption",1], [["$defq0"], ["has actor", "sk2_activity", "#:John 1", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [10, ["mp", [8,2], [9,1], 7, "fromga", 1], [["-isa","activity","sk2_activity"], ["$block", ["$","bird",4], ["typical", "sk2_activity", ["$ctxt","present","W0","?:X","?:Y"]]], ["-typical", "sk2_activity", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [11, ["in","sent_S6","assumption",1], [["$defq0"], ["typical", "sk2_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [12, ["mp", [10,2], [11,1], 7, "fromga", 1], [["-isa","activity","sk2_activity"], ["$block", ["$","bird",4], ["typical", "sk2_activity", ["$ctxt","present","W0","?:X","?:Y"]]]]],
+          [13, ["in","sent_S6","assumption",1], [["isa","activity","sk2_activity"], ["$defq0"]]],
+          [14, ["mp",12,13,7,"fromga",1], [["$block", ["$","bird",4], ["typical", "sk2_activity", ["$ctxt","present","W0","?:X3","?:Y3"]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Baby birds do not fly.",
+"  (2) John is a baby bird.",
+"  (3) John does not fly?",
+"Proof steps:",
+"  (1) If some bird W is baby and X is a fly event and W performs X and X is an activity then X is not typical, except when X is typical  [sentence 1]",
+"  (2) John is baby  [sentence 2]",
+"  (3) If John is a bird and X3 is a fly event and John performs X3 and X3 is an activity then X3 is not typical, except when X3 is typical  [from steps 1, 2]",
+"  (4) John is a bird  [sentence 2]",
+"  (5) If X is a fly event and John performs X and X is an activity then X is not typical, except when X is typical  [from steps 3, 4]",
+"  (6) Answer holds or the event act1 is a fly event  [sentence 3]",
+"  (7) assume for contradiction: the answer is no  [from question]",
+"  (8) If the event act1 is an activity and John performs the act1 then the act1 is not typical, except when the act1 is typical  [from steps 5, 6, 7]",
+"  (9) Answer holds or John performs the event act1  [sentence 3]",
+"  (10) If the event act1 is an activity then the act1 is not typical, except when the act1 is typical  [from steps 8, 9, 7]",
+"  (11) Answer holds or the event act1 is typical  [sentence 3]",
+"  (12) The act1 is not an activity, except when the act1 is typical  [from steps 10, 11, 7]",
+"  (13) The event act1 is an activity or answer holds  [sentence 3]",
+"  (14) Outstanding exception: the event act1 is typical  [from steps 12, 13, 7]",
+"Exceptions checked and not holding:",
+"  act1 is typical"
+],
+  "timestamp": "2026-06-09T16:47:07Z"
+}
