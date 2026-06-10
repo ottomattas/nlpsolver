@@ -151,7 +151,7 @@ def build_case_json(testname, case_id, input_text, expected, llm, collect, match
     out["correctness"] = correctness
   for k in ("stage1", "stage_1_fixes", "stage_1_retries",
             "stage2", "stage_2_fixes", "stage_2_retries",
-            "clauses", "gk_command", "proof", "nl_proof"):
+            "clauses", "gk_command", "proof", "nl_proof", "llm_usage"):
     v = collect.get(k)
     if not v:   # skip None/[]/'' — omit empty keys
       continue

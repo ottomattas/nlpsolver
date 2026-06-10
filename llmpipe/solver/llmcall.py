@@ -275,6 +275,69 @@ def _post_with_retry(host, url, body, headers, provider):
     return llm_error(provider + " response is not valid JSON: " + str(rawdata))
 
 
+# ======== usage capture ========
+
+# Capture the per-call token 'usage' field from provider API responses for
+# cost accounting.  When the collect mechanism is active (solve.py's
+# english_to_answer(collect=...) sets globals.options["_collect"]), each real
+# API call appends one record to collect["llm_usage"]:
+#
+#   {"llm":..., "version":...,
+#    "input_tokens":        total input tokens, including provider-cached,
+#    "cached_input_tokens": input tokens read from the provider prompt cache,
+#    "output_tokens":       output tokens, including reasoning/thinking,
+#    "raw":                 the provider's unmodified usage dict}
+#
+# Local SQLite cache hits make no API call and add no record, so the sum over
+# records is the run's actual provider-side token spend.  Additive and
+# provider-tolerant: responses without a usage field are silently skipped.
+
+def _norm_usage_fields(llm, usage):
+  """Map a provider usage dict to (input, cached_input, output) token counts."""
+  def _i(val):
+    return val if isinstance(val, (int, float)) else 0
+  if llm == "claude":
+    # Anthropic reports uncached, cache-write and cache-read input separately.
+    base = _i(usage.get("input_tokens"))
+    creation = _i(usage.get("cache_creation_input_tokens"))
+    read = _i(usage.get("cache_read_input_tokens"))
+    return base + creation + read, read, _i(usage.get("output_tokens"))
+  if llm == "gemini":
+    # promptTokenCount includes cachedContentTokenCount; thinking tokens are
+    # reported separately from the candidate (answer) tokens.
+    inp = _i(usage.get("promptTokenCount"))
+    cached = _i(usage.get("cachedContentTokenCount"))
+    out = _i(usage.get("candidatesTokenCount")) + _i(usage.get("thoughtsTokenCount"))
+    return inp, cached, out
+  # gpt (responses + chat-completions APIs) and deepseek (openai-compatible)
+  inp = _i(usage.get("input_tokens")) or _i(usage.get("prompt_tokens"))
+  out = _i(usage.get("output_tokens")) or _i(usage.get("completion_tokens"))
+  details = usage.get("input_tokens_details") or usage.get("prompt_tokens_details") or {}
+  cached = _i(details.get("cached_tokens")) or _i(usage.get("prompt_cache_hit_tokens"))
+  return inp, cached, out
+
+
+def _record_usage(llm, version, data, usage_key="usage"):
+  """Append a token-usage record to globals.options["_collect"]["llm_usage"].
+  No-op when collect is inactive or the response has no usage.  Never raises."""
+  try:
+    usage = data.get(usage_key) if isinstance(data, dict) else None
+    if not isinstance(usage, dict) or not usage:
+      return
+    import globals as _globals
+    collect = _globals.options.get("_collect")
+    if not isinstance(collect, dict):
+      return
+    inp, cached, out = _norm_usage_fields(llm, usage)
+    collect.setdefault("llm_usage", []).append({
+      "llm": llm, "version": version,
+      "input_tokens": inp, "cached_input_tokens": cached,
+      "output_tokens": out, "raw": usage,
+    })
+  except Exception:
+    pass
+
+
 # ======== gemini ========
 
 # https://ai.google.dev/gemini-api/docs/text-generation
@@ -404,6 +467,7 @@ def call_gemini(version, sentences, sysprompt, max_tokens, think=False):
                             "Gemini")
     if data is None:
       return None, None
+    _record_usage("gemini", version, data, usage_key="usageMetadata")
     if "candidates" not in data:
       return llm_error("Gemini response has no candidates: " + str(data)), None
     cand = data["candidates"][0]
@@ -467,6 +531,7 @@ def call_claude(version, sentences, sysprompt, max_tokens, think=False):
                            "x-api-key": key},
                           "Claude")
   if data is None: return None
+  _record_usage("claude", version, data)
 
   if "content" not in data:
     return llm_error("Claude response has no content: " + str(data))
@@ -522,6 +587,7 @@ def call_gpt(version, sentences, sysprompt, max_tokens, think=False):
                            "Authorization": "Bearer " + key},
                           "GPT")
   if data is None: return None
+  _record_usage("gpt", version, data)
 
   utils.debug_print("gpt response:", data, flag=debug)
 
@@ -584,6 +650,7 @@ def call_deepseek(version, sentences, sysprompt, max_tokens, think=False):
                            "Authorization": "Bearer " + key},
                           "DeepSeek")
   if data is None: return None
+  _record_usage("deepseek", version, data)
 
   utils.debug_print("deepseek response:", data, flag=debug)
 
