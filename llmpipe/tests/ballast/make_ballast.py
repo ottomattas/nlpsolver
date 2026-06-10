@@ -123,6 +123,25 @@ PRONOUNS = frozenset(["i", "you", "he", "she", "it", "we", "they",
                       "himself", "herself", "itself", "themselves",
                       "myself", "yourself", "ourselves"])
 
+# Bare demonstratives ("This was deep.") act like pronouns: with no content
+# NP of their own they invite the parser to resolve them onto neighbouring
+# (original) content.  Phase 1 caught exactly one such capture (case 22,
+# claude resolved ballast "This was deep." onto "John is glad." and lost the
+# case), so from dose b4 on the pool drops any sentence where a demonstrative
+# is NOT followed by a content word (i.e. is a bare pronoun-like NP rather
+# than a determiner as in "this car").  "That" as complementizer before a
+# noun ("believes that Mary...") survives; bare relativizer "that is red"
+# is dropped too — conservative, and the pool is large.
+DEMONSTRATIVES = frozenset(["this", "that", "these", "those"])
+
+def _has_bare_demonstrative(toks):
+  for i, t in enumerate(toks):
+    if t in DEMONSTRATIVES:
+      nxt = toks[i + 1] if i + 1 < len(toks) else None
+      if nxt is None or nxt in STOPWORDS:
+        return True
+  return False
+
 # ======== text utilities ========
 
 def norm_ws(text):
@@ -308,7 +327,8 @@ def build_pool(pool_tests):
   """Statement sentences of the pool suite, deduplicated, each with its
   comparison sets and source case ids.  Returns (pool list, stats dict)."""
   stats = {"raw_sentences": 0, "questions": 0, "dropped_wh": 0,
-           "dropped_pronoun": 0, "dropped_short": 0, "dropped_nocontent": 0,
+           "dropped_pronoun": 0, "dropped_demonstrative": 0,
+           "dropped_short": 0, "dropped_nocontent": 0,
            "kept_before_dedup": 0}
   by_text = {}
   order = []
@@ -326,6 +346,9 @@ def build_pool(pool_tests):
         continue
       if tokset & PRONOUNS:
         stats["dropped_pronoun"] += 1
+        continue
+      if _has_bare_demonstrative(toks):
+        stats["dropped_demonstrative"] += 1
         continue
       if len(toks) < 3:
         stats["dropped_short"] += 1
@@ -539,7 +562,9 @@ def main():
   print(f"Pool: {pool_stats['pool_size']} unique statement sentences "
         f"(from {pool_stats['raw_sentences']} raw; "
         f"-{pool_stats['questions']} questions, -{pool_stats['dropped_wh']} wh, "
-        f"-{pool_stats['dropped_pronoun']} pronoun, -{pool_stats['dropped_short']} short, "
+        f"-{pool_stats['dropped_pronoun']} pronoun, "
+        f"-{pool_stats['dropped_demonstrative']} demonstrative, "
+        f"-{pool_stats['dropped_short']} short, "
         f"-{pool_stats['dropped_nocontent']} no-content, "
         f"-{pool_stats['kept_before_dedup'] - pool_stats['pool_size']} duplicates)")
 
