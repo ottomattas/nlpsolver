@@ -1,0 +1,114 @@
+PARSING ARCHITECTURE: TWO-STAGE vs ONE-STAGE -- plain-text summary
+==================================================================
+Relevant dir: https://github.com/ottomattas/nlpsolver/tree/main/results/parsing-architecture
+Full results with all detail and caveats: https://github.com/ottomattas/nlpsolver/blob/main/results/parsing-architecture/results.md
+
+
+Setup: nlpsolver/llmpipe on macOS (local gk ARM64), LLM cache on, thinking off (baseline decoding).  100-subset, 4 models.
+
+THE QUESTION (Tanel, June 2): is two-stage better than one-stage, by how much, and in which cases?
+SHORT ANSWER: yes; ~7 points overall; and the win comes from the SEPARATE PARSE
+STAGE (the decomposition) -- not from the ASU notation, and not from just doing a second pass.
+
+WHAT I RAN
+==========
+Each item: what I ran -> the script/prompt -> the results folder -> what it seems to show.
+
+
+--- CORE (Gate-1: 100-subset x 4 models = 1200 runs, 0 errors) ---
+
+A  Two-stage baseline. English -> ASUs -> logic, two LLM calls. The current pipeline.
+   data:   results/parsing-architecture/core_100/twostage/<llm>/
+   -> 98.8% over 400 runs. This is the reference.
+
+B  One call, structured. One prompt asks the model to reason through ASUs in a single response, then emit logic.
+   prompt: https://github.com/ottomattas/nlpsolver/blob/main/llmpipe/prompts/onestage_struct_wrapper.txt
+   data:   results/parsing-architecture/core_100/onestage-struct/<llm>/
+   -> 90.2%. Telling one call to "think in ASUs" buys ~nothing over going direct.
+
+C  One call, direct. English -> logic in a single call, no ASUs at all.
+   prompt: https://github.com/ottomattas/nlpsolver/blob/main/llmpipe/prompts/onestage_direct_wrapper.txt
+   data:   results/parsing-architecture/core_100/onestage-direct/<llm>/
+   -> 91.5%. About 7 points below two-stage.
+
+IT SEEMS LIKE: two-stage wins for every model; one-stage almost never rescues a case two-stage misses; and B is no better than C, so the lever is the separate second CALL, not the ASU format.
+
+
+--- EXTENSIONS (mõned ettepanekud, mida võiks mõelda kas tasub 1600 lause peale skaleerida) ---
+
+X1  Parse faithfulness. Is the two-stage LOGIC better, not just the final answer?
+    script: https://github.com/ottomattas/nlpsolver/blob/main/results/parsing-architecture/analysis/x1_faithfulness.py
+    (pure re-analysis of the core data above; no new LLM calls)
+    -> When A and C give different answers, the two-stage logic is the right one almost every time: 14-0 (gpt), 10-2 (claude), 6-1 (gemini), 4-2 (deepseek).
+       Two-stage also writes richer logic (~20 vs ~17 clauses).
+       IT SEEMS LIKE the two-stage PARSE is more faithful, not just luckier.
+
+X2  Decomposition vs self-refinement. WHY does the second call help -- because it does a different subtask (parse, then encode), or just because it is a second pass?
+    script: https://github.com/ottomattas/nlpsolver/blob/main/results/parsing-architecture/analysis/x2_selfrefine.py
+    prompt: https://github.com/ottomattas/nlpsolver/blob/main/llmpipe/prompts/onestage_refine_user.txt  (new Condition D: -onestage refine)
+    data:   results/parsing-architecture/core_100/selfrefine/<llm>/
+    -> On the 10 cases where two-stage beats one-stage: A = 97.5%, C = 45.0%, and a
+       one-stage pass that is shown its OWN logic and asked to fix it (D) = 45.0%.
+       It rescued 0 of 22 failures and changed ZERO answers.
+       IT SEEMS LIKE the win is DECOMPOSITION (two different subtasks), not a second pass and not more compute. (This is the most interesting result.)
+
+X3  Defeasible focus. WHERE does the advantage live? Guess: default/exception reasoning (birds fly, but penguins do not), where gk's blockers are essential.
+    script: https://github.com/ottomattas/nlpsolver/blob/main/results/parsing-architecture/analysis/x3_defeasible.py
+    set:    https://github.com/ottomattas/nlpsolver/blob/main/llmpipe/tests/tests_core_defeasible.py  (10 penguin / baby-bird cases)
+    data:   results/parsing-architecture/core_defeasible/{twostage,onestage-direct}/
+    -> A = 100% vs C = 85% (15-point gap, about double the 7-point overall gap),
+       and it is carried by gpt (100 -> 40 in one-stage). claude/gemini/deepseek
+       still get 100% on this small set, so the full defeasible phase is needed to size it for them.
+       IT SEEMS LIKE the advantage concentrates exactly where the symbolic prover does work an LLM cannot soundly encode in one pass.
+
+E8  Complexity scaling. Does one-stage fail more on harder inputs?
+    script: https://github.com/ottomattas/nlpsolver/blob/main/results/parsing-architecture/analysis/e8_complexity_scaling.py  (re-analysis)
+    -> A-C gap by complexity: 2.3 (low) -> 11.3 (med) -> 8.2 (high).
+       IT SEEMS LIKE the easy 100-subset understates the gap; the full 1600-set should show it more clearly.
+
+E2  Failure localisation. WHERE does one-stage break in the pipeline?
+    script: https://github.com/ottomattas/nlpsolver/blob/main/results/parsing-architecture/analysis/e2_failure_localisation.py  (re-analysis)
+    -> One-stage failures are almost all "no proof" (logic too weak -> Unknown) or
+       "wrong answer"; parse and convert failures are ~zero. Two-stage has 5 failures of any kind, total.
+       IT SEEMS LIKE the cost of collapsing the parse is semantic, not a formatting/plumbing problem.
+
+E5  Accuracy per cost. Is the second stage worth it?
+    script: https://github.com/ottomattas/nlpsolver/blob/main/results/parsing-architecture/analysis/e5_cost_frontier.py  (re-analysis)
+    -> Two-stage uses ~2 requests/case but about the SAME input tokens as one call (56,027 vs 56,391, because it splits the prompt into two halves), and gets
+       more accuracy per token (176 vs 162 per 100K input tokens).
+       IT SEEMS LIKE the second stage costs an extra request, not extra tokens — so the "two calls cost 2x" worry does not hold on a token budget.
+
+
+THE COMPLETE TABLE
+==================
+
+Accuracy, percent correct (100-subset, 4 models):
+
+  model      A two-stage     B one-struct    C one-direct
+  ---------------------------------------------------------
+  gpt                    100.0            84.0               86.0
+  claude                 98.0            87.0               90.0
+  gemini                 99.0            97.0               94.0
+  deepseek            98.0            93.0               96.0
+  ---------------------------------------------------------
+  ALL (n=400)       98.8             90.2               91.5
+
+Extension headlines:
+
+  X1  A-vs-C disagreements won by the two-stage logic:  14-0 / 10-2 / 6-1 / 4-2
+  X2  on the A>C cases:  A 97.5  |  C 45.0  |  D self-refine 45.0   (0% recovered)
+  X3  defeasible 10-case:  A 100  |  C 85   (gap 15; gpt 100 -> 40)
+  E8  A-C gap by complexity:  low 2.3  |  med 11.3  |  high 8.2
+  E2  one-stage fails: no-proof 20 + wrong-answer 13 (of 34); parse/convert ~0
+  E5  per case:  A = 2.08 calls / 56,027 in-tok / 98.8%
+                         C = 1.01 calls / 56,391 in-tok / 91.5%
+
+Cost of the extensions:
+X1, E8, E2, E5 were free (re-analysis of data we already have).
+X2 + X3 needed new runs, ~7M tokens total (~$8-12), mostly claude + gpt.
+
+
+STATUS
+======
+Gate-1 done. All six extensions piloted (10 cases x 4 models each). The full 1600-set is NOT run yet.
+Left to you (to avoid duplication): E1 axiom ablation ("ilma reegliteta") and the RQ4 nonce-word arm.
