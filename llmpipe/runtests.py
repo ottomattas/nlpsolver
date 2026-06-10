@@ -68,8 +68,12 @@ def _worker(args):
   from solve import english_to_answer
   import llmcall
   _solve_mod.llm = llm
+  # max_tokens is a solve-module knob, not a globals.options key: pop it
+  # before the options dict reaches set_global_options, which sys.exit()s
+  # on unknown keys (inside a pool worker that deadlocks the whole pool).
+  run_opts = dict(run_opts)
   if run_opts.get("max_tokens"):
-    _solve_mod.max_tokens = run_opts["max_tokens"]
+    _solve_mod.max_tokens = run_opts.pop("max_tokens")
 
   collect = {}
   error_payload = None
