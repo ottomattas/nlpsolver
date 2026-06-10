@@ -139,10 +139,49 @@ def content_words(sentence):
   return [t for t in tokenize(sentence) if t not in STOPWORDS]
 
 
+# Irregular inflections the suffix rules below cannot reach.  Both the
+# inflected form and its lemma land in the comparison set, so "mice" vs
+# "mouse" or "bought" vs "buy" counts as word overlap.  Only forms that
+# plausibly occur in the test suites are listed; over-listing is safe.
+IRREGULAR = {
+  "has": "have", "had": "have", "having": "have",
+  "men": "man", "women": "woman", "children": "child", "child's": "child",
+  "mice": "mouse", "feet": "foot", "geese": "goose", "teeth": "tooth",
+  "people": "person", "oxen": "ox", "wolves": "wolf", "leaves": "leaf",
+  "knives": "knife", "lives": "life", "shelves": "shelf", "wives": "wife",
+  "ate": "eat", "eaten": "eat", "saw": "see", "seen": "see",
+  "went": "go", "gone": "go", "goes": "go",
+  "bought": "buy", "brought": "bring", "caught": "catch", "taught": "teach",
+  "drove": "drive", "driven": "drive", "wrote": "write", "written": "write",
+  "broke": "break", "broken": "break", "took": "take", "taken": "take",
+  "gave": "give", "given": "give", "made": "make", "ran": "run",
+  "came": "come", "sat": "sit", "stood": "stand", "fell": "fall",
+  "fallen": "fall", "held": "hold", "kept": "keep", "slept": "sleep",
+  "left": "leave", "lost": "lose", "found": "find", "told": "tell",
+  "said": "say", "got": "get", "gotten": "get", "flew": "fly",
+  "flown": "fly", "grew": "grow", "grown": "grow", "knew": "know",
+  "known": "know", "threw": "throw", "thrown": "throw", "wore": "wear",
+  "worn": "wear", "sold": "sell", "sent": "send", "spent": "spend",
+  "built": "build", "bent": "bend", "met": "meet", "swam": "swim",
+  "swum": "swim", "sang": "sing", "sung": "sing", "drank": "drink",
+  "drunk": "drink", "rode": "ride", "ridden": "ride", "chose": "choose",
+  "chosen": "choose", "spoke": "speak", "spoken": "speak",
+  "stole": "steal", "stolen": "steal", "woke": "wake", "woken": "wake",
+  "heard": "hear", "felt": "feel", "meant": "mean", "paid": "pay",
+  "laid": "lay", "lay": "lie", "lain": "lie", "hid": "hide",
+  "hidden": "hide", "bit": "bite", "bitten": "bite", "shot": "shoot",
+  "won": "win", "fed": "feed", "fled": "flee", "led": "lead",
+  "better": "good", "best": "good", "worse": "bad", "worst": "bad",
+  "bigger": "big", "biggest": "big",
+}
+
+
 def variants(w):
   """Naive morphological variants for overlap checking.  Over-generation is
   safe: false matches only shrink the candidate pool."""
   out = {w}
+  if w in IRREGULAR:
+    out.add(IRREGULAR[w])
   n = len(w)
   if w.endswith("ies") and n > 4: out.add(w[:-3] + "y")     # flies -> fly
   if w.endswith("es") and n > 3:  out.add(w[:-2])           # boxes -> box
