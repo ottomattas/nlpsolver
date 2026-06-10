@@ -25,7 +25,12 @@
 #      score >= 0.5 only, recorded in the manifest;
 #   5. no shared proper names — subsumed by (1), all checks are lowercase;
 #   6. no word pair in the same data_exclusions group: lc_post_inject's
-#      mutual-exclusion axioms must not bridge ballast and original either.
+#      mutual-exclusion axioms must not bridge ballast and original either;
+#   7. no word pair in two DIFFERENT noun-mutex groups (_ISA_EXCL_GROUPS):
+#      lc_post_inject.inject_isa_cross_group_axioms emits cross-group
+#      cross-entity mutex axioms (e.g. house x animal), which would also
+#      bridge the vocabularies.  Subsumption-exempt pairs (animal subsumes
+#      the animal-kind group, etc.) are allowed, mirroring the injector.
 #
 # Ballast sentences are also MUTUALLY inert within one case (the ballast may
 # not form its own reasoning chain); at high dose this can be relaxed to
@@ -61,7 +66,16 @@ from runtests import load_tests
 from data_synonyms import SOFT_SYNONYMS
 from data_antonyms import ANTONYMS
 from data_canonicals import CANONICALS
-from data_exclusions import EXCLUSION_INDEX
+from data_exclusions import EXCLUSION_INDEX, EXCLUSION_GROUPS
+from lc_post_inject import _ISA_EXCL_GROUPS, _TOP_LEVEL_SUBSUMES
+
+# word -> set of noun-mutex group ids (condition 7).  The pipeline's injector
+# resolves multi-group words first-wins over a frozenset (order undefined),
+# so we conservatively keep ALL groups a word belongs to.
+_ISA_WORD_GROUPS = {}
+for _gid in sorted(_ISA_EXCL_GROUPS):
+  for _w in EXCLUSION_GROUPS.get(_gid, {}).get("words", ()):
+    _ISA_WORD_GROUPS.setdefault(_w, set()).add(_gid)
 
 # ======== function words ========
 
@@ -224,6 +238,7 @@ def analyze(words):
       if c:
         exp.add(c)
   ant, syn_all, syn_strong, excl = set(), set(), set(), set()
+  isa_groups = {}
   for w in exp:
     a = ANTONYMS.get(w)
     if a:
@@ -234,8 +249,10 @@ def analyze(words):
       if score >= 0.5:
         syn_strong.add(p)
     excl.update(EXCLUSION_INDEX.get(w, ()))
+    if w in _ISA_WORD_GROUPS:
+      isa_groups[w] = _ISA_WORD_GROUPS[w]
   return {"exp": exp, "ant": ant, "syn_all": syn_all,
-          "syn_strong": syn_strong, "excl": excl}
+          "syn_strong": syn_strong, "excl": excl, "isa_groups": isa_groups}
 
 
 # ======== compatibility predicate ========
@@ -246,7 +263,25 @@ def analyze(words):
 #   2 "soft05+intra"    : like 1, but ballast sentences may overlap each other
 LEVEL_NAMES = {0: "strict", 1: "soft05", 2: "soft05+intra-overlap"}
 
-REASONS = ["word-overlap", "antonym", "soft-synonym", "exclusion-group"]
+REASONS = ["word-overlap", "antonym", "soft-synonym", "exclusion-group",
+           "isa-cross-group"]
+
+
+def _isa_cross_group(b, c):
+  """True if some word pair would trigger inject_isa_cross_group_axioms:
+  members of two different noun-mutex groups, not subsumption-exempt."""
+  for w1, gs1 in b["isa_groups"].items():
+    for w2, gs2 in c["isa_groups"].items():
+      for g1 in gs1:
+        for g2 in gs2:
+          if g1 == g2:
+            continue                       # same group: condition 6 covers it
+          if g2 in _TOP_LEVEL_SUBSUMES.get(w1, ()):
+            continue
+          if g1 in _TOP_LEVEL_SUBSUMES.get(w2, ()):
+            continue
+          return True
+  return False
 
 
 def compat(b, c, syn_level):
@@ -262,6 +297,8 @@ def compat(b, c, syn_level):
     return "soft-synonym"
   if b["excl"] & c["excl"]:
     return "exclusion-group"
+  if b["isa_groups"] and c["isa_groups"] and _isa_cross_group(b, c):
+    return "isa-cross-group"
   return None
 
 
