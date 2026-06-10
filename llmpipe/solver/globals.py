@@ -93,7 +93,14 @@ options={
 cache_db_name=os.path.join(_root, "cache.db")
 
 # solving logic with a prover
-prover_fname=os.path.join(_root, "../gk/gk")  # gk binary
+prover_fname=os.path.join(_root, "../gk/gk")  # gk binary (Linux x86-64)
+# On Apple Silicon macOS use the committed ARM64 build instead (same gk version,
+# also shipped as gk/gk-macos-ARM64.zip), so the pipeline runs out of the box.
+import platform as _platform
+if sys.platform == "darwin" and _platform.machine() == "arm64":
+  _mac_gk = os.path.join(_root, "../gk/gk-macos-arm64")
+  if os.path.exists(_mac_gk):
+    prover_fname = _mac_gk
 prover_datafolder=os.path.join(_root, "../gk")  # where gk_name_number.txt etc are located
 memkb_name="1000"  # in-memory knowledge base name (number)
 prover_infile="gk_infile.js"
