@@ -339,6 +339,27 @@ runs) so the dataset and the sqlite LLM cache are hole-free for replays.
 18/22 passed; the cell numbers above include them. Cost of the patch:
 ≈ $3.1.
 
+### 11.4b Replay artifacts (per Tanel's email: keep everything, incl. the cache)
+
+- **`cache-snapshot-phases0-2.db.gz`** (1.4 MB; SHA256
+  `d9895a7a56f3bb903ecef574c49eac9fc3d42ec7f32dde4af4b2ba46b0707f48`) — a
+  consistent `VACUUM INTO` snapshot of the local LLM cache covering every
+  call of Phases 0–2 incl. the outage patch, taken at code state `28f774e`.
+  To replay: gunzip → place as `llmpipe/cache.db`. **b4/b8/b16 must be
+  re-run with `-maxtokens 32000`** (the output budget is part of the cache
+  key; b2 used the default 8000) — otherwise every call misses the cache
+  and makes real API calls. Cache hits answer in <1s.
+- **`gk-bug-case1011-minimal.gkin`** — minimal reproducer (17 clauses +
+  question, delta-debugged from case 1011's 141-clause prover input) for
+  the gk datarec allocator error of §11.1. Run:
+  `gk/gk-macos-arm64 llmpipe/axioms_std.js -strategytext
+  '{"strategy": ["unit"], "query_preference": 0}' -seconds 2
+  results/ballast-robustness/gk-bug-case1011-minimal.gkin -defaults
+  -confidence 0.1 -keepconfidence 0.1 --datafolder gk` → fails in ~0.3s
+  with "cannot extend datarec area"; `-mbsize` 1000–16000 does not help;
+  removing the question makes it pass. Observed on macOS ARM64; ~1% of
+  b16 cases — relevant for Phase 5.
+
 ### 11.5 Phase-2 cost (usage ledger, list prices)
 
 ```
