@@ -1,0 +1,739 @@
+{
+  "test_name": "core_100_b8",
+  "case_id": 1539,
+  "input_text": "Mark is not in the box. Mike is badly defeated. The teacher showed a map to the students. Frogs are small animals. John is an elephant with a probability 50 percent. The dog was barking and the cat was too. Birds fly or swim. A big bear was strong. Eve sent a letter to Tom. John is an elephant?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Mark is not in the box.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mark 1 is not in the box 2.",
+          "type": "situation",
+          "entities": [{"id": "Mark 1", "type": "concrete", "category": "person"},
+            {"id": "box 2", "type": "concrete", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is badly defeated.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Mike 3 is badly defeated.",
+          "type": "situation",
+          "entities": [{"id": "Mike 3", "type": "concrete", "category": "person"}],
+          "adjectives": [["defeated","high","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "The teacher showed a map to the students.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The teacher 4 showed a map 5 to the students 6.",
+          "type": "situation",
+          "entities": [{"id": "teacher 4", "type": "concrete", "category": "person"},
+            {"id": "map 5", "type": "concrete", "category": "artifact"},
+            {"id": "students 6", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 4", "target": "map 5", "recipient": "students 6"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Frogs are small animals.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Frogs are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "frogs", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S5",
+          "text": "Frogs are small.",
+          "type": "normal_rule",
+          "entities": [{"id": "frogs", "type": "generic", "category": "animal"}],
+          "adjectives": [["small","none","animal"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "John is an elephant with a probability 50 percent.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "John 7 is an elephant.",
+          "type": "situation",
+          "entities": [{"id": "John 7", "type": "concrete", "category": "animal"},
+            {"id": "elephant", "type": "generic", "category": "animal"}
+          ],
+          "confidence": 0.5
+        }
+      ]
+    },
+    {
+      "raw": "The dog was barking and the cat was too.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "The dog 8 was barking.",
+          "type": "situation",
+          "entities": [{"id": "dog 8", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "bark", "mode": "event"}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S8",
+          "text": "The cat 9 was barking.",
+          "type": "situation",
+          "entities": [{"id": "cat 9", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "bark", "mode": "event"}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Birds fly or swim.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Birds fly or swim.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly or swim", "mode": "capability"}],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "A big bear was strong.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "A big bear 10 was strong.",
+          "type": "situation",
+          "entities": [{"id": "bear 10", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","bear"], ["strong","none","bear"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Eve sent a letter to Tom.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Eve 11 sent a letter 12 to Tom 13.",
+          "type": "situation",
+          "entities": [{"id": "Eve 11", "type": "concrete", "category": "person"},
+            {"id": "letter 12", "type": "concrete", "category": "artifact"},
+            {"id": "Tom 13", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "send",
+              "mode": "event",
+              "roles": {"actor": "Eve 11", "target": "letter 12", "recipient": "Tom 13"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is an elephant?",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Is John 7 an elephant?",
+          "type": "query",
+          "entities": [{"id": "John 7", "type": "concrete", "category": "animal"},
+            {"id": "elephant", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mark 1"],
+          ["isa","box","box 2"],
+          ["not", ["is rel2","in","Mark 1","box 2"]]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mike 3"],
+          ["has degree property","defeated","Mike 3","high","person"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","teacher 4"],
+          ["isa","artifact","map 5"],
+          ["isa","person","students 6"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","show"],
+              ["has actor","E","teacher 4"],
+              ["has target","E","map 5"],
+              ["has recipient","E","students 6"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","frog","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","frog","X"],
+              ["normally", ["has degree property","small","X","none","animal"]]
+            ]
+          ]
+        ],
+        ["@p","S5",0.99]
+      ]
+    ],
+    ["@id", "S6", ["and", ["holds", "W0", ["isa","elephant","John 7"]], ["@p","S6",0.5]]],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","dog","dog 8"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","bark"],
+              ["has actor","E","dog 8"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","cat","cat 9"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","bark"],
+              ["has actor","E","cat 9"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["or",
+                  ["exists","E",
+                    ["and",
+                      ["isa","activity","E"],
+                      ["has type","E","fly"],
+                      ["has actor","E","X"],
+                      ["capability","E"]
+                    ]
+                  ],
+                  ["exists","E",
+                    ["and",
+                      ["isa","activity","E"],
+                      ["has type","E","swim"],
+                      ["has actor","E","X"],
+                      ["capability","E"]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S9",0.95]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","bear","bear 10"],
+            ["has degree property","big","bear 10","none","bear"],
+            ["has degree property","strong","bear 10","none","bear"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Eve 11"],
+            ["isa","letter","letter 12"],
+            ["isa","person","Tom 13"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","send"],
+                ["has actor","E","Eve 11"],
+                ["has target","E","letter 12"],
+                ["has recipient","E","Tom 13"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id", "S12", ["question", ["isa","elephant","John 7"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","teacher","#:teacher 4"],
+ "@nl": "The teacher 4 showed a map 5 to the students 6."},
+{"@name": "entity_S3",
+ "@logic": ["isa","map","#:map 5"],
+ "@nl": "The teacher 4 showed a map 5 to the students 6."},
+{"@name": "entity_S3",
+ "@logic": ["isa","student","#:students 6"],
+ "@nl": "The teacher 4 showed a map 5 to the students 6."},
+{"@name": "entity_S3",
+ "@logic": ["isa","student","#:students 6"],
+ "@nl": "The teacher 4 showed a map 5 to the students 6."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mark 1"],
+ "@nl": "Mark 1 is not in the box 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","box","#:box 2"],
+ "@nl": "Mark 1 is not in the box 2."},
+{"@name": "sent_S1",
+ "@logic": ["-is rel2", "in", "#:Mark 1", "#:box 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mark 1 is not in the box 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mike 3"],
+ "@nl": "Mike 3 is badly defeated."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "defeated", "#:Mike 3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mike 3 is badly defeated."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:teacher 4"],
+ "@nl": "The teacher 4 showed a map 5 to the students 6."},
+{"@name": "sent_S3",
+ "@logic": ["isa","artifact","#:map 5"],
+ "@nl": "The teacher 4 showed a map 5 to the students 6."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:students 6"],
+ "@nl": "The teacher 4 showed a map 5 to the students 6."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The teacher 4 showed a map 5 to the students 6."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "show", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The teacher 4 showed a map 5 to the students 6."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:teacher 4", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The teacher 4 showed a map 5 to the students 6."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk0_activity", "#:map 5", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The teacher 4 showed a map 5 to the students 6."},
+{"@name": "sent_S3",
+ "@logic": ["has recipient", "sk0_activity", "#:students 6", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The teacher 4 showed a map 5 to the students 6."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The teacher 4 showed a map 5 to the students 6."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","frog","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Frogs are animals."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","frog","?:X"],
+            ["has degree property", "small", "?:X", "none", "animal", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["$block", ["$","frog",1], ["$not", ["has degree property", "small", "?:X", "none", "animal", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Frogs are small."},
+{"@name": "sent_S7",
+ "@logic": ["isa","dog","#:dog 8"],
+ "@nl": "The dog 8 was barking."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The dog 8 was barking."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk1_activity", "bark", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The dog 8 was barking."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk1_activity", "#:dog 8", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The dog 8 was barking."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The dog 8 was barking."},
+{"@name": "sent_S8",
+ "@logic": ["isa","cat","#:cat 9"],
+ "@nl": "The cat 9 was barking."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The cat 9 was barking."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk2_activity", "bark", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The cat 9 was barking."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk2_activity", "#:cat 9", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The cat 9 was barking."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The cat 9 was barking."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["isa", "activity", ["sk3","?:X"]],
+            ["isa", "activity", ["sk4","?:X"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["isa", "activity", ["sk3","?:X"]],
+            ["has type", ["sk4","?:X"], "swim", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["isa", "activity", ["sk3","?:X"]],
+            ["has actor", ["sk4","?:X"], "?:X", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["isa", "activity", ["sk3","?:X"]],
+            ["capability", ["sk4","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk4","?:X"]]]]
+           ],
+ "@confidence": 0.9851,
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk3","?:X"], "fly", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["isa", "activity", ["sk4","?:X"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk3","?:X"], "fly", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["has type", ["sk4","?:X"], "swim", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk3","?:X"], "fly", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["has actor", ["sk4","?:X"], "?:X", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk3","?:X"], "fly", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["capability", ["sk4","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk4","?:X"]]]]
+           ],
+ "@confidence": 0.9851,
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk3","?:X"], "?:X", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["isa", "activity", ["sk4","?:X"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk3","?:X"], "?:X", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["has type", ["sk4","?:X"], "swim", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk3","?:X"], "?:X", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["has actor", ["sk4","?:X"], "?:X", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk3","?:X"], "?:X", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["capability", ["sk4","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk4","?:X"]]]]
+           ],
+ "@confidence": 0.9851,
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["isa", "activity", ["sk4","?:X"]],
+            ["capability", ["sk3","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk3","?:X"]]]]
+           ],
+ "@confidence": 0.9851,
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk4","?:X"], "swim", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["capability", ["sk3","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk3","?:X"]]]]
+           ],
+ "@confidence": 0.9851,
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk4","?:X"], "?:X", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["capability", ["sk3","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk3","?:X"]]]]
+           ],
+ "@confidence": 0.9851,
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["capability", ["sk3","?:X"]],
+            ["capability", ["sk4","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk4","?:X"]]]]
+           ],
+ "@confidence": 0.9851,
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S10",
+ "@logic": ["isa","bear","#:bear 10"],
+ "@nl": "A big bear 10 was strong."},
+{"@name": "sent_S10",
+ "@logic": ["has degree property", "big", "#:bear 10", "none", "bear", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "A big bear 10 was strong."},
+{"@name": "sent_S10",
+ "@logic": ["has degree property", "strong", "#:bear 10", "none", "bear", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "A big bear 10 was strong."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:Eve 11"],
+ "@nl": "Eve 11 sent a letter 12 to Tom 13."},
+{"@name": "sent_S11",
+ "@logic": ["isa","letter","#:letter 12"],
+ "@nl": "Eve 11 sent a letter 12 to Tom 13."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:Tom 13"],
+ "@nl": "Eve 11 sent a letter 12 to Tom 13."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "Eve 11 sent a letter 12 to Tom 13."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk5_activity", "give", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "Eve 11 sent a letter 12 to Tom 13."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk5_activity", "#:Eve 11", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "Eve 11 sent a letter 12 to Tom 13."},
+{"@name": "sent_S11",
+ "@logic": ["has target", "sk5_activity", "#:letter 12", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "Eve 11 sent a letter 12 to Tom 13."},
+{"@name": "sent_S11",
+ "@logic": ["has recipient", "sk5_activity", "#:Tom 13", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "Eve 11 sent a letter 12 to Tom 13."},
+{"@name": "sent_S11",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "Eve 11 sent a letter 12 to Tom 13."},
+{"@name": "sent_S11",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Eve 11 sent a letter 12 to Tom 13."},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","elephant","#:John 7"]],
+ "@nl": "Is John 7 an elephant?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-isa","elephant","#:John 7"], ["$defq0"]],
+ "@nl": "Is John 7 an elephant?"},
+{"@name": "sent_S12",
+ "@question": ["$defq0"],
+ "@nl": "Is John 7 an elephant?"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","frog","$some_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","frog","$some_not_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "small", "$some_small_animal", "none", "animal", ["$ctxt","?:Fv94","?:Fv91","?:Fv92","?:Fv93"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_small_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "small", "$some_not_small_animal", "none", "animal", ["$ctxt","?:Fv102","?:Fv99","?:Fv100","?:Fv101"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv103","?:Fv36"],
+            ["-has degree property","high","?:X","none","?:Fv104","?:Fv36"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv105","?:Fv37"],
+            ["has degree property","small","?:X","none","?:Fv106","?:Fv37"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","swim","?:Fv38"], ["has type","?:E","go","?:Fv38"]],
+ "@confidence": 0.51,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv39"], ["has type","?:E","go","?:Fv39"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv40"], ["has type","?:E","give","?:Fv40"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","bird","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","bird","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv107", ["$ctxt","past","?:Fv41","?:Fv42","?:Fv43"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv108", ["$ctxt","present","?:Fv41","?:Fv42","?:Fv43"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv109", ["$ctxt","present","?:Fv41","?:Fv42","?:Fv43"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv44","?:Fv45","?:Fv46"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv44","?:Fv45","?:Fv46"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv44","?:Fv45","?:Fv46"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv110", ["$ctxt","past","?:Fv47","?:Fv48","?:Fv49"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv111", ["$ctxt","present","?:Fv47","?:Fv48","?:Fv49"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv112", ["$ctxt","present","?:Fv47","?:Fv48","?:Fv49"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv50","?:Fv51","?:Fv52"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv50","?:Fv51","?:Fv52"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv50","?:Fv51","?:Fv52"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv113", ["$ctxt","past","?:Fv53","?:Fv54","?:Fv55"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv114", ["$ctxt","present","?:Fv53","?:Fv54","?:Fv55"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv115", ["$ctxt","present","?:Fv53","?:Fv54","?:Fv55"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv56","?:Fv57","?:Fv58"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv56","?:Fv57","?:Fv58"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv56","?:Fv57","?:Fv58"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32122,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1679,
+      "raw": {
+        "input_tokens": 80,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1679,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 40149,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1595,
+      "raw": {
+        "input_tokens": 1258,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1595,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T11:50:15Z"
+}

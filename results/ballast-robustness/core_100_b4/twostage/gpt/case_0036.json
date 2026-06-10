@@ -1,0 +1,586 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 36,
+  "input_text": "The rain continued. John is somewhat big. The price of the car is above 20 dollars. The song was sung by Mary. Eve failed to finish the report. John is big?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The rain continued.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The rain 1 continued.",
+          "type": "situation",
+          "entities": [{"id": "rain 1", "type": "concrete", "category": "event"}],
+          "actions": [{"root": "continue", "mode": "event", "roles": {"actor": "rain 1"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "The rain 1 was falling.",
+          "type": "situation",
+          "entities": [{"id": "rain 1", "type": "concrete", "category": "event"}],
+          "actions": [{"root": "fall", "mode": "event", "roles": {"actor": "rain 1"}}],
+          "pre_state": "W0",
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "The rain 1 is falling.",
+          "type": "situation",
+          "entities": [{"id": "rain 1", "type": "concrete", "category": "event"}],
+          "actions": [{"root": "fall", "mode": "event", "roles": {"actor": "rain 1"}}],
+          "pre_state": "W1",
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "John is somewhat big.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "John 2 is somewhat big.",
+          "type": "situation",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"}],
+          "adjectives": [["big","low","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "The price of the car is above 20 dollars.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "The price 3 of the car 4 is greater than 20 dollars.",
+          "type": "situation",
+          "entities": [{"id": "price 3", "type": "concrete", "text": "price"},
+            {"id": "car 4", "type": "concrete", "category": "artifact"},
+            {"id": "20 dollars", "type": "concrete"}
+          ],
+          "definites": [["price of","price 3","car 4"]]
+        },
+        {
+          "unit_id": "S6",
+          "text": "The price 3 is the price of the car 4.",
+          "type": "situation",
+          "entities": [{"id": "price 3", "type": "concrete", "text": "price"},
+            {"id": "car 4", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["price of","price 3","car 4"]]
+        }
+      ]
+    },
+    {
+      "raw": "The song was sung by Mary.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Mary 5 sang the song 6.",
+          "type": "situation",
+          "entities": [{"id": "Mary 5", "type": "concrete", "category": "person"},
+            {"id": "song 6", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "sing", "mode": "event", "roles": {"actor": "Mary 5", "target": "song 6"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Eve failed to finish the report.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Eve 7 failed to finish the report 8.",
+          "type": "situation",
+          "entities": [{"id": "Eve 7", "type": "concrete", "category": "person"},
+            {"id": "report 8", "type": "concrete", "category": "abstract"}
+          ],
+          "time": "past"
+        },
+        {
+          "unit_id": "S9",
+          "text": "Eve 7 did not finish the report 8.",
+          "type": "situation",
+          "entities": [{"id": "Eve 7", "type": "concrete", "category": "person"},
+            {"id": "report 8", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "finish", "mode": "event", "roles": {"actor": "Eve 7", "target": "report 8"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is big?",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Is John 2 big?",
+          "type": "query",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"}],
+          "adjectives": [["big","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","rain","rain 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","continue"],
+                ["has actor","E","rain 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","rain","rain 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","fall"],
+              ["has actor","E","rain 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W1",
+        ["and",
+          ["isa","rain","rain 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","fall"],
+              ["has actor","E","rain 1"],
+              ["has time","E","present","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and", ["isa","person","John 2"], ["has degree property","big","John 2","low","person"]]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","car","car 4"],
+          [">", ["$measure_of","price","car 4","W0"], ["$measure",20,"dollar"]]
+        ]
+      ]
+    ],
+    ["@id", "S6", ["holds", "W0", ["and", ["isa","car","car 4"]]]],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 5"],
+          ["isa","song","song 6"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","sing"],
+              ["has actor","E","Mary 5"],
+              ["has target","E","song 6"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S8", ["holds", "W0", ["and", ["isa","person","Eve 7"], ["isa","report","report 8"]]]],
+    ["@id","S9",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 7"],
+          ["isa","report","report 8"],
+          ["not",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","finish"],
+                ["has actor","E","Eve 7"],
+                ["has target","E","report 8"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["question",
+        ["and", ["isa","person","John 2"], ["has degree property","big","John 2","none","person"]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","rain","#:rain 1"],
+ "@nl": "The rain 1 continued."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The rain 1 continued."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "continue", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The rain 1 continued."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:rain 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The rain 1 continued."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The rain 1 continued."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The rain 1 continued."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The rain 1 continued."},
+{"@name": "sent_S2",
+ "@logic": ["isa","rain","#:rain 1"],
+ "@nl": "The rain 1 was falling."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The rain 1 was falling."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "fall", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The rain 1 was falling."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:rain 1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The rain 1 was falling."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The rain 1 was falling."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The rain 1 was falling."},
+{"@name": "sent_S3",
+ "@logic": ["isa","rain","#:rain 1"],
+ "@nl": "The rain 1 is falling."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The rain 1 is falling."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "fall", ["$ctxt","present","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The rain 1 is falling."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:rain 1", ["$ctxt","present","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The rain 1 is falling."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "present", "in", ["$ctxt","present","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The rain 1 is falling."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The rain 1 is falling."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "John 2 is somewhat big."},
+{"@name": "sent_S4",
+ "@logic": ["has degree property", "big", "#:John 2", "low", "person", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "John 2 is somewhat big."},
+{"@name": "sent_S5",
+ "@logic": ["isa","car","#:car 4"],
+ "@nl": "The price 3 of the car 4 is greater than 20 dollars."},
+{"@name": "sent_S5",
+ "@logic": ["less_measure", ["$list",20,"#:dollar"], ["$measure_of","price","#:car 4","W0"]],
+ "@nl": "The price 3 of the car 4 is greater than 20 dollars."},
+{"@name": "sent_S6",
+ "@logic": ["isa","car","#:car 4"],
+ "@nl": "The price 3 is the price of the car 4."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Mary 5"],
+ "@nl": "Mary 5 sang the song 6."},
+{"@name": "sent_S7",
+ "@logic": ["isa","song","#:song 6"],
+ "@nl": "Mary 5 sang the song 6."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Mary 5 sang the song 6."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk3_activity", "sing", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 5 sang the song 6."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk3_activity", "#:Mary 5", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 5 sang the song 6."},
+{"@name": "sent_S7",
+ "@logic": ["has target", "sk3_activity", "#:song 6", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 5 sang the song 6."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 5 sang the song 6."},
+{"@name": "sent_S7",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Mary 5 sang the song 6."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Eve 7"],
+ "@nl": "Eve 7 failed to finish the report 8."},
+{"@name": "sent_S8",
+ "@logic": ["isa","report","#:report 8"],
+ "@nl": "Eve 7 failed to finish the report 8."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Eve 7"],
+ "@nl": "Eve 7 did not finish the report 8."},
+{"@name": "sent_S9",
+ "@logic": ["isa","report","#:report 8"],
+ "@nl": "Eve 7 did not finish the report 8."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "finish", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+            ["-has actor", "?:E", "#:Eve 7", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+            ["-has target", "?:E", "#:report 8", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+            ["-actuality","?:E"]
+           ],
+ "@nl": "Eve 7 did not finish the report 8."},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:John 2"]],
+ "@nl": "Is John 2 big?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Is John 2 big?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:John 2"],
+            ["-has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:Fv19","?:Fv20"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 2 big?"},
+{"@name": "sent_S10",
+ "@question": ["$defq0"],
+ "@nl": "Is John 2 big?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "big", "#:John 2", "none", "person", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 2 big?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","price","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "price", ["$measure_of","price","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","continue","?:Fv26"], ["has type","?:E","keep","?:Fv26"]],
+ "@confidence": 0.92,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","keep","?:Fv27"], ["has type","?:E","continue","?:Fv27"]],
+ "@confidence": 0.92,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","report","?:Fv28"], ["has type","?:E","announce","?:Fv28"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","announce","?:Fv29"], ["has type","?:E","report","?:Fv29"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv44", ["$ctxt","past","?:Fv30","?:Fv31","?:Fv32"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv45", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv46", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv33","?:Fv34","?:Fv35"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "blockers": [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "?:X3", ["$ctxt","present","W1","?:Y3","?:Z3"]]]]
+        ],
+        "confidence": 0.992727,
+        "positive proof": [[1, ["in","frm_97","axiom",1], [["-has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","present","?:V","?:W","?:2006"]], ["has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","past","?:2007","?:W","?:2006"]], ["-before","?:V","?:2007"]]],
+          [2, ["in","frm_7","axiom",1], [["-has degree property","?:X","?:Y","low","?:Z","?:U"], ["has degree property","?:X","?:Y","none","?:Z","?:U"]]],
+          [3, ["in","sent_S4","assumption",1], [["has degree property", "big", "#:John 2", "low", "person", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [4, ["mp",2,3,"fromassumption",1], [["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [5, ["mp",1,4,"fromassumption",1], [["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-before","W0","?:X"]]],
+          [6, ["in","frm_91","axiom",1], [["-next","?:X","?:Y"], ["before","?:X","?:Y"]]],
+          [7, ["in","sent_S1","assumption",1], [["next","W0","W1"]]],
+          [8, ["mp",6,7,"fromassumption",1], [["before","W0","W1"]]],
+          [9, ["mp", [5,1], 8, "fromassumption", 1], [["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [10, ["in","sent_S10","assumption",0.99], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["-has degree property", "big", "#:John 2", "none", "person", ["$ctxt","past","?:X","?:Y","?:Z"]], ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [11, ["in","sent_S10","assumption",1], [["-isa","person","#:John 2"], ["$defq0"], ["-has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [12, ["in","sent_S4","assumption",1], [["isa","person","#:John 2"]]],
+          [13, ["in","sent_S10","goal",1], [["-$defq0"]]],
+          [14, ["mp",11,12,13,"fromga",1], [["-has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]],
+          [15, ["mp", 9, [10,1], 14, "fromga", 0.99], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [16, ["in","frm_world_geom","assumption",1], [["next","W0","W1"]]],
+          [17, ["mp",6,16,"fromassumption",1], [["before","W0","W1"]]],
+          [18, ["mp", [5,1], 17, "fromassumption", 1], [["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [19, ["mp", 18, [10,1], 14, "fromga", 0.99], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [20, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]]]], ["-has degree property", "big", "?:X", "none", "?:W", ["$ctxt","past","?:Z","?:U","?:V"]], ["has degree property", "big", "?:X", "none", "?:2006", ["$ctxt","present","?:Z","?:U","?:V"]]]],
+          [21, ["mp", 14, [20,2], "fromga", 0.95], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "?:X", ["$ctxt","present","W1","?:Y","?:Z"]]]], ["-has degree property", "big", "#:John 2", "none", "?:U", ["$ctxt","past","W1","?:Y","?:Z"]]]],
+          [22, ["mp", [21,1], 18, "fromga", 0.95], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "?:X3", ["$ctxt","present","W1","?:Y3","?:Z3"]]]]]],
+          [23, ["cumul",19,22,"fromga",0.991188], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "?:X3", ["$ctxt","present","W1","?:Y3","?:Z3"]]]]]],
+          [24, ["cumul",15,23,"fromga",0.992727], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "?:X3", ["$ctxt","present","W1","?:Y3","?:Z3"]]]]]]
+        ]
+      },
+      {
+        "answer": true,
+        "blockers": [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.992727,
+        "positive proof": [[1, ["in","frm_97","axiom",1], [["-has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","present","?:V","?:W","?:2006"]], ["has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","past","?:2007","?:W","?:2006"]], ["-before","?:V","?:2007"]]],
+          [2, ["in","frm_7","axiom",1], [["-has degree property","?:X","?:Y","low","?:Z","?:U"], ["has degree property","?:X","?:Y","none","?:Z","?:U"]]],
+          [3, ["in","sent_S4","assumption",1], [["has degree property", "big", "#:John 2", "low", "person", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [4, ["mp",2,3,"fromassumption",1], [["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [5, ["mp",1,4,"fromassumption",1], [["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-before","W0","?:X"]]],
+          [6, ["in","frm_91","axiom",1], [["-next","?:X","?:Y"], ["before","?:X","?:Y"]]],
+          [7, ["in","sent_S1","assumption",1], [["next","W0","W1"]]],
+          [8, ["mp",6,7,"fromassumption",1], [["before","W0","W1"]]],
+          [9, ["mp", [5,1], 8, "fromassumption", 1], [["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [10, ["in","sent_S10","assumption",0.99], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["-has degree property", "big", "#:John 2", "none", "person", ["$ctxt","past","?:X","?:Y","?:Z"]], ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [11, ["in","sent_S10","assumption",1], [["-isa","person","#:John 2"], ["$defq0"], ["-has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [12, ["in","sent_S4","assumption",1], [["isa","person","#:John 2"]]],
+          [13, ["in","sent_S10","goal",1], [["-$defq0"]]],
+          [14, ["mp",11,12,13,"fromga",1], [["-has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]],
+          [15, ["mp", 9, [10,1], 14, "fromga", 0.99], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [16, ["in","frm_world_geom","assumption",1], [["next","W0","W1"]]],
+          [17, ["mp",6,16,"fromassumption",1], [["before","W0","W1"]]],
+          [18, ["mp", [5,1], 17, "fromassumption", 1], [["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [19, ["mp", 18, [10,1], 14, "fromga", 0.99], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [20, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:Y", "?:Z", ["$ctxt","present","?:U","?:V","?:W"]]]], ["-has degree property", "big", "?:X", "?:Y", "?:Z", ["$ctxt","past","?:U","?:V","?:W"]], ["has degree property", "big", "?:X", "?:Y", "?:Z", ["$ctxt","present","?:U","?:V","?:W"]]]],
+          [21, ["mp", 18, [20,1], 14, "fromga", 0.95], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [22, ["cumul",19,21,"fromga",0.991188], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [23, ["cumul",15,22,"fromga",0.992727], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]]
+        ]
+      },
+      {
+        "answer": true,
+        "blockers": [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "low", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.955938,
+        "positive proof": [[1, ["in","frm_97","axiom",1], [["-has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","present","?:V","?:W","?:2006"]], ["has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","past","?:2007","?:W","?:2006"]], ["-before","?:V","?:2007"]]],
+          [2, ["in","sent_S4","assumption",1], [["has degree property", "big", "#:John 2", "low", "person", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp",1,2,"fromassumption",1], [["has degree property", "big", "#:John 2", "low", "person", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-before","W0","?:X"]]],
+          [4, ["in","frm_91","axiom",1], [["-next","?:X","?:Y"], ["before","?:X","?:Y"]]],
+          [5, ["in","sent_S1","assumption",1], [["next","W0","W1"]]],
+          [6, ["mp",4,5,"fromassumption",1], [["before","W0","W1"]]],
+          [7, ["mp", [3,1], 6, "fromassumption", 1], [["has degree property", "big", "#:John 2", "low", "person", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [8, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:Y", "?:Z", ["$ctxt","present","?:U","?:V","?:W"]]]], ["-has degree property", "big", "?:X", "?:Y", "?:Z", ["$ctxt","past","?:U","?:V","?:W"]], ["has degree property", "big", "?:X", "?:Y", "?:Z", ["$ctxt","present","?:U","?:V","?:W"]]]],
+          [9, ["in","sent_S10","assumption",1], [["-isa","person","#:John 2"], ["$defq0"], ["-has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [10, ["in","sent_S4","assumption",1], [["isa","person","#:John 2"]]],
+          [11, ["in","sent_S10","goal",1], [["-$defq0"]]],
+          [12, ["mp",9,10,11,"fromga",1], [["-has degree property", "big", "#:John 2", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [13, ["in","frm_7","axiom",1], [["-has degree property","?:X","?:Y","low","?:Z","?:U"], ["has degree property","?:X","?:Y","none","?:Z","?:U"]]],
+          [14, ["mp", 12, [13,1], "fromga", 1], [["-has degree property", "big", "#:John 2", "low", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]],
+          [15, ["mp", 7, [8,1], 14, "fromga", 0.95], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "low", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [16, ["in","frm_world_geom","assumption",1], [["next","W0","W1"]]],
+          [17, ["mp",4,16,"fromassumption",1], [["before","W0","W1"]]],
+          [18, ["mp", [3,1], 17, "fromassumption", 1], [["has degree property", "big", "#:John 2", "low", "person", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [19, ["mp", 18, [8,1], 14, "fromga", 0.95], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "low", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [20, ["cumul",15,19,"fromga",0.955938], [["$block", 0, ["$not", ["has degree property", "big", "#:John 2", "low", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 96%.",
+"Sentences used:",
+"  (1) The rain continued.",
+"  (2) John is somewhat big.",
+"  (3) John is big?",
+"Knowledge used:",
+"  If some Y is some z some X and a situation V is earlier than a situation E2 then Y is z X. Why: assumed basic knowledge.",
+"  If a situation X is followed by a situation Y then X is earlier than Y. Why: assumed basic knowledge.",
+"  If some X is some y big then normally X is y big. Why: assumed basic knowledge.",
+"  If some Y is slightly some X then Y is X. Why: assumed basic knowledge.",
+"  The situation W0 is followed by the situation W1. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If some Y is some z some X and a situation V is earlier than a situation E2 then Y is z X  [background knowledge]",
+"  (2) John is a slightly big person  [sentence 2]",
+"  (3) If the situation W0 is earlier than a situation X then John is a slightly big person  [from steps 1, 2]",
+"  (4) If a situation X is followed by a situation Y then X is earlier than Y  [background knowledge]",
+"  (5) The situation W0 is followed by the situation W1  [sentence 1]",
+"  (6) The situation W0 is earlier than the situation W1  [from steps 4, 5]",
+"  (7) John is a slightly big person  [from steps 3, 6]",
+"  (8) If some X is some y big then normally X is y big  [background knowledge, confidence 95%]",
+"  (9) If John is a person and John is a big person then answer holds  [sentence 3]",
+"  (10) John is a person  [sentence 2]",
+"  (11) assume for contradiction: the answer is no  [from question]",
+"  (12) John is not a big person  [from steps 9, 10, 11]",
+"  (13) If some Y is slightly some X then Y is X  [background knowledge]",
+"  (14) John is not a slightly big person  [from steps 12, 13]",
+"  (15) Outstanding exception: John is not a slightly big person  [from steps 7, 8, 14, confidence 95%]",
+"  (16) The situation W0 is followed by the situation W1  [background knowledge]",
+"  (17) The situation W0 is earlier than the situation W1  [from steps 4, 16]",
+"  (18) John is a slightly big person  [from steps 3, 17]",
+"  (19) Outstanding exception: John is not a slightly big person  [from steps 18, 8, 14, confidence 95%]",
+"  (20) Outstanding exception: John is not a slightly big person  [from steps 15, 19, confidence 96%]",
+"Exceptions checked and not holding:",
+"  John is not a slightly big person"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28351,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1272,
+      "raw": {
+        "input_tokens": 28351,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1272,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29623
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34432,
+      "cached_input_tokens": 33280,
+      "output_tokens": 766,
+      "raw": {
+        "input_tokens": 34432,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 766,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35198
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:39:08Z"
+}

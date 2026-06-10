@@ -1,0 +1,634 @@
+{
+  "test_name": "core_100_b8",
+  "case_id": 523,
+  "input_text": "A coffee cup broke. No elephant is an animal. John's sister laughed. The red square is nice. Mr Dursley is a Muggle. Frogs are small. Mary tried to solve the puzzle. Winona is a cat. Amazon's length is 20 kilometers. Some elephant is an animal?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "A coffee cup broke.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "A coffee cup 1 broke.",
+          "type": "situation",
+          "entities": [{
+              "id": "coffee cup 1",
+              "type": "concrete",
+              "subtype": "compound",
+              "category": "artifact"
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "No elephant is an animal.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "No elephant is an animal.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John's sister laughed.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 1's sister 2 laughed.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "sister 2", "type": "concrete", "text": "sister", "category": "person"}
+          ],
+          "actions": [{"root": "laugh", "mode": "event"}],
+          "pre_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "Sister 2 is the sister of John 1.",
+          "type": "situation",
+          "entities": [{"id": "sister 2", "type": "concrete", "text": "sister", "category": "person"},
+            {"id": "John 1", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["sister of","sister 2","John 1"]],
+          "pre_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "The red square is nice.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "The red square 3 is nice.",
+          "type": "situation",
+          "entities": [{"id": "square 3", "type": "concrete"}],
+          "adjectives": [["red","none","none"], ["nice","none","entity"]],
+          "pre_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is a Muggle.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Mr Dursley 4 is a Muggle.",
+          "type": "real",
+          "entities": [{"id": "Mr Dursley 4", "type": "concrete", "category": "person"},
+            {"id": "Muggle", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Frogs are small.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Frogs are small.",
+          "type": "normal_rule",
+          "entities": [{"id": "frogs", "type": "generic", "category": "animal"}],
+          "adjectives": [["small","none","frog"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Mary tried to solve the puzzle.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Mary 5 tried to solve the puzzle 6.",
+          "type": "situation",
+          "entities": [{"id": "Mary 5", "type": "concrete", "category": "person"},
+            {"id": "puzzle 6", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "try",
+              "mode": "event",
+              "roles": {
+                "actor": "Mary 5",
+                "content": {
+                  "root": "solve",
+                  "mode": "event",
+                  "roles": {"actor": "Mary 5", "target": "puzzle 6"}
+                }
+              }
+            }
+          ],
+          "pre_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Winona is a cat.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Winona 7 is a cat.",
+          "type": "real",
+          "entities": [{"id": "Winona 7", "type": "concrete", "category": "animal"},
+            {"id": "cat", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Amazon's length is 20 kilometers.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Amazon 8's length 9 is 20 kilometers.",
+          "type": "real",
+          "entities": [{
+              "id": "Amazon 8",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Amazon_River"
+            },
+            {"id": "length 9", "type": "concrete", "text": "length"},
+            {"id": "20 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 9","Amazon 8"]]
+        },
+        {
+          "unit_id": "S11",
+          "text": "The length 9 is the length of Amazon 8.",
+          "type": "real",
+          "entities": [{"id": "length 9", "type": "concrete", "text": "length"},
+            {
+              "id": "Amazon 8",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Amazon_River"
+            }
+          ],
+          "definites": [["length of","length 9","Amazon 8"]]
+        }
+      ]
+    },
+    {
+      "raw": "Some elephant is an animal?",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Does there exist an elephant that is an animal?",
+          "type": "query",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","coffee cup","coffee cup 1"], ["has property","broke","coffee cup 1"]]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall", "X", ["implies", ["isa","elephant","X"], ["not", ["isa","animal","X"]]]]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W1",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","sister","sister 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","laugh"],
+              ["has actor","E","sister 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","sister","sister 2"],
+            ["isa","person","John 1"],
+            ["is rel2","sister of","sister 2","John 1"]
+          ]
+        ],
+        ["@definite","S4","W1","sister of","John 1","sister 2"]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W1",
+        ["and",
+          ["isa","square","square 3"],
+          ["has degree property","red","square 3","none","none"],
+          ["has degree property","nice","square 3","none","entity"]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds", "W0", ["and", ["isa","person","Mr Dursley 4"], ["isa","Muggle","Mr Dursley 4"]]]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","frog","X"],
+              ["normally", ["has degree property","small","X","none","frog"]]
+            ]
+          ]
+        ],
+        ["@p","S7",0.99]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W1",
+        ["and",
+          ["isa","person","Mary 5"],
+          ["isa","puzzle","puzzle 6"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","try"],
+              ["has actor","E1","Mary 5"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","solve"],
+                  ["has actor","E2","Mary 5"],
+                  ["has target","E2","puzzle 6"],
+                  ["has time","E2","past","in"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S9", ["holds", "W0", ["isa","cat","Winona 7"]]],
+    ["@id","S10",
+      ["holds","W0",
+        ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Amazon_River","W0"], ["$measure",20,"kilometer"]]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W0",
+          ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Amazon_River","W0"], ["$measure",20,"kilometer"]]
+        ],
+        ["@definite","S11","W0","length of","https://en.wikipedia.org/wiki/Amazon_River","length 9"]
+      ]
+    ],
+    ["@id","S12",
+      ["question", ["exists", "X", ["and", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","sister","#:sister 2"],
+ "@nl": "John 1's sister 2 laughed."},
+{"@name": "entity_S10",
+ "@logic": ["isa","place","#:Amazon 8"],
+ "@nl": "Amazon 8's length 9 is 20 kilometers."},
+{"@name": "entity_S10",
+ "@logic": ["isa","measure","20 kilometers"],
+ "@nl": "Amazon 8's length 9 is 20 kilometers."},
+{"@name": "sent_S1",
+ "@logic": ["isa","coffee cup","#:coffee cup 1"],
+ "@nl": "A coffee cup 1 broke."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "broke", "#:coffee cup 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A coffee cup 1 broke."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "A coffee cup 1 broke."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"], ["-isa","animal","?:X"]],
+ "@nl": "No elephant is an animal."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1's sister 2 laughed."},
+{"@name": "sent_S3",
+ "@logic": ["isa", "sister", ["$theof1", "sister", "#:John 1", ["$ctxt","present","W1","?:Fv9","?:Fv10"]]],
+ "@nl": "John 1's sister 2 laughed."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1's sister 2 laughed."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "laugh", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "John 1's sister 2 laughed."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", ["$theof1", "sister", "#:John 1", ["$ctxt","present","W1","?:Fv9","?:Fv10"]], ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "John 1's sister 2 laughed."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "John 1's sister 2 laughed."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "John 1's sister 2 laughed."},
+{"@name": "sent_S4",
+ "@logic": ["isa", "sister", ["$theof1", "sister", "#:John 1", ["$ctxt","present","W1","?:Fv9","?:Fv10"]]],
+ "@nl": "Sister 2 is the sister of John 1."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "Sister 2 is the sister of John 1."},
+{"@name": "sent_S5",
+ "@logic": ["-isa","round","#:square 3"],
+ "@nl": "The red square 3 is nice."},
+{"@name": "sent_S5",
+ "@logic": ["has property", "red", "#:square 3", ["$ctxt","present","W1","?:Fv11","?:Fv12"]],
+ "@nl": "The red square 3 is nice."},
+{"@name": "sent_S5",
+ "@logic": ["has degree property", "good", "#:square 3", "none", "?:Fv104", ["$ctxt","present","W1","?:Fv11","?:Fv12"]],
+ "@nl": "The red square 3 is nice."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Mr Dursley 4"],
+ "@nl": "Mr Dursley 4 is a Muggle."},
+{"@name": "sent_S6",
+ "@logic": ["isa","muggle","#:Mr Dursley 4"],
+ "@nl": "Mr Dursley 4 is a Muggle."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","frog","?:X"],
+            ["has degree property", "small", "?:X", "none", "frog", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]],
+            ["$block", ["$","frog",1], ["$not", ["has degree property", "small", "?:X", "none", "frog", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Frogs are small."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Mary 5"],
+ "@nl": "Mary 5 tried to solve the puzzle 6."},
+{"@name": "sent_S8",
+ "@logic": ["isa","puzzle","#:puzzle 6"],
+ "@nl": "Mary 5 tried to solve the puzzle 6."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Mary 5 tried to solve the puzzle 6."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk1_activity", "try", ["$ctxt","past","W1","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 5 tried to solve the puzzle 6."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk1_activity", "#:Mary 5", ["$ctxt","past","W1","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 5 tried to solve the puzzle 6."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 5 tried to solve the puzzle 6."},
+{"@name": "sent_S8",
+ "@logic": ["has content","sk1_activity","sk2_activity"],
+ "@nl": "Mary 5 tried to solve the puzzle 6."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Mary 5 tried to solve the puzzle 6."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk2_activity", "solve", ["$ctxt","past","W1","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 5 tried to solve the puzzle 6."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk2_activity", "#:Mary 5", ["$ctxt","past","W1","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 5 tried to solve the puzzle 6."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk2_activity", "#:puzzle 6", ["$ctxt","past","W1","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 5 tried to solve the puzzle 6."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W1","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 5 tried to solve the puzzle 6."},
+{"@name": "sent_S8",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Mary 5 tried to solve the puzzle 6."},
+{"@name": "sent_S9",
+ "@logic": ["isa","cat","#:Winona 7"],
+ "@nl": "Winona 7 is a cat."},
+{"@name": "sent_S10",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Amazon_River","W0"], ["$list",20000,"#:meter"]],
+ "@nl": "Amazon 8's length 9 is 20 kilometers."},
+{"@name": "sent_S11",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Amazon_River","W0"], ["$list",20000,"#:meter"]],
+ "@nl": "The length 9 is the length of Amazon 8."},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","elephant","sk3_elephant"]],
+ "@nl": "Does there exist an elephant that is an animal?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","animal","sk3_elephant"]],
+ "@nl": "Does there exist an elephant that is an animal?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-isa","elephant","?:X"], ["-isa","animal","?:X"], ["$defq0"]],
+ "@nl": "Does there exist an elephant that is an animal?"},
+{"@name": "sent_S12",
+ "@question": ["$defq0"],
+ "@nl": "Does there exist an elephant that is an animal?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:John 1", ["$theof1", "sister", "#:John 1", ["$ctxt","present","W1","?:Fv9","?:Fv10"]], ["$ctxt","present","W1","?:Fv9","?:Fv10"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "sister of", ["$theof1","sister","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "sister", ["$theof1","sister","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","frog","$some_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","frog","$some_not_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "small", "$some_small_frog", "none", "frog", ["$ctxt","?:Fv87","?:Fv84","?:Fv85","?:Fv86"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","frog","$some_small_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "small", "$some_not_small_frog", "none", "frog", ["$ctxt","?:Fv95","?:Fv92","?:Fv93","?:Fv94"]],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","coffee cup","?:X"], ["isa","cup","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","coffee","?:X"], ["-isa","cup","?:X"], ["isa","coffee cup","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv105","?:Fv38"],
+            ["-has degree property","high","?:X","none","?:Fv106","?:Fv38"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv107","?:Fv39"],
+            ["has degree property","small","?:X","none","?:Fv108","?:Fv39"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv40","?:Fv41","?:Fv42"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv43","?:Fv44","?:Fv45"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv109", ["$ctxt","past","?:Fv46","?:Fv47","?:Fv48"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv110", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv111", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv49","?:Fv50","?:Fv51"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv49","?:Fv50","?:Fv51"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv49","?:Fv50","?:Fv51"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S12","assumption",1], [["-$defq0"], ["isa","animal","sk3_elephant"]]],
+          [2, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [3, ["mp",1,2,"fromga",1], [["isa","animal","sk3_elephant"]]],
+          [4, ["in","sent_S2","assumption",1], [["-isa","elephant","?:X"], ["-isa","animal","?:X"]]],
+          [5, ["in","sent_S12","assumption",1], [["-$defq0"], ["isa","elephant","sk3_elephant"]]],
+          [6, ["mp",5,2,"fromga",1], [["isa","elephant","sk3_elephant"]]],
+          [7, ["mp", 3, [4,1], 6, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) No elephant is an animal.",
+"  (2) Some elephant is an animal?",
+"Proof steps (by contradiction):",
+"  (1) If answer holds then some elephant ele1 is an animal  [sentence 2]",
+"  (2) Answer holds  [assumption]",
+"  (3) Ele1 is an animal  [from steps 1, 2]",
+"  (4) If some X is an elephant then X is not an animal  [sentence 1]",
+"  (5) If answer holds then ele1 is an elephant  [sentence 2]",
+"  (6) Ele1 is an elephant  [from steps 5, 2]",
+"  (7) Contradiction  [from steps 3, 4, 6]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32116,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1759,
+      "raw": {
+        "input_tokens": 74,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1759,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 40243,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1522,
+      "raw": {
+        "input_tokens": 1352,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1522,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 42390,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1098,
+      "raw": {
+        "input_tokens": 3499,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1098,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:57:52Z"
+}

@@ -1,0 +1,417 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 228,
+  "input_text": "Tallinn is probably in Estonia. A leg of Mary is clean. The teacher showed the students the map. John's brother has a car. If X is cool and X is nice then X is red. John's sister has a car?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Tallinn is probably in Estonia.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Tallinn 1 is in Estonia 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Estonia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "A leg of Mary is clean.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "A leg 1 of Mary 3 is clean.",
+          "type": "situation",
+          "entities": [{"id": "leg 1", "type": "concrete", "text": "leg"},
+            {"id": "Mary 3", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["clean","none","leg"]]
+        }
+      ]
+    },
+    {
+      "raw": "The teacher showed the students the map.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The teacher 4 showed the students 5 the map 6.",
+          "type": "situation",
+          "entities": [{"id": "teacher 4", "type": "concrete", "category": "person"},
+            {"id": "students 5", "type": "concrete", "category": "person"},
+            {"id": "map 6", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 4", "recipient": "students 5", "target": "map 6"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John's brother has a car.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "John 7's brother 8 has a car 9.",
+          "type": "situation",
+          "entities": [{"id": "John 7", "type": "concrete", "category": "person"},
+            {"id": "brother 8", "type": "concrete", "text": "brother", "category": "person"},
+            {"id": "car 9", "type": "concrete", "category": "artifact"}
+          ]
+        },
+        {
+          "unit_id": "S5",
+          "text": "Brother 8 is the brother of John 7.",
+          "type": "situation",
+          "entities": [{"id": "brother 8", "type": "concrete", "text": "brother", "category": "person"},
+            {"id": "John 7", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "If X is cool and X is nice then X is red.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "If X is cool and X is nice then X is red.",
+          "type": "strict_rule",
+          "entities": [{"id": "X", "type": "generic"}],
+          "adjectives": [["cool","none","entity"], ["nice","none","entity"], ["red","none","entity"]]
+        }
+      ]
+    },
+    {
+      "raw": "John's sister has a car?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Does John 7's sister 10 have a car?",
+          "type": "query",
+          "entities": [{"id": "John 7", "type": "concrete", "category": "person"},
+            {"id": "sister 10", "type": "concrete", "text": "sister", "category": "person"},
+            {"id": "car", "type": "generic", "category": "artifact"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Estonia"]
+        ],
+        ["@p","S1",0.8]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","leg","leg 1"],
+          ["isa","person","Mary 3"],
+          ["has part","Mary 3","leg 1"],
+          ["has degree property","clean","leg 1","none","leg"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","teacher 4"],
+          ["isa","person","students 5"],
+          ["isa","map","map 6"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","show"],
+              ["has actor","E","teacher 4"],
+              ["has recipient","E","students 5"],
+              ["has target","E","map 6"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 7"],
+          ["isa","brother","brother 8"],
+          ["isa","car","car 9"],
+          ["have","brother 8","car 9"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","brother","brother 8"],
+          ["isa","person","John 7"],
+          ["is rel2","brother of","brother 8","John 7"]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["and",
+              ["has degree property","cool","X","none","entity"],
+              ["has degree property","nice","X","none","entity"]
+            ],
+            ["has degree property","red","X","none","entity"]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["question", ["exists", "X", ["and", ["isa","car","X"], ["have","sister 10","X"]]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Estonia 2"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "entity_S3",
+ "@logic": ["isa","teacher","#:teacher 4"],
+ "@nl": "The teacher 4 showed the students 5 the map 6."},
+{"@name": "entity_S3",
+ "@logic": ["isa","student","#:students 5"],
+ "@nl": "The teacher 4 showed the students 5 the map 6."},
+{"@name": "entity_S3",
+ "@logic": ["isa","student","#:students 5"],
+ "@nl": "The teacher 4 showed the students 5 the map 6."},
+{"@name": "entity_S7",
+ "@logic": ["isa","person","#:sister 10"],
+ "@nl": "Does John 7's sister 10 have a car?"},
+{"@name": "entity_S7",
+ "@logic": ["isa","sister","#:sister 10"],
+ "@nl": "Does John 7's sister 10 have a car?"},
+{"@name": "sent_S1",
+ "@logic": ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@confidence": 0.6,
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","leg","#:leg 1"],
+ "@nl": "A leg 1 of Mary 3 is clean."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 3"],
+ "@nl": "A leg 1 of Mary 3 is clean."},
+{"@name": "sent_S2",
+ "@logic": ["has part", "#:Mary 3", "#:leg 1", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A leg 1 of Mary 3 is clean."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "clean", "#:leg 1", "none", "leg", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A leg 1 of Mary 3 is clean."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:teacher 4"],
+ "@nl": "The teacher 4 showed the students 5 the map 6."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:students 5"],
+ "@nl": "The teacher 4 showed the students 5 the map 6."},
+{"@name": "sent_S3",
+ "@logic": ["isa","map","#:map 6"],
+ "@nl": "The teacher 4 showed the students 5 the map 6."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The teacher 4 showed the students 5 the map 6."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "show", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The teacher 4 showed the students 5 the map 6."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:teacher 4", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The teacher 4 showed the students 5 the map 6."},
+{"@name": "sent_S3",
+ "@logic": ["has recipient", "sk0_activity", "#:students 5", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The teacher 4 showed the students 5 the map 6."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk0_activity", "#:map 6", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The teacher 4 showed the students 5 the map 6."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The teacher 4 showed the students 5 the map 6."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The teacher 4 showed the students 5 the map 6."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:John 7"],
+ "@nl": "John 7's brother 8 has a car 9."},
+{"@name": "sent_S4",
+ "@logic": ["isa","brother","#:brother 8"],
+ "@nl": "John 7's brother 8 has a car 9."},
+{"@name": "sent_S4",
+ "@logic": ["isa","car","#:car 9"],
+ "@nl": "John 7's brother 8 has a car 9."},
+{"@name": "sent_S4",
+ "@logic": ["have", "#:brother 8", "#:car 9", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "John 7's brother 8 has a car 9."},
+{"@name": "sent_S5",
+ "@logic": ["isa","brother","#:brother 8"],
+ "@nl": "Brother 8 is the brother of John 7."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:John 7"],
+ "@nl": "Brother 8 is the brother of John 7."},
+{"@name": "sent_S5",
+ "@logic": ["is rel2", "brother of", "#:brother 8", "#:John 7", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Brother 8 is the brother of John 7."},
+{"@name": "sent_S6",
+ "@logic": [["-has degree property", "cool", "?:X", "none", "?:Fv79", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-has degree property", "good", "?:X", "none", "?:Fv80", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["has property", "red", "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "If X is cool and X is nice then X is red."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","car","sk1_car"]],
+ "@nl": "Does John 7's sister 10 have a car?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["have", "#:sister 10", "sk1_car", ["$ctxt","present","?:Fv21","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Does John 7's sister 10 have a car?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","car","?:X"],
+            ["-have", "#:sister 10", "?:X", ["$ctxt","present","?:Fv24","?:Fv15","?:Fv16"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 7's sister 10 have a car?"},
+{"@name": "sent_S5",
+ "@logic": ["have", "#:John 7", "#:brother 8", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Brother 8 is the brother of John 7."},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Does John 7's sister 10 have a car?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "#:sister 10", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "#:sister 10", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "#:sister 10", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Does John 7's sister 10 have a car?"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "cool", "$some_cool_entity", "none", "?:Fv81", ["$ctxt","?:Fv46","?:Fv43","?:Fv44","?:Fv45"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cool", "$some_not_cool_entity", "none", "?:Fv82", ["$ctxt","?:Fv54","?:Fv51","?:Fv52","?:Fv53"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "good", "$some_nice_entity", "none", "?:Fv83", ["$ctxt","?:Fv58","?:Fv55","?:Fv56","?:Fv57"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "good", "$some_not_nice_entity", "none", "?:Fv84", ["$ctxt","?:Fv66","?:Fv63","?:Fv64","?:Fv65"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "red", "$some_red_entity", ["$ctxt","?:Fv70","?:Fv67","?:Fv68","?:Fv69"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "red", "$some_not_red_entity", ["$ctxt","?:Fv78","?:Fv75","?:Fv76","?:Fv77"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","brother","?:X","?:Fv25"], ["-has property","sister","?:X","?:Fv25"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_kin_excl",
+ "@logic": [["-isa","sister","?:X"], ["-isa","brother","?:X"]],
+ "@nl": "[generated: frm_kin_excl]"},
+{"@name": "frm_kin_excl",
+ "@logic": [["-is rel2","sister of","?:X","?:Y","?:Fv26"],
+            ["-is rel2","brother of","?:X","?:Y","?:Fv26"]
+           ],
+ "@nl": "[generated: frm_kin_excl]"},
+{"@name": "frm_kin_excl",
+ "@logic": [["-is rel2","sister of","?:X","?:Y","?:Fv27"], ["isa","sister","?:X"]],
+ "@nl": "[generated: frm_kin_excl]"},
+{"@name": "frm_kin_excl",
+ "@logic": [["-is rel2","brother of","?:X","?:Y","?:Fv28"], ["isa","brother","?:X"]],
+ "@nl": "[generated: frm_kin_excl]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv29","?:Fv30","?:Fv31"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv29","?:Fv30","?:Fv31"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv29","?:Fv30","?:Fv31"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv32","?:Fv33","?:Fv34"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28360,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1121,
+      "raw": {
+        "input_tokens": 28360,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1121,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29481
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34223,
+      "cached_input_tokens": 33408,
+      "output_tokens": 550,
+      "raw": {
+        "input_tokens": 34223,
+        "input_tokens_details": {"cached_tokens": 33408},
+        "output_tokens": 550,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34773
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:44:59Z"
+}

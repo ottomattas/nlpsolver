@@ -1,0 +1,477 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1032,
+  "input_text": "Elephants have a head. John is probably a child of Mike. The house was built by Tom. Mary was given a promotion. A tall and quiet man entered. Tom destroyed the house?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Elephants have a head.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Elephants have a head.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "head", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "John is probably a child of Mike.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 is a child of Mike 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Mike 2", "type": "concrete", "category": "person"}
+          ],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "The house was built by Tom.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Tom 3 built the house 4.",
+          "type": "situation",
+          "entities": [{"id": "Tom 3", "type": "concrete", "category": "person"},
+            {"id": "house 4", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "build", "mode": "event", "roles": {"actor": "Tom 3", "target": "house 4"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary was given a promotion.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mary 5 was given a promotion 6.",
+          "type": "situation",
+          "entities": [{"id": "Mary 5", "type": "concrete", "category": "person"},
+            {"id": "promotion 6", "type": "concrete", "category": "event"}
+          ],
+          "actions": [{
+              "root": "give",
+              "mode": "event",
+              "roles": {"recipient": "Mary 5", "target": "promotion 6"}
+            }
+          ],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A tall and quiet man entered.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "A tall and quiet man 7 entered.",
+          "type": "situation",
+          "entities": [{"id": "man 7", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "enter", "mode": "event"}],
+          "adjectives": [["tall","none","person"], ["quiet","none","person"]],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Tom destroyed the house?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Did Tom 3 destroy the house 4?",
+          "type": "query",
+          "entities": [{"id": "Tom 3", "type": "concrete", "category": "person"},
+            {"id": "house 4", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "destroy", "mode": "event", "roles": {"actor": "Tom 3", "target": "house 4"}}],
+          "pre_state": "W3",
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","head","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["isa","person","Mike 2"],
+            ["is rel2","child of","John 1","Mike 2"]
+          ]
+        ],
+        ["@p","S2",0.8]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Tom 3"],
+            ["isa","house","house 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","build"],
+                ["has actor","E","Tom 3"],
+                ["has target","E","house 4"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Mary 5"],
+            ["isa","event","promotion 6"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","give"],
+                ["has recipient","E","Mary 5"],
+                ["has target","E","promotion 6"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","man","man 7"],
+            ["has degree property","tall","man 7","none","person"],
+            ["has degree property","quiet","man 7","none","person"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","enter"],
+                ["has actor","E","man 7"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S6",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","destroy"],
+            ["has actor","E","Tom 3"],
+            ["has target","E","house 4"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","promotion","#:promotion 6"],
+ "@nl": "Mary 5 was given a promotion 6."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "head", ["sk0","?:X"]]],
+ "@nl": "Elephants have a head."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have a head."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@confidence": 0.8434,
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mike 2"],
+ "@confidence": 0.8434,
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "sent_S2",
+ "@logic": ["is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@confidence": 0.8434,
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Tom 3"],
+ "@nl": "Tom 3 built the house 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","house","#:house 4"],
+ "@nl": "Tom 3 built the house 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Tom 3 built the house 4."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "build", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 3 built the house 4."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:Tom 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 3 built the house 4."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk1_activity", "#:house 4", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 3 built the house 4."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 3 built the house 4."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Tom 3 built the house 4."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Tom 3 built the house 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mary 5"],
+ "@nl": "Mary 5 was given a promotion 6."},
+{"@name": "sent_S4",
+ "@logic": ["isa","event","#:promotion 6"],
+ "@nl": "Mary 5 was given a promotion 6."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Mary 5 was given a promotion 6."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk2_activity", "give", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 5 was given a promotion 6."},
+{"@name": "sent_S4",
+ "@logic": ["has recipient", "sk2_activity", "#:Mary 5", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 5 was given a promotion 6."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk2_activity", "#:promotion 6", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 5 was given a promotion 6."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 5 was given a promotion 6."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Mary 5 was given a promotion 6."},
+{"@name": "sent_S4",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Mary 5 was given a promotion 6."},
+{"@name": "sent_S5",
+ "@logic": ["isa","man","#:man 7"],
+ "@nl": "A tall and quiet man 7 entered."},
+{"@name": "sent_S5",
+ "@logic": ["has degree property", "tall", "#:man 7", "none", "person", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "A tall and quiet man 7 entered."},
+{"@name": "sent_S5",
+ "@logic": ["-has degree property", "active", "#:man 7", "none", "person", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "A tall and quiet man 7 entered."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "A tall and quiet man 7 entered."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk3_activity", "enter", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "A tall and quiet man 7 entered."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk3_activity", "#:man 7", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "A tall and quiet man 7 entered."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "A tall and quiet man 7 entered."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "A tall and quiet man 7 entered."},
+{"@name": "sent_S5",
+ "@logic": ["next","W2","W3"],
+ "@nl": "A tall and quiet man 7 entered."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk4_activity"]],
+ "@nl": "Did Tom 3 destroy the house 4?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk4_activity", "destroy", ["$ctxt","past","?:Fv18","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Did Tom 3 destroy the house 4?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk4_activity", "#:Tom 3", ["$ctxt","past","?:Fv20","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Did Tom 3 destroy the house 4?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk4_activity", "#:house 4", ["$ctxt","past","?:Fv22","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Did Tom 3 destroy the house 4?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk4_activity"]],
+ "@nl": "Did Tom 3 destroy the house 4?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "destroy", ["$ctxt","past","?:Fv26","?:Fv13","?:Fv14"]],
+            ["-has actor", "?:E", "#:Tom 3", ["$ctxt","past","?:Fv28","?:Fv13","?:Fv14"]],
+            ["-has target", "?:E", "#:house 4", ["$ctxt","past","?:Fv30","?:Fv13","?:Fv14"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Tom 3 destroy the house 4?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Did Tom 3 destroy the house 4?"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "destroy", ["$ctxt","?:Fv32","?:Fv33","?:Fv35","?:Fv36"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv32","?:Fv33","?:Fv35","?:Fv36"]],
+            ["-next","?:Fv33","?:Fv34"],
+            ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv34","?:Fv35","?:Fv36"]],
+            ["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv34","?:Fv35","?:Fv36"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "destroy", "?:X", ["$ctxt","?:Fv37","?:Fv38","?:Fv40","?:Fv41"]],
+            ["-next","?:Fv38","?:Fv39"],
+            ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]],
+            ["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","head","$some_head"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","head","$some_not_head"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv42"], ["has type","?:E","give","?:Fv42"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","tall","?:X","none","?:Fv75","?:Fv43"],
+            ["has degree property","high","?:X","none","?:Fv76","?:Fv43"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","high","?:X","none","?:Fv77","?:Fv44"],
+            ["has degree property","tall","?:X","none","?:Fv78","?:Fv44"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","event","?:X"], ["-isa","house","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","event","?:X"], ["-isa","house","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "none", "?:Fv79", ["$ctxt","past","?:Fv45","?:Fv46","?:Fv47"]],
+            ["has degree property", "tall", "?:X", "none", "?:Fv80", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "none", "?:Fv81", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv48","?:Fv49","?:Fv50"]],
+            ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32088,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1016,
+      "raw": {
+        "input_tokens": 46,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1016,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39684,
+      "cached_input_tokens": 38891,
+      "output_tokens": 924,
+      "raw": {
+        "input_tokens": 793,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 924,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:05:55Z"
+}

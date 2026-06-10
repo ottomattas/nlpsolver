@@ -3,9 +3,12 @@
 Companion to `wip/plans/02-ballast-robustness-experiments.md` (Tanel's ask,
 2026-06-10: insert pure-ballast sentences into the test cases at increasing
 dose and measure when accuracy degrades).
-Status: **Phase 0 (generator + validation) and Phase 1 (100-subset @ b2,
-gpt+claude) complete.** Higher doses (Phase 2) and the full 1600 runs
-(Phases 4–5) **not run** — the 1600 runs are gated on explicit sign-off.
+Status: **Phases 0–2 run (b2/b4/b8/b16 × gpt+claude on the 100-subset).**
+The Phase-2 data is **provisional**: post-run auditing caught a
+sentence-splitter bug that contaminated part of the collected suites, plus
+an Anthropic credit outage inside claude's b16 — see §11. The generator is
+fixed and clean suites are regenerated; the clean rerun awaits sign-off.
+The full 1600 runs (Phases 4–5) are gated on explicit sign-off.
 Run: `nlpsolver/llmpipe` on macOS (local `gk` ARM64), two-stage pipeline,
 LLM cache on, thinking off, prover at the default 2s. Date: 2026-06-10.
 
@@ -147,8 +150,10 @@ stored runs:
     was **lost**; gpt case 134 — original pronoun "She" re-bound to the
     ballast's "the mouse" (answer survived, since both pronoun uses moved
     together); both models case 136 — "She" → ballast "Mary"; gpt case
-    1408 — ballast title + original noun merged into the entity
-    "Dr. Penguins" (answer survived).
+    1408 — the entity "Dr. Penguins" (answer survived). **Correction
+    (post-Phase-2):** case 1408 was NOT an LLM merge — the suite text
+    itself read "A surgeon, Dr. Penguins are birds." due to the splitter
+    bug of §11.2; the model parsed corrupted input faithfully.
   - **Benign enrichment:** the LLM typing ballast people as `isa person` /
     John as `animal` where that word happens to be on the other side
     (cases 70, 1365) — scaffolding, not a bridge.
@@ -251,7 +256,85 @@ gitignored. Suite + manifest: `llmpipe/tests/ballast/tests_core_100_b2.py`,
 |-------|------|--------|
 | 0 | Generator + self-checks + clause spot-checks (6 cases, gemini) | **done** — all PASS after isa-cross-group fix |
 | 1 | 100-subset @ b2, gpt+claude | **done** — 200/200, 0 errors, $7.71 |
-| 2 | 100-subset @ b4/b8/b16, gpt+claude | next — pending go (+ demonstrative-subject pool filter first) |
+| 2 | 100-subset @ b4/b8/b16, gpt+claude | **run, provisional** (§11) — clean rerun pending sign-off |
 | 3 | 100-subset @ N_light/N_heavy, gemini+deepseek | pending |
 | 4 | Full 1600 @ N_light, 4 models | **gated: explicit sign-off (large spend)** |
 | 5 | Full 1600 @ N_heavy, 4 models | **gated: explicit sign-off (large spend)** |
+
+## 11. Phase 2 (b4/b8/b16, gpt+claude) — provisional results and incidents
+
+All 600 runs executed (b4/b8/b16 × 2 models × 100 cases), at a constant
+non-binding 32K output budget (`runtests.py -maxtokens`, see §11.3).
+Snapshots: `core_100_b4/`, `core_100_b8/`, `core_100_b16/`. Per-dose
+exclusion lists: `phase2_exclusions.json`.
+
+### 11.1 The curve (provisional)
+
+As collected (all 100 cases per cell) and on valid cases only (excluding
+the contaminated cases of §11.2 and claude-b16's credit-outage cases of
+§11.4):
+
+```
+accuracy %, as collected        valid cases only (excluded/cell)
+        b0    b2    b4    b8   b16     b2     b4     b8     b16
+gpt   100.0  98.0  84.0  93.0  78.0   98.0   85.1   94.6   79.4   (-2/-6/-7/-32)
+claude 98.0  96.0  94.0  89.0  65.0†  95.9   94.7   90.3   83.6   (-2/-6/-7/-45)
+   († 22 of claude-b16's 35 fails are the credit outage, not the model)
+```
+
+- The dose effect is now unambiguous: both models degrade with dose, and
+  b16 is the "clearly hurting" regime (N_heavy candidate). b4–b8 looks
+  like N_light territory.
+- Failure decomposition stays parse-side: `no_proof` dominates everywhere;
+  a **wrong_answer** bucket appears from b4 on (3–4/dose/model) — at higher
+  doses the parse doesn't just lose clauses, it produces misleading ones —
+  and claude emitted *malformed* stage-2 logic once at b8 (case 1315,
+  "null at formula level") and again at b16 (case 193).
+- **gpt's b4 (85.1) < b8 (94.6) is non-monotonic on complete cells** and
+  survives the contamination exclusions. Each dose has an independently
+  drawn ballast set, so an unlucky/interactive b4 draw or run-level decode
+  variance are the candidates; the clean rerun will say which.
+
+### 11.2 Incident: splitter bug contaminated part of the suites
+
+The pool builder split "A surgeon, **Dr.** Smith, entered the room." at
+the abbreviation dot. Three corruption channels into the collected runs:
+fragment ballast "A surgeon, Dr." (and partials "Smith, entered the
+room.", "Smith, a surgeon, entered the room."); ballast inserted *inside*
+the severed original of case 1085; and b2-1408's "Dr. Penguins" (§5
+correction). Contaminated cases — b2: 2, b4: 6, b8: 7, b16: 32 (ids in
+`phase2_exclusions.json`). Fixed in commit `9a69fc8` (abbreviation-masking
+in `split_sentences`); all four suites regenerated cleanly at strict
+inertness. The regenerated suites reshuffle all picks (pool size changed),
+so the collected runs correspond to the old suites in git history.
+
+### 11.3 Incident: 8K output cap truncates heavy-dose parses
+
+At b16 the default 8000-token output budget truncates stage outputs
+(gemini probes: every call returned exactly ~8K and two probe cases died
+with "stage 2 produced no output"; a 10s/32K rerun PASSed them). gpt's
+reasoning tokens count against the same budget. Phase 2 therefore ran at
+32K (non-binding; b2 calls peak at 1.8K, b16 at ~6K mean output). The cap
+collision is itself an operational finding for anyone running this
+pipeline on long inputs.
+
+### 11.4 Incident: Anthropic credit outage inside claude-b16
+
+22 consecutive claude cases (588–1094) got "credit balance is too low",
+recorded no API response, and were bucketed as failures. They are listed
+in `phase2_exclusions.json` and excluded from the valid-cases table.
+Top up credits (or enable auto-reload) before any claude rerun.
+
+### 11.5 Phase-2 cost (usage ledger, list prices)
+
+```
+dose       gpt     claude   note
+b4        3.28       7.09
+b8        4.99       9.92
+b16       8.33      13.17   claude cell incomplete (78/100 with usage)
+Phase 2  16.60      30.18   = $46.78
+```
+
+Study total so far (Phase 0 ≈ $0.7 + Phase 1 $7.71 + Phase 2 $46.78):
+**≈ $55**. A full clean rerun of all four doses is an estimated **$55–60**
+more at observed caching rates.

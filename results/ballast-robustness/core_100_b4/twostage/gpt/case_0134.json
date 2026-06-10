@@ -1,0 +1,428 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 134,
+  "input_text": "Cats are afraid of wolves. An apple was bad. She was in a room. If X1 is male and X1 is a grandchild of Y1, X1 is a grandson of Y1. John is a big strong bear. Eve sent Tom a long letter. She was in the room?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "Cats are afraid of wolves.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Cats are afraid of wolves.",
+          "type": "normal_rule",
+          "entities": [{"id": "cats", "type": "generic", "category": "animal"},
+            {"id": "wolves", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["afraid of wolves","none","animal"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "An apple was bad.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "An apple 1 was bad.",
+          "type": "situation",
+          "entities": [{"id": "apple 1", "type": "concrete"}],
+          "adjectives": [["bad","none","none"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "She was in a room.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "She 2 was in a room 3.",
+          "type": "situation",
+          "entities": [{"id": "she 2", "type": "concrete", "category": "person"},
+            {"id": "room 3", "type": "concrete", "category": "place"}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is male and X1 is a grandchild of Y1, X1 is a grandson of Y1.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "If X1 is male and X1 is a grandchild of Y1, X1 is a grandson of Y1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic", "category": "person"},
+            {"id": "Y1", "type": "generic", "category": "person"},
+            {"id": "grandchild", "type": "generic", "category": "person"},
+            {"id": "grandson", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is a big strong bear.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "John 3 is a bear.",
+          "type": "situation",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "animal"},
+            {"id": "bear", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S6",
+          "text": "John 3 is big.",
+          "type": "situation",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","bear"]]
+        },
+        {
+          "unit_id": "S7",
+          "text": "John 3 is strong.",
+          "type": "situation",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "animal"}],
+          "adjectives": [["strong","none","bear"]]
+        }
+      ]
+    },
+    {
+      "raw": "Eve sent Tom a long letter.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Eve 4 sent Tom 5 a long letter 6.",
+          "type": "situation",
+          "entities": [{"id": "Eve 4", "type": "concrete", "category": "person"},
+            {"id": "Tom 5", "type": "concrete", "category": "person"},
+            {"id": "letter 6", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{
+              "root": "send",
+              "mode": "event",
+              "roles": {"actor": "Eve 4", "recipient": "Tom 5", "target": "letter 6"}
+            }
+          ],
+          "adjectives": [["long","none","letter"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "She was in the room?",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Was Eve 4 in the room 3?",
+          "type": "query",
+          "entities": [{"id": "Eve 4", "type": "concrete", "category": "person"},
+            {"id": "room 3", "type": "concrete", "category": "place"}
+          ],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["forall","Y",
+              ["implies",
+                ["and", ["isa","cat","X"], ["isa","wolf","Y"]],
+                ["normally", ["has degree rel2","afraid of wolves","X","Y","none","animal"]]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","apple","apple 1"],
+            ["@time", "past", ["has degree property","bad","apple 1","none","none"]]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","she 2"],
+            ["isa","room","room 3"],
+            ["@time", "past", ["is rel2","in","she 2","room 3"]]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies",
+              ["and", ["has property","male","X1"], ["is rel2","grandchild of","X1","Y1"]],
+              ["is rel2","grandson of","X1","Y1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S5", ["holds", "W0", ["isa","bear","John 3"]]],
+    ["@id", "S6", ["holds", "W0", ["has degree property","big","John 3","none","bear"]]],
+    ["@id", "S7", ["holds", "W0", ["has degree property","strong","John 3","none","bear"]]],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Eve 4"],
+            ["isa","person","Tom 5"],
+            ["isa","letter","letter 6"],
+            ["has degree property","long","letter 6","none","letter"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","send"],
+                ["has actor","E","Eve 4"],
+                ["has recipient","E","Tom 5"],
+                ["has target","E","letter 6"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S9", ["question", ["@time", "past", ["is rel2","in","Eve 4","room 3"]]]]
+  ],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","she","#:she 2"],
+ "@nl": "She 2 was in a room 3."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","cat","?:X"],
+            ["-isa","wolf","?:Y"],
+            ["is rel2", "afraid of wolves", "?:X", "?:Y", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","wolf",1], ["$not", ["is rel2", "afraid of wolves", "?:X", "?:Y", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Cats are afraid of wolves."},
+{"@name": "sent_S2",
+ "@logic": ["isa","apple","#:apple 1"],
+ "@nl": "An apple 1 was bad."},
+{"@name": "sent_S2",
+ "@logic": ["-has degree property", "good", "#:apple 1", "none", "?:Fv78", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "An apple 1 was bad."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:she 2"],
+ "@nl": "She 2 was in a room 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","room","#:room 3"],
+ "@nl": "She 2 was in a room 3."},
+{"@name": "sent_S3",
+ "@logic": ["is rel2", "in", "#:she 2", "#:room 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "She 2 was in a room 3."},
+{"@name": "sent_S4",
+ "@logic": [["-has property", "male", "?:X1", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-is rel2", "grandchild of", "?:X1", "?:Y1", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["is rel2", "grandson of", "?:X1", "?:Y1", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "If X1 is male and X1 is a grandchild of Y1, X1 is a grandson of Y1."},
+{"@name": "sent_S5",
+ "@logic": ["isa","bear","#:John 3"],
+ "@nl": "John 3 is a bear."},
+{"@name": "sent_S6",
+ "@logic": ["has degree property", "big", "#:John 3", "none", "bear", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "John 3 is big."},
+{"@name": "sent_S7",
+ "@logic": ["has degree property", "strong", "#:John 3", "none", "bear", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "John 3 is strong."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Eve 4"],
+ "@nl": "Eve 4 sent Tom 5 a long letter 6."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Tom 5"],
+ "@nl": "Eve 4 sent Tom 5 a long letter 6."},
+{"@name": "sent_S8",
+ "@logic": ["isa","letter","#:letter 6"],
+ "@nl": "Eve 4 sent Tom 5 a long letter 6."},
+{"@name": "sent_S8",
+ "@logic": ["has degree property", "long", "#:letter 6", "none", "letter", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Eve 4 sent Tom 5 a long letter 6."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Eve 4 sent Tom 5 a long letter 6."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk0_activity", "give", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Eve 4 sent Tom 5 a long letter 6."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk0_activity", "#:Eve 4", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Eve 4 sent Tom 5 a long letter 6."},
+{"@name": "sent_S8",
+ "@logic": ["has recipient", "sk0_activity", "#:Tom 5", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Eve 4 sent Tom 5 a long letter 6."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk0_activity", "#:letter 6", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Eve 4 sent Tom 5 a long letter 6."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Eve 4 sent Tom 5 a long letter 6."},
+{"@name": "sent_S8",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Eve 4 sent Tom 5 a long letter 6."},
+{"@name": "sent_S9",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "in", "#:Eve 4", "#:room 3", ["$ctxt","past","?:Fv23","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "Was Eve 4 in the room 3?"},
+{"@name": "sent_S9",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "in", "#:Eve 4", "#:room 3", ["$ctxt","past","?:Fv23","?:Fv21","?:Fv22"]],
+            ["$defq0"]
+           ],
+ "@nl": "Was Eve 4 in the room 3?"},
+{"@name": "sent_S9",
+ "@question": ["$defq0"],
+ "@nl": "Was Eve 4 in the room 3?"},
+{"@name": "sent_S9",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "#:Eve 4", "#:room 3", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["is rel2", "in", "#:Eve 4", "#:room 3", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "#:Eve 4", "#:room 3", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Was Eve 4 in the room 3?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","cat","$some_cat"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","cat","$some_not_cat"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","wolf","$some_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","wolf","$some_not_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "male", "$some_male", ["$ctxt","?:Fv73","?:Fv70","?:Fv71","?:Fv72"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "male", "$some_not_male", ["$ctxt","?:Fv77","?:Fv74","?:Fv75","?:Fv76"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","animal","?:X"], ["isa","male","?:X"]],
+ "@confidence": 0.8,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","male","?:X"], ["isa","animal","?:X"]],
+ "@confidence": 0.8,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv27"], ["has type","?:E","give","?:Fv27"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","apple","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","apple","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv79", ["$ctxt","past","?:Fv28","?:Fv29","?:Fv30"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv80", ["$ctxt","present","?:Fv28","?:Fv29","?:Fv30"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv81", ["$ctxt","present","?:Fv28","?:Fv29","?:Fv30"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv31","?:Fv32","?:Fv33"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv31","?:Fv32","?:Fv33"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv31","?:Fv32","?:Fv33"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "none", "?:Fv82", ["$ctxt","past","?:Fv34","?:Fv35","?:Fv36"]],
+            ["has degree property", "long", "?:X", "none", "?:Fv83", ["$ctxt","present","?:Fv34","?:Fv35","?:Fv36"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "none", "?:Fv84", ["$ctxt","present","?:Fv34","?:Fv35","?:Fv36"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv37","?:Fv38","?:Fv39"]],
+            ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv37","?:Fv38","?:Fv39"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv37","?:Fv38","?:Fv39"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv85", ["$ctxt","past","?:Fv40","?:Fv41","?:Fv42"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv86", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv87", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv43","?:Fv44","?:Fv45"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28375,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1126,
+      "raw": {
+        "input_tokens": 28375,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1126,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29501
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34327,
+      "cached_input_tokens": 33280,
+      "output_tokens": 681,
+      "raw": {
+        "input_tokens": 34327,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 681,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35008
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:40:48Z"
+}

@@ -1,0 +1,452 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1074,
+  "input_text": "Though Mary was ill, she traveled. Estonia is not outside Europe. Red cars do not have trunks. Muggles cannot disappear. The horse kept in the stable was calm. Mary did not travel?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Though Mary was ill, she traveled.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mary 1 was ill.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["ill","none","person"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "Mary 1 traveled.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "travel", "mode": "event"}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Estonia is not outside Europe.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Estonia 1 is not outside Europe 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Estonia 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            },
+            {
+              "id": "Europe 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Europe"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Red cars do not have trunks.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Red cars do not have trunks.",
+          "type": "strict_rule",
+          "entities": [{"id": "cars", "type": "generic", "category": "artifact"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"}
+          ],
+          "adjectives": [["red","none","car"]]
+        }
+      ]
+    },
+    {
+      "raw": "Muggles cannot disappear.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Muggles cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "muggles", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "The horse kept in the stable was calm.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The horse 1 that was kept in the stable 2 was calm.",
+          "type": "situation",
+          "entities": [{"id": "horse 1", "type": "concrete", "category": "animal"},
+            {"id": "stable 2", "type": "concrete", "category": "place"}
+          ],
+          "adjectives": [["calm","none","animal"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary did not travel?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Did Mary 1 not travel?",
+          "type": "query",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "travel", "mode": "event"}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","person","Mary 1"], ["has degree property","ill","Mary 1","none","person"]]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","travel"],
+            ["has actor","E","Mary 1"],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["not",
+          ["is rel2","outside","https://en.wikipedia.org/wiki/Estonia","https://en.wikipedia.org/wiki/Europe"]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["and", ["isa","car","X"], ["has degree property","red","X","none","car"]],
+            ["not", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","muggle","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","horse","horse 1"],
+            ["isa","stable","stable 2"],
+            ["has degree property","calm","horse 1","none","animal"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S7",
+      ["question",
+        ["not",
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","travel"],
+              ["has actor","E","Mary 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Estonia 1"],
+ "@nl": "Estonia 1 is not outside Europe 2."},
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Europe 2"],
+ "@nl": "Estonia 1 is not outside Europe 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 was ill."},
+{"@name": "sent_S1",
+ "@logic": ["-has property", "well", "#:Mary 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1 was ill."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Mary 1 traveled."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 1 traveled."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 1 traveled."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 1 traveled."},
+{"@name": "sent_S3",
+ "@logic": ["-is rel2", "outside", "https://en.wikipedia.org/wiki/Estonia", "https://en.wikipedia.org/wiki/Europe", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Estonia 1 is not outside Europe 2."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","car","?:X"],
+            ["-has property", "red", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-isa","trunk","?:Y"],
+            ["-has part", "?:X", "?:Y", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Red cars do not have trunks."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","muggle","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Muggles cannot disappear."},
+{"@name": "sent_S6",
+ "@logic": ["isa","horse","#:horse 1"],
+ "@nl": "The horse 1 that was kept in the stable 2 was calm."},
+{"@name": "sent_S6",
+ "@logic": ["isa","stable","#:stable 2"],
+ "@nl": "The horse 1 that was kept in the stable 2 was calm."},
+{"@name": "sent_S6",
+ "@logic": ["has degree property", "calm", "#:horse 1", "none", "animal", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The horse 1 that was kept in the stable 2 was calm."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "go", ["$ctxt","past","?:Fv23","?:Fv17","?:Fv18"]],
+            ["-has actor", "?:E", "#:Mary 1", ["$ctxt","past","?:Fv25","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did Mary 1 not travel?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["isa","activity","sk1_activity"], ["$defq0"]],
+ "@nl": "Did Mary 1 not travel?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["has type", "sk1_activity", "go", ["$ctxt","past","?:Fv31","?:Fv17","?:Fv18"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did Mary 1 not travel?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["has actor", "sk1_activity", "#:Mary 1", ["$ctxt","past","?:Fv33","?:Fv17","?:Fv18"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did Mary 1 not travel?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["has time", "sk1_activity", "past", "in", ["$ctxt","past","?:Fv35","?:Fv17","?:Fv18"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did Mary 1 not travel?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Did Mary 1 not travel?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","car","$some_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","car","$some_not_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","muggle","$some_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","muggle","$some_not_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "red", "$some_red_car", ["$ctxt","?:Fv81","?:Fv78","?:Fv79","?:Fv80"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","car","$some_red_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "red", "$some_not_red_car", ["$ctxt","?:Fv89","?:Fv86","?:Fv87","?:Fv88"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","car","$some_red_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "red", "$some_red_car", ["$ctxt","?:Fv97","?:Fv94","?:Fv95","?:Fv96"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv37"], ["has type","?:E","go","?:Fv37"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","in","?:X","?:Fv38"],
+            ["-has property","outside","?:X","?:Fv38"],
+            ["$block", 0, ["has property","outside","?:X","?:Fv38"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","in","?:X","?:Fv39"],
+            ["-has property","outside","?:X","?:Fv39"],
+            ["$block", 0, ["has property","in","?:X","?:Fv39"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","car","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","car","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv40","?:Fv41","?:Fv42"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv43","?:Fv44","?:Fv45"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S7","assumption",1], [["-$defq0"], ["-has type", "?:X", "go", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has actor", "?:X", "#:Mary 1", ["$ctxt","past","?:V","?:Z","?:U"]], ["-isa","activity","?:X"]]],
+          [2, ["in","sent_S2","assumption",1], [["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp", [1,1], 2, 3, "fromga", 1], [["-isa","activity","sk0_activity"], ["-has actor", "sk0_activity", "#:Mary 1", ["$ctxt","past","?:X3","?:Y3","?:Z3"]]]],
+          [5, ["in","sent_S2","assumption",1], [["isa","activity","sk0_activity"]]],
+          [6, ["simp",4,5,"fromga",1], [["-has actor", "sk0_activity", "#:Mary 1", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [7, ["in","sent_S2","assumption",1], [["has actor", "sk0_activity", "#:Mary 1", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [8, ["mp",6,7,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Though Mary was ill, she traveled.",
+"  (2) Mary did not travel?",
+"Proof steps (by contradiction):",
+"  (1) If answer holds and X is a go event and Mary performs X then X is not an activity  [sentence 2]",
+"  (2) The event act1 is a go event  [sentence 1]",
+"  (3) Answer holds  [assumption]",
+"  (4) If the event act1 is an activity then Mary does not perform the act1  [from steps 1, 2, 3]",
+"  (5) The event act1 is an activity  [sentence 1]",
+"  (6) Mary does not perform the act1  [from steps 4, 5]",
+"  (7) Mary performs the event act1  [sentence 1]",
+"  (8) Contradiction  [from steps 6, 7]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28354,
+      "cached_input_tokens": 28288,
+      "output_tokens": 815,
+      "raw": {
+        "input_tokens": 28354,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 815,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29169
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34058,
+      "cached_input_tokens": 33280,
+      "output_tokens": 555,
+      "raw": {
+        "input_tokens": 34058,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 555,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34613
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:05:28Z"
+}

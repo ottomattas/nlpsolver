@@ -1,0 +1,434 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 671,
+  "input_text": "John is in a cave with a probability 10%. Anna handed a key to Mark. The woman holding a heavy lamp sang. The black car is not in the box. Mary, a pilot, smiled. The lamp was light?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "John is in a cave with a probability 10%.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is in a cave.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "cave", "type": "generic", "category": "place"}
+          ],
+          "confidence": 0.1
+        }
+      ]
+    },
+    {
+      "raw": "Anna handed a key to Mark.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Anna 2 handed a key 3 to Mark 4.",
+          "type": "situation",
+          "entities": [{"id": "Anna 2", "type": "concrete", "category": "person"},
+            {"id": "key 3", "type": "concrete", "category": "artifact"},
+            {"id": "Mark 4", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "hand",
+              "mode": "event",
+              "roles": {"actor": "Anna 2", "target": "key 3", "recipient": "Mark 4"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The woman holding a heavy lamp sang.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The woman 5 who held a heavy lamp 6 sang.",
+          "type": "situation",
+          "entities": [{"id": "woman 5", "type": "concrete", "category": "person"},
+            {"id": "lamp 6", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "hold", "mode": "event", "roles": {"actor": "woman 5", "target": "lamp 6"}},
+            {"root": "sing", "mode": "event", "roles": {"actor": "woman 5"}}
+          ],
+          "adjectives": [["heavy","none","lamp"]],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The black car is not in the box.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The black car 7 is not in the box 8.",
+          "type": "situation",
+          "entities": [{"id": "car 7", "type": "concrete", "category": "artifact"},
+            {"id": "box 8", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["black","none","car"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mary, a pilot, smiled.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Mary 9 smiled.",
+          "type": "situation",
+          "entities": [{"id": "Mary 9", "type": "concrete", "category": "person"},
+            {"id": "pilot", "type": "generic", "category": "person"}
+          ],
+          "actions": [{"root": "smile", "mode": "event", "roles": {"actor": "Mary 9"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The lamp was light?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Was the lamp 6 light?",
+          "type": "query",
+          "entities": [{"id": "lamp 6", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["light","none","lamp"]],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["and", ["holds", "W0", ["is rel2","in","John 1","cave"]], ["@p","S1",0.1]]],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Anna 2"],
+            ["isa","key","key 3"],
+            ["isa","person","Mark 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","hand"],
+                ["has actor","E","Anna 2"],
+                ["has target","E","key 3"],
+                ["has recipient","E","Mark 4"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","woman","woman 5"],
+            ["isa","lamp","lamp 6"],
+            ["has degree property","heavy","lamp 6","none","lamp"],
+            ["exists","E1",
+              ["and",
+                ["isa","activity","E1"],
+                ["has type","E1","hold"],
+                ["has actor","E1","woman 5"],
+                ["has target","E1","lamp 6"],
+                ["has time","E1","past","in"]
+              ]
+            ],
+            ["exists","E2",
+              ["and",
+                ["isa","activity","E2"],
+                ["has type","E2","sing"],
+                ["has actor","E2","woman 5"],
+                ["has time","E2","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","car","car 7"],
+          ["isa","box","box 8"],
+          ["has degree property","black","car 7","none","car"],
+          ["not", ["is rel2","in","car 7","box 8"]]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 9"],
+          ["isa","pilot","Mary 9"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","smile"],
+              ["has actor","E","Mary 9"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["question",
+        ["and",
+          ["isa","lamp","lamp 6"],
+          ["@time", "past", ["has degree property","light","lamp 6","none","lamp"]]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is in a cave."},
+{"@name": "sent_S1",
+ "@logic": ["-is rel2", "in", "#:John 1", "cave", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@confidence": 0.8,
+ "@nl": "John 1 is in a cave."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Anna 2"],
+ "@nl": "Anna 2 handed a key 3 to Mark 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","important","#:key 3"],
+ "@nl": "Anna 2 handed a key 3 to Mark 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mark 4"],
+ "@nl": "Anna 2 handed a key 3 to Mark 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Anna 2 handed a key 3 to Mark 4."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "give", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Anna 2 handed a key 3 to Mark 4."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:Anna 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Anna 2 handed a key 3 to Mark 4."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "#:key 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Anna 2 handed a key 3 to Mark 4."},
+{"@name": "sent_S2",
+ "@logic": ["has recipient", "sk0_activity", "#:Mark 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Anna 2 handed a key 3 to Mark 4."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Anna 2 handed a key 3 to Mark 4."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Anna 2 handed a key 3 to Mark 4."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Anna 2 handed a key 3 to Mark 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","woman","#:woman 5"],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S3",
+ "@logic": ["isa","lamp","#:lamp 6"],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S3",
+ "@logic": ["-has degree property", "light", "#:lamp 6", "none", "lamp", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "hold", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:woman 5", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk1_activity", "#:lamp 6", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "sing", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:woman 5", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S3",
+ "@logic": ["next","W1","W2"],
+ "@nl": "The woman 5 who held a heavy lamp 6 sang."},
+{"@name": "sent_S4",
+ "@logic": ["isa","car","#:car 7"],
+ "@nl": "The black car 7 is not in the box 8."},
+{"@name": "sent_S4",
+ "@logic": ["isa","box","#:box 8"],
+ "@nl": "The black car 7 is not in the box 8."},
+{"@name": "sent_S4",
+ "@logic": ["has property", "black", "#:car 7", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The black car 7 is not in the box 8."},
+{"@name": "sent_S4",
+ "@logic": ["-is rel2", "in", "#:car 7", "#:box 8", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The black car 7 is not in the box 8."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mary 9"],
+ "@nl": "Mary 9 smiled."},
+{"@name": "sent_S5",
+ "@logic": ["isa","pilot","#:Mary 9"],
+ "@nl": "Mary 9 smiled."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Mary 9 smiled."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk3_activity", "smile", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 9 smiled."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk3_activity", "#:Mary 9", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 9 smiled."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 9 smiled."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Mary 9 smiled."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","lamp","#:lamp 6"]],
+ "@nl": "Was the lamp 6 light?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "light", "#:lamp 6", "none", "?:Fv51", ["$ctxt","past","W2","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Was the lamp 6 light?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-isa","lamp","#:lamp 6"],
+            ["-has degree property", "light", "#:lamp 6", "none", "?:Fv52", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+            ["$defq0"]
+           ],
+ "@nl": "Was the lamp 6 light?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Was the lamp 6 light?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "light", "#:lamp 6", "none", "lamp", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["has degree property", "light", "#:lamp 6", "none", "lamp", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "light", "#:lamp 6", "none", "lamp", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Was the lamp 6 light?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv18"], ["has type","?:E","give","?:Fv18"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "black", "?:X", ["$ctxt","past","?:Fv19","?:Fv20","?:Fv21"]],
+            ["has property", "black", "?:X", ["$ctxt","present","?:Fv19","?:Fv20","?:Fv21"]],
+            ["$block", 0, ["$not", ["has property", "black", "?:X", ["$ctxt","present","?:Fv19","?:Fv20","?:Fv21"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "black", "?:X", ["$ctxt","past","?:Fv22","?:Fv23","?:Fv24"]],
+            ["has property", "black", "?:X", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]],
+            ["$block", 0, ["$not", ["has property", "black", "?:X", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "light", "?:X", "none", "?:Fv45", ["$ctxt","past","?:Fv25","?:Fv26","?:Fv27"]],
+            ["-has degree property", "light", "?:X", "none", "?:Fv46", ["$ctxt","present","?:Fv25","?:Fv26","?:Fv27"]],
+            ["$block", 0, ["$not", ["has degree property", "heavy", "?:X", "none", "?:Fv47", ["$ctxt","present","?:Fv25","?:Fv26","?:Fv27"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv28","?:Fv29","?:Fv30"]],
+            ["-has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv28","?:Fv29","?:Fv30"]],
+            ["$block", 0, ["$not", ["has degree property", "heavy", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv28","?:Fv29","?:Fv30"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "light", "?:X", "none", "?:Fv48", ["$ctxt","past","?:Fv31","?:Fv32","?:Fv33"]],
+            ["has degree property", "light", "?:X", "none", "?:Fv49", ["$ctxt","present","?:Fv31","?:Fv32","?:Fv33"]],
+            ["$block", 0, ["$not", ["has degree property", "light", "?:X", "none", "?:Fv50", ["$ctxt","present","?:Fv31","?:Fv32","?:Fv33"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv34","?:Fv35","?:Fv36"]],
+            ["has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv34","?:Fv35","?:Fv36"]],
+            ["$block", 0, ["$not", ["has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv34","?:Fv35","?:Fv36"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28360,
+      "cached_input_tokens": 28288,
+      "output_tokens": 999,
+      "raw": {
+        "input_tokens": 28360,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 999,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29359
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34178,
+      "cached_input_tokens": 33280,
+      "output_tokens": 656,
+      "raw": {
+        "input_tokens": 34178,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 656,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34834
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:56:26Z"
+}

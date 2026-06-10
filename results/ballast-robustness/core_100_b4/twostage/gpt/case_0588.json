@@ -1,0 +1,418 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 588,
+  "input_text": "No penguin can fly. The song was sung by Mary. If X1 is a father of Y1, Y1 is a child of X1. A tall and quiet man entered. John had a car Eve bought. A woman entered?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "No penguin can fly.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "No penguin can fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "The song was sung by Mary.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Mary 1 sang the song 2.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "song 2", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "sing", "mode": "event", "roles": {"actor": "Mary 1", "target": "song 2"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a father of Y1, Y1 is a child of X1.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "If X1 is a father of Y1, Y1 is a child of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"}, {"id": "Y1", "type": "generic"}]
+        }
+      ]
+    },
+    {
+      "raw": "A tall and quiet man entered.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "A tall and quiet man 1 entered.",
+          "type": "situation",
+          "entities": [{"id": "man 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "enter", "mode": "event"}],
+          "adjectives": [["tall","none","man"], ["quiet","none","man"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John had a car Eve bought.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "John 2 had a car 3 Eve 4 bought.",
+          "type": "situation",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"},
+            {"id": "car 3", "type": "concrete", "category": "artifact"},
+            {"id": "Eve 4", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "buy", "mode": "event", "roles": {"actor": "Eve 4", "target": "car 3"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A woman entered?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Did a woman enter?",
+          "type": "query",
+          "entities": [{"id": "woman", "type": "generic", "category": "person"}],
+          "actions": [{"root": "enter", "mode": "event"}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 1"],
+          ["isa","song","song 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","sing"],
+              ["has actor","E","Mary 1"],
+              ["has target","E","song 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies", ["is rel2","father of","X1","Y1"], ["is rel2","child of","Y1","X1"]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","man","man 1"],
+          ["has degree property","tall","man 1","none","man"],
+          ["has degree property","quiet","man 1","none","man"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","enter"],
+              ["has actor","E","man 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 2"],
+          ["isa","car","car 3"],
+          ["isa","person","Eve 4"],
+          ["have","John 2","car 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","buy"],
+              ["has actor","E","Eve 4"],
+              ["has target","E","car 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["question",
+        ["exists","X",
+          ["and",
+            ["isa","woman","X"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","enter"],
+                ["has actor","E","X"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "No penguin can fly."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 sang the song 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","song","#:song 2"],
+ "@nl": "Mary 1 sang the song 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Mary 1 sang the song 2."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "sing", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mary 1 sang the song 2."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mary 1 sang the song 2."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "#:song 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mary 1 sang the song 2."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mary 1 sang the song 2."},
+{"@name": "sent_S3",
+ "@logic": [["-is rel2", "father of", "?:X1", "?:Y1", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["is rel2", "child of", "?:Y1", "?:X1", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "If X1 is a father of Y1, Y1 is a child of X1."},
+{"@name": "sent_S4",
+ "@logic": ["isa","man","#:man 1"],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S4",
+ "@logic": ["has degree property", "tall", "#:man 1", "none", "man", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S4",
+ "@logic": ["-has degree property", "active", "#:man 1", "none", "man", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "enter", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk1_activity", "#:man 1", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "John 2 had a car 3 Eve 4 bought."},
+{"@name": "sent_S5",
+ "@logic": ["isa","car","#:car 3"],
+ "@nl": "John 2 had a car 3 Eve 4 bought."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Eve 4"],
+ "@nl": "John 2 had a car 3 Eve 4 bought."},
+{"@name": "sent_S5",
+ "@logic": ["have", "#:John 2", "#:car 3", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John 2 had a car 3 Eve 4 bought."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "John 2 had a car 3 Eve 4 bought."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk2_activity", "buy", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John 2 had a car 3 Eve 4 bought."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:Eve 4", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John 2 had a car 3 Eve 4 bought."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk2_activity", "#:car 3", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John 2 had a car 3 Eve 4 bought."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John 2 had a car 3 Eve 4 bought."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","woman","sk3_woman"]],
+ "@nl": "Did a woman enter?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk4_activity"]],
+ "@nl": "Did a woman enter?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk4_activity", "enter", ["$ctxt","past","?:Fv23","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Did a woman enter?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk4_activity", "sk3_woman", ["$ctxt","past","?:Fv25","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Did a woman enter?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk4_activity", "past", "in", ["$ctxt","past","?:Fv27","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Did a woman enter?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-isa","woman","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "enter", ["$ctxt","past","?:Fv33","?:Fv15","?:Fv16"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","past","?:Fv35","?:Fv15","?:Fv16"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did a woman enter?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Did a woman enter?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv39"], ["has type","?:E","go","?:Fv39"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","tall","?:X","none","?:Fv80","?:Fv40"],
+            ["has degree property","high","?:X","none","?:Fv81","?:Fv40"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","high","?:X","none","?:Fv82","?:Fv41"],
+            ["has degree property","tall","?:X","none","?:Fv83","?:Fv41"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","man","?:X","?:Fv42"], ["-has property","woman","?:X","?:Fv42"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv43","?:Fv44","?:Fv46","?:Fv47"]],
+            ["-has actor", "?:E", "?:Owner", ["$ctxt","?:Fv43","?:Fv44","?:Fv46","?:Fv47"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv43","?:Fv44","?:Fv46","?:Fv47"]],
+            ["-next","?:Fv44","?:Fv45"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv48","?:Fv49","?:Fv51","?:Fv52"]],
+            ["-has beneficiary", "?:E", "?:Owner", ["$ctxt","?:Fv48","?:Fv49","?:Fv51","?:Fv52"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv48","?:Fv49","?:Fv51","?:Fv52"]],
+            ["-next","?:Fv49","?:Fv50"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv50","?:Fv51","?:Fv52"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv53","?:Fv54","?:Fv56","?:Fv57"]],
+            ["-has recipient", "?:E", "?:Owner", ["$ctxt","?:Fv53","?:Fv54","?:Fv56","?:Fv57"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv53","?:Fv54","?:Fv56","?:Fv57"]],
+            ["-next","?:Fv54","?:Fv55"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv55","?:Fv56","?:Fv57"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "none", "?:Fv84", ["$ctxt","past","?:Fv58","?:Fv59","?:Fv60"]],
+            ["has degree property", "tall", "?:X", "none", "?:Fv85", ["$ctxt","present","?:Fv58","?:Fv59","?:Fv60"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "none", "?:Fv86", ["$ctxt","present","?:Fv58","?:Fv59","?:Fv60"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv61","?:Fv62","?:Fv63"]],
+            ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv61","?:Fv62","?:Fv63"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv61","?:Fv62","?:Fv63"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28363,
+      "cached_input_tokens": 28288,
+      "output_tokens": 846,
+      "raw": {
+        "input_tokens": 28363,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 846,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29209
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34055,
+      "cached_input_tokens": 33280,
+      "output_tokens": 636,
+      "raw": {
+        "input_tokens": 34055,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 636,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34691
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:57:16Z"
+}

@@ -1,0 +1,466 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 409,
+  "input_text": "Catholics can not disappear. John has three nice cars. Tallinn is hardly in Latvia. Cats are afraid of wolves. Tom and Eve greeted each other. How many nice cars does John have?",
+  "expected_answer": ["Three","3."],
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "3.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Catholics can not disappear.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Catholics cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "catholics", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "John has three nice cars.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 has three nice cars.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "cars", "type": "generic", "category": "artifact"}
+          ],
+          "adjectives": [["nice","none","car"]]
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is hardly in Latvia.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Tallinn 1 is hardly in Latvia 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ],
+          "confidence": 0.2
+        }
+      ]
+    },
+    {
+      "raw": "Cats are afraid of wolves.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Cats are afraid of wolves.",
+          "type": "normal_rule",
+          "entities": [{"id": "cats", "type": "generic", "category": "animal"},
+            {"id": "wolves", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["afraid of","none","cat"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Tom and Eve greeted each other.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Tom 2 and Eve 3 greeted each other.",
+          "type": "situation",
+          "entities": [{"id": "Tom 2", "type": "concrete", "category": "person"},
+            {"id": "Eve 3", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "greet", "mode": "event", "roles": {"accompaniment": "Eve 3"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "How many nice cars does John have?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "How many nice cars does John 1 have?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "cars", "type": "generic", "category": "artifact", "wh_placeholder": true}
+          ],
+          "adjectives": [["nice","none","car"]]
+        }
+      ]
+    }
+  ],
+  "stage_1_retries": ["sanity #1: missing_wh_placeholder"],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","catholic","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["=", 3, ["$count", ["$setof", "?:X", ["and", ["isa","car","?:X"], ["has degree property","nice","?:X","none","car"], ["have","John 1","?:X"]]]]]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+        ],
+        ["@p","S3",0.2]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","cat","X"],
+              ["forall","Y",
+                ["implies",
+                  ["isa","wolf","Y"],
+                  ["normally", ["has degree rel2","afraid of","X","Y","none","cat"]]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S4",0.99]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Tom 2"],
+          ["isa","person","Eve 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","greet"],
+              ["has actor","E","Tom 2"],
+              ["has accompaniment","E","Eve 3"],
+              ["has time","E","past","in"]
+            ]
+          ],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","greet"],
+              ["has actor","E1","Eve 3"],
+              ["has accompaniment","E1","Tom 2"],
+              ["has time","E1","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["ask","X",
+        ["=", "X", ["$count", ["$setof", "?:C", ["and", ["isa","car","?:C"], ["has degree property","nice","?:C","none","car"], ["have","John 1","?:C"]]]]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is hardly in Latvia 2."},
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Latvia 2"],
+ "@nl": "Tallinn 1 is hardly in Latvia 2."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","catholic","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Catholics cannot disappear."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 has three nice cars."},
+{"@name": "sent_S2",
+ "@logic": ["=", 3, ["$count", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]],
+ "@nl": "John 1 has three nice cars."},
+{"@name": "sent_S2_el1",
+ "@logic": ["isa","car","$set1_el1"],
+ "@nl": "[generated: sent_S2_el1]"},
+{"@name": "sent_S2_el1",
+ "@logic": ["has degree property", "good", "$set1_el1", "none", "car", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "[generated: sent_S2_el1]"},
+{"@name": "sent_S2_el1",
+ "@logic": ["have", "#:John 1", "$set1_el1", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "[generated: sent_S2_el1]"},
+{"@name": "sent_S2_el1",
+ "@logic": ["member", "$set1_el1", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]],
+ "@nl": "[generated: sent_S2_el1]"},
+{"@name": "sent_S2_el2",
+ "@logic": ["isa","car","$set1_el2"],
+ "@nl": "[generated: sent_S2_el2]"},
+{"@name": "sent_S2_el2",
+ "@logic": ["has degree property", "good", "$set1_el2", "none", "car", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "[generated: sent_S2_el2]"},
+{"@name": "sent_S2_el2",
+ "@logic": ["have", "#:John 1", "$set1_el2", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "[generated: sent_S2_el2]"},
+{"@name": "sent_S2_el2",
+ "@logic": ["member", "$set1_el2", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]],
+ "@nl": "[generated: sent_S2_el2]"},
+{"@name": "sent_S2_el3",
+ "@logic": ["isa","car","$set1_el3"],
+ "@nl": "[generated: sent_S2_el3]"},
+{"@name": "sent_S2_el3",
+ "@logic": ["has degree property", "good", "$set1_el3", "none", "car", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "[generated: sent_S2_el3]"},
+{"@name": "sent_S2_el3",
+ "@logic": ["have", "#:John 1", "$set1_el3", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "[generated: sent_S2_el3]"},
+{"@name": "sent_S2_el3",
+ "@logic": ["member", "$set1_el3", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]],
+ "@nl": "[generated: sent_S2_el3]"},
+{"@name": "sent_S2_dist",
+ "@logic": ["-=","$set1_el1","$set1_el2"],
+ "@nl": "[generated: sent_S2_dist]"},
+{"@name": "sent_S2_dist",
+ "@logic": ["-=","$set1_el1","$set1_el3"],
+ "@nl": "[generated: sent_S2_dist]"},
+{"@name": "sent_S2_dist",
+ "@logic": ["-=","$set1_el2","$set1_el3"],
+ "@nl": "[generated: sent_S2_dist]"},
+{"@name": "sent_S3",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@confidence": 0.6,
+ "@nl": "Tallinn 1 is hardly in Latvia 2."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","cat","?:X"],
+            ["-isa","wolf","?:Y"],
+            ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","wolf",1], ["$not", ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Cats are afraid of wolves."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Tom 2"],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Eve 3"],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk0_activity", "greet", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk0_activity", "#:Tom 2", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has accompaniment", "sk0_activity", "#:Eve 3", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk1_activity", "greet", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk1_activity", "#:Eve 3", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has accompaniment", "sk1_activity", "#:Tom 2", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["=", "?:X", ["$count", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]]
+           ],
+ "@nl": "How many nice cars does John 1 have?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-=", "?:X", ["$count", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "How many nice cars does John 1 have?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@nl": "How many nice cars does John 1 have?"},
+{"@name": "frm_set",
+ "@logic": [["-isa","?:C","?:M"],
+            ["-has property","?:D","?:M"],
+            ["-have","?:S","?:M"],
+            ["member", "?:M", ["$setof", "have", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "have", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["isa","?:C","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "have", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["has property","?:D","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "have", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["have","?:S","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","catholic","$some_catholic"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","catholic","$some_not_catholic"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","cat","$some_cat"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","cat","$some_not_cat"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","wolf","$some_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","wolf","$some_not_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","receive","?:Fv19"], ["has type","?:E","have","?:Fv19"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans",3]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S6","assumption",1], [["-=", "?:0", ["$count", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]], ["$defq0","?:0"]]],
+          [2, ["in","sent_S2","assumption",1], [["=", 3, ["$count", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]]]],
+          [3, ["simp",1,2,"fromassumption",1], [["-=","?:X",3], ["$defq0","?:X"]]],
+          [4, ["r=", [3,0], "fromassumption", 1], [["$defq0",3]]],
+          [5, ["in","sent_S6","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [6, ["mp",4,5,"fromga",1], [["$ans",3]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John has three nice cars.",
+"  (2) How many nice cars does John have?",
+"Proof steps:",
+"  (1) If the number of good cars John has is E1 then some E1 is the answer  [sentence 2]",
+"  (2) The number of good cars John has is 3  [sentence 1]",
+"  (3) If some X equals 3 then X is the answer  [from steps 1, 2]",
+"  (4) 3 Is the answer  [from steps 3]",
+"  (5) technical answer unwrap step  [from question]",
+"  (6) 3 Is an answer  [from steps 4, 5]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32091,
+      "cached_input_tokens": 32042,
+      "output_tokens": 885,
+      "raw": {
+        "input_tokens": 49,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 885,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 33473,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1076,
+      "raw": {
+        "input_tokens": 1431,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1076,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39587,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1012,
+      "raw": {
+        "input_tokens": 696,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1012,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:47:09Z"
+}

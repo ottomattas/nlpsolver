@@ -1,0 +1,489 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1315,
+  "input_text": "The bike's length is 10 kilometers. Eve planned to travel. Elephants have a head. Cities in Estonia are estonian. Mary called the boy in the kitchen. Eve traveled?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The bike's length is 10 kilometers.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The bike 1's length 2 is 10 kilometers.",
+          "type": "real",
+          "entities": [{"id": "bike 1", "type": "concrete", "category": "artifact"},
+            {"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "10 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 2","bike 1"]]
+        },
+        {
+          "unit_id": "S2",
+          "text": "The length 2 is the length of the bike 1.",
+          "type": "real",
+          "entities": [{"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "bike 1", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["length of","length 2","bike 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "Eve planned to travel.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Eve 1 planned to travel.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "plan",
+              "mode": "intention",
+              "roles": {
+                "actor": "Eve 1",
+                "content": {"root": "travel", "mode": "event", "roles": {"actor": "Eve 1"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have a head.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Elephants have a head.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "head", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Cities in Estonia are estonian.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Cities in Estonia 1 are Estonian.",
+          "type": "strict_rule",
+          "entities": [{"id": "cities", "type": "generic", "category": "place"},
+            {
+              "id": "Estonia 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ],
+          "adjectives": [["Estonian","none","city"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mary called the boy in the kitchen.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Mary 2 called the boy 3 in the kitchen 4.",
+          "type": "situation",
+          "entities": [{"id": "Mary 2", "type": "concrete", "category": "person"},
+            {"id": "boy 3", "type": "concrete", "category": "person"},
+            {"id": "kitchen 4", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "call",
+              "mode": "event",
+              "roles": {"actor": "Mary 2", "target": "boy 3", "location": "kitchen 4", "location_prep": "in"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Eve traveled?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Did Eve 1 travel?",
+          "type": "query",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "travel", "mode": "event", "roles": {"actor": "Eve 1"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","artifact","bike 1"],
+          ["=", ["$measure_of","length","bike 1","W0"], ["$measure",10,"kilometer"]]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","artifact","bike 1"],
+            ["=", ["$measure_of","length","bike 1","W0"], ["$measure",10,"kilometer"]]
+          ]
+        ],
+        ["@definite","S2","W0","length of","bike 1","length 2"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","plan"],
+              ["has actor","E1","Eve 1"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","travel"],
+                  ["has actor","E2","Eve 1"],
+                  ["has time","E2","past","in"]
+                ]
+              ],
+              ["intention","E1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","head","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S4",0.99]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["and",
+              ["isa","city","X"],
+              ["is rel2","in","X","https://en.wikipedia.org/wiki/Estonia"]
+            ],
+            ["has degree property","Estonian","X","none","city"]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 2"],
+          ["isa","person","boy 3"],
+          ["isa","place","kitchen 4"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","call"],
+              ["has actor","E","Mary 2"],
+              ["has target","E","boy 3"],
+              ["has location","E","kitchen 4","in"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","travel"],
+            ["has actor","E","Eve 1"],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","bike","#:bike 1"],
+ "@nl": "The bike 1's length 2 is 10 kilometers."},
+{"@name": "entity_S1",
+ "@logic": ["isa","measure","10 kilometers"],
+ "@nl": "The bike 1's length 2 is 10 kilometers."},
+{"@name": "entity_S5",
+ "@logic": ["isa","place","#:Estonia 1"],
+ "@nl": "Cities in Estonia 1 are Estonian."},
+{"@name": "entity_S6",
+ "@logic": ["isa","boy","#:boy 3"],
+ "@nl": "Mary 2 called the boy 3 in the kitchen 4."},
+{"@name": "entity_S6",
+ "@logic": ["isa","kitchen","#:kitchen 4"],
+ "@nl": "Mary 2 called the boy 3 in the kitchen 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","artifact","#:bike 1"],
+ "@nl": "The bike 1's length 2 is 10 kilometers."},
+{"@name": "sent_S1",
+ "@logic": ["=", ["$measure_of","length","#:bike 1","W0"], ["$list",10000,"#:meter"]],
+ "@nl": "The bike 1's length 2 is 10 kilometers."},
+{"@name": "sent_S2",
+ "@logic": ["isa","artifact","#:bike 1"],
+ "@nl": "The length 2 is the length of the bike 1."},
+{"@name": "sent_S2",
+ "@logic": ["=", ["$measure_of","length","#:bike 1","W0"], ["$list",10000,"#:meter"]],
+ "@nl": "The length 2 is the length of the bike 1."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "plan", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "go", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["intention","sk0_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "head", ["sk2","?:X"]]],
+ "@nl": "Elephants have a head."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk2","?:X"], ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk2","?:X"], ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have a head."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","city","?:X"],
+            ["-is rel2", "in", "?:X", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["has property", "Estonian", "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Cities in Estonia 1 are Estonian."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Mary 2 called the boy 3 in the kitchen 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:boy 3"],
+ "@nl": "Mary 2 called the boy 3 in the kitchen 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","place","#:kitchen 4"],
+ "@nl": "Mary 2 called the boy 3 in the kitchen 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Mary 2 called the boy 3 in the kitchen 4."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk3_activity", "call", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 2 called the boy 3 in the kitchen 4."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk3_activity", "#:Mary 2", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 2 called the boy 3 in the kitchen 4."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk3_activity", "#:boy 3", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 2 called the boy 3 in the kitchen 4."},
+{"@name": "sent_S6",
+ "@logic": ["has location", "sk3_activity", "#:kitchen 4", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 2 called the boy 3 in the kitchen 4."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 2 called the boy 3 in the kitchen 4."},
+{"@name": "sent_S6",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Mary 2 called the boy 3 in the kitchen 4."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk4_activity"]],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk4_activity", "go", ["$ctxt","past","?:Fv23","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk4_activity", "#:Eve 1", ["$ctxt","past","?:Fv25","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk4_activity", "past", "in", ["$ctxt","past","?:Fv27","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk4_activity"]],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "go", ["$ctxt","past","?:Fv31","?:Fv17","?:Fv18"]],
+            ["-has actor", "?:E", "#:Eve 1", ["$ctxt","past","?:Fv33","?:Fv17","?:Fv18"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","head","$some_head"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","head","$some_not_head"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","city","$some_city"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","city","$some_not_city"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "Estonian", "$some_Estonian_city", ["$ctxt","?:Fv73","?:Fv70","?:Fv71","?:Fv72"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","city","$some_Estonian_city"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "Estonian", "$some_not_Estonian_city", ["$ctxt","?:Fv81","?:Fv78","?:Fv79","?:Fv80"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","city","$some_city_in_Estonia"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["is rel2", "in", "$some_city_in_Estonia", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","?:Fv89","?:Fv86","?:Fv87","?:Fv88"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv37"], ["has type","?:E","go","?:Fv37"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32088,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1151,
+      "raw": {
+        "input_tokens": 46,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1151,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39766,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1002,
+      "raw": {
+        "input_tokens": 875,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1002,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 41518,
+      "cached_input_tokens": 38891,
+      "output_tokens": 849,
+      "raw": {
+        "input_tokens": 2627,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 849,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:14:39Z"
+}

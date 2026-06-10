@@ -1,0 +1,498 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1375,
+  "input_text": "Some elephants have trunks. Smith, entered the room. If an animal is cool and defeated then it is green. John is an animal. John is cool. Mike is an animal. Mike is cool. The teacher showed a map to the students. John is defeated. The bike's length is 10 kilometers. John is not green?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Error: prover returned empty result.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "Some elephants have trunks.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Some elephants have trunks.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Smith, entered the room.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Smith 1 entered the room 2.",
+          "type": "situation",
+          "entities": [{"id": "Smith 1", "type": "concrete", "category": "person"},
+            {"id": "room 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "enter", "mode": "event", "roles": {"target": "room 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "If an animal is cool and defeated then it is green.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "If an animal is cool and defeated, the animal is green.",
+          "type": "strict_rule",
+          "entities": [{"id": "animal", "type": "generic", "category": "animal"}],
+          "adjectives": [["cool","none","animal"], ["defeated","none","animal"], ["green","none","animal"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is an animal.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "John 3 is an animal.",
+          "type": "situation",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "John is cool.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "John 3 is cool.",
+          "type": "situation",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "animal"}],
+          "adjectives": [["cool","none","animal"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is an animal.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Mike 4 is an animal.",
+          "type": "situation",
+          "entities": [{"id": "Mike 4", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is cool.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Mike 4 is cool.",
+          "type": "situation",
+          "entities": [{"id": "Mike 4", "type": "concrete", "category": "animal"}],
+          "adjectives": [["cool","none","animal"]]
+        }
+      ]
+    },
+    {
+      "raw": "The teacher showed a map to the students.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "The teacher 5 showed a map 6 to the students 7.",
+          "type": "situation",
+          "entities": [{"id": "teacher 5", "type": "concrete", "category": "person"},
+            {"id": "map 6", "type": "concrete", "category": "artifact"},
+            {"id": "students 7", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 5", "target": "map 6", "recipient": "students 7"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is defeated.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "John 3 is defeated.",
+          "type": "situation",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "animal"}],
+          "adjectives": [["defeated","none","animal"]]
+        }
+      ]
+    },
+    {
+      "raw": "The bike's length is 10 kilometers.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "The bike 8's length 9 is 10 kilometers.",
+          "type": "real",
+          "entities": [{"id": "bike 8", "type": "concrete", "category": "artifact"},
+            {"id": "length 9", "type": "concrete", "text": "length"},
+            {"id": "10 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 9","bike 8"]]
+        },
+        {
+          "unit_id": "S11",
+          "text": "The length 9 is the length of the bike 8.",
+          "type": "real",
+          "entities": [{"id": "length 9", "type": "concrete", "text": "length"},
+            {"id": "bike 8", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["length of","length 9","bike 8"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is not green?",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Is John 3 not green?",
+          "type": "query",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "animal"}],
+          "adjectives": [["green","none","animal"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Smith 1"],
+            ["isa","room","room 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","enter"],
+                ["has actor","E","Smith 1"],
+                ["has target","E","room 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["and",
+              ["isa","animal","X"],
+              ["has degree property","cool","X","none","animal"],
+              ["has degree property","defeated","X","none","animal"]
+            ],
+            ["has degree property","green","X","none","animal"]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S4", ["holds", "W0", ["isa","animal","John 3"]]],
+    ["@id", "S5", ["holds", "W0", ["has degree property","cool","John 3","none","animal"]]],
+    ["@id", "S6", ["holds", "W0", ["isa","animal","Mike 4"]]],
+    ["@id", "S7", ["holds", "W0", ["has degree property","cool","Mike 4","none","animal"]]],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","teacher 5"],
+          ["isa","artifact","map 6"],
+          ["isa","person","students 7"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","show"],
+              ["has actor","E","teacher 5"],
+              ["has target","E","map 6"],
+              ["has recipient","E","students 7"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S9", ["holds", "W0", ["has degree property","defeated","John 3","none","animal"]]],
+    ["@id","S10",
+      ["holds","W0",
+        ["and",
+          ["isa","bike","bike 8"],
+          ["=", ["$measure_of","length","bike 8","W0"], ["$measure",10,"kilometer"]]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["holds","W0",
+        ["and", ["isa","bike","bike 8"], ["@definite","S11","W0","length of","bike 8","length 9"]]
+      ]
+    ],
+    ["@id", "S12", ["question", ["not", ["has degree property","green","John 3","none","animal"]]]]
+  ],
+  "clauses": [
+{"@name": "entity_S8",
+ "@logic": ["isa","teacher","#:teacher 5"],
+ "@nl": "The teacher 5 showed a map 6 to the students 7."},
+{"@name": "entity_S8",
+ "@logic": ["isa","map","#:map 6"],
+ "@nl": "The teacher 5 showed a map 6 to the students 7."},
+{"@name": "entity_S8",
+ "@logic": ["isa","student","#:students 7"],
+ "@nl": "The teacher 5 showed a map 6 to the students 7."},
+{"@name": "entity_S8",
+ "@logic": ["isa","student","#:students 7"],
+ "@nl": "The teacher 5 showed a map 6 to the students 7."},
+{"@name": "entity_S10",
+ "@logic": ["isa","measure","10 kilometers"],
+ "@nl": "The bike 8's length 9 is 10 kilometers."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk0","?:X"]]],
+ "@nl": "Some elephants have trunks."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Some elephants have trunks."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Smith 1"],
+ "@nl": "Smith 1 entered the room 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","room","#:room 2"],
+ "@nl": "Smith 1 entered the room 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Smith 1 entered the room 2."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "enter", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Smith 1 entered the room 2."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:Smith 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Smith 1 entered the room 2."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk1_activity", "#:room 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Smith 1 entered the room 2."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Smith 1 entered the room 2."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Smith 1 entered the room 2."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Smith 1 entered the room 2."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","animal","?:X"],
+            ["-has degree property", "cool", "?:X", "none", "animal", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-has property", "defeated", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["has property", "green", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "If an animal is cool and defeated, the animal is green."},
+{"@name": "sent_S4",
+ "@logic": ["isa","animal","#:John 3"],
+ "@nl": "John 3 is an animal."},
+{"@name": "sent_S5",
+ "@logic": ["has degree property", "cool", "#:John 3", "none", "animal", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John 3 is cool."},
+{"@name": "sent_S6",
+ "@logic": ["isa","animal","#:Mike 4"],
+ "@nl": "Mike 4 is an animal."},
+{"@name": "sent_S7",
+ "@logic": ["has degree property", "cool", "#:Mike 4", "none", "animal", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Mike 4 is cool."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:teacher 5"],
+ "@nl": "The teacher 5 showed a map 6 to the students 7."},
+{"@name": "sent_S8",
+ "@logic": ["isa","artifact","#:map 6"],
+ "@nl": "The teacher 5 showed a map 6 to the students 7."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:students 7"],
+ "@nl": "The teacher 5 showed a map 6 to the students 7."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The teacher 5 showed a map 6 to the students 7."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk2_activity", "show", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The teacher 5 showed a map 6 to the students 7."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk2_activity", "#:teacher 5", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The teacher 5 showed a map 6 to the students 7."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk2_activity", "#:map 6", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The teacher 5 showed a map 6 to the students 7."},
+{"@name": "sent_S8",
+ "@logic": ["has recipient", "sk2_activity", "#:students 7", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The teacher 5 showed a map 6 to the students 7."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The teacher 5 showed a map 6 to the students 7."},
+{"@name": "sent_S8",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The teacher 5 showed a map 6 to the students 7."},
+{"@name": "sent_S9",
+ "@logic": ["has property", "defeated", "#:John 3", ["$ctxt","present","W0","?:Fv21","?:Fv22"]],
+ "@nl": "John 3 is defeated."},
+{"@name": "sent_S10",
+ "@logic": ["isa","bike","#:bike 8"],
+ "@nl": "The bike 8's length 9 is 10 kilometers."},
+{"@name": "sent_S10",
+ "@logic": ["=", ["$measure_of","length","#:bike 8","W0"], ["$list",10000,"#:meter"]],
+ "@nl": "The bike 8's length 9 is 10 kilometers."},
+{"@name": "sent_S11",
+ "@logic": ["isa","bike","#:bike 8"],
+ "@nl": "The length 9 is the length of the bike 8."},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-has property", "green", "#:John 3", ["$ctxt","present","W1","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Is John 3 not green?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["has property", "green", "#:John 3", ["$ctxt","present","W1","?:Fv27","?:Fv28"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 3 not green?"},
+{"@name": "sent_S12",
+ "@question": ["$defq0"],
+ "@nl": "Is John 3 not green?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "green", "#:John 3", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "green", "#:John 3", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "green", "#:John 3", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 3 not green?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cool", "$some_not_cool_animal", "none", "animal", ["$ctxt","?:Fv67","?:Fv64","?:Fv65","?:Fv66"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "defeated", "$some_not_defeated_animal", ["$ctxt","?:Fv71","?:Fv68","?:Fv69","?:Fv70"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "green", "$some_green_animal", ["$ctxt","?:Fv75","?:Fv72","?:Fv73","?:Fv74"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_green_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "green", "$some_not_green_animal", ["$ctxt","?:Fv83","?:Fv80","?:Fv81","?:Fv82"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "green", "?:X", ["$ctxt","past","?:Fv30","?:Fv31","?:Fv32"]],
+            ["has property", "green", "?:X", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]],
+            ["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "green", "?:X", ["$ctxt","past","?:Fv33","?:Fv34","?:Fv35"]],
+            ["has property", "green", "?:X", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]],
+            ["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32120,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1617,
+      "raw": {
+        "input_tokens": 78,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1617,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 40126,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1165,
+      "raw": {
+        "input_tokens": 1235,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1165,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:25:27Z"
+}

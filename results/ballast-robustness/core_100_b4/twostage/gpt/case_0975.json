@@ -1,0 +1,504 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 975,
+  "input_text": "Eve sent Tom a letter. John saw elephant's head. Mary visited London in September. Bears eat most boxers. Estonia contains Tartu. Did Mary visit Paris?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Eve sent Tom a letter.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Eve 1 sent Tom 2 a letter 3.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "Tom 2", "type": "concrete", "category": "person"},
+            {"id": "letter 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "send",
+              "mode": "event",
+              "roles": {"actor": "Eve 1", "recipient": "Tom 2", "target": "letter 3"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John saw elephant's head.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 4 saw an elephant's head 5.",
+          "type": "situation",
+          "entities": [{"id": "John 4", "type": "concrete", "category": "person"},
+            {"id": "elephant 6", "type": "concrete", "category": "animal"},
+            {"id": "head 5", "type": "concrete", "text": "head", "category": "animal"}
+          ],
+          "actions": [{"root": "see", "mode": "event", "roles": {"actor": "John 4", "target": "head 5"}}],
+          "definites": [["head of","head 5","elephant 6"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "The head 5 is the head of the elephant 6.",
+          "type": "situation",
+          "entities": [{"id": "head 5", "type": "concrete", "text": "head", "category": "animal"},
+            {"id": "elephant 6", "type": "concrete", "category": "animal"}
+          ],
+          "definites": [["head of","head 5","elephant 6"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary visited London in September.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mary 7 visited London 8 in September.",
+          "type": "situation",
+          "entities": [{"id": "Mary 7", "type": "concrete", "category": "person"},
+            {
+              "id": "London 8",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/London"
+            },
+            {"id": "September", "type": "concrete"}
+          ],
+          "actions": [{"root": "visit", "mode": "event", "roles": {"actor": "Mary 7", "target": "London 8"}}],
+          "time": "September",
+          "time_prep": "in",
+          "state_tense": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Bears eat most boxers.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Bears eat most boxers.",
+          "type": "normal_rule",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "boxers", "type": "generic", "category": "person"}
+          ],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"actor": "bears", "target": "boxers"}}],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "Estonia contains Tartu.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Estonia 9 contains Tartu 10.",
+          "type": "real",
+          "entities": [{
+              "id": "Estonia 9",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            },
+            {
+              "id": "Tartu 10",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tartu"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Did Mary visit Paris?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Did Mary 7 visit Paris 11?",
+          "type": "query",
+          "entities": [{"id": "Mary 7", "type": "concrete", "category": "person"},
+            {
+              "id": "Paris 11",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Paris"
+            }
+          ],
+          "actions": [{"root": "visit", "mode": "event", "roles": {"actor": "Mary 7", "target": "Paris 11"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["isa","person","Tom 2"],
+          ["isa","letter","letter 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","send"],
+              ["has actor","E","Eve 1"],
+              ["has recipient","E","Tom 2"],
+              ["has target","E","letter 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 4"],
+          ["isa","elephant","elephant 6"],
+          ["isa","head","head 5"],
+          ["has part","elephant 6","head 5"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","see"],
+              ["has actor","E","John 4"],
+              ["has target","E","head 5"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","head","head 5"],
+            ["isa","elephant","elephant 6"],
+            ["has part","elephant 6","head 5"]
+          ]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S3","W0","head of","elephant 6","head 5"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 7"],
+            ["isa","city","https://en.wikipedia.org/wiki/London"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","visit"],
+                ["has actor","E","Mary 7"],
+                ["has target","E","https://en.wikipedia.org/wiki/London"],
+                ["has time","E","September","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bear","X"],
+              ["forall","Y",
+                ["implies",
+                  ["isa","boxer","Y"],
+                  ["normally",
+                    ["exists","E",
+                      ["and",
+                        ["isa","activity","E"],
+                        ["has type","E","eat"],
+                        ["has actor","E","X"],
+                        ["has target","E","Y"],
+                        ["typical","E"]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S5",0.8]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["is rel2","in","https://en.wikipedia.org/wiki/Tartu","https://en.wikipedia.org/wiki/Estonia"]
+      ]
+    ],
+    ["@id","S7",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","visit"],
+            ["has actor","E","Mary 7"],
+            ["has target","E","https://en.wikipedia.org/wiki/Paris"],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","head","#:head 5"],
+ "@nl": "John 4 saw an elephant's head 5."},
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:London 8"],
+ "@nl": "Mary 7 visited London 8 in September."},
+{"@name": "entity_S6",
+ "@logic": ["isa","place","#:Estonia 9"],
+ "@nl": "Estonia 9 contains Tartu 10."},
+{"@name": "entity_S6",
+ "@logic": ["isa","place","#:Tartu 10"],
+ "@nl": "Estonia 9 contains Tartu 10."},
+{"@name": "entity_S7",
+ "@logic": ["isa","place","#:Paris 11"],
+ "@nl": "Did Mary 7 visit Paris 11?"},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 sent Tom 2 a letter 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Tom 2"],
+ "@nl": "Eve 1 sent Tom 2 a letter 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","letter","#:letter 3"],
+ "@nl": "Eve 1 sent Tom 2 a letter 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Eve 1 sent Tom 2 a letter 3."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "give", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 sent Tom 2 a letter 3."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 sent Tom 2 a letter 3."},
+{"@name": "sent_S1",
+ "@logic": ["has recipient", "sk0_activity", "#:Tom 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 sent Tom 2 a letter 3."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:letter 3", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 sent Tom 2 a letter 3."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 sent Tom 2 a letter 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 4"],
+ "@nl": "John 4 saw an elephant's head 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","elephant","#:elephant 6"],
+ "@nl": "John 4 saw an elephant's head 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa", "head", ["$theof1", "head", "#:elephant 6", ["$ctxt","past","W0","?:Fv3","?:Fv4"]]],
+ "@nl": "John 4 saw an elephant's head 5."},
+{"@name": "sent_S2",
+ "@logic": ["has part", "#:elephant 6", ["$theof1", "head", "#:elephant 6", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 4 saw an elephant's head 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "John 4 saw an elephant's head 5."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "show", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 4 saw an elephant's head 5."},
+{"@name": "sent_S2",
+ "@logic": ["has recipient", "sk1_activity", "#:John 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 4 saw an elephant's head 5."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk1_activity", ["$theof1", "head", "#:elephant 6", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 4 saw an elephant's head 5."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 4 saw an elephant's head 5."},
+{"@name": "sent_S3",
+ "@logic": ["isa", "head", ["$theof1", "head", "#:elephant 6", ["$ctxt","past","W0","?:Fv3","?:Fv4"]]],
+ "@nl": "The head 5 is the head of the elephant 6."},
+{"@name": "sent_S3",
+ "@logic": ["isa","elephant","#:elephant 6"],
+ "@nl": "The head 5 is the head of the elephant 6."},
+{"@name": "sent_S3",
+ "@logic": ["has part", "#:elephant 6", ["$theof1", "head", "#:elephant 6", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The head 5 is the head of the elephant 6."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mary 7"],
+ "@nl": "Mary 7 visited London 8 in September."},
+{"@name": "sent_S4",
+ "@logic": ["isa","city","https://en.wikipedia.org/wiki/London"],
+ "@nl": "Mary 7 visited London 8 in September."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Mary 7 visited London 8 in September."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk2_activity", "visit", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mary 7 visited London 8 in September."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk2_activity", "#:Mary 7", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mary 7 visited London 8 in September."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk2_activity", "https://en.wikipedia.org/wiki/London", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mary 7 visited London 8 in September."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk2_activity", "September", "in", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mary 7 visited London 8 in September."},
+{"@name": "sent_S4",
+ "@logic": ["=", ["$theof1","time","W0","?:Fv9"], ["$datetime","September"]],
+ "@nl": "Mary 7 visited London 8 in September."},
+{"@name": "sent_S4",
+ "@logic": ["is_past_world","W0"],
+ "@nl": "Mary 7 visited London 8 in September."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","bear","?:X"], ["-isa","boxer","?:Y"], ["isa", "activity", ["sk3","?:X"]]],
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has type", ["sk3","?:X"], "eat", ["$ctxt","?:Fv13","?:Fv12","?:Fv10","?:Fv11"]]
+           ],
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has actor", ["sk3","?:X"], "?:X", ["$ctxt","?:Fv13","?:Fv12","?:Fv10","?:Fv11"]]
+           ],
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has target", ["sk3","?:X"], "?:Y", ["$ctxt","?:Fv13","?:Fv12","?:Fv10","?:Fv11"]]
+           ],
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["typical", ["sk3","?:X"], ["$ctxt","?:Fv13","?:Fv12","?:Fv10","?:Fv11"]],
+            ["$block", ["$","boxer",1], ["$not", ["typical", ["sk3","?:X"], ["$ctxt","?:Fv13","?:Fv12","?:Fv10","?:Fv11"]]]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S6",
+ "@logic": ["is rel2", "in", "https://en.wikipedia.org/wiki/Tartu", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W0","?:Fv14","?:Fv15"]],
+ "@nl": "Estonia 9 contains Tartu 10."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk4_activity"]],
+ "@nl": "Did Mary 7 visit Paris 11?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk4_activity", "visit", ["$ctxt","past","?:Fv22","?:Fv16","?:Fv17"]]
+           ],
+ "@nl": "Did Mary 7 visit Paris 11?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk4_activity", "#:Mary 7", ["$ctxt","past","?:Fv24","?:Fv16","?:Fv17"]]
+           ],
+ "@nl": "Did Mary 7 visit Paris 11?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk4_activity", "https://en.wikipedia.org/wiki/Paris", ["$ctxt","past","?:Fv26","?:Fv16","?:Fv17"]]
+           ],
+ "@nl": "Did Mary 7 visit Paris 11?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk4_activity", "past", "in", ["$ctxt","past","?:Fv28","?:Fv16","?:Fv17"]]
+           ],
+ "@nl": "Did Mary 7 visit Paris 11?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "visit", ["$ctxt","past","?:Fv32","?:Fv16","?:Fv17"]],
+            ["-has actor", "?:E", "#:Mary 7", ["$ctxt","past","?:Fv34","?:Fv16","?:Fv17"]],
+            ["-has target", "?:E", "https://en.wikipedia.org/wiki/Paris", ["$ctxt","past","?:Fv36","?:Fv16","?:Fv17"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did Mary 7 visit Paris 11?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Did Mary 7 visit Paris 11?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:elephant 6", ["$theof1", "head", "#:elephant 6", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:elephant 6", ["$theof1", "head", "#:elephant 6", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "head of", ["$theof1","head","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "head", ["$theof1","head","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","boxer","$some_boxer"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","boxer","$some_not_boxer"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv40"], ["has type","?:E","give","?:Fv40"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28348,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1369,
+      "raw": {
+        "input_tokens": 28348,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1369,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29717
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34411,
+      "cached_input_tokens": 33280,
+      "output_tokens": 794,
+      "raw": {
+        "input_tokens": 34411,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 794,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35205
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:01:24Z"
+}

@@ -1,0 +1,503 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1059,
+  "input_text": "John is white. A coffee cup broke. Daniel went back to the bathroom. Eve reported that Tom arrived. Cars have fenders. Did Tom depart?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is white.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is white.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["white","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "A coffee cup broke.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "A coffee cup 1 broke.",
+          "type": "situation",
+          "entities": [{
+              "id": "coffee cup 1",
+              "type": "concrete",
+              "subtype": "compound",
+              "category": "artifact"
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Daniel went back to the bathroom.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Daniel 1 went back to the bathroom 2.",
+          "type": "situation",
+          "entities": [{"id": "Daniel 1", "type": "concrete", "category": "person"},
+            {"id": "bathroom 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "go",
+              "mode": "event",
+              "roles": {"actor": "Daniel 1", "destination": "bathroom 2"}
+            }
+          ],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Eve reported that Tom arrived.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Eve 1 reported that Tom 2 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "Tom 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "report",
+              "mode": "speech_act",
+              "roles": {
+                "actor": "Eve 1",
+                "content": {"root": "arrive", "mode": "event", "roles": {"actor": "Tom 2"}}
+              }
+            }
+          ],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        },
+        {
+          "unit_id": "S5",
+          "text": "Tom 2 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Tom 2", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "arrive", "mode": "event", "roles": {"actor": "Tom 2"}}],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Cars have fenders.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Cars have fenders.",
+          "type": "normal_rule",
+          "entities": [{"id": "cars", "type": "generic", "category": "artifact"},
+            {"id": "fenders", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Did Tom depart?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Did Tom 2 depart?",
+          "type": "query",
+          "entities": [{"id": "Tom 2", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "depart", "mode": "event", "roles": {"actor": "Tom 2"}}],
+          "pre_state": "W3",
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["has degree property","white","John 1","none","person"]]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","coffee cup","coffee cup 1"], ["has property","broke","coffee cup 1"]]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Daniel 1"],
+            ["isa","bathroom","bathroom 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","go"],
+                ["has actor","E","Daniel 1"],
+                ["has destination","E","bathroom 2","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","Eve 1"],
+            ["isa","person","Tom 2"],
+            ["exists","E1",
+              ["and",
+                ["isa","activity","E1"],
+                ["has type","E1","report"],
+                ["has actor","E1","Eve 1"],
+                ["has time","E1","past","in"],
+                ["exists","E2",
+                  ["and",
+                    ["has content","E1","E2"],
+                    ["isa","activity","E2"],
+                    ["has type","E2","arrive"],
+                    ["has actor","E2","Tom 2"],
+                    ["has time","E2","past","in"]
+                  ]
+                ],
+                ["speech_act","E1"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","Tom 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","arrive"],
+                ["has actor","E","Tom 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","car","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","fender","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S6",0.99]
+      ]
+    ],
+    ["@id","S7",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","depart"],
+            ["has actor","E","Tom 2"],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is white."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "white", "#:John 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is white."},
+{"@name": "sent_S2",
+ "@logic": ["isa","coffee cup","#:coffee cup 1"],
+ "@nl": "A coffee cup 1 broke."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "broke", "#:coffee cup 1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A coffee cup 1 broke."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "A coffee cup 1 broke."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Daniel 1"],
+ "@nl": "Daniel 1 went back to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","bathroom","#:bathroom 2"],
+ "@nl": "Daniel 1 went back to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Daniel 1 went back to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "Daniel 1 went back to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:Daniel 1", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "Daniel 1 went back to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["has destination", "sk0_activity", "#:bathroom 2", "at", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "Daniel 1 went back to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "Daniel 1 went back to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Daniel 1 went back to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Daniel 1 went back to the bathroom 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Tom 2"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "report", ["$ctxt","past","W2","?:Fv7","?:Fv8"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk1_activity", "#:Eve 1", ["$ctxt","past","W2","?:Fv7","?:Fv8"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W2","?:Fv7","?:Fv8"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["has content","sk1_activity","sk2_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk2_activity", "arrive", ["$ctxt","past","W2","?:Fv7","?:Fv8"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk2_activity", "#:Tom 2", ["$ctxt","past","W2","?:Fv7","?:Fv8"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W2","?:Fv7","?:Fv8"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["speech_act","sk1_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["next","W2","W3"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Tom 2"],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk3_activity", "arrive", ["$ctxt","past","W2","?:Fv9","?:Fv10"]],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk3_activity", "#:Tom 2", ["$ctxt","past","W2","?:Fv9","?:Fv10"]],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W2","?:Fv9","?:Fv10"]],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["next","W2","W3"],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","car","?:X"], ["isa", "fender", ["sk4","?:X"]]],
+ "@nl": "Cars have fenders."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","car","?:X"],
+            ["has part", "?:X", ["sk4","?:X"], ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["$block", ["$","car",1], ["$not", ["has part", "?:X", ["sk4","?:X"], ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Cars have fenders."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk5_activity"]],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk5_activity", "depart", ["$ctxt","past","?:Fv20","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk5_activity", "#:Tom 2", ["$ctxt","past","?:Fv22","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk5_activity", "past", "in", ["$ctxt","past","?:Fv24","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk5_activity"]],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "depart", ["$ctxt","past","?:Fv28","?:Fv15","?:Fv16"]],
+            ["-has actor", "?:E", "#:Tom 2", ["$ctxt","past","?:Fv30","?:Fv15","?:Fv16"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","car","$some_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","car","$some_not_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fender","$some_fender"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","fender","$some_not_fender"],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","coffee cup","?:X"], ["isa","cup","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","coffee","?:X"], ["-isa","cup","?:X"], ["isa","coffee cup","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv34"], ["has type","?:E","go","?:Fv34"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","report","?:Fv35"], ["has type","?:E","announce","?:Fv35"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","announce","?:Fv36"], ["has type","?:E","report","?:Fv36"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "white", "?:X", ["$ctxt","past","?:Fv37","?:Fv38","?:Fv39"]],
+            ["has property", "white", "?:X", ["$ctxt","present","?:Fv37","?:Fv38","?:Fv39"]],
+            ["$block", 0, ["$not", ["has property", "white", "?:X", ["$ctxt","present","?:Fv37","?:Fv38","?:Fv39"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "white", "?:X", ["$ctxt","past","?:Fv40","?:Fv41","?:Fv42"]],
+            ["has property", "white", "?:X", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]],
+            ["$block", 0, ["$not", ["has property", "white", "?:X", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32080,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1093,
+      "raw": {
+        "input_tokens": 38,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1093,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39717,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1144,
+      "raw": {
+        "input_tokens": 826,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1144,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 41504,
+      "cached_input_tokens": 38891,
+      "output_tokens": 859,
+      "raw": {
+        "input_tokens": 2613,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 859,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:08:14Z"
+}

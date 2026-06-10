@@ -1,0 +1,406 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 6,
+  "input_text": "Birds near Tallinn are nice. The woman holding a heavy lamp sang. Elephants are animals. John is near a spoon. There is a ghost in the room. Who is an animal?",
+  "expected_answer": "An elephant.",
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "An elephant.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Birds near Tallinn are nice.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Birds near Tallinn 1 are nice.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"},
+            {
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            }
+          ],
+          "adjectives": [["nice","none","entity"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "The woman holding a heavy lamp sang.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The woman 1 holding a heavy lamp 2 sang.",
+          "type": "situation",
+          "entities": [{"id": "woman 1", "type": "concrete", "category": "person"},
+            {"id": "lamp 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "hold", "mode": "event", "roles": {"actor": "woman 1", "target": "lamp 2"}},
+            {"root": "sing", "mode": "event", "roles": {"actor": "woman 1"}}
+          ],
+          "adjectives": [["heavy","none","lamp"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants are animals.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Elephants are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is near a spoon.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "John 1 is near a spoon 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "spoon 2", "type": "concrete", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "There is a ghost in the room.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "A ghost 1 is in the room 2.",
+          "type": "situation",
+          "entities": [{"id": "ghost 1", "type": "concrete"},
+            {"id": "room 2", "type": "concrete", "category": "place"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Who is an animal?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Which entity is an animal?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "animal", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["and",
+                ["isa","bird","X"],
+                ["is rel2","near","X","https://en.wikipedia.org/wiki/Tallinn"]
+              ],
+              ["normally", ["has degree property","nice","X","none","entity"]]
+            ]
+          ]
+        ],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","woman","woman 1"],
+          ["isa","lamp","lamp 2"],
+          ["has degree property","heavy","lamp 2","none","lamp"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","hold"],
+              ["has actor","E1","woman 1"],
+              ["has target","E1","lamp 2"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","sing"],
+              ["has actor","E2","woman 1"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","spoon","spoon 2"],
+          ["is rel2","near","John 1","spoon 2"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","ghost","ghost 1"],
+          ["isa","room","room 2"],
+          ["is rel2","in","ghost 1","room 2"]
+        ]
+      ]
+    ],
+    ["@id", "S6", ["ask", "X", ["isa","animal","X"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Birds near Tallinn 1 are nice."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","bird","?:X"],
+            ["-has degree rel2", "near", "?:X", "https://en.wikipedia.org/wiki/Tallinn", "none", "?:Fv77", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["has degree property", "good", "?:X", "none", "?:Fv78", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","bird",2], ["$not", ["has degree property", "good", "?:X", "none", "?:Fv79", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Birds near Tallinn 1 are nice."},
+{"@name": "sent_S2",
+ "@logic": ["isa","woman","#:woman 1"],
+ "@nl": "The woman 1 holding a heavy lamp 2 sang."},
+{"@name": "sent_S2",
+ "@logic": ["isa","lamp","#:lamp 2"],
+ "@nl": "The woman 1 holding a heavy lamp 2 sang."},
+{"@name": "sent_S2",
+ "@logic": ["-has degree property", "light", "#:lamp 2", "none", "lamp", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 1 holding a heavy lamp 2 sang."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The woman 1 holding a heavy lamp 2 sang."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "hold", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 1 holding a heavy lamp 2 sang."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:woman 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 1 holding a heavy lamp 2 sang."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "#:lamp 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 1 holding a heavy lamp 2 sang."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 1 holding a heavy lamp 2 sang."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The woman 1 holding a heavy lamp 2 sang."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The woman 1 holding a heavy lamp 2 sang."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "sing", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 1 holding a heavy lamp 2 sang."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:woman 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 1 holding a heavy lamp 2 sang."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The woman 1 holding a heavy lamp 2 sang."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The woman 1 holding a heavy lamp 2 sang."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Elephants are animals."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is near a spoon 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","spoon","#:spoon 2"],
+ "@nl": "John 1 is near a spoon 2."},
+{"@name": "sent_S4",
+ "@logic": ["has degree rel2", "near", "#:John 1", "#:spoon 2", "none", "?:Fv80", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "John 1 is near a spoon 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","ghost","#:ghost 1"],
+ "@nl": "A ghost 1 is in the room 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","room","#:room 2"],
+ "@nl": "A ghost 1 is in the room 2."},
+{"@name": "sent_S5",
+ "@logic": ["is rel2", "in", "#:ghost 1", "#:room 2", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "A ghost 1 is in the room 2."},
+{"@name": "sent_S6",
+ "@question": ["isa","animal","?:X"],
+ "@askvars": 1,
+ "@nl": "Which entity is an animal?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "good", "$some_nice_entity", "none", "?:Fv81", ["$ctxt","?:Fv60","?:Fv57","?:Fv58","?:Fv59"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "good", "$some_not_nice_entity", "none", "?:Fv82", ["$ctxt","?:Fv68","?:Fv65","?:Fv66","?:Fv67"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird_near_Tallinn"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree rel2", "near", "$some_bird_near_Tallinn", "https://en.wikipedia.org/wiki/Tallinn", "none", "?:Fv83", ["$ctxt","?:Fv76","?:Fv73","?:Fv74","?:Fv75"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "light", "?:X", "none", "?:Fv84", ["$ctxt","past","?:Fv19","?:Fv20","?:Fv21"]],
+            ["-has degree property", "light", "?:X", "none", "?:Fv85", ["$ctxt","present","?:Fv19","?:Fv20","?:Fv21"]],
+            ["$block", 0, ["$not", ["has degree property", "heavy", "?:X", "none", "?:Fv86", ["$ctxt","present","?:Fv19","?:Fv20","?:Fv21"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv22","?:Fv23","?:Fv24"]],
+            ["-has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]],
+            ["$block", 0, ["$not", ["has degree property", "heavy", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "pop_what",
+ "@logic": ["isa","spoon","$some_spoon"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","woman","$some_woman"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","ghost","$some_ghost"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","room","$some_room"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","lamp","$some_lamp"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","place","$some_place"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","$some_elephant"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S3","assumption",1], [["-isa","elephant","?:X"], ["isa","animal","?:X"]]],
+          [2, ["in","sent_S3","assumption",1], [["isa","elephant","$some_elephant"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["isa","animal","$some_elephant"]]],
+          [4, ["in","sent_S6","goal",1], [["-isa","animal","?:X"], ["$ans","?:X"]]],
+          [5, ["mp",3,4,"fromga",1], [["$ans","$some_elephant"]]]
+        ]
+      },
+      {
+        "answer": [["$ans","$some_animal"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S3","assumption",1], [["isa","animal","$some_animal"]]],
+          [2, ["in","sent_S6","goal",1], [["-isa","animal","?:X"], ["$ans","?:X"]]],
+          [3, ["mp",1,2,"fromga",1], [["$ans","$some_animal"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Elephants are animals.",
+"  (2) Who is an animal?",
+"Proof steps:",
+"  (1) If some X is an elephant then X is an animal  [sentence 1]",
+"  (2) An elephant is an elephant  [sentence 1]",
+"  (3) An elephant is an animal  [from steps 1, 2]",
+"  (4) X is an answer  [from question]",
+"  (5) An elephant is an answer  [from steps 3, 4]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28352,
+      "cached_input_tokens": 28288,
+      "output_tokens": 778,
+      "raw": {
+        "input_tokens": 28352,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 778,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29130
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34028,
+      "cached_input_tokens": 33280,
+      "output_tokens": 511,
+      "raw": {
+        "input_tokens": 34028,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 511,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34539
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:37:27Z"
+}

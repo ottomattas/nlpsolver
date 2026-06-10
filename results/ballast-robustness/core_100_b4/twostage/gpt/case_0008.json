@@ -1,0 +1,372 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 8,
+  "input_text": "Emily is a wolf. Elephants are big animals. The red straw is 10 meters long. John is an elephant. Muggles cannot disappear. The road leading to the village was narrow. Who is nice?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Emily is a wolf.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Emily 1 is a wolf.",
+          "type": "situation",
+          "entities": [{"id": "Emily 1", "type": "concrete", "category": "animal"},
+            {"id": "wolf", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Elephants are big animals.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Elephants are big animals.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["big","none","animal"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "The red straw is 10 meters long.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The red straw 1 is 10 meters long.",
+          "type": "situation",
+          "entities": [{"id": "straw 1", "type": "concrete", "category": "artifact"},
+            {"id": "10 meters", "type": "concrete", "category": "measure"}
+          ],
+          "adjectives": [["red","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is an elephant.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "John 1 is an elephant.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"},
+            {"id": "elephant", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Muggles cannot disappear.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Muggles cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "muggles", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "The road leading to the village was narrow.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The road 1 that leads to the village 2 was narrow.",
+          "type": "situation",
+          "entities": [{"id": "road 1", "type": "concrete", "category": "place"},
+            {"id": "village 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "lead",
+              "mode": "habitual",
+              "roles": {"actor": "road 1", "destination": "village 2"}
+            }
+          ],
+          "adjectives": [["narrow","none","road"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Who is nice?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Which entity is nice?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true}],
+          "adjectives": [["nice","none","entity"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","wolf","Emily 1"]]],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["has degree property","big","X","none","animal"]]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","straw","straw 1"],
+          ["has degree property","red","straw 1","none","none"],
+          ["=", ["$measure_of","length","straw 1","W0"], ["$measure",10,"meter"]]
+        ]
+      ]
+    ],
+    ["@id", "S4", ["holds", "W0", ["isa","elephant","John 1"]]],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","muggle","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","road","road 1"],
+            ["isa","village","village 2"],
+            ["has degree property","narrow","road 1","none","road"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","lead"],
+                ["has actor","E","road 1"],
+                ["has destination","E","village 2","at"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S7", ["ask", "X", ["has degree property","nice","X","none","entity"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","measure","10 meters"],
+ "@nl": "The red straw 1 is 10 meters long."},
+{"@name": "sent_S1",
+ "@logic": ["isa","wolf","#:Emily 1"],
+ "@nl": "Emily 1 is a wolf."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has degree property", "big", "?:X", "none", "animal", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$block", ["$","elephant",1], ["$not", ["has degree property", "big", "?:X", "none", "animal", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants are big animals."},
+{"@name": "sent_S3",
+ "@logic": ["isa","straw","#:straw 1"],
+ "@nl": "The red straw 1 is 10 meters long."},
+{"@name": "sent_S3",
+ "@logic": ["has property", "red", "#:straw 1", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The red straw 1 is 10 meters long."},
+{"@name": "sent_S3",
+ "@logic": ["=", ["$measure_of","length","#:straw 1","W0"], ["$list",10,"#:meter"]],
+ "@nl": "The red straw 1 is 10 meters long."},
+{"@name": "sent_S4",
+ "@logic": ["isa","elephant","#:John 1"],
+ "@nl": "John 1 is an elephant."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","muggle","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Muggles cannot disappear."},
+{"@name": "sent_S6",
+ "@logic": ["isa","road","#:road 1"],
+ "@nl": "The road 1 that leads to the village 2 was narrow."},
+{"@name": "sent_S6",
+ "@logic": ["isa","village","#:village 2"],
+ "@nl": "The road 1 that leads to the village 2 was narrow."},
+{"@name": "sent_S6",
+ "@logic": ["-has degree property", "wide", "#:road 1", "none", "road", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The road 1 that leads to the village 2 was narrow."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The road 1 that leads to the village 2 was narrow."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk0_activity", "lead", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The road 1 that leads to the village 2 was narrow."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk0_activity", "#:road 1", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The road 1 that leads to the village 2 was narrow."},
+{"@name": "sent_S6",
+ "@logic": ["has destination", "sk0_activity", "#:village 2", "at", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The road 1 that leads to the village 2 was narrow."},
+{"@name": "sent_S6",
+ "@logic": ["typical", "sk0_activity", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The road 1 that leads to the village 2 was narrow."},
+{"@name": "sent_S7",
+ "@question": ["has degree property", "good", "?:X", "none", "?:Fv71", ["$ctxt","present","?:Fv19","?:Fv17","?:Fv18"]],
+ "@askvars": 1,
+ "@nl": "Which entity is nice?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "good", "?:Br1", "none", "?:Fv72", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "good", "?:Br1", "none", "?:Fv73", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "good", "?:Br1", "none", "?:Fv74", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is nice?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","muggle","$some_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","muggle","$some_not_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "big", "$some_big_animal", "none", "animal", ["$ctxt","?:Fv62","?:Fv59","?:Fv60","?:Fv61"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_big_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "big", "$some_not_big_animal", "none", "animal", ["$ctxt","?:Fv70","?:Fv67","?:Fv68","?:Fv69"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv75", ["$ctxt","past","?:Fv21","?:Fv22","?:Fv23"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv76", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv77", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv24","?:Fv25","?:Fv26"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "none", "?:Fv78", ["$ctxt","past","?:Fv27","?:Fv28","?:Fv29"]],
+            ["-has degree property", "wide", "?:X", "none", "?:Fv79", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "none", "?:Fv80", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv30","?:Fv31","?:Fv32"]],
+            ["-has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv33","?:Fv34","?:Fv35"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv36","?:Fv37","?:Fv38"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "pop_what",
+ "@logic": ["isa","straw","$some_straw"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","village","$some_village"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","wolf","$some_wolf"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","road","$some_road"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","measure","$some_measure"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no answers found"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28357,
+      "cached_input_tokens": 28288,
+      "output_tokens": 973,
+      "raw": {
+        "input_tokens": 28357,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 973,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29330
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34084,
+      "cached_input_tokens": 33280,
+      "output_tokens": 507,
+      "raw": {
+        "input_tokens": 34084,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 507,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34591
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:36:39Z"
+}

@@ -1,0 +1,683 @@
+{
+  "test_name": "core_100_b8",
+  "case_id": 1326,
+  "input_text": "The cat slept on the velvet sofa. Elephants have no wings. Greg is a bad man. Ellen is fond of John. Penguins do not fly. Eve failed to finish the report. The guide offered the tourists tea. Mary decided to leave. If X1 is male and X1 is a grandchild of Y1, X1 is a grandson of Y1. Who is Ellen afraid of?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The cat slept on the velvet sofa.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The cat 1 slept on the velvet sofa 2.",
+          "type": "situation",
+          "entities": [{"id": "cat 1", "type": "concrete", "category": "animal"},
+            {"id": "sofa 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "sleep",
+              "mode": "event",
+              "roles": {"location": "sofa 2", "location_prep": "on"}
+            }
+          ],
+          "adjectives": [["velvet","none","sofa"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have no wings.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Elephants have no wings.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "wings", "type": "generic", "scope": "dependent"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Greg is a bad man.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Greg 1 is a bad man.",
+          "type": "real",
+          "entities": [{"id": "Greg 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["bad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Ellen is fond of John.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Ellen 1 is fond of John 2.",
+          "type": "real",
+          "entities": [{"id": "Ellen 1", "type": "concrete", "category": "person"},
+            {"id": "John 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["fond of","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Penguins do not fly.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Penguins cannot fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "Eve failed to finish the report.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Eve 1 failed to finish the report 2.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "report 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "fail",
+              "mode": "event",
+              "roles": {
+                "actor": "Eve 1",
+                "content": {
+                  "root": "finish",
+                  "mode": "event",
+                  "roles": {"actor": "Eve 1", "target": "report 2"}
+                }
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The guide offered the tourists tea.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "The guide 1 offered the tourists 2 tea.",
+          "type": "situation",
+          "entities": [{"id": "guide 1", "type": "concrete", "category": "person"},
+            {"id": "tourists 2", "type": "concrete", "category": "person"},
+            {"id": "tea", "type": "generic", "scope": "kind", "category": "substance"}
+          ],
+          "actions": [{
+              "root": "offer",
+              "mode": "event",
+              "roles": {"actor": "guide 1", "recipient": "tourists 2", "target": "tea"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary decided to leave.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Mary 1 decided to leave.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "decide",
+              "mode": "intention",
+              "roles": {
+                "actor": "Mary 1",
+                "content": {"root": "leave", "mode": "event", "roles": {"actor": "Mary 1"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is male and X1 is a grandchild of Y1, X1 is a grandson of Y1.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "If X1 is male and X1 is a grandchild of Y1, X1 is a grandson of Y1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic", "category": "person"},
+            {"id": "Y1", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["male","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Who is Ellen afraid of?",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Which entity is Ellen 1 afraid of?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "Ellen 1", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["afraid of","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","cat","cat 1"],
+          ["isa","sofa","sofa 2"],
+          ["has degree property","velvet","sofa 2","none","sofa"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","sleep"],
+              ["has actor","E","cat 1"],
+              ["has location","E","sofa 2","on"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","elephant","X"],
+            ["not", ["exists", "Y", ["and", ["isa","wing","Y"], ["has part","X","Y"]]]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and", ["isa","man","Greg 1"], ["has degree property","bad","Greg 1","none","person"]]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Ellen 1"],
+          ["isa","person","John 2"],
+          ["has degree rel2","fond of","Ellen 1","John 2","none","person"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["isa","report","report 2"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","fail"],
+              ["has actor","E1","Eve 1"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","finish"],
+                  ["has actor","E2","Eve 1"],
+                  ["has target","E2","report 2"],
+                  ["has time","E2","past","in"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","person","guide 1"],
+          ["isa","person","tourists 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","offer"],
+              ["has actor","E","guide 1"],
+              ["has recipient","E","tourists 2"],
+              ["has target","E","tea"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 1"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","decide"],
+              ["has actor","E1","Mary 1"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","leave"],
+                  ["has actor","E2","Mary 1"],
+                  ["has time","E2","past","in"]
+                ]
+              ],
+              ["intention","E1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies",
+              ["and",
+                ["has degree property","male","X1","none","person"],
+                ["is rel2","grandchild of","X1","Y1"]
+              ],
+              ["is rel2","grandson of","X1","Y1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["ask","X",
+        ["and",
+          ["isa","person","Ellen 1"],
+          ["has degree rel2","afraid of","Ellen 1","X","none","person"]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time, inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "entity_S7",
+ "@logic": ["isa","guide","#:guide 1"],
+ "@nl": "The guide 1 offered the tourists 2 tea."},
+{"@name": "entity_S7",
+ "@logic": ["isa","tourist","#:tourists 2"],
+ "@nl": "The guide 1 offered the tourists 2 tea."},
+{"@name": "entity_S7",
+ "@logic": ["isa","tourist","#:tourists 2"],
+ "@nl": "The guide 1 offered the tourists 2 tea."},
+{"@name": "sent_S1",
+ "@logic": ["isa","cat","#:cat 1"],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","sofa","#:sofa 2"],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "velvet", "#:sofa 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "sleep", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:cat 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S1",
+ "@logic": ["has location", "sk0_activity", "#:sofa 2", "on", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-isa","wing","?:Y"],
+            ["-has part", "?:X", "?:Y", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Elephants have no wings."},
+{"@name": "sent_S3",
+ "@logic": ["isa","man","#:Greg 1"],
+ "@nl": "Greg 1 is a bad man."},
+{"@name": "sent_S3",
+ "@logic": ["-has degree property", "good", "#:Greg 1", "none", "person", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Greg 1 is a bad man."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Ellen 1"],
+ "@nl": "Ellen 1 is fond of John 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "Ellen 1 is fond of John 2."},
+{"@name": "sent_S4",
+ "@logic": ["is rel2", "fond of", "#:Ellen 1", "#:John 2", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Ellen 1 is fond of John 2."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Penguins cannot fly."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 failed to finish the report 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","report","#:report 2"],
+ "@nl": "Eve 1 failed to finish the report 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Eve 1 failed to finish the report 2."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk1_activity", "fail", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Eve 1 failed to finish the report 2."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk1_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Eve 1 failed to finish the report 2."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Eve 1 failed to finish the report 2."},
+{"@name": "sent_S6",
+ "@logic": ["has content","sk1_activity","sk2_activity"],
+ "@nl": "Eve 1 failed to finish the report 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Eve 1 failed to finish the report 2."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk2_activity", "finish", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Eve 1 failed to finish the report 2."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk2_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Eve 1 failed to finish the report 2."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk2_activity", "#:report 2", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Eve 1 failed to finish the report 2."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Eve 1 failed to finish the report 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:guide 1"],
+ "@nl": "The guide 1 offered the tourists 2 tea."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:tourists 2"],
+ "@nl": "The guide 1 offered the tourists 2 tea."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The guide 1 offered the tourists 2 tea."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk3_activity", "offer", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The guide 1 offered the tourists 2 tea."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk3_activity", "#:guide 1", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The guide 1 offered the tourists 2 tea."},
+{"@name": "sent_S7",
+ "@logic": ["has recipient", "sk3_activity", "#:tourists 2", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The guide 1 offered the tourists 2 tea."},
+{"@name": "sent_S7",
+ "@logic": ["isa","tea","sk4_tea"],
+ "@nl": "The guide 1 offered the tourists 2 tea."},
+{"@name": "sent_S7",
+ "@logic": ["has target", "sk3_activity", "sk4_tea", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The guide 1 offered the tourists 2 tea."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The guide 1 offered the tourists 2 tea."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk5_activity", "decide", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk5_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S8",
+ "@logic": ["has content","sk5_activity","sk6_activity"],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk6_activity"],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk6_activity", "leave", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk6_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk6_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S8",
+ "@logic": ["intention","sk5_activity"],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S9",
+ "@logic": [["-has property", "male", "?:X1", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["-is rel2", "grandchild of", "?:X1", "?:Y1", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["is rel2", "grandson of", "?:X1", "?:Y1", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "If X1 is male and X1 is a grandchild of Y1, X1 is a grandson of Y1."},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa","person","#:Ellen 1"]],
+ "@nl": "Which entity is Ellen 1 afraid of?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["is rel2", "afraid of", "#:Ellen 1", "?:X", ["$ctxt","present","?:Fv27","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Which entity is Ellen 1 afraid of?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:Ellen 1"],
+            ["-is rel2", "afraid of", "#:Ellen 1", "?:X", ["$ctxt","present","?:Fv27","?:Fv25","?:Fv26"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which entity is Ellen 1 afraid of?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","wing","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S10",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@nl": "Which entity is Ellen 1 afraid of?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "afraid of", "#:Ellen 1", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "afraid of", "#:Ellen 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "afraid of", "#:Ellen 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Ellen 1 afraid of?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","wing","$some_wing"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","wing","$some_not_wing"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "male", "$some_male_person", ["$ctxt","?:Fv73","?:Fv70","?:Fv71","?:Fv72"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","person","$some_male_person"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "male", "$some_not_male_person", ["$ctxt","?:Fv81","?:Fv78","?:Fv79","?:Fv80"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv33"], ["has type","?:E","go","?:Fv33"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","report","?:Fv34"], ["has type","?:E","announce","?:Fv34"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","announce","?:Fv35"], ["has type","?:E","report","?:Fv35"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_verb_excl",
+ "@logic": [["-has type","?:E1","pass","?:Fv36"],
+            ["-has actor","?:E1","?:Ag","?:Fv36"],
+            ["-has target","?:E1","?:Tg","?:Fv36"],
+            ["-has type","?:E2","fail","?:Fv36"],
+            ["-has actor","?:E2","?:Ag","?:Fv36"],
+            ["-has target","?:E2","?:Tg","?:Fv36"],
+            ["$block", 0, ["has type","?:E2","fail","?:Fv36"]]
+           ],
+ "@confidence": 0.85,
+ "@nl": "[generated: frm_verb_excl]"},
+{"@name": "frm_verb_excl",
+ "@logic": [["-has type","?:E1","fail","?:Fv37"],
+            ["-has actor","?:E1","?:Ag","?:Fv37"],
+            ["-has target","?:E1","?:Tg","?:Fv37"],
+            ["-has type","?:E2","pass","?:Fv37"],
+            ["-has actor","?:E2","?:Ag","?:Fv37"],
+            ["-has target","?:E2","?:Tg","?:Fv37"],
+            ["$block", 0, ["has type","?:E2","pass","?:Fv37"]]
+           ],
+ "@confidence": 0.85,
+ "@nl": "[generated: frm_verb_excl]"},
+{"@name": "pop_what",
+ "@logic": ["isa","tea","$some_tea"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","tourist","$some_tourist"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","tourist","$some_tourists"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","cat","$some_cat"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","report","$some_report"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","guide","$some_guide"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","man","$some_man"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","sofa","$some_sofa"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no answers found"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32140,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1648,
+      "raw": {
+        "input_tokens": 98,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1648,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 40148,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1214,
+      "raw": {
+        "input_tokens": 1257,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1214,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 42856,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1240,
+      "raw": {
+        "input_tokens": 3965,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1240,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T11:35:27Z"
+}

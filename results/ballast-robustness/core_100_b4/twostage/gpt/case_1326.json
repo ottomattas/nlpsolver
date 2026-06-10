@@ -1,0 +1,281 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1326,
+  "input_text": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1. Tallinn is hardly in Latvia. Ellen is fond of John. The big animal lifted a stone. A surgeon, Dr. Who is Ellen afraid of?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic", "category": "person"},
+            {"id": "Y1", "type": "generic", "category": "person"},
+            {"id": "Z1", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is hardly in Latvia.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Tallinn 1 is probably not in Latvia 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ],
+          "confidence": 0.2
+        }
+      ]
+    },
+    {
+      "raw": "Ellen is fond of John.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Ellen 1 is fond of John 2.",
+          "type": "situation",
+          "entities": [{"id": "Ellen 1", "type": "concrete", "category": "person"},
+            {"id": "John 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["fond of","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "The big animal lifted a stone.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The big animal 1 lifted a stone 2.",
+          "type": "situation",
+          "entities": [{"id": "animal 1", "type": "concrete", "category": "animal"},
+            {"id": "stone 2", "type": "concrete"}
+          ],
+          "actions": [{"root": "lift", "mode": "event", "roles": {"target": "stone 2"}}],
+          "adjectives": [["big","none","animal"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A surgeon, Dr. Who is Ellen afraid of?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Which entity is Ellen 1 afraid of?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "Ellen 1", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["forall","Y",
+            ["forall","Z",
+              ["implies",
+                ["and", ["is rel2","father of","X","Y"], ["is rel2","father of","Y","Z"]],
+                ["is rel2","grandfather of","X","Z"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["not",
+            ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+          ]
+        ],
+        ["@p","S2",0.2]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Ellen 1"],
+          ["isa","person","John 2"],
+          ["has degree rel2","fond of","Ellen 1","John 2","none","person"]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","animal","animal 1"],
+          ["isa","stone","stone 2"],
+          ["has degree property","big","animal 1","none","animal"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","lift"],
+              ["has actor","E","animal 1"],
+              ["has target","E","stone 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S5", ["ask", "X", ["has degree rel2","afraid of","Ellen 1","X","none","person"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is probably not in Latvia 2."},
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:Latvia 2"],
+ "@nl": "Tallinn 1 is probably not in Latvia 2."},
+{"@name": "sent_S1",
+ "@logic": [["-is rel2", "father of", "?:X", "?:Y", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-is rel2", "father of", "?:Y", "?:Z", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["is rel2", "grandfather of", "?:X", "?:Z", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1."},
+{"@name": "sent_S2",
+ "@logic": ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@confidence": 0.6,
+ "@nl": "Tallinn 1 is probably not in Latvia 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Ellen 1"],
+ "@nl": "Ellen 1 is fond of John 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "Ellen 1 is fond of John 2."},
+{"@name": "sent_S3",
+ "@logic": ["is rel2", "fond of", "#:Ellen 1", "#:John 2", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Ellen 1 is fond of John 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","animal","#:animal 1"],
+ "@nl": "The big animal 1 lifted a stone 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","stone","#:stone 2"],
+ "@nl": "The big animal 1 lifted a stone 2."},
+{"@name": "sent_S4",
+ "@logic": ["has degree property", "big", "#:animal 1", "none", "animal", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The big animal 1 lifted a stone 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The big animal 1 lifted a stone 2."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk0_activity", "lift", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The big animal 1 lifted a stone 2."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk0_activity", "#:animal 1", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The big animal 1 lifted a stone 2."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk0_activity", "#:stone 2", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The big animal 1 lifted a stone 2."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The big animal 1 lifted a stone 2."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The big animal 1 lifted a stone 2."},
+{"@name": "sent_S5",
+ "@question": ["is rel2", "afraid of", "#:Ellen 1", "?:X", ["$ctxt","present","?:Fv13","?:Fv11","?:Fv12"]],
+ "@askvars": 1,
+ "@nl": "Which entity is Ellen 1 afraid of?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "afraid of", "#:Ellen 1", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "afraid of", "#:Ellen 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "afraid of", "#:Ellen 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Ellen 1 afraid of?"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv29", ["$ctxt","past","?:Fv15","?:Fv16","?:Fv17"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv30", ["$ctxt","present","?:Fv15","?:Fv16","?:Fv17"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv31", ["$ctxt","present","?:Fv15","?:Fv16","?:Fv17"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv18","?:Fv19","?:Fv20"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv18","?:Fv19","?:Fv20"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv18","?:Fv19","?:Fv20"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "pop_what",
+ "@logic": ["isa","stone","$some_stone"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","place","$some_place"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no answers found"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28371,
+      "cached_input_tokens": 28288,
+      "output_tokens": 759,
+      "raw": {
+        "input_tokens": 28371,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 759,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29130
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34004,
+      "cached_input_tokens": 33280,
+      "output_tokens": 415,
+      "raw": {
+        "input_tokens": 34004,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 415,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34419
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:17:26Z"
+}

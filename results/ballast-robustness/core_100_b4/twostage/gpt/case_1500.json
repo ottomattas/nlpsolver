@@ -1,0 +1,484 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1500,
+  "input_text": "John is an elephant with a probability 50 percent. Emajogi's length is 80 kilometers. Tallinn is hardly in Latvia. Sandra travelled to the kitchen. A blue hand of a man moved a wheel of a large wheelbarrow. Tallinn is in Latvia?",
+  "expected_answer": "Likely false.",
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "John is an elephant with a probability 50 percent.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is an elephant.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "elephant", "type": "generic", "category": "animal"}
+          ],
+          "confidence": 0.5
+        }
+      ]
+    },
+    {
+      "raw": "Emajogi's length is 80 kilometers.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The length 2 of Emajogi 1 is 80 kilometers.",
+          "type": "real",
+          "entities": [{
+              "id": "Emajogi 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Emajogi"
+            },
+            {"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "80 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 2","Emajogi 1"]]
+        },
+        {
+          "unit_id": "S3",
+          "text": "The length 2 is the length of Emajogi 1.",
+          "type": "real",
+          "entities": [{"id": "length 2", "type": "concrete", "text": "length"},
+            {
+              "id": "Emajogi 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Emajogi"
+            }
+          ],
+          "definites": [["length of","length 2","Emajogi 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is hardly in Latvia.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Tallinn 1 is hardly in Latvia 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Sandra travelled to the kitchen.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Sandra 1 travelled to the kitchen 2.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 1", "type": "concrete", "category": "person"},
+            {"id": "kitchen 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "travel",
+              "mode": "event",
+              "roles": {"actor": "Sandra 1", "destination": "kitchen 2"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A blue hand of a man moved a wheel of a large wheelbarrow.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4.",
+          "type": "situation",
+          "entities": [{"id": "hand 1", "type": "concrete", "category": "artifact"},
+            {"id": "man 2", "type": "concrete", "category": "person"},
+            {"id": "wheel 3", "type": "concrete", "category": "artifact"},
+            {"id": "wheelbarrow 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "move", "mode": "event", "roles": {"actor": "hand 1", "target": "wheel 3"}}],
+          "adjectives": [["blue","none","hand"], ["large","none","wheelbarrow"]],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S7",
+          "text": "Hand 1 is the hand of man 2.",
+          "type": "situation",
+          "entities": [{"id": "hand 1", "type": "concrete", "category": "artifact"},
+            {"id": "man 2", "type": "concrete", "category": "person"}
+          ]
+        },
+        {
+          "unit_id": "S8",
+          "text": "Wheel 3 is the wheel of wheelbarrow 4.",
+          "type": "situation",
+          "entities": [{"id": "wheel 3", "type": "concrete", "category": "artifact"},
+            {"id": "wheelbarrow 4", "type": "concrete", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is in Latvia?",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Is Tallinn 1 in Latvia 2?",
+          "type": "query",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["and", ["holds", "W0", ["isa","elephant","John 1"]], ["@p","S1",0.5]]],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","place","https://en.wikipedia.org/wiki/Emajogi"],
+            ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$measure",80,"kilometer"]]
+          ]
+        ],
+        ["@definite","S2","W0","length of","Emajogi 1","length 2"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 2"],
+            ["isa","place","https://en.wikipedia.org/wiki/Emajogi"]
+          ]
+        ],
+        ["@definite","S3","W0","length of","Emajogi 1","length 2"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+        ],
+        ["@p","S4",0.1]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Sandra 1"],
+            ["isa","kitchen","kitchen 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","travel"],
+                ["has actor","E","Sandra 1"],
+                ["has destination","E","kitchen 2","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","hand","hand 1"],
+            ["isa","man","man 2"],
+            ["isa","wheel","wheel 3"],
+            ["isa","wheelbarrow","wheelbarrow 4"],
+            ["has part","man 2","hand 1"],
+            ["has part","wheelbarrow 4","wheel 3"],
+            ["has degree property","blue","hand 1","none","hand"],
+            ["has degree property","large","wheelbarrow 4","none","wheelbarrow"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","move"],
+                ["has actor","E","hand 1"],
+                ["has target","E","wheel 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and", ["isa","hand","hand 1"], ["isa","man","man 2"], ["has part","man 2","hand 1"]]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","wheel","wheel 3"],
+          ["isa","wheelbarrow","wheelbarrow 4"],
+          ["has part","wheelbarrow 4","wheel 3"]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["question",
+        ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:Emajogi 1"],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "entity_S2",
+ "@logic": ["isa","measure","80 kilometers"],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is hardly in Latvia 2."},
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:Latvia 2"],
+ "@nl": "Tallinn 1 is hardly in Latvia 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/Emajogi"],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "sent_S2",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "sent_S3",
+ "@logic": ["isa","length","#:length 2"],
+ "@nl": "The length 2 is the length of Emajogi 1."},
+{"@name": "sent_S3",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/Emajogi"],
+ "@nl": "The length 2 is the length of Emajogi 1."},
+{"@name": "sent_S4",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@confidence": 0.8,
+ "@nl": "Tallinn 1 is hardly in Latvia 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Sandra 1"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","kitchen","#:kitchen 2"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk0_activity", "#:Sandra 1", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["has destination", "sk0_activity", "#:kitchen 2", "at", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","hand","#:hand 1"],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","man","#:man 2"],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","wheel","#:wheel 3"],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","wheelbarrow","#:wheelbarrow 4"],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S6",
+ "@logic": ["has part", "#:man 2", "#:hand 1", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S6",
+ "@logic": ["has part", "#:wheelbarrow 4", "#:wheel 3", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S6",
+ "@logic": ["has property", "blue", "#:hand 1", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S6",
+ "@logic": ["-has degree property", "small", "#:wheelbarrow 4", "none", "wheelbarrow", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk1_activity", "go", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk1_activity", "#:hand 1", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk1_activity", "#:wheel 3", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S6",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S6",
+ "@logic": ["next","W0","W1"],
+ "@nl": "A blue hand 1 of a man 2 moved a wheel 3 of a large wheelbarrow 4."},
+{"@name": "sent_S7",
+ "@logic": ["isa","hand","#:hand 1"],
+ "@nl": "Hand 1 is the hand of man 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","man","#:man 2"],
+ "@nl": "Hand 1 is the hand of man 2."},
+{"@name": "sent_S7",
+ "@logic": ["has part", "#:man 2", "#:hand 1", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Hand 1 is the hand of man 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","wheel","#:wheel 3"],
+ "@nl": "Wheel 3 is the wheel of wheelbarrow 4."},
+{"@name": "sent_S8",
+ "@logic": ["isa","wheelbarrow","#:wheelbarrow 4"],
+ "@nl": "Wheel 3 is the wheel of wheelbarrow 4."},
+{"@name": "sent_S8",
+ "@logic": ["has part", "#:wheelbarrow 4", "#:wheel 3", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Wheel 3 is the wheel of wheelbarrow 4."},
+{"@name": "sent_S9",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W1","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Is Tallinn 1 in Latvia 2?"},
+{"@name": "sent_S9",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W1","?:Fv17","?:Fv18"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is Tallinn 1 in Latvia 2?"},
+{"@name": "sent_S9",
+ "@question": ["$defq0"],
+ "@nl": "Is Tallinn 1 in Latvia 2?"},
+{"@name": "sent_S9",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is Tallinn 1 in Latvia 2?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv20"], ["has type","?:E","go","?:Fv20"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","hand","?:Fv21"], ["has type","?:E","give","?:Fv21"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv22","?:Fv23","?:Fv24"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv25","?:Fv26","?:Fv27"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv25","?:Fv26","?:Fv27"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv25","?:Fv26","?:Fv27"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "small", "?:X", "none", "?:Fv42", ["$ctxt","past","?:Fv28","?:Fv29","?:Fv30"]],
+            ["-has degree property", "small", "?:X", "none", "?:Fv43", ["$ctxt","present","?:Fv28","?:Fv29","?:Fv30"]],
+            ["$block", 0, ["$not", ["has degree property", "large", "?:X", "none", "?:Fv44", ["$ctxt","present","?:Fv28","?:Fv29","?:Fv30"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv31","?:Fv32","?:Fv33"]],
+            ["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv31","?:Fv32","?:Fv33"]],
+            ["$block", 0, ["$not", ["has degree property", "large", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv31","?:Fv32","?:Fv33"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28367,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1416,
+      "raw": {
+        "input_tokens": 28367,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1416,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29783
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34549,
+      "cached_input_tokens": 33280,
+      "output_tokens": 824,
+      "raw": {
+        "input_tokens": 34549,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 824,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35373
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:29:41Z"
+}

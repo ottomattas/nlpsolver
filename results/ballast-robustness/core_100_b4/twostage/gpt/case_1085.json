@@ -1,0 +1,472 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1085,
+  "input_text": "A surgeon, Dr. Baby bears eat no berries. The big mouse is strong. Smith, entered the room. The blue car costs two dollars. Mike or Mickey is not female. Who entered the room?",
+  "expected_answer": ["Dr. Smith.","A surgeon."],
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Smith.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "A surgeon, Dr. Baby bears eat no berries.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Dr. Baby 1 is a surgeon.",
+          "type": "situation",
+          "entities": [{"id": "Dr. Baby 1", "type": "concrete", "category": "person"},
+            {"id": "surgeon", "type": "generic", "category": "person"}
+          ]
+        },
+        {
+          "unit_id": "S2",
+          "text": "Dr. Baby 1 eats no berries.",
+          "type": "normal_rule",
+          "entities": [{"id": "Dr. Baby 1", "type": "concrete", "category": "person"},
+            {"id": "berries", "type": "generic", "scope": "kind", "category": "plant"}
+          ],
+          "actions": [{
+              "root": "eat",
+              "mode": "habitual",
+              "roles": {"actor": "Dr. Baby 1", "target": "berries"}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The big mouse is strong.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The big mouse 2 is strong.",
+          "type": "situation",
+          "entities": [{"id": "mouse 2", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","mouse"], ["strong","none","mouse"]]
+        }
+      ]
+    },
+    {
+      "raw": "Smith, entered the room.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Smith 3 entered the room 4.",
+          "type": "situation",
+          "entities": [{"id": "Smith 3", "type": "concrete", "category": "person"},
+            {"id": "room 4", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "enter",
+              "mode": "event",
+              "roles": {"actor": "Smith 3", "destination": "room 4"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The blue car costs two dollars.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "The blue car 5 costs two dollars 6.",
+          "type": "situation",
+          "entities": [{"id": "car 5", "type": "concrete", "category": "artifact"},
+            {"id": "two dollars 6", "type": "concrete", "category": "measure"}
+          ],
+          "adjectives": [["blue","none","car"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mike or Mickey is not female.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Mike 7 or Mickey 8 is not female.",
+          "type": "situation",
+          "entities": [{"id": "Mike 7", "type": "concrete", "category": "person"},
+            {"id": "Mickey 8", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["female","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Who entered the room?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Which entity entered the room 4?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "room 4", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "enter",
+              "mode": "event",
+              "roles": {"actor": "entity", "destination": "room 4"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","surgeon","Dr. Baby 1"]]],
+    ["@id","S2",
+      ["holds","W0",
+        ["normally",
+          ["not",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","eat"],
+                ["has actor","E","Dr. Baby 1"],
+                ["has target","E","berries"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","mouse","mouse 2"],
+          ["has degree property","big","mouse 2","none","mouse"],
+          ["has degree property","strong","mouse 2","none","mouse"]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Smith 3"],
+          ["isa","room","room 4"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","enter"],
+              ["has actor","E","Smith 3"],
+              ["has destination","E","room 4","at"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","car","car 5"],
+          ["has degree property","blue","car 5","none","car"],
+          ["=", ["$measure_of","price","car 5","W0"], ["$measure",2,"dollar"]]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["or",
+          ["and",
+            ["isa","person","Mike 7"],
+            ["not", ["has degree property","female","Mike 7","none","person"]]
+          ],
+          ["and",
+            ["isa","person","Mickey 8"],
+            ["not", ["has degree property","female","Mickey 8","none","person"]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["ask","X",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","enter"],
+            ["has actor","E","X"],
+            ["has destination","E","room 4","at"],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S5",
+ "@logic": ["isa","measure","#:two dollars 6"],
+ "@nl": "The blue car 5 costs two dollars 6."},
+{"@name": "entity_S5",
+ "@logic": ["isa","two dollar","#:two dollars 6"],
+ "@nl": "The blue car 5 costs two dollars 6."},
+{"@name": "entity_S5",
+ "@logic": ["isa","two dollar","#:two dollars 6"],
+ "@nl": "The blue car 5 costs two dollars 6."},
+{"@name": "sent_S1",
+ "@logic": ["isa","surgeon","Dr. Baby 1"],
+ "@nl": "Dr. Baby 1 is a surgeon."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "eat", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-has actor", "?:E", "Dr. Baby 1", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-isa","berry","?:Gobj0"],
+            ["-has target", "?:E", "?:Gobj0", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$block", ["$","berry",4], ["typical", "?:E", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]]
+           ],
+ "@nl": "Dr. Baby 1 eats no berries."},
+{"@name": "sent_S3",
+ "@logic": ["isa","mouse","#:mouse 2"],
+ "@nl": "The big mouse 2 is strong."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "big", "#:mouse 2", "none", "mouse", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The big mouse 2 is strong."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "strong", "#:mouse 2", "none", "mouse", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The big mouse 2 is strong."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Smith 3"],
+ "@nl": "Smith 3 entered the room 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","room","#:room 4"],
+ "@nl": "Smith 3 entered the room 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Smith 3 entered the room 4."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk0_activity", "enter", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Smith 3 entered the room 4."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk0_activity", "#:Smith 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Smith 3 entered the room 4."},
+{"@name": "sent_S4",
+ "@logic": ["has destination", "sk0_activity", "#:room 4", "at", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Smith 3 entered the room 4."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Smith 3 entered the room 4."},
+{"@name": "sent_S5",
+ "@logic": ["isa","car","#:car 5"],
+ "@nl": "The blue car 5 costs two dollars 6."},
+{"@name": "sent_S5",
+ "@logic": ["has property", "blue", "#:car 5", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The blue car 5 costs two dollars 6."},
+{"@name": "sent_S5",
+ "@logic": ["=", ["$measure_of","price","#:car 5","W0"], ["$list",2,"#:dollar"]],
+ "@nl": "The blue car 5 costs two dollars 6."},
+{"@name": "sent_S6",
+ "@logic": [["isa","person","#:Mike 7"], ["isa","person","#:Mickey 8"]],
+ "@nl": "Mike 7 or Mickey 8 is not female."},
+{"@name": "sent_S6",
+ "@logic": [["isa","person","#:Mike 7"],
+            ["-has property", "female", "#:Mickey 8", ["$ctxt","present","W0","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Mike 7 or Mickey 8 is not female."},
+{"@name": "sent_S6",
+ "@logic": [["-has property", "female", "#:Mike 7", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+            ["isa","person","#:Mickey 8"]
+           ],
+ "@nl": "Mike 7 or Mickey 8 is not female."},
+{"@name": "sent_S6",
+ "@logic": [["-has property", "female", "#:Mike 7", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+            ["-has property", "female", "#:Mickey 8", ["$ctxt","present","W0","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Mike 7 or Mickey 8 is not female."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "activity", ["sk1","?:X"]]],
+ "@nl": "Which entity entered the room 4?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has type", ["sk1","?:X"], "enter", ["$ctxt","past","?:Fv21","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Which entity entered the room 4?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has actor", ["sk1","?:X"], "?:X", ["$ctxt","past","?:Fv23","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Which entity entered the room 4?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has destination", ["sk1","?:X"], "#:room 4", "at", ["$ctxt","past","?:Fv25","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Which entity entered the room 4?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has time", ["sk1","?:X"], "past", "in", ["$ctxt","past","?:Fv27","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Which entity entered the room 4?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "enter", ["$ctxt","past","?:Fv31","?:Fv15","?:Fv16"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","past","?:Fv33","?:Fv15","?:Fv16"]],
+            ["-has destination", "?:E", "#:room 4", "at", ["$ctxt","past","?:Fv35","?:Fv15","?:Fv16"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which entity entered the room 4?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@nl": "Which entity entered the room 4?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","price","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "price", ["$measure_of","price","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "female", "$some_female_person", ["$ctxt","?:Fv68","?:Fv65","?:Fv66","?:Fv67"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","person","$some_female_person"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv73", ["$ctxt","past","?:Fv39","?:Fv40","?:Fv41"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv74", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv75", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv45","?:Fv46","?:Fv47"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv48","?:Fv49","?:Fv50"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv76", ["$ctxt","past","?:Fv51","?:Fv52","?:Fv53"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv77", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv78", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv54","?:Fv55","?:Fv56"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "pop_what",
+ "@logic": ["isa","two dollar","$some_two_dollars"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","two dollar","$some_two_dollar"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","mouse","$some_mouse"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","surgeon","$some_surgeon"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","room","$some_room"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","car","$some_car"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","measure","$some_measure"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","#:Smith 3"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S7","assumption",1], [["-has destination", "?:X", "#:room 4", "at", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has type", "?:X", "enter", ["$ctxt","past","?:V","?:Z","?:U"]], ["-has actor", "?:X", "?:W", ["$ctxt","past","?:2006","?:Z","?:U"]], ["-isa","activity","?:X"], ["$defq0","?:W"]]],
+          [2, ["in","sent_S4","assumption",1], [["isa","activity","sk0_activity"]]],
+          [3, ["mp", [1,3], 2, "fromassumption", 1], [["-has destination", "sk0_activity", "#:room 4", "at", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has type", "sk0_activity", "enter", ["$ctxt","past","?:U","?:Y","?:Z"]], ["-has actor", "sk0_activity", "?:V", ["$ctxt","past","?:W","?:Y","?:Z"]], ["$defq0","?:V"]]],
+          [4, ["in","sent_S4","assumption",1], [["has destination", "sk0_activity", "#:room 4", "at", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [5, ["mp",3,4,"fromassumption",1], [["-has type", "sk0_activity", "enter", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has actor", "sk0_activity", "?:U", ["$ctxt","past","?:V","?:Y","?:Z"]], ["$defq0","?:U"]]],
+          [6, ["in","sent_S4","assumption",1], [["has type", "sk0_activity", "enter", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [7, ["mp",5,6,"fromassumption",1], [["-has actor", "sk0_activity", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["$defq0","?:X"]]],
+          [8, ["in","sent_S4","assumption",1], [["has actor", "sk0_activity", "#:Smith 3", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [9, ["mp",7,8,"fromassumption",1], [["$defq0","#:Smith 3"]]],
+          [10, ["in","sent_S7","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [11, ["mp",9,10,"fromga",1], [["$ans","#:Smith 3"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Smith, entered the room.",
+"  (2) Who entered the room?",
+"Proof steps:",
+"  (1) If the room D is a destination of X and X is a enter event and some W performs X and X is an activity then W is the answer  [sentence 2]",
+"  (2) The event act1 is an activity  [sentence 1]",
+"  (3) If the room D is the destination of the event act1 and the act1 is a enter event and some V performs the act1 then V is the answer  [from steps 1, 2]",
+"  (4) The room D is the destination of the event act1  [sentence 1]",
+"  (5) If the event act1 is a enter event and some U performs the act1 then U is the answer  [from steps 3, 4]",
+"  (6) The event act1 is a enter event  [sentence 1]",
+"  (7) If some X performs the event act1 then X is the answer  [from steps 5, 6]",
+"  (8) Smith performs the event act1  [sentence 1]",
+"  (9) Smith is the answer  [from steps 7, 8]",
+"  (10) technical answer unwrap step  [from question]",
+"  (11) Smith is an answer  [from steps 9, 10]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28355,
+      "cached_input_tokens": 28288,
+      "output_tokens": 951,
+      "raw": {
+        "input_tokens": 28355,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 951,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29306
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34163,
+      "cached_input_tokens": 33280,
+      "output_tokens": 575,
+      "raw": {
+        "input_tokens": 34163,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 575,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34738
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:06:52Z"
+}

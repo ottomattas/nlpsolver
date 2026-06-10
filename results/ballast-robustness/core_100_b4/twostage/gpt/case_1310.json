@@ -1,0 +1,714 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1310,
+  "input_text": "Sandra travelled to the kitchen. Elephants have trunks or tails. Sandra travelled to the hallway. John smokes with a probability 0.1. Mary went to the bathroom. A surgeon, Dr. Sandra moved to the garden. \"Riga is not in America. Where is Sandra?",
+  "expected_answer": ["garden","In the garden.","At the garden."],
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "At the garden.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Sandra travelled to the kitchen.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Sandra 1 travelled to the kitchen 2.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 1", "type": "concrete", "category": "person"},
+            {"id": "kitchen 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "travel",
+              "mode": "event",
+              "roles": {"actor": "Sandra 1", "destination": "kitchen 2"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have trunks or tails.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Elephants have trunks or tails.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"},
+            {"id": "tails", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Sandra travelled to the hallway.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Sandra 1 travelled to the hallway 3.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 1", "type": "concrete", "category": "person"},
+            {"id": "hallway 3", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "travel",
+              "mode": "event",
+              "roles": {"actor": "Sandra 1", "destination": "hallway 3"}
+            }
+          ],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John smokes with a probability 0.1.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "John 2 smokes.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 2"}}],
+          "confidence": 0.1
+        }
+      ]
+    },
+    {
+      "raw": "Mary went to the bathroom.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Mary 3 went to the bathroom 4.",
+          "type": "situation",
+          "entities": [{"id": "Mary 3", "type": "concrete", "category": "person"},
+            {"id": "bathroom 4", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "go",
+              "mode": "event",
+              "roles": {"actor": "Mary 3", "destination": "bathroom 4"}
+            }
+          ],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A surgeon, Dr. Sandra moved to the garden.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Sandra 1 moved to the garden 5.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 1", "type": "concrete", "category": "person"},
+            {"id": "surgeon", "type": "generic", "category": "person"},
+            {"id": "garden 5", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "move",
+              "mode": "event",
+              "roles": {"actor": "Sandra 1", "destination": "garden 5"}
+            }
+          ],
+          "pre_state": "W3",
+          "next_state": "W4",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "\"Riga is not in America.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Riga 6 is not in America 7.",
+          "type": "real",
+          "entities": [{
+              "id": "Riga 6",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Riga"
+            },
+            {"id": "America 7", "type": "concrete", "category": "place"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Where is Sandra?",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Which entity is Sandra 1 located in?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "Sandra 1", "type": "concrete", "category": "person"}
+          ],
+          "pre_state": "W4"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Sandra 1"],
+            ["isa","kitchen","kitchen 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","travel"],
+                ["has actor","E","Sandra 1"],
+                ["has destination","E","kitchen 2","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally",
+                ["or",
+                  ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]],
+                  ["exists", "Z", ["and", ["isa","tail","Z"], ["has part","X","Z"]]]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Sandra 1"],
+            ["isa","hallway","hallway 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","travel"],
+                ["has actor","E","Sandra 1"],
+                ["has destination","E","hallway 3","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 2"],
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","smoke"],
+                  ["has actor","E","John 2"],
+                  ["typical","E"]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S4",0.1]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","Mary 3"],
+            ["isa","bathroom","bathroom 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","go"],
+                ["has actor","E","Mary 3"],
+                ["has destination","E","bathroom 4","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W3",
+          ["and",
+            ["isa","person","Sandra 1"],
+            ["isa","surgeon","Sandra 1"],
+            ["isa","garden","garden 5"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","move"],
+                ["has actor","E","Sandra 1"],
+                ["has destination","E","garden 5","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W3","W4"]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","place","https://en.wikipedia.org/wiki/Riga"],
+          ["isa","place","America 7"],
+          ["not", ["is rel2","in","https://en.wikipedia.org/wiki/Riga","America 7"]]
+        ]
+      ]
+    ],
+    ["@id", "S8", ["ask", "X", ["is rel2","located in","Sandra 1","X"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "John 2 smokes."},
+{"@name": "entity_S7",
+ "@logic": ["isa","place","#:Riga 6"],
+ "@nl": "Riga 6 is not in America 7."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Sandra 1"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","kitchen","#:kitchen 2"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Sandra 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["has destination", "sk0_activity", "#:kitchen 2", "at", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"],
+            ["isa", "trunk", ["sk1","?:X"]],
+            ["isa", "tail", ["sk2","?:X"]]
+           ],
+ "@nl": "Elephants have trunks or tails."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"],
+            ["isa", "trunk", ["sk1","?:X"]],
+            ["has part", "?:X", ["sk2","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk2","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]]]
+           ],
+ "@confidence": 0.9933,
+ "@nl": "Elephants have trunks or tails."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"],
+            ["isa", "tail", ["sk2","?:X"]],
+            ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]]]
+           ],
+ "@confidence": 0.9933,
+ "@nl": "Elephants have trunks or tails."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["has part", "?:X", ["sk2","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk2","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]]]
+           ],
+ "@confidence": 0.9933,
+ "@nl": "Elephants have trunks or tails."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Sandra 1"],
+ "@nl": "Sandra 1 travelled to the hallway 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","hallway","#:hallway 3"],
+ "@nl": "Sandra 1 travelled to the hallway 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Sandra 1 travelled to the hallway 3."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk3_activity", "go", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "Sandra 1 travelled to the hallway 3."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk3_activity", "#:Sandra 1", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "Sandra 1 travelled to the hallway 3."},
+{"@name": "sent_S3",
+ "@logic": ["has destination", "sk3_activity", "#:hallway 3", "at", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "Sandra 1 travelled to the hallway 3."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "Sandra 1 travelled to the hallway 3."},
+{"@name": "sent_S3",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Sandra 1 travelled to the hallway 3."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","person","#:John 2"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "smoke", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-has actor", "?:E", "#:John 2", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","person",1], ["$not", ["or", ["-isa","activity","?:E"], ["-has type", "?:E", "smoke", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]], ["-has actor", "?:E", "#:John 2", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]], ["-typical", "?:E", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]]]
+           ],
+ "@confidence": 0.8,
+ "@nl": "John 2 smokes."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mary 3"],
+ "@nl": "Mary 3 went to the bathroom 4."},
+{"@name": "sent_S5",
+ "@logic": ["isa","bathroom","#:bathroom 4"],
+ "@nl": "Mary 3 went to the bathroom 4."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Mary 3 went to the bathroom 4."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk4_activity", "go", ["$ctxt","past","W2","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 3 went to the bathroom 4."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk4_activity", "#:Mary 3", ["$ctxt","past","W2","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 3 went to the bathroom 4."},
+{"@name": "sent_S5",
+ "@logic": ["has destination", "sk4_activity", "#:bathroom 4", "at", ["$ctxt","past","W2","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 3 went to the bathroom 4."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W2","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 3 went to the bathroom 4."},
+{"@name": "sent_S5",
+ "@logic": ["next","W2","W3"],
+ "@nl": "Mary 3 went to the bathroom 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Sandra 1"],
+ "@nl": "Sandra 1 moved to the garden 5."},
+{"@name": "sent_S6",
+ "@logic": ["isa","surgeon","#:Sandra 1"],
+ "@nl": "Sandra 1 moved to the garden 5."},
+{"@name": "sent_S6",
+ "@logic": ["isa","garden","#:garden 5"],
+ "@nl": "Sandra 1 moved to the garden 5."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "Sandra 1 moved to the garden 5."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk5_activity", "go", ["$ctxt","past","W3","?:Fv15","?:Fv16"]],
+ "@nl": "Sandra 1 moved to the garden 5."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk5_activity", "#:Sandra 1", ["$ctxt","past","W3","?:Fv15","?:Fv16"]],
+ "@nl": "Sandra 1 moved to the garden 5."},
+{"@name": "sent_S6",
+ "@logic": ["has destination", "sk5_activity", "#:garden 5", "at", ["$ctxt","past","W3","?:Fv15","?:Fv16"]],
+ "@nl": "Sandra 1 moved to the garden 5."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W3","?:Fv15","?:Fv16"]],
+ "@nl": "Sandra 1 moved to the garden 5."},
+{"@name": "sent_S6",
+ "@logic": ["next","W3","W4"],
+ "@nl": "Sandra 1 moved to the garden 5."},
+{"@name": "sent_S7",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/Riga"],
+ "@nl": "Riga 6 is not in America 7."},
+{"@name": "sent_S7",
+ "@logic": ["isa","place","#:America 7"],
+ "@nl": "Riga 6 is not in America 7."},
+{"@name": "sent_S7",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Riga", "#:America 7", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Riga 6 is not in America 7."},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "in", "#:Sandra 1", "?:Q1", ["$ctxt","present","W4","?:Fv19","?:Fv20"]],
+            ["$defq0","in","?:Q1"]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","in","?:Q1"],
+            ["is rel2", "in", "#:Sandra 1", "?:Q1", ["$ctxt","present","W4","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "on", "#:Sandra 1", "?:Q1", ["$ctxt","present","W4","?:Fv19","?:Fv20"]],
+            ["$defq0","on","?:Q1"]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","on","?:Q1"],
+            ["is rel2", "on", "#:Sandra 1", "?:Q1", ["$ctxt","present","W4","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "at", "#:Sandra 1", "?:Q1", ["$ctxt","present","W4","?:Fv19","?:Fv20"]],
+            ["$defq0","at","?:Q1"]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","at","?:Q1"],
+            ["is rel2", "at", "#:Sandra 1", "?:Q1", ["$ctxt","present","W4","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-has degree rel2", "near", "#:Sandra 1", "?:Q1", "none", "?:Fv60", ["$ctxt","present","W4","?:Fv19","?:Fv20"]],
+            ["$defq0","near","?:Q1"]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","near","?:Q1"],
+            ["has degree rel2", "near", "#:Sandra 1", "?:Q1", "none", "?:Fv61", ["$ctxt","present","W4","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "above", "#:Sandra 1", "?:Q1", ["$ctxt","present","W4","?:Fv19","?:Fv20"]],
+            ["$defq0","above","?:Q1"]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","above","?:Q1"],
+            ["is rel2", "above", "#:Sandra 1", "?:Q1", ["$ctxt","present","W4","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "under", "#:Sandra 1", "?:Q1", ["$ctxt","present","W4","?:Fv19","?:Fv20"]],
+            ["$defq0","under","?:Q1"]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","under","?:Q1"],
+            ["is rel2", "under", "#:Sandra 1", "?:Q1", ["$ctxt","present","W4","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@question": ["$defq0","?:Rel","?:Q1"],
+ "@askvars": 2,
+ "@where_query": true,
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "on", "#:Sandra 1", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "on", "#:Sandra 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "on", "#:Sandra 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "at", "#:Sandra 1", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "at", "#:Sandra 1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "at", "#:Sandra 1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-has degree rel2", "near", "#:Sandra 1", "?:Br3", "none", "?:Fv57", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree rel2", "near", "#:Sandra 1", "?:Br3", "none", "?:Fv58", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree rel2", "near", "#:Sandra 1", "?:Br3", "none", "?:Fv59", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "#:Sandra 1", "?:Br4", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "in", "#:Sandra 1", "?:Br4", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "#:Sandra 1", "?:Br4", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "above", "#:Sandra 1", "?:Br5", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "above", "#:Sandra 1", "?:Br5", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "above", "#:Sandra 1", "?:Br5", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "under", "#:Sandra 1", "?:Br6", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "under", "#:Sandra 1", "?:Br6", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "under", "#:Sandra 1", "?:Br6", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","tail","$some_tail"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","tail","$some_not_tail"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv22"], ["has type","?:E","go","?:Fv22"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "pop_what",
+ "@logic": ["isa","bathroom","$some_bathroom"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","surgeon","$some_surgeon"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","kitchen","$some_kitchen"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","place","$some_place"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","garden","$some_garden"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","hallway","$some_hallway"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W3","W4"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","at","#:garden 5"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","frm_37","axiom",1], [["is rel2", "at", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]], ["-has destination", "?:W", "?:Y", "?:2006", ["$ctxt","?:2007","?:2008","?:U","?:V"]], ["-has type", "?:W", "go", ["$ctxt","?:2007","?:2008","?:U","?:V"]], ["-has actor", "?:W", "?:X", ["$ctxt","?:2007","?:2008","?:U","?:V"]], ["-next","?:2008","?:Z"]]],
+          [2, ["in","sent_S8","assumption",1], [["-is rel2", "at", "#:Sandra 1", "?:X", ["$ctxt","present","W4","?:Y","?:Z"]], ["$defq0","at","?:X"]]],
+          [3, ["in","sent_S8","goal",1], [["-$defq0","?:X","?:Y"], ["$ans","?:X","?:Y"]]],
+          [4, ["mp", [2,1], 3, "fromga", 1], [["-is rel2", "at", "#:Sandra 1", "?:X", ["$ctxt","present","W4","?:Y","?:Z"]], ["$ans","at","?:X"]]],
+          [5, ["mp",1,4,"fromga",1], [["-has destination", "?:X", "?:Y", "?:Z", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["-has type", "?:X", "go", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["-has actor", "?:X", "#:Sandra 1", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["$ans","at","?:Y"], ["-next","?:V","W4"]]],
+          [6, ["in","frm_world_geom","assumption",1], [["next","W3","W4"]]],
+          [7, ["mp", [5,4], 6, "fromga", 1], [["-has destination", "?:X", "?:Y", "?:Z", ["$ctxt","?:U","W3","?:V","?:W"]], ["-has type", "?:X", "go", ["$ctxt","?:U","W3","?:V","?:W"]], ["-has actor", "?:X", "#:Sandra 1", ["$ctxt","?:U","W3","?:V","?:W"]], ["$ans","at","?:Y"]]],
+          [8, ["in","sent_S6","assumption",1], [["has type", "sk5_activity", "go", ["$ctxt","past","W3","?:X","?:Y"]]]],
+          [9, ["mp", [7,1], 8, "fromga", 1], [["-has destination", "sk5_activity", "?:X", "?:Y", ["$ctxt","past","W3","?:Z","?:U"]], ["-has actor", "sk5_activity", "#:Sandra 1", ["$ctxt","past","W3","?:Z","?:U"]], ["$ans","at","?:X"]]],
+          [10, ["in","sent_S6","assumption",1], [["has actor", "sk5_activity", "#:Sandra 1", ["$ctxt","past","W3","?:X","?:Y"]]]],
+          [11, ["mp", [9,1], 10, "fromga", 1], [["-has destination", "sk5_activity", "?:X", "?:Y", ["$ctxt","past","W3","?:Z","?:U"]], ["$ans","at","?:X"]]],
+          [12, ["in","sent_S6","assumption",1], [["has destination", "sk5_activity", "#:garden 5", "at", ["$ctxt","past","W3","?:X","?:Y"]]]],
+          [13, ["mp",11,12,"fromga",1], [["$ans","at","#:garden 5"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) A surgeon, Dr. Sandra moved to the garden.",
+"  (2) Where is Sandra?",
+"Knowledge used:",
+"  If some Y is a destination of W and W is a go event and some X performs W and a situation E3 is followed by a situation Z then X is at Y. Why: assumed basic knowledge.",
+"  The situation W3 is followed by the situation W4. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If some Y is a destination of W and W is a go event and some X performs W and a situation E3 is followed by a situation Z then X is at Y  [background knowledge]",
+"  (2) If the Dr Sandra is at some X then 'at X' is the answer  [sentence 2]",
+"  (3) technical answer unwrap step  [from question]",
+"  (4) If the Dr Sandra is at some X then at is an answer  [from steps 2, 3]",
+"  (5) If some Y is a destination of X and X is a go event and the Dr Sandra performs X and a situation V is followed by the situation W4 then at is an answer  [from steps 1, 4]",
+"  (6) The situation W3 is followed by the situation W4  [background knowledge]",
+"  (7) If some Y is a destination of X and X is a go event and the Dr Sandra performs X then at is an answer  [from steps 5, 6]",
+"  (8) The event act4 is a go event  [sentence 1]",
+"  (9) If some X is the destination of the event act4 and the Dr Sandra performs the act4 then at is an answer  [from steps 7, 8]",
+"  (10) The Dr Sandra performs the event act4  [sentence 1]",
+"  (11) If some X is the destination of the event act4 then at is an answer  [from steps 9, 10]",
+"  (12) The garden F is the destination of the event act4  [sentence 1]",
+"  (13) 'At the garden F' is an answer  [from steps 11, 12]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28372,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1262,
+      "raw": {
+        "input_tokens": 28372,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1262,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29634
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34424,
+      "cached_input_tokens": 33280,
+      "output_tokens": 898,
+      "raw": {
+        "input_tokens": 34424,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 898,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35322
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:14:00Z"
+}

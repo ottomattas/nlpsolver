@@ -1,0 +1,369 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1011,
+  "input_text": "A not very big bear is nice. John is defeated. The cake was eaten by the child. Mr Dursley is a catholic. A leg of Mary is clean. John is not defeated?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "A not very big bear is nice.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "A not very big bear 1 is nice.",
+          "type": "situation",
+          "entities": [{"id": "bear 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","high","bear"], ["nice","none","bear"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is defeated.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 is defeated.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["defeated","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "The cake was eaten by the child.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The child 2 ate the cake 3.",
+          "type": "situation",
+          "entities": [{"id": "child 2", "type": "concrete", "category": "person"},
+            {"id": "cake 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "eat", "mode": "event", "roles": {"actor": "child 2", "target": "cake 3"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is a catholic.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mr Dursley 1 is a catholic.",
+          "type": "real",
+          "entities": [{"id": "Mr Dursley 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["catholic","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "A leg of Mary is clean.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "A leg 2 of Mary 1 is clean.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "leg 2", "type": "concrete", "text": "leg"}
+          ],
+          "adjectives": [["clean","none","leg"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is not defeated?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Is John 1 not defeated?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["defeated","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","bear","bear 1"],
+          ["not", ["has degree property","big","bear 1","high","bear"]],
+          ["has degree property","nice","bear 1","none","bear"]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["has degree property","defeated","John 1","none","person"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","child 2"],
+            ["isa","artifact","cake 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","eat"],
+                ["has actor","E","child 2"],
+                ["has target","E","cake 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","catholic","Mr Dursley 1"],
+          ["has degree property","catholic","Mr Dursley 1","none","person"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 1"],
+          ["isa","leg","leg 2"],
+          ["has part","Mary 1","leg 2"],
+          ["has degree property","clean","leg 2","none","leg"]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["question", ["not", ["has degree property","defeated","John 1","none","person"]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","child","#:child 2"],
+ "@nl": "The child 2 ate the cake 3."},
+{"@name": "entity_S3",
+ "@logic": ["isa","cake","#:cake 3"],
+ "@nl": "The child 2 ate the cake 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","bear","#:bear 1"],
+ "@nl": "A not very big bear 1 is nice."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "big", "#:bear 1", "none", "bear", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A not very big bear 1 is nice."},
+{"@name": "sent_S1",
+ "@logic": ["-has degree property", "big", "#:bear 1", "high", "bear", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A not very big bear 1 is nice."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "good", "#:bear 1", "none", "bear", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A not very big bear 1 is nice."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is defeated."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "defeated", "#:John 1", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 is defeated."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:child 2"],
+ "@nl": "The child 2 ate the cake 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","artifact","#:cake 3"],
+ "@nl": "The child 2 ate the cake 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The child 2 ate the cake 3."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "eat", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The child 2 ate the cake 3."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:child 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The child 2 ate the cake 3."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk0_activity", "#:cake 3", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The child 2 ate the cake 3."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The child 2 ate the cake 3."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The child 2 ate the cake 3."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The child 2 ate the cake 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","catholic","#:Mr Dursley 1"],
+ "@nl": "Mr Dursley 1 is a catholic."},
+{"@name": "sent_S4",
+ "@logic": ["has property", "catholic", "#:Mr Dursley 1", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mr Dursley 1 is a catholic."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "A leg 2 of Mary 1 is clean."},
+{"@name": "sent_S5",
+ "@logic": ["isa","leg","#:leg 2"],
+ "@nl": "A leg 2 of Mary 1 is clean."},
+{"@name": "sent_S5",
+ "@logic": ["has part", "#:Mary 1", "#:leg 2", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "A leg 2 of Mary 1 is clean."},
+{"@name": "sent_S5",
+ "@logic": ["has degree property", "clean", "#:leg 2", "none", "leg", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "A leg 2 of Mary 1 is clean."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Is John 1 not defeated?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:Fv11","?:Fv12"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 not defeated?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 not defeated?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "defeated", "#:John 1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "defeated", "#:John 1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "defeated", "#:John 1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 not defeated?"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv28", ["$ctxt","past","?:Fv14","?:Fv15","?:Fv16"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv29", ["$ctxt","present","?:Fv14","?:Fv15","?:Fv16"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv30", ["$ctxt","present","?:Fv14","?:Fv15","?:Fv16"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv17","?:Fv18","?:Fv19"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "blockers": [["$block", 0, ["$not", ["has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.996678,
+        "negative proof": [[1, ["in","frm_93","axiom",1], [["-has property", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]], ["has property", "?:X", "?:Y", ["$ctxt","past","?:W","?:U","?:V"]], ["-before","?:Z","?:W"]]],
+          [2, ["in","sent_S2","assumption",1], [["has property", "defeated", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp",1,2,"fromassumption",1], [["has property", "defeated", "#:John 1", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-before","W0","?:X"]]],
+          [4, ["in","frm_91","axiom",1], [["-next","?:X","?:Y"], ["before","?:X","?:Y"]]],
+          [5, ["in","sent_S3","assumption",1], [["next","W0","W1"]]],
+          [6, ["mp",4,5,"fromassumption",1], [["before","W0","W1"]]],
+          [7, ["mp", [3,1], 6, "fromassumption", 1], [["has property", "defeated", "#:John 1", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [8, ["in","sent_S6","assumption",0.99], [["$block", 0, ["$not", ["has property", "defeated", "#:John 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["-has property", "defeated", "#:John 1", ["$ctxt","past","?:X","?:Y","?:Z"]], ["has property", "defeated", "#:John 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [9, ["mp", 7, [8,1], "fromassumption", 0.99], [["$block", 0, ["$not", ["has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [10, ["in","sent_S6","assumption",1], [["-$defq0"], ["-has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [11, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [12, ["mp", [9,1], [10,1], 11, "fromga", 0.99], [["$block", 0, ["$not", ["has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [13, ["in","frm_56","axiom",0.99], [["$block", 0, ["$not", ["has property", "?:X", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]]]], ["-has property", "?:X", "?:Y", ["$ctxt","?:Z","?:2006","?:V","?:W"]], ["has property", "?:X", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-next","?:2006","?:U"]]],
+          [14, ["mp", [13,1], 2, "fromassumption", 0.99], [["$block", 0, ["$not", ["has property", "defeated", "#:John 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["has property", "defeated", "#:John 1", ["$ctxt","present","?:X","?:Y","?:Z"]], ["-next","W0","?:X"]]],
+          [15, ["mp", [14,2], 5, "fromassumption", 0.99], [["$block", 0, ["$not", ["has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [16, ["mp", [15,1], [10,1], 11, "fromga", 0.99], [["$block", 0, ["$not", ["has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [17, ["cumul",12,16,"fromga",0.99396], [["$block", 0, ["$not", ["has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [18, ["in","frm_world_geom","assumption",1], [["next","W0","W1"]]],
+          [19, ["mp", [14,2], 18, "fromassumption", 0.99], [["$block", 0, ["$not", ["has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [20, ["mp", [19,1], [10,1], 11, "fromga", 0.99], [["$block", 0, ["$not", ["has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [21, ["cumul",17,20,"fromga",0.996678], [["$block", 0, ["$not", ["has property", "defeated", "#:John 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 100%.",
+"Sentences used:",
+"  (1) John is defeated.",
+"  (2) The cake was eaten by the child.",
+"  (3) John is not defeated?",
+"Knowledge used:",
+"  If some Y is some X and a situation Z is earlier than a situation W then Y is X. Why: assumed basic knowledge.",
+"  If a situation X is followed by a situation Y then X is earlier than Y. Why: assumed basic knowledge.",
+"  If some Y is some X and a situation E1 is followed by a situation U then normally Y is X. Why: assumed basic knowledge.",
+"  The situation W0 is followed by the situation W1. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If some Y is some X and a situation Z is earlier than a situation W then Y is X  [background knowledge]",
+"  (2) John is defeated  [sentence 1]",
+"  (3) If the situation W0 is earlier than a situation X then John is defeated  [from steps 1, 2]",
+"  (4) If a situation X is followed by a situation Y then X is earlier than Y  [background knowledge]",
+"  (5) The situation W0 is followed by the situation W1  [sentence 2]",
+"  (6) The situation W0 is earlier than the situation W1  [from steps 4, 5]",
+"  (7) John is defeated  [from steps 3, 6]",
+"  (8) If John is defeated then normally John is defeated  [sentence 3, confidence 99%]",
+"  (9) Normally John is defeated  [from steps 7, 8, confidence 99%]",
+"  (10) If answer holds then John is not defeated  [sentence 3]",
+"  (11) Answer holds  [assumption]",
+"  (12) Outstanding exception: John is not defeated  [from steps 9, 10, 11, confidence 99%]",
+"  (13) If some Y is some X and a situation E1 is followed by a situation U then normally Y is X  [background knowledge, confidence 99%]",
+"  (14) If the situation W0 is followed by a situation X then normally John is defeated  [from steps 13, 2, confidence 99%]",
+"  (15) Normally John is defeated  [from steps 14, 5, confidence 99%]",
+"  (16) Outstanding exception: John is not defeated  [from steps 15, 10, 11, confidence 99%]",
+"  (17) Outstanding exception: John is not defeated  [from steps 12, 16, confidence 99%]",
+"  (18) The situation W0 is followed by the situation W1  [background knowledge]",
+"  (19) Normally John is defeated  [from steps 14, 18, confidence 99%]",
+"  (20) Outstanding exception: John is not defeated  [from steps 19, 10, 11, confidence 99%]",
+"  (21) Outstanding exception: John is not defeated  [from steps 17, 20, confidence 100%]",
+"Exceptions checked and not holding:",
+"  John is not defeated"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32088,
+      "cached_input_tokens": 32042,
+      "output_tokens": 828,
+      "raw": {
+        "input_tokens": 46,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 828,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39515,
+      "cached_input_tokens": 38891,
+      "output_tokens": 790,
+      "raw": {
+        "input_tokens": 624,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 790,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:04:27Z"
+}

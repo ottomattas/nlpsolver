@@ -1,0 +1,408 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1318,
+  "input_text": "A leg of Mary is clean. John Sweeney is a car. Tallinn is in Estonia. Elephants have a trunk with a probability 10 percent. John Smith is bad. Unexpectedly, the door opened. Who is John Sweeney?",
+  "expected_answer": "A car.",
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "A car.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "A leg of Mary is clean.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "A leg 1 of Mary 2 is clean.",
+          "type": "situation",
+          "entities": [{"id": "leg 1", "type": "concrete", "text": "leg"},
+            {"id": "Mary 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["clean","none","none"]],
+          "definites": [["leg of","leg 1","Mary 2"]]
+        },
+        {
+          "unit_id": "S2",
+          "text": "The leg 1 is a leg of Mary 2.",
+          "type": "situation",
+          "entities": [{"id": "leg 1", "type": "concrete", "text": "leg"},
+            {"id": "Mary 2", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John Sweeney is a car.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John Sweeney 3 is a car.",
+          "type": "situation",
+          "entities": [{"id": "John Sweeney 3", "type": "concrete", "category": "person"},
+            {"id": "car", "type": "generic", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is in Estonia.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Tallinn 4 is in Estonia 5.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 4",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Estonia 5",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have a trunk with a probability 10 percent.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Elephants have a trunk.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunk", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.1
+        }
+      ]
+    },
+    {
+      "raw": "John Smith is bad.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "John Smith 6 is bad.",
+          "type": "situation",
+          "entities": [{"id": "John Smith 6", "type": "concrete", "category": "person"}],
+          "adjectives": [["bad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Unexpectedly, the door opened.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "The door 7 opened unexpectedly.",
+          "type": "situation",
+          "entities": [{"id": "door 7", "type": "concrete", "category": "artifact"}],
+          "actions": [{
+              "root": "open",
+              "mode": "event",
+              "roles": {"target": "door 7", "manner": "unexpectedly"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Who is John Sweeney?",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Which entity is John Sweeney 3?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "John Sweeney 3", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","leg","leg 1"],
+            ["isa","person","Mary 2"],
+            ["has part","Mary 2","leg 1"],
+            ["has degree property","clean","leg 1","none","none"]
+          ]
+        ],
+        ["@definite","S1","W0","leg of","Mary 2","leg 1"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and", ["isa","leg","leg 1"], ["isa","person","Mary 2"], ["has part","Mary 2","leg 1"]]
+      ]
+    ],
+    ["@id", "S3", ["holds", "W0", ["isa","car","John Sweeney 3"]]],
+    ["@id","S4",
+      ["holds","W0",
+        ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Estonia"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S5",0.1]
+      ]
+    ],
+    ["@id", "S6", ["holds", "W0", ["has degree property","bad","John Smith 6","none","person"]]],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","door","door 7"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","open"],
+                ["has target","E","door 7"],
+                ["has manner","E","unexpectedly"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id", "S8", ["ask", "X", ["isa","X","John Sweeney 3"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:Tallinn 4"],
+ "@nl": "Tallinn 4 is in Estonia 5."},
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:Estonia 5"],
+ "@nl": "Tallinn 4 is in Estonia 5."},
+{"@name": "entity_S6",
+ "@logic": ["isa","person","#:John Smith 6"],
+ "@nl": "John Smith 6 is bad."},
+{"@name": "sent_S1",
+ "@logic": ["isa", "leg", ["$theof1", "leg", "#:Mary 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]]],
+ "@nl": "A leg 1 of Mary 2 is clean."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "A leg 1 of Mary 2 is clean."},
+{"@name": "sent_S1",
+ "@logic": ["has part", "#:Mary 2", ["$theof1", "leg", "#:Mary 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]], ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A leg 1 of Mary 2 is clean."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "clean", ["$theof1", "leg", "#:Mary 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]], "none", "?:Fv50", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A leg 1 of Mary 2 is clean."},
+{"@name": "sent_S2",
+ "@logic": ["isa", "leg", ["$theof1", "leg", "#:Mary 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]]],
+ "@nl": "The leg 1 is a leg of Mary 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "The leg 1 is a leg of Mary 2."},
+{"@name": "sent_S2",
+ "@logic": ["has part", "#:Mary 2", ["$theof1", "leg", "#:Mary 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]], ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The leg 1 is a leg of Mary 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","car","#:John Sweeney 3"],
+ "@nl": "John Sweeney 3 is a car."},
+{"@name": "sent_S4",
+ "@logic": ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Tallinn 4 is in Estonia 5."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-isa","trunk","?:Y"],
+            ["-has part", "?:X", "?:Y", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","elephant",1], ["has part", "?:X", "?:Y", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]
+           ],
+ "@confidence": 0.8,
+ "@nl": "Elephants have a trunk."},
+{"@name": "sent_S6",
+ "@logic": ["-has degree property", "good", "#:John Smith 6", "none", "person", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John Smith 6 is bad."},
+{"@name": "sent_S7",
+ "@logic": ["isa","door","#:door 7"],
+ "@nl": "The door 7 opened unexpectedly."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The door 7 opened unexpectedly."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk0_activity", "open", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The door 7 opened unexpectedly."},
+{"@name": "sent_S7",
+ "@logic": ["has target", "sk0_activity", "#:door 7", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The door 7 opened unexpectedly."},
+{"@name": "sent_S7",
+ "@logic": ["has manner", "sk0_activity", "unexpectedly", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The door 7 opened unexpectedly."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The door 7 opened unexpectedly."},
+{"@name": "sent_S7",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The door 7 opened unexpectedly."},
+{"@name": "sent_S7",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The door 7 opened unexpectedly."},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-isa","?:X","#:John Sweeney 3"], ["$defq0","?:X"]],
+ "@nl": "Which entity is John Sweeney 3?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa","?:X","#:John Sweeney 3"]],
+ "@nl": "Which entity is John Sweeney 3?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-=","?:X","#:John Sweeney 3"], ["$defq0","?:X"]],
+ "@nl": "Which entity is John Sweeney 3?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["=","?:X","#:John Sweeney 3"]],
+ "@nl": "Which entity is John Sweeney 3?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S8",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@who_entity": "John Sweeney 3",
+ "@who_kind": "who",
+ "@nl": "Which entity is John Sweeney 3?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:Mary 2", ["$theof1", "leg", "#:Mary 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]], ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "leg of", ["$theof1","leg","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "leg", ["$theof1","leg","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","open","?:X"], ["isa","outside","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","outside","?:X"], ["isa","open","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "pop_what",
+ "@logic": ["isa","car","$some_car"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","door","$some_door"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","place","$some_place"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","#:John Sweeney 3"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S8","assumption",1], [["-isa","?:X","#:John Sweeney 3"], ["$defq0","?:X"]]],
+          [2, ["in","sent_S3","assumption",1], [["isa","car","#:John Sweeney 3"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["$defq0","car"]]],
+          [4, ["in","sent_S8","assumption",1], [["=","?:X","#:John Sweeney 3"], ["-$defq0","?:X"]]],
+          [5, ["mp", 3, [4,1], "fromassumption", 1], [["=","car","#:John Sweeney 3"]]],
+          [6, ["=", 5, [3,0,1], "fromassumption", 1], [["$defq0","#:John Sweeney 3"]]],
+          [7, ["in","sent_S8","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [8, ["mp",6,7,"fromga",1], [["$ans","#:John Sweeney 3"]]]
+        ]
+      },
+      {
+        "answer": [["$ans","car"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S8","assumption",1], [["-isa","?:X","#:John Sweeney 3"], ["$defq0","?:X"]]],
+          [2, ["in","sent_S3","assumption",1], [["isa","car","#:John Sweeney 3"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["$defq0","car"]]],
+          [4, ["in","sent_S8","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [5, ["mp",3,4,"fromga",1], [["$ans","car"]]]
+        ]
+      }
+    ]
+  },
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28362,
+      "cached_input_tokens": 28288,
+      "output_tokens": 985,
+      "raw": {
+        "input_tokens": 28362,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 985,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29347
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34193,
+      "cached_input_tokens": 33280,
+      "output_tokens": 532,
+      "raw": {
+        "input_tokens": 34193,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 532,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34725
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:22:30Z"
+}

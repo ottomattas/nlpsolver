@@ -1,0 +1,543 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 663,
+  "input_text": "Mike is a boxer. John saw a blue head of a red elephant. The children playing in the garden laughed. Baby bears eat no berries. Gertrude is a cat. The children were in the garden?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Mike is a boxer.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mike 1 is a boxer.",
+          "type": "situation",
+          "entities": [{"id": "Mike 1", "type": "concrete", "category": "person"},
+            {"id": "boxer", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John saw a blue head of a red elephant.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 2 saw a blue head 3 of a red elephant 4.",
+          "type": "situation",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"},
+            {"id": "head 3", "type": "concrete", "text": "head"},
+            {"id": "elephant 4", "type": "concrete", "category": "animal"}
+          ],
+          "actions": [{"root": "see", "mode": "event", "roles": {"actor": "John 2", "target": "head 3"}}],
+          "adjectives": [["blue","none","head"], ["red","none","elephant"]],
+          "definites": [["head of","head 3","elephant 4"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "The head 3 is the head of the elephant 4.",
+          "type": "situation",
+          "entities": [{"id": "head 3", "type": "concrete", "text": "head"},
+            {"id": "elephant 4", "type": "concrete", "category": "animal"}
+          ],
+          "definites": [["head of","head 3","elephant 4"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The children playing in the garden laughed.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The children 5 were in the garden 6.",
+          "type": "situation",
+          "entities": [{"id": "children 5", "type": "concrete", "category": "person"},
+            {"id": "garden 6", "type": "concrete", "category": "place"}
+          ],
+          "time": "past"
+        },
+        {
+          "unit_id": "S5",
+          "text": "The children 5 played in the garden 6.",
+          "type": "situation",
+          "entities": [{"id": "children 5", "type": "concrete", "category": "person"},
+            {"id": "garden 6", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "play",
+              "mode": "event",
+              "roles": {"actor": "children 5", "location": "garden 6"}
+            }
+          ],
+          "time": "past"
+        },
+        {
+          "unit_id": "S6",
+          "text": "The children 5 laughed.",
+          "type": "situation",
+          "entities": [{"id": "children 5", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "laugh", "mode": "event", "roles": {"actor": "children 5"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Baby bears eat no berries.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Baby bears eat no berries.",
+          "type": "normal_rule",
+          "entities": [{"id": "baby bears", "type": "generic", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "kind", "category": "plant"}
+          ],
+          "actions": [{
+              "root": "eat",
+              "mode": "habitual",
+              "roles": {"actor": "baby bears", "target": "berries"}
+            }
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Gertrude is a cat.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Gertrude 7 is a cat.",
+          "type": "situation",
+          "entities": [{"id": "Gertrude 7", "type": "concrete", "category": "animal"},
+            {"id": "cat", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The children were in the garden?",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Were the children 5 in the garden 6?",
+          "type": "query",
+          "entities": [{"id": "children 5", "type": "concrete", "category": "person"},
+            {"id": "garden 6", "type": "concrete", "category": "place"}
+          ],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["and", ["isa","person","Mike 1"], ["isa","boxer","Mike 1"]]]],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 2"],
+            ["isa","head","head 3"],
+            ["isa","elephant","elephant 4"],
+            ["has part","elephant 4","head 3"],
+            ["has degree property","blue","head 3","none","head"],
+            ["has degree property","red","elephant 4","none","elephant"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","see"],
+                ["has actor","E","John 2"],
+                ["has target","E","head 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S2","W0","head of","elephant 4","head 3"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","head","head 3"],
+            ["isa","elephant","elephant 4"],
+            ["has part","elephant 4","head 3"]
+          ]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S3","W0","head of","elephant 4","head 3"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","child","children 5"],
+            ["isa","garden","garden 6"],
+            ["is rel2","in","children 5","garden 6"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","child","children 5"],
+            ["isa","garden","garden 6"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","play"],
+                ["has actor","E","children 5"],
+                ["has location","E","garden 6","in"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","child","children 5"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","laugh"],
+                ["has actor","E","children 5"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","baby bear","X"],
+              ["normally",
+                ["not",
+                  ["exists","E",
+                    ["and",
+                      ["isa","activity","E"],
+                      ["has type","E","eat"],
+                      ["has actor","E","X"],
+                      ["has target","E","berries"],
+                      ["typical","E"]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S7",0.99]
+      ]
+    ],
+    ["@id", "S8", ["holds", "W0", ["and", ["isa","cat","Gertrude 7"]]]],
+    ["@id","S9",
+      ["question",
+        ["and",
+          ["isa","child","children 5"],
+          ["isa","garden","garden 6"],
+          ["@time", "past", ["is rel2","in","children 5","garden 6"]]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","children","#:children 5"],
+ "@nl": "The children 5 were in the garden 6."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mike 1"],
+ "@nl": "Mike 1 is a boxer."},
+{"@name": "sent_S1",
+ "@logic": ["isa","boxer","#:Mike 1"],
+ "@nl": "Mike 1 is a boxer."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "John 2 saw a blue head 3 of a red elephant 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa", "head", ["$theof1", "head", "#:elephant 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]]],
+ "@nl": "John 2 saw a blue head 3 of a red elephant 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","elephant","#:elephant 4"],
+ "@nl": "John 2 saw a blue head 3 of a red elephant 4."},
+{"@name": "sent_S2",
+ "@logic": ["has part", "#:elephant 4", ["$theof1", "head", "#:elephant 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 saw a blue head 3 of a red elephant 4."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "blue", ["$theof1", "head", "#:elephant 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 saw a blue head 3 of a red elephant 4."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "red", "#:elephant 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 saw a blue head 3 of a red elephant 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 2 saw a blue head 3 of a red elephant 4."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "show", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 saw a blue head 3 of a red elephant 4."},
+{"@name": "sent_S2",
+ "@logic": ["has recipient", "sk0_activity", "#:John 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 saw a blue head 3 of a red elephant 4."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", ["$theof1", "head", "#:elephant 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 saw a blue head 3 of a red elephant 4."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 saw a blue head 3 of a red elephant 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa", "head", ["$theof1", "head", "#:elephant 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]]],
+ "@nl": "The head 3 is the head of the elephant 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","elephant","#:elephant 4"],
+ "@nl": "The head 3 is the head of the elephant 4."},
+{"@name": "sent_S3",
+ "@logic": ["has part", "#:elephant 4", ["$theof1", "head", "#:elephant 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The head 3 is the head of the elephant 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","child","#:children 5"],
+ "@nl": "The children 5 were in the garden 6."},
+{"@name": "sent_S4",
+ "@logic": ["isa","garden","#:garden 6"],
+ "@nl": "The children 5 were in the garden 6."},
+{"@name": "sent_S4",
+ "@logic": ["is rel2", "in", "#:children 5", "#:garden 6", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The children 5 were in the garden 6."},
+{"@name": "sent_S5",
+ "@logic": ["isa","child","#:children 5"],
+ "@nl": "The children 5 played in the garden 6."},
+{"@name": "sent_S5",
+ "@logic": ["isa","garden","#:garden 6"],
+ "@nl": "The children 5 played in the garden 6."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The children 5 played in the garden 6."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk1_activity", "play", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The children 5 played in the garden 6."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk1_activity", "#:children 5", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The children 5 played in the garden 6."},
+{"@name": "sent_S5",
+ "@logic": ["has location", "sk1_activity", "#:garden 6", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The children 5 played in the garden 6."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The children 5 played in the garden 6."},
+{"@name": "sent_S6",
+ "@logic": ["isa","child","#:children 5"],
+ "@nl": "The children 5 laughed."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The children 5 laughed."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk2_activity", "laugh", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The children 5 laughed."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk2_activity", "#:children 5", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The children 5 laughed."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The children 5 laughed."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","baby bear","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "eat", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["-isa","berry","?:Gobj0"],
+            ["-has target", "?:E", "?:Gobj0", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["$block", ["$","baby bear",4], ["typical", "?:E", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Baby bears eat no berries."},
+{"@name": "sent_S8",
+ "@logic": ["isa","cat","#:Gertrude 7"],
+ "@nl": "Gertrude 7 is a cat."},
+{"@name": "sent_S9",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","child","#:children 5"]],
+ "@nl": "Were the children 5 in the garden 6?"},
+{"@name": "sent_S9",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","garden","#:garden 6"]],
+ "@nl": "Were the children 5 in the garden 6?"},
+{"@name": "sent_S9",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "in", "#:children 5", "#:garden 6", ["$ctxt","past","?:Fv21","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Were the children 5 in the garden 6?"},
+{"@name": "sent_S9",
+ "@sourcetype": "question",
+ "@logic": [["-isa","child","#:children 5"],
+            ["-isa","garden","#:garden 6"],
+            ["-is rel2", "in", "#:children 5", "#:garden 6", ["$ctxt","past","?:Fv21","?:Fv19","?:Fv20"]],
+            ["$defq0"]
+           ],
+ "@nl": "Were the children 5 in the garden 6?"},
+{"@name": "sent_S9",
+ "@question": ["$defq0"],
+ "@nl": "Were the children 5 in the garden 6?"},
+{"@name": "sent_S9",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "#:children 5", "#:garden 6", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["is rel2", "in", "#:children 5", "#:garden 6", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "#:children 5", "#:garden 6", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Were the children 5 in the garden 6?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:elephant 4", ["$theof1", "head", "#:elephant 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:elephant 4", ["$theof1", "head", "#:elephant 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "head of", ["$theof1","head","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "head", ["$theof1","head","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","baby bear","$some_baby_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","baby bear","$some_not_baby_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","baby bear","?:X"], ["isa","bear","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","baby","?:X"], ["-isa","bear","?:X"], ["isa","baby bear","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv31"],
+            ["-has property","red","?:X","?:Fv31"],
+            ["$block", 0, ["has property","red","?:X","?:Fv31"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv32"],
+            ["-has property","red","?:X","?:Fv32"],
+            ["$block", 0, ["has property","blue","?:X","?:Fv32"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv33","?:Fv34","?:Fv35"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv36","?:Fv37","?:Fv38"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv39","?:Fv40","?:Fv41"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S9","assumption",1], [["-isa","child","#:children 5"], ["-isa","garden","#:garden 6"], ["$defq0"], ["-is rel2", "in", "#:children 5", "#:garden 6", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [2, ["in","sent_S4","assumption",1], [["is rel2", "in", "#:children 5", "#:garden 6", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S9","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,3], 2, 3, "fromga", 1], [["-isa","child","#:children 5"], ["-isa","garden","#:garden 6"]]],
+          [5, ["in","sent_S5","assumption",1], [["isa","child","#:children 5"]]],
+          [6, ["mp",4,5,"fromga",1], [["-isa","garden","#:garden 6"]]],
+          [7, ["in","sent_S5","assumption",1], [["isa","garden","#:garden 6"]]],
+          [8, ["simp",6,7,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) The children playing in the garden laughed.",
+"  (2) The children were in the garden?",
+"Proof steps (by contradiction):",
+"  (1) If the children F is a child and the children F is in the garden G then answer holds  [sentence 2]",
+"  (2) The children F is in the garden G  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) The children F is not a child  [from steps 1, 2, 3]",
+"  (5) The children F is a child  [sentence 1]",
+"  (6) The garden G is not a garden  [from steps 4, 5]",
+"  (7) The garden G is a garden  [sentence 1]",
+"  (8) Contradiction  [from steps 6, 7]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28356,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1226,
+      "raw": {
+        "input_tokens": 28356,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1226,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29582
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34406,
+      "cached_input_tokens": 33280,
+      "output_tokens": 911,
+      "raw": {
+        "input_tokens": 34406,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 911,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35317
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:00:51Z"
+}

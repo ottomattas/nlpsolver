@@ -1,0 +1,333 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1011,
+  "input_text": "A not very big bear is nice. John is defeated. The cake was eaten by the child. Mr Dursley is a catholic. A leg of Mary is clean. John is not defeated?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "A not very big bear is nice.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "A not very big bear 1 is nice.",
+          "type": "situation",
+          "entities": [{"id": "bear 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","high","bear"], ["nice","none","entity"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is defeated.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 2 is defeated.",
+          "type": "situation",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"}],
+          "adjectives": [["defeated","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "The cake was eaten by the child.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The child 3 ate the cake 4.",
+          "type": "situation",
+          "entities": [{"id": "child 3", "type": "concrete", "category": "person"},
+            {"id": "cake 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "eat", "mode": "event", "roles": {"actor": "child 3", "target": "cake 4"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is a catholic.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mr Dursley 5 is a catholic.",
+          "type": "situation",
+          "entities": [{"id": "Mr Dursley 5", "type": "concrete", "category": "person"},
+            {"id": "catholic", "type": "generic"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "A leg of Mary is clean.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "A leg 6 of Mary 7 is clean.",
+          "type": "situation",
+          "entities": [{"id": "leg 6", "type": "concrete", "text": "leg"},
+            {"id": "Mary 7", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["clean","none","leg"]]
+        },
+        {
+          "unit_id": "S6",
+          "text": "Leg 6 is a leg of Mary 7.",
+          "type": "situation",
+          "entities": [{"id": "leg 6", "type": "concrete", "text": "leg"},
+            {"id": "Mary 7", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is not defeated?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Is John 2 not defeated?",
+          "type": "query",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"}],
+          "adjectives": [["defeated","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","bear","bear 1"],
+          ["not", ["has degree property","big","bear 1","high","bear"]],
+          ["has degree property","nice","bear 1","none","entity"]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 2"],
+          ["has degree property","defeated","John 2","none","person"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","child 3"],
+          ["isa","cake","cake 4"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","eat"],
+              ["has actor","E","child 3"],
+              ["has target","E","cake 4"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds", "W0", ["and", ["isa","person","Mr Dursley 5"], ["isa","catholic","Mr Dursley 5"]]]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","leg","leg 6"],
+          ["isa","person","Mary 7"],
+          ["has part","Mary 7","leg 6"],
+          ["has degree property","clean","leg 6","none","leg"]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and", ["isa","leg","leg 6"], ["isa","person","Mary 7"], ["has part","Mary 7","leg 6"]]
+      ]
+    ],
+    ["@id","S7",
+      ["question",
+        ["and",
+          ["isa","person","John 2"],
+          ["not", ["has degree property","defeated","John 2","none","person"]]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","child","#:child 3"],
+ "@nl": "The child 3 ate the cake 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","bear","#:bear 1"],
+ "@nl": "A not very big bear 1 is nice."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "big", "#:bear 1", "none", "bear", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A not very big bear 1 is nice."},
+{"@name": "sent_S1",
+ "@logic": ["-has degree property", "big", "#:bear 1", "high", "bear", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A not very big bear 1 is nice."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "good", "#:bear 1", "none", "?:Fv35", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A not very big bear 1 is nice."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "John 2 is defeated."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "defeated", "#:John 2", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 is defeated."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:child 3"],
+ "@nl": "The child 3 ate the cake 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","cake","#:cake 4"],
+ "@nl": "The child 3 ate the cake 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The child 3 ate the cake 4."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "eat", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The child 3 ate the cake 4."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:child 3", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The child 3 ate the cake 4."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk0_activity", "#:cake 4", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The child 3 ate the cake 4."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The child 3 ate the cake 4."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The child 3 ate the cake 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mr Dursley 5"],
+ "@nl": "Mr Dursley 5 is a catholic."},
+{"@name": "sent_S4",
+ "@logic": ["isa","catholic","#:Mr Dursley 5"],
+ "@nl": "Mr Dursley 5 is a catholic."},
+{"@name": "sent_S5",
+ "@logic": ["isa","leg","#:leg 6"],
+ "@nl": "A leg 6 of Mary 7 is clean."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mary 7"],
+ "@nl": "A leg 6 of Mary 7 is clean."},
+{"@name": "sent_S5",
+ "@logic": ["has part", "#:Mary 7", "#:leg 6", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "A leg 6 of Mary 7 is clean."},
+{"@name": "sent_S5",
+ "@logic": ["has degree property", "clean", "#:leg 6", "none", "leg", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "A leg 6 of Mary 7 is clean."},
+{"@name": "sent_S6",
+ "@logic": ["isa","leg","#:leg 6"],
+ "@nl": "Leg 6 is a leg of Mary 7."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Mary 7"],
+ "@nl": "Leg 6 is a leg of Mary 7."},
+{"@name": "sent_S6",
+ "@logic": ["has part", "#:Mary 7", "#:leg 6", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Leg 6 is a leg of Mary 7."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:John 2"]],
+ "@nl": "Is John 2 not defeated?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-has property", "defeated", "#:John 2", ["$ctxt","present","?:Fv15","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Is John 2 not defeated?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:John 2"],
+            ["has property", "defeated", "#:John 2", ["$ctxt","present","?:Fv15","?:Fv13","?:Fv14"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 2 not defeated?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Is John 2 not defeated?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "defeated", "#:John 2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "defeated", "#:John 2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "defeated", "#:John 2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 2 not defeated?"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv36", ["$ctxt","past","?:Fv21","?:Fv22","?:Fv23"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv37", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv38", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv24","?:Fv25","?:Fv26"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S2","assumption",1], [["has property", "defeated", "#:John 2", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [2, ["in","sent_S7","assumption",1], [["-$defq0"], ["-has property", "defeated", "#:John 2", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp", 1, [2,1], 3, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John is defeated.",
+"  (2) John is not defeated?",
+"Proof steps (by contradiction):",
+"  (1) John is defeated  [sentence 1]",
+"  (2) If answer holds then John is not defeated  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) Contradiction  [from steps 1, 2, 3]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28353,
+      "cached_input_tokens": 28288,
+      "output_tokens": 828,
+      "raw": {
+        "input_tokens": 28353,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 828,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29181
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34054,
+      "cached_input_tokens": 33280,
+      "output_tokens": 485,
+      "raw": {
+        "input_tokens": 34054,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 485,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34539
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:04:27Z"
+}

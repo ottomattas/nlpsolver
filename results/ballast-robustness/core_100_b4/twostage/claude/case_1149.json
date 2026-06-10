@@ -1,0 +1,418 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1149,
+  "input_text": "If X1 is a grandfather of Y1, Y1 is a grandchild of X1. John is near a box. Susan bought herself a new car. Elephants have a head. Clinton defeated Dole. Did Tom buy a car?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "If X1 is a grandfather of Y1, Y1 is a grandchild of X1.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "If X1 is a grandfather of Y1, Y1 is a grandchild of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic", "category": "person"},
+            {"id": "Y1", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is near a box.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 is near a box 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "box 2", "type": "concrete", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Susan bought herself a new car.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Susan 2 bought a new car 3 for Susan 2.",
+          "type": "situation",
+          "entities": [{"id": "Susan 2", "type": "concrete", "category": "person"},
+            {"id": "car 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "buy",
+              "mode": "event",
+              "roles": {"actor": "Susan 2", "target": "car 3", "beneficiary": "Susan 2"}
+            }
+          ],
+          "adjectives": [["new","none","car"]],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have a head.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Elephants have a head.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "head", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Clinton defeated Dole.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Clinton 3 defeated Dole 4.",
+          "type": "real",
+          "entities": [{
+              "id": "Clinton 3",
+              "type": "concrete",
+              "category": "person",
+              "url": "https://en.wikipedia.org/wiki/Bill_Clinton"
+            },
+            {
+              "id": "Dole 4",
+              "type": "concrete",
+              "category": "person",
+              "url": "https://en.wikipedia.org/wiki/Bob_Dole"
+            }
+          ],
+          "actions": [{"root": "defeat", "mode": "event", "roles": {"actor": "Clinton 3", "target": "Dole 4"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Did Tom buy a car?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Did Tom 5 buy a car?",
+          "type": "query",
+          "entities": [{"id": "Tom 5", "type": "concrete", "category": "person"},
+            {"id": "car", "type": "generic", "category": "artifact"}
+          ],
+          "actions": [{"root": "buy", "mode": "event", "roles": {"actor": "Tom 5", "target": "car"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies",
+              ["is rel2","grandfather of","X1","Y1"],
+              ["is rel2","grandchild of","Y1","X1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","box","box 2"],
+          ["is rel2","near","John 1","box 2"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Susan 2"],
+            ["isa","car","car 3"],
+            ["has degree property","new","car 3","none","car"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","buy"],
+                ["has actor","E","Susan 2"],
+                ["has target","E","car 3"],
+                ["has beneficiary","E","Susan 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","head","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S4",0.99]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","defeat"],
+            ["has actor","E","https://en.wikipedia.org/wiki/Bill_Clinton"],
+            ["has target","E","https://en.wikipedia.org/wiki/Bob_Dole"],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["question",
+        ["exists","Y",
+          ["and",
+            ["isa","car","Y"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","buy"],
+                ["has actor","E","Tom 5"],
+                ["has target","E","Y"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S5",
+ "@logic": ["isa","person","#:Clinton 3"],
+ "@nl": "Clinton 3 defeated Dole 4."},
+{"@name": "entity_S5",
+ "@logic": ["isa","person","#:Dole 4"],
+ "@nl": "Clinton 3 defeated Dole 4."},
+{"@name": "entity_S6",
+ "@logic": ["isa","person","#:Tom 5"],
+ "@nl": "Did Tom 5 buy a car?"},
+{"@name": "sent_S1",
+ "@logic": [["-is rel2", "grandfather of", "?:X1", "?:Y1", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["is rel2", "grandchild of", "?:Y1", "?:X1", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "If X1 is a grandfather of Y1, Y1 is a grandchild of X1."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is near a box 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","box","#:box 2"],
+ "@nl": "John 1 is near a box 2."},
+{"@name": "sent_S2",
+ "@logic": ["has degree rel2", "near", "#:John 1", "#:box 2", "none", "?:Fv77", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 is near a box 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Susan 2"],
+ "@nl": "Susan 2 bought a new car 3 for Susan 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","car","#:car 3"],
+ "@nl": "Susan 2 bought a new car 3 for Susan 2."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "new", "#:car 3", "none", "car", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Susan 2 bought a new car 3 for Susan 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Susan 2 bought a new car 3 for Susan 2."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "buy", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Susan 2 bought a new car 3 for Susan 2."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:Susan 2", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Susan 2 bought a new car 3 for Susan 2."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk0_activity", "#:car 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Susan 2 bought a new car 3 for Susan 2."},
+{"@name": "sent_S3",
+ "@logic": ["has beneficiary", "sk0_activity", "#:Susan 2", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Susan 2 bought a new car 3 for Susan 2."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Susan 2 bought a new car 3 for Susan 2."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Susan 2 bought a new car 3 for Susan 2."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Susan 2 bought a new car 3 for Susan 2."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "head", ["sk1","?:X"]]],
+ "@nl": "Elephants have a head."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have a head."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Clinton 3 defeated Dole 4."},
+{"@name": "sent_S5",
+ "@logic": ["-has type", "sk2_activity", "victory", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Clinton 3 defeated Dole 4."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "https://en.wikipedia.org/wiki/Bill_Clinton", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Clinton 3 defeated Dole 4."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk2_activity", "https://en.wikipedia.org/wiki/Bob_Dole", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Clinton 3 defeated Dole 4."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Clinton 3 defeated Dole 4."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Clinton 3 defeated Dole 4."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","car","sk3_car"]],
+ "@nl": "Did Tom 5 buy a car?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk4_activity"]],
+ "@nl": "Did Tom 5 buy a car?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk4_activity", "buy", ["$ctxt","past","?:Fv22","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Did Tom 5 buy a car?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk4_activity", "#:Tom 5", ["$ctxt","past","?:Fv24","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Did Tom 5 buy a car?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk4_activity", "sk3_car", ["$ctxt","past","?:Fv26","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Did Tom 5 buy a car?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk4_activity"]],
+ "@nl": "Did Tom 5 buy a car?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-isa","car","?:Y"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "buy", ["$ctxt","past","?:Fv32","?:Fv15","?:Fv16"]],
+            ["-has actor", "?:E", "#:Tom 5", ["$ctxt","past","?:Fv34","?:Fv15","?:Fv16"]],
+            ["-has target", "?:E", "?:Y", ["$ctxt","past","?:Fv36","?:Fv15","?:Fv16"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Tom 5 buy a car?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Did Tom 5 buy a car?"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","head","$some_head"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","head","$some_not_head"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv38","?:Fv39","?:Fv41","?:Fv42"]],
+            ["-has actor", "?:E", "?:Owner", ["$ctxt","?:Fv38","?:Fv39","?:Fv41","?:Fv42"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv38","?:Fv39","?:Fv41","?:Fv42"]],
+            ["-next","?:Fv39","?:Fv40"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]],
+            ["$block", 0, ["$not", ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv43","?:Fv44","?:Fv46","?:Fv47"]],
+            ["-has beneficiary", "?:E", "?:Owner", ["$ctxt","?:Fv43","?:Fv44","?:Fv46","?:Fv47"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv43","?:Fv44","?:Fv46","?:Fv47"]],
+            ["-next","?:Fv44","?:Fv45"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv48","?:Fv49","?:Fv51","?:Fv52"]],
+            ["-has recipient", "?:E", "?:Owner", ["$ctxt","?:Fv48","?:Fv49","?:Fv51","?:Fv52"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv48","?:Fv49","?:Fv51","?:Fv52"]],
+            ["-next","?:Fv49","?:Fv50"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv50","?:Fv51","?:Fv52"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32103,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1075,
+      "raw": {
+        "input_tokens": 61,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1075,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39698,
+      "cached_input_tokens": 38891,
+      "output_tokens": 955,
+      "raw": {
+        "input_tokens": 807,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 955,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:13:02Z"
+}

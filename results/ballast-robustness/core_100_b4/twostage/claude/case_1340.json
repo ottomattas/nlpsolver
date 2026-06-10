@@ -1,0 +1,606 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1340,
+  "input_text": "Squirrels can fly. Foxes cannot fly. The bike's length is 10 kilometers. Squirrels and foxes are animals. Anna handed a key to Mark. Mike is badly defeated. Smith, a surgeon, entered the room. Which animal cannot fly?",
+  "expected_answer": "A fox",
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "A fox.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Squirrels can fly.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Squirrels can fly.",
+          "type": "normal_rule",
+          "entities": [{"id": "squirrels", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "Foxes cannot fly.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Foxes cannot fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "foxes", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "The bike's length is 10 kilometers.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The bike 1's length 2 is 10 kilometers.",
+          "type": "situation",
+          "entities": [{"id": "bike 1", "type": "concrete", "category": "artifact"},
+            {"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "10 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 2","bike 1"]]
+        },
+        {
+          "unit_id": "S4",
+          "text": "The length 2 is the length of the bike 1.",
+          "type": "situation",
+          "entities": [{"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "bike 1", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["length of","length 2","bike 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "Squirrels and foxes are animals.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Squirrels are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "squirrels", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S6",
+          "text": "Foxes are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "foxes", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Anna handed a key to Mark.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Anna 1 handed a key 2 to Mark 3.",
+          "type": "situation",
+          "entities": [{"id": "Anna 1", "type": "concrete", "category": "person"},
+            {"id": "key 2", "type": "concrete", "category": "artifact"},
+            {"id": "Mark 3", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "hand",
+              "mode": "event",
+              "roles": {"actor": "Anna 1", "target": "key 2", "recipient": "Mark 3"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mike is badly defeated.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Mike 4 is badly defeated.",
+          "type": "situation",
+          "entities": [{"id": "Mike 4", "type": "concrete", "category": "person"}],
+          "adjectives": [["defeated","low","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Smith, a surgeon, entered the room.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Smith 5 entered the room 6.",
+          "type": "situation",
+          "entities": [{"id": "Smith 5", "type": "concrete", "category": "person"},
+            {"id": "room 6", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "enter", "mode": "event", "roles": {"actor": "Smith 5", "target": "room 6"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        },
+        {
+          "unit_id": "S10",
+          "text": "Smith 5 is a surgeon.",
+          "type": "real",
+          "entities": [{"id": "Smith 5", "type": "concrete", "category": "person"}]
+        }
+      ]
+    },
+    {
+      "raw": "Which animal cannot fly?",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Which animal cannot fly?",
+          "type": "query",
+          "entities": [{"id": "animal", "type": "generic", "category": "animal", "wh_placeholder": true}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    }
+  ],
+  "stage_1_retries": ["sanity #1: missing_wh_placeholder"],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","squirrel","X"],
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","fox","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","bike","bike 1"],
+          ["=", ["$measure_of","length","bike 1","W0"], ["$measure",10,"kilometer"]]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds", "W0", ["and", ["isa","bike","bike 1"]]],
+        ["@definite","S4","W0","length of","bike 1","length 2"]
+      ]
+    ],
+    ["@id","S5",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","squirrel","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S6",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","fox","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Anna 1"],
+            ["isa","key","key 2"],
+            ["isa","person","Mark 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","hand"],
+                ["has actor","E","Anna 1"],
+                ["has target","E","key 2"],
+                ["has recipient","E","Mark 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mike 4"],
+          ["has degree property","defeated","Mike 4","low","person"]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Smith 5"],
+            ["isa","room","room 6"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","enter"],
+                ["has actor","E","Smith 5"],
+                ["has target","E","room 6"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id", "S10", ["holds", "W0", ["isa","surgeon","Smith 5"]]],
+    ["@id","S11",
+      ["ask","X",
+        ["and",
+          ["isa","animal","X"],
+          ["not",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","fly"],
+                ["has actor","E","X"],
+                ["capability","E"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","measure","10 kilometers"],
+ "@nl": "The bike 1's length 2 is 10 kilometers."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","squirrel","?:X"], ["isa", "activity", ["sk0","?:X"]]],
+ "@nl": "Squirrels can fly."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","squirrel","?:X"],
+            ["has type", ["sk0","?:X"], "fly", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Squirrels can fly."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","squirrel","?:X"],
+            ["has actor", ["sk0","?:X"], "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Squirrels can fly."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","squirrel","?:X"],
+            ["capability", ["sk0","?:X"]],
+            ["$block", ["$","squirrel",1], ["$not", ["capability", ["sk0","?:X"]]]]
+           ],
+ "@nl": "Squirrels can fly."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","fox","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Foxes cannot fly."},
+{"@name": "sent_S3",
+ "@logic": ["isa","bike","#:bike 1"],
+ "@nl": "The bike 1's length 2 is 10 kilometers."},
+{"@name": "sent_S3",
+ "@logic": ["=", ["$measure_of","length","#:bike 1","W0"], ["$list",10000,"#:meter"]],
+ "@nl": "The bike 1's length 2 is 10 kilometers."},
+{"@name": "sent_S4",
+ "@logic": ["isa","bike","#:bike 1"],
+ "@nl": "The length 2 is the length of the bike 1."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","squirrel","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Squirrels are animals."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","fox","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Foxes are animals."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Anna 1"],
+ "@nl": "Anna 1 handed a key 2 to Mark 3."},
+{"@name": "sent_S7",
+ "@logic": ["isa","important","#:key 2"],
+ "@nl": "Anna 1 handed a key 2 to Mark 3."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Mark 3"],
+ "@nl": "Anna 1 handed a key 2 to Mark 3."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Anna 1 handed a key 2 to Mark 3."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk1_activity", "give", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Anna 1 handed a key 2 to Mark 3."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk1_activity", "#:Anna 1", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Anna 1 handed a key 2 to Mark 3."},
+{"@name": "sent_S7",
+ "@logic": ["has target", "sk1_activity", "#:key 2", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Anna 1 handed a key 2 to Mark 3."},
+{"@name": "sent_S7",
+ "@logic": ["has recipient", "sk1_activity", "#:Mark 3", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Anna 1 handed a key 2 to Mark 3."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Anna 1 handed a key 2 to Mark 3."},
+{"@name": "sent_S7",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Anna 1 handed a key 2 to Mark 3."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Mike 4"],
+ "@nl": "Mike 4 is badly defeated."},
+{"@name": "sent_S8",
+ "@logic": ["has property", "defeated", "#:Mike 4", ["$ctxt","present","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Mike 4 is badly defeated."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Smith 5"],
+ "@nl": "Smith 5 entered the room 6."},
+{"@name": "sent_S9",
+ "@logic": ["isa","room","#:room 6"],
+ "@nl": "Smith 5 entered the room 6."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Smith 5 entered the room 6."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk2_activity", "enter", ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "Smith 5 entered the room 6."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk2_activity", "#:Smith 5", ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "Smith 5 entered the room 6."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk2_activity", "#:room 6", ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "Smith 5 entered the room 6."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "Smith 5 entered the room 6."},
+{"@name": "sent_S9",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Smith 5 entered the room 6."},
+{"@name": "sent_S10",
+ "@logic": ["isa","surgeon","#:Smith 5"],
+ "@nl": "Smith 5 is a surgeon."},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Which animal cannot fly?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv37","?:Fv36","?:Fv29","?:Fv30"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv39","?:Fv38","?:Fv29","?:Fv30"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Which animal cannot fly?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-isa","animal","?:X"], ["isa", "activity", ["sk3","?:X"]], ["$defq0","?:X"]],
+ "@nl": "Which animal cannot fly?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-isa","animal","?:X"],
+            ["has type", ["sk3","?:X"], "fly", ["$ctxt","?:Fv47","?:Fv46","?:Fv29","?:Fv30"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which animal cannot fly?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-isa","animal","?:X"],
+            ["has actor", ["sk3","?:X"], "?:X", ["$ctxt","?:Fv51","?:Fv50","?:Fv29","?:Fv30"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which animal cannot fly?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-isa","animal","?:X"], ["capability", ["sk3","?:X"]], ["$defq0","?:X"]],
+ "@nl": "Which animal cannot fly?"},
+{"@name": "sent_S11",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@what_query": true,
+ "@nl": "Which animal cannot fly?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","squirrel","$some_squirrel"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","squirrel","$some_not_squirrel"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fox","$some_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","fox","$some_not_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv54"], ["has type","?:E","go","?:Fv54"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv55"], ["has type","?:E","give","?:Fv55"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "pop_what",
+ "@logic": ["isa","bike","$some_bike"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","important","$some_key"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","room","$some_room"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","surgeon","$some_surgeon"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","measure","$some_measure"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","$some_fox"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S2","assumption",1], [["isa","fox","$some_fox"]]],
+          [2, ["in","sent_S6","assumption",1], [["-isa","fox","?:X"], ["isa","animal","?:X"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["isa","animal","$some_fox"]]],
+          [4, ["in","sent_S11","assumption",1], [["has actor", ["sk3","?:X"], "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","animal","?:X"], ["$defq0","?:X"]]],
+          [5, ["mp", 3, [4,1], "fromassumption", 1], [["$defq0","$some_fox"], ["has actor", ["sk3","$some_fox"], "$some_fox", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [6, ["in","sent_S11","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [7, ["mp",5,6,"fromga",1], [["$ans","$some_fox"], ["has actor", ["sk3","$some_fox"], "$some_fox", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [8, ["in","sent_S2","assumption",1], [["-has type", "?:X", "fly", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "?:X", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","fox","?:W"], ["-isa","activity","?:X"], ["-capability","?:X"]]],
+          [9, ["mp", [7,1], [8,1], "fromga", 1], [["-isa", "activity", ["sk3","$some_fox"]], ["-capability", ["sk3","$some_fox"]], ["-isa","fox","$some_fox"], ["$ans","$some_fox"], ["-has type", ["sk3","$some_fox"], "fly", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]],
+          [10, ["simp",9,1,"fromga",1], [["-isa", "activity", ["sk3","$some_fox"]], ["-capability", ["sk3","$some_fox"]], ["$ans","$some_fox"], ["-has type", ["sk3","$some_fox"], "fly", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [11, ["in","sent_S11","assumption",1], [["has type", ["sk3","?:X"], "fly", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","animal","?:X"], ["$defq0","?:X"]]],
+          [12, ["mp", 3, [11,1], "fromassumption", 1], [["$defq0","$some_fox"], ["has type", ["sk3","$some_fox"], "fly", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [13, ["mp",12,6,"fromga",1], [["$ans","$some_fox"], ["has type", ["sk3","$some_fox"], "fly", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [14, ["mp", [10,3], [13,1], "fromga", 1], [["-isa", "activity", ["sk3","$some_fox"]], ["-capability", ["sk3","$some_fox"]], ["$ans","$some_fox"]]],
+          [15, ["in","sent_S11","assumption",1], [["isa", "activity", ["sk3","?:X"]], ["-isa","animal","?:X"], ["$defq0","?:X"]]],
+          [16, ["mp", 3, [15,1], "fromassumption", 1], [["isa", "activity", ["sk3","$some_fox"]], ["$defq0","$some_fox"]]],
+          [17, ["mp", [16,1], 6, "fromga", 1], [["isa", "activity", ["sk3","$some_fox"]], ["$ans","$some_fox"]]],
+          [18, ["mp",14,17,"fromga",1], [["-capability", ["sk3","$some_fox"]], ["$ans","$some_fox"]]],
+          [19, ["in","sent_S11","assumption",1], [["capability", ["sk3","?:X"]], ["-isa","animal","?:X"], ["$defq0","?:X"]]],
+          [20, ["mp", [19,2], 6, "fromga", 1], [["capability", ["sk3","?:X"]], ["-isa","animal","?:X"], ["$ans","?:X"]]],
+          [21, ["mp",18,20,"fromga",1], [["-isa","animal","$some_fox"], ["$ans","$some_fox"]]],
+          [22, ["simp",21,3,"fromga",1], [["$ans","$some_fox"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Foxes cannot fly.",
+"  (2) Squirrels and foxes are animals.",
+"  (3) Which animal cannot fly?",
+"Proof steps:",
+"  (1) A fox is a fox  [sentence 1]",
+"  (2) If some X is a fox then X is an animal  [sentence 2]",
+"  (3) A fox is an animal  [from steps 1, 2]",
+"  (4) If some X is an animal then X performs the flying event sk3 of X or X is the answer  [sentence 3]",
+"  (5) A fox is the answer or a fox performs the flying event sk3 of $some_fox  [from steps 3, 4]",
+"  (6) technical answer unwrap step  [from question]",
+"  (7) A fox is an answer or a fox performs the flying event sk3 of $some_fox  [from steps 5, 6]",
+"  (8) If X is a fly event and some fox W performs X and X is an activity then X is not a capability  [sentence 1]",
+"  (9) If the flying event sk3 of $some_fox is an activity and sk3 of $some_fox is a capability and a fox is a fox and sk3 of $some_fox is a fly event then a fox is an answer  [from steps 7, 8]",
+"  (10) If the flying event sk3 of $some_fox is an activity and sk3 of $some_fox is a capability and sk3 of $some_fox is a fly event then a fox is an answer  [from steps 9, 1]",
+"  (11) If some X is an animal then sk3 of X is a fly event or X is the answer  [sentence 3]",
+"  (12) A fox is the answer or sk3 of $some_fox is a fly event  [from steps 3, 11]",
+"  (13) A fox is an answer or sk3 of $some_fox is a fly event  [from steps 12, 6]",
+"  (14) If the flying event sk3 of $some_fox is an activity and sk3 of $some_fox is a capability then a fox is an answer  [from steps 10, 13]",
+"  (15) If some X is an animal then the flying event sk3 of X is an activity or X is the answer  [sentence 3]",
+"  (16) The flying event sk3 of $some_fox is an activity or a fox is the answer  [from steps 3, 15]",
+"  (17) The flying event sk3 of $some_fox is an activity or a fox is an answer  [from steps 16, 6]",
+"  (18) If the flying event sk3 of $some_fox is a capability then a fox is an answer  [from steps 14, 17]",
+"  (19) If some X is an animal then the flying event sk3 of X is a capability or X is the answer  [sentence 3]",
+"  (20) If some X is an animal then the flying event sk3 of X is a capability or X is an answer  [from steps 19, 6]",
+"  (21) If a fox is an animal then a fox is an answer  [from steps 18, 20]",
+"  (22) A fox is an answer  [from steps 21, 3]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32107,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1463,
+      "raw": {
+        "input_tokens": 65,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1463,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 34161,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1779,
+      "raw": {
+        "input_tokens": 2119,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1779,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 40039,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1371,
+      "raw": {
+        "input_tokens": 1148,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1371,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:18:52Z"
+}

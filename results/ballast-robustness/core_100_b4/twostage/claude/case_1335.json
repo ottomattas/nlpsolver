@@ -1,0 +1,741 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1335,
+  "input_text": "John is a nice man. John has an apple. Paul ate a sandwich and Bill a salad. Tallinn is in Estonia with a probability 90 percent. Mike is a nice man. Greg is a bad man. The students studied hard and passed the exam. Mike has a pear. Mary's uncle arrived. Which nice man has a pear?",
+  "expected_answer": "Mike",
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Mike.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is a nice man.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a nice man.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "John has an apple.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 has an apple 1.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "apple 1", "type": "concrete", "category": "plant"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Paul ate a sandwich and Bill a salad.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Paul 1 ate a sandwich 1.",
+          "type": "situation",
+          "entities": [{"id": "Paul 1", "type": "concrete", "category": "person"},
+            {"id": "sandwich 1", "type": "concrete", "category": "substance"}
+          ],
+          "actions": [{"root": "eat", "mode": "event", "roles": {"actor": "Paul 1", "target": "sandwich 1"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "Bill 1 ate a salad 1.",
+          "type": "situation",
+          "entities": [{"id": "Bill 1", "type": "concrete", "category": "person"},
+            {"id": "salad 1", "type": "concrete", "category": "substance"}
+          ],
+          "actions": [{"root": "eat", "mode": "event", "roles": {"actor": "Bill 1", "target": "salad 1"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is in Estonia with a probability 90 percent.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Tallinn 1 is in Estonia 1.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Estonia 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ],
+          "confidence": 0.9
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a nice man.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Mike 1 is a nice man.",
+          "type": "real",
+          "entities": [{"id": "Mike 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Greg is a bad man.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Greg 1 is a bad man.",
+          "type": "real",
+          "entities": [{"id": "Greg 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["bad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "The students studied hard and passed the exam.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "The students 1 studied hard.",
+          "type": "situation",
+          "entities": [{"id": "students 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "study", "mode": "event", "roles": {"manner": "hard"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S9",
+          "text": "The students 1 passed the exam 1.",
+          "type": "situation",
+          "entities": [{"id": "students 1", "type": "concrete", "category": "person"},
+            {"id": "exam 1", "type": "concrete", "category": "event"}
+          ],
+          "actions": [{"root": "pass", "mode": "event", "roles": {"target": "exam 1"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mike has a pear.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Mike 1 has a pear 1.",
+          "type": "situation",
+          "entities": [{"id": "Mike 1", "type": "concrete", "category": "person"},
+            {"id": "pear 1", "type": "concrete", "category": "plant"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mary's uncle arrived.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Mary 1's uncle 1 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "uncle 1", "type": "concrete", "text": "uncle", "category": "person"}
+          ],
+          "actions": [{"root": "arrive", "mode": "event"}],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        },
+        {
+          "unit_id": "S12",
+          "text": "Uncle 1 is the uncle of Mary 1.",
+          "type": "situation",
+          "entities": [{"id": "uncle 1", "type": "concrete", "text": "uncle", "category": "person"},
+            {"id": "Mary 1", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["uncle of","uncle 1","Mary 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "Which nice man has a pear?",
+      "units": [{
+          "unit_id": "S13",
+          "text": "Which nice man has a pear?",
+          "type": "query",
+          "entities": [{"id": "man", "type": "generic", "category": "person", "wh_placeholder": true},
+            {"id": "pear", "type": "generic", "category": "plant"}
+          ],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage_1_retries": ["sanity #1: missing_wh_placeholder"],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","man","John 1"], ["has degree property","nice","John 1","none","person"]]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["isa","apple","apple 1"], ["have","John 1","apple 1"]]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Paul 1"],
+          ["isa","sandwich","sandwich 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","eat"],
+              ["has actor","E","Paul 1"],
+              ["has target","E","sandwich 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Bill 1"],
+          ["isa","salad","salad 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","eat"],
+              ["has actor","E","Bill 1"],
+              ["has target","E","salad 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Estonia"]
+        ],
+        ["@p","S5",0.9]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and", ["isa","man","Mike 1"], ["has degree property","nice","Mike 1","none","person"]]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and", ["isa","man","Greg 1"], ["has degree property","bad","Greg 1","none","person"]]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","students 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","study"],
+                ["has actor","E","students 1"],
+                ["has manner","E","hard"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","students 1"],
+            ["isa","exam","exam 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","pass"],
+                ["has actor","E","students 1"],
+                ["has target","E","exam 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["and", ["isa","person","Mike 1"], ["isa","pear","pear 1"], ["have","Mike 1","pear 1"]]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","uncle","uncle 1"],
+            ["isa","person","Mary 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","arrive"],
+                ["has actor","E","uncle 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S12",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","uncle","uncle 1"],
+            ["isa","person","Mary 1"],
+            ["is rel2","uncle of","uncle 1","Mary 1"]
+          ]
+        ],
+        ["@definite","S12","W0","uncle of","Mary 1","uncle 1"]
+      ]
+    ],
+    ["@id","S13",
+      ["ask","X",
+        ["and",
+          ["isa","man","X"],
+          ["has degree property","nice","X","none","person"],
+          ["exists", "Y", ["and", ["isa","pear","Y"], ["have","X","Y"]]]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S5",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is in Estonia 1."},
+{"@name": "entity_S5",
+ "@logic": ["isa","place","#:Estonia 1"],
+ "@nl": "Tallinn 1 is in Estonia 1."},
+{"@name": "entity_S8",
+ "@logic": ["isa","student","#:students 1"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "entity_S8",
+ "@logic": ["isa","student","#:students 1"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "entity_S11",
+ "@logic": ["isa","uncle","#:uncle 1"],
+ "@nl": "Mary 1's uncle 1 arrived."},
+{"@name": "sent_S1",
+ "@logic": ["isa","man","#:John 1"],
+ "@nl": "John 1 is a nice man."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is a nice man."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 has an apple 1."},
+{"@name": "sent_S2",
+ "@logic": ["isa","apple","#:apple 1"],
+ "@nl": "John 1 has an apple 1."},
+{"@name": "sent_S2",
+ "@logic": ["have", "#:John 1", "#:apple 1", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 has an apple 1."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Paul 1"],
+ "@nl": "Paul 1 ate a sandwich 1."},
+{"@name": "sent_S3",
+ "@logic": ["isa","sandwich","#:sandwich 1"],
+ "@nl": "Paul 1 ate a sandwich 1."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Paul 1 ate a sandwich 1."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "eat", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Paul 1 ate a sandwich 1."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:Paul 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Paul 1 ate a sandwich 1."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk0_activity", "#:sandwich 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Paul 1 ate a sandwich 1."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Paul 1 ate a sandwich 1."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Paul 1 ate a sandwich 1."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Bill 1"],
+ "@nl": "Bill 1 ate a salad 1."},
+{"@name": "sent_S4",
+ "@logic": ["isa","salad","#:salad 1"],
+ "@nl": "Bill 1 ate a salad 1."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Bill 1 ate a salad 1."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "eat", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Bill 1 ate a salad 1."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk1_activity", "#:Bill 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Bill 1 ate a salad 1."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk1_activity", "#:salad 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Bill 1 ate a salad 1."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Bill 1 ate a salad 1."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Bill 1 ate a salad 1."},
+{"@name": "sent_S5",
+ "@logic": ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@confidence": 0.8,
+ "@nl": "Tallinn 1 is in Estonia 1."},
+{"@name": "sent_S6",
+ "@logic": ["isa","man","#:Mike 1"],
+ "@nl": "Mike 1 is a nice man."},
+{"@name": "sent_S6",
+ "@logic": ["has degree property", "good", "#:Mike 1", "none", "person", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mike 1 is a nice man."},
+{"@name": "sent_S7",
+ "@logic": ["isa","man","#:Greg 1"],
+ "@nl": "Greg 1 is a bad man."},
+{"@name": "sent_S7",
+ "@logic": ["-has degree property", "good", "#:Greg 1", "none", "person", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Greg 1 is a bad man."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:students 1"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk2_activity", "study", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk2_activity", "#:students 1", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S8",
+ "@logic": ["has manner", "sk2_activity", "hard", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S8",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S8",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:students 1"],
+ "@nl": "The students 1 passed the exam 1."},
+{"@name": "sent_S9",
+ "@logic": ["isa","exam","#:exam 1"],
+ "@nl": "The students 1 passed the exam 1."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The students 1 passed the exam 1."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk3_activity", "pass", ["$ctxt","past","W1","?:Fv17","?:Fv18"]],
+ "@nl": "The students 1 passed the exam 1."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk3_activity", "#:students 1", ["$ctxt","past","W1","?:Fv17","?:Fv18"]],
+ "@nl": "The students 1 passed the exam 1."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk3_activity", "#:exam 1", ["$ctxt","past","W1","?:Fv17","?:Fv18"]],
+ "@nl": "The students 1 passed the exam 1."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W1","?:Fv17","?:Fv18"]],
+ "@nl": "The students 1 passed the exam 1."},
+{"@name": "sent_S9",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "The students 1 passed the exam 1."},
+{"@name": "sent_S9",
+ "@logic": ["next","W1","W2"],
+ "@nl": "The students 1 passed the exam 1."},
+{"@name": "sent_S10",
+ "@logic": ["isa","person","#:Mike 1"],
+ "@nl": "Mike 1 has a pear 1."},
+{"@name": "sent_S10",
+ "@logic": ["isa","pear","#:pear 1"],
+ "@nl": "Mike 1 has a pear 1."},
+{"@name": "sent_S10",
+ "@logic": ["have", "#:Mike 1", "#:pear 1", ["$ctxt","present","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mike 1 has a pear 1."},
+{"@name": "sent_S11",
+ "@logic": ["isa", "uncle", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","present","W0","?:Fv23","?:Fv24"]]],
+ "@nl": "Mary 1's uncle 1 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1's uncle 1 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Mary 1's uncle 1 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk4_activity", "arrive", ["$ctxt","past","W2","?:Fv21","?:Fv22"]],
+ "@nl": "Mary 1's uncle 1 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk4_activity", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","present","W0","?:Fv23","?:Fv24"]], ["$ctxt","past","W2","?:Fv21","?:Fv22"]],
+ "@nl": "Mary 1's uncle 1 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W2","?:Fv21","?:Fv22"]],
+ "@nl": "Mary 1's uncle 1 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["actuality","sk4_activity"],
+ "@nl": "Mary 1's uncle 1 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["next","W2","W3"],
+ "@nl": "Mary 1's uncle 1 arrived."},
+{"@name": "sent_S12",
+ "@logic": ["isa", "uncle", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","present","W0","?:Fv23","?:Fv24"]]],
+ "@nl": "Uncle 1 is the uncle of Mary 1."},
+{"@name": "sent_S12",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Uncle 1 is the uncle of Mary 1."},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa","man","?:X"]],
+ "@nl": "Which nice man has a pear?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has degree property", "good", "?:X", "none", "person", ["$ctxt","?:Fv31","?:Fv30","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Which nice man has a pear?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "pear", ["sk5","?:X"]]],
+ "@nl": "Which nice man has a pear?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["have", "?:X", ["sk5","?:X"], ["$ctxt","present","?:Fv34","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Which nice man has a pear?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-isa","man","?:X"],
+            ["-has degree property", "good", "?:X", "none", "person", ["$ctxt","?:Fv38","?:Fv37","?:Fv25","?:Fv26"]],
+            ["-isa","pear","?:Y"],
+            ["-have", "?:X", "?:Y", ["$ctxt","present","?:Fv41","?:Fv25","?:Fv26"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which nice man has a pear?"},
+{"@name": "sent_S13",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@what_query": true,
+ "@nl": "Which nice man has a pear?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "?:Br1", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which nice man has a pear?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:Mary 1", ["$theof1", "uncle", "#:Mary 1", ["$ctxt","present","W0","?:Fv23","?:Fv24"]], ["$ctxt","present","W0","?:Fv23","?:Fv24"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "uncle of", ["$theof1","uncle","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "uncle", ["$theof1","uncle","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv42"], ["has type","?:E","give","?:Fv42"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv43"], ["has type","?:E","go","?:Fv43"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","apple","?:X"], ["-isa","pear","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","apple","?:X"], ["-isa","pear","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","apple","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","apple","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","pear","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","pear","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "pop_what",
+ "@logic": ["isa","student","$some_student"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","pear","$some_pear"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","sandwich","$some_sandwich"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","salad","$some_salad"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","uncle","$some_uncle"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","exam","$some_exam"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","student","$some_students"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","apple","$some_apple"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","man","$some_man"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","place","$some_place"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","#:Mike 1"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S13","assumption",1], [["-has degree property", "good", "?:X", "none", "person", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-have", "?:X", "?:W", ["$ctxt","present","?:2006","?:U","?:V"]], ["-isa","pear","?:W"], ["-isa","man","?:X"], ["$defq0","?:X"]]],
+          [2, ["in","sent_S6","assumption",1], [["has degree property", "good", "#:Mike 1", "none", "person", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp",1,2,"fromassumption",1], [["-isa","man","#:Mike 1"], ["$defq0","#:Mike 1"], ["-have", "#:Mike 1", "?:X3", ["$ctxt","present","?:Y3","?:Z3","?:U3"]], ["-isa","pear","?:X3"]]],
+          [4, ["in","sent_S6","assumption",1], [["isa","man","#:Mike 1"]]],
+          [5, ["simp",3,4,"fromassumption",1], [["$defq0","#:Mike 1"], ["-have", "#:Mike 1", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-isa","pear","?:X"]]],
+          [6, ["in","sent_S10","assumption",1], [["have", "#:Mike 1", "#:pear 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [7, ["mp", [5,1], 6, "fromassumption", 1], [["-isa","pear","#:pear 1"], ["$defq0","#:Mike 1"]]],
+          [8, ["in","sent_S10","assumption",1], [["isa","pear","#:pear 1"]]],
+          [9, ["simp",7,8,"fromassumption",1], [["$defq0","#:Mike 1"]]],
+          [10, ["in","sent_S13","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [11, ["mp",9,10,"fromga",1], [["$ans","#:Mike 1"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Mike is a nice man.",
+"  (2) Mike has a pear.",
+"  (3) Which nice man has a pear?",
+"Proof steps:",
+"  (1) If some X is a good person and X has some W and W is a pear and X is a man then X is the answer  [sentence 3]",
+"  (2) Mike is a good person  [sentence 1]",
+"  (3) If Mike is a man and Mike has some X3 and X3 is a pear then Mike is the answer  [from steps 1, 2]",
+"  (4) Mike is a man  [sentence 1]",
+"  (5) If Mike has some X and X is a pear then Mike is the answer  [from steps 3, 4]",
+"  (6) Mike has the pear A  [sentence 2]",
+"  (7) Mike is the answer  [from steps 5, 6]",
+"  (8) The pear A is a pear  [sentence 2]",
+"  (9) Mike is the answer  [from steps 7, 8]",
+"  (10) technical answer unwrap step  [from question]",
+"  (11) Mike is an answer  [from steps 9, 10]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32123,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1842,
+      "raw": {
+        "input_tokens": 81,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1842,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 34658,
+      "cached_input_tokens": 32042,
+      "output_tokens": 2236,
+      "raw": {
+        "input_tokens": 2616,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 2236,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 40343,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1651,
+      "raw": {
+        "input_tokens": 1452,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1651,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:20:34Z"
+}

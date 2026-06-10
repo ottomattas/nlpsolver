@@ -1,0 +1,345 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 553,
+  "input_text": "Muggles cannot disappear. The mountain is higher than the hill. The man carrying a bag waved. A not very big bear is nice. Luke is a father of John. Is the hill higher than the mountain?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "Muggles cannot disappear.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Muggles cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "muggles", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "The mountain is higher than the hill.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The mountain 1 is higher than the hill 2.",
+          "type": "situation",
+          "entities": [{"id": "mountain 1", "type": "concrete", "category": "place"},
+            {"id": "hill 2", "type": "concrete", "category": "place"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The man carrying a bag waved.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The man 3 carrying a bag 4 waved.",
+          "type": "situation",
+          "entities": [{"id": "man 3", "type": "concrete", "category": "person"},
+            {"id": "bag 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "carry", "mode": "event", "roles": {"actor": "man 3", "target": "bag 4"}},
+            {"root": "wave", "mode": "event", "roles": {"actor": "man 3"}}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A not very big bear is nice.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "A not very big bear 5 is nice.",
+          "type": "situation",
+          "entities": [{"id": "bear 5", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","high","bear"], ["nice","none","entity"]]
+        }
+      ]
+    },
+    {
+      "raw": "Luke is a father of John.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Luke 6 is a father of John 7.",
+          "type": "situation",
+          "entities": [{"id": "Luke 6", "type": "concrete", "category": "person"},
+            {"id": "John 7", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Is the hill higher than the mountain?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Is the hill 2 higher than the mountain 1?",
+          "type": "query",
+          "entities": [{"id": "hill 2", "type": "concrete", "category": "place"},
+            {"id": "mountain 1", "type": "concrete", "category": "place"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","muggle","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","mountain","mountain 1"],
+          ["isa","hill","hill 2"],
+          ["has property","higher than","mountain 1"],
+          ["is rel2","higher than","mountain 1","hill 2"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","man","man 3"],
+          ["isa","bag","bag 4"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","carry"],
+              ["has actor","E1","man 3"],
+              ["has target","E1","bag 4"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","wave"],
+              ["has actor","E2","man 3"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","bear","bear 5"],
+          ["not", ["has degree property","big","bear 5","high","bear"]],
+          ["has degree property","nice","bear 5","none","entity"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Luke 6"],
+          ["isa","person","John 7"],
+          ["is rel2","father of","Luke 6","John 7"]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["question",
+        ["and",
+          ["isa","hill","hill 2"],
+          ["isa","mountain","mountain 1"],
+          ["is rel2","higher than","hill 2","mountain 1"]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","muggle","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Muggles cannot disappear."},
+{"@name": "sent_S2",
+ "@logic": ["isa","mountain","#:mountain 1"],
+ "@nl": "The mountain 1 is higher than the hill 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","hill","#:hill 2"],
+ "@nl": "The mountain 1 is higher than the hill 2."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "higher than", "#:mountain 1", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The mountain 1 is higher than the hill 2."},
+{"@name": "sent_S2",
+ "@logic": ["is rel2", "higher than", "#:mountain 1", "#:hill 2", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The mountain 1 is higher than the hill 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","man","#:man 3"],
+ "@nl": "The man 3 carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["isa","bag","#:bag 4"],
+ "@nl": "The man 3 carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The man 3 carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "carry", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The man 3 carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:man 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The man 3 carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk0_activity", "#:bag 4", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The man 3 carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The man 3 carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The man 3 carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The man 3 carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "wave", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The man 3 carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:man 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The man 3 carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The man 3 carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The man 3 carrying a bag 4 waved."},
+{"@name": "sent_S4",
+ "@logic": ["isa","bear","#:bear 5"],
+ "@nl": "A not very big bear 5 is nice."},
+{"@name": "sent_S4",
+ "@logic": ["has degree property", "big", "#:bear 5", "none", "bear", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "A not very big bear 5 is nice."},
+{"@name": "sent_S4",
+ "@logic": ["-has degree property", "big", "#:bear 5", "high", "bear", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "A not very big bear 5 is nice."},
+{"@name": "sent_S4",
+ "@logic": ["has degree property", "good", "#:bear 5", "none", "?:Fv47", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "A not very big bear 5 is nice."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Luke 6"],
+ "@nl": "Luke 6 is a father of John 7."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:John 7"],
+ "@nl": "Luke 6 is a father of John 7."},
+{"@name": "sent_S5",
+ "@logic": ["is rel2", "father of", "#:Luke 6", "#:John 7", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Luke 6 is a father of John 7."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","hill","#:hill 2"]],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","mountain","#:mountain 1"]],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "higher than", "#:hill 2", "#:mountain 1", ["$ctxt","present","?:Fv15","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-isa","hill","#:hill 2"],
+            ["-isa","mountain","#:mountain 1"],
+            ["-is rel2", "higher than", "#:hill 2", "#:mountain 1", ["$ctxt","present","?:Fv15","?:Fv13","?:Fv14"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "higher than", "#:hill 2", "#:mountain 1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "higher than", "#:hill 2", "#:mountain 1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "higher than", "#:hill 2", "#:mountain 1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","muggle","$some_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","muggle","$some_not_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv48", ["$ctxt","past","?:Fv25","?:Fv26","?:Fv27"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv49", ["$ctxt","present","?:Fv25","?:Fv26","?:Fv27"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv50", ["$ctxt","present","?:Fv25","?:Fv26","?:Fv27"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv28","?:Fv29","?:Fv30"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv28","?:Fv29","?:Fv30"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv28","?:Fv29","?:Fv30"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28357,
+      "cached_input_tokens": 28288,
+      "output_tokens": 779,
+      "raw": {
+        "input_tokens": 28357,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 779,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29136
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34009,
+      "cached_input_tokens": 33280,
+      "output_tokens": 556,
+      "raw": {
+        "input_tokens": 34009,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 556,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34565
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:53:00Z"
+}

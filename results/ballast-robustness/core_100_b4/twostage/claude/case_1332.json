@@ -1,0 +1,568 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1332,
+  "input_text": "John is a nice man. John has an apple. Eve forgot to lock the door. Mike is a nice man. The bike is small. Greg is a bad man. If X1 is not a parent of Y1, Y1 is not a child of X1. Mike has a pear. A big old grey elephant was strong. Which man has a potato?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is a nice man.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a nice man.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "John has an apple.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 has an apple 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "apple 2", "type": "concrete", "category": "plant"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Eve forgot to lock the door.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Eve 3 forgot to lock the door 4.",
+          "type": "situation",
+          "entities": [{"id": "Eve 3", "type": "concrete", "category": "person"},
+            {"id": "door 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "forget",
+              "mode": "event",
+              "roles": {
+                "actor": "Eve 3",
+                "content": {"root": "lock", "mode": "event", "roles": {"actor": "Eve 3", "target": "door 4"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a nice man.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mike 5 is a nice man.",
+          "type": "real",
+          "entities": [{"id": "Mike 5", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "The bike is small.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "The bike 6 is small.",
+          "type": "situation",
+          "entities": [{"id": "bike 6", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["small","none","bike"]]
+        }
+      ]
+    },
+    {
+      "raw": "Greg is a bad man.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Greg 7 is a bad man.",
+          "type": "real",
+          "entities": [{"id": "Greg 7", "type": "concrete", "category": "person"}],
+          "adjectives": [["bad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is not a parent of Y1, Y1 is not a child of X1.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "If X1 is not a parent of Y1, Y1 is not a child of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"}, {"id": "Y1", "type": "generic"}]
+        }
+      ]
+    },
+    {
+      "raw": "Mike has a pear.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Mike 5 has a pear 8.",
+          "type": "situation",
+          "entities": [{"id": "Mike 5", "type": "concrete", "category": "person"},
+            {"id": "pear 8", "type": "concrete", "category": "plant"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "A big old grey elephant was strong.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "A big old grey elephant 9 was strong.",
+          "type": "situation",
+          "entities": [{"id": "elephant 9", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","elephant"],
+            ["old","none","elephant"],
+            ["grey","none","elephant"],
+            ["strong","none","elephant"]
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Which man has a potato?",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Which man has a potato?",
+          "type": "query",
+          "entities": [{"id": "man", "type": "generic", "category": "person", "wh_placeholder": true},
+            {"id": "potato", "type": "generic", "category": "plant", "scope": "dependent"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage_1_retries": ["sanity #1: missing_wh_placeholder"],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","man","John 1"], ["has degree property","nice","John 1","none","person"]]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["isa","apple","apple 2"], ["have","John 1","apple 2"]]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 3"],
+          ["isa","door","door 4"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","forget"],
+              ["has actor","E1","Eve 3"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","lock"],
+                  ["has actor","E2","Eve 3"],
+                  ["has target","E2","door 4"],
+                  ["has time","E2","past","in"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and", ["isa","man","Mike 5"], ["has degree property","nice","Mike 5","none","person"]]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and", ["isa","bike","bike 6"], ["has degree property","small","bike 6","none","bike"]]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and", ["isa","man","Greg 7"], ["has degree property","bad","Greg 7","none","person"]]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies",
+              ["not", ["is rel2","parent of","X1","Y1"]],
+              ["not", ["is rel2","child of","Y1","X1"]]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and", ["isa","person","Mike 5"], ["isa","pear","pear 8"], ["have","Mike 5","pear 8"]]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","elephant","elephant 9"],
+            ["has degree property","big","elephant 9","none","elephant"],
+            ["has degree property","old","elephant 9","none","elephant"],
+            ["has degree property","grey","elephant 9","none","elephant"],
+            ["has degree property","strong","elephant 9","none","elephant"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S10",
+      ["ask","X",
+        ["exists", "Y", ["and", ["isa","man","X"], ["isa","potato","Y"], ["have","X","Y"]]]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","man","#:John 1"],
+ "@nl": "John 1 is a nice man."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is a nice man."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 has an apple 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","apple","#:apple 2"],
+ "@nl": "John 1 has an apple 2."},
+{"@name": "sent_S2",
+ "@logic": ["have", "#:John 1", "#:apple 2", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 has an apple 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Eve 3"],
+ "@nl": "Eve 3 forgot to lock the door 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","door","#:door 4"],
+ "@nl": "Eve 3 forgot to lock the door 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Eve 3 forgot to lock the door 4."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "forget", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 3 forgot to lock the door 4."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:Eve 3", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 3 forgot to lock the door 4."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 3 forgot to lock the door 4."},
+{"@name": "sent_S3",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "Eve 3 forgot to lock the door 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Eve 3 forgot to lock the door 4."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "lock", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 3 forgot to lock the door 4."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:Eve 3", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 3 forgot to lock the door 4."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk1_activity", "#:door 4", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 3 forgot to lock the door 4."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 3 forgot to lock the door 4."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Eve 3 forgot to lock the door 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","man","#:Mike 5"],
+ "@nl": "Mike 5 is a nice man."},
+{"@name": "sent_S4",
+ "@logic": ["has degree property", "good", "#:Mike 5", "none", "person", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mike 5 is a nice man."},
+{"@name": "sent_S5",
+ "@logic": ["isa","bike","#:bike 6"],
+ "@nl": "The bike 6 is small."},
+{"@name": "sent_S5",
+ "@logic": ["has degree property", "small", "#:bike 6", "none", "bike", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The bike 6 is small."},
+{"@name": "sent_S6",
+ "@logic": ["isa","man","#:Greg 7"],
+ "@nl": "Greg 7 is a bad man."},
+{"@name": "sent_S6",
+ "@logic": ["-has degree property", "good", "#:Greg 7", "none", "person", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Greg 7 is a bad man."},
+{"@name": "sent_S7",
+ "@logic": [["is rel2", "parent of", "?:X1", "?:Y1", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["-is rel2", "child of", "?:Y1", "?:X1", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "If X1 is not a parent of Y1, Y1 is not a child of X1."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Mike 5"],
+ "@nl": "Mike 5 has a pear 8."},
+{"@name": "sent_S8",
+ "@logic": ["isa","pear","#:pear 8"],
+ "@nl": "Mike 5 has a pear 8."},
+{"@name": "sent_S8",
+ "@logic": ["have", "#:Mike 5", "#:pear 8", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Mike 5 has a pear 8."},
+{"@name": "sent_S9",
+ "@logic": ["isa","elephant","#:elephant 9"],
+ "@nl": "A big old grey elephant 9 was strong."},
+{"@name": "sent_S9",
+ "@logic": ["has degree property", "big", "#:elephant 9", "none", "elephant", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "A big old grey elephant 9 was strong."},
+{"@name": "sent_S9",
+ "@logic": ["-has degree property", "new", "#:elephant 9", "none", "elephant", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "A big old grey elephant 9 was strong."},
+{"@name": "sent_S9",
+ "@logic": ["has property", "grey", "#:elephant 9", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "A big old grey elephant 9 was strong."},
+{"@name": "sent_S9",
+ "@logic": ["has degree property", "strong", "#:elephant 9", "none", "elephant", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "A big old grey elephant 9 was strong."},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa","man","?:X"]],
+ "@nl": "Which man has a potato?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "potato", ["sk2","?:X"]]],
+ "@nl": "Which man has a potato?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["have", "?:X", ["sk2","?:X"], ["$ctxt","present","?:Fv29","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "Which man has a potato?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-isa","man","?:X"],
+            ["-isa","potato","?:Y"],
+            ["-have", "?:X", "?:Y", ["$ctxt","present","?:Fv34","?:Fv21","?:Fv22"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which man has a potato?"},
+{"@name": "sent_S10",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@what_query": true,
+ "@nl": "Which man has a potato?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "?:Br1", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which man has a potato?"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv75","?:Fv35"],
+            ["-has degree property","high","?:X","none","?:Fv76","?:Fv35"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv77","?:Fv36"],
+            ["has degree property","small","?:X","none","?:Fv78","?:Fv36"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","apple","?:X"], ["-isa","pear","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","apple","?:X"], ["-isa","pear","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv79", ["$ctxt","past","?:Fv37","?:Fv38","?:Fv39"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv80", ["$ctxt","present","?:Fv37","?:Fv38","?:Fv39"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv81", ["$ctxt","present","?:Fv37","?:Fv38","?:Fv39"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv40","?:Fv41","?:Fv42"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "grey", "?:X", ["$ctxt","past","?:Fv43","?:Fv44","?:Fv45"]],
+            ["has property", "grey", "?:X", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]],
+            ["$block", 0, ["$not", ["has property", "grey", "?:X", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "grey", "?:X", ["$ctxt","past","?:Fv46","?:Fv47","?:Fv48"]],
+            ["has property", "grey", "?:X", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]],
+            ["$block", 0, ["$not", ["has property", "grey", "?:X", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "new", "?:X", "none", "?:Fv82", ["$ctxt","past","?:Fv49","?:Fv50","?:Fv51"]],
+            ["-has degree property", "new", "?:X", "none", "?:Fv83", ["$ctxt","present","?:Fv49","?:Fv50","?:Fv51"]],
+            ["$block", 0, ["$not", ["has degree property", "old", "?:X", "none", "?:Fv84", ["$ctxt","present","?:Fv49","?:Fv50","?:Fv51"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "new", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv52","?:Fv53","?:Fv54"]],
+            ["-has degree property", "new", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv52","?:Fv53","?:Fv54"]],
+            ["$block", 0, ["$not", ["has degree property", "old", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv52","?:Fv53","?:Fv54"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv85", ["$ctxt","past","?:Fv55","?:Fv56","?:Fv57"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv86", ["$ctxt","present","?:Fv55","?:Fv56","?:Fv57"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv87", ["$ctxt","present","?:Fv55","?:Fv56","?:Fv57"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv58","?:Fv59","?:Fv60"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv58","?:Fv59","?:Fv60"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv58","?:Fv59","?:Fv60"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv88", ["$ctxt","past","?:Fv61","?:Fv62","?:Fv63"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv89", ["$ctxt","present","?:Fv61","?:Fv62","?:Fv63"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv90", ["$ctxt","present","?:Fv61","?:Fv62","?:Fv63"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv64","?:Fv65","?:Fv66"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv64","?:Fv65","?:Fv66"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv64","?:Fv65","?:Fv66"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_neg_implicative",
+ "@logic": [["-has type","?:E1","forget","?:Ct1"],
+            ["-has actor","?:E1","?:X","?:Ct1"],
+            ["-has content","?:E1","?:E2"],
+            ["-has type","?:E2","?:V","?:Ct2"],
+            ["-has actor","?:E2","?:X","?:Ct2"],
+            ["-has target","?:E2","?:Y","?:Ct2"],
+            ["-has type","?:E3","?:V","?:Ct3"],
+            ["-has actor","?:E3","?:X","?:Ct3"],
+            ["-has target","?:E3","?:Y","?:Ct3"],
+            ["-actuality","?:E3"]
+           ],
+ "@nl": "[generated: frm_neg_implicative]"},
+{"@name": "pop_what",
+ "@logic": ["isa","bike","$some_bike"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","door","$some_door"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","pear","$some_pear"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","apple","$some_apple"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","man","$some_man"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no answers found"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32126,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1364,
+      "raw": {
+        "input_tokens": 84,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1364,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 34033,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1622,
+      "raw": {
+        "input_tokens": 1991,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1622,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39907,
+      "cached_input_tokens": 38891,
+      "output_tokens": 882,
+      "raw": {
+        "input_tokens": 1016,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 882,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 41760,
+      "cached_input_tokens": 38891,
+      "output_tokens": 895,
+      "raw": {
+        "input_tokens": 2869,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 895,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:17:01Z"
+}

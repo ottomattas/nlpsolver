@@ -1,0 +1,415 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 184,
+  "input_text": "The red straw is 10 meters long. John ate berries with an edge of a spoon. Elephants have a trunk. If X1 is not a parent of Y1, Y1 is not a child of X1. No penguin can fly. Birds have a trunk?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The red straw is 10 meters long.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The red straw 1 is 10 meters long.",
+          "type": "situation",
+          "entities": [{"id": "straw 1", "type": "concrete", "category": "artifact"},
+            {"id": "10 meters", "type": "concrete", "category": "measure"}
+          ],
+          "adjectives": [["red","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "John ate berries with an edge of a spoon.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 ate berries 2 with the edge 3 of a spoon 4.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "berries 2", "type": "concrete"},
+            {"id": "edge 3", "type": "concrete", "text": "edge", "category": "artifact"},
+            {"id": "spoon 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "eat",
+              "mode": "event",
+              "roles": {"actor": "John 1", "target": "berries 2", "instrument": "edge 3"}
+            }
+          ],
+          "definites": [["edge of","edge 3","spoon 4"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "The edge 3 is the edge of a spoon 4.",
+          "type": "situation",
+          "entities": [{"id": "edge 3", "type": "concrete", "text": "edge", "category": "artifact"},
+            {"id": "spoon 4", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["edge of","edge 3","spoon 4"]]
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have a trunk.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Elephants have a trunk.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunk", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is not a parent of Y1, Y1 is not a child of X1.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "If X1 is not a parent of Y1, Y1 is not a child of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"}, {"id": "Y1", "type": "generic"}]
+        }
+      ]
+    },
+    {
+      "raw": "No penguin can fly.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "No penguin can fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguin", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability", "roles": {"actor": "penguin"}}]
+        }
+      ]
+    },
+    {
+      "raw": "Birds have a trunk?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Do birds have a trunk?",
+          "type": "query",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"},
+            {"id": "trunk", "type": "generic", "scope": "dependent"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","straw","straw 1"],
+          ["has degree property","red","straw 1","none","none"],
+          ["=", ["$measure_of","length","straw 1","W0"], ["$measure",10,"meter"]]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["isa","berry","berries 2"],
+            ["isa","edge","edge 3"],
+            ["isa","spoon","spoon 4"],
+            ["has part","spoon 4","edge 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","eat"],
+                ["has actor","E","John 1"],
+                ["has target","E","berries 2"],
+                ["has instrument","E","edge 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["@definite","S2","W0","edge of","spoon 4","edge 3"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","edge","edge 3"],
+            ["isa","spoon","spoon 4"],
+            ["has part","spoon 4","edge 3"]
+          ]
+        ],
+        ["@definite","S3","W0","edge of","spoon 4","edge 3"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S4",0.99]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall","X",
+          ["forall","Y",
+            ["implies",
+              ["not", ["is rel2","parent of","X","Y"]],
+              ["not", ["is rel2","child of","Y","X"]]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["question",
+        ["forall","X",
+          ["implies",
+            ["isa","bird","X"],
+            ["normally", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","measure","10 meters"],
+ "@nl": "The red straw 1 is 10 meters long."},
+{"@name": "entity_S2",
+ "@logic": ["isa","edge","#:edge 3"],
+ "@nl": "John 1 ate berries 2 with the edge 3 of a spoon 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","straw","#:straw 1"],
+ "@nl": "The red straw 1 is 10 meters long."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "red", "#:straw 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The red straw 1 is 10 meters long."},
+{"@name": "sent_S1",
+ "@logic": ["=", ["$measure_of","length","#:straw 1","W0"], ["$list",10,"#:meter"]],
+ "@nl": "The red straw 1 is 10 meters long."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 ate berries 2 with the edge 3 of a spoon 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","berry","#:berries 2"],
+ "@nl": "John 1 ate berries 2 with the edge 3 of a spoon 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa", "edge", ["$theof1", "edge", "#:spoon 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]]],
+ "@nl": "John 1 ate berries 2 with the edge 3 of a spoon 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","spoon","#:spoon 4"],
+ "@nl": "John 1 ate berries 2 with the edge 3 of a spoon 4."},
+{"@name": "sent_S2",
+ "@logic": ["has part", "#:spoon 4", ["$theof1", "edge", "#:spoon 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 ate berries 2 with the edge 3 of a spoon 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1 ate berries 2 with the edge 3 of a spoon 4."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "eat", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 ate berries 2 with the edge 3 of a spoon 4."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:John 1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 ate berries 2 with the edge 3 of a spoon 4."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "#:berries 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 ate berries 2 with the edge 3 of a spoon 4."},
+{"@name": "sent_S2",
+ "@logic": ["has instrument", "sk0_activity", ["$theof1", "edge", "#:spoon 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 ate berries 2 with the edge 3 of a spoon 4."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 ate berries 2 with the edge 3 of a spoon 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa", "edge", ["$theof1", "edge", "#:spoon 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]]],
+ "@nl": "The edge 3 is the edge of a spoon 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","spoon","#:spoon 4"],
+ "@nl": "The edge 3 is the edge of a spoon 4."},
+{"@name": "sent_S3",
+ "@logic": ["has part", "#:spoon 4", ["$theof1", "edge", "#:spoon 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The edge 3 is the edge of a spoon 4."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk1","?:X"]]],
+ "@nl": "Elephants have a trunk."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have a trunk."},
+{"@name": "sent_S5",
+ "@logic": [["is rel2", "parent of", "?:X", "?:Y", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-is rel2", "child of", "?:Y", "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "If X1 is not a parent of Y1, Y1 is not a child of X1."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "No penguin can fly."},
+{"@name": "sent_S7",
+ "@sourcetype": "question_subject",
+ "@logic": ["isa","bird","skq_S7_bird"],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","trunk","sk2_trunk"]],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has part", "skq_S7_bird", "sk2_trunk", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-has part", "skq_S7_bird", "?:Y", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]],
+            ["$defq0"]
+           ],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:spoon 4", ["$theof1", "edge", "#:spoon 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:spoon 4", ["$theof1", "edge", "#:spoon 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "edge of", ["$theof1","edge","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "edge", ["$theof1","edge","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv23"], ["has type","?:E","go","?:Fv23"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv24","?:Fv25","?:Fv26"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv27","?:Fv28","?:Fv29"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28370,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1080,
+      "raw": {
+        "input_tokens": 28370,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1080,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29450
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34184,
+      "cached_input_tokens": 33280,
+      "output_tokens": 719,
+      "raw": {
+        "input_tokens": 34184,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 719,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34903
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:44:31Z"
+}

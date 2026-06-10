@@ -1,0 +1,598 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 598,
+  "input_text": "\"Riga is outside America. John bought a red car and a blue bicycle. An elephant was strong. The hand of a man moved a wheel. The bear was nice. The bicycle was blue?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "\"Riga is outside America.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Riga 1 is outside America 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Riga 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Riga"
+            },
+            {
+              "id": "America 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Americas"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John bought a red car and a blue bicycle.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 3 bought a car 4 and a bicycle 5.",
+          "type": "situation",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "person"},
+            {"id": "car 4", "type": "concrete", "category": "artifact"},
+            {"id": "bicycle 5", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "buy",
+              "mode": "event",
+              "roles": {"actor": "John 3", "target": ["car 4","bicycle 5"]}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "The car 4 is red.",
+          "type": "situation",
+          "entities": [{"id": "car 4", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["red","none","none"]],
+          "pre_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "The bicycle 5 is blue.",
+          "type": "situation",
+          "entities": [{"id": "bicycle 5", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["blue","none","none"]],
+          "pre_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "An elephant was strong.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "An elephant 6 was strong.",
+          "type": "situation",
+          "entities": [{"id": "elephant 6", "type": "concrete", "category": "animal"}],
+          "adjectives": [["strong","none","elephant"]],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The hand of a man moved a wheel.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The hand 8 of a man 7 moved a wheel 9.",
+          "type": "situation",
+          "entities": [{"id": "man 7", "type": "concrete", "category": "person"},
+            {"id": "hand 8", "type": "concrete", "text": "hand"},
+            {"id": "wheel 9", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "move", "mode": "event", "roles": {"actor": "hand 8", "target": "wheel 9"}}],
+          "definites": [["hand of","hand 8","man 7"]],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S7",
+          "text": "The hand 8 is the hand of the man 7.",
+          "type": "situation",
+          "entities": [{"id": "hand 8", "type": "concrete", "text": "hand"},
+            {"id": "man 7", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["hand of","hand 8","man 7"]],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The bear was nice.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "The bear 10 was nice.",
+          "type": "situation",
+          "entities": [{"id": "bear 10", "type": "concrete", "category": "animal"}],
+          "adjectives": [["nice","none","entity"]],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The bicycle was blue?",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Was the bicycle 5 blue?",
+          "type": "query",
+          "entities": [{"id": "bicycle 5", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["blue","none","none"]],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["is rel2","outside","https://en.wikipedia.org/wiki/Riga","https://en.wikipedia.org/wiki/Americas"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 3"],
+            ["isa","car","car 4"],
+            ["isa","bicycle","bicycle 5"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","buy"],
+                ["has actor","E","John 3"],
+                ["has target","E","car 4"],
+                ["has target","E","bicycle 5"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W1",
+        ["and", ["isa","car","car 4"], ["has degree property","red","car 4","none","none"]]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W1",
+        ["and",
+          ["isa","bicycle","bicycle 5"],
+          ["has degree property","blue","bicycle 5","none","none"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","elephant","elephant 6"],
+            ["has degree property","strong","elephant 6","none","elephant"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","man 7"],
+            ["isa","hand","hand 8"],
+            ["isa","wheel","wheel 9"],
+            ["has part","man 7","hand 8"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","move"],
+                ["has actor","E","hand 8"],
+                ["has target","E","wheel 9"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"],
+        ["@definite","S6","W0","hand of","man 7","hand 8"]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","hand","hand 8"], ["isa","person","man 7"], ["has part","man 7","hand 8"]]
+        ],
+        ["@definite","S7","W0","hand of","man 7","hand 8"]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","bear","bear 10"],
+            ["has degree property","nice","bear 10","none","entity"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S9",
+      ["question",
+        ["and",
+          ["isa","bicycle","bicycle 5"],
+          ["@time", "past", ["has degree property","blue","bicycle 5","none","none"]]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Riga 1"],
+ "@nl": "Riga 1 is outside America 2."},
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:America 2"],
+ "@nl": "Riga 1 is outside America 2."},
+{"@name": "entity_S6",
+ "@logic": ["isa","man","#:man 7"],
+ "@nl": "The hand 8 of a man 7 moved a wheel 9."},
+{"@name": "sent_S1",
+ "@logic": ["is rel2", "outside", "https://en.wikipedia.org/wiki/Riga", "https://en.wikipedia.org/wiki/Americas", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Riga 1 is outside America 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 3"],
+ "@nl": "John 3 bought a car 4 and a bicycle 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","car","#:car 4"],
+ "@nl": "John 3 bought a car 4 and a bicycle 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","bicycle","#:bicycle 5"],
+ "@nl": "John 3 bought a car 4 and a bicycle 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 3 bought a car 4 and a bicycle 5."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "buy", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 3 bought a car 4 and a bicycle 5."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:John 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 3 bought a car 4 and a bicycle 5."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "#:car 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 3 bought a car 4 and a bicycle 5."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "#:bicycle 5", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 3 bought a car 4 and a bicycle 5."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 3 bought a car 4 and a bicycle 5."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "John 3 bought a car 4 and a bicycle 5."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "John 3 bought a car 4 and a bicycle 5."},
+{"@name": "sent_S3",
+ "@logic": ["isa","car","#:car 4"],
+ "@nl": "The car 4 is red."},
+{"@name": "sent_S3",
+ "@logic": ["has property", "red", "#:car 4", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The car 4 is red."},
+{"@name": "sent_S4",
+ "@logic": ["isa","bicycle","#:bicycle 5"],
+ "@nl": "The bicycle 5 is blue."},
+{"@name": "sent_S4",
+ "@logic": ["has property", "blue", "#:bicycle 5", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "The bicycle 5 is blue."},
+{"@name": "sent_S5",
+ "@logic": ["isa","elephant","#:elephant 6"],
+ "@nl": "An elephant 6 was strong."},
+{"@name": "sent_S5",
+ "@logic": ["has degree property", "strong", "#:elephant 6", "none", "elephant", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "An elephant 6 was strong."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:man 7"],
+ "@nl": "The hand 8 of a man 7 moved a wheel 9."},
+{"@name": "sent_S6",
+ "@logic": ["isa", "hand", ["$theof1", "hand", "#:man 7", ["$ctxt","past","W0","?:Fv11","?:Fv12"]]],
+ "@nl": "The hand 8 of a man 7 moved a wheel 9."},
+{"@name": "sent_S6",
+ "@logic": ["isa","wheel","#:wheel 9"],
+ "@nl": "The hand 8 of a man 7 moved a wheel 9."},
+{"@name": "sent_S6",
+ "@logic": ["has part", "#:man 7", ["$theof1", "hand", "#:man 7", ["$ctxt","past","W0","?:Fv11","?:Fv12"]], ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The hand 8 of a man 7 moved a wheel 9."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The hand 8 of a man 7 moved a wheel 9."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk1_activity", "go", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The hand 8 of a man 7 moved a wheel 9."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk1_activity", ["$theof1", "hand", "#:man 7", ["$ctxt","past","W0","?:Fv11","?:Fv12"]], ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The hand 8 of a man 7 moved a wheel 9."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk1_activity", "#:wheel 9", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The hand 8 of a man 7 moved a wheel 9."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The hand 8 of a man 7 moved a wheel 9."},
+{"@name": "sent_S6",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The hand 8 of a man 7 moved a wheel 9."},
+{"@name": "sent_S6",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The hand 8 of a man 7 moved a wheel 9."},
+{"@name": "sent_S7",
+ "@logic": ["isa", "hand", ["$theof1", "hand", "#:man 7", ["$ctxt","past","W0","?:Fv11","?:Fv12"]]],
+ "@nl": "The hand 8 is the hand of the man 7."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:man 7"],
+ "@nl": "The hand 8 is the hand of the man 7."},
+{"@name": "sent_S7",
+ "@logic": ["has part", "#:man 7", ["$theof1", "hand", "#:man 7", ["$ctxt","past","W0","?:Fv11","?:Fv12"]], ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The hand 8 is the hand of the man 7."},
+{"@name": "sent_S8",
+ "@logic": ["isa","bear","#:bear 10"],
+ "@nl": "The bear 10 was nice."},
+{"@name": "sent_S8",
+ "@logic": ["has degree property", "good", "#:bear 10", "none", "?:Fv71", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The bear 10 was nice."},
+{"@name": "sent_S9",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","bicycle","#:bicycle 5"]],
+ "@nl": "Was the bicycle 5 blue?"},
+{"@name": "sent_S9",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "blue", "#:bicycle 5", ["$ctxt","past","W1","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Was the bicycle 5 blue?"},
+{"@name": "sent_S9",
+ "@sourcetype": "question",
+ "@logic": [["-isa","bicycle","#:bicycle 5"],
+            ["-has property", "blue", "#:bicycle 5", ["$ctxt","past","W1","?:Fv17","?:Fv18"]],
+            ["$defq0"]
+           ],
+ "@nl": "Was the bicycle 5 blue?"},
+{"@name": "sent_S9",
+ "@question": ["$defq0"],
+ "@nl": "Was the bicycle 5 blue?"},
+{"@name": "sent_S9",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "blue", "#:bicycle 5", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["has property", "blue", "#:bicycle 5", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "blue", "#:bicycle 5", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Was the bicycle 5 blue?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:man 7", ["$theof1", "hand", "#:man 7", ["$ctxt","past","W0","?:Fv11","?:Fv12"]], ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:man 7", ["$theof1", "hand", "#:man 7", ["$ctxt","past","W0","?:Fv11","?:Fv12"]], ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "hand of", ["$theof1","hand","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "hand", ["$theof1","hand","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","hand","?:Fv24"], ["has type","?:E","give","?:Fv24"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv25"], ["has type","?:E","go","?:Fv25"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv26"],
+            ["-has property","red","?:X","?:Fv26"],
+            ["$block", 0, ["has property","red","?:X","?:Fv26"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv27"],
+            ["-has property","red","?:X","?:Fv27"],
+            ["$block", 0, ["has property","blue","?:X","?:Fv27"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","bicycle","?:X"], ["-isa","car","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","bicycle","?:X"], ["-isa","car","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","in","?:X","?:Fv28"],
+            ["-has property","outside","?:X","?:Fv28"],
+            ["$block", 0, ["has property","outside","?:X","?:Fv28"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","in","?:X","?:Fv29"],
+            ["-has property","outside","?:X","?:Fv29"],
+            ["$block", 0, ["has property","in","?:X","?:Fv29"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bicycle","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bicycle","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv30","?:Fv31","?:Fv33","?:Fv34"]],
+            ["-has actor", "?:E", "?:Owner", ["$ctxt","?:Fv30","?:Fv31","?:Fv33","?:Fv34"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv30","?:Fv31","?:Fv33","?:Fv34"]],
+            ["-next","?:Fv31","?:Fv32"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]],
+            ["$block", 0, ["$not", ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv35","?:Fv36","?:Fv38","?:Fv39"]],
+            ["-has beneficiary", "?:E", "?:Owner", ["$ctxt","?:Fv35","?:Fv36","?:Fv38","?:Fv39"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv35","?:Fv36","?:Fv38","?:Fv39"]],
+            ["-next","?:Fv36","?:Fv37"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv37","?:Fv38","?:Fv39"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv40","?:Fv41","?:Fv43","?:Fv44"]],
+            ["-has recipient", "?:E", "?:Owner", ["$ctxt","?:Fv40","?:Fv41","?:Fv43","?:Fv44"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv40","?:Fv41","?:Fv43","?:Fv44"]],
+            ["-next","?:Fv41","?:Fv42"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv45","?:Fv46","?:Fv47"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv48","?:Fv49","?:Fv50"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv51","?:Fv52","?:Fv53"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv54","?:Fv55","?:Fv56"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv72", ["$ctxt","past","?:Fv57","?:Fv58","?:Fv59"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv73", ["$ctxt","present","?:Fv57","?:Fv58","?:Fv59"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv74", ["$ctxt","present","?:Fv57","?:Fv58","?:Fv59"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv60","?:Fv61","?:Fv62"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv60","?:Fv61","?:Fv62"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv60","?:Fv61","?:Fv62"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S9","assumption",1], [["-isa","bicycle","#:bicycle 5"], ["$defq0"], ["-has property", "blue", "#:bicycle 5", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [2, ["in","sent_S4","assumption",1], [["has property", "blue", "#:bicycle 5", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [3, ["in","sent_S9","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,2], 2, 3, "fromga", 1], [["-isa","bicycle","#:bicycle 5"]]],
+          [5, ["in","sent_S4","assumption",1], [["isa","bicycle","#:bicycle 5"]]],
+          [6, ["simp",4,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John bought a red car and a blue bicycle.",
+"  (2) The bicycle was blue?",
+"Proof steps (by contradiction):",
+"  (1) If the bicycle F is blue then answer holds  [sentence 2]",
+"  (2) The bicycle F is blue  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) The bicycle F is not a bicycle  [from steps 1, 2, 3]",
+"  (5) The bicycle F is a bicycle  [sentence 1]",
+"  (6) Contradiction  [from steps 4, 5]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28354,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1279,
+      "raw": {
+        "input_tokens": 28354,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1279,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29633
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34440,
+      "cached_input_tokens": 33280,
+      "output_tokens": 770,
+      "raw": {
+        "input_tokens": 34440,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 770,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35210
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:54:20Z"
+}

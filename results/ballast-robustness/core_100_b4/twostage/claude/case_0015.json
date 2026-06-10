@@ -1,0 +1,457 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 15,
+  "input_text": "Eve forgot to lock the door. The room was cleaned by the maid. Cars are red. Agatha is in trouble. John is a tall man and not a tall man?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Eve forgot to lock the door.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Eve 1 forgot to lock the door 2.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "door 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "forget",
+              "mode": "event",
+              "roles": {
+                "actor": "Eve 1",
+                "content": {"root": "lock", "mode": "event", "roles": {"actor": "Eve 1", "target": "door 2"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The room was cleaned by the maid.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The maid 3 cleaned the room 4.",
+          "type": "situation",
+          "entities": [{"id": "maid 3", "type": "concrete", "category": "person"},
+            {"id": "room 4", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "clean", "mode": "event", "roles": {"actor": "maid 3", "target": "room 4"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Cars are red.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Cars are red.",
+          "type": "normal_rule",
+          "entities": [{"id": "cars", "type": "generic", "category": "artifact"}],
+          "adjectives": [["red","none","car"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Agatha is in trouble.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Agatha 1 is in trouble.",
+          "type": "situation",
+          "entities": [{"id": "Agatha 1", "type": "concrete", "category": "person"},
+            {"id": "trouble", "type": "generic", "category": "abstract"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is a tall man and not a tall man?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Is John 1 a tall man and not a tall man?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "man", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["tall","none","man"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["isa","door","door 2"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","forget"],
+              ["has actor","E1","Eve 1"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","lock"],
+                  ["has actor","E2","Eve 1"],
+                  ["has target","E2","door 2"],
+                  ["has time","E2","past","in"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","maid 3"],
+            ["isa","room","room 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","clean"],
+                ["has actor","E","maid 3"],
+                ["has target","E","room 4"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","car","X"],
+              ["normally", ["has degree property","red","X","none","car"]]
+            ]
+          ]
+        ],
+        ["@p","S3",0.99]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Agatha 1"],
+          ["exists", "Y", ["and", ["isa","trouble","Y"], ["is rel2","in","Agatha 1","Y"]]]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["question",
+        ["and",
+          ["isa","man","John 1"],
+          ["has degree property","tall","John 1","none","man"],
+          ["not", ["has degree property","tall","John 1","none","man"]]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","maid","#:maid 3"],
+ "@nl": "The maid 3 cleaned the room 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","door","#:door 2"],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "forget", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk1_activity", "lock", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk1_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk1_activity", "#:door 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:maid 3"],
+ "@nl": "The maid 3 cleaned the room 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","room","#:room 4"],
+ "@nl": "The maid 3 cleaned the room 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The maid 3 cleaned the room 4."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk2_activity", "clean", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The maid 3 cleaned the room 4."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk2_activity", "#:maid 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The maid 3 cleaned the room 4."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk2_activity", "#:room 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The maid 3 cleaned the room 4."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The maid 3 cleaned the room 4."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The maid 3 cleaned the room 4."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The maid 3 cleaned the room 4."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","car","?:X"],
+            ["has property", "red", "?:X", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$block", ["$","car",1], ["$not", ["has property", "red", "?:X", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Cars are red."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Agatha 1"],
+ "@nl": "Agatha 1 is in trouble."},
+{"@name": "sent_S4",
+ "@logic": ["isa","trouble","sk3_trouble"],
+ "@nl": "Agatha 1 is in trouble."},
+{"@name": "sent_S4",
+ "@logic": ["is rel2", "in", "#:Agatha 1", "sk3_trouble", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Agatha 1 is in trouble."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","man","#:John 1"]],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","W1","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","W1","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-isa","man","#:John 1"],
+            ["-has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","W1","?:Fv11","?:Fv12"]],
+            ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","W1","?:Fv11","?:Fv12"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","car","$some_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","car","$some_not_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trouble","$some_trouble"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trouble","$some_not_trouble"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "red", "$some_red_car", ["$ctxt","?:Fv59","?:Fv56","?:Fv57","?:Fv58"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","car","$some_red_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "red", "$some_not_red_car", ["$ctxt","?:Fv67","?:Fv64","?:Fv65","?:Fv66"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","tall","?:X","none","?:Fv68","?:Fv18"],
+            ["has degree property","high","?:X","none","?:Fv69","?:Fv18"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","high","?:X","none","?:Fv70","?:Fv19"],
+            ["has degree property","tall","?:X","none","?:Fv71","?:Fv19"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv20","?:Fv21","?:Fv22"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv23","?:Fv24","?:Fv25"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "none", "?:Fv72", ["$ctxt","past","?:Fv26","?:Fv27","?:Fv28"]],
+            ["has degree property", "tall", "?:X", "none", "?:Fv73", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "none", "?:Fv74", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv29","?:Fv30","?:Fv31"]],
+            ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv29","?:Fv30","?:Fv31"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv29","?:Fv30","?:Fv31"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_neg_implicative",
+ "@logic": [["-has type","?:E1","forget","?:Ct1"],
+            ["-has actor","?:E1","?:X","?:Ct1"],
+            ["-has content","?:E1","?:E2"],
+            ["-has type","?:E2","?:V","?:Ct2"],
+            ["-has actor","?:E2","?:X","?:Ct2"],
+            ["-has target","?:E2","?:Y","?:Ct2"],
+            ["-has type","?:E3","?:V","?:Ct3"],
+            ["-has actor","?:E3","?:X","?:Ct3"],
+            ["-has target","?:E3","?:Y","?:Ct3"],
+            ["-actuality","?:E3"]
+           ],
+ "@nl": "[generated: frm_neg_implicative]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S5","assumption",1], [["-$defq0"], ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [2, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [3, ["mp",1,2,"fromga",1], [["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [4, ["in","sent_S5","assumption",1], [["-$defq0"], ["-has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [5, ["mp", 3, [4,1], 2, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John is a tall man and not a tall man?",
+"Proof steps (by contradiction):",
+"  (1) If answer holds then John is a tall man  [sentence 1]",
+"  (2) Answer holds  [assumption]",
+"  (3) John is a tall man  [from steps 1, 2]",
+"  (4) If answer holds then John is not a tall man  [sentence 1]",
+"  (5) Contradiction  [from steps 3, 4, 2]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32086,
+      "cached_input_tokens": 32042,
+      "output_tokens": 835,
+      "raw": {
+        "input_tokens": 44,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 835,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39513,
+      "cached_input_tokens": 38891,
+      "output_tokens": 891,
+      "raw": {
+        "input_tokens": 622,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 891,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 40910,
+      "cached_input_tokens": 38891,
+      "output_tokens": 640,
+      "raw": {
+        "input_tokens": 2019,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 640,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:36:08Z"
+}

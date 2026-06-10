@@ -1,0 +1,425 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 552,
+  "input_text": "Elephants have either trunks or tails. The cup filled with water fell. John is as tall as Bill. Tallinn is hardly in Latvia. Baby birds do not fly. Is John's height equal to Bill's?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "Elephants have either trunks or tails.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Elephants have either trunks or tails.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"},
+            {"id": "tails", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "The cup filled with water fell.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The cup 1 that was filled with water fell.",
+          "type": "situation",
+          "entities": [{"id": "cup 1", "type": "concrete", "category": "artifact"},
+            {"id": "water", "type": "generic", "scope": "kind", "category": "substance"}
+          ],
+          "actions": [{"root": "fill", "mode": "event", "roles": {"target": "cup 1", "content": "water"}},
+            {"root": "fall", "mode": "event", "roles": {"actor": "cup 1"}}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is as tall as Bill.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 1 is as tall as Bill 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Bill 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["tall","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is hardly in Latvia.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Tallinn 1 is hardly in Latvia 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Baby birds do not fly.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Baby birds do not fly.",
+          "type": "normal_rule",
+          "entities": [{"id": "baby birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability", "roles": {"actor": "baby birds"}}],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Is John's height equal to Bill's?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Is the height 1 of John 2 equal to the height 3 of Bill 4?",
+          "type": "query",
+          "entities": [{"id": "height 1", "type": "concrete", "text": "height"},
+            {"id": "John 2", "type": "concrete", "category": "person"},
+            {"id": "height 3", "type": "concrete", "text": "height"},
+            {"id": "Bill 4", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["height of","height 1","John 2"], ["height of","height 3","Bill 4"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["xor",
+                ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]],
+                ["exists", "Z", ["and", ["isa","tail","Z"], ["has part","X","Z"]]]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","cup","cup 1"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","fill"],
+              ["has target","E1","cup 1"],
+              ["has content","E1","water"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","fall"],
+              ["has actor","E2","cup 1"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","person","Bill 2"],
+          ["=", ["$measure_of","height","John 1","W0"], ["$measure_of","height","Bill 2","W0"]]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+        ],
+        ["@p","S4",0.1]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","baby bird","X"],
+              ["normally",
+                ["not",
+                  ["exists","E",
+                    ["and",
+                      ["isa","activity","E"],
+                      ["has type","E","fly"],
+                      ["has actor","E","X"],
+                      ["capability","E"]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S5",0.99]
+      ]
+    ],
+    ["@id","S6",
+      ["question",
+        ["=", ["$measure_of","height","John 2","W0"], ["$measure_of","height","Bill 4","W0"]]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: either_or_not_xor"],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is hardly in Latvia 2."},
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:Latvia 2"],
+ "@nl": "Tallinn 1 is hardly in Latvia 2."},
+{"@name": "entity_S6",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "Is the height 1 of John 2 equal to the height 3 of Bill 4?"},
+{"@name": "entity_S6",
+ "@logic": ["isa","person","#:Bill 4"],
+ "@nl": "Is the height 1 of John 2 equal to the height 3 of Bill 4?"},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["isa", "trunk", ["sk0","?:X"]],
+            ["isa", "tail", ["sk1","?:X"]]
+           ],
+ "@confidence": 0.995,
+ "@nl": "Elephants have either trunks or tails."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["isa", "trunk", ["sk0","?:X"]],
+            ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@confidence": 0.995,
+ "@nl": "Elephants have either trunks or tails."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["isa", "tail", ["sk1","?:X"]]
+           ],
+ "@confidence": 0.995,
+ "@nl": "Elephants have either trunks or tails."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@confidence": 0.995,
+ "@nl": "Elephants have either trunks or tails."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-isa","trunk","?:Y"],
+            ["-has part", "?:X", "?:Y", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-isa","tail","?:Z"],
+            ["-has part", "?:X", "?:Z", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Elephants have either trunks or tails."},
+{"@name": "sent_S2",
+ "@logic": ["isa","cup","#:cup 1"],
+ "@nl": "The cup 1 that was filled with water fell."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The cup 1 that was filled with water fell."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk2_activity", "fill", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The cup 1 that was filled with water fell."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk2_activity", "#:cup 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The cup 1 that was filled with water fell."},
+{"@name": "sent_S2",
+ "@logic": ["has content","sk2_activity","water"],
+ "@nl": "The cup 1 that was filled with water fell."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The cup 1 that was filled with water fell."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The cup 1 that was filled with water fell."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The cup 1 that was filled with water fell."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk3_activity", "fall", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The cup 1 that was filled with water fell."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk3_activity", "#:cup 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The cup 1 that was filled with water fell."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The cup 1 that was filled with water fell."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "The cup 1 that was filled with water fell."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is as tall as Bill 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Bill 2"],
+ "@nl": "John 1 is as tall as Bill 2."},
+{"@name": "sent_S3",
+ "@logic": ["=", ["$measure_of","height","#:John 1","W0"], ["$measure_of","height","#:Bill 2","W0"]],
+ "@nl": "John 1 is as tall as Bill 2."},
+{"@name": "sent_S4",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@confidence": 0.8,
+ "@nl": "Tallinn 1 is hardly in Latvia 2."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","baby bird","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-capability","?:E"],
+            ["$block", ["$","baby bird",3], ["capability","?:E"]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Baby birds do not fly."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["=", ["$measure_of","height","#:John 2","W0"], ["$measure_of","height","#:Bill 4","W0"]]
+           ],
+ "@nl": "Is the height 1 of John 2 equal to the height 3 of Bill 4?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-=", ["$measure_of","height","#:John 2","W0"], ["$measure_of","height","#:Bill 4","W0"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is the height 1 of John 2 equal to the height 3 of Bill 4?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","tail","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Is the height 1 of John 2 equal to the height 3 of Bill 4?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","height","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "height", ["$measure_of","height","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","tail","$some_tail"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","baby bird","$some_baby_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","baby bird","$some_not_baby_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","baby bird","?:X"], ["isa","bird","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","baby","?:X"], ["-isa","bird","?:X"], ["isa","baby bird","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv19"], ["has type","?:E","go","?:Fv19"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28355,
+      "cached_input_tokens": 28288,
+      "output_tokens": 961,
+      "raw": {
+        "input_tokens": 28355,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 961,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29316
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34169,
+      "cached_input_tokens": 33280,
+      "output_tokens": 614,
+      "raw": {
+        "input_tokens": 34169,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 614,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34783
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 35366,
+      "cached_input_tokens": 34048,
+      "output_tokens": 623,
+      "raw": {
+        "input_tokens": 35366,
+        "input_tokens_details": {"cached_tokens": 34048},
+        "output_tokens": 623,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35989
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:48:46Z"
+}

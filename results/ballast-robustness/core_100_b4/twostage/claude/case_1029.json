@@ -1,0 +1,493 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1029,
+  "input_text": "The chef cooked a meal for the guests. The letter was written by Eve. Emajogi's length is 80 kilometers. John was bad. An animal lifted a stone. Eve wrote the letter?",
+  "expected_answer": true,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The chef cooked a meal for the guests.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The chef 1 cooked a meal 2 for the guests 3.",
+          "type": "situation",
+          "entities": [{"id": "chef 1", "type": "concrete", "category": "person"},
+            {"id": "meal 2", "type": "concrete", "category": "artifact"},
+            {"id": "guests 3", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "cook",
+              "mode": "event",
+              "roles": {"actor": "chef 1", "target": "meal 2", "beneficiary": "guests 3"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The letter was written by Eve.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Eve 4 wrote the letter 5.",
+          "type": "situation",
+          "entities": [{"id": "Eve 4", "type": "concrete", "category": "person"},
+            {"id": "letter 5", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "write", "mode": "event", "roles": {"actor": "Eve 4", "target": "letter 5"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Emajogi's length is 80 kilometers.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The length 7 of Emajogi 6 is 80 kilometers.",
+          "type": "real",
+          "entities": [{
+              "id": "Emajogi 6",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Emajogi"
+            },
+            {"id": "length 7", "type": "concrete", "text": "length"},
+            {"id": "80 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 7","Emajogi 6"]]
+        },
+        {
+          "unit_id": "S4",
+          "text": "The length 7 is the length of Emajogi 6.",
+          "type": "real",
+          "entities": [{"id": "length 7", "type": "concrete", "text": "length"},
+            {
+              "id": "Emajogi 6",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Emajogi"
+            }
+          ],
+          "definites": [["length of","length 7","Emajogi 6"]]
+        }
+      ]
+    },
+    {
+      "raw": "John was bad.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "John 8 was bad.",
+          "type": "situation",
+          "entities": [{"id": "John 8", "type": "concrete", "category": "person"}],
+          "adjectives": [["bad","none","person"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "An animal lifted a stone.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "An animal 9 lifted a stone 10.",
+          "type": "situation",
+          "entities": [{"id": "animal 9", "type": "concrete", "category": "animal"},
+            {"id": "stone 10", "type": "concrete"}
+          ],
+          "actions": [{"root": "lift", "mode": "event", "roles": {"actor": "animal 9", "target": "stone 10"}}],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Eve wrote the letter?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Did Eve 4 write the letter 5?",
+          "type": "query",
+          "entities": [{"id": "Eve 4", "type": "concrete", "category": "person"},
+            {"id": "letter 5", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "write", "mode": "event", "roles": {"actor": "Eve 4", "target": "letter 5"}}],
+          "pre_state": "W3",
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","chef 1"],
+            ["isa","meal","meal 2"],
+            ["isa","person","guests 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","cook"],
+                ["has actor","E","chef 1"],
+                ["has target","E","meal 2"],
+                ["has beneficiary","E","guests 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Eve 4"],
+            ["isa","letter","letter 5"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","write"],
+                ["has actor","E","Eve 4"],
+                ["has target","E","letter 5"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$measure",80,"kilometer"]]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds", "W0", ["and", ["isa","place","https://en.wikipedia.org/wiki/Emajogi"]]],
+        ["@definite","S4","W0","length of","https://en.wikipedia.org/wiki/Emajogi","length 7"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","person","John 8"], ["has degree property","bad","John 8","none","person"]]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","animal","animal 9"],
+            ["isa","stone","stone 10"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","lift"],
+                ["has actor","E","animal 9"],
+                ["has target","E","stone 10"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S7",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","write"],
+            ["has actor","E","Eve 4"],
+            ["has target","E","letter 5"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","chef","#:chef 1"],
+ "@nl": "The chef 1 cooked a meal 2 for the guests 3."},
+{"@name": "entity_S1",
+ "@logic": ["isa","guest","#:guests 3"],
+ "@nl": "The chef 1 cooked a meal 2 for the guests 3."},
+{"@name": "entity_S1",
+ "@logic": ["isa","guest","#:guests 3"],
+ "@nl": "The chef 1 cooked a meal 2 for the guests 3."},
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Emajogi 6"],
+ "@nl": "The length 7 of Emajogi 6 is 80 kilometers."},
+{"@name": "entity_S3",
+ "@logic": ["isa","measure","80 kilometers"],
+ "@nl": "The length 7 of Emajogi 6 is 80 kilometers."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:chef 1"],
+ "@nl": "The chef 1 cooked a meal 2 for the guests 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","meal","#:meal 2"],
+ "@nl": "The chef 1 cooked a meal 2 for the guests 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:guests 3"],
+ "@nl": "The chef 1 cooked a meal 2 for the guests 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The chef 1 cooked a meal 2 for the guests 3."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "cook", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The chef 1 cooked a meal 2 for the guests 3."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:chef 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The chef 1 cooked a meal 2 for the guests 3."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:meal 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The chef 1 cooked a meal 2 for the guests 3."},
+{"@name": "sent_S1",
+ "@logic": ["has beneficiary", "sk0_activity", "#:guests 3", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The chef 1 cooked a meal 2 for the guests 3."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The chef 1 cooked a meal 2 for the guests 3."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The chef 1 cooked a meal 2 for the guests 3."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The chef 1 cooked a meal 2 for the guests 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Eve 4"],
+ "@nl": "Eve 4 wrote the letter 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","letter","#:letter 5"],
+ "@nl": "Eve 4 wrote the letter 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Eve 4 wrote the letter 5."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "write", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Eve 4 wrote the letter 5."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:Eve 4", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Eve 4 wrote the letter 5."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk1_activity", "#:letter 5", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Eve 4 wrote the letter 5."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Eve 4 wrote the letter 5."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Eve 4 wrote the letter 5."},
+{"@name": "sent_S2",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Eve 4 wrote the letter 5."},
+{"@name": "sent_S3",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The length 7 of Emajogi 6 is 80 kilometers."},
+{"@name": "sent_S4",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/Emajogi"],
+ "@nl": "The length 7 is the length of Emajogi 6."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:John 8"],
+ "@nl": "John 8 was bad."},
+{"@name": "sent_S5",
+ "@logic": ["-has degree property", "good", "#:John 8", "none", "person", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "John 8 was bad."},
+{"@name": "sent_S6",
+ "@logic": ["isa","animal","#:animal 9"],
+ "@nl": "An animal 9 lifted a stone 10."},
+{"@name": "sent_S6",
+ "@logic": ["isa","stone","#:stone 10"],
+ "@nl": "An animal 9 lifted a stone 10."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "An animal 9 lifted a stone 10."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk2_activity", "lift", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "An animal 9 lifted a stone 10."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk2_activity", "#:animal 9", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "An animal 9 lifted a stone 10."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk2_activity", "#:stone 10", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "An animal 9 lifted a stone 10."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "An animal 9 lifted a stone 10."},
+{"@name": "sent_S6",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "An animal 9 lifted a stone 10."},
+{"@name": "sent_S6",
+ "@logic": ["next","W2","W3"],
+ "@nl": "An animal 9 lifted a stone 10."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk3_activity"]],
+ "@nl": "Did Eve 4 write the letter 5?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk3_activity", "write", ["$ctxt","past","?:Fv18","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Did Eve 4 write the letter 5?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk3_activity", "#:Eve 4", ["$ctxt","past","?:Fv20","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Did Eve 4 write the letter 5?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk3_activity", "#:letter 5", ["$ctxt","past","?:Fv22","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Did Eve 4 write the letter 5?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk3_activity"]],
+ "@nl": "Did Eve 4 write the letter 5?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "write", ["$ctxt","past","?:Fv26","?:Fv13","?:Fv14"]],
+            ["-has actor", "?:E", "#:Eve 4", ["$ctxt","past","?:Fv28","?:Fv13","?:Fv14"]],
+            ["-has target", "?:E", "#:letter 5", ["$ctxt","past","?:Fv30","?:Fv13","?:Fv14"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Eve 4 write the letter 5?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Did Eve 4 write the letter 5?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","chef","?:X"], ["isa","cook","?:X"]],
+ "@confidence": 0.86,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","cook","?:X"], ["isa","chef","?:X"]],
+ "@confidence": 0.86,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S7","assumption",1], [["$defq0"], ["-has type", "?:X", "write", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has actor", "?:X", "#:Eve 4", ["$ctxt","past","?:V","?:Z","?:U"]], ["-has target", "?:X", "#:letter 5", ["$ctxt","past","?:W","?:Z","?:U"]], ["-isa","activity","?:X"], ["-actuality","?:X"]]],
+          [2, ["in","sent_S2","assumption",1], [["isa","activity","sk1_activity"]]],
+          [3, ["in","sent_S7","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,4], 2, 3, "fromga", 1], [["-actuality","sk1_activity"], ["-has type", "sk1_activity", "write", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has actor", "sk1_activity", "#:Eve 4", ["$ctxt","past","?:U","?:Y","?:Z"]], ["-has target", "sk1_activity", "#:letter 5", ["$ctxt","past","?:V","?:Y","?:Z"]]]],
+          [5, ["in","sent_S2","assumption",1], [["has actor", "sk1_activity", "#:Eve 4", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [6, ["mp", [4,2], 5, "fromga", 1], [["-actuality","sk1_activity"], ["-has type", "sk1_activity", "write", ["$ctxt","past","?:X3","?:Y3","?:Z3"]], ["-has target", "sk1_activity", "#:letter 5", ["$ctxt","past","?:U3","?:Y3","?:Z3"]]]],
+          [7, ["in","sent_S2","assumption",1], [["actuality","sk1_activity"]]],
+          [8, ["simp",6,7,"fromga",1], [["-has type", "sk1_activity", "write", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has target", "sk1_activity", "#:letter 5", ["$ctxt","past","?:U","?:Y","?:Z"]]]],
+          [9, ["in","sent_S2","assumption",1], [["has target", "sk1_activity", "#:letter 5", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [10, ["mp", [8,1], 9, "fromga", 1], [["-has type", "sk1_activity", "write", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [11, ["in","sent_S2","assumption",1], [["has type", "sk1_activity", "write", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [12, ["mp",10,11,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) The letter was written by Eve.",
+"  (2) Eve wrote the letter?",
+"Proof steps (by contradiction):",
+"  (1) If X is a write event and Eve performs X and X targets the letter F and X is an activity then answer holds  [sentence 2]",
+"  (2) The event act2 is an activity  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) If the event act2 is a write event and Eve performs the act2 then the act2 does not target the letter F  [from steps 1, 2, 3]",
+"  (5) Eve performs the event act2  [sentence 1]",
+"  (6) If the event act2 is a write event then the act2 does not target the letter F  [from steps 4, 5]",
+"  (7)   [sentence 1]",
+"  (8) If the event act2 is a write event then the act2 does not target the letter F  [from steps 6, 7]",
+"  (9) The event act2 targets the letter F  [sentence 1]",
+"  (10) The act2 is not a write event  [from steps 8, 9]",
+"  (11) The event act2 is a write event  [sentence 1]",
+"  (12) Contradiction  [from steps 10, 11]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32092,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1272,
+      "raw": {
+        "input_tokens": 50,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1272,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39922,
+      "cached_input_tokens": 38891,
+      "output_tokens": 804,
+      "raw": {
+        "input_tokens": 1031,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 804,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:02:13Z"
+}

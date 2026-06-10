@@ -1,0 +1,737 @@
+{
+  "test_name": "core_100_b8",
+  "case_id": 107,
+  "input_text": "The man carrying a bag waved. A boy saw a girl. Emily is a cat. John probably smokes. The manager, Anna, called Eve. A surgeon, Dr. He was nice. Elephants have trunks. Mary's uncle arrived. The toy of the child was broken. Who was nice?",
+  "expected_answer": ["The boy","The nice boy"],
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Dr. He.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "The man carrying a bag waved.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The man 1 carrying a bag 2 waved.",
+          "type": "situation",
+          "entities": [{"id": "man 1", "type": "concrete", "category": "person"},
+            {"id": "bag 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "wave", "mode": "event", "roles": {"actor": "man 1"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "The man 1 was carrying a bag 2.",
+          "type": "situation",
+          "entities": [{"id": "man 1", "type": "concrete", "category": "person"},
+            {"id": "bag 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "carry", "mode": "event", "roles": {"actor": "man 1", "target": "bag 2"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A boy saw a girl.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "A boy 3 saw a girl 4.",
+          "type": "situation",
+          "entities": [{"id": "boy 3", "type": "concrete", "category": "person"},
+            {"id": "girl 4", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "see", "mode": "event", "roles": {"actor": "boy 3", "target": "girl 4"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Emily is a cat.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Emily 1 is a cat.",
+          "type": "real",
+          "entities": [{"id": "Emily 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "John probably smokes.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "John 1 smokes.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 1"}}],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "The manager, Anna, called Eve.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Anna 1 called Eve 2.",
+          "type": "situation",
+          "entities": [{"id": "Anna 1", "type": "concrete", "category": "person"},
+            {"id": "Eve 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "call", "mode": "event", "roles": {"actor": "Anna 1", "target": "Eve 2"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S7",
+          "text": "Anna 1 is a manager.",
+          "type": "real",
+          "entities": [{"id": "Anna 1", "type": "concrete", "category": "person"}]
+        }
+      ]
+    },
+    {
+      "raw": "A surgeon, Dr. He was nice.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Dr. He 1 was nice.",
+          "type": "situation",
+          "entities": [{"id": "Dr. He 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S9",
+          "text": "Dr. He 1 is a surgeon.",
+          "type": "real",
+          "entities": [{"id": "Dr. He 1", "type": "concrete", "category": "person"}]
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have trunks.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Elephants have trunks.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Mary's uncle arrived.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Mary 1's uncle 2 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "uncle 2", "type": "concrete", "text": "uncle", "category": "person"}
+          ],
+          "actions": [{"root": "arrive", "mode": "event", "roles": {"actor": "uncle 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S12",
+          "text": "Uncle 2 is the uncle of Mary 1.",
+          "type": "situation",
+          "entities": [{"id": "uncle 2", "type": "concrete", "text": "uncle", "category": "person"},
+            {"id": "Mary 1", "type": "concrete", "category": "person"}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The toy of the child was broken.",
+      "units": [{
+          "unit_id": "S13",
+          "text": "The toy 3 of the child 4 was broken.",
+          "type": "situation",
+          "entities": [{"id": "toy 3", "type": "concrete", "category": "artifact"},
+            {"id": "child 4", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["broken","none","toy"]],
+          "definites": [["toy of","toy 3","child 4"]],
+          "pre_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S14",
+          "text": "The toy 3 is the toy of the child 4.",
+          "type": "situation",
+          "entities": [{"id": "toy 3", "type": "concrete", "category": "artifact"},
+            {"id": "child 4", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["toy of","toy 3","child 4"]],
+          "pre_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Who was nice?",
+      "units": [{
+          "unit_id": "S15",
+          "text": "Which entity was nice?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true}],
+          "adjectives": [["nice","none","entity"]],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","man 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","wave"],
+              ["has actor","E","man 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","man 1"],
+          ["isa","artifact","bag 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","carry"],
+              ["has actor","E","man 1"],
+              ["has target","E","bag 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","boy 3"],
+          ["isa","person","girl 4"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","see"],
+              ["has actor","E","boy 3"],
+              ["has target","E","girl 4"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S4", ["holds", "W0", ["isa","cat","Emily 1"]]],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["normally",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","smoke"],
+                ["has actor","E","John 1"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S5",0.8]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Anna 1"],
+          ["isa","person","Eve 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","call"],
+              ["has actor","E","Anna 1"],
+              ["has target","E","Eve 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S7", ["holds", "W0", ["isa","manager","Anna 1"]]],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Dr. He 1"],
+            ["has degree property","nice","Dr. He 1","none","person"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S9", ["holds", "W0", ["isa","surgeon","Dr. He 1"]]],
+    ["@id","S10",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S10",0.99]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","uncle","uncle 2"],
+            ["isa","person","Mary 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","arrive"],
+                ["has actor","E","uncle 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S12",
+      ["holds","W0",
+        ["and",
+          ["isa","uncle","uncle 2"],
+          ["isa","person","Mary 1"],
+          ["is rel2","uncle of","uncle 2","Mary 1"]
+        ]
+      ]
+    ],
+    ["@id","S13",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","toy","toy 3"],
+            ["isa","person","child 4"],
+            ["has degree property","broken","toy 3","none","toy"]
+          ]
+        ],
+        ["state time","W1","past"],
+        ["@definite","S13","W1","toy of","child 4","toy 3"]
+      ]
+    ],
+    ["@id","S14",
+      ["and",
+        ["holds","W1",
+          ["and", ["isa","toy","toy 3"], ["isa","person","child 4"], ["have","child 4","toy 3"]]
+        ],
+        ["state time","W1","past"],
+        ["@definite","S14","W1","toy of","child 4","toy 3"]
+      ]
+    ],
+    ["@id","S15",
+      ["ask", "X", ["@time", "past", ["has degree property","nice","X","none","entity"]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","man","#:man 1"],
+ "@nl": "The man 1 carrying a bag 2 waved."},
+{"@name": "entity_S1",
+ "@logic": ["isa","bag","#:bag 2"],
+ "@nl": "The man 1 carrying a bag 2 waved."},
+{"@name": "entity_S3",
+ "@logic": ["isa","boy","#:boy 3"],
+ "@nl": "A boy 3 saw a girl 4."},
+{"@name": "entity_S3",
+ "@logic": ["isa","girl","#:girl 4"],
+ "@nl": "A boy 3 saw a girl 4."},
+{"@name": "entity_S5",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 smokes."},
+{"@name": "entity_S13",
+ "@logic": ["isa","toy","#:toy 3"],
+ "@nl": "The toy 3 of the child 4 was broken."},
+{"@name": "entity_S13",
+ "@logic": ["isa","child","#:child 4"],
+ "@nl": "The toy 3 of the child 4 was broken."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:man 1"],
+ "@nl": "The man 1 carrying a bag 2 waved."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The man 1 carrying a bag 2 waved."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "wave", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The man 1 carrying a bag 2 waved."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:man 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The man 1 carrying a bag 2 waved."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The man 1 carrying a bag 2 waved."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:man 1"],
+ "@nl": "The man 1 was carrying a bag 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","artifact","#:bag 2"],
+ "@nl": "The man 1 was carrying a bag 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The man 1 was carrying a bag 2."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "carry", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The man 1 was carrying a bag 2."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:man 1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The man 1 was carrying a bag 2."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk1_activity", "#:bag 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The man 1 was carrying a bag 2."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The man 1 was carrying a bag 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:boy 3"],
+ "@nl": "A boy 3 saw a girl 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:girl 4"],
+ "@nl": "A boy 3 saw a girl 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "A boy 3 saw a girl 4."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "show", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "A boy 3 saw a girl 4."},
+{"@name": "sent_S3",
+ "@logic": ["has recipient", "sk2_activity", "#:boy 3", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "A boy 3 saw a girl 4."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk2_activity", "#:girl 4", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "A boy 3 saw a girl 4."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "A boy 3 saw a girl 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","cat","#:Emily 1"],
+ "@nl": "Emily 1 is a cat."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk3_activity", "smoke", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk3_activity", "#:John 1", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S5",
+ "@logic": [["typical", "sk3_activity", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","$generic",1], ["$not", ["typical", "sk3_activity", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Anna 1"],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Eve 2"],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk4_activity", "call", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk4_activity", "#:Anna 1", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk4_activity", "#:Eve 2", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","manager","#:Anna 1"],
+ "@nl": "Anna 1 is a manager."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","Dr. He 1"],
+ "@nl": "Dr. He 1 was nice."},
+{"@name": "sent_S8",
+ "@logic": ["has degree property", "good", "Dr. He 1", "none", "person", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Dr. He 1 was nice."},
+{"@name": "sent_S9",
+ "@logic": ["isa","surgeon","Dr. He 1"],
+ "@nl": "Dr. He 1 is a surgeon."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk5","?:X"]]],
+ "@nl": "Elephants have trunks."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk5","?:X"], ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk5","?:X"], ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have trunks."},
+{"@name": "sent_S11",
+ "@logic": ["isa","uncle","#:uncle 2"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk6_activity"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk6_activity", "arrive", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk6_activity", "#:uncle 2", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has time", "sk6_activity", "past", "in", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S12",
+ "@logic": ["isa","uncle","#:uncle 2"],
+ "@nl": "Uncle 2 is the uncle of Mary 1."},
+{"@name": "sent_S12",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Uncle 2 is the uncle of Mary 1."},
+{"@name": "sent_S12",
+ "@logic": ["is rel2", "uncle of", "#:uncle 2", "#:Mary 1", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "Uncle 2 is the uncle of Mary 1."},
+{"@name": "sent_S13",
+ "@logic": ["isa", "toy", ["$theof1", "toy", "#:child 4", ["$ctxt","past","W1","?:Fv31","?:Fv32"]]],
+ "@nl": "The toy 3 of the child 4 was broken."},
+{"@name": "sent_S13",
+ "@logic": ["isa","person","#:child 4"],
+ "@nl": "The toy 3 of the child 4 was broken."},
+{"@name": "sent_S13",
+ "@logic": ["has property", "broken", ["$theof1", "toy", "#:child 4", ["$ctxt","past","W1","?:Fv31","?:Fv32"]], ["$ctxt","past","W1","?:Fv29","?:Fv30"]],
+ "@nl": "The toy 3 of the child 4 was broken."},
+{"@name": "sent_S14",
+ "@logic": ["isa", "toy", ["$theof1", "toy", "#:child 4", ["$ctxt","past","W1","?:Fv31","?:Fv32"]]],
+ "@nl": "The toy 3 is the toy of the child 4."},
+{"@name": "sent_S14",
+ "@logic": ["isa","person","#:child 4"],
+ "@nl": "The toy 3 is the toy of the child 4."},
+{"@name": "sent_S14",
+ "@logic": ["have", "#:child 4", ["$theof1", "toy", "#:child 4", ["$ctxt","past","W1","?:Fv31","?:Fv32"]], ["$ctxt","past","W1","?:Fv31","?:Fv32"]],
+ "@nl": "The toy 3 is the toy of the child 4."},
+{"@name": "sent_S15",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has degree property", "good", "?:X", "none", "?:Fv61", ["$ctxt","past","W1","?:Fv33","?:Fv34"]]
+           ],
+ "@nl": "Which entity was nice?"},
+{"@name": "sent_S15",
+ "@sourcetype": "question",
+ "@logic": [["-has degree property", "good", "?:X", "none", "?:Fv62", ["$ctxt","past","W1","?:Fv33","?:Fv34"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which entity was nice?"},
+{"@name": "sent_S12",
+ "@logic": ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Uncle 2 is the uncle of Mary 1."},
+{"@name": "sent_S15",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@nl": "Which entity was nice?"},
+{"@name": "sent_S15",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "good", "?:Br1", "none", "?:Fv63", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["has degree property", "good", "?:Br1", "none", "?:Fv64", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "good", "?:Br1", "none", "?:Fv65", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity was nice?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:child 4", ["$theof1", "toy", "#:child 4", ["$ctxt","past","W1","?:Fv31","?:Fv32"]], ["$ctxt","past","W1","?:Fv31","?:Fv32"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:child 4", ["$theof1", "toy", "#:child 4", ["$ctxt","past","W1","?:Fv31","?:Fv32"]], ["$ctxt","past","W1","?:Fv31","?:Fv32"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "toy of", ["$theof1","toy","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "toy", ["$theof1","toy","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","boy","?:X","?:Fv36"], ["-has property","girl","?:X","?:Fv36"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "pop_what",
+ "@logic": ["isa","artifact","$some_artifact"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","bag","$some_bag"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","surgeon","$some_surgeon"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","cat","$some_cat"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","girl","$some_girl"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","child","$some_child"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","uncle","$some_uncle"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","manager","$some_manager"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","man","$some_man"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","toy","$some_toy"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","boy","$some_boy"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","Dr. He 1"]],
+        "blockers": [["$block", 0, ["$not", ["has degree property", "good", "Dr. He 1", "none", "person", ["$ctxt","past","W1","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.992475,
+        "positive proof": [[1, ["in","frm_57","axiom",0.99], [["$block", 0, ["$not", ["has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","?:V","?:W","?:2006","?:2007"]]]], ["-has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","?:V","?:2008","?:2006","?:2007"]], ["has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","?:V","?:W","?:2006","?:2007"]], ["-next","?:2008","?:W"]]],
+          [2, ["in","sent_S8","assumption",1], [["has degree property", "good", "Dr. He 1", "none", "person", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 0.99], [["$block", 0, ["$not", ["has degree property", "good", "Dr. He 1", "none", "person", ["$ctxt","past","?:X","?:Y","?:Z"]]]], ["has degree property", "good", "Dr. He 1", "none", "person", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-next","W0","?:X"]]],
+          [4, ["in","sent_S11","assumption",1], [["next","W0","W1"]]],
+          [5, ["mp", [3,2], 4, "fromassumption", 0.99], [["$block", 0, ["$not", ["has degree property", "good", "Dr. He 1", "none", "person", ["$ctxt","past","W1","?:X","?:Y"]]]], ["has degree property", "good", "Dr. He 1", "none", "person", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [6, ["in","sent_S15","assumption",1], [["-has degree property", "good", "?:X", "none", "?:Y", ["$ctxt","past","W1","?:Z","?:U"]], ["$defq0","?:X"]]],
+          [7, ["mp", [5,1], 6, "fromassumption", 0.99], [["$defq0","Dr. He 1"], ["$block", 0, ["$not", ["has degree property", "good", "Dr. He 1", "none", "person", ["$ctxt","past","W1","?:X","?:Y"]]]]]],
+          [8, ["in","sent_S15","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [9, ["mp",7,8,"fromga",0.99], [["$block", 0, ["$not", ["has degree property", "good", "Dr. He 1", "none", "person", ["$ctxt","past","W1","?:X3","?:Y3"]]]], ["$ans","Dr. He 1"]]],
+          [10, ["in","frm_world_geom","assumption",1], [["next","W0","W1"]]],
+          [11, ["mp", [3,2], 10, "fromassumption", 0.99], [["$block", 0, ["$not", ["has degree property", "good", "Dr. He 1", "none", "person", ["$ctxt","past","W1","?:X","?:Y"]]]], ["has degree property", "good", "Dr. He 1", "none", "person", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [12, ["mp", [11,1], 6, "fromassumption", 0.99], [["$defq0","Dr. He 1"], ["$block", 0, ["$not", ["has degree property", "good", "Dr. He 1", "none", "person", ["$ctxt","past","W1","?:X","?:Y"]]]]]],
+          [13, ["mp",12,8,"fromga",0.99], [["$block", 0, ["$not", ["has degree property", "good", "Dr. He 1", "none", "person", ["$ctxt","past","W1","?:X3","?:Y3"]]]], ["$ans","Dr. He 1"]]],
+          [14, ["cumul",9,13,"fromga",0.992475], [["$block", 0, ["$not", ["has degree property", "good", "Dr. He 1", "none", "person", ["$ctxt","past","W1","?:X3","?:Y3"]]]], ["$ans","Dr. He 1"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 99%.",
+"Sentences used:",
+"  (1) A surgeon, Dr. He was nice.",
+"  (2) Mary's uncle arrived.",
+"  (3) Who was nice?",
+"Knowledge used:",
+"  If some Y is some z some X and a situation E3 is followed by a situation W then normally Y is z X. Why: assumed basic knowledge.",
+"  The situation W0 is followed by the situation W1. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If some Y is some z some X and a situation E3 is followed by a situation W then normally Y is z X  [background knowledge, confidence 99%]",
+"  (2) Dr. He is a good person  [sentence 1]",
+"  (3) If the situation W0 is followed by a situation X then normally Dr. He is a good person  [from steps 1, 2, confidence 99%]",
+"  (4) The situation W0 is followed by the situation W1  [sentence 2]",
+"  (5) Normally Dr. He is a good person  [from steps 3, 4, confidence 99%]",
+"  (6) If some X is good then X is the answer  [sentence 3]",
+"  (7) Dr. He is the answer, except when Dr. He is not a good person  [from steps 5, 6, confidence 99%]",
+"  (8) technical answer unwrap step  [from question]",
+"  (9) Dr. He is an answer, except when Dr. He is not a good person  [from steps 7, 8, confidence 99%]",
+"  (10) The situation W0 is followed by the situation W1  [background knowledge]",
+"  (11) Normally Dr. He is a good person  [from steps 3, 10, confidence 99%]",
+"  (12) Dr. He is the answer, except when Dr. He is not a good person  [from steps 11, 6, confidence 99%]",
+"  (13) Dr. He is an answer, except when Dr. He is not a good person  [from steps 12, 8, confidence 99%]",
+"  (14) Dr. He is an answer, except when Dr. He is not a good person  [from steps 9, 13, confidence 99%]",
+"Exceptions checked and not holding:",
+"  Dr. He is not a good person"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32114,
+      "cached_input_tokens": 32042,
+      "output_tokens": 2053,
+      "raw": {
+        "input_tokens": 72,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 2053,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 40486,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1749,
+      "raw": {
+        "input_tokens": 1595,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1749,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:47:07Z"
+}

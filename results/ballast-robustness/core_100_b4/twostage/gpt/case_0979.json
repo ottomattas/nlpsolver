@@ -1,0 +1,577 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 979,
+  "input_text": "The horse kept in the stable was calm. John works at the hospital every day. If X1 is a grandfather of Y1, Y1 is not a child of X1. Mary was heard to sing. Anna handed a key to Mark. Where does John work?",
+  "expected_answer": "At the hospital.",
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Likely at the hospital.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The horse kept in the stable was calm.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The horse 1 kept in the stable 2 was calm.",
+          "type": "situation",
+          "entities": [{"id": "horse 1", "type": "concrete", "category": "animal"},
+            {"id": "stable 2", "type": "concrete", "category": "place"}
+          ],
+          "adjectives": [["calm","none","horse"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John works at the hospital every day.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 2 works at the hospital 3 every day.",
+          "type": "real",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"},
+            {"id": "hospital 3", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "work",
+              "mode": "habitual",
+              "roles": {"actor": "John 2", "location": "hospital 3", "location_prep": "at"}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a grandfather of Y1, Y1 is not a child of X1.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "If X1 is a grandfather of Y1, Y1 is not a child of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"}, {"id": "Y1", "type": "generic"}]
+        }
+      ]
+    },
+    {
+      "raw": "Mary was heard to sing.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Someone heard Mary 4 sing.",
+          "type": "situation",
+          "entities": [{"id": "Mary 4", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "hear",
+              "mode": "event",
+              "roles": {
+                "target": "Mary 4",
+                "content": {"root": "sing", "mode": "event", "roles": {"actor": "Mary 4"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Anna handed a key to Mark.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Anna 5 handed a key 6 to Mark 7.",
+          "type": "situation",
+          "entities": [{"id": "Anna 5", "type": "concrete", "category": "person"},
+            {"id": "key 6", "type": "concrete", "category": "artifact"},
+            {"id": "Mark 7", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "hand",
+              "mode": "event",
+              "roles": {"actor": "Anna 5", "target": "key 6", "recipient": "Mark 7"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Where does John work?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Which entity is John 2 working at?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "John 2", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","horse","horse 1"],
+            ["isa","stable","stable 2"],
+            ["has degree property","calm","horse 1","none","horse"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 2"],
+          ["isa","hospital","hospital 3"],
+          ["normally",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","work"],
+                ["has actor","E","John 2"],
+                ["has location","E","hospital 3","at"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies",
+              ["is rel2","grandfather of","X1","Y1"],
+              ["not", ["is rel2","child of","Y1","X1"]]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 4"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","hear"],
+              ["has target","E1","Mary 4"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","sing"],
+                  ["has actor","E2","Mary 4"],
+                  ["has time","E2","past","in"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Anna 5"],
+            ["isa","key","key 6"],
+            ["isa","person","Mark 7"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","hand"],
+                ["has actor","E","Anna 5"],
+                ["has target","E","key 6"],
+                ["has recipient","E","Mark 7"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id", "S6", ["ask", "X", ["is rel2","at","John 2","X"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","horse","#:horse 1"],
+ "@nl": "The horse 1 kept in the stable 2 was calm."},
+{"@name": "sent_S1",
+ "@logic": ["isa","stable","#:stable 2"],
+ "@nl": "The horse 1 kept in the stable 2 was calm."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "calm", "#:horse 1", "none", "horse", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The horse 1 kept in the stable 2 was calm."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "John 2 works at the hospital 3 every day."},
+{"@name": "sent_S2",
+ "@logic": ["isa","hospital","#:hospital 3"],
+ "@nl": "John 2 works at the hospital 3 every day."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 2 works at the hospital 3 every day."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "work", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 works at the hospital 3 every day."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:John 2", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 works at the hospital 3 every day."},
+{"@name": "sent_S2",
+ "@logic": ["has location", "sk0_activity", "#:hospital 3", "at", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 works at the hospital 3 every day."},
+{"@name": "sent_S2",
+ "@logic": [["typical", "sk0_activity", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$block", ["$","$generic",1], ["$not", ["typical", "sk0_activity", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]]]
+           ],
+ "@nl": "John 2 works at the hospital 3 every day."},
+{"@name": "sent_S3",
+ "@logic": [["-is rel2", "grandfather of", "?:X1", "?:Y1", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-is rel2", "child of", "?:Y1", "?:X1", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "If X1 is a grandfather of Y1, Y1 is not a child of X1."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mary 4"],
+ "@nl": "Someone heard Mary 4 sing."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Someone heard Mary 4 sing."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "hear", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Someone heard Mary 4 sing."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk1_activity", "#:Mary 4", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Someone heard Mary 4 sing."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Someone heard Mary 4 sing."},
+{"@name": "sent_S4",
+ "@logic": ["has content","sk1_activity","sk2_activity"],
+ "@nl": "Someone heard Mary 4 sing."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Someone heard Mary 4 sing."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk2_activity", "sing", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Someone heard Mary 4 sing."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk2_activity", "#:Mary 4", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Someone heard Mary 4 sing."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Someone heard Mary 4 sing."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Someone heard Mary 4 sing."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Anna 5"],
+ "@nl": "Anna 5 handed a key 6 to Mark 7."},
+{"@name": "sent_S5",
+ "@logic": ["isa","important","#:key 6"],
+ "@nl": "Anna 5 handed a key 6 to Mark 7."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mark 7"],
+ "@nl": "Anna 5 handed a key 6 to Mark 7."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Anna 5 handed a key 6 to Mark 7."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk3_activity", "give", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 5 handed a key 6 to Mark 7."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk3_activity", "#:Anna 5", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 5 handed a key 6 to Mark 7."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk3_activity", "#:key 6", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 5 handed a key 6 to Mark 7."},
+{"@name": "sent_S5",
+ "@logic": ["has recipient", "sk3_activity", "#:Mark 7", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 5 handed a key 6 to Mark 7."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 5 handed a key 6 to Mark 7."},
+{"@name": "sent_S5",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Anna 5 handed a key 6 to Mark 7."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "in", "#:John 2", "?:Q1", ["$ctxt","present","W1","?:Fv15","?:Fv16"]],
+            ["$defq0","in","?:Q1"]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","in","?:Q1"],
+            ["is rel2", "in", "#:John 2", "?:Q1", ["$ctxt","present","W1","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "on", "#:John 2", "?:Q1", ["$ctxt","present","W1","?:Fv15","?:Fv16"]],
+            ["$defq0","on","?:Q1"]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","on","?:Q1"],
+            ["is rel2", "on", "#:John 2", "?:Q1", ["$ctxt","present","W1","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "at", "#:John 2", "?:Q1", ["$ctxt","present","W1","?:Fv15","?:Fv16"]],
+            ["$defq0","at","?:Q1"]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","at","?:Q1"],
+            ["is rel2", "at", "#:John 2", "?:Q1", ["$ctxt","present","W1","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-has degree rel2", "near", "#:John 2", "?:Q1", "none", "?:Fv32", ["$ctxt","present","W1","?:Fv15","?:Fv16"]],
+            ["$defq0","near","?:Q1"]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","near","?:Q1"],
+            ["has degree rel2", "near", "#:John 2", "?:Q1", "none", "?:Fv33", ["$ctxt","present","W1","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "above", "#:John 2", "?:Q1", ["$ctxt","present","W1","?:Fv15","?:Fv16"]],
+            ["$defq0","above","?:Q1"]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","above","?:Q1"],
+            ["is rel2", "above", "#:John 2", "?:Q1", ["$ctxt","present","W1","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "under", "#:John 2", "?:Q1", ["$ctxt","present","W1","?:Fv15","?:Fv16"]],
+            ["$defq0","under","?:Q1"]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","under","?:Q1"],
+            ["is rel2", "under", "#:John 2", "?:Q1", ["$ctxt","present","W1","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0","?:Rel","?:Q1"],
+ "@askvars": 2,
+ "@where_query": true,
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "under", "#:John 2", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "under", "#:John 2", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "under", "#:John 2", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "#:John 2", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "in", "#:John 2", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "#:John 2", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-has degree rel2", "near", "#:John 2", "?:Br3", "none", "?:Fv29", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree rel2", "near", "#:John 2", "?:Br3", "none", "?:Fv30", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree rel2", "near", "#:John 2", "?:Br3", "none", "?:Fv31", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "at", "#:John 2", "?:Br4", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "at", "#:John 2", "?:Br4", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "?:Br4", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "on", "#:John 2", "?:Br5", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "on", "#:John 2", "?:Br5", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "on", "#:John 2", "?:Br5", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "above", "#:John 2", "?:Br6", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "above", "#:John 2", "?:Br6", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "above", "#:John 2", "?:Br6", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is John 2 working at?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv18"], ["has type","?:E","give","?:Fv18"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_perception_factive",
+ "@logic": [["-has type","?:E1","hear","?:Ct1"],
+            ["-has content","?:E1","?:E2"],
+            ["actuality","?:E2"],
+            ["$block", 0, ["$not", ["actuality","?:E2"]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_perception_factive]"},
+{"@name": "pop_what",
+ "@logic": ["isa","stable","$some_stable"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","important","$some_key"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","hospital","$some_hospital"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","horse","$some_horse"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","at","#:hospital 3"]],
+        "blockers": [["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","present","W1","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.9,
+        "positive proof": [[1, ["in","frm_53","axiom",0.9], [["$block", 0, ["$not", ["is rel2","at","?:X","?:Y","?:Z"]]], ["is rel2","at","?:X","?:Y","?:Z"], ["-has location","?:U","?:Y","at","?:Z"], ["-has actor","?:U","?:X","?:Z"]]],
+          [2, ["in","sent_S2","assumption",1], [["has location", "sk0_activity", "#:hospital 3", "at", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [3, ["mp", [1,2], 2, "fromassumption", 0.9], [["$block", 0, ["$not", ["is rel2", "at", "?:X", "#:hospital 3", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["is rel2", "at", "?:X", "#:hospital 3", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "sk0_activity", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]],
+          [4, ["in","sent_S2","assumption",1], [["has actor", "sk0_activity", "#:John 2", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [5, ["mp", [3,2], 4, "fromassumption", 0.9], [["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [6, ["in","sent_S6","assumption",1], [["-is rel2", "at", "#:John 2", "?:X", ["$ctxt","present","W1","?:Y","?:Z"]], ["$defq0","at","?:X"]]],
+          [7, ["mp", [5,1], 6, "fromassumption", 0.9], [["$defq0","at","#:hospital 3"], ["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","present","W1","?:X","?:Y"]]]]]],
+          [8, ["in","sent_S6","goal",1], [["-$defq0","?:X","?:Y"], ["$ans","?:X","?:Y"]]],
+          [9, ["mp",7,8,"fromga",0.9], [["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$ans","at","#:hospital 3"]]]
+        ]
+      },
+      {
+        "answer": [["$ans","at","#:hospital 3"]],
+        "blockers": [["$block", 0, ["moved","#:John 2","W0"]],
+          ["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","present","W0","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.907187,
+        "positive proof": [[1, ["in","frm_54","axiom",0.99], [["-is rel2", "?:X", "?:Y", "?:Z", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["is rel2", "?:X", "?:Y", "?:Z", ["$ctxt","?:U","?:2007","?:W","?:2006"]], ["$block", 0, ["moved","?:Y","?:V"]], ["-next","?:V","?:2007"]]],
+          [2, ["in","frm_53","axiom",0.9], [["$block", 0, ["$not", ["is rel2","at","?:X","?:Y","?:Z"]]], ["is rel2","at","?:X","?:Y","?:Z"], ["-has location","?:U","?:Y","at","?:Z"], ["-has actor","?:U","?:X","?:Z"]]],
+          [3, ["in","sent_S2","assumption",1], [["has location", "sk0_activity", "#:hospital 3", "at", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [4, ["mp", [2,2], 3, "fromassumption", 0.9], [["$block", 0, ["$not", ["is rel2", "at", "?:X", "#:hospital 3", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["is rel2", "at", "?:X", "#:hospital 3", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "sk0_activity", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]],
+          [5, ["in","sent_S2","assumption",1], [["has actor", "sk0_activity", "#:John 2", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [6, ["mp", [4,2], 5, "fromassumption", 0.9], [["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [7, ["mp", 1, [6,1], "fromassumption", 0.891], [["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","?:X","?:V","?:Z","?:U"]], ["$block", 0, ["moved","#:John 2","?:Y"]], ["-next","?:Y","?:V"]]],
+          [8, ["in","frm_world_geom","assumption",1], [["next","W0","W1"]]],
+          [9, ["mp", [7,3], 8, "fromassumption", 0.891], [["$block", 0, ["moved","#:John 2","W0"]], ["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","?:X","W0","?:Y","?:Z"]]]], ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","?:X","W1","?:Y","?:Z"]]]],
+          [10, ["in","sent_S6","assumption",1], [["-is rel2", "at", "#:John 2", "?:X", ["$ctxt","present","W1","?:Y","?:Z"]], ["$defq0","at","?:X"]]],
+          [11, ["mp", [9,2], 10, "fromassumption", 0.891], [["$block", 0, ["moved","#:John 2","W0"]], ["$defq0","at","#:hospital 3"], ["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","present","W0","?:X","?:Y"]]]]]],
+          [12, ["in","sent_S6","goal",1], [["-$defq0","?:X","?:Y"], ["$ans","?:X","?:Y"]]],
+          [13, ["mp", [11,1], 12, "fromga", 0.891], [["$block", 0, ["moved","#:John 2","W0"]], ["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$ans","at","#:hospital 3"]]],
+          [14, ["in","sent_S5","assumption",1], [["next","W0","W1"]]],
+          [15, ["mp", [7,3], 14, "fromassumption", 0.891], [["$block", 0, ["moved","#:John 2","W0"]], ["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","?:X","W0","?:Y","?:Z"]]]], ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","?:X","W1","?:Y","?:Z"]]]],
+          [16, ["mp", [15,2], 10, "fromassumption", 0.891], [["$block", 0, ["moved","#:John 2","W0"]], ["$defq0","at","#:hospital 3"], ["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","present","W0","?:X","?:Y"]]]]]],
+          [17, ["mp", [16,1], 12, "fromga", 0.891], [["$block", 0, ["moved","#:John 2","W0"]], ["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$ans","at","#:hospital 3"]]],
+          [18, ["cumul",13,17,"fromga",0.907187], [["$block", 0, ["moved","#:John 2","W0"]], ["$block", 0, ["$not", ["is rel2", "at", "#:John 2", "#:hospital 3", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$ans","at","#:hospital 3"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 91%.",
+"Sentences used:",
+"  (1) John works at the hospital every day.",
+"  (2) Anna handed a key to Mark.",
+"  (3) Where does John work?",
+"Knowledge used:",
+"  If some Y is in relation X to some Z and a situation V is followed by a situation E2 then Y is in relation X to Z, except when Y moved in V. Why: assumed basic knowledge.",
+"  If an event U takes place at some Y and some X performs U then normally X is at Y. Why: assumed basic knowledge.",
+"  The situation W0 is followed by the situation W1. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If some Y is in relation X to some Z and a situation V is followed by a situation E2 then Y is in relation X to Z, except when Y moved in V  [background knowledge, confidence 99%]",
+"  (2) If an event U takes place at some Y and some X performs U then normally X is at Y  [background knowledge, confidence 90%]",
+"  (3) The event act1 takes place at the hospital C  [sentence 1]",
+"  (4) If some X performs the event act1 then normally X is at the hospital C  [from steps 2, 3, confidence 90%]",
+"  (5) John performs the event act1  [sentence 1]",
+"  (6) Normally John is at the hospital C  [from steps 4, 5, confidence 90%]",
+"  (7) If a situation Y is followed by a situation V then John is at the hospital C, except when John is not at the hospital C and John moved in Y  [from steps 1, 6, confidence 89%]",
+"  (8) The situation W0 is followed by the situation W1  [background knowledge]",
+"  (9) John is at the hospital C, except when John moved in the situation W0 and John is not at the hospital C  [from steps 7, 8, confidence 89%]",
+"  (10) If John is at some X then 'at X' is the answer  [sentence 3]",
+"  (11) 'At the hospital C' is the answer, except when John moved in the situation W0 and John is not at the hospital C  [from steps 9, 10, confidence 89%]",
+"  (12) technical answer unwrap step  [from question]",
+"  (13) 'At the hospital C' is an answer, except when John moved in the situation W0 and John is not at the hospital C  [from steps 11, 12, confidence 89%]",
+"  (14) The situation W0 is followed by the situation W1  [sentence 2]",
+"  (15) John is at the hospital C, except when John moved in the situation W0 and John is not at the hospital C  [from steps 7, 14, confidence 89%]",
+"  (16) 'At the hospital C' is the answer, except when John moved in the situation W0 and John is not at the hospital C  [from steps 15, 10, confidence 89%]",
+"  (17) 'At the hospital C' is an answer, except when John moved in the situation W0 and John is not at the hospital C  [from steps 16, 12, confidence 89%]",
+"  (18) 'At the hospital C' is an answer, except when John moved in the situation W0 and John is not at the hospital C  [from steps 13, 17, confidence 91%]",
+"Exceptions checked and not holding:",
+"  John moved in W0",
+"  John is not at hospital C"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28368,
+      "cached_input_tokens": 28288,
+      "output_tokens": 920,
+      "raw": {
+        "input_tokens": 28368,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 920,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29288
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34137,
+      "cached_input_tokens": 33280,
+      "output_tokens": 624,
+      "raw": {
+        "input_tokens": 34137,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 624,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34761
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:00:15Z"
+}

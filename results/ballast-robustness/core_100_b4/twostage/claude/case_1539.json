@@ -1,0 +1,412 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1539,
+  "input_text": "Daniel journeyed to the office. A chocolate cake fell. John is an elephant with a probability 50 percent. The bicycle was repaired by Anna. The dog was barking and the cat was too. John is an elephant?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Daniel journeyed to the office.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Daniel 1 journeyed to the office 2.",
+          "type": "situation",
+          "entities": [{"id": "Daniel 1", "type": "concrete", "category": "person"},
+            {"id": "office 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "journey", "mode": "event", "roles": {"destination": "office 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A chocolate cake fell.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "A chocolate cake 3 fell.",
+          "type": "situation",
+          "entities": [{
+              "id": "chocolate cake 3",
+              "type": "concrete",
+              "subtype": "compound",
+              "category": "artifact"
+            }
+          ],
+          "actions": [{"root": "fall", "mode": "event"}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is an elephant with a probability 50 percent.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 4 is an elephant.",
+          "type": "situation",
+          "entities": [{"id": "John 4", "type": "concrete", "category": "animal"},
+            {"id": "elephant", "type": "generic", "category": "animal"}
+          ],
+          "confidence": 0.5,
+          "pre_state": "W2"
+        }
+      ]
+    },
+    {
+      "raw": "The bicycle was repaired by Anna.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Anna 5 repaired the bicycle 6.",
+          "type": "situation",
+          "entities": [{"id": "Anna 5", "type": "concrete", "category": "person"},
+            {"id": "bicycle 6", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "repair", "mode": "event", "roles": {"actor": "Anna 5", "target": "bicycle 6"}}],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The dog was barking and the cat was too.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "The dog 7 was barking.",
+          "type": "situation",
+          "entities": [{"id": "dog 7", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "bark", "mode": "event"}],
+          "pre_state": "W3",
+          "time": "past"
+        },
+        {
+          "unit_id": "S6",
+          "text": "The cat 8 was barking.",
+          "type": "situation",
+          "entities": [{"id": "cat 8", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "bark", "mode": "event"}],
+          "pre_state": "W3",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is an elephant?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Is John 4 an elephant?",
+          "type": "query",
+          "entities": [{"id": "John 4", "type": "concrete", "category": "animal"},
+            {"id": "elephant", "type": "generic", "category": "animal"}
+          ],
+          "pre_state": "W3"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Daniel 1"],
+            ["isa","office","office 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","journey"],
+                ["has actor","E","Daniel 1"],
+                ["has destination","E","office 2","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","chocolate cake","chocolate cake 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","fall"],
+                ["has actor","E","chocolate cake 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id", "S3", ["and", ["holds", "W2", ["isa","elephant","John 4"]], ["@p","S3",0.5]]],
+    ["@id","S4",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","Anna 5"],
+            ["isa","bicycle","bicycle 6"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","repair"],
+                ["has actor","E","Anna 5"],
+                ["has target","E","bicycle 6"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W3",
+        ["and",
+          ["isa","dog","dog 7"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","bark"],
+              ["has actor","E","dog 7"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W3",
+        ["and",
+          ["isa","cat","cat 8"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","bark"],
+              ["has actor","E","cat 8"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S7", ["question", ["isa","elephant","John 4"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Daniel 1"],
+ "@nl": "Daniel 1 journeyed to the office 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","office","#:office 2"],
+ "@nl": "Daniel 1 journeyed to the office 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Daniel 1 journeyed to the office 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Daniel 1 journeyed to the office 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Daniel 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Daniel 1 journeyed to the office 2."},
+{"@name": "sent_S1",
+ "@logic": ["has destination", "sk0_activity", "#:office 2", "at", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Daniel 1 journeyed to the office 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Daniel 1 journeyed to the office 2."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Daniel 1 journeyed to the office 2."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Daniel 1 journeyed to the office 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","chocolate cake","#:chocolate cake 3"],
+ "@nl": "A chocolate cake 3 fell."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "A chocolate cake 3 fell."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "fall", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "A chocolate cake 3 fell."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:chocolate cake 3", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "A chocolate cake 3 fell."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "A chocolate cake 3 fell."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "A chocolate cake 3 fell."},
+{"@name": "sent_S2",
+ "@logic": ["next","W1","W2"],
+ "@nl": "A chocolate cake 3 fell."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Anna 5"],
+ "@nl": "Anna 5 repaired the bicycle 6."},
+{"@name": "sent_S4",
+ "@logic": ["isa","bicycle","#:bicycle 6"],
+ "@nl": "Anna 5 repaired the bicycle 6."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Anna 5 repaired the bicycle 6."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk2_activity", "repair", ["$ctxt","past","W2","?:Fv7","?:Fv8"]],
+ "@nl": "Anna 5 repaired the bicycle 6."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk2_activity", "#:Anna 5", ["$ctxt","past","W2","?:Fv7","?:Fv8"]],
+ "@nl": "Anna 5 repaired the bicycle 6."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk2_activity", "#:bicycle 6", ["$ctxt","past","W2","?:Fv7","?:Fv8"]],
+ "@nl": "Anna 5 repaired the bicycle 6."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W2","?:Fv7","?:Fv8"]],
+ "@nl": "Anna 5 repaired the bicycle 6."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Anna 5 repaired the bicycle 6."},
+{"@name": "sent_S4",
+ "@logic": ["next","W2","W3"],
+ "@nl": "Anna 5 repaired the bicycle 6."},
+{"@name": "sent_S5",
+ "@logic": ["isa","dog","#:dog 7"],
+ "@nl": "The dog 7 was barking."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The dog 7 was barking."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk3_activity", "bark", ["$ctxt","past","W3","?:Fv9","?:Fv10"]],
+ "@nl": "The dog 7 was barking."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk3_activity", "#:dog 7", ["$ctxt","past","W3","?:Fv9","?:Fv10"]],
+ "@nl": "The dog 7 was barking."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W3","?:Fv9","?:Fv10"]],
+ "@nl": "The dog 7 was barking."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "The dog 7 was barking."},
+{"@name": "sent_S6",
+ "@logic": ["isa","cat","#:cat 8"],
+ "@nl": "The cat 8 was barking."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "The cat 8 was barking."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk4_activity", "bark", ["$ctxt","past","W3","?:Fv11","?:Fv12"]],
+ "@nl": "The cat 8 was barking."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk4_activity", "#:cat 8", ["$ctxt","past","W3","?:Fv11","?:Fv12"]],
+ "@nl": "The cat 8 was barking."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W3","?:Fv11","?:Fv12"]],
+ "@nl": "The cat 8 was barking."},
+{"@name": "sent_S6",
+ "@logic": ["actuality","sk4_activity"],
+ "@nl": "The cat 8 was barking."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","elephant","#:John 4"]],
+ "@nl": "Is John 4 an elephant?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","elephant","#:John 4"], ["$defq0"]],
+ "@nl": "Is John 4 an elephant?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Is John 4 an elephant?"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "repair", ["$ctxt","?:Fv20","?:Fv21","?:Fv23","?:Fv24"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv20","?:Fv21","?:Fv23","?:Fv24"]],
+            ["-next","?:Fv21","?:Fv22"],
+            ["has property", "repaired", "?:X", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]],
+            ["$block", 0, ["$not", ["has property", "repaired", "?:X", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "repair", "?:X", ["$ctxt","?:Fv25","?:Fv26","?:Fv28","?:Fv29"]],
+            ["-next","?:Fv26","?:Fv27"],
+            ["has property", "repaired", "?:X", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]],
+            ["$block", 0, ["$not", ["has property", "repaired", "?:X", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","chocolate cake","?:X"], ["isa","cake","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","chocolate","?:X"], ["-isa","cake","?:X"], ["isa","chocolate cake","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv30"], ["has type","?:E","go","?:Fv30"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32097,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1067,
+      "raw": {
+        "input_tokens": 55,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1067,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39717,
+      "cached_input_tokens": 38891,
+      "output_tokens": 731,
+      "raw": {
+        "input_tokens": 826,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 731,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:27:32Z"
+}

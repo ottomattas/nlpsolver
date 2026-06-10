@@ -1,0 +1,567 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 893,
+  "input_text": "John likes all boxers. A school bus arrived. The dog chased by the boy was black. Tom and Eve greeted each other. The student who passed the test studied a lot. Did the student fail the test?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Likely false.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John likes all boxers.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 likes all boxers.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "boxers", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "A school bus arrived.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "A school bus 2 arrived.",
+          "type": "situation",
+          "entities": [{
+              "id": "school bus 2",
+              "type": "concrete",
+              "subtype": "compound",
+              "category": "artifact"
+            }
+          ],
+          "actions": [{"root": "arrive", "mode": "event", "roles": {"actor": "school bus 2"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The dog chased by the boy was black.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The dog 3 was chased by the boy 4.",
+          "type": "situation",
+          "entities": [{"id": "dog 3", "type": "concrete", "category": "animal"},
+            {"id": "boy 4", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "chase", "mode": "event", "roles": {"actor": "boy 4", "target": "dog 3"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "The dog 3 was black.",
+          "type": "situation",
+          "entities": [{"id": "dog 3", "type": "concrete", "category": "animal"}],
+          "adjectives": [["black","none","entity"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Tom and Eve greeted each other.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Tom 5 and Eve 6 greeted each other.",
+          "type": "situation",
+          "entities": [{"id": "Tom 5", "type": "concrete", "category": "person"},
+            {"id": "Eve 6", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "greet",
+              "mode": "event",
+              "roles": {"actor": ["Tom 5","Eve 6"], "target": ["Tom 5","Eve 6"]}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The student who passed the test studied a lot.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The student 7 passed the test 8.",
+          "type": "situation",
+          "entities": [{"id": "student 7", "type": "concrete", "category": "person"},
+            {"id": "test 8", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "pass", "mode": "event", "roles": {"actor": "student 7", "target": "test 8"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S7",
+          "text": "The student 7 studied the test 8 a lot.",
+          "type": "situation",
+          "entities": [{"id": "student 7", "type": "concrete", "category": "person"},
+            {"id": "test 8", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{
+              "root": "study",
+              "mode": "habitual",
+              "roles": {"actor": "student 7", "target": "test 8", "manner": "a lot"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Did the student fail the test?",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Did the student 7 fail the test 8?",
+          "type": "query",
+          "entities": [{"id": "student 7", "type": "concrete", "category": "person"},
+            {"id": "test 8", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "fail", "mode": "event", "roles": {"actor": "student 7", "target": "test 8"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["forall","X",
+            ["implies",
+              ["isa","boxer","X"],
+              ["has degree rel2","like","John 1","X","none","person"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","school bus","school bus 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","arrive"],
+              ["has actor","E","school bus 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","dog","dog 3"],
+          ["isa","boy","boy 4"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","chase"],
+              ["has actor","E","boy 4"],
+              ["has target","E","dog 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and", ["isa","dog","dog 3"], ["has degree property","black","dog 3","none","entity"]]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Tom 5"],
+          ["isa","person","Eve 6"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","greet"],
+              ["has actor","E","Tom 5"],
+              ["has actor","E","Eve 6"],
+              ["has target","E","Tom 5"],
+              ["has target","E","Eve 6"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","student","student 7"],
+          ["isa","test","test 8"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","pass"],
+              ["has actor","E","student 7"],
+              ["has target","E","test 8"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","student","student 7"],
+          ["isa","test","test 8"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","study"],
+              ["has actor","E","student 7"],
+              ["has target","E","test 8"],
+              ["has manner","E","a lot"],
+              ["typical","E"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","fail"],
+            ["has actor","E","student 7"],
+            ["has target","E","test 8"],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 likes all boxers."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","boxer","?:X"],
+            ["has degree rel2", "like", "#:John 1", "?:X", "none", "person", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "John 1 likes all boxers."},
+{"@name": "sent_S2",
+ "@logic": ["isa","school bus","#:school bus 2"],
+ "@nl": "A school bus 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "A school bus 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "arrive", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "A school bus 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:school bus 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "A school bus 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "A school bus 2 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["isa","dog","#:dog 3"],
+ "@nl": "The dog 3 was chased by the boy 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","boy","#:boy 4"],
+ "@nl": "The dog 3 was chased by the boy 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The dog 3 was chased by the boy 4."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "chase", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The dog 3 was chased by the boy 4."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:boy 4", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The dog 3 was chased by the boy 4."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk1_activity", "#:dog 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The dog 3 was chased by the boy 4."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The dog 3 was chased by the boy 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","dog","#:dog 3"],
+ "@nl": "The dog 3 was black."},
+{"@name": "sent_S4",
+ "@logic": ["has property", "black", "#:dog 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The dog 3 was black."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Tom 5"],
+ "@nl": "Tom 5 and Eve 6 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Eve 6"],
+ "@nl": "Tom 5 and Eve 6 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Tom 5 and Eve 6 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk2_activity", "greet", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Tom 5 and Eve 6 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:Tom 5", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Tom 5 and Eve 6 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:Eve 6", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Tom 5 and Eve 6 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk2_activity", "#:Tom 5", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Tom 5 and Eve 6 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk2_activity", "#:Eve 6", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Tom 5 and Eve 6 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Tom 5 and Eve 6 greeted each other."},
+{"@name": "sent_S6",
+ "@logic": ["isa","student","#:student 7"],
+ "@nl": "The student 7 passed the test 8."},
+{"@name": "sent_S6",
+ "@logic": ["isa","test","#:test 8"],
+ "@nl": "The student 7 passed the test 8."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The student 7 passed the test 8."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk3_activity", "pass", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The student 7 passed the test 8."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk3_activity", "#:student 7", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The student 7 passed the test 8."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk3_activity", "#:test 8", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The student 7 passed the test 8."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The student 7 passed the test 8."},
+{"@name": "sent_S7",
+ "@logic": ["isa","student","#:student 7"],
+ "@nl": "The student 7 studied the test 8 a lot."},
+{"@name": "sent_S7",
+ "@logic": ["isa","test","#:test 8"],
+ "@nl": "The student 7 studied the test 8 a lot."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "The student 7 studied the test 8 a lot."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk4_activity", "study", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The student 7 studied the test 8 a lot."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk4_activity", "#:student 7", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The student 7 studied the test 8 a lot."},
+{"@name": "sent_S7",
+ "@logic": ["has target", "sk4_activity", "#:test 8", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The student 7 studied the test 8 a lot."},
+{"@name": "sent_S7",
+ "@logic": ["has manner", "sk4_activity", "a lot", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The student 7 studied the test 8 a lot."},
+{"@name": "sent_S7",
+ "@logic": ["typical", "sk4_activity", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The student 7 studied the test 8 a lot."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The student 7 studied the test 8 a lot."},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk5_activity"]],
+ "@nl": "Did the student 7 fail the test 8?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk5_activity", "fail", ["$ctxt","past","?:Fv23","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did the student 7 fail the test 8?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk5_activity", "#:student 7", ["$ctxt","past","?:Fv25","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did the student 7 fail the test 8?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk5_activity", "#:test 8", ["$ctxt","past","?:Fv27","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did the student 7 fail the test 8?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk5_activity", "past", "in", ["$ctxt","past","?:Fv29","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did the student 7 fail the test 8?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "fail", ["$ctxt","past","?:Fv33","?:Fv17","?:Fv18"]],
+            ["-has actor", "?:E", "#:student 7", ["$ctxt","past","?:Fv35","?:Fv17","?:Fv18"]],
+            ["-has target", "?:E", "#:test 8", ["$ctxt","past","?:Fv37","?:Fv17","?:Fv18"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did the student 7 fail the test 8?"},
+{"@name": "sent_S8",
+ "@question": ["$defq0"],
+ "@nl": "Did the student 7 fail the test 8?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","boxer","$some_boxer"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","boxer","$some_not_boxer"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","school bus","?:X"], ["isa","bus","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","school","?:X"], ["-isa","bus","?:X"], ["isa","school bus","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv41"], ["has type","?:E","give","?:Fv41"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv42"], ["has type","?:E","go","?:Fv42"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_verb_excl",
+ "@logic": [["-has type","?:E1","pass","?:Fv43"],
+            ["-has actor","?:E1","?:Ag","?:Fv43"],
+            ["-has target","?:E1","?:Tg","?:Fv43"],
+            ["-has type","?:E2","fail","?:Fv43"],
+            ["-has actor","?:E2","?:Ag","?:Fv43"],
+            ["-has target","?:E2","?:Tg","?:Fv43"],
+            ["$block", 0, ["has type","?:E2","fail","?:Fv43"]]
+           ],
+ "@confidence": 0.85,
+ "@nl": "[generated: frm_verb_excl]"},
+{"@name": "frm_verb_excl",
+ "@logic": [["-has type","?:E1","fail","?:Fv44"],
+            ["-has actor","?:E1","?:Ag","?:Fv44"],
+            ["-has target","?:E1","?:Tg","?:Fv44"],
+            ["-has type","?:E2","pass","?:Fv44"],
+            ["-has actor","?:E2","?:Ag","?:Fv44"],
+            ["-has target","?:E2","?:Tg","?:Fv44"],
+            ["$block", 0, ["has type","?:E2","pass","?:Fv44"]]
+           ],
+ "@confidence": 0.85,
+ "@nl": "[generated: frm_verb_excl]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "black", "?:X", ["$ctxt","past","?:Fv45","?:Fv46","?:Fv47"]],
+            ["has property", "black", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["has property", "black", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "black", "?:X", ["$ctxt","past","?:Fv48","?:Fv49","?:Fv50"]],
+            ["has property", "black", "?:X", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]],
+            ["$block", 0, ["$not", ["has property", "black", "?:X", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "blockers": [["$block", 0, ["has type", "sk5_activity", "fail", ["$ctxt","past","W0","?:X3","?:Y3"]]]],
+        "confidence": 0.85,
+        "negative proof": [[1, ["in","frm_verb_excl","assumption",0.85], [["$block", 0, ["has type","?:X","fail","?:Y"]], ["-has type","?:Z","pass","?:Y"], ["-has type","?:X","fail","?:Y"], ["-has actor","?:Z","?:U","?:Y"], ["-has actor","?:X","?:U","?:Y"], ["-has target","?:Z","?:V","?:Y"], ["-has target","?:X","?:V","?:Y"]]],
+          [2, ["in","sent_S6","assumption",1], [["has type", "sk3_activity", "pass", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 0.85], [["$block", 0, ["has type", "?:X", "fail", ["$ctxt","past","W0","?:Y","?:Z"]]], ["-has actor", "sk3_activity", "?:U", ["$ctxt","past","W0","?:Y","?:Z"]], ["-has target", "sk3_activity", "?:V", ["$ctxt","past","W0","?:Y","?:Z"]], ["-has type", "?:X", "fail", ["$ctxt","past","W0","?:Y","?:Z"]], ["-has actor", "?:X", "?:U", ["$ctxt","past","W0","?:Y","?:Z"]], ["-has target", "?:X", "?:V", ["$ctxt","past","W0","?:Y","?:Z"]]]],
+          [4, ["in","sent_S6","assumption",1], [["has actor", "sk3_activity", "#:student 7", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [5, ["mp", [3,1], 4, "fromassumption", 0.85], [["$block", 0, ["has type", "?:X", "fail", ["$ctxt","past","W0","?:Y","?:Z"]]], ["-has target", "sk3_activity", "?:U", ["$ctxt","past","W0","?:Y","?:Z"]], ["-has type", "?:X", "fail", ["$ctxt","past","W0","?:Y","?:Z"]], ["-has actor", "?:X", "#:student 7", ["$ctxt","past","W0","?:Y","?:Z"]], ["-has target", "?:X", "?:U", ["$ctxt","past","W0","?:Y","?:Z"]]]],
+          [6, ["in","sent_S6","assumption",1], [["has target", "sk3_activity", "#:test 8", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [7, ["mp", [5,1], 6, "fromassumption", 0.85], [["$block", 0, ["has type", "?:X", "fail", ["$ctxt","past","W0","?:Y","?:Z"]]], ["-has type", "?:X", "fail", ["$ctxt","past","W0","?:Y","?:Z"]], ["-has actor", "?:X", "#:student 7", ["$ctxt","past","W0","?:Y","?:Z"]], ["-has target", "?:X", "#:test 8", ["$ctxt","past","W0","?:Y","?:Z"]]]],
+          [8, ["in","sent_S8","assumption",1], [["-$defq0"], ["has type", "sk5_activity", "fail", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [9, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [10, ["mp",8,9,"fromga",1], [["has type", "sk5_activity", "fail", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [11, ["mp", [7,1], 10, "fromga", 0.85], [["$block", 0, ["has type", "sk5_activity", "fail", ["$ctxt","past","W0","?:X","?:Y"]]], ["-has actor", "sk5_activity", "#:student 7", ["$ctxt","past","W0","?:X","?:Y"]], ["-has target", "sk5_activity", "#:test 8", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [12, ["in","sent_S8","assumption",1], [["-$defq0"], ["has actor", "sk5_activity", "#:student 7", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [13, ["mp",12,9,"fromga",1], [["has actor", "sk5_activity", "#:student 7", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [14, ["mp", [11,1], 13, "fromga", 0.85], [["$block", 0, ["has type", "sk5_activity", "fail", ["$ctxt","past","W0","?:X","?:Y"]]], ["-has target", "sk5_activity", "#:test 8", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [15, ["in","sent_S8","assumption",1], [["-$defq0"], ["has target", "sk5_activity", "#:test 8", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [16, ["mp",15,9,"fromga",1], [["has target", "sk5_activity", "#:test 8", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [17, ["mp", [14,1], 16, "fromga", 0.85], [["$block", 0, ["has type", "sk5_activity", "fail", ["$ctxt","past","W0","?:X3","?:Y3"]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 85%.",
+"Sentences used:",
+"  (1) The student who passed the test studied a lot.",
+"  (2) Did the student fail the test?",
+"Knowledge used:",
+"  If Z is a pass event and X is a fail event and some U performs Z and U performs X and Z targets some V then X does not target V, except when X is a fail event. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If Z is a pass event and X is a fail event and some U performs Z and U performs X and Z targets some V then X does not target V, except when X is a fail event  [background knowledge, confidence 85%]",
+"  (2) The event act4 is a pass event  [sentence 1]",
+"  (3) If some U performs the event act4 and the act4 targets some V and X is a fail event and U performs X then X does not target V, except when X is a fail event  [from steps 1, 2, confidence 85%]",
+"  (4) The student H performs the event act4  [sentence 1]",
+"  (5) If the event act4 targets some U and X is a fail event and the student H performs X then X does not target U, except when X is a fail event  [from steps 3, 4, confidence 85%]",
+"  (6) The event act4 targets the test I  [sentence 1]",
+"  (7) If X is a fail event and the student H performs X then X does not target the test I, except when X is a fail event  [from steps 5, 6, confidence 85%]",
+"  (8) If answer holds then the event act6 is a fail event  [sentence 2]",
+"  (9) Answer holds  [assumption]",
+"  (10) The event act6 is a fail event  [from steps 8, 9]",
+"  (11) If the student H performs the event act6 then the act6 does not target the test I, except when the act6 is a fail event  [from steps 7, 10, confidence 85%]",
+"  (12) If answer holds then the student H performs the event act6  [sentence 2]",
+"  (13) The student H performs the event act6  [from steps 12, 9]",
+"  (14) The act6 does not target the test I, except when the act6 is a fail event  [from steps 11, 13, confidence 85%]",
+"  (15) If answer holds then the event act6 targets the test I  [sentence 2]",
+"  (16) The event act6 targets the test I  [from steps 15, 9]",
+"  (17) Outstanding exception: the event act6 is a fail event  [from steps 14, 16, confidence 85%]",
+"Exceptions checked and not holding:",
+"  act6 is a fail event"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28357,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1158,
+      "raw": {
+        "input_tokens": 28357,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1158,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29515
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34338,
+      "cached_input_tokens": 33408,
+      "output_tokens": 795,
+      "raw": {
+        "input_tokens": 34338,
+        "input_tokens_details": {"cached_tokens": 33408},
+        "output_tokens": 795,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35133
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:56:50Z"
+}

@@ -1,0 +1,585 @@
+{
+  "test_name": "core_100_b8",
+  "case_id": 1389,
+  "input_text": "Some bears eat all berries. Mary, a pilot, smiled. Sue is a true patriot. Jessica is a mouse. The road leading to the village was narrow. If animal or bird is nice and simple, it is cute. Daniel went back to the bathroom. Mr Dursley is an American. The woman holding a heavy lamp sang. John is cute?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Some bears eat all berries.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Some bears eat all berries.",
+          "type": "normal_rule",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "dependent", "category": "plant"}
+          ],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"target": "berries"}}],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Mary, a pilot, smiled.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Mary 1 smiled.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "pilot", "type": "generic", "category": "person"}
+          ],
+          "actions": [{"root": "smile", "mode": "event"}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Sue is a true patriot.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Sue 2 is a true patriot.",
+          "type": "situation",
+          "entities": [{"id": "Sue 2", "type": "concrete", "category": "person"},
+            {"id": "patriot", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Jessica is a mouse.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Jessica 3 is a mouse.",
+          "type": "situation",
+          "entities": [{"id": "Jessica 3", "type": "concrete", "category": "animal"},
+            {"id": "mouse", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The road leading to the village was narrow.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "The road 1 leading to the village 2 was narrow.",
+          "type": "situation",
+          "entities": [{"id": "road 1", "type": "concrete", "category": "artifact"},
+            {"id": "village 2", "type": "concrete", "category": "place"}
+          ],
+          "adjectives": [["narrow","none","road"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "If animal or bird is nice and simple, it is cute.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "If an animal or a bird is nice and simple, the animal or bird is cute.",
+          "type": "normal_rule",
+          "entities": [{"id": "animal", "type": "generic", "category": "animal"},
+            {"id": "bird", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["nice","none","entity"], ["simple","none","entity"], ["cute","none","entity"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "Daniel went back to the bathroom.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Daniel 4 went back to the bathroom 5.",
+          "type": "situation",
+          "entities": [{"id": "Daniel 4", "type": "concrete", "category": "person"},
+            {"id": "bathroom 5", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "go back", "mode": "event", "roles": {"destination": "bathroom 5"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is an American.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Mr Dursley 6 is an American.",
+          "type": "situation",
+          "entities": [{"id": "Mr Dursley 6", "type": "concrete", "category": "person"},
+            {"id": "American", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The woman holding a heavy lamp sang.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "The woman 7 holding a heavy lamp 8 sang.",
+          "type": "situation",
+          "entities": [{"id": "woman 7", "type": "concrete", "category": "person"},
+            {"id": "lamp 8", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "hold", "mode": "event", "roles": {"actor": "woman 7", "target": "lamp 8"}},
+            {"root": "sing", "mode": "event", "roles": {"actor": "woman 7"}}
+          ],
+          "adjectives": [["heavy","none","lamp"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is cute?",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Is John 8 cute?",
+          "type": "query",
+          "entities": [{"id": "John 8", "type": "concrete", "category": "person"}],
+          "adjectives": [["cute","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["exists","X",
+            ["and",
+              ["isa","bear","X"],
+              ["forall","Y",
+                ["implies",
+                  ["isa","berry","Y"],
+                  ["normally",
+                    ["exists","E",
+                      ["and",
+                        ["isa","activity","E"],
+                        ["has type","E","eat"],
+                        ["has actor","E","X"],
+                        ["has target","E","Y"],
+                        ["typical","E"]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 1"],
+          ["isa","pilot","Mary 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","smile"],
+              ["has actor","E","Mary 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and", ["isa","patriot","Sue 2"], ["has degree property","true","Sue 2","none","patriot"]]
+      ]
+    ],
+    ["@id", "S4", ["holds", "W0", ["isa","mouse","Jessica 3"]]],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","road","road 1"],
+            ["isa","village","village 2"],
+            ["has degree property","narrow","road 1","none","road"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["normally",
+              ["implies",
+                ["and",
+                  ["or", ["isa","animal","X"], ["isa","bird","X"]],
+                  ["has degree property","nice","X","none","entity"],
+                  ["has degree property","simple","X","none","entity"]
+                ],
+                ["has degree property","cute","X","none","entity"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S6",0.95]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Daniel 4"],
+            ["isa","bathroom","bathroom 5"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","go back"],
+                ["has actor","E","Daniel 4"],
+                ["has destination","E","bathroom 5","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id", "S8", ["holds", "W0", ["isa","American","Mr Dursley 6"]]],
+    ["@id","S9",
+      ["holds","W0",
+        ["and",
+          ["isa","woman","woman 7"],
+          ["isa","lamp","lamp 8"],
+          ["has degree property","heavy","lamp 8","none","lamp"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","hold"],
+              ["has actor","E1","woman 7"],
+              ["has target","E1","lamp 8"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","sing"],
+              ["has actor","E2","woman 7"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S10", ["question", ["has degree property","cute","John 8","none","person"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S10",
+ "@logic": ["isa","person","#:John 8"],
+ "@nl": "Is John 8 cute?"},
+{"@name": "sent_S1",
+ "@logic": ["isa","bear","sk0_bear"],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","berry","?:Y"], ["isa", "activity", ["sk1","?:Y"]]],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","berry","?:Y"],
+            ["has type", ["sk1","?:Y"], "eat", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","berry","?:Y"],
+            ["has actor", ["sk1","?:Y"], "sk0_bear", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","berry","?:Y"],
+            ["has target", ["sk1","?:Y"], "?:Y", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","berry","?:Y"],
+            ["typical", ["sk1","?:Y"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","berry",1], ["$not", ["typical", ["sk1","?:Y"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 smiled."},
+{"@name": "sent_S2",
+ "@logic": ["isa","pilot","#:Mary 1"],
+ "@nl": "Mary 1 smiled."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Mary 1 smiled."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk2_activity", "smile", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mary 1 smiled."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk2_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mary 1 smiled."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mary 1 smiled."},
+{"@name": "sent_S3",
+ "@logic": ["isa","patriot","#:Sue 2"],
+ "@nl": "Sue 2 is a true patriot."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "true", "#:Sue 2", "none", "patriot", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Sue 2 is a true patriot."},
+{"@name": "sent_S4",
+ "@logic": ["isa","mouse","#:Jessica 3"],
+ "@nl": "Jessica 3 is a mouse."},
+{"@name": "sent_S5",
+ "@logic": ["isa","road","#:road 1"],
+ "@nl": "The road 1 leading to the village 2 was narrow."},
+{"@name": "sent_S5",
+ "@logic": ["isa","village","#:village 2"],
+ "@nl": "The road 1 leading to the village 2 was narrow."},
+{"@name": "sent_S5",
+ "@logic": ["-has degree property", "wide", "#:road 1", "none", "road", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The road 1 leading to the village 2 was narrow."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","animal","?:X"],
+            ["-has degree property", "good", "?:X", "none", "?:Fv114", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["-has degree property", "simple", "?:X", "none", "?:Fv115", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["has degree property", "cute", "?:X", "none", "?:Fv116", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["$block", ["$","animal",3], ["$not", ["has degree property", "cute", "?:X", "none", "?:Fv117", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]]]
+           ],
+ "@confidence": 0.9487,
+ "@nl": "If an animal or a bird is nice and simple, the animal or bird is cute."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","bird","?:X"],
+            ["-has degree property", "good", "?:X", "none", "?:Fv118", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["-has degree property", "simple", "?:X", "none", "?:Fv119", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["has degree property", "cute", "?:X", "none", "?:Fv120", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["$block", ["$","bird",3], ["$not", ["has degree property", "cute", "?:X", "none", "?:Fv121", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]]]
+           ],
+ "@confidence": 0.9487,
+ "@nl": "If an animal or a bird is nice and simple, the animal or bird is cute."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Daniel 4"],
+ "@nl": "Daniel 4 went back to the bathroom 5."},
+{"@name": "sent_S7",
+ "@logic": ["isa","bathroom","#:bathroom 5"],
+ "@nl": "Daniel 4 went back to the bathroom 5."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Daniel 4 went back to the bathroom 5."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk3_activity", "go back", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Daniel 4 went back to the bathroom 5."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk3_activity", "#:Daniel 4", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Daniel 4 went back to the bathroom 5."},
+{"@name": "sent_S7",
+ "@logic": ["has destination", "sk3_activity", "#:bathroom 5", "at", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Daniel 4 went back to the bathroom 5."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Daniel 4 went back to the bathroom 5."},
+{"@name": "sent_S7",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Daniel 4 went back to the bathroom 5."},
+{"@name": "sent_S8",
+ "@logic": ["isa","american","#:Mr Dursley 6"],
+ "@nl": "Mr Dursley 6 is an American."},
+{"@name": "sent_S9",
+ "@logic": ["isa","woman","#:woman 7"],
+ "@nl": "The woman 7 holding a heavy lamp 8 sang."},
+{"@name": "sent_S9",
+ "@logic": ["isa","lamp","#:lamp 8"],
+ "@nl": "The woman 7 holding a heavy lamp 8 sang."},
+{"@name": "sent_S9",
+ "@logic": ["-has degree property", "light", "#:lamp 8", "none", "lamp", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 7 holding a heavy lamp 8 sang."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "The woman 7 holding a heavy lamp 8 sang."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk4_activity", "hold", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 7 holding a heavy lamp 8 sang."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk4_activity", "#:woman 7", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 7 holding a heavy lamp 8 sang."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk4_activity", "#:lamp 8", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 7 holding a heavy lamp 8 sang."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 7 holding a heavy lamp 8 sang."},
+{"@name": "sent_S9",
+ "@logic": ["actuality","sk4_activity"],
+ "@nl": "The woman 7 holding a heavy lamp 8 sang."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "The woman 7 holding a heavy lamp 8 sang."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk5_activity", "sing", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 7 holding a heavy lamp 8 sang."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk5_activity", "#:woman 7", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 7 holding a heavy lamp 8 sang."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 7 holding a heavy lamp 8 sang."},
+{"@name": "sent_S9",
+ "@logic": ["actuality","sk5_activity"],
+ "@nl": "The woman 7 holding a heavy lamp 8 sang."},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "cute", "#:John 8", "none", "?:Fv134", ["$ctxt","present","W1","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Is John 8 cute?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-has degree property", "cute", "#:John 8", "none", "?:Fv135", ["$ctxt","present","W1","?:Fv23","?:Fv24"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 8 cute?"},
+{"@name": "sent_S10",
+ "@question": ["$defq0"],
+ "@nl": "Is John 8 cute?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "cute", "#:John 8", "none", "person", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "cute", "#:John 8", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "cute", "#:John 8", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 8 cute?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","berry","$some_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","berry","$some_not_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "good", "$some_nice_entity", "none", "?:Fv122", ["$ctxt","?:Fv81","?:Fv78","?:Fv79","?:Fv80"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "good", "$some_not_nice_entity", "none", "?:Fv123", ["$ctxt","?:Fv89","?:Fv86","?:Fv87","?:Fv88"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "simple", "$some_simple_entity", "none", "?:Fv124", ["$ctxt","?:Fv93","?:Fv90","?:Fv91","?:Fv92"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "simple", "$some_not_simple_entity", "none", "?:Fv125", ["$ctxt","?:Fv101","?:Fv98","?:Fv99","?:Fv100"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "cute", "$some_cute_entity", "none", "?:Fv126", ["$ctxt","?:Fv105","?:Fv102","?:Fv103","?:Fv104"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cute", "$some_not_cute_entity", "none", "?:Fv127", ["$ctxt","?:Fv113","?:Fv110","?:Fv111","?:Fv112"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "light", "?:X", "none", "?:Fv128", ["$ctxt","past","?:Fv26","?:Fv27","?:Fv28"]],
+            ["-has degree property", "light", "?:X", "none", "?:Fv129", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]],
+            ["$block", 0, ["$not", ["has degree property", "heavy", "?:X", "none", "?:Fv130", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv29","?:Fv30","?:Fv31"]],
+            ["-has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv29","?:Fv30","?:Fv31"]],
+            ["$block", 0, ["$not", ["has degree property", "heavy", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv29","?:Fv30","?:Fv31"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "none", "?:Fv131", ["$ctxt","past","?:Fv32","?:Fv33","?:Fv34"]],
+            ["-has degree property", "wide", "?:X", "none", "?:Fv132", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "none", "?:Fv133", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv35","?:Fv36","?:Fv37"]],
+            ["-has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28386,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1414,
+      "raw": {
+        "input_tokens": 28386,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1414,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29800
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34532,
+      "cached_input_tokens": 33280,
+      "output_tokens": 931,
+      "raw": {
+        "input_tokens": 34532,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 931,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35463
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T11:49:35Z"
+}

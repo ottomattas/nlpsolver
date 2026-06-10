@@ -1,0 +1,488 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 1188,
+  "input_text": "Greg is a bear. While John was cooking, Mary read a book. Eve reported that Tom arrived. Elephants are not birds. The teacher showed the students a map. Mary read a book?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "Greg is a bear.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Greg 1 is a bear.",
+          "type": "situation",
+          "entities": [{"id": "Greg 1", "type": "concrete", "category": "animal"},
+            {"id": "bear", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "While John was cooking, Mary read a book.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 2 was cooking while Mary 3 read a book 4.",
+          "type": "situation",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"},
+            {"id": "Mary 3", "type": "concrete", "category": "person"},
+            {"id": "book 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "cook", "mode": "event", "roles": {"actor": "John 2"}},
+            {"root": "read", "mode": "event", "roles": {"actor": "Mary 3", "target": "book 4"}}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Eve reported that Tom arrived.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Tom 5 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Tom 5", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "arrive", "mode": "event", "roles": {"actor": "Tom 5"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "Eve 6 reported that Tom 5 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Eve 6", "type": "concrete", "category": "person"},
+            {"id": "Tom 5", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "report",
+              "mode": "speech_act",
+              "roles": {
+                "actor": "Eve 6",
+                "content": {"root": "arrive", "mode": "event", "roles": {"actor": "Tom 5"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants are not birds.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Elephants are not birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The teacher showed the students a map.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The teacher 7 showed the students 8 a map 9.",
+          "type": "situation",
+          "entities": [{"id": "teacher 7", "type": "concrete", "category": "person"},
+            {"id": "students 8", "type": "concrete", "category": "person"},
+            {"id": "map 9", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 7", "recipient": "students 8", "target": "map 9"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary read a book?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Did Mary 3 read a book?",
+          "type": "query",
+          "entities": [{"id": "Mary 3", "type": "concrete", "category": "person"},
+            {"id": "book", "type": "generic", "category": "artifact"}
+          ],
+          "actions": [{"root": "read", "mode": "event", "roles": {"actor": "Mary 3", "target": "book"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","bear","Greg 1"]]],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 2"],
+          ["isa","person","Mary 3"],
+          ["isa","book","book 4"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","cook"],
+              ["has actor","E1","John 2"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","read"],
+              ["has actor","E2","Mary 3"],
+              ["has target","E2","book 4"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Tom 5"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","arrive"],
+              ["has actor","E","Tom 5"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 6"],
+          ["isa","person","Tom 5"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","report"],
+              ["has actor","E1","Eve 6"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","arrive"],
+                  ["has actor","E2","Tom 5"],
+                  ["has time","E2","past","in"]
+                ]
+              ],
+              ["speech_act","E1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall", "X", ["implies", ["isa","elephant","X"], ["not", ["isa","bird","X"]]]]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","teacher","teacher 7"],
+          ["isa","student","students 8"],
+          ["isa","map","map 9"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","show"],
+              ["has actor","E","teacher 7"],
+              ["has recipient","E","students 8"],
+              ["has target","E","map 9"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["question",
+        ["exists","X",
+          ["and",
+            ["isa","book","X"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","read"],
+                ["has actor","E","Mary 3"],
+                ["has target","E","X"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "entity_S6",
+ "@logic": ["isa","student","#:students 8"],
+ "@nl": "The teacher 7 showed the students 8 a map 9."},
+{"@name": "sent_S1",
+ "@logic": ["isa","bear","#:Greg 1"],
+ "@nl": "Greg 1 is a bear."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "John 2 was cooking while Mary 3 read a book 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 3"],
+ "@nl": "John 2 was cooking while Mary 3 read a book 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","book","#:book 4"],
+ "@nl": "John 2 was cooking while Mary 3 read a book 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 2 was cooking while Mary 3 read a book 4."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "cook", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 was cooking while Mary 3 read a book 4."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:John 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 was cooking while Mary 3 read a book 4."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 was cooking while Mary 3 read a book 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "John 2 was cooking while Mary 3 read a book 4."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "read", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 was cooking while Mary 3 read a book 4."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:Mary 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 was cooking while Mary 3 read a book 4."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk1_activity", "#:book 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 was cooking while Mary 3 read a book 4."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 was cooking while Mary 3 read a book 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Tom 5"],
+ "@nl": "Tom 5 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Tom 5 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "arrive", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 5 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:Tom 5", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 5 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 5 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Tom 5 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Eve 6"],
+ "@nl": "Eve 6 reported that Tom 5 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Tom 5"],
+ "@nl": "Eve 6 reported that Tom 5 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Eve 6 reported that Tom 5 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk3_activity", "report", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Eve 6 reported that Tom 5 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk3_activity", "#:Eve 6", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Eve 6 reported that Tom 5 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Eve 6 reported that Tom 5 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["has content","sk3_activity","sk4_activity"],
+ "@nl": "Eve 6 reported that Tom 5 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Eve 6 reported that Tom 5 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk4_activity", "arrive", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Eve 6 reported that Tom 5 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk4_activity", "#:Tom 5", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Eve 6 reported that Tom 5 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Eve 6 reported that Tom 5 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["speech_act","sk3_activity"],
+ "@nl": "Eve 6 reported that Tom 5 arrived."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","elephant","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Elephants are not birds."},
+{"@name": "sent_S6",
+ "@logic": ["isa","teacher","#:teacher 7"],
+ "@nl": "The teacher 7 showed the students 8 a map 9."},
+{"@name": "sent_S6",
+ "@logic": ["isa","student","#:students 8"],
+ "@nl": "The teacher 7 showed the students 8 a map 9."},
+{"@name": "sent_S6",
+ "@logic": ["isa","map","#:map 9"],
+ "@nl": "The teacher 7 showed the students 8 a map 9."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "The teacher 7 showed the students 8 a map 9."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk5_activity", "show", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The teacher 7 showed the students 8 a map 9."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk5_activity", "#:teacher 7", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The teacher 7 showed the students 8 a map 9."},
+{"@name": "sent_S6",
+ "@logic": ["has recipient", "sk5_activity", "#:students 8", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The teacher 7 showed the students 8 a map 9."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk5_activity", "#:map 9", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The teacher 7 showed the students 8 a map 9."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The teacher 7 showed the students 8 a map 9."},
+{"@name": "sent_S6",
+ "@logic": ["actuality","sk5_activity"],
+ "@nl": "The teacher 7 showed the students 8 a map 9."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","book","sk6_book"]],
+ "@nl": "Did Mary 3 read a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk7_activity"]],
+ "@nl": "Did Mary 3 read a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk7_activity", "read", ["$ctxt","past","?:Fv23","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Did Mary 3 read a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk7_activity", "#:Mary 3", ["$ctxt","past","?:Fv25","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Did Mary 3 read a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk7_activity", "sk6_book", ["$ctxt","past","?:Fv27","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Did Mary 3 read a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk7_activity", "past", "in", ["$ctxt","past","?:Fv29","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Did Mary 3 read a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk7_activity"]],
+ "@nl": "Did Mary 3 read a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","book","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "read", ["$ctxt","past","?:Fv35","?:Fv15","?:Fv16"]],
+            ["-has actor", "?:E", "#:Mary 3", ["$ctxt","past","?:Fv37","?:Fv15","?:Fv16"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","past","?:Fv39","?:Fv15","?:Fv16"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Mary 3 read a book?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Did Mary 3 read a book?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","report","?:Fv43"], ["has type","?:E","announce","?:Fv43"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","announce","?:Fv44"], ["has type","?:E","report","?:Fv44"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28353,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1071,
+      "raw": {
+        "input_tokens": 28353,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1071,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29424
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34270,
+      "cached_input_tokens": 33280,
+      "output_tokens": 771,
+      "raw": {
+        "input_tokens": 34270,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 771,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35041
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 35753,
+      "cached_input_tokens": 34176,
+      "output_tokens": 1286,
+      "raw": {
+        "input_tokens": 35753,
+        "input_tokens_details": {"cached_tokens": 34176},
+        "output_tokens": 1286,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 37039
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T10:09:59Z"
+}

@@ -1,0 +1,414 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 519,
+  "input_text": "John is a big mouse. If X is cool and X is nice then X is red. A hand of a man moved a wheel. Penguins live in the water. Some elephants are animals. Some elephants are not animals?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is a big mouse.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a big mouse.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","mouse"]]
+        }
+      ]
+    },
+    {
+      "raw": "If X is cool and X is nice then X is red.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "If X is cool and X is nice, then X is red.",
+          "type": "strict_rule",
+          "entities": [{"id": "X", "type": "generic"}],
+          "adjectives": [["cool","none","entity"], ["nice","none","entity"], ["red","none","entity"]]
+        }
+      ]
+    },
+    {
+      "raw": "A hand of a man moved a wheel.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "A hand 2 of a man 3 moved a wheel 4.",
+          "type": "situation",
+          "entities": [{"id": "hand 2", "type": "concrete", "text": "hand", "category": "artifact"},
+            {"id": "man 3", "type": "concrete", "category": "person"},
+            {"id": "wheel 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "move", "mode": "event", "roles": {"actor": "hand 2", "target": "wheel 4"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "The hand 2 is the hand of the man 3.",
+          "type": "situation",
+          "entities": [{"id": "hand 2", "type": "concrete", "text": "hand", "category": "artifact"},
+            {"id": "man 3", "type": "concrete", "category": "person"}
+          ],
+          "pre_state": "W0"
+        }
+      ]
+    },
+    {
+      "raw": "Penguins live in the water.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Penguins live in water.",
+          "type": "normal_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"},
+            {"id": "water", "type": "generic", "scope": "kind", "category": "substance"}
+          ],
+          "actions": [{
+              "root": "live",
+              "mode": "habitual",
+              "roles": {"location": "water", "location_prep": "in"}
+            }
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Some elephants are animals.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Some elephants are animals.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Some elephants are not animals?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Are some elephants not animals?",
+          "type": "query",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","mouse","John 1"], ["has degree property","big","John 1","none","mouse"]]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["and",
+              ["has degree property","cool","X","none","entity"],
+              ["has degree property","nice","X","none","entity"]
+            ],
+            ["has degree property","red","X","none","entity"]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","hand","hand 2"],
+            ["isa","man","man 3"],
+            ["isa","wheel","wheel 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","move"],
+                ["has actor","E","hand 2"],
+                ["has target","E","wheel 4"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and", ["isa","hand","hand 2"], ["isa","man","man 3"], ["has part","man 3","hand 2"]]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","penguin","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","live"],
+                    ["has actor","E","X"],
+                    ["has location","E","water","in"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S5",0.99]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds", "W0", ["exists", "X", ["and", ["isa","elephant","X"], ["isa","animal","X"]]]],
+        ["@p","S6",0.99]
+      ]
+    ],
+    ["@id","S7",
+      ["question", ["exists", "X", ["and", ["isa","elephant","X"], ["not", ["isa","animal","X"]]]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","mouse","#:John 1"],
+ "@nl": "John 1 is a big mouse."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "big", "#:John 1", "none", "mouse", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is a big mouse."},
+{"@name": "sent_S2",
+ "@logic": [["-has degree property", "cool", "?:X", "none", "?:Fv110", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-has degree property", "good", "?:X", "none", "?:Fv111", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["has property", "red", "?:X", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "If X is cool and X is nice, then X is red."},
+{"@name": "sent_S3",
+ "@logic": ["isa","hand","#:hand 2"],
+ "@nl": "A hand 2 of a man 3 moved a wheel 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","man","#:man 3"],
+ "@nl": "A hand 2 of a man 3 moved a wheel 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","wheel","#:wheel 4"],
+ "@nl": "A hand 2 of a man 3 moved a wheel 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "A hand 2 of a man 3 moved a wheel 4."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "A hand 2 of a man 3 moved a wheel 4."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:hand 2", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "A hand 2 of a man 3 moved a wheel 4."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk0_activity", "#:wheel 4", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "A hand 2 of a man 3 moved a wheel 4."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "A hand 2 of a man 3 moved a wheel 4."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "A hand 2 of a man 3 moved a wheel 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","hand","#:hand 2"],
+ "@nl": "The hand 2 is the hand of the man 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","man","#:man 3"],
+ "@nl": "The hand 2 is the hand of the man 3."},
+{"@name": "sent_S4",
+ "@logic": ["has part", "#:man 3", "#:hand 2", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The hand 2 is the hand of the man 3."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"], ["isa", "activity", ["sk1","?:X"]]],
+ "@nl": "Penguins live in water."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has type", ["sk1","?:X"], "live", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Penguins live in water."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has actor", ["sk1","?:X"], "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Penguins live in water."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"], ["isa", "water", ["sk2","?:X"]]],
+ "@nl": "Penguins live in water."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has location", ["sk1","?:X"], ["sk2","?:X"], "in", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Penguins live in water."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"],
+            ["typical", ["sk1","?:X"], ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["$block", ["$","penguin",1], ["$not", ["typical", ["sk1","?:X"], ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Penguins live in water."},
+{"@name": "sent_S6",
+ "@logic": ["isa","elephant","sk3_elephant"],
+ "@confidence": 0.9899,
+ "@nl": "Some elephants are animals."},
+{"@name": "sent_S6",
+ "@logic": ["isa","animal","sk3_elephant"],
+ "@confidence": 0.9899,
+ "@nl": "Some elephants are animals."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","elephant","sk4_elephant"]],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","animal","sk4_elephant"]],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"], ["$defq0"]],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "cool", "$some_cool_entity", "none", "?:Fv112", ["$ctxt","?:Fv77","?:Fv74","?:Fv75","?:Fv76"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cool", "$some_not_cool_entity", "none", "?:Fv113", ["$ctxt","?:Fv85","?:Fv82","?:Fv83","?:Fv84"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "good", "$some_nice_entity", "none", "?:Fv114", ["$ctxt","?:Fv89","?:Fv86","?:Fv87","?:Fv88"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "good", "$some_not_nice_entity", "none", "?:Fv115", ["$ctxt","?:Fv97","?:Fv94","?:Fv95","?:Fv96"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "red", "$some_red_entity", ["$ctxt","?:Fv101","?:Fv98","?:Fv99","?:Fv100"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "red", "$some_not_red_entity", ["$ctxt","?:Fv109","?:Fv106","?:Fv107","?:Fv108"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","hand","?:Fv28"], ["has type","?:E","give","?:Fv28"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv29"], ["has type","?:E","go","?:Fv29"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv116", ["$ctxt","past","?:Fv30","?:Fv31","?:Fv32"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv117", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv118", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv33","?:Fv34","?:Fv35"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv36","?:Fv37","?:Fv38"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv39","?:Fv40","?:Fv41"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32098,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1034,
+      "raw": {
+        "input_tokens": 56,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1034,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39698,
+      "cached_input_tokens": 38891,
+      "output_tokens": 984,
+      "raw": {
+        "input_tokens": 807,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 984,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:49:57Z"
+}

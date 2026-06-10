@@ -1,0 +1,456 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 656,
+  "input_text": "The teacher showed the students the map. The child wearing a hat ran. These links present the many viewpoints that existed. Fortunately, John found the key. Elephants probably do not have wings. The child wore a coat?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The teacher showed the students the map.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The teacher 1 showed the students 2 the map 3.",
+          "type": "situation",
+          "entities": [{"id": "teacher 1", "type": "concrete", "category": "person"},
+            {"id": "students 2", "type": "concrete", "category": "person"},
+            {"id": "map 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 1", "recipient": "students 2", "target": "map 3"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The child wearing a hat ran.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The child 4 ran.",
+          "type": "situation",
+          "entities": [{"id": "child 4", "type": "concrete", "category": "person"},
+            {"id": "hat 5", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "run", "mode": "event"}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "The child 4 was wearing a hat 5.",
+          "type": "situation",
+          "entities": [{"id": "child 4", "type": "concrete", "category": "person"},
+            {"id": "hat 5", "type": "concrete", "category": "artifact"}
+          ],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "These links present the many viewpoints that existed.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "These links 6 present the many viewpoints 7 that existed.",
+          "type": "situation",
+          "entities": [{"id": "links 6", "type": "concrete", "category": "artifact"},
+            {"id": "viewpoints 7", "type": "concrete", "category": "abstract"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Fortunately, John found the key.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "John 8 found the key 9.",
+          "type": "situation",
+          "entities": [{"id": "John 8", "type": "concrete", "category": "person"},
+            {"id": "key 9", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "find", "mode": "event", "roles": {"actor": "John 8", "target": "key 9"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants probably do not have wings.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Elephants do not have wings.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "wings", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "The child wore a coat?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Did the child 4 wear a coat?",
+          "type": "query",
+          "entities": [{"id": "child 4", "type": "concrete", "category": "person"},
+            {"id": "coat", "type": "generic", "category": "artifact"}
+          ],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","teacher 1"],
+          ["isa","person","students 2"],
+          ["isa","artifact","map 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","show"],
+              ["has actor","E","teacher 1"],
+              ["has recipient","E","students 2"],
+              ["has target","E","map 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","child 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","run"],
+                ["has actor","E","child 4"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","child 4"],
+          ["isa","artifact","hat 5"],
+          ["@time", "past", ["is rel2","wear","child 4","hat 5"]]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","artifact","links 6"],
+          ["isa","abstract","viewpoints 7"],
+          ["is rel2","present","links 6","viewpoints 7"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","John 8"],
+            ["isa","artifact","key 9"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","find"],
+                ["has actor","E","John 8"],
+                ["has target","E","key 9"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally",
+                ["not", ["exists", "Y", ["and", ["isa","wing","Y"], ["has part","X","Y"]]]]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S6",0.8]
+      ]
+    ],
+    ["@id","S7",
+      ["question",
+        ["exists","X",
+          ["and", ["isa","coat","X"], ["@time", "past", ["is rel2","wear","child 4","X"]]]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","teacher","#:teacher 1"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "entity_S1",
+ "@logic": ["isa","student","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "entity_S1",
+ "@logic": ["isa","student","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "entity_S1",
+ "@logic": ["isa","map","#:map 3"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "entity_S2",
+ "@logic": ["isa","child","#:child 4"],
+ "@nl": "The child 4 ran."},
+{"@name": "entity_S2",
+ "@logic": ["isa","hat","#:hat 5"],
+ "@nl": "The child 4 ran."},
+{"@name": "entity_S4",
+ "@logic": ["isa","link","#:links 6"],
+ "@nl": "These links 6 present the many viewpoints 7 that existed."},
+{"@name": "entity_S4",
+ "@logic": ["isa","link","#:links 6"],
+ "@nl": "These links 6 present the many viewpoints 7 that existed."},
+{"@name": "entity_S4",
+ "@logic": ["isa","viewpoint","#:viewpoints 7"],
+ "@nl": "These links 6 present the many viewpoints 7 that existed."},
+{"@name": "entity_S4",
+ "@logic": ["isa","viewpoint","#:viewpoints 7"],
+ "@nl": "These links 6 present the many viewpoints 7 that existed."},
+{"@name": "entity_S5",
+ "@logic": ["isa","important","#:key 9"],
+ "@nl": "John 8 found the key 9."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:teacher 1"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","artifact","#:map 3"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "show", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:teacher 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S1",
+ "@logic": ["has recipient", "sk0_activity", "#:students 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:map 3", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:child 4"],
+ "@nl": "The child 4 ran."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The child 4 ran."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "run", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The child 4 ran."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:child 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The child 4 ran."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The child 4 ran."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The child 4 ran."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The child 4 ran."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:child 4"],
+ "@nl": "The child 4 was wearing a hat 5."},
+{"@name": "sent_S3",
+ "@logic": ["isa","artifact","#:hat 5"],
+ "@nl": "The child 4 was wearing a hat 5."},
+{"@name": "sent_S3",
+ "@logic": ["is rel2", "wear", "#:child 4", "#:hat 5", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The child 4 was wearing a hat 5."},
+{"@name": "sent_S4",
+ "@logic": ["isa","artifact","#:links 6"],
+ "@nl": "These links 6 present the many viewpoints 7 that existed."},
+{"@name": "sent_S4",
+ "@logic": ["isa","abstract","#:viewpoints 7"],
+ "@nl": "These links 6 present the many viewpoints 7 that existed."},
+{"@name": "sent_S4",
+ "@logic": ["is rel2", "present", "#:links 6", "#:viewpoints 7", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "These links 6 present the many viewpoints 7 that existed."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:John 8"],
+ "@nl": "John 8 found the key 9."},
+{"@name": "sent_S5",
+ "@logic": ["isa","artifact","#:key 9"],
+ "@nl": "John 8 found the key 9."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "John 8 found the key 9."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk2_activity", "find", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "John 8 found the key 9."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:John 8", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "John 8 found the key 9."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk2_activity", "#:key 9", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "John 8 found the key 9."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "John 8 found the key 9."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "John 8 found the key 9."},
+{"@name": "sent_S5",
+ "@logic": ["next","W1","W2"],
+ "@nl": "John 8 found the key 9."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-isa","wing","?:Y"],
+            ["-has part", "?:X", "?:Y", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["$block", ["$","elephant",1], ["has part", "?:X", "?:Y", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "Elephants do not have wings."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","coat","sk3_coat"]],
+ "@nl": "Did the child 4 wear a coat?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "wear", "#:child 4", "sk3_coat", ["$ctxt","past","W2","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Did the child 4 wear a coat?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","coat","?:X"],
+            ["-is rel2", "wear", "#:child 4", "?:X", ["$ctxt","past","W2","?:Fv15","?:Fv16"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did the child 4 wear a coat?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","wing","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Did the child 4 wear a coat?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "wear", "#:child 4", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["is rel2", "wear", "#:child 4", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "wear", "#:child 4", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Did the child 4 wear a coat?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","wing","$some_wing"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","wing","$some_not_wing"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","run","?:Fv22"], ["has type","?:E","go","?:Fv22"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32097,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1140,
+      "raw": {
+        "input_tokens": 55,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1140,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39745,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1103,
+      "raw": {
+        "input_tokens": 854,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1103,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:57:46Z"
+}

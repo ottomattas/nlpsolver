@@ -1,0 +1,422 @@
+{
+  "test_name": "core_100_b4",
+  "case_id": 2,
+  "input_text": "The bear is strong. A promotion was given to Mary. Elephants are animals. Sandra went back to the bathroom. Eve sent Tom a long letter. John is an elephant. John is an animal?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The bear is strong.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The bear 1 is strong.",
+          "type": "situation",
+          "entities": [{"id": "bear 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["strong","none","bear"]]
+        }
+      ]
+    },
+    {
+      "raw": "A promotion was given to Mary.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Someone gave a promotion 1 to Mary 2.",
+          "type": "situation",
+          "entities": [{"id": "someone", "type": "generic"},
+            {"id": "promotion 1", "type": "concrete", "category": "abstract"},
+            {"id": "Mary 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "give",
+              "mode": "event",
+              "roles": {"actor": "someone", "target": "promotion 1", "recipient": "Mary 2"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants are animals.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Elephants are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Sandra went back to the bathroom.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Sandra 3 went back to the bathroom 4.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 3", "type": "concrete", "category": "person"},
+            {"id": "bathroom 4", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "go back",
+              "mode": "event",
+              "roles": {"actor": "Sandra 3", "destination": "bathroom 4"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Eve sent Tom a long letter.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Eve 5 sent Tom 6 a long letter 7.",
+          "type": "situation",
+          "entities": [{"id": "Eve 5", "type": "concrete", "category": "person"},
+            {"id": "Tom 6", "type": "concrete", "category": "person"},
+            {"id": "letter 7", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{
+              "root": "send",
+              "mode": "event",
+              "roles": {"actor": "Eve 5", "recipient": "Tom 6", "target": "letter 7"}
+            }
+          ],
+          "adjectives": [["long","none","letter"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is an elephant.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "John 8 is an elephant.",
+          "type": "situation",
+          "entities": [{"id": "John 8", "type": "concrete", "category": "animal"},
+            {"id": "elephant", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is an animal?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Is John 8 an animal?",
+          "type": "query",
+          "entities": [{"id": "John 8", "type": "concrete", "category": "animal"},
+            {"id": "animal", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","bear","bear 1"], ["has degree property","strong","bear 1","none","bear"]]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","promotion","promotion 1"],
+          ["isa","person","Mary 2"],
+          ["exists","X",
+            ["and",
+              ["isa","someone","X"],
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","give"],
+                  ["has actor","E","X"],
+                  ["has target","E","promotion 1"],
+                  ["has recipient","E","Mary 2"],
+                  ["has time","E","past","in"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Sandra 3"],
+          ["isa","bathroom","bathroom 4"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","go back"],
+              ["has actor","E","Sandra 3"],
+              ["has destination","E","bathroom 4","at"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 5"],
+          ["isa","person","Tom 6"],
+          ["isa","letter","letter 7"],
+          ["has degree property","long","letter 7","none","letter"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","send"],
+              ["has actor","E","Eve 5"],
+              ["has recipient","E","Tom 6"],
+              ["has target","E","letter 7"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S6", ["holds", "W0", ["and", ["isa","elephant","John 8"], ["isa","animal","John 8"]]]],
+    ["@id", "S7", ["question", ["isa","animal","John 8"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","bear","#:bear 1"],
+ "@nl": "The bear 1 is strong."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "strong", "#:bear 1", "none", "bear", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The bear 1 is strong."},
+{"@name": "sent_S2",
+ "@logic": ["isa","promotion","#:promotion 1"],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","someone","sk0_someone"],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "give", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "sk0_someone", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk1_activity", "#:promotion 1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S2",
+ "@logic": ["has recipient", "sk1_activity", "#:Mary 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Elephants are animals."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Sandra 3"],
+ "@nl": "Sandra 3 went back to the bathroom 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","bathroom","#:bathroom 4"],
+ "@nl": "Sandra 3 went back to the bathroom 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Sandra 3 went back to the bathroom 4."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk2_activity", "go back", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Sandra 3 went back to the bathroom 4."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk2_activity", "#:Sandra 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Sandra 3 went back to the bathroom 4."},
+{"@name": "sent_S4",
+ "@logic": ["has destination", "sk2_activity", "#:bathroom 4", "at", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Sandra 3 went back to the bathroom 4."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Sandra 3 went back to the bathroom 4."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Sandra 3 went back to the bathroom 4."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Eve 5"],
+ "@nl": "Eve 5 sent Tom 6 a long letter 7."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Tom 6"],
+ "@nl": "Eve 5 sent Tom 6 a long letter 7."},
+{"@name": "sent_S5",
+ "@logic": ["isa","letter","#:letter 7"],
+ "@nl": "Eve 5 sent Tom 6 a long letter 7."},
+{"@name": "sent_S5",
+ "@logic": ["has degree property", "long", "#:letter 7", "none", "letter", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 5 sent Tom 6 a long letter 7."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Eve 5 sent Tom 6 a long letter 7."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk3_activity", "give", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 5 sent Tom 6 a long letter 7."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk3_activity", "#:Eve 5", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 5 sent Tom 6 a long letter 7."},
+{"@name": "sent_S5",
+ "@logic": ["has recipient", "sk3_activity", "#:Tom 6", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 5 sent Tom 6 a long letter 7."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk3_activity", "#:letter 7", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 5 sent Tom 6 a long letter 7."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 5 sent Tom 6 a long letter 7."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Eve 5 sent Tom 6 a long letter 7."},
+{"@name": "sent_S6",
+ "@logic": ["isa","elephant","#:John 8"],
+ "@nl": "John 8 is an elephant."},
+{"@name": "sent_S6",
+ "@logic": ["isa","animal","#:John 8"],
+ "@nl": "John 8 is an elephant."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","animal","#:John 8"]],
+ "@nl": "Is John 8 an animal?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","animal","#:John 8"], ["$defq0"]],
+ "@nl": "Is John 8 an animal?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Is John 8 an animal?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","someone","$some_someone"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","someone","$some_not_someone"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv23"], ["has type","?:E","give","?:Fv23"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "none", "?:Fv60", ["$ctxt","past","?:Fv24","?:Fv25","?:Fv26"]],
+            ["has degree property", "long", "?:X", "none", "?:Fv61", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "none", "?:Fv62", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv27","?:Fv28","?:Fv29"]],
+            ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv63", ["$ctxt","past","?:Fv30","?:Fv31","?:Fv32"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv64", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv65", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv33","?:Fv34","?:Fv35"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S3","assumption",1], [["-isa","elephant","?:X"], ["isa","animal","?:X"]]],
+          [2, ["in","sent_S6","assumption",1], [["isa","elephant","#:John 8"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["isa","animal","#:John 8"]]],
+          [4, ["in","sent_S7","assumption",1], [["-isa","animal","#:John 8"], ["$defq0"]]],
+          [5, ["in","sent_S7","goal",1], [["-$defq0"]]],
+          [6, ["mp",3,4,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Elephants are animals.",
+"  (2) John is an elephant.",
+"  (3) John is an animal?",
+"Proof steps (by contradiction):",
+"  (1) If some X is an elephant then X is an animal  [sentence 1]",
+"  (2) John is an elephant  [sentence 2]",
+"  (3) John is an animal  [from steps 1, 2]",
+"  (4) If John is an animal then answer holds  [sentence 3]",
+"  (5) assume for contradiction: the answer is no  [from question]",
+"  (6) Contradiction  [from steps 3, 4, 5]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28354,
+      "cached_input_tokens": 0,
+      "output_tokens": 992,
+      "raw": {
+        "input_tokens": 28354,
+        "input_tokens_details": {"cached_tokens": 0},
+        "output_tokens": 992,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29346
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34188,
+      "cached_input_tokens": 0,
+      "output_tokens": 591,
+      "raw": {
+        "input_tokens": 34188,
+        "input_tokens_details": {"cached_tokens": 0},
+        "output_tokens": 591,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34779
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T09:32:49Z"
+}
