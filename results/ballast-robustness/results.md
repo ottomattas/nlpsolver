@@ -4,10 +4,14 @@ Companion to `wip/plans/02-ballast-robustness-experiments.md` (Tanel's ask,
 2026-06-10: insert pure-ballast sentences into the test cases at increasing
 dose and measure when accuracy degrades).
 Status: **Phases 0–2 run (b2/b4/b8/b16 × gpt+claude on the 100-subset).**
-The Phase-2 data is **provisional**: post-run auditing caught a
-sentence-splitter bug that contaminated part of the collected suites, plus
-an Anthropic credit outage inside claude's b16 — see §11. The generator is
-fixed and clean suites are regenerated; the clean rerun awaits sign-off.
+Post-run auditing caught a sentence-splitter bug that contaminated part of
+the collected suites (excluded analytically, generator fixed — §11.2) and
+an Anthropic credit outage inside claude's b16 (patched same evening —
+§11.4). **Decision: no clean rerun of the 100-subset ladder** — the
+contaminated minority is excluded, the curve is unambiguous, and because
+ballast picks are seeded per (case_id, dose), the fixed-generator 1600
+suites at the chosen doses contain the clean 100-subset cells as a strict
+subset, so Phases 4–5 deliver the definitive numbers automatically.
 The full 1600 runs (Phases 4–5) are gated on explicit sign-off.
 Run: `nlpsolver/llmpipe` on macOS (local `gk` ARM64), two-stage pipeline,
 LLM cache on, thinking off, prover at the default 2s. Date: 2026-06-10.
@@ -278,9 +282,16 @@ the contaminated cases of §11.2 and claude-b16's credit-outage cases of
 accuracy %, as collected        valid cases only (excluded/cell)
         b0    b2    b4    b8   b16     b2     b4     b8     b16
 gpt   100.0  98.0  84.0  93.0  78.0   98.0   85.1   94.6   79.4   (-2/-6/-7/-32)
-claude 98.0  96.0  94.0  89.0  65.0†  95.9   94.7   90.3   83.6   (-2/-6/-7/-45)
-   († 22 of claude-b16's 35 fails are the credit outage, not the model)
+claude 98.0  96.0  94.0  89.0  83.0   95.9   94.7   90.3   85.3   (-2/-6/-7/-32)
 ```
+
+(claude-b16 includes the 22 credit-outage cases re-run 2026-06-10 evening
+on the *old* suite — texts verified byte-identical to the collected data —
+so the cell is complete; only the contamination exclusions remain. One
+patched case, 1011, failed with gk's "db memory allocation error: cannot
+extend datarec area" → "prover returned empty result": at b16 the clause
+sets are big enough to hit prover-side resource limits — an operational
+finding in line with §11.3, relevant to Tanel's later gk-strategy replays.)
 
 - The dose effect is now unambiguous: both models degrade with dose, and
   b16 is the "clearly hurting" regime (N_heavy candidate). b4–b8 looks
@@ -318,12 +329,15 @@ reasoning tokens count against the same budget. Phase 2 therefore ran at
 collision is itself an operational finding for anyone running this
 pipeline on long inputs.
 
-### 11.4 Incident: Anthropic credit outage inside claude-b16
+### 11.4 Incident: Anthropic credit outage inside claude-b16 (RESOLVED)
 
 22 consecutive claude cases (588–1094) got "credit balance is too low",
-recorded no API response, and were bucketed as failures. They are listed
-in `phase2_exclusions.json` and excluded from the valid-cases table.
-Top up credits (or enable auto-reload) before any claude rerun.
+recorded no API response, and were initially bucketed as failures. After a
+credit top-up they were re-run the same evening against the **old** suite
+(extracted from git history; texts verified identical to the collected
+runs) so the dataset and the sqlite LLM cache are hole-free for replays.
+18/22 passed; the cell numbers above include them. Cost of the patch:
+≈ $3.1.
 
 ### 11.5 Phase-2 cost (usage ledger, list prices)
 
@@ -331,10 +345,19 @@ Top up credits (or enable auto-reload) before any claude rerun.
 dose       gpt     claude   note
 b4        3.28       7.09
 b8        4.99       9.92
-b16       8.33      13.17   claude cell incomplete (78/100 with usage)
-Phase 2  16.60      30.18   = $46.78
+b16       8.33      16.31   incl. the $3.1 credit-outage patch (§11.4)
+Phase 2  16.60      33.32   = $49.92
 ```
 
-Study total so far (Phase 0 ≈ $0.7 + Phase 1 $7.71 + Phase 2 $46.78):
-**≈ $55**. A full clean rerun of all four doses is an estimated **$55–60**
-more at observed caching rates.
+Study total (Phase 0 ≈ $0.7 + Phase 1 $7.71 + Phase 2 $49.92): **≈ $58**.
+Caching context (Tanel's email): 95.7% of the study's 61.4M input tokens
+were provider-cache-served (~10× cheaper on the input side), but output
+tokens are not cacheable and account for **66% of the actual bill** — so
+the total lands ~3× under list ($54.7 actual vs $169.6 uncached for the
+same tokens), not 10×. Projections at measured per-case rates for the
+1600 runs: Phase 4 @ b8 ≈ **$270** (gpt $80 + claude $159 + gemini ~$25 +
+deepseek ~$3), Phase 5 @ b16 ≈ **$390** (gpt $133 + claude $214 + gemini
+~$35 + deepseek ~$4) — both together comfortably under the €900 quote.
+The local sqlite cache (`llmpipe/cache.db`, gitignored, preserved) makes
+replays of unchanged prompts free — that is what enables Tanel's
+gk-strategy reruns at zero API cost.

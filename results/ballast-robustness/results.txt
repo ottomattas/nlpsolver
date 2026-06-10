@@ -6,7 +6,7 @@ Full results with all detail and caveats: https://github.com/ottomattas/nlpsolve
 
 Setup: nlpsolver/llmpipe on macOS (local gk ARM64), current two-stage pipeline, LLM cache on, thinking off, prover default 2s.
 THE ASK (Tanel, June 10): insert pure-ballast sentences (no shared content words, no synonym/antonym links even soft) into the test cases at increasing dose; find when accuracy starts to degrade; spot-check the generated clause sets.
-STATE SO FAR: all four doses (b2/b4/b8/b16) run on the 100-subset with gpt+claude. The dose effect is clear and the failure mode is informative. CAVEAT: post-run auditing caught a generator text bug that contaminated a minority of cases (worst at b16) plus an Anthropic credit outage inside claude-b16, so the Phase-2 numbers below are PROVISIONAL; the generator is fixed, clean suites are committed, and a clean rerun (~$55-60) awaits go-ahead. The 1600 runs are NOT started.
+STATE SO FAR: all four doses (b2/b4/b8/b16) run on the 100-subset with gpt+claude. The dose effect is clear and the failure mode is informative. Post-run auditing caught a generator text bug that contaminated a minority of cases (excluded analytically, generator fixed; details in item 7) and an Anthropic credit outage inside claude-b16 (re-run the same evening; cell complete). No rerun of the 100-subset ladder is planned: ballast picks are seeded per (case_id, dose), so the fixed-generator 1600 suites contain the clean 100-subset cells as a strict subset -- the 1600 runs deliver the definitive numbers at the doses that matter. The 1600 runs are NOT started.
 
 WHAT I RAN
 ==========
@@ -49,7 +49,7 @@ S  Clause-set spot checks ("pistelisi kontrolle"). Original vs ballasted runs, f
 
 7  Post-run audit caught TWO data-validity problems; both are handled and documented:
    a) Sentence-splitter bug: "A surgeon, Dr. Smith, entered the room." was split at "Dr.", which put fragments into the ballast pool and even let ballast be inserted INSIDE that sentence in one case. The earlier "Dr. Penguins" curiosity from the b2 audit was THIS bug (corrupted suite text), not LLM entity-merging -- correction to item 3. Contaminated: 2/6/7/32 cases at b2/b4/b8/b16; excluded from the valid-cases numbers below. Fix + cleanly regenerated suites: https://github.com/ottomattas/nlpsolver/blob/main/llmpipe/tests/ballast/make_ballast.py
-   b) Anthropic credits ran out mid-b16: 22 consecutive claude cases got no API response at all and count as failures in the raw numbers; excluded in the valid-cases numbers. Credits need topping up before any claude rerun.
+   b) Anthropic credits ran out mid-b16: 22 consecutive claude cases got no API response at all. RESOLVED: after a credit top-up they were re-run the same evening against the exact collected suite texts (verified identical), so the dataset and the sqlite LLM cache are hole-free for your gk-strategy replays. 18/22 passed. One of them (case 1011) failed with gk "db memory allocation error: cannot extend datarec area" -> "prover returned empty result" -- at b16 the clause sets get big enough to hit prover-side resource limits, which may interest you for the strategy replays.
 
 
 THE TABLE SO FAR (PROVISIONAL -- see item 7)
@@ -62,16 +62,18 @@ Accuracy, percent correct (100-subset; b0 = no ballast, from the parsing-archite
   model    b0    b2    b4    b8   b16        b2     b4     b8    b16
   ------------------------------------     -------------------------
   gpt   100.0  98.0  84.0  93.0  78.0      98.0   85.1   94.6   79.4
-  claude 98.0  96.0  94.0  89.0  65.0*     95.9   94.7   90.3   83.6
-  (* 22 of the 35 claude-b16 fails are the credit outage, not the model)
+  claude 98.0  96.0  94.0  89.0  83.0      95.9   94.7   90.3   85.3
+  ("valid" = the contaminated cases of item 7a excluded: -2/-6/-7/-32 per dose)
 
-READING: two ballast sentences barely hurt; by b16 both models lose roughly a fifth of the cases they used to solve. Failures are overwhelmingly "logic too weak -> Unknown" (the prover is never the problem; 5x prover budget changes nothing), plus a small wrong-answer bucket from b4 on. N_light looks like b4-b8, N_heavy like b16 -- to be confirmed on the clean rerun before committing to the 1600 runs.
+READING: two ballast sentences barely hurt; by b16 both models lose roughly a fifth of the cases they used to solve. Failures are overwhelmingly "prover found no proof" (the parse loses or distorts clauses the proof needs; answers stay stable under a 5x prover budget), plus a small wrong-answer bucket from b4 on. gpt's b4 < b8 is non-monotonic; each dose is an independently drawn ballast set, so at n=100 we flag it rather than interpret it. PROPOSAL: N_light = b8, N_heavy = b16.
 
-Cost so far (usage ledger, list prices): Phase 0 ~$0.7; Phase 1 (b2) $7.71; Phase 2 (b4+b8+b16) $46.78. Total ~$55. Caching keeps marginal cost ~4x under list-price estimates (~97.8% of input tokens served from provider prompt caches).
+COST, measured via the usage ledger (your ~10x caching estimate, quantified): 95.7% of our 61.4M input tokens were indeed served from provider prompt caches (~10x cheaper on the input side), but output tokens cannot be cached and were 66% of the actual bill, so the total lands ~3x under list rather than 10x. Actuals: Phase 0 ~$0.7; Phase 1 (b2) $7.71; Phase 2 (b4+b8+b16, incl. the $3 outage patch) $49.92. TOTAL SO FAR ~$58 (~EUR 50, vs the EUR 100 quoted). Projections at measured per-case rates: 1600 @ b8 with all four models ~$270; 1600 @ b16 ~$390; both together ~EUR 600-650, under the EUR 900 quoted.
+
+ARTIFACTS KEPT FOR YOUR REPLAYS (per your email): all runtests.py outputs (live tree + committed snapshots) and the local sqlite LLM cache (llmpipe/cache.db, ~13 MB, gitignored -- needs a handover channel, say a direct copy or a release asset). Unchanged prompts replay from it in <1s with zero API cost, so re-running our cases with different gk strategies is free on your side.
 
 
 STATUS
 ======
-Phases 0-2 run. Generator bugs found by the audits are FIXED (isa-cross-group, demonstrative subjects, abbreviation splitting) and clean suites for all four doses are committed.
-Next: clean rerun of b2-b16 on the fixed suites (~$55-60, ~4-5h) to get the publishable curve -- waiting for go-ahead + Anthropic credit top-up.
-Then Phase 3 (gemini+deepseek at N_light/N_heavy) and the full 1600x4 runs (Phases 4-5) -- the latter remain gated on explicit sign-off (~$300-450 list per dose, much less with caching).
+Phases 0-2 done. Generator bugs found by the audits are FIXED (isa-cross-group, demonstrative subjects, abbreviation splitting) and clean suites for all four doses are committed; the collected data is analysed with the contaminated minority excluded (phase2_exclusions.json).
+No 100-subset rerun planned: the fixed-generator 1600 suites at the chosen doses contain the clean 100-subset cells as a strict subset.
+NEXT (on your sign-off): generate the full-1600 suites at N_light=b8 and N_heavy=b16, spot-check, then Phase 4 (1600 @ b8: gpt+claude first, then gemini+deepseek, ~$270) and Phase 5 (1600 @ b16, ~$390). Optionally Phase 3 first (100-subset, gemini+deepseek at both doses, ~$5-10) as a cheap cross-model sanity check.
