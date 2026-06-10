@@ -148,11 +148,21 @@ def norm_ws(text):
   return re.sub(r"\s+", " ", text).strip()
 
 
+# Title abbreviations that end in '.' but never end a sentence here.  The
+# corpus contains "Dr. Smith"; splitting after "Dr." dismembered that
+# sentence into pool fragments ("A surgeon, Dr.") AND let ballast be
+# inserted inside the original sentence (caught post-hoc in Phase 2:
+# "A surgeon, Dr. Penguins are birds.").
+_ABBREVS = ("Dr.", "Mr.", "Mrs.", "Ms.", "Prof.", "St.", "Jr.", "Sr.")
+
 def split_sentences(text):
   """Split normalized text on terminal punctuation followed by whitespace.
-  Safe for the core suites: no abbreviation dots, decimals have no space."""
-  parts = re.split(r"(?<=[.?!])\s+", norm_ws(text))
-  return [p for p in parts if p]
+  Title abbreviations (Dr. etc) are protected from splitting."""
+  t = norm_ws(text)
+  for a in _ABBREVS:
+    t = t.replace(a + " ", a + "\x00")
+  parts = re.split(r"(?<=[.?!])\s+", t)
+  return [p.replace("\x00", " ") for p in parts if p]
 
 
 def tokenize(sentence):
