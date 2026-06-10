@@ -1,0 +1,243 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 519,
+  "input_text": "John is a big mouse. Some elephants are animals. The teacher showed the students the map. Some elephants are not animals?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is a big mouse.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a big mouse.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","mouse"]]
+        }
+      ]
+    },
+    {
+      "raw": "Some elephants are animals.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Some elephants are animals.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "The teacher showed the students the map.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The teacher 2 showed the students 3 the map 4.",
+          "type": "situation",
+          "entities": [{"id": "teacher 2", "type": "concrete", "category": "person"},
+            {"id": "students 3", "type": "concrete", "category": "person"},
+            {"id": "map 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 2", "recipient": "students 3", "target": "map 4"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Some elephants are not animals?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Are some elephants not animals?",
+          "type": "query",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","mouse","John 1"], ["has degree property","big","John 1","none","mouse"]]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["exists", "X", ["and", ["isa","elephant","X"], ["normally", ["isa","animal","X"]]]]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","teacher","teacher 2"],
+          ["isa","student","students 3"],
+          ["isa","map","map 4"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","show"],
+              ["has actor","E","teacher 2"],
+              ["has recipient","E","students 3"],
+              ["has target","E","map 4"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["question", ["exists", "X", ["and", ["isa","elephant","X"], ["not", ["isa","animal","X"]]]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","student","#:students 3"],
+ "@nl": "The teacher 2 showed the students 3 the map 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","mouse","#:John 1"],
+ "@nl": "John 1 is a big mouse."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "big", "#:John 1", "none", "mouse", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is a big mouse."},
+{"@name": "sent_S2",
+ "@logic": ["isa","elephant","sk0_elephant"],
+ "@nl": "Some elephants are animals."},
+{"@name": "sent_S2",
+ "@logic": [["isa","animal","sk0_elephant"],
+            ["$block", ["$","$generic",1], ["$not", ["isa","animal","sk0_elephant"]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Some elephants are animals."},
+{"@name": "sent_S3",
+ "@logic": ["isa","teacher","#:teacher 2"],
+ "@nl": "The teacher 2 showed the students 3 the map 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","student","#:students 3"],
+ "@nl": "The teacher 2 showed the students 3 the map 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","map","#:map 4"],
+ "@nl": "The teacher 2 showed the students 3 the map 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The teacher 2 showed the students 3 the map 4."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "show", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The teacher 2 showed the students 3 the map 4."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:teacher 2", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The teacher 2 showed the students 3 the map 4."},
+{"@name": "sent_S3",
+ "@logic": ["has recipient", "sk1_activity", "#:students 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The teacher 2 showed the students 3 the map 4."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk1_activity", "#:map 4", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The teacher 2 showed the students 3 the map 4."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The teacher 2 showed the students 3 the map 4."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The teacher 2 showed the students 3 the map 4."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","elephant","sk2_elephant"]],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","animal","sk2_elephant"]],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"], ["$defq0"]],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv51", ["$ctxt","past","?:Fv21","?:Fv22","?:Fv23"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv52", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv53", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv24","?:Fv25","?:Fv26"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32075,
+      "cached_input_tokens": 32042,
+      "output_tokens": 598,
+      "raw": {
+        "input_tokens": 33,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 598,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39335,
+      "cached_input_tokens": 38891,
+      "output_tokens": 602,
+      "raw": {
+        "input_tokens": 444,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 602,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:26:32Z"
+}

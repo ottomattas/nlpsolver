@@ -1,0 +1,267 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1539,
+  "input_text": "Sandra moved to the kitchen. Some bears eat all berries. John is an elephant with a probability 50 percent. John is an elephant?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Sandra moved to the kitchen.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Sandra 1 moved to the kitchen 2.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 1", "type": "concrete", "category": "person"},
+            {"id": "kitchen 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "move",
+              "mode": "event",
+              "roles": {"actor": "Sandra 1", "destination": "kitchen 2"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Some bears eat all berries.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Some bears eat all berries.",
+          "type": "normal_rule",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "dependent", "category": "plant"}
+          ],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"actor": "bears", "target": "berries"}}],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "John is an elephant with a probability 50 percent.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 3 is an elephant.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "person"},
+            {"id": "elephant", "type": "generic", "category": "animal"}
+          ],
+          "confidence": 0.5
+        }
+      ]
+    },
+    {
+      "raw": "John is an elephant?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Is John 3 an elephant?",
+          "type": "query",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "person"},
+            {"id": "elephant", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage_1_retries": ["sanity #1: entity_used_as_location"],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Sandra 1"],
+            ["isa","kitchen","kitchen 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","move"],
+                ["has actor","E","Sandra 1"],
+                ["has destination","E","kitchen 2","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["exists","Y",
+            ["and",
+              ["isa","berry","Y"],
+              ["forall","X",
+                ["implies",
+                  ["isa","bear","X"],
+                  ["normally",
+                    ["exists","E",
+                      ["and",
+                        ["isa","activity","E"],
+                        ["has type","E","eat"],
+                        ["has actor","E","X"],
+                        ["has target","E","Y"],
+                        ["typical","E"]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id", "S3", ["and", ["holds", "W0", ["isa","elephant","John 3"]], ["@p","S3",0.5]]],
+    ["@id", "S4", ["question", ["isa","elephant","John 3"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Sandra 1"],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","kitchen","#:kitchen 2"],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Sandra 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["has destination", "sk0_activity", "#:kitchen 2", "at", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","berry","sk1_berry"],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"], ["isa", "activity", ["sk2","?:X"]]],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"],
+            ["has type", ["sk2","?:X"], "eat", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"],
+            ["has actor", ["sk2","?:X"], "?:X", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"],
+            ["has target", ["sk2","?:X"], "sk1_berry", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"],
+            ["typical", ["sk2","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$block", ["$","bear",1], ["$not", ["typical", ["sk2","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","elephant","#:John 3"]],
+ "@nl": "Is John 3 an elephant?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","elephant","#:John 3"], ["$defq0"]],
+ "@nl": "Is John 3 an elephant?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Is John 3 an elephant?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","berry","$some_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","berry","$some_not_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv16"], ["has type","?:E","go","?:Fv16"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28341,
+      "cached_input_tokens": 28288,
+      "output_tokens": 591,
+      "raw": {
+        "input_tokens": 28341,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 591,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 28932
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 29328,
+      "cached_input_tokens": 28288,
+      "output_tokens": 630,
+      "raw": {
+        "input_tokens": 29328,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 630,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29958
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33854,
+      "cached_input_tokens": 33280,
+      "output_tokens": 363,
+      "raw": {
+        "input_tokens": 33854,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 363,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34217
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:52:14Z"
+}

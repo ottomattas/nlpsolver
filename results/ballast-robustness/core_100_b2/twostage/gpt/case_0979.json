@@ -1,0 +1,427 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 979,
+  "input_text": "Bears eat all berries. John works at the hospital every day. Eve planned to travel. Where does John work?",
+  "expected_answer": "At the hospital.",
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "At the hospital.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Bears eat all berries.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Bears eat all berries.",
+          "type": "normal_rule",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "dependent", "category": "plant"}
+          ],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"target": "berries"}}],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "John works at the hospital every day.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 works at the hospital 2 every day.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "hospital 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "work",
+              "mode": "habitual",
+              "roles": {"actor": "John 1", "location": "hospital 2", "location_prep": "at"}
+            }
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Eve planned to travel.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Eve 1 planned to travel.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "plan",
+              "mode": "intention",
+              "roles": {
+                "actor": "Eve 1",
+                "content": {"root": "travel", "mode": "event", "roles": {"actor": "Eve 1"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Where does John work?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Which entity is John 1 located in when John 1 works?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "hospital 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "work", "mode": "habitual", "roles": {"actor": "John 1", "location": "entity"}}]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","Y",
+            ["implies",
+              ["isa","berry","Y"],
+              ["forall","X",
+                ["implies",
+                  ["isa","bear","X"],
+                  ["normally",
+                    ["exists","E",
+                      ["and",
+                        ["isa","activity","E"],
+                        ["has type","E","eat"],
+                        ["has actor","E","X"],
+                        ["has target","E","Y"],
+                        ["typical","E"]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["isa","hospital","hospital 2"],
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","work"],
+                  ["has actor","E","John 1"],
+                  ["has location","E","hospital 2","at"],
+                  ["typical","E"]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","plan"],
+              ["has actor","E1","Eve 1"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","travel"],
+                  ["has actor","E2","Eve 1"],
+                  ["has time","E2","past","in"]
+                ]
+              ],
+              ["intention","E1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["ask","X",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","work"],
+            ["has actor","E","John 1"],
+            ["has location","E","X","in"],
+            ["typical","E"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","berry","?:Y"], ["-isa","bear","?:X"], ["isa", "activity", ["sk0","?:Y"]]],
+ "@nl": "Bears eat all berries."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","berry","?:Y"],
+            ["-isa","bear","?:X"],
+            ["has type", ["sk0","?:Y"], "eat", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Bears eat all berries."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","berry","?:Y"],
+            ["-isa","bear","?:X"],
+            ["has actor", ["sk0","?:Y"], "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Bears eat all berries."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","berry","?:Y"],
+            ["-isa","bear","?:X"],
+            ["has target", ["sk0","?:Y"], "?:Y", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Bears eat all berries."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","berry","?:Y"],
+            ["-isa","bear","?:X"],
+            ["typical", ["sk0","?:Y"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","bear",1], ["$not", ["typical", ["sk0","?:Y"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Bears eat all berries."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S2",
+ "@logic": ["isa","hospital","#:hospital 2"],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "work", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:John 1", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S2",
+ "@logic": ["has location", "sk1_activity", "#:hospital 2", "at", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S2",
+ "@logic": [["typical", "sk1_activity", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$block", ["$","$generic",1], ["$not", ["typical", "sk1_activity", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "plan", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["has content","sk2_activity","sk3_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk3_activity", "go", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk3_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S3",
+ "@logic": ["intention","sk2_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"], ["isa", "activity", ["sk4","?:X","?:_Prep"]]],
+ "@nl": "Which entity is John 1 located in when John 1 works?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["has type", ["sk4","?:X","?:_Prep"], "work", ["$ctxt","?:Fv18","?:Fv17","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Which entity is John 1 located in when John 1 works?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["has actor", ["sk4","?:X","?:_Prep"], "#:John 1", ["$ctxt","?:Fv20","?:Fv19","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Which entity is John 1 located in when John 1 works?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["has location", ["sk4","?:X","?:_Prep"], "?:X", "?:_Prep", ["$ctxt","?:Fv22","?:Fv21","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Which entity is John 1 located in when John 1 works?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["typical", ["sk4","?:X","?:_Prep"], ["$ctxt","?:Fv24","?:Fv23","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Which entity is John 1 located in when John 1 works?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "work", ["$ctxt","?:Fv28","?:Fv27","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "#:John 1", ["$ctxt","?:Fv30","?:Fv29","?:Fv11","?:Fv12"]],
+            ["-has location", "?:E", "?:X", "?:_Prep", ["$ctxt","?:Fv32","?:Fv31","?:Fv11","?:Fv12"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv34","?:Fv33","?:Fv11","?:Fv12"]],
+            ["$defq0","?:_Prep","?:X"]
+           ],
+ "@nl": "Which entity is John 1 located in when John 1 works?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0","?:Rel","?:X"],
+ "@askvars": 2,
+ "@where_query": true,
+ "@nl": "Which entity is John 1 located in when John 1 works?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","berry","$some_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","berry","$some_not_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv35"], ["has type","?:E","go","?:Fv35"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","hospital","$some_hospital"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","at","#:hospital 2"]],
+        "blockers": [["$block", ["$","$generic",1], ["$not", ["typical", "sk1_activity", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]]
+        ],
+        "confidence": 0.98,
+        "positive proof": [[1, ["in","sent_S4","assumption",1], [["-has location", "?:X", "?:Y", "?:Z", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["-has type", "?:X", "work", ["$ctxt","?:2007","?:2008","?:W","?:2006"]], ["-has actor", "?:X", "#:John 1", ["$ctxt","?:2009","?:2010","?:W","?:2006"]], ["-typical", "?:X", ["$ctxt","?:2011","?:2012","?:W","?:2006"]], ["-isa","activity","?:X"], ["$defq0","?:Z","?:Y"]]],
+          [2, ["in","sent_S2","assumption",1], [["has type", "sk1_activity", "work", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 1], [["-isa","activity","sk1_activity"], ["-has location", "sk1_activity", "?:X3", "?:Y3", ["$ctxt","?:Z3","?:U3","?:V3","?:W3"]], ["-has actor", "sk1_activity", "#:John 1", ["$ctxt","?:3006","?:3007","?:V3","?:W3"]], ["-typical", "sk1_activity", ["$ctxt","?:3008","?:3009","?:V3","?:W3"]], ["$defq0","?:Y3","?:X3"]]],
+          [4, ["in","sent_S2","assumption",1], [["isa","activity","sk1_activity"]]],
+          [5, ["simp",3,4,"fromassumption",1], [["-has location", "sk1_activity", "?:X", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-has actor", "sk1_activity", "#:John 1", ["$ctxt","?:2006","?:2007","?:V","?:W"]], ["-typical", "sk1_activity", ["$ctxt","?:2008","?:2009","?:V","?:W"]], ["$defq0","?:Y","?:X"]]],
+          [6, ["in","sent_S2","assumption",1], [["has actor", "sk1_activity", "#:John 1", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [7, ["mp", [5,1], 6, "fromassumption", 1], [["-has location", "sk1_activity", "?:X", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-typical", "sk1_activity", ["$ctxt","?:2006","?:2007","?:V","?:W"]], ["$defq0","?:Y","?:X"]]],
+          [8, ["in","sent_S2","assumption",1], [["has location", "sk1_activity", "#:hospital 2", "at", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [9, ["mp",7,8,"fromassumption",1], [["$defq0","at","#:hospital 2"], ["-typical", "sk1_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [10, ["in","sent_S2","assumption",0.98], [["$block", ["$","$generic",1], ["$not", ["typical", "sk1_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["typical", "sk1_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [11, ["mp", [9,1], [10,1], "fromassumption", 0.98], [["$defq0","at","#:hospital 2"], ["$block", ["$","$generic",1], ["$not", ["typical", "sk1_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]]]],
+          [12, ["in","sent_S4","goal",1], [["-$defq0","?:X","?:Y"], ["$ans","?:X","?:Y"]]],
+          [13, ["mp",11,12,"fromga",0.98], [["$block", ["$","$generic",1], ["$not", ["typical", "sk1_activity", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]], ["$ans","at","#:hospital 2"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 98%.",
+"Sentences used:",
+"  (1) John works at the hospital every day.",
+"  (2) Where does John work?",
+"Proof steps:",
+"  (1) If X takes place some Z some Y and X is a work event and John performs X and X is typical and X is an activity then [Z, Y] is the answer  [sentence 2]",
+"  (2) The event act1 is a work event  [sentence 1]",
+"  (3) If the event act1 is an activity and the act1 takes place some Y3 some X3 and John performs the act1 and the act1 is typical then [Y3, X3] is the answer  [from steps 1, 2]",
+"  (4) The event act1 is an activity  [sentence 1]",
+"  (5) If the event act1 takes place some Y some X and John performs the act1 and the act1 is typical then [Y, X] is the answer  [from steps 3, 4]",
+"  (6) John performs the event act1  [sentence 1]",
+"  (7) If the event act1 takes place some Y some X and the act1 is typical then [Y, X] is the answer  [from steps 5, 6]",
+"  (8) The event act1 takes place at the hospital B  [sentence 1]",
+"  (9) If the event act1 is typical then 'at the hospital B' is the answer  [from steps 7, 8]",
+"  (10) Normally the event act1 is typical  [sentence 1, confidence 98%]",
+"  (11) 'At the hospital B' is the answer, except when the event act1 is not typical  [from steps 9, 10, confidence 98%]",
+"  (12) technical answer unwrap step  [from question]",
+"  (13) 'At the hospital B' is an answer, except when the event act1 is not typical  [from steps 11, 12, confidence 98%]",
+"Exceptions checked and not holding:",
+"  act1 is not typical"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28337,
+      "cached_input_tokens": 28288,
+      "output_tokens": 702,
+      "raw": {
+        "input_tokens": 28337,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 702,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29039
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33938,
+      "cached_input_tokens": 33280,
+      "output_tokens": 529,
+      "raw": {
+        "input_tokens": 33938,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 529,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34467
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 35014,
+      "cached_input_tokens": 33920,
+      "output_tokens": 879,
+      "raw": {
+        "input_tokens": 35014,
+        "input_tokens_details": {"cached_tokens": 33920},
+        "output_tokens": 879,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35893
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:33:53Z"
+}

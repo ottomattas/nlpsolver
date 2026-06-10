@@ -1,0 +1,524 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 561,
+  "input_text": "A hand of a man moved a wheel. Elephants, foxes and rabbits are neither birds nor small fish. The toy of the child was broken. John is a rabbit. John is not a bird?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "A hand of a man moved a wheel.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "A hand 1 of a man 2 moved a wheel 3.",
+          "type": "situation",
+          "entities": [{"id": "hand 1", "type": "concrete", "text": "hand"},
+            {"id": "man 2", "type": "concrete", "category": "person"},
+            {"id": "wheel 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "move", "mode": "event", "roles": {"actor": "hand 1", "target": "wheel 3"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "The hand 1 is the hand of the man 2.",
+          "type": "situation",
+          "entities": [{"id": "hand 1", "type": "concrete", "text": "hand"},
+            {"id": "man 2", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Elephants, foxes and rabbits are neither birds nor small fish.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Elephants are not birds or small fish.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"},
+            {"id": "fish", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S4",
+          "text": "Foxes are not birds or small fish.",
+          "type": "strict_rule",
+          "entities": [{"id": "foxes", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"},
+            {"id": "fish", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S5",
+          "text": "Rabbits are not birds or small fish.",
+          "type": "strict_rule",
+          "entities": [{"id": "rabbits", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"},
+            {"id": "fish", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S6",
+          "text": "Small fish are fish that are small.",
+          "type": "strict_rule",
+          "entities": [{"id": "fish", "type": "generic", "category": "animal"}],
+          "adjectives": [["small","none","fish"]]
+        }
+      ]
+    },
+    {
+      "raw": "The toy of the child was broken.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "The toy 1 of the child 2 was broken.",
+          "type": "situation",
+          "entities": [{"id": "toy 1", "type": "concrete", "category": "artifact"},
+            {"id": "child 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["broken","none","toy"]],
+          "definites": [["toy of","toy 1","child 2"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S8",
+          "text": "The toy 1 is the toy of the child 2.",
+          "type": "situation",
+          "entities": [{"id": "toy 1", "type": "concrete", "category": "artifact"},
+            {"id": "child 2", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["toy of","toy 1","child 2"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is a rabbit.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "John 1 is a rabbit.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "rabbit", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is not a bird?",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Is John 1 not a bird?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "bird", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","hand","hand 1"],
+          ["isa","person","man 2"],
+          ["isa","wheel","wheel 3"],
+          ["has part","man 2","hand 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","move"],
+              ["has actor","E","hand 1"],
+              ["has target","E","wheel 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and", ["isa","hand","hand 1"], ["isa","person","man 2"], ["has part","man 2","hand 1"]]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","elephant","X"],
+            ["and",
+              ["not", ["isa","bird","X"]],
+              ["not",
+                ["and", ["isa","fish","X"], ["has degree property","small","X","none","fish"]]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","fox","X"],
+            ["and",
+              ["not", ["isa","bird","X"]],
+              ["not",
+                ["and", ["isa","fish","X"], ["has degree property","small","X","none","fish"]]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","rabbit","X"],
+            ["and",
+              ["not", ["isa","bird","X"]],
+              ["not",
+                ["and", ["isa","fish","X"], ["has degree property","small","X","none","fish"]]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["and", ["isa","fish","X"], ["has degree property","small","X","none","fish"]],
+            ["isa","fish","X"]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","toy","toy 1"],
+            ["isa","child","child 2"],
+            ["have","child 2","toy 1"],
+            ["has degree property","broken","toy 1","none","toy"]
+          ]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S7","W0","toy of","child 2","toy 1"]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","toy","toy 1"], ["isa","child","child 2"], ["have","child 2","toy 1"]]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S8","W0","toy of","child 2","toy 1"]
+      ]
+    ],
+    ["@id", "S9", ["holds", "W0", ["and", ["isa","person","John 1"], ["isa","rabbit","John 1"]]]],
+    ["@id", "S10", ["question", ["not", ["isa","bird","John 1"]]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","man","#:man 2"],
+ "@nl": "A hand 1 of a man 2 moved a wheel 3."},
+{"@name": "entity_S7",
+ "@logic": ["isa","toy","#:toy 1"],
+ "@nl": "The toy 1 of the child 2 was broken."},
+{"@name": "sent_S1",
+ "@logic": ["isa","hand","#:hand 1"],
+ "@nl": "A hand 1 of a man 2 moved a wheel 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:man 2"],
+ "@nl": "A hand 1 of a man 2 moved a wheel 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","wheel","#:wheel 3"],
+ "@nl": "A hand 1 of a man 2 moved a wheel 3."},
+{"@name": "sent_S1",
+ "@logic": ["has part", "#:man 2", "#:hand 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A hand 1 of a man 2 moved a wheel 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "A hand 1 of a man 2 moved a wheel 3."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A hand 1 of a man 2 moved a wheel 3."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:hand 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A hand 1 of a man 2 moved a wheel 3."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:wheel 3", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A hand 1 of a man 2 moved a wheel 3."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A hand 1 of a man 2 moved a wheel 3."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "A hand 1 of a man 2 moved a wheel 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","hand","#:hand 1"],
+ "@nl": "The hand 1 is the hand of the man 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:man 2"],
+ "@nl": "The hand 1 is the hand of the man 2."},
+{"@name": "sent_S2",
+ "@logic": ["has part", "#:man 2", "#:hand 1", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The hand 1 is the hand of the man 2."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","elephant","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Elephants are not birds or small fish."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-isa","fish","?:X"],
+            ["-has degree property", "small", "?:X", "none", "fish", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Elephants are not birds or small fish."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","fox","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Foxes are not birds or small fish."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","fox","?:X"],
+            ["-isa","fish","?:X"],
+            ["-has degree property", "small", "?:X", "none", "fish", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Foxes are not birds or small fish."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","rabbit","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Rabbits are not birds or small fish."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","rabbit","?:X"],
+            ["-isa","fish","?:X"],
+            ["-has degree property", "small", "?:X", "none", "fish", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Rabbits are not birds or small fish."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","fish","?:X"],
+            ["-has degree property", "small", "?:X", "none", "fish", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["isa","fish","?:X"]
+           ],
+ "@nl": "Small fish are fish that are small."},
+{"@name": "sent_S7",
+ "@logic": ["isa", "toy", ["$theof1", "toy", "#:child 2", ["$ctxt","past","W0","?:Fv21","?:Fv22"]]],
+ "@nl": "The toy 1 of the child 2 was broken."},
+{"@name": "sent_S7",
+ "@logic": ["isa","child","#:child 2"],
+ "@nl": "The toy 1 of the child 2 was broken."},
+{"@name": "sent_S7",
+ "@logic": ["have", "#:child 2", ["$theof1", "toy", "#:child 2", ["$ctxt","past","W0","?:Fv21","?:Fv22"]], ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The toy 1 of the child 2 was broken."},
+{"@name": "sent_S7",
+ "@logic": ["has property", "broken", ["$theof1", "toy", "#:child 2", ["$ctxt","past","W0","?:Fv21","?:Fv22"]], ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The toy 1 of the child 2 was broken."},
+{"@name": "sent_S8",
+ "@logic": ["isa", "toy", ["$theof1", "toy", "#:child 2", ["$ctxt","past","W0","?:Fv21","?:Fv22"]]],
+ "@nl": "The toy 1 is the toy of the child 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","child","#:child 2"],
+ "@nl": "The toy 1 is the toy of the child 2."},
+{"@name": "sent_S8",
+ "@logic": ["have", "#:child 2", ["$theof1", "toy", "#:child 2", ["$ctxt","past","W0","?:Fv21","?:Fv22"]], ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The toy 1 is the toy of the child 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is a rabbit."},
+{"@name": "sent_S9",
+ "@logic": ["isa","rabbit","#:John 1"],
+ "@nl": "John 1 is a rabbit."},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","bird","#:John 1"]],
+ "@nl": "Is John 1 not a bird?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["isa","bird","#:John 1"], ["$defq0"]],
+ "@nl": "Is John 1 not a bird?"},
+{"@name": "sent_S10",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 not a bird?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:child 2", ["$theof1", "toy", "#:child 2", ["$ctxt","past","W0","?:Fv21","?:Fv22"]], ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:child 2", ["$theof1", "toy", "#:child 2", ["$ctxt","past","W0","?:Fv21","?:Fv22"]], ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "toy of", ["$theof1","toy","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "toy", ["$theof1","toy","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fish","$some_fish"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","fish","$some_not_fish"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fox","$some_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","fox","$some_not_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","rabbit","$some_not_rabbit"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "small", "$some_small_fish", "none", "fish", ["$ctxt","?:Fv92","?:Fv89","?:Fv90","?:Fv91"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fish","$some_small_fish"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "small", "$some_not_small_fish", "none", "fish", ["$ctxt","?:Fv100","?:Fv97","?:Fv98","?:Fv99"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fish","$some_small_fish"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "small", "$some_small_fish", "none", "fish", ["$ctxt","?:Fv108","?:Fv105","?:Fv106","?:Fv107"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","hand","?:Fv35"], ["has type","?:E","give","?:Fv35"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv36"], ["has type","?:E","go","?:Fv36"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv109","?:Fv37"],
+            ["-has degree property","high","?:X","none","?:Fv110","?:Fv37"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv111","?:Fv38"],
+            ["has degree property","small","?:X","none","?:Fv112","?:Fv38"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","bird","?:X"], ["-isa","fish","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","bird","?:X"], ["-isa","fish","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv113", ["$ctxt","past","?:Fv39","?:Fv40","?:Fv41"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv114", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv115", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S5","assumption",1], [["-isa","rabbit","?:X"], ["-isa","bird","?:X"]]],
+          [2, ["in","sent_S9","assumption",1], [["isa","rabbit","#:John 1"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["-isa","bird","#:John 1"]]],
+          [4, ["in","sent_S10","assumption",1], [["isa","bird","#:John 1"], ["$defq0"]]],
+          [5, ["in","sent_S10","goal",1], [["-$defq0"]]],
+          [6, ["mp",3,4,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Elephants, foxes and rabbits are neither birds nor small fish.",
+"  (2) John is a rabbit.",
+"  (3) John is not a bird?",
+"Proof steps (by contradiction):",
+"  (1) If some X is a rabbit then X is not a bird  [sentence 1]",
+"  (2) John is a rabbit  [sentence 2]",
+"  (3) John is not a bird  [from steps 1, 2]",
+"  (4) John is a bird or answer holds  [sentence 3]",
+"  (5) assume for contradiction: the answer is no  [from question]",
+"  (6) Contradiction  [from steps 3, 4, 5]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28355,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1198,
+      "raw": {
+        "input_tokens": 28355,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1198,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29553
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34389,
+      "cached_input_tokens": 33280,
+      "output_tokens": 821,
+      "raw": {
+        "input_tokens": 34389,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 821,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35210
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:29:08Z"
+}

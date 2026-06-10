@@ -1,0 +1,369 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1029,
+  "input_text": "Apparently, Tom left early. The letter was written by Eve. A school bus arrived. Eve wrote the letter?",
+  "expected_answer": true,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Apparently, Tom left early.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Tom 1 left early.",
+          "type": "situation",
+          "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "leave", "mode": "event", "roles": {"actor": "Tom 1", "manner": "early"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past",
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "The letter was written by Eve.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Eve 2 wrote the letter 3.",
+          "type": "situation",
+          "entities": [{"id": "Eve 2", "type": "concrete", "category": "person"},
+            {"id": "letter 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "write", "mode": "event", "roles": {"actor": "Eve 2", "target": "letter 3"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A school bus arrived.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "A school bus 4 arrived.",
+          "type": "situation",
+          "entities": [{
+              "id": "school bus 4",
+              "type": "concrete",
+              "subtype": "compound",
+              "category": "artifact"
+            }
+          ],
+          "actions": [{"root": "arrive", "mode": "event", "roles": {"actor": "school bus 4"}}],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Eve wrote the letter?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Did Eve 2 write the letter 3?",
+          "type": "query",
+          "entities": [{"id": "Eve 2", "type": "concrete", "category": "person"},
+            {"id": "letter 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "write", "mode": "event", "roles": {"actor": "Eve 2", "target": "letter 3"}}],
+          "pre_state": "W3",
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Tom 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","leave"],
+                ["has actor","E","Tom 1"],
+                ["has manner","E","early"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"],
+        ["@p","S1",0.8]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Eve 2"],
+            ["isa","letter","letter 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","write"],
+                ["has actor","E","Eve 2"],
+                ["has target","E","letter 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","school bus","school bus 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","arrive"],
+                ["has actor","E","school bus 4"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","write"],
+            ["has actor","E","Eve 2"],
+            ["has target","E","letter 3"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Tom 1"],
+ "@nl": "Tom 1 left early."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@confidence": 0.9184,
+ "@nl": "Tom 1 left early."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "leave", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@confidence": 0.9184,
+ "@nl": "Tom 1 left early."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Tom 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@confidence": 0.9184,
+ "@nl": "Tom 1 left early."},
+{"@name": "sent_S1",
+ "@logic": ["has manner", "sk0_activity", "early", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@confidence": 0.9184,
+ "@nl": "Tom 1 left early."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@confidence": 0.9184,
+ "@nl": "Tom 1 left early."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@confidence": 0.9184,
+ "@nl": "Tom 1 left early."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Tom 1 left early."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Eve 2"],
+ "@nl": "Eve 2 wrote the letter 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","letter","#:letter 3"],
+ "@nl": "Eve 2 wrote the letter 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Eve 2 wrote the letter 3."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "write", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Eve 2 wrote the letter 3."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:Eve 2", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Eve 2 wrote the letter 3."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk1_activity", "#:letter 3", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Eve 2 wrote the letter 3."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Eve 2 wrote the letter 3."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Eve 2 wrote the letter 3."},
+{"@name": "sent_S2",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Eve 2 wrote the letter 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","school bus","#:school bus 4"],
+ "@nl": "A school bus 4 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "A school bus 4 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "arrive", ["$ctxt","past","W2","?:Fv5","?:Fv6"]],
+ "@nl": "A school bus 4 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:school bus 4", ["$ctxt","past","W2","?:Fv5","?:Fv6"]],
+ "@nl": "A school bus 4 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W2","?:Fv5","?:Fv6"]],
+ "@nl": "A school bus 4 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "A school bus 4 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["next","W2","W3"],
+ "@nl": "A school bus 4 arrived."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk3_activity"]],
+ "@nl": "Did Eve 2 write the letter 3?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk3_activity", "write", ["$ctxt","past","?:Fv12","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Did Eve 2 write the letter 3?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk3_activity", "#:Eve 2", ["$ctxt","past","?:Fv14","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Did Eve 2 write the letter 3?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk3_activity", "#:letter 3", ["$ctxt","past","?:Fv16","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Did Eve 2 write the letter 3?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk3_activity"]],
+ "@nl": "Did Eve 2 write the letter 3?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "write", ["$ctxt","past","?:Fv20","?:Fv7","?:Fv8"]],
+            ["-has actor", "?:E", "#:Eve 2", ["$ctxt","past","?:Fv22","?:Fv7","?:Fv8"]],
+            ["-has target", "?:E", "#:letter 3", ["$ctxt","past","?:Fv24","?:Fv7","?:Fv8"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Eve 2 write the letter 3?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Did Eve 2 write the letter 3?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","school bus","?:X"], ["isa","bus","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","school","?:X"], ["-isa","bus","?:X"], ["isa","school bus","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S4","assumption",1], [["$defq0"], ["-has type", "?:X", "write", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has actor", "?:X", "#:Eve 2", ["$ctxt","past","?:V","?:Z","?:U"]], ["-has target", "?:X", "#:letter 3", ["$ctxt","past","?:W","?:Z","?:U"]], ["-isa","activity","?:X"], ["-actuality","?:X"]]],
+          [2, ["in","sent_S2","assumption",1], [["has type", "sk1_activity", "write", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [3, ["in","sent_S4","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,1], 2, 3, "fromga", 1], [["-isa","activity","sk1_activity"], ["-actuality","sk1_activity"], ["-has actor", "sk1_activity", "#:Eve 2", ["$ctxt","past","?:X3","?:Y3","?:Z3"]], ["-has target", "sk1_activity", "#:letter 3", ["$ctxt","past","?:U3","?:Y3","?:Z3"]]]],
+          [5, ["in","sent_S2","assumption",1], [["isa","activity","sk1_activity"]]],
+          [6, ["in","sent_S2","assumption",1], [["actuality","sk1_activity"]]],
+          [7, ["simp",4,5,6,"fromga",1], [["-has actor", "sk1_activity", "#:Eve 2", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has target", "sk1_activity", "#:letter 3", ["$ctxt","past","?:U","?:Y","?:Z"]]]],
+          [8, ["in","sent_S2","assumption",1], [["has actor", "sk1_activity", "#:Eve 2", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [9, ["mp",7,8,"fromga",1], [["-has target", "sk1_activity", "#:letter 3", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [10, ["in","sent_S2","assumption",1], [["has target", "sk1_activity", "#:letter 3", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [11, ["mp",9,10,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) The letter was written by Eve.",
+"  (2) Eve wrote the letter?",
+"Proof steps (by contradiction):",
+"  (1) If X is a write event and Eve performs X and X targets the letter C and X is an activity then answer holds  [sentence 2]",
+"  (2) The event act2 is a write event  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) If the event act2 is an activity and Eve performs the act2 then the act2 does not target the letter C  [from steps 1, 2, 3]",
+"  (5) The event act2 is an activity  [sentence 1]",
+"  (6)   [sentence 1]",
+"  (7) If Eve performs the event act2 then the act2 does not target the letter C  [from steps 4, 5, 6]",
+"  (8) Eve performs the event act2  [sentence 1]",
+"  (9) The act2 does not target the letter C  [from steps 7, 8]",
+"  (10) The event act2 targets the letter C  [sentence 1]",
+"  (11) Contradiction  [from steps 9, 10]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32072,
+      "cached_input_tokens": 32042,
+      "output_tokens": 722,
+      "raw": {
+        "input_tokens": 30,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 722,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39460,
+      "cached_input_tokens": 38891,
+      "output_tokens": 512,
+      "raw": {
+        "input_tokens": 569,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 512,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:35:15Z"
+}

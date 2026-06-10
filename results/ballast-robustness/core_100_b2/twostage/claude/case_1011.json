@@ -1,0 +1,252 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1011,
+  "input_text": "Mike is an animal. John is defeated. A big old grey elephant was strong. John is not defeated?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Mike is an animal.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mike 1 is an animal.",
+          "type": "situation",
+          "entities": [{"id": "Mike 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "John is defeated.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 2 is defeated.",
+          "type": "situation",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"}],
+          "adjectives": [["defeated","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "A big old grey elephant was strong.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "A big old grey elephant 3 was strong.",
+          "type": "situation",
+          "entities": [{"id": "elephant 3", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","elephant"],
+            ["old","none","elephant"],
+            ["grey","none","elephant"],
+            ["strong","none","elephant"]
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is not defeated?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Is John 2 not defeated?",
+          "type": "query",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"}],
+          "adjectives": [["defeated","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","animal","Mike 1"]]],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 2"],
+          ["has degree property","defeated","John 2","none","person"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","elephant","elephant 3"],
+            ["has degree property","big","elephant 3","none","elephant"],
+            ["has degree property","old","elephant 3","none","elephant"],
+            ["has degree property","grey","elephant 3","none","elephant"],
+            ["has degree property","strong","elephant 3","none","elephant"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S4",
+      ["question", ["not", ["has degree property","defeated","John 2","none","person"]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","animal","#:Mike 1"],
+ "@nl": "Mike 1 is an animal."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "John 2 is defeated."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "defeated", "#:John 2", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 is defeated."},
+{"@name": "sent_S3",
+ "@logic": ["isa","elephant","#:elephant 3"],
+ "@nl": "A big old grey elephant 3 was strong."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "big", "#:elephant 3", "none", "elephant", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "A big old grey elephant 3 was strong."},
+{"@name": "sent_S3",
+ "@logic": ["-has degree property", "new", "#:elephant 3", "none", "elephant", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "A big old grey elephant 3 was strong."},
+{"@name": "sent_S3",
+ "@logic": ["has property", "grey", "#:elephant 3", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "A big old grey elephant 3 was strong."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "strong", "#:elephant 3", "none", "elephant", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "A big old grey elephant 3 was strong."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-has property", "defeated", "#:John 2", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Is John 2 not defeated?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["has property", "defeated", "#:John 2", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 2 not defeated?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Is John 2 not defeated?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "defeated", "#:John 2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "defeated", "#:John 2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "defeated", "#:John 2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 2 not defeated?"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv35", ["$ctxt","past","?:Fv11","?:Fv12","?:Fv13"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv36", ["$ctxt","present","?:Fv11","?:Fv12","?:Fv13"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv37", ["$ctxt","present","?:Fv11","?:Fv12","?:Fv13"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv14","?:Fv15","?:Fv16"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv14","?:Fv15","?:Fv16"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv14","?:Fv15","?:Fv16"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "grey", "?:X", ["$ctxt","past","?:Fv17","?:Fv18","?:Fv19"]],
+            ["has property", "grey", "?:X", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]],
+            ["$block", 0, ["$not", ["has property", "grey", "?:X", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "grey", "?:X", ["$ctxt","past","?:Fv20","?:Fv21","?:Fv22"]],
+            ["has property", "grey", "?:X", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]],
+            ["$block", 0, ["$not", ["has property", "grey", "?:X", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "new", "?:X", "none", "?:Fv38", ["$ctxt","past","?:Fv23","?:Fv24","?:Fv25"]],
+            ["-has degree property", "new", "?:X", "none", "?:Fv39", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]],
+            ["$block", 0, ["$not", ["has degree property", "old", "?:X", "none", "?:Fv40", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "new", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv26","?:Fv27","?:Fv28"]],
+            ["-has degree property", "new", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]],
+            ["$block", 0, ["$not", ["has degree property", "old", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv41", ["$ctxt","past","?:Fv29","?:Fv30","?:Fv31"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv42", ["$ctxt","present","?:Fv29","?:Fv30","?:Fv31"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv43", ["$ctxt","present","?:Fv29","?:Fv30","?:Fv31"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv32","?:Fv33","?:Fv34"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S2","assumption",1], [["has property", "defeated", "#:John 2", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [2, ["in","sent_S4","assumption",1], [["-$defq0"], ["-has property", "defeated", "#:John 2", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp", 1, [2,1], 3, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John is defeated.",
+"  (2) John is not defeated?",
+"Proof steps (by contradiction):",
+"  (1) John is defeated  [sentence 1]",
+"  (2) If answer holds then John is not defeated  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) Contradiction  [from steps 1, 2, 3]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32070,
+      "cached_input_tokens": 32042,
+      "output_tokens": 497,
+      "raw": {
+        "input_tokens": 28,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 497,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39250,
+      "cached_input_tokens": 38891,
+      "output_tokens": 278,
+      "raw": {
+        "input_tokens": 359,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 278,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:36:43Z"
+}

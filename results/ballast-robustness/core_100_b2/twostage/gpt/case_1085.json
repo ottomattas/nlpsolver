@@ -1,0 +1,417 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1085,
+  "input_text": "John ate berries with the help of a spoon. A surgeon, Dr. Smith, entered the room. An apple was bad. Who entered the room?",
+  "expected_answer": ["Dr. Smith.","A surgeon."],
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Dr. Smith.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John ate berries with the help of a spoon.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 ate berries 2 with the help 3 of a spoon 4.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "berries 2", "type": "concrete", "category": "plant"},
+            {"id": "help 3", "type": "concrete", "text": "help", "category": "abstract"},
+            {"id": "spoon 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "eat",
+              "mode": "event",
+              "roles": {"actor": "John 1", "target": "berries 2", "instrument": "spoon 4"}
+            }
+          ],
+          "definites": [["help of","help 3","spoon 4"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "The help 3 is the help of a spoon 4.",
+          "type": "situation",
+          "entities": [{"id": "help 3", "type": "concrete", "text": "help", "category": "abstract"},
+            {"id": "spoon 4", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["help of","help 3","spoon 4"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A surgeon, Dr. Smith, entered the room.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Dr. Smith 2, who is a surgeon 1, entered the room 3.",
+          "type": "situation",
+          "entities": [{"id": "surgeon 1", "type": "concrete", "category": "person"},
+            {"id": "Dr. Smith 2", "type": "concrete", "category": "person"},
+            {"id": "room 3", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "enter",
+              "mode": "event",
+              "roles": {"actor": "Dr. Smith 2", "destination": "room 3"}
+            }
+          ],
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "Dr. Smith 2 is a surgeon 1.",
+          "type": "situation",
+          "entities": [{"id": "Dr. Smith 2", "type": "concrete", "category": "person"},
+            {"id": "surgeon 1", "type": "concrete", "category": "person"}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "An apple was bad.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "An apple 5 was bad.",
+          "type": "situation",
+          "entities": [{"id": "apple 5", "type": "concrete", "category": "plant"}],
+          "adjectives": [["bad","none","none"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Who entered the room?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Which entity entered the room 3?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "room 3", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "enter", "mode": "event", "roles": {"destination": "room 3"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["isa","plant","berries 2"],
+            ["isa","help","help 3"],
+            ["isa","spoon","spoon 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","eat"],
+                ["has actor","E","John 1"],
+                ["has target","E","berries 2"],
+                ["has instrument","E","spoon 4"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["@definite","S1","W0","help of","spoon 4","help 3"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds", "W0", ["and", ["isa","help","help 3"], ["isa","spoon","spoon 4"]]],
+        ["@definite","S2","W0","help of","spoon 4","help 3"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","surgeon","surgeon 1"],
+          ["isa","person","Dr. Smith 2"],
+          ["isa","room","room 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","enter"],
+              ["has actor","E","Dr. Smith 2"],
+              ["has destination","E","room 3","at"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Dr. Smith 2"],
+          ["isa","surgeon","surgeon 1"],
+          ["=","Dr. Smith 2","surgeon 1"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and", ["isa","apple","apple 5"], ["has degree property","bad","apple 5","none","none"]]
+      ]
+    ],
+    ["@id","S6",
+      ["ask","X",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","enter"],
+            ["has actor","E","X"],
+            ["has destination","E","room 3","at"],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","berries","#:berries 2"],
+ "@nl": "John 1 ate berries 2 with the help 3 of a spoon 4."},
+{"@name": "entity_S1",
+ "@logic": ["isa","berry","#:berries 2"],
+ "@nl": "John 1 ate berries 2 with the help 3 of a spoon 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 ate berries 2 with the help 3 of a spoon 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","plant","#:berries 2"],
+ "@nl": "John 1 ate berries 2 with the help 3 of a spoon 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","help","#:help 3"],
+ "@nl": "John 1 ate berries 2 with the help 3 of a spoon 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","spoon","#:spoon 4"],
+ "@nl": "John 1 ate berries 2 with the help 3 of a spoon 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1 ate berries 2 with the help 3 of a spoon 4."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "eat", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 ate berries 2 with the help 3 of a spoon 4."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 ate berries 2 with the help 3 of a spoon 4."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:berries 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 ate berries 2 with the help 3 of a spoon 4."},
+{"@name": "sent_S1",
+ "@logic": ["has instrument", "sk0_activity", "#:spoon 4", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 ate berries 2 with the help 3 of a spoon 4."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 ate berries 2 with the help 3 of a spoon 4."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "John 1 ate berries 2 with the help 3 of a spoon 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","help","#:help 3"],
+ "@nl": "The help 3 is the help of a spoon 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","spoon","#:spoon 4"],
+ "@nl": "The help 3 is the help of a spoon 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","surgeon","#:surgeon 1"],
+ "@nl": "Dr. Smith 2, who is a surgeon 1, entered the room 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","Dr. Smith 2"],
+ "@nl": "Dr. Smith 2, who is a surgeon 1, entered the room 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","room","#:room 3"],
+ "@nl": "Dr. Smith 2, who is a surgeon 1, entered the room 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Dr. Smith 2, who is a surgeon 1, entered the room 3."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "enter", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Dr. Smith 2, who is a surgeon 1, entered the room 3."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "Dr. Smith 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Dr. Smith 2, who is a surgeon 1, entered the room 3."},
+{"@name": "sent_S3",
+ "@logic": ["has destination", "sk1_activity", "#:room 3", "at", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Dr. Smith 2, who is a surgeon 1, entered the room 3."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Dr. Smith 2, who is a surgeon 1, entered the room 3."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Dr. Smith 2, who is a surgeon 1, entered the room 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","Dr. Smith 2"],
+ "@nl": "Dr. Smith 2 is a surgeon 1."},
+{"@name": "sent_S4",
+ "@logic": ["isa","surgeon","#:surgeon 1"],
+ "@nl": "Dr. Smith 2 is a surgeon 1."},
+{"@name": "sent_S4",
+ "@logic": ["=","Dr. Smith 2","#:surgeon 1"],
+ "@nl": "Dr. Smith 2 is a surgeon 1."},
+{"@name": "sent_S5",
+ "@logic": ["isa","apple","#:apple 5"],
+ "@nl": "An apple 5 was bad."},
+{"@name": "sent_S5",
+ "@logic": ["-has degree property", "good", "#:apple 5", "none", "?:Fv43", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "An apple 5 was bad."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "activity", ["sk2","?:X"]]],
+ "@nl": "Which entity entered the room 3?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has type", ["sk2","?:X"], "enter", ["$ctxt","past","?:Fv17","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Which entity entered the room 3?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has actor", ["sk2","?:X"], "?:X", ["$ctxt","past","?:Fv19","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Which entity entered the room 3?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has destination", ["sk2","?:X"], "#:room 3", "at", ["$ctxt","past","?:Fv21","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Which entity entered the room 3?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has time", ["sk2","?:X"], "past", "in", ["$ctxt","past","?:Fv23","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Which entity entered the room 3?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["actuality", ["sk2","?:X"]]],
+ "@nl": "Which entity entered the room 3?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "enter", ["$ctxt","past","?:Fv27","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","past","?:Fv29","?:Fv11","?:Fv12"]],
+            ["-has destination", "?:E", "#:room 3", "at", ["$ctxt","past","?:Fv31","?:Fv11","?:Fv12"]],
+            ["-actuality","?:E"],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which entity entered the room 3?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@nl": "Which entity entered the room 3?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "pop_what",
+ "@logic": ["isa","berry","$some_berry"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","plant","$some_plant"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","help","$some_help"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","apple","$some_apple"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","room","$some_room"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","surgeon","$some_surgeon"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","spoon","$some_spoon"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","berries","$some_berries"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","Dr. Smith 2"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S6","assumption",1], [["-has destination", "?:X", "#:room 3", "at", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has type", "?:X", "enter", ["$ctxt","past","?:V","?:Z","?:U"]], ["-has actor", "?:X", "?:W", ["$ctxt","past","?:2006","?:Z","?:U"]], ["-isa","activity","?:X"], ["-actuality","?:X"], ["$defq0","?:W"]]],
+          [2, ["in","sent_S3","assumption",1], [["has destination", "sk1_activity", "#:room 3", "at", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["mp",1,2,"fromassumption",1], [["-isa","activity","sk1_activity"], ["-actuality","sk1_activity"], ["-has type", "sk1_activity", "enter", ["$ctxt","past","?:X3","?:Y3","?:Z3"]], ["-has actor", "sk1_activity", "?:U3", ["$ctxt","past","?:V3","?:Y3","?:Z3"]], ["$defq0","?:U3"]]],
+          [4, ["in","sent_S3","assumption",1], [["isa","activity","sk1_activity"]]],
+          [5, ["in","sent_S3","assumption",1], [["actuality","sk1_activity"]]],
+          [6, ["simp",3,4,5,"fromassumption",1], [["-has type", "sk1_activity", "enter", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has actor", "sk1_activity", "?:U", ["$ctxt","past","?:V","?:Y","?:Z"]], ["$defq0","?:U"]]],
+          [7, ["in","sent_S3","assumption",1], [["has type", "sk1_activity", "enter", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [8, ["mp",6,7,"fromassumption",1], [["-has actor", "sk1_activity", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["$defq0","?:X"]]],
+          [9, ["in","sent_S3","assumption",1], [["has actor", "sk1_activity", "Dr. Smith 2", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [10, ["mp",8,9,"fromassumption",1], [["$defq0","Dr. Smith 2"]]],
+          [11, ["in","sent_S6","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [12, ["mp",10,11,"fromga",1], [["$ans","Dr. Smith 2"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) A surgeon, Dr. Smith, entered the room.",
+"  (2) Who entered the room?",
+"Proof steps:",
+"  (1) If the room C is a destination of X and X is a enter event and some W performs X and X is an activity then W is the answer  [sentence 2]",
+"  (2) The room C is the destination of the event act2  [sentence 1]",
+"  (3) If the event act2 is an activity and the act2 is a enter event and some U3 performs the act2 then U3 is the answer  [from steps 1, 2]",
+"  (4) The event act2 is an activity  [sentence 1]",
+"  (5)   [sentence 1]",
+"  (6) If the event act2 is a enter event and some U performs the act2 then U is the answer  [from steps 3, 4, 5]",
+"  (7) The event act2 is a enter event  [sentence 1]",
+"  (8) If some X performs the event act2 then X is the answer  [from steps 6, 7]",
+"  (9) Dr. Smith performs the event act2  [sentence 1]",
+"  (10) Dr. Smith is the answer  [from steps 8, 9]",
+"  (11) technical answer unwrap step  [from question]",
+"  (12) Dr. Smith is an answer  [from steps 10, 11]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28344,
+      "cached_input_tokens": 28288,
+      "output_tokens": 955,
+      "raw": {
+        "input_tokens": 28344,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 955,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29299
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34190,
+      "cached_input_tokens": 33280,
+      "output_tokens": 593,
+      "raw": {
+        "input_tokens": 34190,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 593,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34783
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:38:12Z"
+}

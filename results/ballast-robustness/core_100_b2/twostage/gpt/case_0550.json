@@ -1,0 +1,395 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 550,
+  "input_text": "The manager, Anna, called Eve. Elephants have a trunk. The red car is faster than the blue car. Is the green car faster than the red car?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The manager, Anna, called Eve.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Anna 1, who is a manager, called Eve 2.",
+          "type": "situation",
+          "entities": [{"id": "Anna 1", "type": "concrete", "category": "person"},
+            {"id": "manager", "type": "generic", "category": "person"},
+            {"id": "Eve 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "call", "mode": "event", "roles": {"actor": "Anna 1", "target": "Eve 2"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have a trunk.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Elephants have a trunk.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunk", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "The red car is faster than the blue car.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The red car 1 is faster than the blue car 2.",
+          "type": "situation",
+          "entities": [{"id": "car 1", "type": "concrete", "category": "artifact"},
+            {"id": "car 2", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["red","none","none"], ["blue","none","none"], ["fast","high","car"]]
+        }
+      ]
+    },
+    {
+      "raw": "Is the green car faster than the red car?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Is the green car 3 faster than the red car 1?",
+          "type": "query",
+          "entities": [{"id": "car 3", "type": "concrete", "category": "artifact"},
+            {"id": "car 1", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["green","none","none"], ["red","none","none"], ["fast","high","car"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Anna 1"],
+          ["isa","manager","Anna 1"],
+          ["isa","person","Eve 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","call"],
+              ["has actor","E","Anna 1"],
+              ["has target","E","Eve 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","car","car 1"],
+          ["isa","car","car 2"],
+          ["has degree property","red","car 1","none","none"],
+          ["has degree property","blue","car 2","none","none"],
+          [">", ["$measure_of","fast","car 1","W0"], ["$measure_of","fast","car 2","W0"]]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["and",
+          ["isa","car","car 3"],
+          ["isa","car","car 1"],
+          ["has degree property","green","car 3","none","none"],
+          ["has degree property","red","car 1","none","none"],
+          [">", ["$measure_of","fast","car 3","W0"], ["$measure_of","fast","car 1","W0"]]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: comparative_as_degree_property"],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","car","#:car 3"],
+ "@nl": "Is the green car 3 faster than the red car 1?"},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Anna 1"],
+ "@nl": "Anna 1, who is a manager, called Eve 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","manager","#:Anna 1"],
+ "@nl": "Anna 1, who is a manager, called Eve 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Eve 2"],
+ "@nl": "Anna 1, who is a manager, called Eve 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Anna 1, who is a manager, called Eve 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "call", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Anna 1, who is a manager, called Eve 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Anna 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Anna 1, who is a manager, called Eve 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:Eve 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Anna 1, who is a manager, called Eve 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Anna 1, who is a manager, called Eve 2."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Anna 1, who is a manager, called Eve 2."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk1","?:X"]]],
+ "@nl": "Elephants have a trunk."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have a trunk."},
+{"@name": "sent_S3",
+ "@logic": ["isa","car","#:car 1"],
+ "@nl": "The red car 1 is faster than the blue car 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","car","#:car 2"],
+ "@nl": "The red car 1 is faster than the blue car 2."},
+{"@name": "sent_S3",
+ "@logic": ["has property", "red", "#:car 1", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The red car 1 is faster than the blue car 2."},
+{"@name": "sent_S3",
+ "@logic": ["has property", "blue", "#:car 2", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The red car 1 is faster than the blue car 2."},
+{"@name": "sent_S3",
+ "@logic": ["less_measure", ["$measure_of","fast","#:car 2","W0"], ["$measure_of","fast","#:car 1","W0"]],
+ "@nl": "The red car 1 is faster than the blue car 2."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","car","#:car 3"]],
+ "@nl": "Is the green car 3 faster than the red car 1?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","car","#:car 1"]],
+ "@nl": "Is the green car 3 faster than the red car 1?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "green", "#:car 3", ["$ctxt","present","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Is the green car 3 faster than the red car 1?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "red", "#:car 1", ["$ctxt","present","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Is the green car 3 faster than the red car 1?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["less_measure", ["$measure_of","fast","#:car 1","W0"], ["$measure_of","fast","#:car 3","W0"]]
+           ],
+ "@nl": "Is the green car 3 faster than the red car 1?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","car","#:car 3"],
+            ["-isa","car","#:car 1"],
+            ["-has property", "green", "#:car 3", ["$ctxt","present","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-has property", "red", "#:car 1", ["$ctxt","present","?:Fv11","?:Fv9","?:Fv10"]],
+            ["not",
+             ["less_measure", ["$measure_of","fast","#:car 1","W0"], ["$measure_of","fast","#:car 3","W0"]]
+            ],
+            ["$defq0"]
+           ],
+ "@nl": "Is the green car 3 faster than the red car 1?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Is the green car 3 faster than the red car 1?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "red", "#:car 1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "red", "#:car 1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "red", "#:car 1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the green car 3 faster than the red car 1?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "green", "#:car 3", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "green", "#:car 3", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "green", "#:car 3", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the green car 3 faster than the red car 1?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","fast","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "fast", ["$measure_of","fast","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv21"],
+            ["-has property","green","?:X","?:Fv21"],
+            ["$block", 0, ["has property","green","?:X","?:Fv21"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv22"],
+            ["-has property","green","?:X","?:Fv22"],
+            ["$block", 0, ["has property","blue","?:X","?:Fv22"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv23"],
+            ["-has property","red","?:X","?:Fv23"],
+            ["$block", 0, ["has property","red","?:X","?:Fv23"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv24"],
+            ["-has property","red","?:X","?:Fv24"],
+            ["$block", 0, ["has property","blue","?:X","?:Fv24"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","green","?:X","?:Fv25"],
+            ["-has property","red","?:X","?:Fv25"],
+            ["$block", 0, ["has property","red","?:X","?:Fv25"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","green","?:X","?:Fv26"],
+            ["-has property","red","?:X","?:Fv26"],
+            ["$block", 0, ["has property","green","?:X","?:Fv26"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv27","?:Fv28","?:Fv29"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv30","?:Fv31","?:Fv32"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "green", "?:X", ["$ctxt","past","?:Fv33","?:Fv34","?:Fv35"]],
+            ["has property", "green", "?:X", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]],
+            ["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "green", "?:X", ["$ctxt","past","?:Fv36","?:Fv37","?:Fv38"]],
+            ["has property", "green", "?:X", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]],
+            ["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv39","?:Fv40","?:Fv41"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28347,
+      "cached_input_tokens": 28288,
+      "output_tokens": 641,
+      "raw": {
+        "input_tokens": 28347,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 641,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 28988
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33904,
+      "cached_input_tokens": 33280,
+      "output_tokens": 417,
+      "raw": {
+        "input_tokens": 33904,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 417,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34321
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34832,
+      "cached_input_tokens": 33792,
+      "output_tokens": 728,
+      "raw": {
+        "input_tokens": 34832,
+        "input_tokens_details": {"cached_tokens": 33792},
+        "output_tokens": 728,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35560
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:27:09Z"
+}

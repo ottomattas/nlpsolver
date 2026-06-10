@@ -1,0 +1,293 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 184,
+  "input_text": "John probably smokes. Elephants have a trunk. Tom and Eve greeted each other. Birds have a trunk?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John probably smokes.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 smokes.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual"}],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have a trunk.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Elephants have a trunk.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunk", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Tom and Eve greeted each other.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Tom 2 and Eve 3 greeted each other.",
+          "type": "situation",
+          "entities": [{"id": "Tom 2", "type": "concrete", "category": "person"},
+            {"id": "Eve 3", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "greet", "mode": "event", "roles": {"target": "Eve 3"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Birds have a trunk?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Do birds have a trunk?",
+          "type": "query",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"},
+            {"id": "trunk", "type": "generic", "scope": "dependent"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","smoke"],
+                  ["has actor","E","John 1"],
+                  ["typical","E"]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.8]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Tom 2"],
+          ["isa","person","Eve 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","greet"],
+              ["has actor","E","Tom 2"],
+              ["has target","E","Eve 3"],
+              ["has time","E","past","in"]
+            ]
+          ],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","greet"],
+              ["has actor","E1","Eve 3"],
+              ["has target","E1","Tom 2"],
+              ["has time","E1","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["forall","X",
+          ["implies",
+            ["isa","bird","X"],
+            ["normally", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "smoke", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:John 1", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S1",
+ "@logic": [["typical", "sk0_activity", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","$generic",1], ["$not", ["typical", "sk0_activity", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk1","?:X"]]],
+ "@nl": "Elephants have a trunk."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have a trunk."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Tom 2"],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Eve 3"],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "greet", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:Tom 2", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk2_activity", "#:Eve 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk3_activity", "greet", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk3_activity", "#:Eve 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk3_activity", "#:Tom 2", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Tom 2 and Eve 3 greeted each other."},
+{"@name": "sent_S4",
+ "@sourcetype": "question_subject",
+ "@logic": ["isa","bird","skq_S4_bird"],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","trunk","sk4_trunk"]],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has part", "skq_S4_bird", "sk4_trunk", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-has part", "skq_S4_bird", "?:Y", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["$defq0"]
+           ],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32073,
+      "cached_input_tokens": 32042,
+      "output_tokens": 545,
+      "raw": {
+        "input_tokens": 31,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 545,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39305,
+      "cached_input_tokens": 38891,
+      "output_tokens": 758,
+      "raw": {
+        "input_tokens": 414,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 758,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:22:22Z"
+}

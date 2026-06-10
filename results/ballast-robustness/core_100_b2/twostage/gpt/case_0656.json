@@ -1,0 +1,292 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 656,
+  "input_text": "John smokes with a probability 0.1. The child wearing a hat ran. Mike is a boxer. The child wore a coat?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John smokes with a probability 0.1.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 smokes.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual"}],
+          "confidence": 0.1
+        }
+      ]
+    },
+    {
+      "raw": "The child wearing a hat ran.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The child 2 wearing a hat 3 ran.",
+          "type": "situation",
+          "entities": [{"id": "child 2", "type": "concrete", "category": "person"},
+            {"id": "hat 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "run", "mode": "event"}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "The child 2 wore a hat 3.",
+          "type": "situation",
+          "entities": [{"id": "child 2", "type": "concrete", "category": "person"},
+            {"id": "hat 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "wear", "mode": "event", "roles": {"target": "hat 3"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a boxer.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mike 4 is a boxer.",
+          "type": "situation",
+          "entities": [{"id": "Mike 4", "type": "concrete", "category": "person"},
+            {"id": "boxer", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The child wore a coat?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Did the child 2 wear a coat?",
+          "type": "query",
+          "entities": [{"id": "child 2", "type": "concrete", "category": "person"},
+            {"id": "coat", "type": "generic", "category": "artifact"}
+          ],
+          "actions": [{"root": "wear", "mode": "event", "roles": {"target": "coat"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["normally",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","smoke"],
+                ["has actor","E","John 1"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.1]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","child","child 2"],
+          ["isa","hat","hat 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","run"],
+              ["has actor","E","child 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","child","child 2"],
+          ["isa","hat","hat 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","wear"],
+              ["has actor","E","child 2"],
+              ["has target","E","hat 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S4", ["holds", "W0", ["and", ["isa","person","Mike 4"], ["isa","boxer","Mike 4"]]]],
+    ["@id","S5",
+      ["question",
+        ["exists","X",
+          ["and",
+            ["isa","coat","X"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","wear"],
+                ["has actor","E","child 2"],
+                ["has target","E","X"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "smoke", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has actor", "?:E", "#:John 1", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","$generic",1], ["$not", ["or", ["-isa","activity","?:E"], ["-has type", "?:E", "smoke", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]], ["-has actor", "?:E", "#:John 1", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]], ["-typical", "?:E", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]]
+           ],
+ "@confidence": 0.8,
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S2",
+ "@logic": ["isa","child","#:child 2"],
+ "@nl": "The child 2 wearing a hat 3 ran."},
+{"@name": "sent_S2",
+ "@logic": ["isa","hat","#:hat 3"],
+ "@nl": "The child 2 wearing a hat 3 ran."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The child 2 wearing a hat 3 ran."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "run", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The child 2 wearing a hat 3 ran."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:child 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The child 2 wearing a hat 3 ran."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The child 2 wearing a hat 3 ran."},
+{"@name": "sent_S3",
+ "@logic": ["isa","child","#:child 2"],
+ "@nl": "The child 2 wore a hat 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","hat","#:hat 3"],
+ "@nl": "The child 2 wore a hat 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The child 2 wore a hat 3."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "wear", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The child 2 wore a hat 3."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:child 2", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The child 2 wore a hat 3."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk1_activity", "#:hat 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The child 2 wore a hat 3."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The child 2 wore a hat 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mike 4"],
+ "@nl": "Mike 4 is a boxer."},
+{"@name": "sent_S4",
+ "@logic": ["isa","boxer","#:Mike 4"],
+ "@nl": "Mike 4 is a boxer."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","coat","sk2_coat"]],
+ "@nl": "Did the child 2 wear a coat?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk3_activity"]],
+ "@nl": "Did the child 2 wear a coat?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk3_activity", "wear", ["$ctxt","past","?:Fv19","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did the child 2 wear a coat?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk3_activity", "#:child 2", ["$ctxt","past","?:Fv21","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did the child 2 wear a coat?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk3_activity", "sk2_coat", ["$ctxt","past","?:Fv23","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did the child 2 wear a coat?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk3_activity", "past", "in", ["$ctxt","past","?:Fv25","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did the child 2 wear a coat?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-isa","coat","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "wear", ["$ctxt","past","?:Fv31","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "#:child 2", ["$ctxt","past","?:Fv33","?:Fv11","?:Fv12"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","past","?:Fv35","?:Fv11","?:Fv12"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did the child 2 wear a coat?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "Did the child 2 wear a coat?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","run","?:Fv39"], ["has type","?:E","go","?:Fv39"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28342,
+      "cached_input_tokens": 28288,
+      "output_tokens": 721,
+      "raw": {
+        "input_tokens": 28342,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 721,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29063
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33914,
+      "cached_input_tokens": 33280,
+      "output_tokens": 460,
+      "raw": {
+        "input_tokens": 33914,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 460,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34374
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:32:05Z"
+}

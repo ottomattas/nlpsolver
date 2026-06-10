@@ -1,0 +1,409 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1370,
+  "input_text": "If someone is a nice animal and badly defeated then they are weak. John and Mike are nice animals. Mr Dursley is a catholic. Penguins happily live in water. John is badly defeated. John is weak?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Probably true.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "If someone is a nice animal and badly defeated then they are weak.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "If a person is a nice animal and badly defeated then the person is weak.",
+          "type": "normal_rule",
+          "entities": [{"id": "person", "type": "generic", "category": "person"},
+            {"id": "animal", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["nice","none","animal"], ["badly defeated","none","person"], ["weak","none","person"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "John and Mike are nice animals.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 is a nice animal.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "animal", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["nice","none","animal"]]
+        },
+        {
+          "unit_id": "S3",
+          "text": "Mike 2 is a nice animal.",
+          "type": "situation",
+          "entities": [{"id": "Mike 2", "type": "concrete", "category": "person"},
+            {"id": "animal", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["nice","none","animal"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is a catholic.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mr Dursley 3 is a catholic.",
+          "type": "situation",
+          "entities": [{"id": "Mr Dursley 3", "type": "concrete", "category": "person"},
+            {"id": "catholic", "type": "generic", "category": "abstract"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Penguins happily live in water.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Penguins happily live in water.",
+          "type": "normal_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"},
+            {"id": "water", "type": "generic", "scope": "kind", "category": "substance"}
+          ],
+          "actions": [{
+              "root": "live",
+              "mode": "habitual",
+              "roles": {"actor": "penguins", "location": "water", "manner": "happily"}
+            }
+          ],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "John is badly defeated.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "John 1 is badly defeated.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["badly defeated","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is weak?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Is John 1 weak?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["weak","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["normally",
+              ["implies",
+                ["and",
+                  ["isa","person","X"],
+                  ["isa","animal","X"],
+                  ["has degree property","nice","X","none","animal"],
+                  ["has degree property","badly defeated","X","none","person"]
+                ],
+                ["has degree property","weak","X","none","person"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.95]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","animal","John 1"],
+          ["has degree property","nice","John 1","none","animal"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mike 2"],
+          ["isa","animal","Mike 2"],
+          ["has degree property","nice","Mike 2","none","animal"]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds", "W0", ["and", ["isa","person","Mr Dursley 3"], ["isa","catholic","Mr Dursley 3"]]]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","penguin","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","live"],
+                    ["has actor","E","X"],
+                    ["has location","E","water","in"],
+                    ["has manner","E","happily"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S5",0.95]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["has degree property","badly defeated","John 1","none","person"]
+        ]
+      ]
+    ],
+    ["@id", "S7", ["question", ["has degree property","weak","John 1","none","person"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","person","?:X"],
+            ["-isa","animal","?:X"],
+            ["-has degree property", "good", "?:X", "none", "animal", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has property", "badly defeated", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has degree property", "strong", "?:X", "none", "person", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","person",3], ["$not", ["has degree property", "weak", "?:X", "none", "person", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "If a person is a nice animal and badly defeated then the person is weak."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is a nice animal."},
+{"@name": "sent_S2",
+ "@logic": ["isa","animal","#:John 1"],
+ "@nl": "John 1 is a nice animal."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "good", "#:John 1", "none", "animal", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 is a nice animal."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Mike 2"],
+ "@nl": "Mike 2 is a nice animal."},
+{"@name": "sent_S3",
+ "@logic": ["isa","animal","#:Mike 2"],
+ "@nl": "Mike 2 is a nice animal."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "good", "#:Mike 2", "none", "animal", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mike 2 is a nice animal."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mr Dursley 3"],
+ "@nl": "Mr Dursley 3 is a catholic."},
+{"@name": "sent_S4",
+ "@logic": ["isa","catholic","#:Mr Dursley 3"],
+ "@nl": "Mr Dursley 3 is a catholic."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"], ["isa", "activity", ["sk0","?:X"]]],
+ "@nl": "Penguins happily live in water."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has type", ["sk0","?:X"], "live", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Penguins happily live in water."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has actor", ["sk0","?:X"], "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Penguins happily live in water."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"], ["isa", "water", ["sk1","?:X"]]],
+ "@nl": "Penguins happily live in water."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has location", ["sk0","?:X"], ["sk1","?:X"], "in", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Penguins happily live in water."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has manner", ["sk0","?:X"], "happily", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Penguins happily live in water."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"],
+            ["typical", ["sk0","?:X"], ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["$block", ["$","penguin",1], ["$not", ["typical", ["sk0","?:X"], ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Penguins happily live in water."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is badly defeated."},
+{"@name": "sent_S6",
+ "@logic": ["has property", "badly defeated", "#:John 1", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "John 1 is badly defeated."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-has degree property", "strong", "#:John 1", "none", "person", ["$ctxt","present","?:Fv19","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Is John 1 weak?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["has degree property", "strong", "#:John 1", "none", "person", ["$ctxt","present","?:Fv19","?:Fv17","?:Fv18"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 weak?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 weak?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["has degree property", "strong", "#:John 1", "none", "person", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["-has degree property", "strong", "#:John 1", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "weak", "#:John 1", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 weak?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","person","$some_not_person"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "good", "$some_not_nice_animal", "none", "animal", ["$ctxt","?:Fv54","?:Fv51","?:Fv52","?:Fv53"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "badly defeated", "$some_not_badly_defeated_person", ["$ctxt","?:Fv58","?:Fv55","?:Fv56","?:Fv57"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "strong", "$some_weak_person", "none", "person", ["$ctxt","?:Fv62","?:Fv59","?:Fv60","?:Fv61"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","person","$some_weak_person"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "strong", "$some_not_weak_person", "none", "person", ["$ctxt","?:Fv70","?:Fv67","?:Fv68","?:Fv69"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "strong", "?:X", "none", "?:Fv71", ["$ctxt","past","?:Fv21","?:Fv22","?:Fv23"]],
+            ["-has degree property", "strong", "?:X", "none", "?:Fv72", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]],
+            ["$block", 0, ["$not", ["has degree property", "weak", "?:X", "none", "?:Fv73", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv24","?:Fv25","?:Fv26"]],
+            ["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]],
+            ["$block", 0, ["$not", ["has degree property", "weak", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "blockers": [["$block", ["$","person",3], ["$not", ["has degree property", "weak", "#:John 1", "none", "person", ["$ctxt","present","W0","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.9,
+        "positive proof": [[1, ["in","sent_S1","assumption",0.9], [["$block", ["$","person",3], ["$not", ["has degree property", "weak", "?:X", "none", "person", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["-has degree property", "strong", "?:X", "none", "person", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has degree property", "good", "?:X", "none", "animal", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has property", "badly defeated", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","person","?:X"], ["-isa","animal","?:X"]]],
+          [2, ["in","sent_S7","assumption",1], [["$defq0"], ["has degree property", "strong", "#:John 1", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","sent_S7","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,1], [2,1], 3, "fromga", 0.9], [["-isa","animal","#:John 1"], ["-isa","person","#:John 1"], ["$block", ["$","person",3], ["$not", ["has degree property", "weak", "#:John 1", "none", "person", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]], ["-has degree property", "good", "#:John 1", "none", "animal", ["$ctxt","present","?:X3","?:Y3","?:Z3"]], ["-has property", "badly defeated", "#:John 1", ["$ctxt","present","?:X3","?:Y3","?:Z3"]]]],
+          [5, ["in","sent_S2","assumption",1], [["isa","person","#:John 1"]]],
+          [6, ["in","sent_S2","assumption",1], [["isa","animal","#:John 1"]]],
+          [7, ["simp",4,5,6,"fromga",0.9], [["$block", ["$","person",3], ["$not", ["has degree property", "weak", "#:John 1", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["-has degree property", "good", "#:John 1", "none", "animal", ["$ctxt","present","?:X","?:Y","?:Z"]], ["-has property", "badly defeated", "#:John 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [8, ["in","sent_S2","assumption",1], [["has degree property", "good", "#:John 1", "none", "animal", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [9, ["mp", [7,1], 8, "fromga", 0.9], [["$block", ["$","person",3], ["$not", ["has degree property", "weak", "#:John 1", "none", "person", ["$ctxt","present","W0","?:X","?:Y"]]]], ["-has property", "badly defeated", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [10, ["in","sent_S6","assumption",1], [["has property", "badly defeated", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [11, ["mp", [9,1], 10, "fromga", 0.9], [["$block", ["$","person",3], ["$not", ["has degree property", "weak", "#:John 1", "none", "person", ["$ctxt","present","W0","?:X3","?:Y3"]]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 90%.",
+"Sentences used:",
+"  (1) If someone is a nice animal and badly defeated then they are weak.",
+"  (2) John and Mike are nice animals.",
+"  (3) John is badly defeated.",
+"  (4) John is weak?",
+"Proof steps:",
+"  (1) If some person X is a strong person and X is a good animal and X is badly defeated then X is not an animal, except when X is not a weak person  [sentence 1, confidence 90%]",
+"  (2) Answer holds or John is a strong person  [sentence 4]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) If John is an animal and John is a person and John is a good animal then John is not badly defeated, except when John is not a weak person  [from steps 1, 2, 3, confidence 90%]",
+"  (5) John is a person  [sentence 2]",
+"  (6) John is an animal  [sentence 2]",
+"  (7) If John is a good animal then John is not badly defeated, except when John is not a weak person  [from steps 4, 5, 6, confidence 90%]",
+"  (8) John is a good animal  [sentence 2]",
+"  (9) John is not badly defeated, except when John is not a weak person  [from steps 7, 8, confidence 90%]",
+"  (10) John is badly defeated  [sentence 3]",
+"  (11) Outstanding exception: John is not a weak person  [from steps 9, 10, confidence 90%]",
+"Exceptions checked and not holding:",
+"  John is not a weak person"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28357,
+      "cached_input_tokens": 28288,
+      "output_tokens": 884,
+      "raw": {
+        "input_tokens": 28357,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 884,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29241
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34114,
+      "cached_input_tokens": 33280,
+      "output_tokens": 534,
+      "raw": {
+        "input_tokens": 34114,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 534,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34648
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:49:42Z"
+}

@@ -1,0 +1,420 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 975,
+  "input_text": "John drove a red car Mike bought. Eve failed to finish the report. Mary visited London in September. Did Mary visit Paris?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John drove a red car Mike bought.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 drove a car 2 which Mike 3 bought.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "car 2", "type": "concrete", "category": "artifact"},
+            {"id": "Mike 3", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "drive", "mode": "event", "roles": {"actor": "John 1", "target": "car 2"}},
+            {"root": "buy", "mode": "event", "roles": {"actor": "Mike 3", "target": "car 2"}}
+          ],
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "The car 2 is red.",
+          "type": "situation",
+          "entities": [{"id": "car 2", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["red","none","none"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Eve failed to finish the report.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Eve 4 failed to finish the report 5.",
+          "type": "situation",
+          "entities": [{"id": "Eve 4", "type": "concrete", "category": "person"},
+            {"id": "report 5", "type": "concrete", "category": "abstract"}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary visited London in September.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mary 6 visited London 7 in September.",
+          "type": "situation",
+          "entities": [{"id": "Mary 6", "type": "concrete", "category": "person"},
+            {
+              "id": "London 7",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/London"
+            },
+            {"id": "September", "type": "concrete"}
+          ],
+          "actions": [{
+              "root": "visit",
+              "mode": "event",
+              "roles": {"actor": "Mary 6", "target": "London 7", "time": "September"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Did Mary visit Paris?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Did Mary 6 visit Paris 8?",
+          "type": "query",
+          "entities": [{"id": "Mary 6", "type": "concrete", "category": "person"},
+            {
+              "id": "Paris 8",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Paris"
+            }
+          ],
+          "actions": [{"root": "visit", "mode": "event", "roles": {"actor": "Mary 6", "target": "Paris 8"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","car","car 2"],
+          ["isa","person","Mike 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","drive"],
+              ["has actor","E","John 1"],
+              ["has target","E","car 2"],
+              ["has time","E","past","in"]
+            ]
+          ],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","buy"],
+              ["has actor","E1","Mike 3"],
+              ["has target","E1","car 2"],
+              ["has time","E1","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and", ["isa","car","car 2"], ["has degree property","red","car 2","none","none"]]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 4"],
+          ["isa","report","report 5"],
+          ["not",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","finish"],
+                ["has actor","E","Eve 4"],
+                ["has target","E","report 5"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 6"],
+          ["isa","city","https://en.wikipedia.org/wiki/London"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","visit"],
+              ["has actor","E","Mary 6"],
+              ["has target","E","https://en.wikipedia.org/wiki/London"],
+              ["has time","E","September","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","visit"],
+            ["has actor","E","Mary 6"],
+            ["has target","E","https://en.wikipedia.org/wiki/Paris"],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:London 7"],
+ "@nl": "Mary 6 visited London 7 in September."},
+{"@name": "entity_S5",
+ "@logic": ["isa","place","#:Paris 8"],
+ "@nl": "Did Mary 6 visit Paris 8?"},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S1",
+ "@logic": ["isa","car","#:car 2"],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mike 3"],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "drive", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:car 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk1_activity", "buy", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk1_activity", "#:Mike 3", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk1_activity", "#:car 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "John 1 drove a car 2 which Mike 3 bought."},
+{"@name": "sent_S2",
+ "@logic": ["isa","car","#:car 2"],
+ "@nl": "The car 2 is red."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "red", "#:car 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The car 2 is red."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Eve 4"],
+ "@nl": "Eve 4 failed to finish the report 5."},
+{"@name": "sent_S3",
+ "@logic": ["isa","report","#:report 5"],
+ "@nl": "Eve 4 failed to finish the report 5."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "finish", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+            ["-has actor", "?:E", "#:Eve 4", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+            ["-has target", "?:E", "#:report 5", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+            ["-actuality","?:E"]
+           ],
+ "@nl": "Eve 4 failed to finish the report 5."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mary 6"],
+ "@nl": "Mary 6 visited London 7 in September."},
+{"@name": "sent_S4",
+ "@logic": ["isa","city","https://en.wikipedia.org/wiki/London"],
+ "@nl": "Mary 6 visited London 7 in September."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Mary 6 visited London 7 in September."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk2_activity", "visit", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mary 6 visited London 7 in September."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk2_activity", "#:Mary 6", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mary 6 visited London 7 in September."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk2_activity", "https://en.wikipedia.org/wiki/London", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mary 6 visited London 7 in September."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk2_activity", "September", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mary 6 visited London 7 in September."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Mary 6 visited London 7 in September."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk3_activity"]],
+ "@nl": "Did Mary 6 visit Paris 8?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk3_activity", "visit", ["$ctxt","past","?:Fv15","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Did Mary 6 visit Paris 8?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk3_activity", "#:Mary 6", ["$ctxt","past","?:Fv17","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Did Mary 6 visit Paris 8?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk3_activity", "https://en.wikipedia.org/wiki/Paris", ["$ctxt","past","?:Fv19","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Did Mary 6 visit Paris 8?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk3_activity", "past", "in", ["$ctxt","past","?:Fv21","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Did Mary 6 visit Paris 8?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk3_activity"]],
+ "@nl": "Did Mary 6 visit Paris 8?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "visit", ["$ctxt","past","?:Fv25","?:Fv9","?:Fv10"]],
+            ["-has actor", "?:E", "#:Mary 6", ["$ctxt","past","?:Fv27","?:Fv9","?:Fv10"]],
+            ["-has target", "?:E", "https://en.wikipedia.org/wiki/Paris", ["$ctxt","past","?:Fv29","?:Fv9","?:Fv10"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Mary 6 visit Paris 8?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "Did Mary 6 visit Paris 8?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","drive","?:Fv33"], ["has type","?:E","go","?:Fv33"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","report","?:Fv34"], ["has type","?:E","announce","?:Fv34"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","announce","?:Fv35"], ["has type","?:E","report","?:Fv35"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv36","?:Fv37","?:Fv39","?:Fv40"]],
+            ["-has actor", "?:E", "?:Owner", ["$ctxt","?:Fv36","?:Fv37","?:Fv39","?:Fv40"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv36","?:Fv37","?:Fv39","?:Fv40"]],
+            ["-next","?:Fv37","?:Fv38"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv38","?:Fv39","?:Fv40"]],
+            ["$block", 0, ["$not", ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv38","?:Fv39","?:Fv40"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv41","?:Fv42","?:Fv44","?:Fv45"]],
+            ["-has beneficiary", "?:E", "?:Owner", ["$ctxt","?:Fv41","?:Fv42","?:Fv44","?:Fv45"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv41","?:Fv42","?:Fv44","?:Fv45"]],
+            ["-next","?:Fv42","?:Fv43"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv46","?:Fv47","?:Fv49","?:Fv50"]],
+            ["-has recipient", "?:E", "?:Owner", ["$ctxt","?:Fv46","?:Fv47","?:Fv49","?:Fv50"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv46","?:Fv47","?:Fv49","?:Fv50"]],
+            ["-next","?:Fv47","?:Fv48"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv51","?:Fv52","?:Fv53"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv54","?:Fv55","?:Fv56"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28339,
+      "cached_input_tokens": 28288,
+      "output_tokens": 844,
+      "raw": {
+        "input_tokens": 28339,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 844,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29183
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34063,
+      "cached_input_tokens": 33280,
+      "output_tokens": 575,
+      "raw": {
+        "input_tokens": 34063,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 575,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34638
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:34:39Z"
+}

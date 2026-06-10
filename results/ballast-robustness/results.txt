@@ -1,0 +1,69 @@
+BALLAST ROBUSTNESS: DISTRACTOR SENTENCES AT INCREASING DOSE -- plain-text summary
+=================================================================================
+Relevant dir: https://github.com/ottomattas/nlpsolver/tree/main/results/ballast-robustness
+Full results with all detail and caveats: https://github.com/ottomattas/nlpsolver/blob/main/results/ballast-robustness/results.md
+
+
+Setup: nlpsolver/llmpipe on macOS (local gk ARM64), current two-stage pipeline, LLM cache on, thinking off, prover default 2s.
+THE ASK (Tanel, June 10): insert pure-ballast sentences (no shared content words, no synonym/antonym links even soft) into the test cases at increasing dose; find when accuracy starts to degrade; spot-check the generated clause sets.
+STATE SO FAR: generator built and validated; light dose (b2 = 2 ballast sentences/case) run on the 100-subset with gpt+claude. Higher doses and the 1600 runs are NOT run yet.
+
+WHAT I RAN
+==========
+
+G  Ballast generator. Pool = the statement sentences of the 1600 set itself (738 unique after dropping questions, wh-sentences, pronoun sentences, duplicates). A sentence is accepted as ballast for a case only if it shares NO content words with it (raw + morphological variants incl. irregulars + canonical forms), has no ANTONYMS link, no SOFT_SYNONYMS link at any score, no shared exclusion group, and no pair in two different noun-mutex groups; ballast sentences are also mutually inert. Insertion slots (start / between / right before the question) from a per-(case,dose) seeded RNG; deterministic output; self-checks re-verify everything from the written files.
+   script: https://github.com/ottomattas/nlpsolver/blob/main/llmpipe/tests/ballast/make_ballast.py
+   suite:  https://github.com/ottomattas/nlpsolver/blob/main/llmpipe/tests/ballast/tests_core_100_b2.py
+   manifest (ballast + sources + slots per case): https://github.com/ottomattas/nlpsolver/blob/main/llmpipe/tests/ballast/tests_core_100_b2.manifest.json
+   -> All 100 cases generated at the STRICT level (no relaxation needed; min 196 eligible pool sentences per case).
+
+S  Clause-set spot checks ("pistelisi kontrolle"). Original vs ballasted runs, full pipeline, then a clause-level diff: no clause may mix ballast and original vocabulary, no injected axiom may bridge the two sides, the answer must stay correct. Probes included a wh-case, a defeasible case, a measure case and a pronoun case.
+   script: https://github.com/ottomattas/nlpsolver/blob/main/llmpipe/tests/ballast/spot_check.py
+   -> The check CAUGHT a real gap: inject_isa_cross_group_axioms bridged ballast "house" with original "animal" (cross-group noun mutex) on the wh-case. Added that injector's own lexicon as a generator condition; after the fix all six probes pass clean. Exactly the kind of thing you warned about.
+
+1  Phase 1: 100-subset at b2, gpt + claude (200 runs, 0 errors).
+   data: https://github.com/ottomattas/nlpsolver/tree/main/results/ballast-robustness/core_100_b2
+   analysis: https://github.com/ottomattas/nlpsolver/tree/main/results/ballast-robustness/analysis
+   -> gpt 100 -> 98, claude 98 -> 96. Two ballast sentences already hurt slightly, but only slightly.
+
+2  Failure decomposition. Every single b2 failure is "no proof" (logic too weak -> Unknown); zero wrong answers, zero errors. Re-running all 5 lost cases with -seconds 10 (5x prover budget) changes nothing -> these are NOT prover timeouts.
+   script: https://github.com/ottomattas/nlpsolver/blob/main/results/ballast-robustness/analysis/dose_response.py
+   -> IT SEEMS LIKE the degradation enters ONLY through the LLM parse: the encoding silently loses clauses the proof needs. The symbolic half is indifferent to inert ballast, as it should be. Lost cases (553 comparative, 893 possessive presupposition, 22 conditional, 1500/1521 hedged confidence) overlap with the fragile classes from the parsing-architecture study.
+
+3  Ballast handling audit over all 200 runs: did the models parse the ballast, and did any parse MERGE ballast with original content?
+   script: https://github.com/ottomattas/nlpsolver/blob/main/results/ballast-robustness/analysis/ballast_audit.py
+   -> Ballast was parsed in all 200 runs (never skipped). Found a small COREFERENCE-CAPTURE failure mode: claude resolved ballast "This was deep." onto the original "John is glad." and lost case 22; gpt re-bound "She" to a ballast NP on case 134 (survived) and merged "Dr." + "Penguins" into one entity on 1408 (survived). For the next doses the pool filter will also drop demonstrative-subject sentences (pronouns are already dropped); at b2 this cost exactly one case.
+
+4  Position effect (start vs middle vs right-before-question): at this dose too few failures to say anything (gpt's two losses had start-placed ballast, claude's three involved before-question placement -- opposite directions, anecdote level). Phase 2 doses will give this power.
+   script: https://github.com/ottomattas/nlpsolver/blob/main/results/ballast-robustness/analysis/position_effect.py
+
+5  Token/cost ledger. llmcall.py now captures each real API call's usage field into the per-case JSONs (additive change), so spend is measured, not estimated.
+   change: https://github.com/ottomattas/nlpsolver/blob/main/llmpipe/solver/llmcall.py
+   script: https://github.com/ottomattas/nlpsolver/blob/main/results/ballast-robustness/analysis/token_ledger.py
+   -> Phase 1 cost $7.71 at list prices (gpt $2.35, claude $5.36): provider prompt caching served ~97.8% of input tokens, so the run came in well under the ~$15 estimate. Phase 0 (key smoke + spot checks) ~$0.7. Session total ~$8.4.
+
+
+THE TABLE SO FAR
+================
+
+Accuracy, percent correct (100-subset; b0 = no ballast, from the parsing-architecture Gate-1 snapshot):
+
+  model        b0       b2
+  -------------------------
+  gpt       100.0     98.0
+  claude     98.0     96.0
+
+Per-case flips vs b0:
+  gpt    b2: lost 553, 893         | gained none
+  claude b2: lost 22, 1500, 1521   | gained 248
+
+Failures by pipeline stage at b2: no_proof 6 / wrong_answer 0 / error 0 (and no_proof stays no_proof at -seconds 10).
+
+Cost: Phase 0 ~0.8M tokens (~$0.7, mostly gemini spot checks); Phase 1 14.3M input tokens, 97.8% provider-cached, 307K output = $7.71 list. Total ~$8.4.
+
+
+STATUS
+======
+Phase 0 (generator + validation) and Phase 1 (100 @ b2, gpt+claude) done.
+Next: harden the pool filter (demonstrative subjects), then Phase 2 = b4/b8/b16 on the 100-subset with gpt+claude to find N_light and N_heavy (~$8-15 per dose at observed caching rates).
+The full 1600x4 runs (Phases 4-5, the two final datasets) are NOT started -- waiting for explicit go, since that is the big-ticket spend (~$300-450 list per dose, much less with caching).

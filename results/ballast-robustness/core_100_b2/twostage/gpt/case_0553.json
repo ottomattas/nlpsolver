@@ -1,0 +1,257 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 553,
+  "input_text": "Elephants have either trunks or tails. The letter was written. The mountain is higher than the hill. Is the hill higher than the mountain?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "Elephants have either trunks or tails.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Elephants have either trunks or tails.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"},
+            {"id": "tails", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "The letter was written.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The letter 1 was written.",
+          "type": "situation",
+          "entities": [{"id": "letter 1", "type": "concrete", "category": "abstract"}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The mountain is higher than the hill.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The mountain 1 is higher than the hill 2.",
+          "type": "situation",
+          "entities": [{"id": "mountain 1", "type": "concrete", "category": "place"},
+            {"id": "hill 2", "type": "concrete", "category": "place"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Is the hill higher than the mountain?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Is the hill 2 higher than the mountain 1?",
+          "type": "query",
+          "entities": [{"id": "hill 2", "type": "concrete", "category": "place"},
+            {"id": "mountain 1", "type": "concrete", "category": "place"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["xor",
+                ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]],
+                ["exists", "Z", ["and", ["isa","tail","Z"], ["has part","X","Z"]]]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id", "S2", ["and", ["holds", "W0", ["isa","letter","letter 1"]], ["state time","W0","past"]]],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","mountain","mountain 1"],
+          ["isa","hill","hill 2"],
+          ["is rel2","higher than","mountain 1","hill 2"]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["and",
+          ["isa","hill","hill 2"],
+          ["isa","mountain","mountain 1"],
+          ["is rel2","higher than","hill 2","mountain 1"]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: either_or_not_xor"],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["isa", "trunk", ["sk0","?:X"]],
+            ["isa", "tail", ["sk1","?:X"]]
+           ],
+ "@confidence": 0.995,
+ "@nl": "Elephants have either trunks or tails."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["isa", "trunk", ["sk0","?:X"]],
+            ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@confidence": 0.995,
+ "@nl": "Elephants have either trunks or tails."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["isa", "tail", ["sk1","?:X"]]
+           ],
+ "@confidence": 0.995,
+ "@nl": "Elephants have either trunks or tails."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@confidence": 0.995,
+ "@nl": "Elephants have either trunks or tails."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-isa","trunk","?:Y"],
+            ["-has part", "?:X", "?:Y", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-isa","tail","?:Z"],
+            ["-has part", "?:X", "?:Z", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Elephants have either trunks or tails."},
+{"@name": "sent_S2",
+ "@logic": ["isa","letter","#:letter 1"],
+ "@nl": "The letter 1 was written."},
+{"@name": "sent_S3",
+ "@logic": ["isa","mountain","#:mountain 1"],
+ "@nl": "The mountain 1 is higher than the hill 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","hill","#:hill 2"],
+ "@nl": "The mountain 1 is higher than the hill 2."},
+{"@name": "sent_S3",
+ "@logic": ["is rel2", "higher than", "#:mountain 1", "#:hill 2", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The mountain 1 is higher than the hill 2."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","hill","#:hill 2"]],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","mountain","#:mountain 1"]],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "higher than", "#:hill 2", "#:mountain 1", ["$ctxt","present","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","hill","#:hill 2"],
+            ["-isa","mountain","#:mountain 1"],
+            ["-is rel2", "higher than", "#:hill 2", "#:mountain 1", ["$ctxt","present","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","tail","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "higher than", "#:hill 2", "#:mountain 1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "higher than", "#:hill 2", "#:mountain 1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "higher than", "#:hill 2", "#:mountain 1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the hill 2 higher than the mountain 1?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","tail","$some_tail"],
+ "@nl": "[population: from input]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28342,
+      "cached_input_tokens": 28288,
+      "output_tokens": 510,
+      "raw": {
+        "input_tokens": 28342,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 510,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 28852
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33768,
+      "cached_input_tokens": 33280,
+      "output_tokens": 335,
+      "raw": {
+        "input_tokens": 33768,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 335,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34103
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34503,
+      "cached_input_tokens": 33664,
+      "output_tokens": 316,
+      "raw": {
+        "input_tokens": 34503,
+        "input_tokens_details": {"cached_tokens": 33664},
+        "output_tokens": 316,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34819
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:28:34Z"
+}

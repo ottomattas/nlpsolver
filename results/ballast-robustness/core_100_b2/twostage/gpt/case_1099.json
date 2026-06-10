@@ -1,0 +1,386 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1099,
+  "input_text": "Mike is nicer than Eve. Bears do not eat berries in a forest. John is a not strong elephant. Bears eat berries in a forest?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Mike is nicer than Eve.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mike 1 is nicer than Eve 2.",
+          "type": "situation",
+          "entities": [{"id": "Mike 1", "type": "concrete", "category": "person"},
+            {"id": "Eve 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["nice","high","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Bears do not eat berries in a forest.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Bears do not eat berries in a forest.",
+          "type": "normal_rule",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "dependent", "category": "plant"},
+            {"id": "forest", "type": "generic", "scope": "dependent", "category": "place"}
+          ],
+          "actions": [{
+              "root": "eat",
+              "mode": "habitual",
+              "roles": {"target": "berries", "location": "forest", "location_prep": "in"}
+            }
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "John is a not strong elephant.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 3 is a not strong elephant.",
+          "type": "situation",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "animal"},
+            {"id": "elephant", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["strong","none","elephant"]]
+        }
+      ]
+    },
+    {
+      "raw": "Bears eat berries in a forest?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Do bears eat berries in a forest?",
+          "type": "query",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "dependent", "category": "plant"},
+            {"id": "forest", "type": "generic", "scope": "dependent", "category": "place"}
+          ],
+          "actions": [{
+              "root": "eat",
+              "mode": "habitual",
+              "roles": {"target": "berries", "location": "forest", "location_prep": "in"}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mike 1"],
+          ["isa","person","Eve 2"],
+          ["has degree property","nice","Mike 1","high","person"]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bear","X"],
+              ["normally",
+                ["not",
+                  ["exists","E",
+                    ["and",
+                      ["isa","activity","E"],
+                      ["has type","E","eat"],
+                      ["has actor","E","X"],
+                      ["exists", "Y", ["and", ["isa","berry","Y"], ["has target","E","Y"]]],
+                      ["exists", "Z", ["and", ["isa","forest","Z"], ["has location","E","Z","in"]]],
+                      ["typical","E"]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","elephant","John 3"],
+          ["not", ["has degree property","strong","John 3","none","elephant"]]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["forall","X",
+          ["implies",
+            ["isa","bear","X"],
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","eat"],
+                  ["has actor","E","X"],
+                  ["exists", "Y", ["and", ["isa","berry","Y"], ["has target","E","Y"]]],
+                  ["exists", "Z", ["and", ["isa","forest","Z"], ["has location","E","Z","in"]]],
+                  ["typical","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mike 1"],
+ "@nl": "Mike 1 is nicer than Eve 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Eve 2"],
+ "@nl": "Mike 1 is nicer than Eve 2."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "good", "#:Mike 1", "high", "person", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mike 1 is nicer than Eve 2."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "eat", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-isa","berry","?:Y"],
+            ["-has target", "?:E", "?:Y", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-isa","forest","?:Z"],
+            ["-has location", "?:E", "?:Z", "in", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$block", ["$","bear",5], ["typical", "?:E", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Bears do not eat berries in a forest."},
+{"@name": "sent_S3",
+ "@logic": ["isa","elephant","#:John 3"],
+ "@nl": "John 3 is a not strong elephant."},
+{"@name": "sent_S3",
+ "@logic": ["-has degree property", "strong", "#:John 3", "none", "elephant", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "John 3 is a not strong elephant."},
+{"@name": "sent_S4",
+ "@sourcetype": "question_subject",
+ "@logic": ["isa","bear","skq_S4_bear"],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk0_activity"]],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk0_activity", "eat", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk0_activity", "skq_S4_bear", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","berry","sk1_berry"]],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk0_activity", "sk1_berry", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","forest","sk2_forest"]],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has location", "sk0_activity", "sk2_forest", "in", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["typical", "sk0_activity", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "eat", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-has actor", "?:E", "skq_S4_bear", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-isa","berry","?:Y"],
+            ["-has target", "?:E", "?:Y", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-isa","forest","?:Z"],
+            ["-has location", "?:E", "?:Z", "in", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$defq0"]
+           ],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","berry","$some_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","berry","$some_not_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","forest","$some_forest"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","forest","$some_not_forest"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "strong", "$some_strong_elephant", "none", "elephant", ["$ctxt","?:Fv54","?:Fv51","?:Fv52","?:Fv53"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_strong_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv59", ["$ctxt","past","?:Fv13","?:Fv14","?:Fv15"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv60", ["$ctxt","present","?:Fv13","?:Fv14","?:Fv15"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv61", ["$ctxt","present","?:Fv13","?:Fv14","?:Fv15"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv16","?:Fv17","?:Fv18"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv16","?:Fv17","?:Fv18"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv16","?:Fv17","?:Fv18"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "blockers": [["$block", ["$","bear",5], ["typical", "sk0_activity", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]
+        ],
+        "confidence": 0.98,
+        "negative proof": [[1, ["in","sent_S2","assumption",0.98], [["$block", ["$","bear",5], ["typical", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]]], ["-has location", "?:X", "?:W", "in", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has type", "?:X", "eat", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "?:X", "?:2006", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has target", "?:X", "?:2007", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-typical", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","forest","?:W"], ["-isa","berry","?:2007"], ["-isa","bear","?:2006"], ["-isa","activity","?:X"]]],
+          [2, ["in","sent_S4","assumption",1], [["-$defq0"], ["has location", "sk0_activity", "sk2_forest", "in", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has location", "sk0_activity", "sk2_forest", "in", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [5, ["in","sent_S4","assumption",1], [["-$defq0"], ["has type", "sk0_activity", "eat", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [6, ["mp",5,3,"fromga",1], [["has type", "sk0_activity", "eat", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]],
+          [7, ["in","sent_S4","assumption",1], [["-$defq0"], ["typical", "sk0_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [8, ["mp",7,3,"fromga",1], [["typical", "sk0_activity", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]],
+          [9, ["in","sent_S4","assumption",1], [["-$defq0"], ["isa","forest","sk2_forest"]]],
+          [10, ["mp",9,3,"fromga",1], [["isa","forest","sk2_forest"]]],
+          [11, ["in","sent_S4","assumption",1], [["-$defq0"], ["isa","activity","sk0_activity"]]],
+          [12, ["mp",11,3,"fromga",1], [["isa","activity","sk0_activity"]]],
+          [13, ["mp", [1,1], 4, 6, 8, 10, 12, "fromga", 0.98], [["$block", ["$","bear",5], ["typical", "sk0_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]], ["-has actor", "sk0_activity", "?:V", ["$ctxt","?:X","?:Y","?:Z","?:U"]], ["-has target", "sk0_activity", "?:W", ["$ctxt","?:X","?:Y","?:Z","?:U"]], ["-isa","berry","?:W"], ["-isa","bear","?:V"]]],
+          [14, ["in","sent_S4","assumption",1], [["-$defq0"], ["has actor", "sk0_activity", "skq_S4_bear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [15, ["mp",14,3,"fromga",1], [["has actor", "sk0_activity", "skq_S4_bear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [16, ["mp", [13,1], 15, "fromga", 0.98], [["-isa","bear","skq_S4_bear"], ["$block", ["$","bear",5], ["typical", "sk0_activity", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]], ["-has target", "sk0_activity", "?:V3", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]], ["-isa","berry","?:V3"]]],
+          [17, ["in","sent_S4","assumption",1], [["isa","bear","skq_S4_bear"]]],
+          [18, ["simp",16,17,"fromga",0.98], [["$block", ["$","bear",5], ["typical", "sk0_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]], ["-has target", "sk0_activity", "?:V", ["$ctxt","?:X","?:Y","?:Z","?:U"]], ["-isa","berry","?:V"]]],
+          [19, ["in","sent_S4","assumption",1], [["-$defq0"], ["has target", "sk0_activity", "sk1_berry", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [20, ["mp",19,3,"fromga",1], [["has target", "sk0_activity", "sk1_berry", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [21, ["in","sent_S4","assumption",1], [["-$defq0"], ["isa","berry","sk1_berry"]]],
+          [22, ["mp",21,3,"fromga",1], [["isa","berry","sk1_berry"]]],
+          [23, ["mp", [18,1], 20, 22, "fromga", 0.98], [["$block", ["$","bear",5], ["typical", "sk0_activity", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 98%.",
+"Sentences used:",
+"  (1) Bears do not eat berries in a forest.",
+"  (2) Bears eat berries in a forest?",
+"Proof steps:",
+"  (1) If X takes place in some forest W and X is a eat event and some bear E1 performs X and X targets some berry E2 and X is an activity then X is not typical, except when X is typical  [sentence 1, confidence 98%]",
+"  (2) If answer holds then the event act1 takes place in some forest for1  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) The event act1 takes place in for1  [from steps 2, 3]",
+"  (5) If answer holds then the event act1 is a eat event  [sentence 2]",
+"  (6) The event act1 is a eat event  [from steps 5, 3]",
+"  (7) If answer holds then the event act1 is typical  [sentence 2]",
+"  (8) The event act1 is typical  [from steps 7, 3]",
+"  (9) If answer holds then for1 is a forest  [sentence 2]",
+"  (10) For1 is a forest  [from steps 9, 3]",
+"  (11) If answer holds then the event act1 is an activity  [sentence 2]",
+"  (12) The event act1 is an activity  [from steps 11, 3]",
+"  (13) If some bear V performs the event act1 then the act1 does not target W, except when the act1 is typical  [from steps 1, 4, 6, 8, 10, 12, confidence 98%]",
+"  (14) If answer holds then skq_S4_bear performs the event act1  [sentence 2]",
+"  (15) Skq_S4_bear performs the event act1  [from steps 14, 3]",
+"  (16) If skq_S4_bear is a bear then the act1 does not target V3, except when the act1 is typical  [from steps 13, 15, confidence 98%]",
+"  (17) Skq_S4_bear is a bear  [sentence 2]",
+"  (18) The act1 does not target V, except when the act1 is typical  [from steps 16, 17, confidence 98%]",
+"  (19) If answer holds then the event act1 targets some berry ber1  [sentence 2]",
+"  (20) The event act1 targets ber1  [from steps 19, 3]",
+"  (21) If answer holds then ber1 is a berry  [sentence 2]",
+"  (22) Ber1 is a berry  [from steps 21, 3]",
+"  (23) Outstanding exception: the event act1 is typical  [from steps 18, 20, 22, confidence 98%]",
+"Exceptions checked and not holding:",
+"  act1 is typical"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28342,
+      "cached_input_tokens": 28288,
+      "output_tokens": 662,
+      "raw": {
+        "input_tokens": 28342,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 662,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29004
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33927,
+      "cached_input_tokens": 33280,
+      "output_tokens": 472,
+      "raw": {
+        "input_tokens": 33927,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 472,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34399
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:40:22Z"
+}

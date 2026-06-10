@@ -1,0 +1,467 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1341,
+  "input_text": "Squirrels can fly. John is a sparrow. Foxes cannot fly. Yellow and green elephants are nice. Squirrels and foxes are animals. Which can fly?",
+  "expected_answer": "A squirrel",
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "A squirrel.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Squirrels can fly.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Squirrels can fly.",
+          "type": "normal_rule",
+          "entities": [{"id": "squirrels", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "John is a sparrow.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 is a sparrow.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "Foxes cannot fly.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Foxes cannot fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "foxes", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "Yellow and green elephants are nice.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Elephants that are yellow and green are nice.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"}],
+          "adjectives": [["yellow","none","elephant"], ["green","none","elephant"], ["nice","none","entity"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "Squirrels and foxes are animals.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Squirrels are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "squirrels", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S6",
+          "text": "Foxes are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "foxes", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Which can fly?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Which entity can fly?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","squirrel","X"],
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S2", ["holds", "W0", ["isa","sparrow","John 1"]]],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","fox","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["and",
+                ["isa","elephant","X"],
+                ["has degree property","yellow","X","none","elephant"],
+                ["has degree property","green","X","none","elephant"]
+              ],
+              ["normally", ["has degree property","nice","X","none","entity"]]
+            ]
+          ]
+        ],
+        ["@p","S4",0.95]
+      ]
+    ],
+    ["@id","S5",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","squirrel","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S6",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","fox","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S7",
+      ["ask","X",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","fly"],
+            ["has actor","E","X"],
+            ["capability","E"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","squirrel","?:X"], ["isa", "activity", ["sk0","?:X"]]],
+ "@nl": "Squirrels can fly."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","squirrel","?:X"],
+            ["has type", ["sk0","?:X"], "fly", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Squirrels can fly."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","squirrel","?:X"],
+            ["has actor", ["sk0","?:X"], "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Squirrels can fly."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","squirrel","?:X"],
+            ["capability", ["sk0","?:X"]],
+            ["$block", ["$","squirrel",1], ["$not", ["capability", ["sk0","?:X"]]]]
+           ],
+ "@nl": "Squirrels can fly."},
+{"@name": "sent_S2",
+ "@logic": ["isa","sparrow","#:John 1"],
+ "@nl": "John 1 is a sparrow."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","fox","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Foxes cannot fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-has property", "yellow", "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-has property", "green", "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["has degree property", "good", "?:X", "none", "?:Fv146", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["$block", ["$","elephant",3], ["$not", ["has degree property", "good", "?:X", "none", "?:Fv147", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Elephants that are yellow and green are nice."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","squirrel","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Squirrels are animals."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","fox","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Foxes are animals."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "activity", ["sk1","?:X"]]],
+ "@nl": "Which entity can fly?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has type", ["sk1","?:X"], "fly", ["$ctxt","?:Fv30","?:Fv29","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Which entity can fly?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has actor", ["sk1","?:X"], "?:X", ["$ctxt","?:Fv32","?:Fv31","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Which entity can fly?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["capability", ["sk1","?:X"]]],
+ "@nl": "Which entity can fly?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv36","?:Fv35","?:Fv23","?:Fv24"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv38","?:Fv37","?:Fv23","?:Fv24"]],
+            ["-capability","?:E"],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which entity can fly?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@what_query": true,
+ "@nl": "Which entity can fly?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","squirrel","$some_squirrel"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","squirrel","$some_not_squirrel"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fox","$some_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","fox","$some_not_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "yellow", "$some_yellow_elephant", ["$ctxt","?:Fv97","?:Fv94","?:Fv95","?:Fv96"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_yellow_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "yellow", "$some_not_yellow_elephant", ["$ctxt","?:Fv105","?:Fv102","?:Fv103","?:Fv104"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "green", "$some_green_elephant", ["$ctxt","?:Fv109","?:Fv106","?:Fv107","?:Fv108"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_green_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "green", "$some_not_green_elephant", ["$ctxt","?:Fv117","?:Fv114","?:Fv115","?:Fv116"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "good", "$some_nice_entity", "none", "?:Fv148", ["$ctxt","?:Fv121","?:Fv118","?:Fv119","?:Fv120"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "good", "$some_not_nice_entity", "none", "?:Fv149", ["$ctxt","?:Fv129","?:Fv126","?:Fv127","?:Fv128"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_yellow_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "yellow", "$some_yellow_elephant", ["$ctxt","?:Fv137","?:Fv134","?:Fv135","?:Fv136"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_green_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "green", "$some_green_elephant", ["$ctxt","?:Fv145","?:Fv142","?:Fv143","?:Fv144"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv39"], ["has type","?:E","go","?:Fv39"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","green","?:X","?:Fv40"],
+            ["-has property","yellow","?:X","?:Fv40"],
+            ["$block", 0, ["has property","yellow","?:X","?:Fv40"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","green","?:X","?:Fv41"],
+            ["-has property","yellow","?:X","?:Fv41"],
+            ["$block", 0, ["has property","green","?:X","?:Fv41"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "green", "?:X", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has property", "green", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "green", "?:X", ["$ctxt","past","?:Fv45","?:Fv46","?:Fv47"]],
+            ["has property", "green", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "yellow", "?:X", ["$ctxt","past","?:Fv48","?:Fv49","?:Fv50"]],
+            ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]],
+            ["$block", 0, ["$not", ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "yellow", "?:X", ["$ctxt","past","?:Fv51","?:Fv52","?:Fv53"]],
+            ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "pop_what",
+ "@logic": ["isa","sparrow","$some_sparrow"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","$some_squirrel"]],
+        "blockers": [["$block", ["$","squirrel",1], ["$not", ["capability", ["sk0","$some_squirrel"]]]]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S1","assumption",1], [["isa","squirrel","$some_squirrel"]]],
+          [2, ["in","sent_S1","assumption",1], [["has type", ["sk0","?:X"], "fly", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","squirrel","?:X"]]],
+          [3, ["mp", 1, [2,1], "fromassumption", 1], [["has type", ["sk0","$some_squirrel"], "fly", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [4, ["in","sent_S7","assumption",1], [["-has type", "?:X", "fly", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "?:X", "?:W", ["$ctxt","?:2006","?:2007","?:U","?:V"]], ["-isa","activity","?:X"], ["-capability","?:X"], ["$defq0","?:W"]]],
+          [5, ["mp",3,4,"fromassumption",1], [["-isa", "activity", ["sk0","$some_squirrel"]], ["-capability", ["sk0","$some_squirrel"]], ["-has actor", ["sk0","$some_squirrel"], "?:X3", ["$ctxt","?:Y3","?:Z3","?:U3","?:V3"]], ["$defq0","?:X3"]]],
+          [6, ["in","sent_S1","assumption",1], [["isa", "activity", ["sk0","?:X"]], ["-isa","squirrel","?:X"]]],
+          [7, ["mp", 1, [6,1], "fromassumption", 1], [["isa", "activity", ["sk0","$some_squirrel"]]]],
+          [8, ["simp",5,7,"fromassumption",1], [["-capability", ["sk0","$some_squirrel"]], ["-has actor", ["sk0","$some_squirrel"], "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["$defq0","?:X"]]],
+          [9, ["in","sent_S1","assumption",1], [["has actor", ["sk0","?:X"], "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","squirrel","?:X"]]],
+          [10, ["mp", 1, [9,1], "fromassumption", 1], [["has actor", ["sk0","$some_squirrel"], "$some_squirrel", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [11, ["mp", [8,1], 10, "fromassumption", 1], [["-capability", ["sk0","$some_squirrel"]], ["$defq0","$some_squirrel"]]],
+          [12, ["in","sent_S1","assumption",1], [["$block", ["$","squirrel",1], ["$not", ["capability", ["sk0","?:X"]]]], ["capability", ["sk0","?:X"]], ["-isa","squirrel","?:X"]]],
+          [13, ["mp", 1, [12,2], "fromassumption", 1], [["$block", ["$","squirrel",1], ["$not", ["capability", ["sk0","$some_squirrel"]]]], ["capability", ["sk0","$some_squirrel"]]]],
+          [14, ["mp", 11, [13,1], "fromassumption", 1], [["$block", ["$","squirrel",1], ["$not", ["capability", ["sk0","$some_squirrel"]]]], ["$defq0","$some_squirrel"]]],
+          [15, ["in","sent_S7","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [16, ["mp", [14,1], 15, "fromga", 1], [["$block", ["$","squirrel",1], ["$not", ["capability", ["sk0","$some_squirrel"]]]], ["$ans","$some_squirrel"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Squirrels can fly.",
+"  (2) Which can fly?",
+"Proof steps:",
+"  (1) A squirrel is a squirrel  [sentence 1]",
+"  (2) If some X is a squirrel then sk0 of X is a fly event  [sentence 1]",
+"  (3) sk0 of $some_squirrel is a fly event  [from steps 1, 2]",
+"  (4) If X is a fly event and some W performs X and X is an activity and X is a capability then W is the answer  [sentence 2]",
+"  (5) If the flying event sk0 of $some_squirrel is an activity and sk0 of $some_squirrel is a capability and some X3 performs sk0 of $some_squirrel then X3 is the answer  [from steps 3, 4]",
+"  (6) If some X is a squirrel then the flying event sk0 of X is an activity  [sentence 1]",
+"  (7) The flying event sk0 of $some_squirrel is an activity  [from steps 1, 6]",
+"  (8) If the flying event sk0 of $some_squirrel is a capability and some X performs sk0 of $some_squirrel then X is the answer  [from steps 5, 7]",
+"  (9) If some X is a squirrel then X performs the flying event sk0 of X  [sentence 1]",
+"  (10) A squirrel performs the flying event sk0 of $some_squirrel  [from steps 1, 9]",
+"  (11) If the flying event sk0 of $some_squirrel is a capability then a squirrel is the answer  [from steps 8, 10]",
+"  (12) If some X is a squirrel then normally the flying event sk0 of X is a capability  [sentence 1]",
+"  (13) Normally the flying event sk0 of $some_squirrel is a capability  [from steps 1, 12]",
+"  (14) A squirrel is the answer, except when the flying event sk0 of $some_squirrel is not a capability  [from steps 11, 13]",
+"  (15) technical answer unwrap step  [from question]",
+"  (16) A squirrel is an answer, except when the flying event sk0 of $some_squirrel is not a capability  [from steps 14, 15]",
+"Exceptions checked and not holding:",
+"  the flying event sk0 of $some_squirrel is not a capability"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32089,
+      "cached_input_tokens": 32042,
+      "output_tokens": 821,
+      "raw": {
+        "input_tokens": 47,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 821,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39498,
+      "cached_input_tokens": 38891,
+      "output_tokens": 613,
+      "raw": {
+        "input_tokens": 607,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 613,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:47:47Z"
+}

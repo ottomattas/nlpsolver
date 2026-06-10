@@ -1,0 +1,603 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1094,
+  "input_text": "Elephants and sparrows are either animals or birds. The dog chased by the boy escaped. John bought a book, and Bill said Peter did too. Did Bill say Peter bought a book?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Elephants and sparrows are either animals or birds.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Elephants are either animals or birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S2",
+          "text": "Sparrows are either animals or birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "sparrows", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The dog chased by the boy escaped.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The dog 1 was chased by the boy 2.",
+          "type": "situation",
+          "entities": [{"id": "dog 1", "type": "concrete", "category": "animal"},
+            {"id": "boy 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "chase", "mode": "event", "roles": {"actor": "boy 2", "target": "dog 1"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "The dog 1 escaped.",
+          "type": "situation",
+          "entities": [{"id": "dog 1", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "escape", "mode": "event", "roles": {"actor": "dog 1"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John bought a book, and Bill said Peter did too.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "John 1 bought a book 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "book 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "buy", "mode": "event", "roles": {"actor": "John 1", "target": "book 2"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S6",
+          "text": "Bill 3 said that Peter 4 bought a book.",
+          "type": "situation",
+          "entities": [{"id": "Bill 3", "type": "concrete", "category": "person"},
+            {"id": "Peter 4", "type": "concrete", "category": "person"},
+            {"id": "book", "type": "generic", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "say",
+              "mode": "speech_act",
+              "roles": {
+                "actor": "Bill 3",
+                "content": {"root": "buy", "mode": "event", "roles": {"actor": "Peter 4", "target": "book"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Did Bill say Peter bought a book?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Did Bill 3 say that Peter 4 bought a book?",
+          "type": "query",
+          "entities": [{"id": "Bill 3", "type": "concrete", "category": "person"},
+            {"id": "Peter 4", "type": "concrete", "category": "person"},
+            {"id": "book", "type": "generic", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "say",
+              "mode": "speech_act",
+              "roles": {
+                "actor": "Bill 3",
+                "content": {"root": "buy", "mode": "event", "roles": {"actor": "Peter 4", "target": "book"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies", ["isa","elephant","X"], ["xor", ["isa","animal","X"], ["isa","bird","X"]]]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X",
+          ["implies", ["isa","sparrow","X"], ["xor", ["isa","animal","X"], ["isa","bird","X"]]]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","dog","dog 1"],
+            ["isa","boy","boy 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","chase"],
+                ["has actor","E","boy 2"],
+                ["has target","E","dog 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","dog","dog 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","escape"],
+                ["has actor","E","dog 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["isa","book","book 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","buy"],
+                ["has actor","E","John 1"],
+                ["has target","E","book 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Bill 3"],
+            ["isa","person","Peter 4"],
+            ["exists","E1",
+              ["and",
+                ["isa","activity","E1"],
+                ["has type","E1","say"],
+                ["has actor","E1","Bill 3"],
+                ["has time","E1","past","in"],
+                ["exists","E2",
+                  ["and",
+                    ["has content","E1","E2"],
+                    ["isa","activity","E2"],
+                    ["has type","E2","buy"],
+                    ["has actor","E2","Peter 4"],
+                    ["has time","E2","past","in"],
+                    ["exists", "Y", ["and", ["isa","book","Y"], ["has target","E2","Y"]]]
+                  ]
+                ],
+                ["speech_act","E1"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["question",
+        ["exists","E1",
+          ["and",
+            ["isa","activity","E1"],
+            ["has type","E1","say"],
+            ["has actor","E1","Bill 3"],
+            ["has time","E1","past","in"],
+            ["exists","E2",
+              ["and",
+                ["has content","E1","E2"],
+                ["isa","activity","E2"],
+                ["has type","E2","buy"],
+                ["has actor","E2","Peter 4"],
+                ["has time","E2","past","in"],
+                ["exists", "Y", ["and", ["isa","book","Y"], ["has target","E2","Y"]]]
+              ]
+            ],
+            ["speech_act","E1"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time, inner_content_event_missing_time, either_or_not_xor"],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"], ["isa","bird","?:X"]],
+ "@nl": "Elephants are either animals or birds."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"], ["-isa","animal","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Elephants are either animals or birds."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","sparrow","?:X"], ["isa","animal","?:X"], ["isa","bird","?:X"]],
+ "@nl": "Sparrows are either animals or birds."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","sparrow","?:X"], ["-isa","animal","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Sparrows are either animals or birds."},
+{"@name": "sent_S3",
+ "@logic": ["isa","dog","#:dog 1"],
+ "@nl": "The dog 1 was chased by the boy 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","boy","#:boy 2"],
+ "@nl": "The dog 1 was chased by the boy 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The dog 1 was chased by the boy 2."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "chase", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The dog 1 was chased by the boy 2."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:boy 2", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The dog 1 was chased by the boy 2."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk0_activity", "#:dog 1", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The dog 1 was chased by the boy 2."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The dog 1 was chased by the boy 2."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The dog 1 was chased by the boy 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","dog","#:dog 1"],
+ "@nl": "The dog 1 escaped."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The dog 1 escaped."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "escape", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The dog 1 escaped."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk1_activity", "#:dog 1", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The dog 1 escaped."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The dog 1 escaped."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The dog 1 escaped."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 bought a book 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","book","#:book 2"],
+ "@nl": "John 1 bought a book 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "John 1 bought a book 2."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk2_activity", "buy", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John 1 bought a book 2."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:John 1", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John 1 bought a book 2."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk2_activity", "#:book 2", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John 1 bought a book 2."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John 1 bought a book 2."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "John 1 bought a book 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Bill 3"],
+ "@nl": "Bill 3 said that Peter 4 bought a book."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Peter 4"],
+ "@nl": "Bill 3 said that Peter 4 bought a book."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Bill 3 said that Peter 4 bought a book."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk3_activity", "say", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Bill 3 said that Peter 4 bought a book."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk3_activity", "#:Bill 3", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Bill 3 said that Peter 4 bought a book."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Bill 3 said that Peter 4 bought a book."},
+{"@name": "sent_S6",
+ "@logic": ["has content","sk3_activity","sk4_activity"],
+ "@nl": "Bill 3 said that Peter 4 bought a book."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Bill 3 said that Peter 4 bought a book."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk4_activity", "buy", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Bill 3 said that Peter 4 bought a book."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk4_activity", "#:Peter 4", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Bill 3 said that Peter 4 bought a book."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Bill 3 said that Peter 4 bought a book."},
+{"@name": "sent_S6",
+ "@logic": ["isa","book","sk5_book"],
+ "@nl": "Bill 3 said that Peter 4 bought a book."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk4_activity", "sk5_book", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Bill 3 said that Peter 4 bought a book."},
+{"@name": "sent_S6",
+ "@logic": ["speech_act","sk3_activity"],
+ "@nl": "Bill 3 said that Peter 4 bought a book."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk6_activity"]],
+ "@nl": "Did Bill 3 say that Peter 4 bought a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk6_activity", "say", ["$ctxt","past","?:Fv23","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did Bill 3 say that Peter 4 bought a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk6_activity", "#:Bill 3", ["$ctxt","past","?:Fv25","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did Bill 3 say that Peter 4 bought a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk6_activity", "past", "in", ["$ctxt","past","?:Fv27","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did Bill 3 say that Peter 4 bought a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["has content","sk6_activity","sk7_activity"]],
+ "@nl": "Did Bill 3 say that Peter 4 bought a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk7_activity"]],
+ "@nl": "Did Bill 3 say that Peter 4 bought a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk7_activity", "buy", ["$ctxt","past","?:Fv31","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did Bill 3 say that Peter 4 bought a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk7_activity", "#:Peter 4", ["$ctxt","past","?:Fv33","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did Bill 3 say that Peter 4 bought a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk7_activity", "past", "in", ["$ctxt","past","?:Fv35","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did Bill 3 say that Peter 4 bought a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","book","sk8_book"]],
+ "@nl": "Did Bill 3 say that Peter 4 bought a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk7_activity", "sk8_book", ["$ctxt","past","?:Fv39","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Did Bill 3 say that Peter 4 bought a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["speech_act","sk6_activity"]],
+ "@nl": "Did Bill 3 say that Peter 4 bought a book?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E1"],
+            ["-has type", "?:E1", "say", ["$ctxt","past","?:Fv43","?:Fv17","?:Fv18"]],
+            ["-has actor", "?:E1", "#:Bill 3", ["$ctxt","past","?:Fv45","?:Fv17","?:Fv18"]],
+            ["-has content","?:E1","?:E2"],
+            ["-isa","activity","?:E2"],
+            ["-has type", "?:E2", "buy", ["$ctxt","past","?:Fv51","?:Fv17","?:Fv18"]],
+            ["-has actor", "?:E2", "#:Peter 4", ["$ctxt","past","?:Fv53","?:Fv17","?:Fv18"]],
+            ["-isa","book","?:Y"],
+            ["-has target", "?:E2", "?:Y", ["$ctxt","past","?:Fv59","?:Fv17","?:Fv18"]],
+            ["-speech_act","?:E1"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Bill 3 say that Peter 4 bought a book?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Did Bill 3 say that Peter 4 bought a book?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","sparrow","$some_sparrow"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","sparrow","$some_not_sparrow"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","book","$some_not_book"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv61","?:Fv62","?:Fv64","?:Fv65"]],
+            ["-has actor", "?:E", "?:Owner", ["$ctxt","?:Fv61","?:Fv62","?:Fv64","?:Fv65"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv61","?:Fv62","?:Fv64","?:Fv65"]],
+            ["-next","?:Fv62","?:Fv63"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv63","?:Fv64","?:Fv65"]],
+            ["$block", 0, ["$not", ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv63","?:Fv64","?:Fv65"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv66","?:Fv67","?:Fv69","?:Fv70"]],
+            ["-has beneficiary", "?:E", "?:Owner", ["$ctxt","?:Fv66","?:Fv67","?:Fv69","?:Fv70"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv66","?:Fv67","?:Fv69","?:Fv70"]],
+            ["-next","?:Fv67","?:Fv68"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv68","?:Fv69","?:Fv70"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv71","?:Fv72","?:Fv74","?:Fv75"]],
+            ["-has recipient", "?:E", "?:Owner", ["$ctxt","?:Fv71","?:Fv72","?:Fv74","?:Fv75"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv71","?:Fv72","?:Fv74","?:Fv75"]],
+            ["-next","?:Fv72","?:Fv73"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv73","?:Fv74","?:Fv75"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S7","assumption",1], [["$defq0"], ["-has type", "?:X", "buy", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has type", "?:V", "say", ["$ctxt","past","?:W","?:Z","?:U"]], ["-has actor", "?:X", "#:Peter 4", ["$ctxt","past","?:2006","?:Z","?:U"]], ["-has actor", "?:V", "#:Bill 3", ["$ctxt","past","?:2007","?:Z","?:U"]], ["-has target", "?:X", "?:2008", ["$ctxt","past","?:2009","?:Z","?:U"]], ["-isa","book","?:2008"], ["-isa","activity","?:X"], ["-isa","activity","?:V"], ["-has content","?:V","?:X"], ["-speech_act","?:V"]]],
+          [2, ["in","sent_S6","assumption",1], [["has type", "sk4_activity", "buy", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S7","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,1], 2, 3, "fromga", 1], [["-isa","activity","sk4_activity"], ["-has actor", "sk4_activity", "#:Peter 4", ["$ctxt","past","?:V3","?:Z3","?:U3"]], ["-has target", "sk4_activity", "?:3006", ["$ctxt","past","?:3007","?:Z3","?:U3"]], ["-has type", "?:X3", "say", ["$ctxt","past","?:Y3","?:Z3","?:U3"]], ["-has actor", "?:X3", "#:Bill 3", ["$ctxt","past","?:W3","?:Z3","?:U3"]], ["-isa","book","?:3006"], ["-isa","activity","?:X3"], ["-has content","?:X3","sk4_activity"], ["-speech_act","?:X3"]]],
+          [5, ["in","sent_S6","assumption",1], [["isa","activity","sk4_activity"]]],
+          [6, ["simp",4,5,"fromga",1], [["-has actor", "sk4_activity", "#:Peter 4", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has target", "sk4_activity", "?:U", ["$ctxt","past","?:V","?:Y","?:Z"]], ["-has type", "?:W", "say", ["$ctxt","past","?:2006","?:Y","?:Z"]], ["-has actor", "?:W", "#:Bill 3", ["$ctxt","past","?:2007","?:Y","?:Z"]], ["-isa","book","?:U"], ["-isa","activity","?:W"], ["-has content","?:W","sk4_activity"], ["-speech_act","?:W"]]],
+          [7, ["in","sent_S6","assumption",1], [["has actor", "sk4_activity", "#:Peter 4", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [8, ["mp",6,7,"fromga",1], [["-has target", "sk4_activity", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has type", "?:V", "say", ["$ctxt","past","?:W","?:Z","?:U"]], ["-has actor", "?:V", "#:Bill 3", ["$ctxt","past","?:2006","?:Z","?:U"]], ["-isa","book","?:X"], ["-isa","activity","?:V"], ["-has content","?:V","sk4_activity"], ["-speech_act","?:V"]]],
+          [9, ["in","sent_S6","assumption",1], [["has target", "sk4_activity", "sk5_book", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [10, ["mp",8,9,"fromga",1], [["-isa","book","sk5_book"], ["-has type", "?:X3", "say", ["$ctxt","past","?:Y3","?:Z3","?:U3"]], ["-has actor", "?:X3", "#:Bill 3", ["$ctxt","past","?:V3","?:Z3","?:U3"]], ["-isa","activity","?:X3"], ["-has content","?:X3","sk4_activity"], ["-speech_act","?:X3"]]],
+          [11, ["in","sent_S6","assumption",1], [["isa","book","sk5_book"]]],
+          [12, ["simp",10,11,"fromga",1], [["-has type", "?:X", "say", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has actor", "?:X", "#:Bill 3", ["$ctxt","past","?:V","?:Z","?:U"]], ["-isa","activity","?:X"], ["-has content","?:X","sk4_activity"], ["-speech_act","?:X"]]],
+          [13, ["in","sent_S6","assumption",1], [["has type", "sk3_activity", "say", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [14, ["mp",12,13,"fromga",1], [["-isa","activity","sk3_activity"], ["-has content","sk3_activity","sk4_activity"], ["-speech_act","sk3_activity"], ["-has actor", "sk3_activity", "#:Bill 3", ["$ctxt","past","?:X3","?:Y3","?:Z3"]]]],
+          [15, ["in","sent_S6","assumption",1], [["isa","activity","sk3_activity"]]],
+          [16, ["in","sent_S6","assumption",1], [["has content","sk3_activity","sk4_activity"]]],
+          [17, ["in","sent_S6","assumption",1], [["speech_act","sk3_activity"]]],
+          [18, ["simp",14,15,16,17,"fromga",1], [["-has actor", "sk3_activity", "#:Bill 3", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [19, ["in","sent_S6","assumption",1], [["has actor", "sk3_activity", "#:Bill 3", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [20, ["mp",18,19,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John bought a book, and Bill said Peter did too.",
+"  (2) Did Bill say Peter bought a book?",
+"Proof steps (by contradiction):",
+"  (1) If X is a buy event and V is a say event and Peter performs X and Bill performs V and X targets some E3 and E3 is a book and X is an activity and V is an activity and V is about X and V is a speech act then answer holds  [sentence 2]",
+"  (2) The event act5 is a buy event  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) If the event act5 is an activity and Peter performs the act5 and the act5 targets some book E5 and X3 is a say event and Bill performs X3 and X3 is an activity and X3 is about the act5 then X3 is not a speech act  [from steps 1, 2, 3]",
+"  (5) The event act5 is an activity  [sentence 1]",
+"  (6) If Peter performs the event act5 and the act5 targets some book U and W is a say event and Bill performs W and W is an activity and W is about the act5 then W is not a speech act  [from steps 4, 5]",
+"  (7) Peter performs the event act5  [sentence 1]",
+"  (8) If the event act5 targets some book X and V is a say event and Bill performs V and V is an activity and V is about the act5 then V is not a speech act  [from steps 6, 7]",
+"  (9) The event act5 targets some book boo1  [sentence 1]",
+"  (10) If boo1 is a book and X3 is a say event and Bill performs X3 and X3 is an activity and X3 is about the event act5 then X3 is not a speech act  [from steps 8, 9]",
+"  (11) Boo1 is a book  [sentence 1]",
+"  (12) If X is a say event and Bill performs X and X is an activity and X is about the event act5 then X is not a speech act  [from steps 10, 11]",
+"  (13) The event act4 is a say event  [sentence 1]",
+"  (14) If the event act4 is an activity and the act4 is about the event act5 and Bill performs the act4 then the act4 is not a speech act  [from steps 12, 13]",
+"  (15) The event act4 is an activity  [sentence 1]",
+"  (16) The event act4 is about the event act5  [sentence 1]",
+"  (17) The event act4 is a speech act  [sentence 1]",
+"  (18) Bill does not perform the act4  [from steps 14, 15, 16, 17]",
+"  (19) Bill performs the event act4  [sentence 1]",
+"  (20) Contradiction  [from steps 18, 19]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28352,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1115,
+      "raw": {
+        "input_tokens": 28352,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1115,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29467
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34285,
+      "cached_input_tokens": 33280,
+      "output_tokens": 846,
+      "raw": {
+        "input_tokens": 34285,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 846,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35131
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 36328,
+      "cached_input_tokens": 34176,
+      "output_tokens": 1423,
+      "raw": {
+        "input_tokens": 36328,
+        "input_tokens_details": {"cached_tokens": 34176},
+        "output_tokens": 1423,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 37751
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:36:31Z"
+}

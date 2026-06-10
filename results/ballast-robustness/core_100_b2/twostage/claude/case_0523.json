@@ -1,0 +1,244 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 523,
+  "input_text": "No elephant is an animal. John was yellow. Muggles can not disappear. Some elephant is an animal?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "No elephant is an animal.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "No elephant is an animal.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John was yellow.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 was yellow.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["yellow","none","person"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Muggles can not disappear.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Muggles cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "muggles", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "Some elephant is an animal?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Is some elephant an animal?",
+          "type": "query",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall", "X", ["implies", ["isa","elephant","X"], ["not", ["isa","animal","X"]]]]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["has degree property","yellow","John 1","none","person"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","muggle","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["question", ["exists", "X", ["and", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"], ["-isa","animal","?:X"]],
+ "@nl": "No elephant is an animal."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 was yellow."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "yellow", "#:John 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 was yellow."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","muggle","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Muggles cannot disappear."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","elephant","sk0_elephant"]],
+ "@nl": "Is some elephant an animal?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","animal","sk0_elephant"]],
+ "@nl": "Is some elephant an animal?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","elephant","?:X"], ["-isa","animal","?:X"], ["$defq0"]],
+ "@nl": "Is some elephant an animal?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Is some elephant an animal?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","muggle","$some_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","muggle","$some_not_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "yellow", "?:X", ["$ctxt","past","?:Fv23","?:Fv24","?:Fv25"]],
+            ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]],
+            ["$block", 0, ["$not", ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "yellow", "?:X", ["$ctxt","past","?:Fv26","?:Fv27","?:Fv28"]],
+            ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]],
+            ["$block", 0, ["$not", ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S1","assumption",1], [["-isa","elephant","?:X"], ["-isa","animal","?:X"]]],
+          [2, ["in","sent_S4","assumption",1], [["-$defq0"], ["isa","elephant","sk0_elephant"]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["isa","elephant","sk0_elephant"]]],
+          [5, ["in","sent_S4","assumption",1], [["-$defq0"], ["isa","animal","sk0_elephant"]]],
+          [6, ["mp",5,3,"fromga",1], [["isa","animal","sk0_elephant"]]],
+          [7, ["mp",1,4,6,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) No elephant is an animal.",
+"  (2) Some elephant is an animal?",
+"Proof steps (by contradiction):",
+"  (1) If some X is an elephant then X is not an animal  [sentence 1]",
+"  (2) If answer holds then some elephant ele1 is an elephant  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) Ele1 is an elephant  [from steps 2, 3]",
+"  (5) If answer holds then ele1 is an animal  [sentence 2]",
+"  (6) Ele1 is an animal  [from steps 5, 3]",
+"  (7) Contradiction  [from steps 1, 4, 6]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32073,
+      "cached_input_tokens": 32042,
+      "output_tokens": 484,
+      "raw": {
+        "input_tokens": 31,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 484,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39247,
+      "cached_input_tokens": 38891,
+      "output_tokens": 328,
+      "raw": {
+        "input_tokens": 356,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 328,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:28:09Z"
+}

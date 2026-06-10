@@ -1,0 +1,313 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1146,
+  "input_text": "John has length of 2 meters. The chef cooked a meal for the guests. Birds are in the box. Who was the meal for?",
+  "expected_answer": "The guests.",
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "The guests.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John has length of 2 meters.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 has length 2 of 2 meters.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "2 meters", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 2","John 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "The chef cooked a meal for the guests.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The chef 3 cooked a meal 4 for the guests 5.",
+          "type": "situation",
+          "entities": [{"id": "chef 3", "type": "concrete", "category": "person"},
+            {"id": "meal 4", "type": "concrete"},
+            {"id": "guests 5", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "cook",
+              "mode": "event",
+              "roles": {"actor": "chef 3", "target": "meal 4", "beneficiary": "guests 5"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Birds are in the box.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Birds 6 are in the box 7.",
+          "type": "situation",
+          "entities": [{"id": "birds 6", "type": "concrete", "category": "animal"},
+            {"id": "box 7", "type": "concrete", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Who was the meal for?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Which entity was the meal 4 for?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "meal 4", "type": "concrete"}
+          ],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds", "W0", ["=", ["$measure_of","length","John 1","W0"], ["$measure",2,"meter"]]],
+        ["@definite","S1","W0","length of","John 1","length 2"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","chef 3"],
+          ["isa","meal","meal 4"],
+          ["isa","person","guests 5"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","cook"],
+              ["has actor","E","chef 3"],
+              ["has target","E","meal 4"],
+              ["has beneficiary","E","guests 5"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and", ["isa","bird","birds 6"], ["isa","box","box 7"], ["is rel2","in","birds 6","box 7"]]
+      ]
+    ],
+    ["@id", "S4", ["ask", "X", ["is rel2","for","meal 4","X"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 has length 2 of 2 meters."},
+{"@name": "entity_S1",
+ "@logic": ["isa","measure","2 meters"],
+ "@nl": "John 1 has length 2 of 2 meters."},
+{"@name": "entity_S2",
+ "@logic": ["isa","chef","#:chef 3"],
+ "@nl": "The chef 3 cooked a meal 4 for the guests 5."},
+{"@name": "entity_S2",
+ "@logic": ["isa","guest","#:guests 5"],
+ "@nl": "The chef 3 cooked a meal 4 for the guests 5."},
+{"@name": "entity_S2",
+ "@logic": ["isa","guest","#:guests 5"],
+ "@nl": "The chef 3 cooked a meal 4 for the guests 5."},
+{"@name": "entity_S3",
+ "@logic": ["isa","bird","#:birds 6"],
+ "@nl": "Birds 6 are in the box 7."},
+{"@name": "sent_S1",
+ "@logic": ["=", ["$measure_of","length","#:John 1","W0"], ["$list",2,"#:meter"]],
+ "@nl": "John 1 has length 2 of 2 meters."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:chef 3"],
+ "@nl": "The chef 3 cooked a meal 4 for the guests 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","meal","#:meal 4"],
+ "@nl": "The chef 3 cooked a meal 4 for the guests 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:guests 5"],
+ "@nl": "The chef 3 cooked a meal 4 for the guests 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The chef 3 cooked a meal 4 for the guests 5."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "cook", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The chef 3 cooked a meal 4 for the guests 5."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:chef 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The chef 3 cooked a meal 4 for the guests 5."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "#:meal 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The chef 3 cooked a meal 4 for the guests 5."},
+{"@name": "sent_S2",
+ "@logic": ["has beneficiary", "sk0_activity", "#:guests 5", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The chef 3 cooked a meal 4 for the guests 5."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The chef 3 cooked a meal 4 for the guests 5."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The chef 3 cooked a meal 4 for the guests 5."},
+{"@name": "sent_S3",
+ "@logic": ["isa","bird","#:birds 6"],
+ "@nl": "Birds 6 are in the box 7."},
+{"@name": "sent_S3",
+ "@logic": ["isa","box","#:box 7"],
+ "@nl": "Birds 6 are in the box 7."},
+{"@name": "sent_S3",
+ "@logic": ["is rel2", "in", "#:birds 6", "#:box 7", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Birds 6 are in the box 7."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["is rel2", "for", "#:meal 4", "?:X", ["$ctxt","past","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Which entity was the meal 4 for?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "for", "#:meal 4", "?:X", ["$ctxt","past","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which entity was the meal 4 for?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@nl": "Which entity was the meal 4 for?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "for", "#:meal 4", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["is rel2", "for", "#:meal 4", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "for", "#:meal 4", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity was the meal 4 for?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","chef","?:X"], ["isa","cook","?:X"]],
+ "@confidence": 0.86,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","cook","?:X"], ["isa","chef","?:X"]],
+ "@confidence": 0.86,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_ben_for",
+ "@logic": [["-has target","?:E","?:T","?:Fv13"],
+            ["-has beneficiary","?:E","?:B","?:Fv13"],
+            ["is rel2","for","?:T","?:B","?:Fv13"]
+           ],
+ "@nl": "[generated: frm_ben_for]"},
+{"@name": "pop_what",
+ "@logic": ["isa","chef","$some_chef"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","guest","$some_guest"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","guest","$some_guests"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","measure","$some_measure"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","meal","$some_meal"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","bird","$some_birds"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","box","$some_box"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","#:guests 5"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S4","assumption",1], [["-is rel2", "for", "#:meal 4", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["$defq0","?:X"]]],
+          [2, ["in","sent_S4","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [3, ["mp", [1,1], 2, "fromga", 1], [["-is rel2", "for", "#:meal 4", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["$ans","?:X"]]],
+          [4, ["in","frm_ben_for","assumption",1], [["is rel2","for","?:X","?:Y","?:Z"], ["-has beneficiary","?:U","?:Y","?:Z"], ["-has target","?:U","?:X","?:Z"]]],
+          [5, ["mp",3,4,"fromga",1], [["-has beneficiary", "?:X", "?:Y", ["$ctxt","past","?:Z","?:U","?:V"]], ["-has target", "?:X", "#:meal 4", ["$ctxt","past","?:Z","?:U","?:V"]], ["$ans","?:Y"]]],
+          [6, ["in","sent_S2","assumption",1], [["has target", "sk0_activity", "#:meal 4", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [7, ["mp", [5,1], 6, "fromga", 1], [["-has beneficiary", "sk0_activity", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]], ["$ans","?:X"]]],
+          [8, ["in","sent_S2","assumption",1], [["has beneficiary", "sk0_activity", "#:guests 5", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [9, ["mp",7,8,"fromga",1], [["$ans","#:guests 5"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) The chef cooked a meal for the guests.",
+"  (2) Who was the meal for?",
+"Knowledge used:",
+"  If an event U is for some Y and U targets some X then X is for of Y. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If the meal D is for of some X then X is the answer  [sentence 2]",
+"  (2) technical answer unwrap step  [from question]",
+"  (3) If the meal D is for of some X then X is an answer  [from steps 1, 2]",
+"  (4) If an event U is for some Y and U targets some X then X is for of Y  [background knowledge]",
+"  (5) If an event X is for some Y and X targets the meal D then Y is an answer  [from steps 3, 4]",
+"  (6) The event act1 targets the meal D  [sentence 1]",
+"  (7) If the event act1 is for some X then X is an answer  [from steps 5, 6]",
+"  (8) The event act1 is for the guests F  [sentence 1]",
+"  (9) The guests is an answer  [from steps 7, 8]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28342,
+      "cached_input_tokens": 28288,
+      "output_tokens": 604,
+      "raw": {
+        "input_tokens": 28342,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 604,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 28946
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33872,
+      "cached_input_tokens": 33280,
+      "output_tokens": 313,
+      "raw": {
+        "input_tokens": 33872,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 313,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34185
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:42:33Z"
+}

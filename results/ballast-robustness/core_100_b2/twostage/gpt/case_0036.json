@@ -1,0 +1,282 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 36,
+  "input_text": "The elephants saw a fox. John is somewhat big. Sadly, Mary lost the letter. John is big?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The elephants saw a fox.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The elephants 1 saw a fox 2.",
+          "type": "situation",
+          "entities": [{"id": "elephants 1", "type": "concrete", "category": "animal"},
+            {"id": "fox 2", "type": "concrete", "category": "animal"}
+          ],
+          "actions": [{"root": "see", "mode": "event", "roles": {"target": "fox 2"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is somewhat big.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 3 is somewhat big.",
+          "type": "situation",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "person"}],
+          "adjectives": [["big","low","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Sadly, Mary lost the letter.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Mary 4 lost the letter 5.",
+          "type": "situation",
+          "entities": [{"id": "Mary 4", "type": "concrete", "category": "person"},
+            {"id": "letter 5", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "lose", "mode": "event", "roles": {"target": "letter 5"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is big?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Is John 3 big?",
+          "type": "query",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "person"}],
+          "adjectives": [["big","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","elephant","elephants 1"],
+          ["isa","fox","fox 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","see"],
+              ["has actor","E","elephants 1"],
+              ["has target","E","fox 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and", ["isa","person","John 3"], ["has degree property","big","John 3","low","person"]]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 4"],
+          ["isa","letter","letter 5"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","lose"],
+              ["has actor","E","Mary 4"],
+              ["has target","E","letter 5"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["and", ["isa","person","John 3"], ["has degree property","big","John 3","none","person"]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","elephant","#:elephants 1"],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","elephant","#:elephants 1"],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","fox","#:fox 2"],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "show", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["has recipient", "sk0_activity", "#:elephants 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:fox 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 3"],
+ "@nl": "John 3 is somewhat big."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "big", "#:John 3", "low", "person", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 3 is somewhat big."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Mary 4"],
+ "@nl": "Mary 4 lost the letter 5."},
+{"@name": "sent_S3",
+ "@logic": ["isa","letter","#:letter 5"],
+ "@nl": "Mary 4 lost the letter 5."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Mary 4 lost the letter 5."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "lose", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mary 4 lost the letter 5."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:Mary 4", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mary 4 lost the letter 5."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk1_activity", "#:letter 5", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mary 4 lost the letter 5."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mary 4 lost the letter 5."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Mary 4 lost the letter 5."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:John 3"]],
+ "@nl": "Is John 3 big?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "big", "#:John 3", "none", "person", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Is John 3 big?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:John 3"],
+            ["-has degree property", "big", "#:John 3", "none", "person", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 3 big?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Is John 3 big?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "big", "#:John 3", "none", "person", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "big", "#:John 3", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "#:John 3", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 3 big?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv29", ["$ctxt","past","?:Fv15","?:Fv16","?:Fv17"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv30", ["$ctxt","present","?:Fv15","?:Fv16","?:Fv17"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv31", ["$ctxt","present","?:Fv15","?:Fv16","?:Fv17"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv18","?:Fv19","?:Fv20"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv18","?:Fv19","?:Fv20"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv18","?:Fv19","?:Fv20"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","frm_7","axiom",1], [["-has degree property","?:X","?:Y","low","?:Z","?:U"], ["has degree property","?:X","?:Y","none","?:Z","?:U"]]],
+          [2, ["in","sent_S2","assumption",1], [["has degree property", "big", "#:John 3", "low", "person", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp",1,2,"fromassumption",1], [["has degree property", "big", "#:John 3", "none", "person", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [4, ["in","sent_S4","assumption",1], [["-isa","person","#:John 3"], ["$defq0"], ["-has degree property", "big", "#:John 3", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["in","sent_S4","goal",1], [["-$defq0"]]],
+          [6, ["mp", 3, [4,2], 5, "fromga", 1], [["-isa","person","#:John 3"]]],
+          [7, ["in","sent_S2","assumption",1], [["isa","person","#:John 3"]]],
+          [8, ["simp",6,7,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John is somewhat big.",
+"  (2) John is big?",
+"Knowledge used:",
+"  If some Y is slightly some X then Y is X. Why: assumed basic knowledge.",
+"Proof steps (by contradiction):",
+"  (1) If some Y is slightly some X then Y is X  [background knowledge]",
+"  (2) John is a slightly big person  [sentence 1]",
+"  (3) John is a big person  [from steps 1, 2]",
+"  (4) If John is a person and John is a big person then answer holds  [sentence 2]",
+"  (5) assume for contradiction: the answer is no  [from question]",
+"  (6) John is not a person  [from steps 3, 4, 5]",
+"  (7) John is a person  [sentence 1]",
+"  (8) Contradiction  [from steps 6, 7]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28335,
+      "cached_input_tokens": 28288,
+      "output_tokens": 514,
+      "raw": {
+        "input_tokens": 28335,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 514,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 28849
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33800,
+      "cached_input_tokens": 33280,
+      "output_tokens": 334,
+      "raw": {
+        "input_tokens": 33800,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 334,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34134
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:18:54Z"
+}

@@ -1,0 +1,227 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1326,
+  "input_text": "The length of Nile is 10 meters. Ellen is fond of John. Birds are in the box. Who is Ellen afraid of?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The length of Nile is 10 meters.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The length 2 of Nile 1 is 10 meters.",
+          "type": "real",
+          "entities": [{
+              "id": "Nile 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            },
+            {"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "10 meters", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 2","Nile 1"]]
+        },
+        {
+          "unit_id": "S2",
+          "text": "The length 2 is the length of Nile 1.",
+          "type": "real",
+          "entities": [{"id": "length 2", "type": "concrete", "text": "length"},
+            {
+              "id": "Nile 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            }
+          ],
+          "definites": [["length of","length 2","Nile 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "Ellen is fond of John.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Ellen 1 is fond of John 2.",
+          "type": "situation",
+          "entities": [{"id": "Ellen 1", "type": "concrete", "category": "person"},
+            {"id": "John 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["fond of","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Birds are in the box.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Birds 1 are in the box 2.",
+          "type": "situation",
+          "entities": [{"id": "Birds 1", "type": "concrete", "category": "animal"},
+            {"id": "box 2", "type": "concrete", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Who is Ellen afraid of?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Which entity is Ellen 1 afraid of?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "Ellen 1", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["afraid of","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$measure",10,"meter"]]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","length","length 2"], ["isa","place","https://en.wikipedia.org/wiki/Nile"]]
+        ],
+        ["@definite","S2","W0","length of","https://en.wikipedia.org/wiki/Nile","length 2"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Ellen 1"],
+          ["isa","person","John 2"],
+          ["has degree rel2","fond of","Ellen 1","John 2","none","person"]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","animal","Birds 1"],
+          ["isa","box","box 2"],
+          ["is rel2","in","Birds 1","box 2"]
+        ]
+      ]
+    ],
+    ["@id", "S5", ["ask", "X", ["has degree rel2","afraid of","Ellen 1","X","none","person"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Nile 1"],
+ "@nl": "The length 2 of Nile 1 is 10 meters."},
+{"@name": "entity_S1",
+ "@logic": ["isa","measure","10 meters"],
+ "@nl": "The length 2 of Nile 1 is 10 meters."},
+{"@name": "sent_S1",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$list",10,"#:meter"]],
+ "@nl": "The length 2 of Nile 1 is 10 meters."},
+{"@name": "sent_S2",
+ "@logic": ["isa","length","#:length 2"],
+ "@nl": "The length 2 is the length of Nile 1."},
+{"@name": "sent_S2",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/Nile"],
+ "@nl": "The length 2 is the length of Nile 1."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Ellen 1"],
+ "@nl": "Ellen 1 is fond of John 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "Ellen 1 is fond of John 2."},
+{"@name": "sent_S3",
+ "@logic": ["is rel2", "fond of", "#:Ellen 1", "#:John 2", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Ellen 1 is fond of John 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","animal","#:Birds 1"],
+ "@nl": "Birds 1 are in the box 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","box","#:box 2"],
+ "@nl": "Birds 1 are in the box 2."},
+{"@name": "sent_S4",
+ "@logic": ["is rel2", "in", "#:Birds 1", "#:box 2", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Birds 1 are in the box 2."},
+{"@name": "sent_S5",
+ "@question": ["is rel2", "afraid of", "#:Ellen 1", "?:X", ["$ctxt","present","?:Fv11","?:Fv9","?:Fv10"]],
+ "@askvars": 1,
+ "@nl": "Which entity is Ellen 1 afraid of?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "afraid of", "#:Ellen 1", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "afraid of", "#:Ellen 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "afraid of", "#:Ellen 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Ellen 1 afraid of?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "pop_what",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","place","$some_place"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","box","$some_box"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","measure","$some_measure"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","length","$some_length"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no answers found"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28340,
+      "cached_input_tokens": 28288,
+      "output_tokens": 775,
+      "raw": {
+        "input_tokens": 28340,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 775,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29115
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33962,
+      "cached_input_tokens": 33280,
+      "output_tokens": 321,
+      "raw": {
+        "input_tokens": 33962,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 321,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34283
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:45:16Z"
+}

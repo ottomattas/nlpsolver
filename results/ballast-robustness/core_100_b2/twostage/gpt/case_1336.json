@@ -1,0 +1,437 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1336,
+  "input_text": "John is a nice man. A big old grey elephant was strong. John has an apple. Mike is a nice man. Greg is a bad man. Eve planned to travel. Mike has a pear. Which bad man has a pear?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is a nice man.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a nice man.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "A big old grey elephant was strong.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "A big old grey elephant 2 was strong.",
+          "type": "situation",
+          "entities": [{"id": "elephant 2", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","elephant"],
+            ["old","none","elephant"],
+            ["grey","none","elephant"],
+            ["strong","none","elephant"]
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John has an apple.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 1 has an apple 3.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "apple 3", "type": "concrete", "category": "plant"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a nice man.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mike 4 is a nice man.",
+          "type": "situation",
+          "entities": [{"id": "Mike 4", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Greg is a bad man.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Greg 5 is a bad man.",
+          "type": "situation",
+          "entities": [{"id": "Greg 5", "type": "concrete", "category": "person"}],
+          "adjectives": [["bad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Eve planned to travel.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Eve 6 planned to travel.",
+          "type": "situation",
+          "entities": [{"id": "Eve 6", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "plan",
+              "mode": "intention",
+              "roles": {
+                "actor": "Eve 6",
+                "content": {"root": "travel", "mode": "event", "roles": {"actor": "Eve 6"}}
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mike has a pear.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Mike 4 has a pear 7.",
+          "type": "situation",
+          "entities": [{"id": "Mike 4", "type": "concrete", "category": "person"},
+            {"id": "pear 7", "type": "concrete", "category": "plant"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Which bad man has a pear?",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Which bad man has a pear?",
+          "type": "query",
+          "entities": [{"id": "man", "type": "generic", "category": "person", "wh_placeholder": true},
+            {"id": "pear", "type": "generic", "category": "plant"}
+          ],
+          "adjectives": [["bad","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","man","John 1"], ["has degree property","nice","John 1","none","person"]]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","elephant","elephant 2"],
+            ["has degree property","big","elephant 2","none","elephant"],
+            ["has degree property","old","elephant 2","none","elephant"],
+            ["has degree property","grey","elephant 2","none","elephant"],
+            ["has degree property","strong","elephant 2","none","elephant"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["isa","apple","apple 3"], ["have","John 1","apple 3"]]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and", ["isa","man","Mike 4"], ["has degree property","nice","Mike 4","none","person"]]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and", ["isa","man","Greg 5"], ["has degree property","bad","Greg 5","none","person"]]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 6"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","plan"],
+              ["has actor","E1","Eve 6"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","travel"],
+                  ["has actor","E2","Eve 6"]
+                ]
+              ],
+              ["intention","E1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and", ["isa","person","Mike 4"], ["isa","pear","pear 7"], ["have","Mike 4","pear 7"]]
+      ]
+    ],
+    ["@id","S8",
+      ["ask","X",
+        ["exists","Y",
+          ["and",
+            ["isa","man","X"],
+            ["has degree property","bad","X","none","person"],
+            ["isa","pear","Y"],
+            ["have","X","Y"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","man","#:John 1"],
+ "@nl": "John 1 is a nice man."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is a nice man."},
+{"@name": "sent_S2",
+ "@logic": ["isa","elephant","#:elephant 2"],
+ "@nl": "A big old grey elephant 2 was strong."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "big", "#:elephant 2", "none", "elephant", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A big old grey elephant 2 was strong."},
+{"@name": "sent_S2",
+ "@logic": ["-has degree property", "new", "#:elephant 2", "none", "elephant", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A big old grey elephant 2 was strong."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "grey", "#:elephant 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A big old grey elephant 2 was strong."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "strong", "#:elephant 2", "none", "elephant", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A big old grey elephant 2 was strong."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 has an apple 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","apple","#:apple 3"],
+ "@nl": "John 1 has an apple 3."},
+{"@name": "sent_S3",
+ "@logic": ["have", "#:John 1", "#:apple 3", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 has an apple 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","man","#:Mike 4"],
+ "@nl": "Mike 4 is a nice man."},
+{"@name": "sent_S4",
+ "@logic": ["has degree property", "good", "#:Mike 4", "none", "person", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mike 4 is a nice man."},
+{"@name": "sent_S5",
+ "@logic": ["isa","man","#:Greg 5"],
+ "@nl": "Greg 5 is a bad man."},
+{"@name": "sent_S5",
+ "@logic": ["-has degree property", "good", "#:Greg 5", "none", "person", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Greg 5 is a bad man."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Eve 6"],
+ "@nl": "Eve 6 planned to travel."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Eve 6 planned to travel."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk0_activity", "plan", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 6 planned to travel."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk0_activity", "#:Eve 6", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 6 planned to travel."},
+{"@name": "sent_S6",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "Eve 6 planned to travel."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Eve 6 planned to travel."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk1_activity", "go", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 6 planned to travel."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk1_activity", "#:Eve 6", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 6 planned to travel."},
+{"@name": "sent_S6",
+ "@logic": ["intention","sk0_activity"],
+ "@nl": "Eve 6 planned to travel."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Mike 4"],
+ "@nl": "Mike 4 has a pear 7."},
+{"@name": "sent_S7",
+ "@logic": ["isa","pear","#:pear 7"],
+ "@nl": "Mike 4 has a pear 7."},
+{"@name": "sent_S7",
+ "@logic": ["have", "#:Mike 4", "#:pear 7", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mike 4 has a pear 7."},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa","man","?:X"]],
+ "@nl": "Which bad man has a pear?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["-has degree property", "good", "?:X", "none", "person", ["$ctxt","?:Fv22","?:Fv21","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Which bad man has a pear?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "pear", ["sk2","?:X"]]],
+ "@nl": "Which bad man has a pear?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["have", "?:X", ["sk2","?:X"], ["$ctxt","present","?:Fv25","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Which bad man has a pear?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question",
+ "@logic": [["-isa","man","?:X"],
+            ["has degree property", "good", "?:X", "none", "person", ["$ctxt","?:Fv29","?:Fv28","?:Fv15","?:Fv16"]],
+            ["-isa","pear","?:Y"],
+            ["-have", "?:X", "?:Y", ["$ctxt","present","?:Fv32","?:Fv15","?:Fv16"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which bad man has a pear?"},
+{"@name": "sent_S8",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@what_query": true,
+ "@nl": "Which bad man has a pear?"},
+{"@name": "sent_S8",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "?:Br1", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which bad man has a pear?"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv33"], ["has type","?:E","go","?:Fv33"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","apple","?:X"], ["-isa","pear","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","apple","?:X"], ["-isa","pear","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv66", ["$ctxt","past","?:Fv34","?:Fv35","?:Fv36"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv67", ["$ctxt","present","?:Fv34","?:Fv35","?:Fv36"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv68", ["$ctxt","present","?:Fv34","?:Fv35","?:Fv36"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv37","?:Fv38","?:Fv39"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv37","?:Fv38","?:Fv39"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv37","?:Fv38","?:Fv39"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "grey", "?:X", ["$ctxt","past","?:Fv40","?:Fv41","?:Fv42"]],
+            ["has property", "grey", "?:X", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]],
+            ["$block", 0, ["$not", ["has property", "grey", "?:X", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "grey", "?:X", ["$ctxt","past","?:Fv43","?:Fv44","?:Fv45"]],
+            ["has property", "grey", "?:X", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]],
+            ["$block", 0, ["$not", ["has property", "grey", "?:X", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "new", "?:X", "none", "?:Fv69", ["$ctxt","past","?:Fv46","?:Fv47","?:Fv48"]],
+            ["-has degree property", "new", "?:X", "none", "?:Fv70", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]],
+            ["$block", 0, ["$not", ["has degree property", "old", "?:X", "none", "?:Fv71", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "new", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv49","?:Fv50","?:Fv51"]],
+            ["-has degree property", "new", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv49","?:Fv50","?:Fv51"]],
+            ["$block", 0, ["$not", ["has degree property", "old", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv49","?:Fv50","?:Fv51"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv72", ["$ctxt","past","?:Fv52","?:Fv53","?:Fv54"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv73", ["$ctxt","present","?:Fv52","?:Fv53","?:Fv54"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv74", ["$ctxt","present","?:Fv52","?:Fv53","?:Fv54"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv55","?:Fv56","?:Fv57"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv55","?:Fv56","?:Fv57"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv55","?:Fv56","?:Fv57"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "pop_what",
+ "@logic": ["isa","apple","$some_apple"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","man","$some_man"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","pear","$some_pear"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no answers found"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28361,
+      "cached_input_tokens": 28288,
+      "output_tokens": 964,
+      "raw": {
+        "input_tokens": 28361,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 964,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29325
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34165,
+      "cached_input_tokens": 33408,
+      "output_tokens": 625,
+      "raw": {
+        "input_tokens": 34165,
+        "input_tokens_details": {"cached_tokens": 33408},
+        "output_tokens": 625,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34790
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:46:01Z"
+}

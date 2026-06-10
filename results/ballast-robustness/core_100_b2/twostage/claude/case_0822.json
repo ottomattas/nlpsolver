@@ -1,0 +1,295 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 822,
+  "input_text": "The mouse was chased by the cat. John has a car which is nice and red. The elephant was cool. The red car is nice?",
+  "expected_answer": true,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The mouse was chased by the cat.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The cat 1 chased the mouse 2.",
+          "type": "situation",
+          "entities": [{"id": "cat 1", "type": "concrete", "category": "animal"},
+            {"id": "mouse 2", "type": "concrete", "category": "animal"}
+          ],
+          "actions": [{"root": "chase", "mode": "event", "roles": {"actor": "cat 1", "target": "mouse 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John has a car which is nice and red.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 3 has a nice red car 4.",
+          "type": "situation",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "person"},
+            {"id": "car 4", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["nice","none","car"], ["red","none","none"]],
+          "pre_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "The elephant was cool.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The elephant 5 was cool.",
+          "type": "situation",
+          "entities": [{"id": "elephant 5", "type": "concrete", "category": "animal"}],
+          "adjectives": [["cool","none","elephant"]],
+          "pre_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The red car is nice?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Is the red car 4 nice?",
+          "type": "query",
+          "entities": [{"id": "car 4", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["red","none","none"], ["nice","none","car"]],
+          "pre_state": "W1"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","cat","cat 1"],
+            ["isa","mouse","mouse 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","chase"],
+                ["has actor","E","cat 1"],
+                ["has target","E","mouse 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W1",
+        ["and",
+          ["isa","car","car 4"],
+          ["have","John 3","car 4"],
+          ["has degree property","nice","car 4","none","car"],
+          ["has degree property","red","car 4","none","none"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","elephant","elephant 5"],
+            ["has degree property","cool","elephant 5","none","elephant"]
+          ]
+        ],
+        ["state time","W1","past"]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["and",
+          ["has degree property","red","car 4","none","none"],
+          ["has degree property","nice","car 4","none","car"]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","person","#:John 3"],
+ "@nl": "John 3 has a nice red car 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","cat","#:cat 1"],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","mouse","#:mouse 2"],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "chase", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:cat 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:mouse 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","car","#:car 4"],
+ "@nl": "John 3 has a nice red car 4."},
+{"@name": "sent_S2",
+ "@logic": ["have", "#:John 3", "#:car 4", ["$ctxt","present","W1","?:Fv3","?:Fv4"]],
+ "@nl": "John 3 has a nice red car 4."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "good", "#:car 4", "none", "car", ["$ctxt","present","W1","?:Fv3","?:Fv4"]],
+ "@nl": "John 3 has a nice red car 4."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "red", "#:car 4", ["$ctxt","present","W1","?:Fv3","?:Fv4"]],
+ "@nl": "John 3 has a nice red car 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","elephant","#:elephant 5"],
+ "@nl": "The elephant 5 was cool."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "cool", "#:elephant 5", "none", "elephant", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The elephant 5 was cool."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "red", "#:car 4", ["$ctxt","present","W1","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Is the red car 4 nice?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "good", "#:car 4", "none", "car", ["$ctxt","present","W1","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Is the red car 4 nice?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-has property", "red", "#:car 4", ["$ctxt","present","W1","?:Fv7","?:Fv8"]],
+            ["-has degree property", "good", "#:car 4", "none", "car", ["$ctxt","present","W1","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is the red car 4 nice?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Is the red car 4 nice?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "red", "#:car 4", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "red", "#:car 4", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "red", "#:car 4", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the red car 4 nice?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "good", "#:car 4", "none", "car", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "good", "#:car 4", "none", "car", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "good", "#:car 4", "none", "car", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the red car 4 nice?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv10","?:Fv11","?:Fv12"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv10","?:Fv11","?:Fv12"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv10","?:Fv11","?:Fv12"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv13","?:Fv14","?:Fv15"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv13","?:Fv14","?:Fv15"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv13","?:Fv14","?:Fv15"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S4","assumption",1], [["$defq0"], ["-has degree property", "good", "#:car 4", "none", "car", ["$ctxt","present","W1","?:X","?:Y"]], ["-has property", "red", "#:car 4", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [2, ["in","sent_S2","assumption",1], [["has degree property", "good", "#:car 4", "none", "car", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [3, ["in","sent_S4","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,1], 2, 3, "fromga", 1], [["-has property", "red", "#:car 4", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [5, ["in","sent_S2","assumption",1], [["has property", "red", "#:car 4", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [6, ["mp",4,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John has a car which is nice and red.",
+"  (2) The red car is nice?",
+"Proof steps (by contradiction):",
+"  (1) If the car D is good and the car D is red then answer holds  [sentence 2]",
+"  (2) The car D is good  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) The car D is not red  [from steps 1, 2, 3]",
+"  (5) The car D is red  [sentence 1]",
+"  (6) Contradiction  [from steps 4, 5]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32078,
+      "cached_input_tokens": 32042,
+      "output_tokens": 651,
+      "raw": {
+        "input_tokens": 36,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 651,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39386,
+      "cached_input_tokens": 38891,
+      "output_tokens": 387,
+      "raw": {
+        "input_tokens": 495,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 387,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:29:47Z"
+}

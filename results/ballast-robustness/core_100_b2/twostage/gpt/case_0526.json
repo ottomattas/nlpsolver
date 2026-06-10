@@ -1,0 +1,397 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 526,
+  "input_text": "Bears eat most boxers. Mike is a boxer. The cat in the hat sat on the mat. Greg is a bear. John is maybe an elephant. Bears eats Mike?",
+  "expected_answer": "Probably true.",
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Likely true.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Bears eat most boxers.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Bears eat most boxers.",
+          "type": "normal_rule",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "boxers", "type": "generic", "category": "person"}
+          ],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"target": "boxers"}}],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a boxer.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Mike 1 is a boxer.",
+          "type": "situation",
+          "entities": [{"id": "Mike 1", "type": "concrete", "category": "person"},
+            {"id": "boxer", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The cat in the hat sat on the mat.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The cat 1 in the hat 2 sat on the mat 3.",
+          "type": "situation",
+          "entities": [{"id": "cat 1", "type": "concrete", "category": "animal"},
+            {"id": "hat 2", "type": "concrete", "category": "artifact"},
+            {"id": "mat 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "sit",
+              "mode": "event",
+              "roles": {"actor": "cat 1", "location": "mat 3", "location_prep": "on"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Greg is a bear.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Greg 1 is a bear.",
+          "type": "situation",
+          "entities": [{"id": "Greg 1", "type": "concrete", "category": "person"},
+            {"id": "bear", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is maybe an elephant.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "John 1 is an elephant.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "elephant", "type": "generic", "category": "animal"}
+          ],
+          "confidence": 0.6
+        }
+      ]
+    },
+    {
+      "raw": "Bears eats Mike?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Do bears eat Mike 1?",
+          "type": "query",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "Mike 1", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"target": "Mike 1"}}]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bear","X"],
+              ["forall","Y",
+                ["implies",
+                  ["isa","boxer","Y"],
+                  ["normally",
+                    ["exists","E",
+                      ["and",
+                        ["isa","activity","E"],
+                        ["has type","E","eat"],
+                        ["has actor","E","X"],
+                        ["has target","E","Y"],
+                        ["typical","E"]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.8]
+      ]
+    ],
+    ["@id", "S2", ["holds", "W0", ["isa","boxer","Mike 1"]]],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","cat","cat 1"],
+          ["isa","hat","hat 2"],
+          ["isa","mat","mat 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","sit"],
+              ["has actor","E","cat 1"],
+              ["has location","E","mat 3","on"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S4", ["holds", "W0", ["isa","bear","Greg 1"]]],
+    ["@id", "S5", ["and", ["holds", "W0", ["isa","elephant","John 1"]], ["@p","S5",0.6]]],
+    ["@id","S6",
+      ["question",
+        ["exists","X",
+          ["and",
+            ["isa","bear","X"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","eat"],
+                ["has actor","E","X"],
+                ["has target","E","Mike 1"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","bear","?:X"], ["-isa","boxer","?:Y"], ["isa", "activity", ["sk0","?:X"]]],
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has type", ["sk0","?:X"], "eat", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has actor", ["sk0","?:X"], "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has target", ["sk0","?:X"], "?:Y", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["typical", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","boxer",1], ["$not", ["typical", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S2",
+ "@logic": ["isa","boxer","#:Mike 1"],
+ "@nl": "Mike 1 is a boxer."},
+{"@name": "sent_S3",
+ "@logic": ["isa","cat","#:cat 1"],
+ "@nl": "The cat 1 in the hat 2 sat on the mat 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","hat","#:hat 2"],
+ "@nl": "The cat 1 in the hat 2 sat on the mat 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","mat","#:mat 3"],
+ "@nl": "The cat 1 in the hat 2 sat on the mat 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The cat 1 in the hat 2 sat on the mat 3."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "sit", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The cat 1 in the hat 2 sat on the mat 3."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:cat 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The cat 1 in the hat 2 sat on the mat 3."},
+{"@name": "sent_S3",
+ "@logic": ["has location", "sk1_activity", "#:mat 3", "on", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The cat 1 in the hat 2 sat on the mat 3."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The cat 1 in the hat 2 sat on the mat 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","bear","#:Greg 1"],
+ "@nl": "Greg 1 is a bear."},
+{"@name": "sent_S5",
+ "@logic": ["isa","elephant","#:John 1"],
+ "@confidence": 0.2,
+ "@nl": "John 1 is an elephant."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","bear","sk2_bear"]],
+ "@nl": "Do bears eat Mike 1?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk3_activity"]],
+ "@nl": "Do bears eat Mike 1?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk3_activity", "eat", ["$ctxt","?:Fv22","?:Fv21","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Do bears eat Mike 1?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk3_activity", "sk2_bear", ["$ctxt","?:Fv24","?:Fv23","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Do bears eat Mike 1?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk3_activity", "#:Mike 1", ["$ctxt","?:Fv26","?:Fv25","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Do bears eat Mike 1?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["typical", "sk3_activity", ["$ctxt","?:Fv28","?:Fv27","?:Fv13","?:Fv14"]]],
+ "@nl": "Do bears eat Mike 1?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "eat", ["$ctxt","?:Fv34","?:Fv33","?:Fv13","?:Fv14"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv36","?:Fv35","?:Fv13","?:Fv14"]],
+            ["-has target", "?:E", "#:Mike 1", ["$ctxt","?:Fv38","?:Fv37","?:Fv13","?:Fv14"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv40","?:Fv39","?:Fv13","?:Fv14"]],
+            ["$defq0"]
+           ],
+ "@nl": "Do bears eat Mike 1?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Do bears eat Mike 1?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","boxer","$some_not_boxer"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_carrier_lift",
+ "@logic": [["-isa","mat","?:X","?:Fv41"], ["isa","carrier","?:X","?:Fv41"]],
+ "@nl": "[generated: frm_carrier_lift]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "blockers": [["$block", ["$","boxer",1], ["$not", ["typical", ["sk0","#:Greg 1"], ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]]
+        ],
+        "confidence": 0.6,
+        "positive proof": [[1, ["in","sent_S1","assumption",0.6], [["$block", ["$","boxer",1], ["$not", ["typical", ["sk0","?:X"], ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["typical", ["sk0","?:X"], ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","boxer","?:W"], ["-isa","bear","?:X"]]],
+          [2, ["in","sent_S2","assumption",1], [["isa","boxer","#:Mike 1"]]],
+          [3, ["mp", [1,2], 2, "fromassumption", 0.6], [["$block", ["$","boxer",1], ["$not", ["typical", ["sk0","?:X"], ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["typical", ["sk0","?:X"], ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","bear","?:X"]]],
+          [4, ["in","sent_S4","assumption",1], [["isa","bear","#:Greg 1"]]],
+          [5, ["mp", [3,2], 4, "fromassumption", 0.6], [["$block", ["$","boxer",1], ["$not", ["typical", ["sk0","#:Greg 1"], ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["typical", ["sk0","#:Greg 1"], ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [6, ["in","sent_S1","assumption",1], [["has type", ["sk0","?:X"], "eat", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","boxer","?:W"], ["-isa","bear","?:X"]]],
+          [7, ["mp", [6,1], 2, "fromassumption", 1], [["has type", ["sk0","?:X"], "eat", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","bear","?:X"]]],
+          [8, ["mp", [7,1], 4, "fromassumption", 1], [["has type", ["sk0","#:Greg 1"], "eat", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [9, ["in","sent_S6","assumption",1], [["$defq0"], ["-has type", "?:X", "eat", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "?:X", "?:W", ["$ctxt","?:2006","?:2007","?:U","?:V"]], ["-has target", "?:X", "#:Mike 1", ["$ctxt","?:2008","?:2009","?:U","?:V"]], ["-typical", "?:X", ["$ctxt","?:2010","?:2011","?:U","?:V"]], ["-isa","bear","?:W"], ["-isa","activity","?:X"]]],
+          [10, ["in","sent_S6","goal",1], [["-$defq0"]]],
+          [11, ["mp", 8, [9,1], 10, "fromga", 1], [["-isa", "activity", ["sk0","#:Greg 1"]], ["-has target", ["sk0","#:Greg 1"], "#:Mike 1", ["$ctxt","?:W3","?:3006","?:U3","?:V3"]], ["-has actor", ["sk0","#:Greg 1"], "?:X3", ["$ctxt","?:Y3","?:Z3","?:U3","?:V3"]], ["-typical", ["sk0","#:Greg 1"], ["$ctxt","?:3007","?:3008","?:U3","?:V3"]], ["-isa","bear","?:X3"]]],
+          [12, ["in","sent_S1","assumption",1], [["isa", "activity", ["sk0","?:X"]], ["-isa","boxer","?:Y"], ["-isa","bear","?:X"]]],
+          [13, ["mp", [12,1], 2, "fromassumption", 1], [["isa", "activity", ["sk0","?:X"]], ["-isa","bear","?:X"]]],
+          [14, ["mp", [13,1], 4, "fromassumption", 1], [["isa", "activity", ["sk0","#:Greg 1"]]]],
+          [15, ["simp",11,14,"fromga",1], [["-has target", ["sk0","#:Greg 1"], "#:Mike 1", ["$ctxt","?:X","?:Y","?:Z","?:U"]], ["-has actor", ["sk0","#:Greg 1"], "?:V", ["$ctxt","?:W","?:2006","?:Z","?:U"]], ["-typical", ["sk0","#:Greg 1"], ["$ctxt","?:2007","?:2008","?:Z","?:U"]], ["-isa","bear","?:V"]]],
+          [16, ["in","sent_S1","assumption",1], [["has target", ["sk0","?:X"], "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-isa","boxer","?:Y"], ["-isa","bear","?:X"]]],
+          [17, ["mp", [16,1], 2, "fromassumption", 1], [["has target", ["sk0","?:X"], "#:Mike 1", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","bear","?:X"]]],
+          [18, ["mp", [17,1], 4, "fromassumption", 1], [["has target", ["sk0","#:Greg 1"], "#:Mike 1", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [19, ["mp",15,18,"fromga",1], [["-has actor", ["sk0","#:Greg 1"], "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-typical", ["sk0","#:Greg 1"], ["$ctxt","?:W","?:2006","?:U","?:V"]], ["-isa","bear","?:X"]]],
+          [20, ["mp", [5,1], [19,1], "fromga", 0.6], [["$block", ["$","boxer",1], ["$not", ["typical", ["sk0","#:Greg 1"], ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["-has actor", ["sk0","#:Greg 1"], "?:V", ["$ctxt","?:W","?:2006","?:Z","?:U"]], ["-isa","bear","?:V"]]],
+          [21, ["in","sent_S1","assumption",1], [["has actor", ["sk0","?:X"], "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","boxer","?:W"], ["-isa","bear","?:X"]]],
+          [22, ["mp", [21,1], 2, "fromassumption", 1], [["has actor", ["sk0","?:X"], "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","bear","?:X"]]],
+          [23, ["mp", [22,1], 4, "fromassumption", 1], [["has actor", ["sk0","#:Greg 1"], "#:Greg 1", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [24, ["mp", [20,1], 23, "fromga", 0.6], [["-isa","bear","#:Greg 1"], ["$block", ["$","boxer",1], ["$not", ["typical", ["sk0","#:Greg 1"], ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]]]],
+          [25, ["simp",24,4,"fromga",0.6], [["$block", ["$","boxer",1], ["$not", ["typical", ["sk0","#:Greg 1"], ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 60%.",
+"Sentences used:",
+"  (1) Bears eat most boxers.",
+"  (2) Mike is a boxer.",
+"  (3) Greg is a bear.",
+"  (4) Bears eats Mike?",
+"Proof steps:",
+"  (1) If some W is a boxer and some X is a bear then normally the eating event sk0 of X is typical  [sentence 1, confidence 60%]",
+"  (2) Mike is a boxer  [sentence 2]",
+"  (3) If some X is a bear then normally the eating event sk0 of X is typical  [from steps 1, 2, confidence 60%]",
+"  (4) Greg is a bear  [sentence 3]",
+"  (5) Normally the eating event sk0 of Greg 1 is typical  [from steps 3, 4, confidence 60%]",
+"  (6) If some W is a boxer and some X is a bear then sk0 of X is a eat event  [sentence 1]",
+"  (7) If some X is a bear then sk0 of X is a eat event  [from steps 6, 2]",
+"  (8) sk0 of Greg 1 is a eat event  [from steps 7, 4]",
+"  (9) If X is a eat event and some W performs X and X targets Mike and X is typical and W is a bear and X is an activity then answer holds  [sentence 4]",
+"  (10) assume for contradiction: the answer is no  [from question]",
+"  (11) If the eating event sk0 of Greg 1 is an activity and sk0 of Greg 1 targets Mike and some bear X3 performs sk0 of Greg 1 then sk0 of Greg 1 is not typical  [from steps 8, 9, 10]",
+"  (12) If some Y is a boxer and some X is a bear then the eating event sk0 of X is an activity  [sentence 1]",
+"  (13) If some X is a bear then the eating event sk0 of X is an activity  [from steps 12, 2]",
+"  (14) The eating event sk0 of Greg 1 is an activity  [from steps 13, 4]",
+"  (15) If the eating event sk0 of Greg 1 targets Mike and some bear V performs sk0 of Greg 1 then sk0 of Greg 1 is not typical  [from steps 11, 14]",
+"  (16) If some Y is a boxer and some X is a bear then the eating event sk0 of X targets Y  [sentence 1]",
+"  (17) If some X is a bear then the eating event sk0 of X targets Mike  [from steps 16, 2]",
+"  (18) The eating event sk0 of Greg 1 targets Mike  [from steps 17, 4]",
+"  (19) If some bear X performs the eating event sk0 of Greg 1 then sk0 of Greg 1 is not typical  [from steps 15, 18]",
+"  (20) V does not perform sk0 of Greg 1, except when sk0 of Greg 1 is not typical  [from steps 5, 19, confidence 60%]",
+"  (21) If some W is a boxer and some X is a bear then X performs the eating event sk0 of X  [sentence 1]",
+"  (22) If some X is a bear then X performs the eating event sk0 of X  [from steps 21, 2]",
+"  (23) Greg performs the eating event sk0 of Greg 1  [from steps 22, 4]",
+"  (24) Greg is not a bear, except when the eating event sk0 of Greg 1 is not typical  [from steps 20, 23, confidence 60%]",
+"  (25) Outstanding exception: the eating event sk0 of Greg 1 is not typical  [from steps 24, 4, confidence 60%]",
+"Exceptions checked and not holding:",
+"  the eating event sk0 of Greg 1 is not typical"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28350,
+      "cached_input_tokens": 28288,
+      "output_tokens": 912,
+      "raw": {
+        "input_tokens": 28350,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 912,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29262
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34054,
+      "cached_input_tokens": 33280,
+      "output_tokens": 484,
+      "raw": {
+        "input_tokens": 34054,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 484,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34538
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:27:41Z"
+}

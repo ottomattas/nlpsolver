@@ -1,0 +1,359 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 671,
+  "input_text": "John is a big strong bear. The woman holding a heavy lamp sang. A flower was white. The lamp was light?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is a big strong bear.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a bear.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"},
+            {"id": "bear", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S2",
+          "text": "John 1 is big.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","bear"]]
+        },
+        {
+          "unit_id": "S3",
+          "text": "John 1 is strong.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["strong","none","bear"]]
+        }
+      ]
+    },
+    {
+      "raw": "The woman holding a heavy lamp sang.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The woman 2 held a heavy lamp 3 and sang.",
+          "type": "situation",
+          "entities": [{"id": "woman 2", "type": "concrete", "category": "person"},
+            {"id": "lamp 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "hold", "mode": "event", "roles": {"actor": "woman 2", "target": "lamp 3"}},
+            {"root": "sing", "mode": "event", "roles": {"actor": "woman 2"}}
+          ],
+          "time": "past"
+        },
+        {
+          "unit_id": "S5",
+          "text": "The lamp 3 was heavy.",
+          "type": "situation",
+          "entities": [{"id": "lamp 3", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["heavy","none","none"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A flower was white.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "A flower 4 was white.",
+          "type": "situation",
+          "entities": [{"id": "flower 4", "type": "concrete", "category": "plant"}],
+          "adjectives": [["white","none","none"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The lamp was light?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Was the lamp 3 light?",
+          "type": "query",
+          "entities": [{"id": "lamp 3", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["light","none","none"]],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","bear","John 1"]]],
+    ["@id", "S2", ["holds", "W0", ["has degree property","big","John 1","none","bear"]]],
+    ["@id", "S3", ["holds", "W0", ["has degree property","strong","John 1","none","bear"]]],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","woman","woman 2"],
+          ["isa","lamp","lamp 3"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","hold"],
+              ["has actor","E1","woman 2"],
+              ["has target","E1","lamp 3"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","sing"],
+              ["has actor","E2","woman 2"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and", ["isa","lamp","lamp 3"], ["has degree property","heavy","lamp 3","none","none"]]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","flower","flower 4"],
+          ["has degree property","white","flower 4","none","none"]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["question",
+        ["and", ["isa","lamp","lamp 3"], ["has degree property","light","lamp 3","none","none"]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","bear","#:John 1"],
+ "@nl": "John 1 is a bear."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "big", "#:John 1", "none", "bear", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 is big."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "strong", "#:John 1", "none", "bear", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 is strong."},
+{"@name": "sent_S4",
+ "@logic": ["isa","woman","#:woman 2"],
+ "@nl": "The woman 2 held a heavy lamp 3 and sang."},
+{"@name": "sent_S4",
+ "@logic": ["isa","lamp","#:lamp 3"],
+ "@nl": "The woman 2 held a heavy lamp 3 and sang."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The woman 2 held a heavy lamp 3 and sang."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk0_activity", "hold", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The woman 2 held a heavy lamp 3 and sang."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk0_activity", "#:woman 2", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The woman 2 held a heavy lamp 3 and sang."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk0_activity", "#:lamp 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The woman 2 held a heavy lamp 3 and sang."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The woman 2 held a heavy lamp 3 and sang."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The woman 2 held a heavy lamp 3 and sang."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The woman 2 held a heavy lamp 3 and sang."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "sing", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The woman 2 held a heavy lamp 3 and sang."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk1_activity", "#:woman 2", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The woman 2 held a heavy lamp 3 and sang."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The woman 2 held a heavy lamp 3 and sang."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The woman 2 held a heavy lamp 3 and sang."},
+{"@name": "sent_S5",
+ "@logic": ["isa","lamp","#:lamp 3"],
+ "@nl": "The lamp 3 was heavy."},
+{"@name": "sent_S5",
+ "@logic": ["-has degree property", "light", "#:lamp 3", "none", "?:Fv59", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The lamp 3 was heavy."},
+{"@name": "sent_S6",
+ "@logic": ["isa","flower","#:flower 4"],
+ "@nl": "A flower 4 was white."},
+{"@name": "sent_S6",
+ "@logic": ["has property", "white", "#:flower 4", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A flower 4 was white."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","lamp","#:lamp 3"]],
+ "@nl": "Was the lamp 3 light?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "light", "#:lamp 3", "none", "?:Fv60", ["$ctxt","past","?:Fv15","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Was the lamp 3 light?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","lamp","#:lamp 3"],
+            ["-has degree property", "light", "#:lamp 3", "none", "?:Fv61", ["$ctxt","past","?:Fv15","?:Fv13","?:Fv14"]],
+            ["$defq0"]
+           ],
+ "@nl": "Was the lamp 3 light?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Was the lamp 3 light?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "light", "#:lamp 3", "none", "?:Fv62", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["has degree property", "light", "#:lamp 3", "none", "?:Fv63", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "light", "#:lamp 3", "none", "?:Fv64", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Was the lamp 3 light?"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv65", ["$ctxt","past","?:Fv21","?:Fv22","?:Fv23"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv66", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv67", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv24","?:Fv25","?:Fv26"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "light", "?:X", "none", "?:Fv68", ["$ctxt","past","?:Fv27","?:Fv28","?:Fv29"]],
+            ["-has degree property", "light", "?:X", "none", "?:Fv69", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]],
+            ["$block", 0, ["$not", ["has degree property", "heavy", "?:X", "none", "?:Fv70", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv30","?:Fv31","?:Fv32"]],
+            ["-has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]],
+            ["$block", 0, ["$not", ["has degree property", "heavy", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "light", "?:X", "none", "?:Fv71", ["$ctxt","past","?:Fv33","?:Fv34","?:Fv35"]],
+            ["has degree property", "light", "?:X", "none", "?:Fv72", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]],
+            ["$block", 0, ["$not", ["has degree property", "light", "?:X", "none", "?:Fv73", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv36","?:Fv37","?:Fv38"]],
+            ["has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]],
+            ["$block", 0, ["$not", ["has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv74", ["$ctxt","past","?:Fv39","?:Fv40","?:Fv41"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv75", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv76", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "white", "?:X", ["$ctxt","past","?:Fv45","?:Fv46","?:Fv47"]],
+            ["has property", "white", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["has property", "white", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "white", "?:X", ["$ctxt","past","?:Fv48","?:Fv49","?:Fv50"]],
+            ["has property", "white", "?:X", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]],
+            ["$block", 0, ["$not", ["has property", "white", "?:X", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S5","assumption",1], [["-has degree property", "light", "#:lamp 3", "none", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]]]],
+          [2, ["in","sent_S7","assumption",1], [["-$defq0"], ["has degree property", "light", "#:lamp 3", "none", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has degree property", "light", "#:lamp 3", "none", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]]]],
+          [5, ["mp",1,4,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) The woman holding a heavy lamp sang.",
+"  (2) The lamp was light?",
+"Proof steps (by contradiction):",
+"  (1) The lamp C is not light  [sentence 1]",
+"  (2) If answer holds then the lamp C is light  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) The lamp C is light  [from steps 2, 3]",
+"  (5) Contradiction  [from steps 1, 4]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28338,
+      "cached_input_tokens": 28288,
+      "output_tokens": 759,
+      "raw": {
+        "input_tokens": 28338,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 759,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29097
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34014,
+      "cached_input_tokens": 33280,
+      "output_tokens": 436,
+      "raw": {
+        "input_tokens": 34014,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 436,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34450
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:31:01Z"
+}

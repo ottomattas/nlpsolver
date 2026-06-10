@@ -1,0 +1,405 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1329,
+  "input_text": "John is a nice man. The cake was eaten. Estonia is not outside Europe. John has an apple. Mike is a nice man. Greg is a bad man. Mike has a pear. Which man has an apple?",
+  "expected_answer": "John",
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "John.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is a nice man.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a man.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}]
+        },
+        {
+          "unit_id": "S2",
+          "text": "John 1 is nice.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "The cake was eaten.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The cake 2 was eaten.",
+          "type": "situation",
+          "entities": [{"id": "cake 2", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "eat", "mode": "event", "roles": {"target": "cake 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Estonia is not outside Europe.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Estonia 3 is not outside Europe 4.",
+          "type": "real",
+          "entities": [{
+              "id": "Estonia 3",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            },
+            {
+              "id": "Europe 4",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Europe"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John has an apple.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "John 1 has an apple 5.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "apple 5", "type": "concrete", "category": "plant"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a nice man.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Mike 6 is a man.",
+          "type": "real",
+          "entities": [{"id": "Mike 6", "type": "concrete", "category": "person"}]
+        },
+        {
+          "unit_id": "S7",
+          "text": "Mike 6 is nice.",
+          "type": "real",
+          "entities": [{"id": "Mike 6", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Greg is a bad man.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Greg 7 is a man.",
+          "type": "real",
+          "entities": [{"id": "Greg 7", "type": "concrete", "category": "person"}]
+        },
+        {
+          "unit_id": "S9",
+          "text": "Greg 7 is bad.",
+          "type": "real",
+          "entities": [{"id": "Greg 7", "type": "concrete", "category": "person"}],
+          "adjectives": [["bad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mike has a pear.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Mike 6 has a pear 8.",
+          "type": "situation",
+          "entities": [{"id": "Mike 6", "type": "concrete", "category": "person"},
+            {"id": "pear 8", "type": "concrete", "category": "plant"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Which man has an apple?",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Which man has an apple?",
+          "type": "query",
+          "entities": [{"id": "man", "type": "generic", "category": "person", "wh_placeholder": true},
+            {"id": "apple", "type": "generic", "category": "plant"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","man","John 1"]]],
+    ["@id", "S2", ["holds", "W0", ["has degree property","nice","John 1","none","person"]]],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","cake","cake 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","eat"],
+                ["has target","E","cake 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["not",
+          ["is rel2","outside","https://en.wikipedia.org/wiki/Estonia","https://en.wikipedia.org/wiki/Europe"]
+        ]
+      ]
+    ],
+    ["@id", "S5", ["holds", "W0", ["and", ["isa","apple","apple 5"], ["have","John 1","apple 5"]]]],
+    ["@id", "S6", ["holds", "W0", ["isa","man","Mike 6"]]],
+    ["@id", "S7", ["holds", "W0", ["has degree property","nice","Mike 6","none","person"]]],
+    ["@id", "S8", ["holds", "W0", ["isa","man","Greg 7"]]],
+    ["@id", "S9", ["holds", "W0", ["has degree property","bad","Greg 7","none","person"]]],
+    ["@id", "S10", ["holds", "W0", ["and", ["isa","pear","pear 8"], ["have","Mike 6","pear 8"]]]],
+    ["@id","S11",
+      ["ask","X",
+        ["exists", "Y", ["and", ["isa","man","X"], ["isa","apple","Y"], ["have","X","Y"]]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:Estonia 3"],
+ "@nl": "Estonia 3 is not outside Europe 4."},
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:Europe 4"],
+ "@nl": "Estonia 3 is not outside Europe 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","man","#:John 1"],
+ "@nl": "John 1 is a man."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 is nice."},
+{"@name": "sent_S3",
+ "@logic": ["isa","cake","#:cake 2"],
+ "@nl": "The cake 2 was eaten."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The cake 2 was eaten."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "eat", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The cake 2 was eaten."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk0_activity", "#:cake 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The cake 2 was eaten."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The cake 2 was eaten."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The cake 2 was eaten."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The cake 2 was eaten."},
+{"@name": "sent_S4",
+ "@logic": ["-is rel2", "outside", "https://en.wikipedia.org/wiki/Estonia", "https://en.wikipedia.org/wiki/Europe", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Estonia 3 is not outside Europe 4."},
+{"@name": "sent_S5",
+ "@logic": ["isa","apple","#:apple 5"],
+ "@nl": "John 1 has an apple 5."},
+{"@name": "sent_S5",
+ "@logic": ["have", "#:John 1", "#:apple 5", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "John 1 has an apple 5."},
+{"@name": "sent_S6",
+ "@logic": ["isa","man","#:Mike 6"],
+ "@nl": "Mike 6 is a man."},
+{"@name": "sent_S7",
+ "@logic": ["has degree property", "good", "#:Mike 6", "none", "person", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mike 6 is nice."},
+{"@name": "sent_S8",
+ "@logic": ["isa","man","#:Greg 7"],
+ "@nl": "Greg 7 is a man."},
+{"@name": "sent_S9",
+ "@logic": ["-has degree property", "good", "#:Greg 7", "none", "person", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Greg 7 is bad."},
+{"@name": "sent_S10",
+ "@logic": ["isa","pear","#:pear 8"],
+ "@nl": "Mike 6 has a pear 8."},
+{"@name": "sent_S10",
+ "@logic": ["have", "#:Mike 6", "#:pear 8", ["$ctxt","present","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mike 6 has a pear 8."},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa","man","?:X"]],
+ "@nl": "Which man has an apple?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "apple", ["sk1","?:X"]]],
+ "@nl": "Which man has an apple?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["have", "?:X", ["sk1","?:X"], ["$ctxt","present","?:Fv28","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "Which man has an apple?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-isa","man","?:X"],
+            ["-isa","apple","?:Y"],
+            ["-have", "?:X", "?:Y", ["$ctxt","present","?:Fv33","?:Fv21","?:Fv22"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which man has an apple?"},
+{"@name": "sent_S11",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@what_query": true,
+ "@nl": "Which man has an apple?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "?:Br1", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which man has an apple?"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","in","?:X","?:Fv34"],
+            ["-has property","outside","?:X","?:Fv34"],
+            ["$block", 0, ["has property","outside","?:X","?:Fv34"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","in","?:X","?:Fv35"],
+            ["-has property","outside","?:X","?:Fv35"],
+            ["$block", 0, ["has property","in","?:X","?:Fv35"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","apple","?:X"], ["-isa","pear","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","apple","?:X"], ["-isa","pear","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","apple","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","apple","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","pear","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","pear","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "pop_what",
+ "@logic": ["isa","place","$some_place"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","apple","$some_apple"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","man","$some_man"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","cake","$some_cake"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","pear","$some_pear"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","#:John 1"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S11","assumption",1], [["-have", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]], ["-isa","man","?:X"], ["-isa","apple","?:Y"], ["$defq0","?:X"]]],
+          [2, ["in","sent_S5","assumption",1], [["have", "#:John 1", "#:apple 5", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp",1,2,"fromassumption",1], [["-isa","apple","#:apple 5"], ["-isa","man","#:John 1"], ["$defq0","#:John 1"]]],
+          [4, ["in","sent_S1","assumption",1], [["isa","man","#:John 1"]]],
+          [5, ["in","sent_S5","assumption",1], [["isa","apple","#:apple 5"]]],
+          [6, ["simp",3,4,5,"fromassumption",1], [["$defq0","#:John 1"]]],
+          [7, ["in","sent_S11","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [8, ["mp",6,7,"fromga",1], [["$ans","#:John 1"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John is a nice man.",
+"  (2) John has an apple.",
+"  (3) Which man has an apple?",
+"Proof steps:",
+"  (1) If some X has some Y and X is a man and Y is an apple then X is the answer  [sentence 3]",
+"  (2) John has the apple F  [sentence 2]",
+"  (3) If John is a man then John is the answer  [from steps 1, 2]",
+"  (4) John is a man  [sentence 1]",
+"  (5) The apple F is an apple  [sentence 2]",
+"  (6) John is the answer  [from steps 3, 4, 5]",
+"  (7) technical answer unwrap step  [from question]",
+"  (8) John is an answer  [from steps 6, 7]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32094,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1237,
+      "raw": {
+        "input_tokens": 52,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1237,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39822,
+      "cached_input_tokens": 38891,
+      "output_tokens": 605,
+      "raw": {
+        "input_tokens": 931,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 605,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:46:53Z"
+}

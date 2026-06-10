@@ -1,0 +1,330 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 524,
+  "input_text": "The blue car is 3 meters long. Penguins happily live in cold water. John likes all boxers. Mike is a boxer. John likes Mike?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The blue car is 3 meters long.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The blue car 1 is 3 meters long.",
+          "type": "situation",
+          "entities": [{"id": "car 1", "type": "concrete", "category": "artifact"},
+            {"id": "3 meters", "type": "concrete", "category": "measure"}
+          ],
+          "adjectives": [["blue","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "Penguins happily live in cold water.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Penguins live happily in cold water.",
+          "type": "normal_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"},
+            {"id": "water", "type": "generic", "scope": "kind", "category": "substance"}
+          ],
+          "actions": [{
+              "root": "live",
+              "mode": "habitual",
+              "roles": {"actor": "penguins", "location": "water", "manner": "happily"}
+            }
+          ],
+          "adjectives": [["cold","none","none"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "John likes all boxers.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 1 likes all boxers.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "boxers", "type": "generic", "category": "person"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a boxer.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mike 2 is a boxer.",
+          "type": "situation",
+          "entities": [{"id": "Mike 2", "type": "concrete", "category": "person"},
+            {"id": "boxer", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John likes Mike?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Does John 1 like Mike 2?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Mike 2", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","car","car 1"],
+          ["has degree property","blue","car 1","none","none"],
+          ["=", ["$measure_of","length","car 1","W0"], ["$measure",3,"meter"]]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","penguin","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","live"],
+                    ["has actor","E","X"],
+                    ["has location","E","water","in"],
+                    ["has manner","E","happily"],
+                    ["has degree property","cold","water","none","none"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.95]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["forall","X",
+              ["implies",
+                ["isa","boxer","X"],
+                ["has degree rel2","like","John 1","X","none","person"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S3",0.99]
+      ]
+    ],
+    ["@id", "S4", ["holds", "W0", ["and", ["isa","person","Mike 2"], ["isa","boxer","Mike 2"]]]],
+    ["@id", "S5", ["question", ["has degree rel2","like","John 1","Mike 2","none","person"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","measure","3 meters"],
+ "@nl": "The blue car 1 is 3 meters long."},
+{"@name": "sent_S1",
+ "@logic": ["isa","car","#:car 1"],
+ "@nl": "The blue car 1 is 3 meters long."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "blue", "#:car 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The blue car 1 is 3 meters long."},
+{"@name": "sent_S1",
+ "@logic": ["=", ["$measure_of","length","#:car 1","W0"], ["$list",3,"#:meter"]],
+ "@nl": "The blue car 1 is 3 meters long."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","penguin","?:X"], ["isa", "activity", ["sk0","?:X"]]],
+ "@nl": "Penguins live happily in cold water."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has type", ["sk0","?:X"], "live", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Penguins live happily in cold water."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has actor", ["sk0","?:X"], "?:X", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Penguins live happily in cold water."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","penguin","?:X"], ["isa", "water", ["sk1","?:X"]]],
+ "@nl": "Penguins live happily in cold water."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has location", ["sk0","?:X"], ["sk1","?:X"], "in", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Penguins live happily in cold water."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has manner", ["sk0","?:X"], "happily", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Penguins live happily in cold water."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-has degree property", "hot", "water", "none", "?:Fv43", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Penguins live happily in cold water."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","penguin","?:X"],
+            ["typical", ["sk0","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$block", ["$","penguin",1], ["$not", ["typical", ["sk0","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Penguins live happily in cold water."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 1"],
+ "@confidence": 0.9899,
+ "@nl": "John 1 likes all boxers."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","boxer","?:X"],
+            ["has degree rel2", "like", "#:John 1", "?:X", "none", "person", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@confidence": 0.9899,
+ "@nl": "John 1 likes all boxers."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mike 2"],
+ "@nl": "Mike 2 is a boxer."},
+{"@name": "sent_S4",
+ "@logic": ["isa","boxer","#:Mike 2"],
+ "@nl": "Mike 2 is a boxer."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree rel2", "like", "#:John 1", "#:Mike 2", "none", "?:Fv44", ["$ctxt","present","?:Fv15","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Does John 1 like Mike 2?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-has degree rel2", "like", "#:John 1", "#:Mike 2", "none", "?:Fv45", ["$ctxt","present","?:Fv15","?:Fv13","?:Fv14"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 1 like Mike 2?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "Does John 1 like Mike 2?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-has degree rel2", "like", "#:John 1", "#:Mike 2", "none", "person", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree rel2", "like", "#:John 1", "#:Mike 2", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree rel2", "like", "#:John 1", "#:Mike 2", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Does John 1 like Mike 2?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","boxer","$some_not_boxer"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv17","?:Fv18","?:Fv19"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv20","?:Fv21","?:Fv22"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 0.9899,
+        "positive proof": [[1, ["in","sent_S3","assumption",0.9899], [["has degree rel2", "like", "#:John 1", "?:X", "none", "person", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","boxer","?:X"]]],
+          [2, ["in","sent_S4","assumption",1], [["isa","boxer","#:Mike 2"]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 0.9899], [["has degree rel2", "like", "#:John 1", "#:Mike 2", "none", "person", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [4, ["in","sent_S5","assumption",1], [["$defq0"], ["-has degree rel2", "like", "#:John 1", "#:Mike 2", "none", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [5, ["in","sent_S5","goal",1], [["-$defq0"]]],
+          [6, ["mp",4,5,"fromga",1], [["-has degree rel2", "like", "#:John 1", "#:Mike 2", "none", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [7, ["mp",3,6,"fromga",0.9899], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 99%.",
+"Sentences used:",
+"  (1) John likes all boxers.",
+"  (2) Mike is a boxer.",
+"  (3) John likes Mike?",
+"Proof steps (by contradiction):",
+"  (1) If some X is a boxer then John is like of X  [sentence 1, confidence 99%]",
+"  (2) Mike is a boxer  [sentence 2]",
+"  (3) John is like of Mike  [from steps 1, 2, confidence 99%]",
+"  (4) If John is like of Mike then answer holds  [sentence 3]",
+"  (5) assume for contradiction: the answer is no  [from question]",
+"  (6) John is not like of Mike  [from steps 4, 5]",
+"  (7) Contradiction  [from steps 3, 6, confidence 99%]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28344,
+      "cached_input_tokens": 28288,
+      "output_tokens": 655,
+      "raw": {
+        "input_tokens": 28344,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 655,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 28999
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33924,
+      "cached_input_tokens": 33280,
+      "output_tokens": 420,
+      "raw": {
+        "input_tokens": 33924,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 420,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34344
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:24:46Z"
+}

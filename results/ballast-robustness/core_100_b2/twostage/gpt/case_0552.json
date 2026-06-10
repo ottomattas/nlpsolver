@@ -1,0 +1,270 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 552,
+  "input_text": "These were nice. Bears eat most boxers. John is as tall as Bill. Is John's height equal to Bill's?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "These were nice.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "These entities were nice.",
+          "type": "situation",
+          "entities": [{"id": "entities", "type": "generic"}],
+          "adjectives": [["nice","none","entity"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Bears eat most boxers.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Bears eat most boxers.",
+          "type": "normal_rule",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "boxers", "type": "generic", "category": "person"}
+          ],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"target": "boxers"}}],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "John is as tall as Bill.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 1 is as tall as Bill 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Bill 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["tall","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Is John's height equal to Bill's?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Is the height 3 of John 1 equal to the height 4 of Bill 2?",
+          "type": "query",
+          "entities": [{"id": "height 3", "type": "concrete", "text": "height"},
+            {"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "height 4", "type": "concrete", "text": "height"},
+            {"id": "Bill 2", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["height of","height 3","John 1"], ["height of","height 4","Bill 2"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["exists","X",
+          ["and", ["isa","entity","X"], ["has degree property","nice","X","none","entity"]]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bear","X"],
+              ["forall","Y",
+                ["implies",
+                  ["isa","boxer","Y"],
+                  ["normally",
+                    ["exists","E",
+                      ["and",
+                        ["isa","activity","E"],
+                        ["has type","E","eat"],
+                        ["has actor","E","X"],
+                        ["has target","E","Y"],
+                        ["typical","E"]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.8]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","person","Bill 2"],
+          ["=", ["$measure_of","height","John 1","W0"], ["$measure_of","height","Bill 2","W0"]]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["=", ["$measure_of","height","John 1","W0"], ["$measure_of","height","Bill 2","W0"]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "good", "sk0_entity", "none", "?:Fv57", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "These entities were nice."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"], ["-isa","boxer","?:Y"], ["isa", "activity", ["sk1","?:X"]]],
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has type", ["sk1","?:X"], "eat", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has actor", ["sk1","?:X"], "?:X", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has target", ["sk1","?:X"], "?:Y", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["typical", ["sk1","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$block", ["$","boxer",1], ["$not", ["typical", ["sk1","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "Bears eat most boxers."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is as tall as Bill 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Bill 2"],
+ "@nl": "John 1 is as tall as Bill 2."},
+{"@name": "sent_S3",
+ "@logic": ["=", ["$measure_of","height","#:John 1","W0"], ["$measure_of","height","#:Bill 2","W0"]],
+ "@nl": "John 1 is as tall as Bill 2."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["=", ["$measure_of","height","#:John 1","W0"], ["$measure_of","height","#:Bill 2","W0"]]
+           ],
+ "@nl": "Is the height 3 of John 1 equal to the height 4 of Bill 2?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-=", ["$measure_of","height","#:John 1","W0"], ["$measure_of","height","#:Bill 2","W0"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is the height 3 of John 1 equal to the height 4 of Bill 2?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Is the height 3 of John 1 equal to the height 4 of Bill 2?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","height","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "height", ["$measure_of","height","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","boxer","$some_boxer"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","boxer","$some_not_boxer"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "good", "$some_nice_entity", "none", "?:Fv58", ["$ctxt","?:Fv48","?:Fv45","?:Fv46","?:Fv47"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "good", "$some_not_nice_entity", "none", "?:Fv59", ["$ctxt","?:Fv56","?:Fv53","?:Fv54","?:Fv55"]],
+ "@nl": "[population: from input]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S4","assumption",1], [["-=", ["$measure_of","height","#:John 1","W0"], ["$measure_of","height","#:Bill 2","W0"]], ["$defq0"]]],
+          [2, ["in","sent_S4","goal",1], [["-$defq0"]]],
+          [3, ["mp", [1,1], 2, "fromga", 1], [["-=", ["$measure_of","height","#:John 1","W0"], ["$measure_of","height","#:Bill 2","W0"]]]],
+          [4, ["in","sent_S3","assumption",1], [["=", ["$measure_of","height","#:John 1","W0"], ["$measure_of","height","#:Bill 2","W0"]]]],
+          [5, ["simp",3,4,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John is as tall as Bill.",
+"  (2) Is John's height equal to Bill's?",
+"Proof steps (by contradiction):",
+"  (1) If the height of John equals the height of Bill then answer holds  [sentence 2]",
+"  (2) assume for contradiction: the answer is no  [from question]",
+"  (3) The height of John does not equal the height of Bill  [from steps 1, 2]",
+"  (4) The height of John equals the height of Bill  [sentence 1]",
+"  (5) Contradiction  [from steps 3, 4]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28338,
+      "cached_input_tokens": 28288,
+      "output_tokens": 642,
+      "raw": {
+        "input_tokens": 28338,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 642,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 28980
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33874,
+      "cached_input_tokens": 33280,
+      "output_tokens": 345,
+      "raw": {
+        "input_tokens": 33874,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 345,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34219
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:25:26Z"
+}

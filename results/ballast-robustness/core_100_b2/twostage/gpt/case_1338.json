@@ -1,0 +1,511 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1338,
+  "input_text": "The rain continued. John is a nice man. John has an apple. Mike is a nice man. Greg is a bad man. Mike has a pear. Eve sent a letter to Tom. Which nice man has an apple and a pear?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The rain continued.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The rain 1 continued.",
+          "type": "situation",
+          "entities": [{"id": "rain 1", "type": "concrete", "category": "event"}],
+          "actions": [{"root": "continue", "mode": "event", "roles": {"actor": "rain 1"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "The rain 1 was falling.",
+          "type": "situation",
+          "entities": [{"id": "rain 1", "type": "concrete", "category": "event"}],
+          "actions": [{"root": "fall", "mode": "event", "roles": {"actor": "rain 1"}}],
+          "pre_state": "W0",
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "The rain 1 is falling.",
+          "type": "situation",
+          "entities": [{"id": "rain 1", "type": "concrete", "category": "event"}],
+          "actions": [{"root": "fall", "mode": "event", "roles": {"actor": "rain 1"}}],
+          "pre_state": "W1",
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "John is a nice man.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "John 2 is a nice man.",
+          "type": "situation",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"},
+            {"id": "man", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "John has an apple.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "John 2 has an apple 3.",
+          "type": "situation",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"},
+            {"id": "apple 3", "type": "concrete", "category": "plant"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a nice man.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Mike 4 is a nice man.",
+          "type": "situation",
+          "entities": [{"id": "Mike 4", "type": "concrete", "category": "person"},
+            {"id": "man", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Greg is a bad man.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Greg 5 is a bad man.",
+          "type": "situation",
+          "entities": [{"id": "Greg 5", "type": "concrete", "category": "person"},
+            {"id": "man", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["bad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mike has a pear.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Mike 4 has a pear 6.",
+          "type": "situation",
+          "entities": [{"id": "Mike 4", "type": "concrete", "category": "person"},
+            {"id": "pear 6", "type": "concrete", "category": "plant"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Eve sent a letter to Tom.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Eve 7 sent a letter 8 to Tom 9.",
+          "type": "situation",
+          "entities": [{"id": "Eve 7", "type": "concrete", "category": "person"},
+            {"id": "letter 8", "type": "concrete", "category": "artifact"},
+            {"id": "Tom 9", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "send",
+              "mode": "event",
+              "roles": {"actor": "Eve 7", "target": "letter 8", "recipient": "Tom 9"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Which nice man has an apple and a pear?",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Which nice man has an apple and a pear?",
+          "type": "query",
+          "entities": [{"id": "man", "type": "generic", "category": "person", "wh_placeholder": true},
+            {"id": "apple", "type": "generic", "category": "plant"},
+            {"id": "pear", "type": "generic", "category": "plant"}
+          ],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","rain","rain 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","continue"],
+                ["has actor","E","rain 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","rain","rain 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","fall"],
+              ["has actor","E","rain 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W1",
+        ["and",
+          ["isa","rain","rain 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","fall"],
+              ["has actor","E","rain 1"],
+              ["has time","E","present","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and", ["isa","man","John 2"], ["has degree property","nice","John 2","none","person"]]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and", ["isa","person","John 2"], ["isa","apple","apple 3"], ["have","John 2","apple 3"]]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and", ["isa","man","Mike 4"], ["has degree property","nice","Mike 4","none","person"]]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and", ["isa","man","Greg 5"], ["has degree property","bad","Greg 5","none","person"]]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and", ["isa","person","Mike 4"], ["isa","pear","pear 6"], ["have","Mike 4","pear 6"]]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 7"],
+          ["isa","letter","letter 8"],
+          ["isa","person","Tom 9"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","send"],
+              ["has actor","E","Eve 7"],
+              ["has target","E","letter 8"],
+              ["has recipient","E","Tom 9"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["ask","X",
+        ["exists","Y",
+          ["exists","Z",
+            ["and",
+              ["isa","man","X"],
+              ["has degree property","nice","X","none","person"],
+              ["isa","apple","Y"],
+              ["isa","pear","Z"],
+              ["have","X","Y"],
+              ["have","X","Z"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","rain","#:rain 1"],
+ "@nl": "The rain 1 continued."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The rain 1 continued."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "continue", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The rain 1 continued."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:rain 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The rain 1 continued."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The rain 1 continued."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The rain 1 continued."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The rain 1 continued."},
+{"@name": "sent_S2",
+ "@logic": ["isa","rain","#:rain 1"],
+ "@nl": "The rain 1 was falling."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The rain 1 was falling."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "fall", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The rain 1 was falling."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:rain 1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The rain 1 was falling."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The rain 1 was falling."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The rain 1 was falling."},
+{"@name": "sent_S3",
+ "@logic": ["isa","rain","#:rain 1"],
+ "@nl": "The rain 1 is falling."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The rain 1 is falling."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "fall", ["$ctxt","present","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The rain 1 is falling."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:rain 1", ["$ctxt","present","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The rain 1 is falling."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "present", "in", ["$ctxt","present","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The rain 1 is falling."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The rain 1 is falling."},
+{"@name": "sent_S4",
+ "@logic": ["isa","man","#:John 2"],
+ "@nl": "John 2 is a nice man."},
+{"@name": "sent_S4",
+ "@logic": ["has degree property", "good", "#:John 2", "none", "person", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "John 2 is a nice man."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "John 2 has an apple 3."},
+{"@name": "sent_S5",
+ "@logic": ["isa","apple","#:apple 3"],
+ "@nl": "John 2 has an apple 3."},
+{"@name": "sent_S5",
+ "@logic": ["have", "#:John 2", "#:apple 3", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "John 2 has an apple 3."},
+{"@name": "sent_S6",
+ "@logic": ["isa","man","#:Mike 4"],
+ "@nl": "Mike 4 is a nice man."},
+{"@name": "sent_S6",
+ "@logic": ["has degree property", "good", "#:Mike 4", "none", "person", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mike 4 is a nice man."},
+{"@name": "sent_S7",
+ "@logic": ["isa","man","#:Greg 5"],
+ "@nl": "Greg 5 is a bad man."},
+{"@name": "sent_S7",
+ "@logic": ["-has degree property", "good", "#:Greg 5", "none", "person", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Greg 5 is a bad man."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Mike 4"],
+ "@nl": "Mike 4 has a pear 6."},
+{"@name": "sent_S8",
+ "@logic": ["isa","pear","#:pear 6"],
+ "@nl": "Mike 4 has a pear 6."},
+{"@name": "sent_S8",
+ "@logic": ["have", "#:Mike 4", "#:pear 6", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mike 4 has a pear 6."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Eve 7"],
+ "@nl": "Eve 7 sent a letter 8 to Tom 9."},
+{"@name": "sent_S9",
+ "@logic": ["isa","letter","#:letter 8"],
+ "@nl": "Eve 7 sent a letter 8 to Tom 9."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Tom 9"],
+ "@nl": "Eve 7 sent a letter 8 to Tom 9."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Eve 7 sent a letter 8 to Tom 9."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk3_activity", "give", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 7 sent a letter 8 to Tom 9."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk3_activity", "#:Eve 7", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 7 sent a letter 8 to Tom 9."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk3_activity", "#:letter 8", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 7 sent a letter 8 to Tom 9."},
+{"@name": "sent_S9",
+ "@logic": ["has recipient", "sk3_activity", "#:Tom 9", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 7 sent a letter 8 to Tom 9."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 7 sent a letter 8 to Tom 9."},
+{"@name": "sent_S9",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Eve 7 sent a letter 8 to Tom 9."},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa","man","?:X"]],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has degree property", "good", "?:X", "none", "person", ["$ctxt","?:Fv25","?:Fv24","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "apple", ["sk4","?:X"]]],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "pear", ["sk5","?:X"]]],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["have", "?:X", ["sk4","?:X"], ["$ctxt","present","?:Fv30","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["have", "?:X", ["sk5","?:X"], ["$ctxt","present","?:Fv31","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-isa","man","?:X"],
+            ["-has degree property", "good", "?:X", "none", "person", ["$ctxt","?:Fv35","?:Fv34","?:Fv19","?:Fv20"]],
+            ["-isa","apple","?:Y"],
+            ["-isa","pear","?:Z"],
+            ["-have", "?:X", "?:Y", ["$ctxt","present","?:Fv40","?:Fv19","?:Fv20"]],
+            ["-have", "?:X", "?:Z", ["$ctxt","present","?:Fv41","?:Fv19","?:Fv20"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S10",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@what_query": true,
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "?:Br1", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which nice man has an apple and a pear?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","continue","?:Fv42"], ["has type","?:E","keep","?:Fv42"]],
+ "@confidence": 0.92,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","keep","?:Fv43"], ["has type","?:E","continue","?:Fv43"]],
+ "@confidence": 0.92,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv44"], ["has type","?:E","give","?:Fv44"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","apple","?:X"], ["-isa","pear","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","apple","?:X"], ["-isa","pear","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "pop_what",
+ "@logic": ["isa","apple","$some_apple"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","letter","$some_letter"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","man","$some_man"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","pear","$some_pear"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","rain","$some_rain"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no answers found"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28362,
+      "cached_input_tokens": 28288,
+      "output_tokens": 1311,
+      "raw": {
+        "input_tokens": 28362,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 1311,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29673
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34458,
+      "cached_input_tokens": 33280,
+      "output_tokens": 787,
+      "raw": {
+        "input_tokens": 34458,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 787,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35245
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:48:25Z"
+}

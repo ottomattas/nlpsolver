@@ -1,0 +1,329 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1389,
+  "input_text": "Mr Dursley is a catholic. Elephants have long or short trunks. If animal or bird is nice and simple, it is cute. John is cute?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Mr Dursley is a catholic.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mr Dursley 1 is a catholic.",
+          "type": "real",
+          "entities": [{"id": "Mr Dursley 1", "type": "concrete", "category": "person"}]
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have long or short trunks.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Elephants have trunks that are long or short.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"}
+          ],
+          "adjectives": [["long","none","trunk"], ["short","none","trunk"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "If animal or bird is nice and simple, it is cute.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "If an animal or bird is nice and simple, the animal or bird is cute.",
+          "type": "normal_rule",
+          "entities": [{"id": "animal", "type": "generic", "category": "animal"},
+            {"id": "bird", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["nice","none","entity"], ["simple","none","entity"], ["cute","none","entity"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "John is cute?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Is John 2 cute?",
+          "type": "query",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"}],
+          "adjectives": [["cute","none","entity"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","catholic","Mr Dursley 1"]]],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally",
+                ["exists","Y",
+                  ["and",
+                    ["isa","trunk","Y"],
+                    ["has part","X","Y"],
+                    ["or",
+                      ["has degree property","long","Y","none","trunk"],
+                      ["has degree property","short","Y","none","trunk"]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["normally",
+              ["implies",
+                ["and",
+                  ["or", ["isa","animal","X"], ["isa","bird","X"]],
+                  ["has degree property","nice","X","none","entity"],
+                  ["has degree property","simple","X","none","entity"]
+                ],
+                ["has degree property","cute","X","none","entity"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S3",0.95]
+      ]
+    ],
+    ["@id", "S4", ["question", ["has degree property","cute","John 2","none","entity"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "Is John 2 cute?"},
+{"@name": "sent_S1",
+ "@logic": ["isa","catholic","#:Mr Dursley 1"],
+ "@nl": "Mr Dursley 1 is a catholic."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk0","?:X"]]],
+ "@confidence": 0.9933,
+ "@nl": "Elephants have trunks that are long or short."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@confidence": 0.9933,
+ "@nl": "Elephants have trunks that are long or short."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has degree property", "long", ["sk0","?:X"], "none", "trunk", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-has degree property", "long", ["sk0","?:X"], "none", "trunk", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@confidence": 0.9933,
+ "@nl": "Elephants have trunks that are long or short."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","animal","?:X"],
+            ["-has degree property", "good", "?:X", "none", "?:Fv121", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-has degree property", "simple", "?:X", "none", "?:Fv122", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["has degree property", "cute", "?:X", "none", "?:Fv123", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$block", ["$","animal",3], ["$not", ["has degree property", "cute", "?:X", "none", "?:Fv124", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]]]
+           ],
+ "@confidence": 0.9487,
+ "@nl": "If an animal or bird is nice and simple, the animal or bird is cute."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"],
+            ["-has degree property", "good", "?:X", "none", "?:Fv125", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-has degree property", "simple", "?:X", "none", "?:Fv126", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["has degree property", "cute", "?:X", "none", "?:Fv127", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$block", ["$","bird",3], ["$not", ["has degree property", "cute", "?:X", "none", "?:Fv128", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]]]
+           ],
+ "@confidence": 0.9487,
+ "@nl": "If an animal or bird is nice and simple, the animal or bird is cute."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "cute", "#:John 2", "none", "?:Fv129", ["$ctxt","present","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Is John 2 cute?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-has degree property", "cute", "#:John 2", "none", "?:Fv130", ["$ctxt","present","?:Fv13","?:Fv11","?:Fv12"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 2 cute?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Is John 2 cute?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "cute", "#:John 2", "none", "?:Fv131", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "cute", "#:John 2", "none", "?:Fv132", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "cute", "#:John 2", "none", "?:Fv133", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 2 cute?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "long", "$some_long_trunk", "none", "trunk", ["$ctxt","?:Fv64","?:Fv61","?:Fv62","?:Fv63"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_long_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "long", "$some_not_long_trunk", "none", "trunk", ["$ctxt","?:Fv72","?:Fv69","?:Fv70","?:Fv71"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "long", "$some_short_trunk", "none", "trunk", ["$ctxt","?:Fv76","?:Fv73","?:Fv74","?:Fv75"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_short_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "long", "$some_not_short_trunk", "none", "trunk", ["$ctxt","?:Fv84","?:Fv81","?:Fv82","?:Fv83"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "good", "$some_nice_entity", "none", "?:Fv134", ["$ctxt","?:Fv88","?:Fv85","?:Fv86","?:Fv87"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "good", "$some_not_nice_entity", "none", "?:Fv135", ["$ctxt","?:Fv96","?:Fv93","?:Fv94","?:Fv95"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "simple", "$some_simple_entity", "none", "?:Fv136", ["$ctxt","?:Fv100","?:Fv97","?:Fv98","?:Fv99"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "simple", "$some_not_simple_entity", "none", "?:Fv137", ["$ctxt","?:Fv108","?:Fv105","?:Fv106","?:Fv107"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "cute", "$some_cute_entity", "none", "?:Fv138", ["$ctxt","?:Fv112","?:Fv109","?:Fv110","?:Fv111"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cute", "$some_not_cute_entity", "none", "?:Fv139", ["$ctxt","?:Fv120","?:Fv117","?:Fv118","?:Fv119"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","long","?:X","none","?:Fv140","?:Fv15"],
+            ["-has degree property","high","?:X","none","?:Fv141","?:Fv15"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv142","?:Fv16"],
+            ["-has degree property","long","?:X","none","?:Fv143","?:Fv16"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "none", "?:Fv144", ["$ctxt","past","?:Fv17","?:Fv18","?:Fv19"]],
+            ["has degree property", "long", "?:X", "none", "?:Fv145", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "none", "?:Fv146", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv20","?:Fv21","?:Fv22"]],
+            ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "long", "?:X", "none", "?:Fv147", ["$ctxt","past","?:Fv23","?:Fv24","?:Fv25"]],
+            ["-has degree property", "long", "?:X", "none", "?:Fv148", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]],
+            ["$block", 0, ["$not", ["has degree property", "short", "?:X", "none", "?:Fv149", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv26","?:Fv27","?:Fv28"]],
+            ["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]],
+            ["$block", 0, ["$not", ["has degree property", "short", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32084,
+      "cached_input_tokens": 32042,
+      "output_tokens": 589,
+      "raw": {
+        "input_tokens": 42,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 589,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39332,
+      "cached_input_tokens": 38891,
+      "output_tokens": 662,
+      "raw": {
+        "input_tokens": 441,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 662,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:51:57Z"
+}

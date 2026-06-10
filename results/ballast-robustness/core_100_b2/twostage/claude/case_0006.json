@@ -1,0 +1,366 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 6,
+  "input_text": "John eats yellow fish. Elephants are animals. The tail of the dog of Mary was short. Who is an animal?",
+  "expected_answer": "An elephant.",
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "An elephant.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John eats yellow fish.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 eats yellow fish.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "fish", "type": "generic", "scope": "kind", "category": "substance"}
+          ],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"target": "fish"}}],
+          "adjectives": [["yellow","none","fish"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Elephants are animals.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Elephants are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The tail of the dog of Mary was short.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The tail 1 of the dog 2 of Mary 3 was short.",
+          "type": "situation",
+          "entities": [{"id": "tail 1", "type": "concrete", "text": "tail"},
+            {"id": "dog 2", "type": "concrete", "category": "animal"},
+            {"id": "Mary 3", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["short","none","tail"]],
+          "definites": [["tail of","tail 1","dog 2"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "The tail 1 is the tail of the dog 2.",
+          "type": "situation",
+          "entities": [{"id": "tail 1", "type": "concrete", "text": "tail"},
+            {"id": "dog 2", "type": "concrete", "category": "animal"}
+          ],
+          "definites": [["tail of","tail 1","dog 2"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S5",
+          "text": "The dog 2 is the dog of Mary 3.",
+          "type": "situation",
+          "entities": [{"id": "dog 2", "type": "concrete", "category": "animal"},
+            {"id": "Mary 3", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["dog of","dog 2","Mary 3"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Who is an animal?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Which entity is an animal?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "animal", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["normally",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","eat"],
+                ["has actor","E","John 1"],
+                ["has target","E","fish"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id","S2",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","tail","tail 1"],
+            ["isa","dog","dog 2"],
+            ["isa","person","Mary 3"],
+            ["has part","dog 2","tail 1"],
+            ["have","Mary 3","dog 2"],
+            ["has degree property","short","tail 1","none","tail"]
+          ]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S3","W0","tail of","dog 2","tail 1"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","tail","tail 1"], ["isa","dog","dog 2"], ["has part","dog 2","tail 1"]]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S4","W0","tail of","dog 2","tail 1"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","dog","dog 2"], ["isa","person","Mary 3"], ["have","Mary 3","dog 2"]]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S5","W0","dog of","Mary 3","dog 2"]
+      ]
+    ],
+    ["@id", "S6", ["ask", "X", ["isa","animal","X"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 eats yellow fish."},
+{"@name": "entity_S3",
+ "@logic": ["isa","dog","#:dog 2"],
+ "@nl": "The tail 1 of the dog 2 of Mary 3 was short."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1 eats yellow fish."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "eat", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 eats yellow fish."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:John 1", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 eats yellow fish."},
+{"@name": "sent_S1",
+ "@logic": ["isa","fish","sk1_fish"],
+ "@nl": "John 1 eats yellow fish."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "sk1_fish", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 eats yellow fish."},
+{"@name": "sent_S1",
+ "@logic": [["typical", "sk0_activity", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","$generic",1], ["$not", ["typical", "sk0_activity", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "John 1 eats yellow fish."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Elephants are animals."},
+{"@name": "sent_S3",
+ "@logic": ["isa", "tail", ["$theof1", "tail", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$ctxt","past","W0","?:Fv9","?:Fv10"]]],
+ "@nl": "The tail 1 of the dog 2 of Mary 3 was short."},
+{"@name": "sent_S3",
+ "@logic": ["isa", "dog", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]]],
+ "@nl": "The tail 1 of the dog 2 of Mary 3 was short."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Mary 3"],
+ "@nl": "The tail 1 of the dog 2 of Mary 3 was short."},
+{"@name": "sent_S3",
+ "@logic": ["has part", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$theof1", "tail", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The tail 1 of the dog 2 of Mary 3 was short."},
+{"@name": "sent_S3",
+ "@logic": ["have", "#:Mary 3", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The tail 1 of the dog 2 of Mary 3 was short."},
+{"@name": "sent_S3",
+ "@logic": ["-has degree property", "long", ["$theof1", "tail", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$ctxt","past","W0","?:Fv9","?:Fv10"]], "none", "tail", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The tail 1 of the dog 2 of Mary 3 was short."},
+{"@name": "sent_S4",
+ "@logic": ["isa", "tail", ["$theof1", "tail", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$ctxt","past","W0","?:Fv9","?:Fv10"]]],
+ "@nl": "The tail 1 is the tail of the dog 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa", "dog", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]]],
+ "@nl": "The tail 1 is the tail of the dog 2."},
+{"@name": "sent_S4",
+ "@logic": ["has part", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$theof1", "tail", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The tail 1 is the tail of the dog 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa", "dog", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]]],
+ "@nl": "The dog 2 is the dog of Mary 3."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mary 3"],
+ "@nl": "The dog 2 is the dog of Mary 3."},
+{"@name": "sent_S5",
+ "@logic": ["have", "#:Mary 3", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The dog 2 is the dog of Mary 3."},
+{"@name": "sent_S6",
+ "@question": ["isa","animal","?:X"],
+ "@askvars": 1,
+ "@nl": "Which entity is an animal?"},
+{"@name": "frm_theof",
+ "@logic": ["have", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$theof1", "tail", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$theof1", "tail", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:Mary 3", ["$theof1", "dog", "#:Mary 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]], ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "dog of", ["$theof1","dog","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "dog", ["$theof1","dog","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "tail of", ["$theof1","tail","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "tail", ["$theof1","tail","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","long","?:X","none","?:Fv51","?:Fv19"],
+            ["-has degree property","high","?:X","none","?:Fv52","?:Fv19"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv53","?:Fv20"],
+            ["-has degree property","long","?:X","none","?:Fv54","?:Fv20"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "long", "?:X", "none", "?:Fv55", ["$ctxt","past","?:Fv21","?:Fv22","?:Fv23"]],
+            ["-has degree property", "long", "?:X", "none", "?:Fv56", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]],
+            ["$block", 0, ["$not", ["has degree property", "short", "?:X", "none", "?:Fv57", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv24","?:Fv25","?:Fv26"]],
+            ["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]],
+            ["$block", 0, ["$not", ["has degree property", "short", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "pop_what",
+ "@logic": ["isa","fish","$some_fish"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","dog","$some_dog"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","$some_elephant"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S2","assumption",1], [["-isa","elephant","?:X"], ["isa","animal","?:X"]]],
+          [2, ["in","sent_S2","assumption",1], [["isa","elephant","$some_elephant"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["isa","animal","$some_elephant"]]],
+          [4, ["in","sent_S6","goal",1], [["-isa","animal","?:X"], ["$ans","?:X"]]],
+          [5, ["mp",3,4,"fromga",1], [["$ans","$some_elephant"]]]
+        ]
+      },
+      {
+        "answer": [["$ans","$some_animal"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S2","assumption",1], [["isa","animal","$some_animal"]]],
+          [2, ["in","sent_S6","goal",1], [["-isa","animal","?:X"], ["$ans","?:X"]]],
+          [3, ["mp",1,2,"fromga",1], [["$ans","$some_animal"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Elephants are animals.",
+"  (2) Who is an animal?",
+"Proof steps:",
+"  (1) If some X is an elephant then X is an animal  [sentence 1]",
+"  (2) An elephant is an elephant  [sentence 1]",
+"  (3) An elephant is an animal  [from steps 1, 2]",
+"  (4) X is an answer  [from question]",
+"  (5) An elephant is an answer  [from steps 3, 4]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32075,
+      "cached_input_tokens": 32042,
+      "output_tokens": 883,
+      "raw": {
+        "input_tokens": 33,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 883,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39593,
+      "cached_input_tokens": 38891,
+      "output_tokens": 598,
+      "raw": {
+        "input_tokens": 702,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 598,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:18:07Z"
+}

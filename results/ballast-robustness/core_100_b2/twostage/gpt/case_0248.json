@@ -1,0 +1,384 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 248,
+  "input_text": "The red car costs 2 dollars. Mary's uncle arrived. The woman holding a lamp sang. Who has an uncle?",
+  "expected_answer": "Mary.",
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Mary.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The red car costs 2 dollars.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The red car 1 costs 2 dollars.",
+          "type": "situation",
+          "entities": [{"id": "car 1", "type": "concrete", "category": "artifact"},
+            {"id": "2 dollars", "type": "concrete", "category": "measure"}
+          ],
+          "adjectives": [["red","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mary's uncle arrived.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Mary 1's uncle 2 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "uncle 2", "type": "concrete", "text": "uncle", "category": "person"}
+          ],
+          "actions": [{"root": "arrive", "mode": "event"}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "Uncle 2 is an uncle of Mary 1.",
+          "type": "situation",
+          "entities": [{"id": "uncle 2", "type": "concrete", "text": "uncle", "category": "person"},
+            {"id": "Mary 1", "type": "concrete", "category": "person"}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The woman holding a lamp sang.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The woman 3 holding a lamp 4 sang.",
+          "type": "situation",
+          "entities": [{"id": "woman 3", "type": "concrete", "category": "person"},
+            {"id": "lamp 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "hold", "mode": "event", "roles": {"actor": "woman 3", "target": "lamp 4"}},
+            {"root": "sing", "mode": "event", "roles": {"actor": "woman 3"}}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Who has an uncle?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Which entity has an uncle?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "uncle", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","car","car 1"],
+          ["has degree property","red","car 1","none","none"],
+          ["=", ["$measure_of","price","car 1","W0"], ["$measure",2,"dollar"]]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 1"],
+          ["isa","uncle","uncle 2"],
+          ["is rel2","uncle of","uncle 2","Mary 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","arrive"],
+              ["has actor","E","uncle 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","uncle","uncle 2"],
+          ["isa","person","Mary 1"],
+          ["is rel2","uncle of","uncle 2","Mary 1"]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","woman","woman 3"],
+          ["isa","lamp","lamp 4"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","hold"],
+              ["has actor","E1","woman 3"],
+              ["has target","E1","lamp 4"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","sing"],
+              ["has actor","E2","woman 3"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S5", ["ask", "X", ["exists", "Y", ["and", ["isa","uncle","Y"], ["have","X","Y"]]]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","measure","2 dollars"],
+ "@nl": "The red car 1 costs 2 dollars."},
+{"@name": "sent_S1",
+ "@logic": ["isa","car","#:car 1"],
+ "@nl": "The red car 1 costs 2 dollars."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "red", "#:car 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The red car 1 costs 2 dollars."},
+{"@name": "sent_S1",
+ "@logic": ["=", ["$measure_of","price","#:car 1","W0"], ["$list",2,"#:dollar"]],
+ "@nl": "The red car 1 costs 2 dollars."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["isa","uncle","#:uncle 2"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["is rel2", "uncle of", "#:uncle 2", "#:Mary 1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "arrive", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:uncle 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["isa","uncle","#:uncle 2"],
+ "@nl": "Uncle 2 is an uncle of Mary 1."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Uncle 2 is an uncle of Mary 1."},
+{"@name": "sent_S3",
+ "@logic": ["is rel2", "uncle of", "#:uncle 2", "#:Mary 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Uncle 2 is an uncle of Mary 1."},
+{"@name": "sent_S4",
+ "@logic": ["isa","woman","#:woman 3"],
+ "@nl": "The woman 3 holding a lamp 4 sang."},
+{"@name": "sent_S4",
+ "@logic": ["isa","lamp","#:lamp 4"],
+ "@nl": "The woman 3 holding a lamp 4 sang."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The woman 3 holding a lamp 4 sang."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "hold", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The woman 3 holding a lamp 4 sang."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk1_activity", "#:woman 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The woman 3 holding a lamp 4 sang."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk1_activity", "#:lamp 4", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The woman 3 holding a lamp 4 sang."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The woman 3 holding a lamp 4 sang."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The woman 3 holding a lamp 4 sang."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The woman 3 holding a lamp 4 sang."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk2_activity", "sing", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The woman 3 holding a lamp 4 sang."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk2_activity", "#:woman 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The woman 3 holding a lamp 4 sang."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The woman 3 holding a lamp 4 sang."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The woman 3 holding a lamp 4 sang."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "uncle", ["sk3","?:X"]]],
+ "@nl": "Which entity has an uncle?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["have", "?:X", ["sk3","?:X"], ["$ctxt","present","?:Fv15","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Which entity has an uncle?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-isa","uncle","?:Y"],
+            ["-have", "?:X", "?:Y", ["$ctxt","present","?:Fv18","?:Fv9","?:Fv10"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which entity has an uncle?"},
+{"@name": "sent_S2",
+ "@logic": ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S5",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@nl": "Which entity has an uncle?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "?:Br1", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity has an uncle?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","price","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "price", ["$measure_of","price","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv19","?:Fv20","?:Fv21"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv19","?:Fv20","?:Fv21"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv19","?:Fv20","?:Fv21"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv22","?:Fv23","?:Fv24"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "pop_what",
+ "@logic": ["isa","car","$some_car"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","measure","$some_measure"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","lamp","$some_lamp"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","woman","$some_woman"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","uncle","$some_uncle"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","#:Mary 1"]],
+        "blockers": [["$block", 0, ["$not", ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","present","W0","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.977275,
+        "positive proof": [[1, ["in","sent_S5","assumption",0.97], [["$block", 0, ["$not", ["have", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]]]], ["-have", "?:X", "?:Y", ["$ctxt","past","?:Z","?:U","?:V"]], ["have", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]]]],
+          [2, ["in","sent_S2","assumption",1], [["have", "#:Mary 1", "#:uncle 2", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 0.97], [["$block", 0, ["$not", ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","present","W0","?:X","?:Y"]]]], ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [4, ["in","sent_S2","assumption",1], [["isa","uncle","#:uncle 2"]]],
+          [5, ["in","sent_S5","assumption",1], [["-have", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]], ["-isa","uncle","?:Y"], ["$defq0","?:X"]]],
+          [6, ["mp", 4, [5,1], "fromassumption", 1], [["-have", "?:X", "#:uncle 2", ["$ctxt","present","?:Y","?:Z","?:U"]], ["$defq0","?:X"]]],
+          [7, ["in","sent_S5","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [8, ["mp", [6,1], 7, "fromga", 1], [["-have", "?:X", "#:uncle 2", ["$ctxt","present","?:Y","?:Z","?:U"]], ["$ans","?:X"]]],
+          [9, ["mp", [3,1], 8, "fromga", 0.97], [["$block", 0, ["$not", ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$ans","#:Mary 1"]]],
+          [10, ["in","sent_S3","assumption",1], [["isa","uncle","#:uncle 2"]]],
+          [11, ["mp", 10, [5,1], "fromassumption", 1], [["-have", "?:X", "#:uncle 2", ["$ctxt","present","?:Y","?:Z","?:U"]], ["$defq0","?:X"]]],
+          [12, ["mp", [11,1], 7, "fromga", 1], [["-have", "?:X", "#:uncle 2", ["$ctxt","present","?:Y","?:Z","?:U"]], ["$ans","?:X"]]],
+          [13, ["mp", [3,1], 12, "fromga", 0.97], [["$block", 0, ["$not", ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$ans","#:Mary 1"]]],
+          [14, ["cumul",9,13,"fromga",0.977275], [["$block", 0, ["$not", ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$ans","#:Mary 1"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 98%.",
+"Sentences used:",
+"  (1) Mary's uncle arrived.",
+"  (2) Who has an uncle?",
+"Proof steps:",
+"  (1) If some X has some Y then normally X has Y  [sentence 2, confidence 97%]",
+"  (2) Mary has the uncle B  [sentence 1]",
+"  (3) Normally Mary has the uncle B  [from steps 1, 2, confidence 97%]",
+"  (4) The uncle B is an uncle  [sentence 1]",
+"  (5) If some X has some Y and Y is an uncle then X is the answer  [sentence 2]",
+"  (6) If some X has the uncle B then X is the answer  [from steps 4, 5]",
+"  (7) technical answer unwrap step  [from question]",
+"  (8) If some X has the uncle B then X is an answer  [from steps 6, 7]",
+"  (9) Mary is an answer, except when Mary does not have the uncle B  [from steps 3, 8, confidence 97%]",
+"  (10) The uncle B is an uncle  [sentence 1]",
+"  (11) If some X has the uncle B then X is the answer  [from steps 10, 5]",
+"  (12) If some X has the uncle B then X is an answer  [from steps 11, 7]",
+"  (13) Mary is an answer, except when Mary does not have the uncle B  [from steps 3, 12, confidence 97%]",
+"  (14) Mary is an answer, except when Mary does not have the uncle B  [from steps 9, 13, confidence 98%]",
+"Exceptions checked and not holding:",
+"  Mary does not have uncle B"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28337,
+      "cached_input_tokens": 28288,
+      "output_tokens": 690,
+      "raw": {
+        "input_tokens": 28337,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 690,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29027
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33948,
+      "cached_input_tokens": 33280,
+      "output_tokens": 501,
+      "raw": {
+        "input_tokens": 33948,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 501,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34449
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:24:03Z"
+}

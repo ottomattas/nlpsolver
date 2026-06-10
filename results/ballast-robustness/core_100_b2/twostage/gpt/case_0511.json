@@ -1,0 +1,378 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 511,
+  "input_text": "John wrote a report. The handle of Mary's suitcase broke. All elephants are animals. Elephants are not animals?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John wrote a report.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 wrote a report 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "report 2", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "write", "mode": "event", "roles": {"actor": "John 1", "target": "report 2"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The handle of Mary's suitcase broke.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The handle 1 of Mary 2's suitcase 3 broke.",
+          "type": "situation",
+          "entities": [{"id": "handle 1", "type": "concrete", "text": "handle", "category": "artifact"},
+            {"id": "Mary 2", "type": "concrete", "category": "person"},
+            {"id": "suitcase 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "break", "mode": "event", "roles": {"target": "handle 1"}}],
+          "definites": [["handle of","handle 1","suitcase 3"]],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "The handle 1 is the handle of the suitcase 3.",
+          "type": "situation",
+          "entities": [{"id": "handle 1", "type": "concrete", "text": "handle", "category": "artifact"},
+            {"id": "suitcase 3", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["handle of","handle 1","suitcase 3"]],
+          "pre_state": "W0",
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "Mary 2 owns the suitcase 3.",
+          "type": "situation",
+          "entities": [{"id": "Mary 2", "type": "concrete", "category": "person"},
+            {"id": "suitcase 3", "type": "concrete", "category": "artifact"}
+          ],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "All elephants are animals.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "All elephants are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Elephants are not animals?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Are elephants not animals?",
+          "type": "query",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","report","report 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","write"],
+              ["has actor","E","John 1"],
+              ["has target","E","report 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","handle","handle 1"],
+            ["isa","person","Mary 2"],
+            ["isa","suitcase","suitcase 3"],
+            ["has part","suitcase 3","handle 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","break"],
+                ["has target","E","handle 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"],
+        ["@definite","S2","W0","handle of","suitcase 3","handle 1"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","handle","handle 1"],
+            ["isa","suitcase","suitcase 3"],
+            ["has part","suitcase 3","handle 1"]
+          ]
+        ],
+        ["@definite","S3","W0","handle of","suitcase 3","handle 1"]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 2"],
+          ["isa","suitcase","suitcase 3"],
+          ["have","Mary 2","suitcase 3"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S6",
+      ["question",
+        ["forall", "X", ["implies", ["isa","elephant","X"], ["not", ["isa","animal","X"]]]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","handle","#:handle 1"],
+ "@nl": "The handle 1 of Mary 2's suitcase 3 broke."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 wrote a report 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","report","#:report 2"],
+ "@nl": "John 1 wrote a report 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1 wrote a report 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "write", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 wrote a report 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 wrote a report 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:report 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 wrote a report 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 wrote a report 2."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "John 1 wrote a report 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa", "handle", ["$theof1", "handle", "#:suitcase 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]]],
+ "@nl": "The handle 1 of Mary 2's suitcase 3 broke."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "The handle 1 of Mary 2's suitcase 3 broke."},
+{"@name": "sent_S2",
+ "@logic": ["isa","suitcase","#:suitcase 3"],
+ "@nl": "The handle 1 of Mary 2's suitcase 3 broke."},
+{"@name": "sent_S2",
+ "@logic": ["has part", "#:suitcase 3", ["$theof1", "handle", "#:suitcase 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The handle 1 of Mary 2's suitcase 3 broke."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The handle 1 of Mary 2's suitcase 3 broke."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "break", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The handle 1 of Mary 2's suitcase 3 broke."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk1_activity", ["$theof1", "handle", "#:suitcase 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The handle 1 of Mary 2's suitcase 3 broke."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The handle 1 of Mary 2's suitcase 3 broke."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The handle 1 of Mary 2's suitcase 3 broke."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The handle 1 of Mary 2's suitcase 3 broke."},
+{"@name": "sent_S3",
+ "@logic": ["isa", "handle", ["$theof1", "handle", "#:suitcase 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]]],
+ "@nl": "The handle 1 is the handle of the suitcase 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","suitcase","#:suitcase 3"],
+ "@nl": "The handle 1 is the handle of the suitcase 3."},
+{"@name": "sent_S3",
+ "@logic": ["has part", "#:suitcase 3", ["$theof1", "handle", "#:suitcase 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The handle 1 is the handle of the suitcase 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Mary 2 owns the suitcase 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","suitcase","#:suitcase 3"],
+ "@nl": "Mary 2 owns the suitcase 3."},
+{"@name": "sent_S4",
+ "@logic": ["have", "#:Mary 2", "#:suitcase 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mary 2 owns the suitcase 3."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"]],
+ "@nl": "All elephants are animals."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","elephant","?:X"], ["-isa","animal","?:X"]],
+ "@nl": "Are elephants not animals?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["isa","elephant","sk2_elephant"], ["$defq0"]],
+ "@nl": "Are elephants not animals?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["isa","animal","sk2_elephant"], ["$defq0"]],
+ "@nl": "Are elephants not animals?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Are elephants not animals?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:suitcase 3", ["$theof1", "handle", "#:suitcase 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:suitcase 3", ["$theof1", "handle", "#:suitcase 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "handle of", ["$theof1","handle","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "handle", ["$theof1","handle","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "break", ["$ctxt","?:Fv17","?:Fv18","?:Fv20","?:Fv21"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv17","?:Fv18","?:Fv20","?:Fv21"]],
+            ["-next","?:Fv18","?:Fv19"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv19","?:Fv20","?:Fv21"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv19","?:Fv20","?:Fv21"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "break", "?:X", ["$ctxt","?:Fv22","?:Fv23","?:Fv25","?:Fv26"]],
+            ["-next","?:Fv23","?:Fv24"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","report","?:Fv27"], ["has type","?:E","announce","?:Fv27"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","announce","?:Fv28"], ["has type","?:E","report","?:Fv28"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S5","assumption",1], [["isa","elephant","$some_elephant"]]],
+          [2, ["in","sent_S5","assumption",1], [["-isa","elephant","?:X"], ["isa","animal","?:X"]]],
+          [3, ["in","sent_S6","assumption",1], [["-$defq0"], ["-isa","elephant","?:X"], ["-isa","animal","?:X"]]],
+          [4, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [5, ["mp", 1, [3,1], 4, "fromga", 1], [["-isa","animal","$some_elephant"]]],
+          [6, ["mp",1,2,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) All elephants are animals.",
+"  (2) Elephants are not animals?",
+"Proof steps (by contradiction):",
+"  (1) An elephant is an elephant  [sentence 1]",
+"  (2) If some X is an elephant then X is an animal  [sentence 1]",
+"  (3) If answer holds and some X is an elephant then X is not an animal  [sentence 2]",
+"  (4) Answer holds  [assumption]",
+"  (5) An elephant is not an animal  [from steps 1, 3, 4]",
+"  (6) Contradiction  [from steps 1, 2, 5]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28336,
+      "cached_input_tokens": 28288,
+      "output_tokens": 844,
+      "raw": {
+        "input_tokens": 28336,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 844,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29180
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34090,
+      "cached_input_tokens": 33280,
+      "output_tokens": 552,
+      "raw": {
+        "input_tokens": 34090,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 552,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34642
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:25:55Z"
+}

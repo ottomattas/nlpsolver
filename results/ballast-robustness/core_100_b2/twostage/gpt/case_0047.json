@@ -1,0 +1,434 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 47,
+  "input_text": "The door of the house of John was open. A very big mouse is nice. Elephants do not have long red trunks. The mouse is a very big mouse?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The door of the house of John was open.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The door 3 of the house 2 of John 1 was open.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "house 2", "type": "concrete", "category": "place"},
+            {"id": "door 3", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["open","none","door"]],
+          "definites": [["house of","house 2","John 1"], ["door of","door 3","house 2"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "The house 2 is the house of John 1.",
+          "type": "situation",
+          "entities": [{"id": "house 2", "type": "concrete", "category": "place"},
+            {"id": "John 1", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["house of","house 2","John 1"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "The door 3 is the door of the house 2.",
+          "type": "situation",
+          "entities": [{"id": "door 3", "type": "concrete", "category": "artifact"},
+            {"id": "house 2", "type": "concrete", "category": "place"}
+          ],
+          "definites": [["door of","door 3","house 2"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A very big mouse is nice.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "A very big mouse 4 is nice.",
+          "type": "situation",
+          "entities": [{"id": "mouse 4", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","high","mouse"], ["nice","none","entity"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants do not have long red trunks.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Elephants do not have long red trunks.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"}
+          ],
+          "adjectives": [["long","none","trunk"], ["red","none","none"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "The mouse is a very big mouse?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Is the mouse 4 a very big mouse?",
+          "type": "query",
+          "entities": [{"id": "mouse 4", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","high","mouse"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["isa","house","house 2"],
+            ["isa","door","door 3"],
+            ["have","John 1","house 2"],
+            ["has part","house 2","door 3"],
+            ["has degree property","open","door 3","none","door"]
+          ]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S1","W0","house of","John 1","house 2"],
+        ["@definite","S1","W0","door of","house 2","door 3"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","house","house 2"], ["isa","person","John 1"], ["have","John 1","house 2"]]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S2","W0","house of","John 1","house 2"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","door","door 3"],
+            ["isa","house","house 2"],
+            ["has part","house 2","door 3"]
+          ]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S3","W0","door of","house 2","door 3"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","mouse","mouse 4"],
+            ["has degree property","big","mouse 4","high","mouse"],
+            ["has degree property","nice","mouse 4","none","entity"]
+          ]
+        ],
+        ["state time","W0","present"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally",
+                ["not",
+                  ["exists","Y",
+                    ["and",
+                      ["isa","trunk","Y"],
+                      ["has part","X","Y"],
+                      ["has degree property","long","Y","none","trunk"],
+                      ["has degree property","red","Y","none","none"]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S5",0.99]
+      ]
+    ],
+    ["@id","S6",
+      ["question",
+        ["and", ["isa","mouse","mouse 4"], ["has degree property","big","mouse 4","high","mouse"]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","house","#:house 2"],
+ "@nl": "The door 3 of the house 2 of John 1 was open."},
+{"@name": "entity_S1",
+ "@logic": ["isa","door","#:door 3"],
+ "@nl": "The door 3 of the house 2 of John 1 was open."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "The door 3 of the house 2 of John 1 was open."},
+{"@name": "sent_S1",
+ "@logic": ["isa", "house", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]]],
+ "@nl": "The door 3 of the house 2 of John 1 was open."},
+{"@name": "sent_S1",
+ "@logic": ["isa", "door", ["$theof1", "door", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]]],
+ "@nl": "The door 3 of the house 2 of John 1 was open."},
+{"@name": "sent_S1",
+ "@logic": ["have", "#:John 1", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The door 3 of the house 2 of John 1 was open."},
+{"@name": "sent_S1",
+ "@logic": ["has part", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$theof1", "door", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The door 3 of the house 2 of John 1 was open."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "open", ["$theof1", "door", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]], "none", "door", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The door 3 of the house 2 of John 1 was open."},
+{"@name": "sent_S2",
+ "@logic": ["isa", "house", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]]],
+ "@nl": "The house 2 is the house of John 1."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "The house 2 is the house of John 1."},
+{"@name": "sent_S2",
+ "@logic": ["have", "#:John 1", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The house 2 is the house of John 1."},
+{"@name": "sent_S3",
+ "@logic": ["isa", "door", ["$theof1", "door", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]]],
+ "@nl": "The door 3 is the door of the house 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa", "house", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]]],
+ "@nl": "The door 3 is the door of the house 2."},
+{"@name": "sent_S3",
+ "@logic": ["has part", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$theof1", "door", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The door 3 is the door of the house 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","mouse","#:mouse 4"],
+ "@nl": "A very big mouse 4 is nice."},
+{"@name": "sent_S4",
+ "@logic": ["has degree property", "big", "#:mouse 4", "high", "mouse", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "A very big mouse 4 is nice."},
+{"@name": "sent_S4",
+ "@logic": ["has degree property", "good", "#:mouse 4", "none", "?:Fv77", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "A very big mouse 4 is nice."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-isa","trunk","?:Y"],
+            ["-has part", "?:X", "?:Y", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-has degree property", "long", "?:Y", "none", "trunk", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-has property", "red", "?:Y", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","elephant",3], ["has property", "red", "?:Y", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants do not have long red trunks."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","mouse","#:mouse 4"]],
+ "@nl": "Is the mouse 4 a very big mouse?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "big", "#:mouse 4", "high", "mouse", ["$ctxt","present","?:Fv15","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Is the mouse 4 a very big mouse?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-isa","mouse","#:mouse 4"],
+            ["-has degree property", "big", "#:mouse 4", "high", "mouse", ["$ctxt","present","?:Fv15","?:Fv13","?:Fv14"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is the mouse 4 a very big mouse?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Is the mouse 4 a very big mouse?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "big", "#:mouse 4", "high", "mouse", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "big", "#:mouse 4", "high", "mouse", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "#:mouse 4", "high", "mouse", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the mouse 4 a very big mouse?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:John 1", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$theof1", "door", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:John 1", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$theof1", "door", ["$theof1", "house", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]], ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "door of", ["$theof1","door","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "door", ["$theof1","door","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "house of", ["$theof1","house","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "house", ["$theof1","house","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "long", "$some_long_trunk", "none", "trunk", ["$ctxt","?:Fv60","?:Fv57","?:Fv58","?:Fv59"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_long_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "long", "$some_not_long_trunk", "none", "trunk", ["$ctxt","?:Fv68","?:Fv65","?:Fv66","?:Fv67"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "red", "$some_red", ["$ctxt","?:Fv72","?:Fv69","?:Fv70","?:Fv71"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "red", "$some_not_red", ["$ctxt","?:Fv76","?:Fv73","?:Fv74","?:Fv75"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","open","?:X"], ["isa","outside","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","outside","?:X"], ["isa","open","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv78", ["$ctxt","past","?:Fv23","?:Fv24","?:Fv25"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv79", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv80", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv26","?:Fv27","?:Fv28"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "none", "?:Fv81", ["$ctxt","past","?:Fv29","?:Fv30","?:Fv31"]],
+            ["has degree property", "long", "?:X", "none", "?:Fv82", ["$ctxt","present","?:Fv29","?:Fv30","?:Fv31"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "none", "?:Fv83", ["$ctxt","present","?:Fv29","?:Fv30","?:Fv31"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv32","?:Fv33","?:Fv34"]],
+            ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv35","?:Fv36","?:Fv37"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv38","?:Fv39","?:Fv40"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv38","?:Fv39","?:Fv40"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv38","?:Fv39","?:Fv40"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S6","assumption",1], [["-isa","mouse","#:mouse 4"], ["$defq0"], ["-has degree property", "big", "#:mouse 4", "high", "mouse", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [2, ["in","sent_S4","assumption",1], [["has degree property", "big", "#:mouse 4", "high", "mouse", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S6","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,2], 2, 3, "fromga", 1], [["-isa","mouse","#:mouse 4"]]],
+          [5, ["in","sent_S4","assumption",1], [["isa","mouse","#:mouse 4"]]],
+          [6, ["simp",4,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) A very big mouse is nice.",
+"  (2) The mouse is a very big mouse?",
+"Proof steps (by contradiction):",
+"  (1) If the mouse D is very big then answer holds  [sentence 2]",
+"  (2) The mouse D is very big  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) The mouse D is not a mouse  [from steps 1, 2, 3]",
+"  (5) The mouse D is a mouse  [sentence 1]",
+"  (6) Contradiction  [from steps 4, 5]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28347,
+      "cached_input_tokens": 28288,
+      "output_tokens": 820,
+      "raw": {
+        "input_tokens": 28347,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 820,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29167
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34084,
+      "cached_input_tokens": 33280,
+      "output_tokens": 630,
+      "raw": {
+        "input_tokens": 34084,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 630,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34714
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:16:17Z"
+}

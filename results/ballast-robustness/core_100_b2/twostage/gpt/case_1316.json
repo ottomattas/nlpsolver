@@ -1,0 +1,280 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1316,
+  "input_text": "John is nice. Mary, a pilot, smiled. The man carrying a bag waved. Is it true that John is nice?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is nice.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is nice.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","entity"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mary, a pilot, smiled.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Mary 2 smiled.",
+          "type": "situation",
+          "entities": [{"id": "Mary 2", "type": "concrete", "category": "person"},
+            {"id": "pilot", "type": "generic", "category": "person"}
+          ],
+          "actions": [{"root": "smile", "mode": "event"}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The man carrying a bag waved.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The man 3 who was carrying a bag 4 waved.",
+          "type": "situation",
+          "entities": [{"id": "man 3", "type": "concrete", "category": "person"},
+            {"id": "bag 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "carry", "mode": "event", "roles": {"actor": "man 3", "target": "bag 4"}},
+            {"root": "wave", "mode": "event", "roles": {"actor": "man 3"}}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Is it true that John is nice?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Is it true that John 1 is nice?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","entity"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["has degree property","nice","John 1","none","entity"]]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 2"],
+          ["isa","pilot","Mary 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","smile"],
+              ["has actor","E","Mary 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","man","man 3"],
+          ["isa","bag","bag 4"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","carry"],
+              ["has actor","E1","man 3"],
+              ["has target","E1","bag 4"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","wave"],
+              ["has actor","E2","man 3"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["and", ["isa","person","John 1"], ["has degree property","nice","John 1","none","entity"]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is nice."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "good", "#:John 1", "none", "?:Fv23", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is nice."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Mary 2 smiled."},
+{"@name": "sent_S2",
+ "@logic": ["isa","pilot","#:Mary 2"],
+ "@nl": "Mary 2 smiled."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Mary 2 smiled."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "smile", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 2 smiled."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:Mary 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 2 smiled."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 2 smiled."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Mary 2 smiled."},
+{"@name": "sent_S3",
+ "@logic": ["isa","man","#:man 3"],
+ "@nl": "The man 3 who was carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["isa","bag","#:bag 4"],
+ "@nl": "The man 3 who was carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The man 3 who was carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "carry", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The man 3 who was carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:man 3", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The man 3 who was carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk1_activity", "#:bag 4", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The man 3 who was carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The man 3 who was carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The man 3 who was carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The man 3 who was carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "wave", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The man 3 who was carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:man 3", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The man 3 who was carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The man 3 who was carrying a bag 4 waved."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The man 3 who was carrying a bag 4 waved."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:John 1"]],
+ "@nl": "Is it true that John 1 is nice?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "good", "#:John 1", "none", "?:Fv24", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Is it true that John 1 is nice?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:John 1"],
+            ["-has degree property", "good", "#:John 1", "none", "?:Fv25", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is it true that John 1 is nice?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Is it true that John 1 is nice?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "good", "#:John 1", "none", "?:Fv26", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "good", "#:John 1", "none", "?:Fv27", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "?:Fv28", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is it true that John 1 is nice?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S4","assumption",1], [["-isa","person","#:John 1"], ["$defq0"], ["-has degree property", "good", "#:John 1", "none", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [2, ["in","sent_S1","assumption",1], [["has degree property", "good", "#:John 1", "none", "?:X", ["$ctxt","present","W0","?:Y","?:Z"]]]],
+          [3, ["in","sent_S4","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,2], 2, 3, "fromga", 1], [["-isa","person","#:John 1"]]],
+          [5, ["in","sent_S1","assumption",1], [["isa","person","#:John 1"]]],
+          [6, ["simp",4,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John is nice.",
+"  (2) Is it true that John is nice?",
+"Proof steps (by contradiction):",
+"  (1) If John is a person and John is good then answer holds  [sentence 2]",
+"  (2) John is good  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) John is not a person  [from steps 1, 2, 3]",
+"  (5) John is a person  [sentence 1]",
+"  (6) Contradiction  [from steps 4, 5]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28339,
+      "cached_input_tokens": 28288,
+      "output_tokens": 606,
+      "raw": {
+        "input_tokens": 28339,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 606,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 28945
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33824,
+      "cached_input_tokens": 33280,
+      "output_tokens": 385,
+      "raw": {
+        "input_tokens": 33824,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 385,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34209
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:44:04Z"
+}

@@ -1,0 +1,287 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 8,
+  "input_text": "The mouse was chased by the cat. If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1. Elephants are big animals. John is an elephant. Who is nice?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The mouse was chased by the cat.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The cat 1 chased the mouse 2.",
+          "type": "situation",
+          "entities": [{"id": "cat 1", "type": "concrete", "category": "animal"},
+            {"id": "mouse 2", "type": "concrete", "category": "animal"}
+          ],
+          "actions": [{"root": "chase", "mode": "event", "roles": {"actor": "cat 1", "target": "mouse 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic", "category": "person"},
+            {"id": "Y1", "type": "generic", "category": "person"},
+            {"id": "Z1", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Elephants are big animals.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Elephants are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S4",
+          "text": "Elephants are big.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"}],
+          "adjectives": [["big","none","elephant"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "John is an elephant.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "John 1 is an elephant.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "Who is nice?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Which entity is nice?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true}],
+          "adjectives": [["nice","none","entity"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","cat","cat 1"],
+            ["isa","mouse","mouse 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","chase"],
+                ["has actor","E","cat 1"],
+                ["has target","E","mouse 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["forall","Z1",
+              ["implies",
+                ["and", ["is rel2","father of","X1","Y1"], ["is rel2","father of","Y1","Z1"]],
+                ["is rel2","grandfather of","X1","Z1"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["has degree property","big","X","none","elephant"]]
+            ]
+          ]
+        ],
+        ["@p","S4",0.99]
+      ]
+    ],
+    ["@id", "S5", ["holds", "W0", ["isa","elephant","John 1"]]],
+    ["@id", "S6", ["ask", "X", ["has degree property","nice","X","none","entity"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","cat","#:cat 1"],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","mouse","#:mouse 2"],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "chase", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:cat 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:mouse 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The cat 1 chased the mouse 2."},
+{"@name": "sent_S2",
+ "@logic": [["-is rel2", "father of", "?:X1", "?:Y1", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-is rel2", "father of", "?:Y1", "?:Z1", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["is rel2", "grandfather of", "?:X1", "?:Z1", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Elephants are animals."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has degree property", "big", "?:X", "none", "elephant", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["$block", ["$","elephant",1], ["$not", ["has degree property", "big", "?:X", "none", "elephant", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants are big."},
+{"@name": "sent_S5",
+ "@logic": ["isa","elephant","#:John 1"],
+ "@nl": "John 1 is an elephant."},
+{"@name": "sent_S6",
+ "@question": ["has degree property", "good", "?:X", "none", "?:Fv58", ["$ctxt","present","W1","?:Fv17","?:Fv18"]],
+ "@askvars": 1,
+ "@nl": "Which entity is nice?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "good", "?:Br1", "none", "?:Fv59", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "good", "?:Br1", "none", "?:Fv60", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "good", "?:Br1", "none", "?:Fv61", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is nice?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "big", "$some_big_elephant", "none", "elephant", ["$ctxt","?:Fv49","?:Fv46","?:Fv47","?:Fv48"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_big_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "big", "$some_not_big_elephant", "none", "elephant", ["$ctxt","?:Fv57","?:Fv54","?:Fv55","?:Fv56"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv62", ["$ctxt","past","?:Fv20","?:Fv21","?:Fv22"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv63", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv64", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv23","?:Fv24","?:Fv25"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "pop_what",
+ "@logic": ["isa","mouse","$some_mouse"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","cat","$some_cat"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no answers found"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32105,
+      "cached_input_tokens": 32042,
+      "output_tokens": 815,
+      "raw": {
+        "input_tokens": 63,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 815,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39523,
+      "cached_input_tokens": 38891,
+      "output_tokens": 509,
+      "raw": {
+        "input_tokens": 632,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 509,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:17:28Z"
+}

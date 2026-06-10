@@ -1,0 +1,333 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 15,
+  "input_text": "Sandra journeyed to the kitchen. The teacher showed the students the map. John is a tall man and not a tall man?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Sandra journeyed to the kitchen.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Sandra 1 journeyed to the kitchen 2.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 1", "type": "concrete", "category": "person"},
+            {"id": "kitchen 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "journey", "mode": "event", "roles": {"destination": "kitchen 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The teacher showed the students the map.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The teacher 3 showed the students 4 the map 5.",
+          "type": "situation",
+          "entities": [{"id": "teacher 3", "type": "concrete", "category": "person"},
+            {"id": "students 4", "type": "concrete", "category": "person"},
+            {"id": "map 5", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 3", "recipient": "students 4", "target": "map 5"}
+            }
+          ],
+          "pre_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is a tall man and not a tall man?",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Is John 6 a tall man and not a tall man?",
+          "type": "query",
+          "entities": [{"id": "John 6", "type": "concrete", "category": "person"}],
+          "adjectives": [["tall","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Sandra 1"],
+            ["isa","kitchen","kitchen 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","journey"],
+                ["has actor","E","Sandra 1"],
+                ["has destination","E","kitchen 2","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W1",
+        ["and",
+          ["isa","person","teacher 3"],
+          ["isa","person","students 4"],
+          ["isa","artifact","map 5"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","show"],
+              ["has actor","E","teacher 3"],
+              ["has recipient","E","students 4"],
+              ["has target","E","map 5"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["question",
+        ["and",
+          ["isa","man","John 6"],
+          ["has degree property","tall","John 6","none","person"],
+          ["not",
+            ["and", ["isa","man","John 6"], ["has degree property","tall","John 6","none","person"]]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","teacher","#:teacher 3"],
+ "@nl": "The teacher 3 showed the students 4 the map 5."},
+{"@name": "entity_S2",
+ "@logic": ["isa","student","#:students 4"],
+ "@nl": "The teacher 3 showed the students 4 the map 5."},
+{"@name": "entity_S2",
+ "@logic": ["isa","student","#:students 4"],
+ "@nl": "The teacher 3 showed the students 4 the map 5."},
+{"@name": "entity_S2",
+ "@logic": ["isa","map","#:map 5"],
+ "@nl": "The teacher 3 showed the students 4 the map 5."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Sandra 1"],
+ "@nl": "Sandra 1 journeyed to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","kitchen","#:kitchen 2"],
+ "@nl": "Sandra 1 journeyed to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Sandra 1 journeyed to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sandra 1 journeyed to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Sandra 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sandra 1 journeyed to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["has destination", "sk0_activity", "#:kitchen 2", "at", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sandra 1 journeyed to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sandra 1 journeyed to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Sandra 1 journeyed to the kitchen 2."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sandra 1 journeyed to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:teacher 3"],
+ "@nl": "The teacher 3 showed the students 4 the map 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:students 4"],
+ "@nl": "The teacher 3 showed the students 4 the map 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","artifact","#:map 5"],
+ "@nl": "The teacher 3 showed the students 4 the map 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The teacher 3 showed the students 4 the map 5."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "show", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "The teacher 3 showed the students 4 the map 5."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:teacher 3", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "The teacher 3 showed the students 4 the map 5."},
+{"@name": "sent_S2",
+ "@logic": ["has recipient", "sk1_activity", "#:students 4", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "The teacher 3 showed the students 4 the map 5."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk1_activity", "#:map 5", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "The teacher 3 showed the students 4 the map 5."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "The teacher 3 showed the students 4 the map 5."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The teacher 3 showed the students 4 the map 5."},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","man","#:John 6"]],
+ "@nl": "Is John 6 a tall man and not a tall man?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "tall", "#:John 6", "none", "person", ["$ctxt","present","W1","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Is John 6 a tall man and not a tall man?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-isa","man","#:John 6"],
+            ["-has degree property", "tall", "#:John 6", "none", "person", ["$ctxt","present","W1","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Is John 6 a tall man and not a tall man?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-isa","man","#:John 6"],
+            ["-has degree property", "tall", "#:John 6", "none", "person", ["$ctxt","present","W1","?:Fv5","?:Fv6"]],
+            ["isa","man","#:John 6"],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 6 a tall man and not a tall man?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-isa","man","#:John 6"],
+            ["-has degree property", "tall", "#:John 6", "none", "person", ["$ctxt","present","W1","?:Fv5","?:Fv6"]],
+            ["has degree property", "tall", "#:John 6", "none", "person", ["$ctxt","present","W1","?:Fv5","?:Fv6"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 6 a tall man and not a tall man?"},
+{"@name": "sent_S3",
+ "@question": ["$defq0"],
+ "@nl": "Is John 6 a tall man and not a tall man?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "tall", "#:John 6", "none", "person", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "tall", "#:John 6", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "#:John 6", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 6 a tall man and not a tall man?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv18"], ["has type","?:E","go","?:Fv18"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","tall","?:X","none","?:Fv35","?:Fv19"],
+            ["has degree property","high","?:X","none","?:Fv36","?:Fv19"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","high","?:X","none","?:Fv37","?:Fv20"],
+            ["has degree property","tall","?:X","none","?:Fv38","?:Fv20"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "none", "?:Fv39", ["$ctxt","past","?:Fv21","?:Fv22","?:Fv23"]],
+            ["has degree property", "tall", "?:X", "none", "?:Fv40", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "none", "?:Fv41", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv24","?:Fv25","?:Fv26"]],
+            ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S3","assumption",1], [["-isa","man","#:John 6"], ["-$defq0"], ["-has degree property", "tall", "#:John 6", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [2, ["in","sent_S3","assumption",1], [["-$defq0"], ["has degree property", "tall", "#:John 6", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has degree property", "tall", "#:John 6", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [5, ["in","sent_S3","assumption",1], [["-$defq0"], ["isa","man","#:John 6"]]],
+          [6, ["mp",5,3,"fromga",1], [["isa","man","#:John 6"]]],
+          [7, ["mp", [1,2], 4, 6, 3, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John is a tall man and not a tall man?",
+"Proof steps (by contradiction):",
+"  (1) If John is a man and answer holds then John is not a tall person  [sentence 1]",
+"  (2) If answer holds then John is a tall person  [sentence 1]",
+"  (3) Answer holds  [assumption]",
+"  (4) John is a tall person  [from steps 2, 3]",
+"  (5) If answer holds then John is a man  [sentence 1]",
+"  (6) John is a man  [from steps 5, 3]",
+"  (7) Contradiction  [from steps 1, 4, 6, 3]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32075,
+      "cached_input_tokens": 32042,
+      "output_tokens": 542,
+      "raw": {
+        "input_tokens": 33,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 542,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39323,
+      "cached_input_tokens": 38891,
+      "output_tokens": 680,
+      "raw": {
+        "input_tokens": 432,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 680,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:17:11Z"
+}

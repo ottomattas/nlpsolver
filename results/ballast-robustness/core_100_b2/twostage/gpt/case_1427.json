@@ -1,0 +1,345 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1427,
+  "input_text": "Penguins are birds. Penguins do not fly. Animals have legs. Birds fly. A man was yellow. John is a penguin. John is a bird?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Penguins are birds.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Penguins are birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Penguins do not fly.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Penguins do not fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "Animals have legs.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Animals have legs.",
+          "type": "normal_rule",
+          "entities": [{"id": "animals", "type": "generic", "category": "animal"},
+            {"id": "legs", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Birds fly.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Birds fly.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "A man was yellow.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "A man 1 was yellow.",
+          "type": "situation",
+          "entities": [{"id": "man 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["yellow","none","person"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is a penguin.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "John 1 is a penguin.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"},
+            {"id": "penguin", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is a bird?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Is John 1 a bird?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"},
+            {"id": "bird", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","penguin","X"], ["isa","bird","X"]]]]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","animal","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","leg","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S3",0.99]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","fly"],
+                    ["has actor","E","X"],
+                    ["capability","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S4",0.95]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","man","man 1"], ["has degree property","yellow","man 1","none","person"]]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S6", ["holds", "W0", ["and", ["isa","person","John 1"], ["isa","penguin","John 1"]]]],
+    ["@id", "S7", ["question", ["isa","bird","John 1"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","penguin","?:X"], ["isa","bird","?:X"]],
+ "@nl": "Penguins are birds."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Penguins do not fly."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","animal","?:X"], ["isa", "leg", ["sk0","?:X"]]],
+ "@nl": "Animals have legs."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","animal","?:X"],
+            ["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","animal",1], ["$not", ["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Animals have legs."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk1","?:X"]]],
+ "@nl": "Birds fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk1","?:X"], "fly", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Birds fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk1","?:X"], "?:X", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Birds fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"],
+            ["capability", ["sk1","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk1","?:X"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Birds fly."},
+{"@name": "sent_S5",
+ "@logic": ["isa","man","#:man 1"],
+ "@nl": "A man 1 was yellow."},
+{"@name": "sent_S5",
+ "@logic": ["has property", "yellow", "#:man 1", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "A man 1 was yellow."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is a penguin."},
+{"@name": "sent_S6",
+ "@logic": ["isa","penguin","#:John 1"],
+ "@nl": "John 1 is a penguin."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","bird","#:John 1"]],
+ "@nl": "Is John 1 a bird?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","bird","#:John 1"], ["$defq0"]],
+ "@nl": "Is John 1 a bird?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 a bird?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","leg","$some_leg"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","leg","$some_not_leg"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv29"], ["has type","?:E","go","?:Fv29"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "yellow", "?:X", ["$ctxt","past","?:Fv30","?:Fv31","?:Fv32"]],
+            ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]],
+            ["$block", 0, ["$not", ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "yellow", "?:X", ["$ctxt","past","?:Fv33","?:Fv34","?:Fv35"]],
+            ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]],
+            ["$block", 0, ["$not", ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S1","assumption",1], [["-isa","penguin","?:X"], ["isa","bird","?:X"]]],
+          [2, ["in","sent_S6","assumption",1], [["isa","penguin","#:John 1"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["isa","bird","#:John 1"]]],
+          [4, ["in","sent_S7","assumption",1], [["-isa","bird","#:John 1"], ["$defq0"]]],
+          [5, ["in","sent_S7","goal",1], [["-$defq0"]]],
+          [6, ["mp",3,4,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Penguins are birds.",
+"  (2) John is a penguin.",
+"  (3) John is a bird?",
+"Proof steps (by contradiction):",
+"  (1) If some X is a penguin then X is a bird  [sentence 1]",
+"  (2) John is a penguin  [sentence 2]",
+"  (3) John is a bird  [from steps 1, 2]",
+"  (4) If John is a bird then answer holds  [sentence 3]",
+"  (5) assume for contradiction: the answer is no  [from question]",
+"  (6) Contradiction  [from steps 3, 4, 5]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28346,
+      "cached_input_tokens": 28288,
+      "output_tokens": 747,
+      "raw": {
+        "input_tokens": 28346,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 747,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29093
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33973,
+      "cached_input_tokens": 33280,
+      "output_tokens": 510,
+      "raw": {
+        "input_tokens": 33973,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 510,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34483
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:50:02Z"
+}

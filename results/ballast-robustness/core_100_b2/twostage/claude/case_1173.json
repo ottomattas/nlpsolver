@@ -1,0 +1,419 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1173,
+  "input_text": "John has finished his homework. Tom opened the door and the window. Dole was defeated by Clinton. Is the homework unfinished?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John has finished his homework.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 has finished the homework 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "homework 2", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{
+              "root": "finish",
+              "mode": "event",
+              "roles": {"actor": "John 1", "target": "homework 2"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Tom opened the door and the window.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Tom 3 opened the door 4.",
+          "type": "situation",
+          "entities": [{"id": "Tom 3", "type": "concrete", "category": "person"},
+            {"id": "door 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "open", "mode": "event", "roles": {"actor": "Tom 3", "target": "door 4"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "Tom 3 opened the window 5.",
+          "type": "situation",
+          "entities": [{"id": "Tom 3", "type": "concrete", "category": "person"},
+            {"id": "window 5", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "open", "mode": "event", "roles": {"actor": "Tom 3", "target": "window 5"}}],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Dole was defeated by Clinton.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Clinton 6 defeated Dole 7.",
+          "type": "real",
+          "entities": [{
+              "id": "Clinton 6",
+              "type": "concrete",
+              "category": "person",
+              "url": "https://en.wikipedia.org/wiki/Bill_Clinton"
+            },
+            {
+              "id": "Dole 7",
+              "type": "concrete",
+              "category": "person",
+              "url": "https://en.wikipedia.org/wiki/Bob_Dole"
+            }
+          ],
+          "actions": [{"root": "defeat", "mode": "event", "roles": {"actor": "Clinton 6", "target": "Dole 7"}}],
+          "pre_state": "W3",
+          "next_state": "W4",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Is the homework unfinished?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Is the homework 2 unfinished?",
+          "type": "query",
+          "entities": [{"id": "homework 2", "type": "concrete", "category": "abstract"}],
+          "adjectives": [["finished","none","homework"]],
+          "pre_state": "W1"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["isa","homework","homework 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","finish"],
+                ["has actor","E","John 1"],
+                ["has target","E","homework 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Tom 3"],
+            ["isa","door","door 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","open"],
+                ["has actor","E","Tom 3"],
+                ["has target","E","door 4"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","Tom 3"],
+            ["isa","window","window 5"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","open"],
+                ["has actor","E","Tom 3"],
+                ["has target","E","window 5"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W3",
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","defeat"],
+              ["has actor","E","https://en.wikipedia.org/wiki/Bill_Clinton"],
+              ["has target","E","https://en.wikipedia.org/wiki/Bob_Dole"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ],
+        ["next","W3","W4"]
+      ]
+    ],
+    ["@id","S5",
+      ["question", ["not", ["has degree property","finished","homework 2","none","homework"]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","person","#:Clinton 6"],
+ "@nl": "Clinton 6 defeated Dole 7."},
+{"@name": "entity_S4",
+ "@logic": ["isa","person","#:Dole 7"],
+ "@nl": "Clinton 6 defeated Dole 7."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 has finished the homework 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","homework","#:homework 2"],
+ "@nl": "John 1 has finished the homework 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1 has finished the homework 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "finish", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 has finished the homework 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 has finished the homework 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:homework 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 has finished the homework 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 has finished the homework 2."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "John 1 has finished the homework 2."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "John 1 has finished the homework 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Tom 3"],
+ "@nl": "Tom 3 opened the door 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","door","#:door 4"],
+ "@nl": "Tom 3 opened the door 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Tom 3 opened the door 4."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "open", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 3 opened the door 4."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:Tom 3", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 3 opened the door 4."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk1_activity", "#:door 4", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 3 opened the door 4."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 3 opened the door 4."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Tom 3 opened the door 4."},
+{"@name": "sent_S2",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Tom 3 opened the door 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Tom 3"],
+ "@nl": "Tom 3 opened the window 5."},
+{"@name": "sent_S3",
+ "@logic": ["isa","window","#:window 5"],
+ "@nl": "Tom 3 opened the window 5."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Tom 3 opened the window 5."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "open", ["$ctxt","past","W2","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 3 opened the window 5."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:Tom 3", ["$ctxt","past","W2","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 3 opened the window 5."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk2_activity", "#:window 5", ["$ctxt","past","W2","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 3 opened the window 5."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W2","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 3 opened the window 5."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Tom 3 opened the window 5."},
+{"@name": "sent_S3",
+ "@logic": ["next","W2","W3"],
+ "@nl": "Tom 3 opened the window 5."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Clinton 6 defeated Dole 7."},
+{"@name": "sent_S4",
+ "@logic": ["-has type", "sk3_activity", "victory", ["$ctxt","past","W3","?:Fv7","?:Fv8"]],
+ "@nl": "Clinton 6 defeated Dole 7."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk3_activity", "https://en.wikipedia.org/wiki/Bill_Clinton", ["$ctxt","past","W3","?:Fv7","?:Fv8"]],
+ "@nl": "Clinton 6 defeated Dole 7."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk3_activity", "https://en.wikipedia.org/wiki/Bob_Dole", ["$ctxt","past","W3","?:Fv7","?:Fv8"]],
+ "@nl": "Clinton 6 defeated Dole 7."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W3","?:Fv7","?:Fv8"]],
+ "@nl": "Clinton 6 defeated Dole 7."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Clinton 6 defeated Dole 7."},
+{"@name": "sent_S4",
+ "@logic": ["next","W3","W4"],
+ "@nl": "Clinton 6 defeated Dole 7."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-has property", "finished", "#:homework 2", ["$ctxt","present","W1","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Is the homework 2 unfinished?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["has property", "finished", "#:homework 2", ["$ctxt","present","W1","?:Fv9","?:Fv10"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is the homework 2 unfinished?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "Is the homework 2 unfinished?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "finished", "#:homework 2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "finished", "#:homework 2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "finished", "#:homework 2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the homework 2 unfinished?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","open","?:X"], ["isa","outside","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","outside","?:X"], ["isa","open","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W3","W4"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","frm_47","axiom",1], [["has property", "finished", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-has type", "?:V", "finish", ["$ctxt","?:W","?:2006","?:Z","?:U"]], ["-has target", "?:V", "?:X", ["$ctxt","?:W","?:2006","?:Z","?:U"]], ["-next","?:2006","?:Y"]]],
+          [2, ["in","sent_S1","assumption",1], [["has type", "sk0_activity", "finish", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 1], [["-has target", "sk0_activity", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]], ["has property", "finished", "?:X", ["$ctxt","present","?:U","?:Y","?:Z"]], ["-next","W0","?:U"]]],
+          [4, ["in","sent_S1","assumption",1], [["has target", "sk0_activity", "#:homework 2", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [5, ["mp",3,4,"fromassumption",1], [["has property", "finished", "#:homework 2", ["$ctxt","present","?:X","?:Y","?:Z"]], ["-next","W0","?:X"]]],
+          [6, ["in","frm_world_geom","assumption",1], [["next","W0","W1"]]],
+          [7, ["in","sent_S5","assumption",1], [["-$defq0"], ["-has property", "finished", "#:homework 2", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [8, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [9, ["mp",7,8,"fromga",1], [["-has property", "finished", "#:homework 2", ["$ctxt","present","W1","?:X3","?:Y3"]]]],
+          [10, ["mp", [5,1], 6, 9, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John has finished his homework.",
+"  (2) Is the homework unfinished?",
+"Knowledge used:",
+"  If V is a finish event and V targets some X and a situation E1 is followed by a situation Y then X is finished. Why: assumed basic knowledge.",
+"  The situation W0 is followed by the situation W1. Why: assumed basic knowledge.",
+"Proof steps (by contradiction):",
+"  (1) If V is a finish event and V targets some X and a situation E1 is followed by a situation Y then X is finished  [background knowledge]",
+"  (2) The event act1 is a finish event  [sentence 1]",
+"  (3) If the event act1 targets some X and the situation W0 is followed by a situation U then X is finished  [from steps 1, 2]",
+"  (4) The event act1 targets the homework B  [sentence 1]",
+"  (5) If the situation W0 is followed by a situation X then the homework B is finished  [from steps 3, 4]",
+"  (6) The situation W0 is followed by the situation W1  [background knowledge]",
+"  (7) If answer holds then the homework B is not finished  [sentence 2]",
+"  (8) Answer holds  [assumption]",
+"  (9) The homework B is not finished  [from steps 7, 8]",
+"  (10) Contradiction  [from steps 5, 6, 9]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32077,
+      "cached_input_tokens": 32042,
+      "output_tokens": 922,
+      "raw": {
+        "input_tokens": 35,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 922,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39636,
+      "cached_input_tokens": 38891,
+      "output_tokens": 988,
+      "raw": {
+        "input_tokens": 745,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 988,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:40:46Z"
+}

@@ -1,0 +1,435 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1052,
+  "input_text": "Probably John smokes. The city was destroyed. Mary was given a promotion. Is the city intact?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Likely false.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Probably John smokes.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 smokes.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 1"}}],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "The city was destroyed.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Someone destroyed the city 1.",
+          "type": "situation",
+          "entities": [{"id": "someone 0", "type": "generic", "category": "person"},
+            {"id": "city 1", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "destroy",
+              "mode": "event",
+              "roles": {"actor": "someone 0", "target": "city 1"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary was given a promotion.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Someone gave Mary 2 a promotion 3.",
+          "type": "situation",
+          "entities": [{"id": "someone 0", "type": "generic", "category": "person"},
+            {"id": "Mary 2", "type": "concrete", "category": "person"},
+            {"id": "promotion 3", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{
+              "root": "give",
+              "mode": "event",
+              "roles": {"actor": "someone 0", "recipient": "Mary 2", "target": "promotion 3"}
+            }
+          ],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Is the city intact?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Is the city 1 intact?",
+          "type": "query",
+          "entities": [{"id": "city 1", "type": "concrete", "category": "place"}],
+          "adjectives": [["intact","none","entity"]],
+          "pre_state": "W1"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["normally",
+            ["exists","E",
+              ["and",
+                ["isa","person","John 1"],
+                ["isa","activity","E"],
+                ["has type","E","smoke"],
+                ["has actor","E","John 1"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.8]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","city","city 1"],
+            ["exists","X",
+              ["and",
+                ["isa","person","X"],
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","destroy"],
+                    ["has actor","E","X"],
+                    ["has target","E","city 1"],
+                    ["has time","E","past","in"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Mary 2"],
+            ["isa","promotion","promotion 3"],
+            ["exists","X",
+              ["and",
+                ["isa","person","X"],
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","give"],
+                    ["has actor","E","X"],
+                    ["has recipient","E","Mary 2"],
+                    ["has target","E","promotion 3"],
+                    ["has time","E","past","in"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["and", ["isa","city","city 1"], ["has degree property","intact","city 1","none","entity"]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "smoke", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:John 1", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S1",
+ "@logic": [["typical", "sk0_activity", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","$generic",1], ["$not", ["typical", "sk0_activity", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S2",
+ "@logic": ["isa","city","#:city 1"],
+ "@nl": "Someone destroyed the city 1."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","sk1_person"],
+ "@nl": "Someone destroyed the city 1."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Someone destroyed the city 1."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk2_activity", "destroy", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Someone destroyed the city 1."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk2_activity", "sk1_person", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Someone destroyed the city 1."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk2_activity", "#:city 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Someone destroyed the city 1."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Someone destroyed the city 1."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Someone destroyed the city 1."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Someone gave Mary 2 a promotion 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","promotion","#:promotion 3"],
+ "@nl": "Someone gave Mary 2 a promotion 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","sk3_person"],
+ "@nl": "Someone gave Mary 2 a promotion 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Someone gave Mary 2 a promotion 3."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk4_activity", "give", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "Someone gave Mary 2 a promotion 3."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk4_activity", "sk3_person", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "Someone gave Mary 2 a promotion 3."},
+{"@name": "sent_S3",
+ "@logic": ["has recipient", "sk4_activity", "#:Mary 2", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "Someone gave Mary 2 a promotion 3."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk4_activity", "#:promotion 3", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "Someone gave Mary 2 a promotion 3."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "Someone gave Mary 2 a promotion 3."},
+{"@name": "sent_S3",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Someone gave Mary 2 a promotion 3."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","city","#:city 1"]],
+ "@nl": "Is the city 1 intact?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "intact", "#:city 1", ["$ctxt","present","W1","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Is the city 1 intact?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","city","#:city 1"],
+            ["-has property", "intact", "#:city 1", ["$ctxt","present","W1","?:Fv9","?:Fv10"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is the city 1 intact?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Is the city 1 intact?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "intact", "#:city 1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "intact", "#:city 1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "intact", "#:city 1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the city 1 intact?"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "destroy", ["$ctxt","?:Fv16","?:Fv17","?:Fv19","?:Fv20"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv16","?:Fv17","?:Fv19","?:Fv20"]],
+            ["-next","?:Fv17","?:Fv18"],
+            ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv18","?:Fv19","?:Fv20"]],
+            ["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv18","?:Fv19","?:Fv20"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "destroy", "?:X", ["$ctxt","?:Fv21","?:Fv22","?:Fv24","?:Fv25"]],
+            ["-next","?:Fv22","?:Fv23"],
+            ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]],
+            ["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","person","$some_not_person"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv26"], ["has type","?:E","give","?:Fv26"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","destroyed","?:X","?:Fv27"],
+            ["-has property","intact","?:X","?:Fv27"],
+            ["$block", 0, ["has property","intact","?:X","?:Fv27"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","destroyed","?:X","?:Fv28"],
+            ["-has property","intact","?:X","?:Fv28"],
+            ["$block", 0, ["has property","destroyed","?:X","?:Fv28"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "blockers": [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]],
+          ["$block", 0, ["has property", "intact", "#:city 1", ["$ctxt","past","W2","?:X3","?:Y3"]]]
+        ],
+        "confidence": 0.868775,
+        "negative proof": [[1, ["in","frm_93","axiom",1], [["-has property", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]], ["has property", "?:X", "?:Y", ["$ctxt","past","?:W","?:U","?:V"]], ["-before","?:Z","?:W"]]],
+          [2, ["in","frm_verb_result","assumption",0.9], [["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["has property", "destroyed", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-has type", "?:V", "destroy", ["$ctxt","?:W","?:2006","?:Z","?:U"]], ["-has target", "?:V", "?:X", ["$ctxt","?:W","?:2006","?:Z","?:U"]], ["-next","?:2006","?:Y"]]],
+          [3, ["in","sent_S2","assumption",1], [["has type", "sk2_activity", "destroy", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [4, ["mp", [2,2], 3, "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["-has target", "sk2_activity", "?:X", ["$ctxt","past","W0","?:Z","?:U"]], ["has property", "destroyed", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-next","W0","?:Y"]]],
+          [5, ["in","sent_S2","assumption",1], [["has target", "sk2_activity", "#:city 1", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [6, ["mp", [4,1], 5, "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["has property", "destroyed", "#:city 1", ["$ctxt","present","?:X","?:Y","?:Z"]], ["-next","W0","?:X"]]],
+          [7, ["in","sent_S2","assumption",1], [["next","W0","W1"]]],
+          [8, ["mp", [6,2], 7, "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [9, ["mp", 1, [8,1], "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:city 1", ["$ctxt","past","?:Z","?:X","?:Y"]], ["-before","W1","?:Z"]]],
+          [10, ["in","sent_S3","assumption",1], [["next","W1","W2"]]],
+          [11, ["in","frm_91","axiom",1], [["-next","?:X","?:Y"], ["before","?:X","?:Y"]]],
+          [12, ["mp",10,11,"fromassumption",1], [["before","W1","W2"]]],
+          [13, ["mp", [9,2], 12, "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:city 1", ["$ctxt","past","W2","?:X","?:Y"]]]],
+          [14, ["in","frm_excl","assumption",0.95], [["$block", 0, ["has property","intact","?:X","?:Y"]], ["-has property","destroyed","?:X","?:Y"], ["-has property","intact","?:X","?:Y"]]],
+          [15, ["in","sent_S4","assumption",1], [["-$defq0"], ["has property", "intact", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [16, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [17, ["mp",15,16,"fromga",1], [["has property", "intact", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [18, ["mp",1,17,"fromga",1], [["has property", "intact", "#:city 1", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-before","W1","?:X"]]],
+          [19, ["mp", [18,1], 12, "fromga", 1], [["has property", "intact", "#:city 1", ["$ctxt","past","W2","?:X3","?:Y3"]]]],
+          [20, ["mp", [13,1], [14,1], 19, "fromga", 0.855], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["has property", "intact", "#:city 1", ["$ctxt","past","W2","?:X3","?:Y3"]]]]],
+          [21, ["in","frm_world_geom","assumption",1], [["next","W0","W1"]]],
+          [22, ["mp", [6,2], 21, "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [23, ["mp", 1, [22,1], "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:city 1", ["$ctxt","past","?:Z","?:X","?:Y"]], ["-before","W1","?:Z"]]],
+          [24, ["mp", [23,2], 12, "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:city 1", ["$ctxt","past","W2","?:X","?:Y"]]]],
+          [25, ["mp", [24,1], [14,1], 19, "fromga", 0.855], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["has property", "intact", "#:city 1", ["$ctxt","past","W2","?:X3","?:Y3"]]]]],
+          [26, ["cumul",20,25,"fromga",0.868775], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["has property", "intact", "#:city 1", ["$ctxt","past","W2","?:X3","?:Y3"]]]]]
+        ]
+      },
+      {
+        "answer": false,
+        "blockers": [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]],
+          ["$block", 0, ["has property", "intact", "#:city 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]
+        ],
+        "confidence": 0.875663,
+        "negative proof": [[1, ["in","frm_verb_result","assumption",0.9], [["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["has property", "destroyed", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-has type", "?:V", "destroy", ["$ctxt","?:W","?:2006","?:Z","?:U"]], ["-has target", "?:V", "?:X", ["$ctxt","?:W","?:2006","?:Z","?:U"]], ["-next","?:2006","?:Y"]]],
+          [2, ["in","sent_S2","assumption",1], [["has type", "sk2_activity", "destroy", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["mp", [1,2], 2, "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["-has target", "sk2_activity", "?:X", ["$ctxt","past","W0","?:Z","?:U"]], ["has property", "destroyed", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-next","W0","?:Y"]]],
+          [4, ["in","sent_S2","assumption",1], [["has target", "sk2_activity", "#:city 1", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [5, ["mp", [3,1], 4, "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["has property", "destroyed", "#:city 1", ["$ctxt","present","?:X","?:Y","?:Z"]], ["-next","W0","?:X"]]],
+          [6, ["in","frm_world_geom","assumption",1], [["next","W0","W1"]]],
+          [7, ["mp", [5,2], 6, "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [8, ["in","frm_excl","assumption",0.95], [["$block", 0, ["has property","intact","?:X","?:Y"]], ["-has property","destroyed","?:X","?:Y"], ["-has property","intact","?:X","?:Y"]]],
+          [9, ["in","sent_S4","assumption",1], [["-$defq0"], ["has property", "intact", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [10, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [11, ["mp",9,10,"fromga",1], [["has property", "intact", "#:city 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]],
+          [12, ["mp", [7,1], [8,1], 11, "fromga", 0.855], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["has property", "intact", "#:city 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]]],
+          [13, ["in","sent_S2","assumption",1], [["next","W0","W1"]]],
+          [14, ["mp", [5,2], 13, "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [15, ["mp", [14,1], [8,1], 11, "fromga", 0.855], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["has property", "intact", "#:city 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]]],
+          [16, ["cumul",12,15,"fromga",0.875663], [["$block", 0, ["$not", ["has property", "destroyed", "#:city 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["has property", "intact", "#:city 1", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 88%.",
+"Sentences used:",
+"  (1) The city was destroyed.",
+"  (2) Is the city intact?",
+"Knowledge used:",
+"  If V is a destroy event and V targets some X and a situation E1 is followed by a situation Y then normally X is destroyed. Why: assumed basic knowledge.",
+"  The situation W0 is followed by the situation W1. Why: assumed basic knowledge.",
+"  If some X is destroyed then X is not intact, except when X is intact. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If V is a destroy event and V targets some X and a situation E1 is followed by a situation Y then normally X is destroyed  [background knowledge, confidence 90%]",
+"  (2) The event act2 is a destroy event  [sentence 1]",
+"  (3) If the event act2 targets some X and the situation W0 is followed by a situation Y then normally X is destroyed  [from steps 1, 2, confidence 90%]",
+"  (4) The event act2 targets the city A  [sentence 1]",
+"  (5) If the situation W0 is followed by a situation X then normally the city A is destroyed  [from steps 3, 4, confidence 90%]",
+"  (6) The situation W0 is followed by the situation W1  [background knowledge]",
+"  (7) Normally the city A is destroyed  [from steps 5, 6, confidence 90%]",
+"  (8) If some X is destroyed then X is not intact, except when X is intact  [background knowledge, confidence 95%]",
+"  (9) If answer holds then the city A is intact  [sentence 2]",
+"  (10) Answer holds  [assumption]",
+"  (11) The city A is intact  [from steps 9, 10]",
+"  (12) Outstanding exception: the city A is not destroyed and the city A is intact  [from steps 7, 8, 11, confidence 86%]",
+"  (13) The situation W0 is followed by the situation W1  [sentence 1]",
+"  (14) Normally the city A is destroyed  [from steps 5, 13, confidence 90%]",
+"  (15) Outstanding exception: the city A is not destroyed and the city A is intact  [from steps 14, 8, 11, confidence 86%]",
+"  (16) Outstanding exception: the city A is not destroyed and the city A is intact  [from steps 12, 15, confidence 88%]",
+"Exceptions checked and not holding:",
+"  city A is not destroyed",
+"  city A is intact"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28334,
+      "cached_input_tokens": 28288,
+      "output_tokens": 611,
+      "raw": {
+        "input_tokens": 28334,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 611,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 28945
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33902,
+      "cached_input_tokens": 33280,
+      "output_tokens": 457,
+      "raw": {
+        "input_tokens": 33902,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 457,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34359
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:37:02Z"
+}

@@ -1,0 +1,305 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1521,
+  "input_text": "It is not probable that John is a child of Mike. A tall and quiet man entered. The length of the red car is 3 meters. John is a child of Mike?",
+  "expected_answer": "Probably false.",
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "It is not probable that John is a child of Mike.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a child of Mike 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Mike 2", "type": "concrete", "category": "person"}
+          ],
+          "confidence": 0.2
+        }
+      ]
+    },
+    {
+      "raw": "A tall and quiet man entered.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "A tall and quiet man 3 entered.",
+          "type": "situation",
+          "entities": [{"id": "man 3", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "enter", "mode": "event"}],
+          "adjectives": [["tall","none","person"], ["quiet","none","person"]],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The length of the red car is 3 meters.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The length 5 of the red car 4 is 3 meters.",
+          "type": "situation",
+          "entities": [{"id": "car 4", "type": "concrete", "category": "artifact"},
+            {"id": "length 5", "type": "concrete", "text": "length"},
+            {"id": "3 meters", "type": "concrete", "category": "measure"}
+          ],
+          "adjectives": [["red","none","none"]],
+          "definites": [["length of","length 5","car 4"]]
+        },
+        {
+          "unit_id": "S4",
+          "text": "The length 5 is the length of the red car 4.",
+          "type": "situation",
+          "entities": [{"id": "length 5", "type": "concrete", "text": "length"},
+            {"id": "car 4", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["length of","length 5","car 4"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is a child of Mike?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Is John 1 a child of Mike 2?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Mike 2", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["isa","person","Mike 2"],
+            ["is rel2","child of","John 1","Mike 2"]
+          ]
+        ],
+        ["@p","S1",0.2]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","man","man 3"],
+            ["has degree property","tall","man 3","none","person"],
+            ["has degree property","quiet","man 3","none","person"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","enter"],
+                ["has actor","E","man 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","car","car 4"],
+            ["has degree property","red","car 4","none","none"],
+            ["=", ["$measure_of","length","car 4","W0"], ["$measure",3,"meter"]]
+          ]
+        ],
+        ["@definite","S3","W0","length of","car 4","length 5"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds", "W0", ["and", ["isa","car","car 4"], ["isa","length","length 5"]]],
+        ["@definite","S4","W0","length of","car 4","length 5"]
+      ]
+    ],
+    ["@id", "S5", ["question", ["is rel2","child of","John 1","Mike 2"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:Mike 2"],
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "entity_S3",
+ "@logic": ["isa","measure","3 meters"],
+ "@nl": "The length 5 of the red car 4 is 3 meters."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","person","#:John 1"],
+            ["-isa","person","#:Mike 2"],
+            ["-is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","man","#:man 3"],
+ "@nl": "A tall and quiet man 3 entered."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "tall", "#:man 3", "none", "person", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A tall and quiet man 3 entered."},
+{"@name": "sent_S2",
+ "@logic": ["-has degree property", "active", "#:man 3", "none", "person", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A tall and quiet man 3 entered."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "A tall and quiet man 3 entered."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "enter", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A tall and quiet man 3 entered."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:man 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A tall and quiet man 3 entered."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A tall and quiet man 3 entered."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "A tall and quiet man 3 entered."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "A tall and quiet man 3 entered."},
+{"@name": "sent_S3",
+ "@logic": ["isa","car","#:car 4"],
+ "@nl": "The length 5 of the red car 4 is 3 meters."},
+{"@name": "sent_S3",
+ "@logic": ["has property", "red", "#:car 4", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The length 5 of the red car 4 is 3 meters."},
+{"@name": "sent_S3",
+ "@logic": ["=", ["$measure_of","length","#:car 4","W0"], ["$list",3,"#:meter"]],
+ "@nl": "The length 5 of the red car 4 is 3 meters."},
+{"@name": "sent_S4",
+ "@logic": ["isa","car","#:car 4"],
+ "@nl": "The length 5 is the length of the red car 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","length","#:length 5"],
+ "@nl": "The length 5 is the length of the red car 4."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","W1","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Is John 1 a child of Mike 2?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","W1","?:Fv9","?:Fv10"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 a child of Mike 2?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 a child of Mike 2?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 a child of Mike 2?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","tall","?:X","none","?:Fv34","?:Fv12"],
+            ["has degree property","high","?:X","none","?:Fv35","?:Fv12"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","high","?:X","none","?:Fv36","?:Fv13"],
+            ["has degree property","tall","?:X","none","?:Fv37","?:Fv13"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv14","?:Fv15","?:Fv16"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv14","?:Fv15","?:Fv16"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv14","?:Fv15","?:Fv16"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv17","?:Fv18","?:Fv19"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv17","?:Fv18","?:Fv19"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "none", "?:Fv38", ["$ctxt","past","?:Fv20","?:Fv21","?:Fv22"]],
+            ["has degree property", "tall", "?:X", "none", "?:Fv39", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "none", "?:Fv40", ["$ctxt","present","?:Fv20","?:Fv21","?:Fv22"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv23","?:Fv24","?:Fv25"]],
+            ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32086,
+      "cached_input_tokens": 32042,
+      "output_tokens": 773,
+      "raw": {
+        "input_tokens": 44,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 773,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39499,
+      "cached_input_tokens": 38891,
+      "output_tokens": 818,
+      "raw": {
+        "input_tokens": 608,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 818,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:53:58Z"
+}

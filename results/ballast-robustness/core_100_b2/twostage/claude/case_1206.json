@@ -1,0 +1,505 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1206,
+  "input_text": "Tom opened the door and the window. John stopped smoking. Tallinn is a city. Does John smoke now?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Tom opened the door and the window.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Tom 1 opened the door 2.",
+          "type": "situation",
+          "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"},
+            {"id": "door 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "open", "mode": "event", "roles": {"actor": "Tom 1", "target": "door 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "Tom 1 opened the window 3.",
+          "type": "situation",
+          "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"},
+            {"id": "window 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "open", "mode": "event", "roles": {"actor": "Tom 1", "target": "window 3"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John stopped smoking.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 4 stopped smoking.",
+          "type": "situation",
+          "entities": [{"id": "John 4", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "stop",
+              "mode": "event",
+              "roles": {
+                "actor": "John 4",
+                "content": {"root": "smoke", "mode": "event", "roles": {"actor": "John 4"}}
+              }
+            }
+          ],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "John 4 smoked.",
+          "type": "situation",
+          "entities": [{"id": "John 4", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 4"}}],
+          "pre_state": "W2",
+          "time": "past"
+        },
+        {
+          "unit_id": "S5",
+          "text": "John 4 does not smoke.",
+          "type": "situation",
+          "entities": [{"id": "John 4", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 4"}}],
+          "pre_state": "W3"
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is a city.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Tallinn 5 is a city.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 5",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Does John smoke now?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Does John 4 smoke now?",
+          "type": "query",
+          "entities": [{"id": "John 4", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 4"}}],
+          "pre_state": "W3",
+          "time": "present"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Tom 1"],
+            ["isa","door","door 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","open"],
+                ["has actor","E","Tom 1"],
+                ["has target","E","door 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Tom 1"],
+            ["isa","window","window 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","open"],
+                ["has actor","E","Tom 1"],
+                ["has target","E","window 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","John 4"],
+            ["exists","E1",
+              ["and",
+                ["isa","activity","E1"],
+                ["has type","E1","stop"],
+                ["has actor","E1","John 4"],
+                ["has time","E1","past","in"],
+                ["exists","E2",
+                  ["and",
+                    ["has content","E1","E2"],
+                    ["isa","activity","E2"],
+                    ["has type","E2","smoke"],
+                    ["has actor","E2","John 4"],
+                    ["has time","E2","past","in"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W2",
+        ["and",
+          ["isa","person","John 4"],
+          ["normally",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","smoke"],
+                ["has actor","E","John 4"],
+                ["has time","E","past","in"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W3",
+        ["and",
+          ["isa","person","John 4"],
+          ["not",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","smoke"],
+                ["has actor","E","John 4"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S6", ["holds", "W0", ["isa","city","https://en.wikipedia.org/wiki/Tallinn"]]],
+    ["@id","S7",
+      ["question",
+        ["normally",
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","smoke"],
+              ["has actor","E","John 4"],
+              ["typical","E"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "entity_S6",
+ "@logic": ["isa","place","#:Tallinn 5"],
+ "@nl": "Tallinn 5 is a city."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Tom 1"],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","door","#:door 2"],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "open", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Tom 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:door 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Tom 1"],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","window","#:window 3"],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "open", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:Tom 1", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk1_activity", "#:window 3", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S2",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 4"],
+ "@nl": "John 4 stopped smoking."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "John 4 stopped smoking."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "stop", ["$ctxt","past","W2","?:Fv5","?:Fv6"]],
+ "@nl": "John 4 stopped smoking."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:John 4", ["$ctxt","past","W2","?:Fv5","?:Fv6"]],
+ "@nl": "John 4 stopped smoking."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W2","?:Fv5","?:Fv6"]],
+ "@nl": "John 4 stopped smoking."},
+{"@name": "sent_S3",
+ "@logic": ["has content","sk2_activity","sk3_activity"],
+ "@nl": "John 4 stopped smoking."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "John 4 stopped smoking."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk3_activity", "smoke", ["$ctxt","past","W2","?:Fv5","?:Fv6"]],
+ "@nl": "John 4 stopped smoking."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk3_activity", "#:John 4", ["$ctxt","past","W2","?:Fv5","?:Fv6"]],
+ "@nl": "John 4 stopped smoking."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W2","?:Fv5","?:Fv6"]],
+ "@nl": "John 4 stopped smoking."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "John 4 stopped smoking."},
+{"@name": "sent_S3",
+ "@logic": ["next","W2","W3"],
+ "@nl": "John 4 stopped smoking."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:John 4"],
+ "@nl": "John 4 smoked."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "John 4 smoked."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk4_activity", "smoke", ["$ctxt","past","?:Fv9","?:Fv7","?:Fv8"]],
+ "@nl": "John 4 smoked."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk4_activity", "#:John 4", ["$ctxt","past","?:Fv9","?:Fv7","?:Fv8"]],
+ "@nl": "John 4 smoked."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","?:Fv9","?:Fv7","?:Fv8"]],
+ "@nl": "John 4 smoked."},
+{"@name": "sent_S4",
+ "@logic": [["typical", "sk4_activity", ["$ctxt","past","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$block", ["$","$generic",1], ["$not", ["typical", "sk4_activity", ["$ctxt","past","?:Fv9","?:Fv7","?:Fv8"]]]]
+           ],
+ "@nl": "John 4 smoked."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:John 4"],
+ "@nl": "John 4 does not smoke."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "smoke", ["$ctxt","present","W3","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "#:John 4", ["$ctxt","present","W3","?:Fv11","?:Fv12"]],
+            ["-typical", "?:E", ["$ctxt","present","W3","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "John 4 does not smoke."},
+{"@name": "sent_S6",
+ "@logic": ["isa","city","https://en.wikipedia.org/wiki/Tallinn"],
+ "@nl": "Tallinn 5 is a city."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk5_activity"]],
+ "@nl": "Does John 4 smoke now?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk5_activity", "smoke", ["$ctxt","present","?:Fv17","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Does John 4 smoke now?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk5_activity", "#:John 4", ["$ctxt","present","?:Fv17","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Does John 4 smoke now?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["typical", "sk5_activity", ["$ctxt","present","?:Fv17","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Does John 4 smoke now?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "smoke", ["$ctxt","present","?:Fv17","?:Fv15","?:Fv16"]],
+            ["-has actor", "?:E", "#:John 4", ["$ctxt","present","?:Fv17","?:Fv15","?:Fv16"]],
+            ["-typical", "?:E", ["$ctxt","present","?:Fv17","?:Fv15","?:Fv16"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 4 smoke now?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Does John 4 smoke now?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","open","?:X"], ["isa","outside","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","outside","?:X"], ["isa","open","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S5","assumption",1], [["-has type", "?:X", "smoke", ["$ctxt","present","W3","?:Y","?:Z"]], ["-has actor", "?:X", "#:John 4", ["$ctxt","present","W3","?:Y","?:Z"]], ["-typical", "?:X", ["$ctxt","present","W3","?:Y","?:Z"]], ["-isa","activity","?:X"]]],
+          [2, ["in","sent_S7","assumption",1], [["-$defq0"], ["has type", "sk5_activity", "smoke", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has type", "sk5_activity", "smoke", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["in","sent_S7","assumption",1], [["-$defq0"], ["isa","activity","sk5_activity"]]],
+          [6, ["mp",5,3,"fromga",1], [["isa","activity","sk5_activity"]]],
+          [7, ["mp",1,4,6,"fromga",1], [["-has actor", "sk5_activity", "#:John 4", ["$ctxt","present","W3","?:X","?:Y"]], ["-typical", "sk5_activity", ["$ctxt","present","W3","?:X","?:Y"]]]],
+          [8, ["in","sent_S7","assumption",1], [["-$defq0"], ["has actor", "sk5_activity", "#:John 4", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [9, ["mp",8,3,"fromga",1], [["has actor", "sk5_activity", "#:John 4", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [10, ["mp",7,9,"fromga",1], [["-typical", "sk5_activity", ["$ctxt","present","W3","?:X","?:Y"]]]],
+          [11, ["in","sent_S7","assumption",1], [["-$defq0"], ["typical", "sk5_activity", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [12, ["mp",11,3,"fromga",1], [["typical", "sk5_activity", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [13, ["mp",10,12,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John stopped smoking.",
+"  (2) Does John smoke now?",
+"Proof steps (by contradiction):",
+"  (1) If X is a smoke event and John performs X and X is an activity then X is not typical  [sentence 1]",
+"  (2) If answer holds then the event act6 is a smoke event  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) The event act6 is a smoke event  [from steps 2, 3]",
+"  (5) If answer holds then the event act6 is an activity  [sentence 2]",
+"  (6) The event act6 is an activity  [from steps 5, 3]",
+"  (7) If John performs the event act6 then the act6 is not typical  [from steps 1, 4, 6]",
+"  (8) If answer holds then John performs the event act6  [sentence 2]",
+"  (9) John performs the event act6  [from steps 8, 3]",
+"  (10) The act6 is not typical  [from steps 7, 9]",
+"  (11) If answer holds then the event act6 is typical  [sentence 2]",
+"  (12) The event act6 is typical  [from steps 11, 3]",
+"  (13) Contradiction  [from steps 10, 12]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32072,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1050,
+      "raw": {
+        "input_tokens": 30,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1050,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39728,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1156,
+      "raw": {
+        "input_tokens": 837,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1156,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 41572,
+      "cached_input_tokens": 38891,
+      "output_tokens": 875,
+      "raw": {
+        "input_tokens": 2681,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 875,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:41:22Z"
+}

@@ -1,0 +1,341 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1318,
+  "input_text": "Sara, the sister of Mike, left. John Sweeney is a car. Baby bears eat no berries. John Smith is bad. Who is John Sweeney?",
+  "expected_answer": "A car.",
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "A car.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Sara, the sister of Mike, left.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Sara 1, the sister 2 of Mike 3, left.",
+          "type": "situation",
+          "entities": [{"id": "Sara 1", "type": "concrete", "category": "person"},
+            {"id": "sister 2", "type": "concrete", "text": "sister", "category": "person"},
+            {"id": "Mike 3", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "leave", "mode": "event", "roles": {"actor": "Sara 1"}}],
+          "definites": [["sister of","sister 2","Mike 3"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "Sister 2 is the sister of Mike 3.",
+          "type": "situation",
+          "entities": [{"id": "sister 2", "type": "concrete", "text": "sister", "category": "person"},
+            {"id": "Mike 3", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["sister of","sister 2","Mike 3"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John Sweeney is a car.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John Sweeney 4 is a car.",
+          "type": "situation",
+          "entities": [{"id": "John Sweeney 4", "type": "concrete", "category": "person"},
+            {"id": "car", "type": "generic", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Baby bears eat no berries.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Baby bears eat no berries.",
+          "type": "normal_rule",
+          "entities": [{"id": "baby bears", "type": "generic", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "dependent", "category": "plant"}
+          ],
+          "actions": [{
+              "root": "eat",
+              "mode": "habitual",
+              "roles": {"actor": "baby bears", "target": "berries"}
+            }
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "John Smith is bad.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "John Smith 5 is bad.",
+          "type": "situation",
+          "entities": [{"id": "John Smith 5", "type": "concrete", "category": "person"}],
+          "adjectives": [["bad","none","entity"]]
+        }
+      ]
+    },
+    {
+      "raw": "Who is John Sweeney?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Which entity is John Sweeney 4?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "John Sweeney 4", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Sara 1"],
+            ["isa","person","sister 2"],
+            ["isa","person","Mike 3"],
+            ["have","Mike 3","sister 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","leave"],
+                ["has actor","E","Sara 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["@definite","S1","W0","sister of","Mike 3","sister 2"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","sister 2"],
+            ["isa","person","Mike 3"],
+            ["have","Mike 3","sister 2"]
+          ]
+        ],
+        ["@definite","S2","W0","sister of","Mike 3","sister 2"]
+      ]
+    ],
+    ["@id", "S3", ["holds", "W0", ["isa","car","John Sweeney 4"]]],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","baby bear","X"],
+              ["normally",
+                ["not",
+                  ["exists","E",
+                    ["and",
+                      ["isa","activity","E"],
+                      ["has type","E","eat"],
+                      ["has actor","E","X"],
+                      ["exists", "Y", ["and", ["isa","berry","Y"], ["has target","E","Y"]]],
+                      ["typical","E"]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S4",0.99]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John Smith 5"],
+          ["has degree property","bad","John Smith 5","none","entity"]
+        ]
+      ]
+    ],
+    ["@id", "S6", ["ask", "X", ["=","X","John Sweeney 4"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","sister","#:sister 2"],
+ "@nl": "Sara 1, the sister 2 of Mike 3, left."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Sara 1"],
+ "@nl": "Sara 1, the sister 2 of Mike 3, left."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:sister 2"],
+ "@nl": "Sara 1, the sister 2 of Mike 3, left."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mike 3"],
+ "@nl": "Sara 1, the sister 2 of Mike 3, left."},
+{"@name": "sent_S1",
+ "@logic": ["have", "#:Mike 3", "#:sister 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sara 1, the sister 2 of Mike 3, left."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Sara 1, the sister 2 of Mike 3, left."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "leave", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sara 1, the sister 2 of Mike 3, left."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Sara 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sara 1, the sister 2 of Mike 3, left."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Sara 1, the sister 2 of Mike 3, left."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:sister 2"],
+ "@nl": "Sister 2 is the sister of Mike 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mike 3"],
+ "@nl": "Sister 2 is the sister of Mike 3."},
+{"@name": "sent_S2",
+ "@logic": ["have", "#:Mike 3", "#:sister 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Sister 2 is the sister of Mike 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","car","#:John Sweeney 4"],
+ "@nl": "John Sweeney 4 is a car."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","baby bear","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "eat", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-isa","berry","?:Y"],
+            ["-has target", "?:E", "?:Y", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$block", ["$","baby bear",4], ["typical", "?:E", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Baby bears eat no berries."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:John Smith 5"],
+ "@nl": "John Smith 5 is bad."},
+{"@name": "sent_S5",
+ "@logic": ["-has degree property", "good", "#:John Smith 5", "none", "?:Fv53", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "John Smith 5 is bad."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-isa","?:X","#:John Sweeney 4"], ["$defq0","?:X"]],
+ "@nl": "Which entity is John Sweeney 4?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa","?:X","#:John Sweeney 4"]],
+ "@nl": "Which entity is John Sweeney 4?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-=","?:X","#:John Sweeney 4"], ["$defq0","?:X"]],
+ "@nl": "Which entity is John Sweeney 4?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["=","?:X","#:John Sweeney 4"]],
+ "@nl": "Which entity is John Sweeney 4?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@who_entity": "John Sweeney 4",
+ "@who_kind": "who",
+ "@nl": "Which entity is John Sweeney 4?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","baby bear","$some_baby_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","baby bear","$some_not_baby_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","berry","$some_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","berry","$some_not_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","baby bear","?:X"], ["isa","bear","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","baby","?:X"], ["-isa","bear","?:X"], ["isa","baby bear","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "pop_what",
+ "@logic": ["isa","car","$some_car"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","sister","$some_sister"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","#:John Sweeney 4"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S6","assumption",1], [["-isa","?:X","#:John Sweeney 4"], ["$defq0","?:X"]]],
+          [2, ["in","sent_S3","assumption",1], [["isa","car","#:John Sweeney 4"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["$defq0","car"]]],
+          [4, ["in","sent_S6","assumption",1], [["=","?:X","#:John Sweeney 4"], ["-$defq0","?:X"]]],
+          [5, ["mp", 3, [4,1], "fromassumption", 1], [["=","car","#:John Sweeney 4"]]],
+          [6, ["=", 5, [3,0,1], "fromassumption", 1], [["$defq0","#:John Sweeney 4"]]],
+          [7, ["in","sent_S6","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [8, ["mp",6,7,"fromga",1], [["$ans","#:John Sweeney 4"]]]
+        ]
+      },
+      {
+        "answer": [["$ans","car"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S6","assumption",1], [["-isa","?:X","#:John Sweeney 4"], ["$defq0","?:X"]]],
+          [2, ["in","sent_S3","assumption",1], [["isa","car","#:John Sweeney 4"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["$defq0","car"]]],
+          [4, ["in","sent_S6","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [5, ["mp",3,4,"fromga",1], [["$ans","car"]]]
+        ]
+      }
+    ]
+  },
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28346,
+      "cached_input_tokens": 28288,
+      "output_tokens": 823,
+      "raw": {
+        "input_tokens": 28346,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 823,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29169
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34075,
+      "cached_input_tokens": 33280,
+      "output_tokens": 523,
+      "raw": {
+        "input_tokens": 34075,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 523,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34598
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:49:19Z"
+}

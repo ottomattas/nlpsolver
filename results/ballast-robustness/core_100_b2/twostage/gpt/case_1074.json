@@ -1,0 +1,283 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1074,
+  "input_text": "John is a car. Though Mary was ill, she traveled. A mouse was white. Mary did not travel?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is a car.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a car.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "car", "type": "generic", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Though Mary was ill, she traveled.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Mary 2 was ill.",
+          "type": "situation",
+          "entities": [{"id": "Mary 2", "type": "concrete", "category": "person"}],
+          "adjectives": [["ill","none","person"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "Mary 2 traveled.",
+          "type": "situation",
+          "entities": [{"id": "Mary 2", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "travel", "mode": "event", "roles": {"actor": "Mary 2"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A mouse was white.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "A mouse 3 was white.",
+          "type": "situation",
+          "entities": [{"id": "mouse 3", "type": "concrete", "category": "animal"}],
+          "adjectives": [["white","none","mouse"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary did not travel?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Did Mary 2 not travel?",
+          "type": "query",
+          "entities": [{"id": "Mary 2", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "travel", "mode": "event", "roles": {"actor": "Mary 2"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","car","John 1"]]],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","person","Mary 2"], ["has degree property","ill","Mary 2","none","person"]]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","travel"],
+              ["has actor","E","Mary 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","mouse","mouse 3"],
+            ["has degree property","white","mouse 3","none","mouse"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S5",
+      ["question",
+        ["not",
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","travel"],
+              ["has actor","E","Mary 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","car","#:John 1"],
+ "@nl": "John 1 is a car."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Mary 2 was ill."},
+{"@name": "sent_S2",
+ "@logic": ["-has property", "well", "#:Mary 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 2 was ill."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Mary 2 traveled."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Mary 2 traveled."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mary 2 traveled."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:Mary 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mary 2 traveled."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Mary 2 traveled."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Mary 2 traveled."},
+{"@name": "sent_S4",
+ "@logic": ["isa","mouse","#:mouse 3"],
+ "@nl": "A mouse 3 was white."},
+{"@name": "sent_S4",
+ "@logic": ["has property", "white", "#:mouse 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "A mouse 3 was white."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "go", ["$ctxt","past","?:Fv15","?:Fv9","?:Fv10"]],
+            ["-has actor", "?:E", "#:Mary 2", ["$ctxt","past","?:Fv17","?:Fv9","?:Fv10"]],
+            ["-actuality","?:E"]
+           ],
+ "@nl": "Did Mary 2 not travel?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["isa","activity","sk1_activity"], ["$defq0"]],
+ "@nl": "Did Mary 2 not travel?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["has type", "sk1_activity", "go", ["$ctxt","past","?:Fv23","?:Fv9","?:Fv10"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did Mary 2 not travel?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["has actor", "sk1_activity", "#:Mary 2", ["$ctxt","past","?:Fv25","?:Fv9","?:Fv10"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did Mary 2 not travel?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["has time", "sk1_activity", "past", "in", ["$ctxt","past","?:Fv27","?:Fv9","?:Fv10"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did Mary 2 not travel?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["actuality","sk1_activity"], ["$defq0"]],
+ "@nl": "Did Mary 2 not travel?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "Did Mary 2 not travel?"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv29"], ["has type","?:E","go","?:Fv29"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "white", "?:X", ["$ctxt","past","?:Fv30","?:Fv31","?:Fv32"]],
+            ["has property", "white", "?:X", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]],
+            ["$block", 0, ["$not", ["has property", "white", "?:X", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "white", "?:X", ["$ctxt","past","?:Fv33","?:Fv34","?:Fv35"]],
+            ["has property", "white", "?:X", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]],
+            ["$block", 0, ["$not", ["has property", "white", "?:X", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S5","assumption",1], [["-$defq0"], ["-has type", "?:X", "go", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has actor", "?:X", "#:Mary 2", ["$ctxt","past","?:V","?:Z","?:U"]], ["-isa","activity","?:X"], ["-actuality","?:X"]]],
+          [2, ["in","sent_S3","assumption",1], [["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp", [1,1], 2, 3, "fromga", 1], [["-isa","activity","sk0_activity"], ["-actuality","sk0_activity"], ["-has actor", "sk0_activity", "#:Mary 2", ["$ctxt","past","?:X3","?:Y3","?:Z3"]]]],
+          [5, ["in","sent_S3","assumption",1], [["isa","activity","sk0_activity"]]],
+          [6, ["in","sent_S3","assumption",1], [["actuality","sk0_activity"]]],
+          [7, ["simp",4,5,6,"fromga",1], [["-has actor", "sk0_activity", "#:Mary 2", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [8, ["in","sent_S3","assumption",1], [["has actor", "sk0_activity", "#:Mary 2", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [9, ["mp",7,8,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Though Mary was ill, she traveled.",
+"  (2) Mary did not travel?",
+"Proof steps (by contradiction):",
+"  (1) If answer holds and X is a go event and Mary performs X then X is not an activity  [sentence 2]",
+"  (2) The event act1 is a go event  [sentence 1]",
+"  (3) Answer holds  [assumption]",
+"  (4) If the event act1 is an activity then Mary does not perform the act1  [from steps 1, 2, 3]",
+"  (5) The event act1 is an activity  [sentence 1]",
+"  (6)   [sentence 1]",
+"  (7) Mary does not perform the act1  [from steps 4, 5, 6]",
+"  (8) Mary performs the event act1  [sentence 1]",
+"  (9) Contradiction  [from steps 7, 8]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28336,
+      "cached_input_tokens": 28288,
+      "output_tokens": 556,
+      "raw": {
+        "input_tokens": 28336,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 556,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 28892
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33832,
+      "cached_input_tokens": 33280,
+      "output_tokens": 340,
+      "raw": {
+        "input_tokens": 33832,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 340,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34172
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:37:17Z"
+}

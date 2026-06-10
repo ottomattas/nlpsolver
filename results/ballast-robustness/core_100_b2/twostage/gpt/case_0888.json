@@ -1,0 +1,338 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 888,
+  "input_text": "The book that Mary bought is on the table. No penguin can fly. If X1 is a father of Y1, Y1 is a child of X1. Who bought the book?",
+  "expected_answer": "Mary.",
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Mary.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The book that Mary bought is on the table.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mary 1 bought the book 2.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "book 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "buy", "mode": "event", "roles": {"actor": "Mary 1", "target": "book 2"}}]
+        },
+        {
+          "unit_id": "S2",
+          "text": "The book 2 is on the table 3.",
+          "type": "situation",
+          "entities": [{"id": "book 2", "type": "concrete", "category": "artifact"},
+            {"id": "table 3", "type": "concrete", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "No penguin can fly.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "No penguin can fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a father of Y1, Y1 is a child of X1.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "If X1 is a father of Y1, Y1 is a child of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"}, {"id": "Y1", "type": "generic"}]
+        }
+      ]
+    },
+    {
+      "raw": "Who bought the book?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Which entity bought the book 2?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "book 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "buy", "mode": "event", "roles": {"target": "book 2"}}]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 1"],
+          ["isa","book","book 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","buy"],
+              ["has actor","E","Mary 1"],
+              ["has target","E","book 2"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","book","book 2"],
+          ["isa","table","table 3"],
+          ["is rel2","on","book 2","table 3"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies", ["is rel2","father of","X1","Y1"], ["is rel2","child of","Y1","X1"]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["ask","X",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","buy"],
+            ["has actor","E","X"],
+            ["has target","E","book 2"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 bought the book 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","book","#:book 2"],
+ "@nl": "Mary 1 bought the book 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Mary 1 bought the book 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "buy", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1 bought the book 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Mary 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1 bought the book 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:book 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1 bought the book 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","book","#:book 2"],
+ "@nl": "The book 2 is on the table 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","table","#:table 3"],
+ "@nl": "The book 2 is on the table 3."},
+{"@name": "sent_S2",
+ "@logic": ["is rel2", "on", "#:book 2", "#:table 3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The book 2 is on the table 3."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "No penguin can fly."},
+{"@name": "sent_S4",
+ "@logic": [["-is rel2", "father of", "?:X1", "?:Y1", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["is rel2", "child of", "?:Y1", "?:X1", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "If X1 is a father of Y1, Y1 is a child of X1."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "activity", ["sk1","?:X"]]],
+ "@nl": "Which entity bought the book 2?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has type", ["sk1","?:X"], "buy", ["$ctxt","?:Fv20","?:Fv19","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Which entity bought the book 2?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has actor", ["sk1","?:X"], "?:X", ["$ctxt","?:Fv22","?:Fv21","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Which entity bought the book 2?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has target", ["sk1","?:X"], "#:book 2", ["$ctxt","?:Fv24","?:Fv23","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Which entity bought the book 2?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "buy", ["$ctxt","?:Fv28","?:Fv27","?:Fv13","?:Fv14"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv30","?:Fv29","?:Fv13","?:Fv14"]],
+            ["-has target", "?:E", "#:book 2", ["$ctxt","?:Fv32","?:Fv31","?:Fv13","?:Fv14"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which entity bought the book 2?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@nl": "Which entity bought the book 2?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv33"], ["has type","?:E","go","?:Fv33"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv34","?:Fv35","?:Fv37","?:Fv38"]],
+            ["-has actor", "?:E", "?:Owner", ["$ctxt","?:Fv34","?:Fv35","?:Fv37","?:Fv38"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv34","?:Fv35","?:Fv37","?:Fv38"]],
+            ["-next","?:Fv35","?:Fv36"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]],
+            ["$block", 0, ["$not", ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv39","?:Fv40","?:Fv42","?:Fv43"]],
+            ["-has beneficiary", "?:E", "?:Owner", ["$ctxt","?:Fv39","?:Fv40","?:Fv42","?:Fv43"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv39","?:Fv40","?:Fv42","?:Fv43"]],
+            ["-next","?:Fv40","?:Fv41"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv41","?:Fv42","?:Fv43"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv44","?:Fv45","?:Fv47","?:Fv48"]],
+            ["-has recipient", "?:E", "?:Owner", ["$ctxt","?:Fv44","?:Fv45","?:Fv47","?:Fv48"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv44","?:Fv45","?:Fv47","?:Fv48"]],
+            ["-next","?:Fv45","?:Fv46"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "pop_what",
+ "@logic": ["isa","book","$some_book"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","table","$some_table"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","#:Mary 1"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S5","assumption",1], [["-has type", "?:X", "buy", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "?:X", "?:W", ["$ctxt","?:2006","?:2007","?:U","?:V"]], ["-has target", "?:X", "#:book 2", ["$ctxt","?:2008","?:2009","?:U","?:V"]], ["-isa","activity","?:X"], ["$defq0","?:W"]]],
+          [2, ["in","sent_S1","assumption",1], [["has type", "sk0_activity", "buy", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp",1,2,"fromassumption",1], [["-isa","activity","sk0_activity"], ["-has target", "sk0_activity", "#:book 2", ["$ctxt","?:W3","?:3006","?:U3","?:V3"]], ["-has actor", "sk0_activity", "?:X3", ["$ctxt","?:Y3","?:Z3","?:U3","?:V3"]], ["$defq0","?:X3"]]],
+          [4, ["in","sent_S1","assumption",1], [["isa","activity","sk0_activity"]]],
+          [5, ["simp",3,4,"fromassumption",1], [["-has target", "sk0_activity", "#:book 2", ["$ctxt","?:X","?:Y","?:Z","?:U"]], ["-has actor", "sk0_activity", "?:V", ["$ctxt","?:W","?:2006","?:Z","?:U"]], ["$defq0","?:V"]]],
+          [6, ["in","sent_S1","assumption",1], [["has target", "sk0_activity", "#:book 2", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [7, ["mp",5,6,"fromassumption",1], [["-has actor", "sk0_activity", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["$defq0","?:X"]]],
+          [8, ["in","sent_S1","assumption",1], [["has actor", "sk0_activity", "#:Mary 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [9, ["mp",7,8,"fromassumption",1], [["$defq0","#:Mary 1"]]],
+          [10, ["in","sent_S5","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [11, ["mp",9,10,"fromga",1], [["$ans","#:Mary 1"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) The book that Mary bought is on the table.",
+"  (2) Who bought the book?",
+"Proof steps:",
+"  (1) If X is a buy event and some W performs X and X targets the book B and X is an activity then W is the answer  [sentence 2]",
+"  (2) The event act1 is a buy event  [sentence 1]",
+"  (3) If the event act1 is an activity and the act1 targets the book B and some X3 performs the act1 then X3 is the answer  [from steps 1, 2]",
+"  (4) The event act1 is an activity  [sentence 1]",
+"  (5) If the event act1 targets the book B and some V performs the act1 then V is the answer  [from steps 3, 4]",
+"  (6) The event act1 targets the book B  [sentence 1]",
+"  (7) If some X performs the event act1 then X is the answer  [from steps 5, 6]",
+"  (8) Mary performs the event act1  [sentence 1]",
+"  (9) Mary is the answer  [from steps 7, 8]",
+"  (10) technical answer unwrap step  [from question]",
+"  (11) Mary is an answer  [from steps 9, 10]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28353,
+      "cached_input_tokens": 28288,
+      "output_tokens": 627,
+      "raw": {
+        "input_tokens": 28353,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 627,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 28980
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33886,
+      "cached_input_tokens": 33280,
+      "output_tokens": 412,
+      "raw": {
+        "input_tokens": 33886,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 412,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34298
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:35:00Z"
+}

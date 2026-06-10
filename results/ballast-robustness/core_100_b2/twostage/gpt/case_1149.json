@@ -1,0 +1,337 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1149,
+  "input_text": "Susan bought herself a new car. John is a big strong bear. Cats are afraid of wolves. Did Tom buy a car?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Susan bought herself a new car.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Susan 1 bought a new car 2 for Susan 1.",
+          "type": "situation",
+          "entities": [{"id": "Susan 1", "type": "concrete", "category": "person"},
+            {"id": "car 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "buy",
+              "mode": "event",
+              "roles": {"actor": "Susan 1", "target": "car 2", "beneficiary": "Susan 1"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is a big strong bear.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 2 is a bear.",
+          "type": "situation",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "animal"},
+            {"id": "bear", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S3",
+          "text": "John 2 is big and strong.",
+          "type": "situation",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","bear"], ["strong","none","bear"]]
+        }
+      ]
+    },
+    {
+      "raw": "Cats are afraid of wolves.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Cats are afraid of wolves.",
+          "type": "normal_rule",
+          "entities": [{"id": "cats", "type": "generic", "category": "animal"},
+            {"id": "wolves", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["afraid of","none","entity"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Did Tom buy a car?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Did Tom 3 buy a car?",
+          "type": "query",
+          "entities": [{"id": "Tom 3", "type": "concrete", "category": "person"},
+            {"id": "car", "type": "generic", "category": "artifact"}
+          ],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Susan 1"],
+            ["isa","car","car 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","buy"],
+                ["has actor","E","Susan 1"],
+                ["has target","E","car 2"],
+                ["has beneficiary","E","Susan 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id", "S2", ["holds", "W0", ["and", ["isa","bear","John 2"], ["isa","animal","John 2"]]]],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","animal","John 2"],
+          ["has degree property","big","John 2","none","bear"],
+          ["has degree property","strong","John 2","none","bear"]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["forall","Y",
+              ["implies",
+                ["and", ["isa","cat","X"], ["isa","wolf","Y"]],
+                ["normally", ["has degree rel2","afraid of","X","Y","none","entity"]]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S4",0.99]
+      ]
+    ],
+    ["@id", "S5", ["question", ["exists", "X", ["and", ["isa","car","X"], ["have","Tom 3","X"]]]]]
+  ],
+  "clauses": [
+{"@name": "entity_S5",
+ "@logic": ["isa","person","#:Tom 3"],
+ "@nl": "Did Tom 3 buy a car?"},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Susan 1"],
+ "@nl": "Susan 1 bought a new car 2 for Susan 1."},
+{"@name": "sent_S1",
+ "@logic": ["isa","car","#:car 2"],
+ "@nl": "Susan 1 bought a new car 2 for Susan 1."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Susan 1 bought a new car 2 for Susan 1."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "buy", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Susan 1 bought a new car 2 for Susan 1."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Susan 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Susan 1 bought a new car 2 for Susan 1."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:car 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Susan 1 bought a new car 2 for Susan 1."},
+{"@name": "sent_S1",
+ "@logic": ["has beneficiary", "sk0_activity", "#:Susan 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Susan 1 bought a new car 2 for Susan 1."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Susan 1 bought a new car 2 for Susan 1."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Susan 1 bought a new car 2 for Susan 1."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Susan 1 bought a new car 2 for Susan 1."},
+{"@name": "sent_S2",
+ "@logic": ["isa","bear","#:John 2"],
+ "@nl": "John 2 is a bear."},
+{"@name": "sent_S2",
+ "@logic": ["isa","animal","#:John 2"],
+ "@nl": "John 2 is a bear."},
+{"@name": "sent_S3",
+ "@logic": ["isa","animal","#:John 2"],
+ "@nl": "John 2 is big and strong."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "big", "#:John 2", "none", "bear", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 2 is big and strong."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "strong", "#:John 2", "none", "bear", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 2 is big and strong."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","cat","?:X"],
+            ["-isa","wolf","?:Y"],
+            ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$block", ["$","wolf",1], ["$not", ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Cats are afraid of wolves."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","car","sk1_car"]],
+ "@nl": "Did Tom 3 buy a car?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["have", "#:Tom 3", "sk1_car", ["$ctxt","past","?:Fv16","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did Tom 3 buy a car?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-isa","car","?:X"],
+            ["-have", "#:Tom 3", "?:X", ["$ctxt","past","?:Fv19","?:Fv11","?:Fv12"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did Tom 3 buy a car?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "Did Tom 3 buy a car?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "#:Tom 3", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["have", "#:Tom 3", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "#:Tom 3", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Did Tom 3 buy a car?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","cat","$some_cat"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","cat","$some_not_cat"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","wolf","$some_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","wolf","$some_not_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","car","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","car","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv20","?:Fv21","?:Fv23","?:Fv24"]],
+            ["-has actor", "?:E", "?:Owner", ["$ctxt","?:Fv20","?:Fv21","?:Fv23","?:Fv24"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv20","?:Fv21","?:Fv23","?:Fv24"]],
+            ["-next","?:Fv21","?:Fv22"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]],
+            ["$block", 0, ["$not", ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv25","?:Fv26","?:Fv28","?:Fv29"]],
+            ["-has beneficiary", "?:E", "?:Owner", ["$ctxt","?:Fv25","?:Fv26","?:Fv28","?:Fv29"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv25","?:Fv26","?:Fv28","?:Fv29"]],
+            ["-next","?:Fv26","?:Fv27"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv27","?:Fv28","?:Fv29"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv30","?:Fv31","?:Fv33","?:Fv34"]],
+            ["-has recipient", "?:E", "?:Owner", ["$ctxt","?:Fv30","?:Fv31","?:Fv33","?:Fv34"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv30","?:Fv31","?:Fv33","?:Fv34"]],
+            ["-next","?:Fv31","?:Fv32"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv71", ["$ctxt","past","?:Fv35","?:Fv36","?:Fv37"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv72", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv73", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv38","?:Fv39","?:Fv40"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv38","?:Fv39","?:Fv40"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv38","?:Fv39","?:Fv40"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv74", ["$ctxt","past","?:Fv41","?:Fv42","?:Fv43"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv75", ["$ctxt","present","?:Fv41","?:Fv42","?:Fv43"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv76", ["$ctxt","present","?:Fv41","?:Fv42","?:Fv43"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv44","?:Fv45","?:Fv46"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv44","?:Fv45","?:Fv46"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv44","?:Fv45","?:Fv46"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28339,
+      "cached_input_tokens": 28288,
+      "output_tokens": 664,
+      "raw": {
+        "input_tokens": 28339,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 664,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29003
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33913,
+      "cached_input_tokens": 33280,
+      "output_tokens": 417,
+      "raw": {
+        "input_tokens": 33913,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 417,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34330
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:42:10Z"
+}

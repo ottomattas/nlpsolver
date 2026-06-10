@@ -1,0 +1,278 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1500,
+  "input_text": "Some elephants are animals. Tallinn is hardly in Latvia. The bill was paid by John. Tallinn is in Latvia?",
+  "expected_answer": "Likely false.",
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Probably false.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Some elephants are animals.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Some elephants are animals.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is hardly in Latvia.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Tallinn 1 is hardly in Latvia 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The bill was paid by John.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 3 paid the bill 4.",
+          "type": "situation",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "person"},
+            {"id": "bill 4", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "pay", "mode": "event", "roles": {"actor": "John 3", "target": "bill 4"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is in Latvia?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Is Tallinn 1 in Latvia 2?",
+          "type": "query",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds", "W0", ["exists", "X", ["and", ["isa","elephant","X"], ["isa","animal","X"]]]],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+        ],
+        ["@p","S2",0.1]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 3"],
+          ["isa","bill","bill 4"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","pay"],
+              ["has actor","E","John 3"],
+              ["has target","E","bill 4"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is hardly in Latvia 2."},
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:Latvia 2"],
+ "@nl": "Tallinn 1 is hardly in Latvia 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","elephant","sk0_elephant"],
+ "@confidence": 0.9899,
+ "@nl": "Some elephants are animals."},
+{"@name": "sent_S1",
+ "@logic": ["isa","animal","sk0_elephant"],
+ "@confidence": 0.9899,
+ "@nl": "Some elephants are animals."},
+{"@name": "sent_S2",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@confidence": 0.8,
+ "@nl": "Tallinn 1 is hardly in Latvia 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 3"],
+ "@nl": "John 3 paid the bill 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","bill","#:bill 4"],
+ "@nl": "John 3 paid the bill 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "John 3 paid the bill 4."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "pay", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 3 paid the bill 4."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:John 3", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 3 paid the bill 4."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk1_activity", "#:bill 4", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 3 paid the bill 4."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 3 paid the bill 4."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "John 3 paid the bill 4."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Is Tallinn 1 in Latvia 2?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is Tallinn 1 in Latvia 2?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Is Tallinn 1 in Latvia 2?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is Tallinn 1 in Latvia 2?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 0.8,
+        "negative proof": [[1, ["in","sent_S2","assumption",0.8], [["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [2, ["in","sent_S4","assumption",1], [["-$defq0"], ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["mp",1,4,"fromga",0.8], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 80%.",
+"Sentences used:",
+"  (1) Tallinn is hardly in Latvia.",
+"  (2) Tallinn is in Latvia?",
+"Proof steps (by contradiction):",
+"  (1) Tallinn is not in Latvia  [sentence 1, confidence 80%]",
+"  (2) If answer holds then Tallinn is in Latvia  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) Tallinn is in Latvia  [from steps 2, 3]",
+"  (5) Contradiction  [from steps 1, 4, confidence 80%]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28336,
+      "cached_input_tokens": 28288,
+      "output_tokens": 590,
+      "raw": {
+        "input_tokens": 28336,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 590,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 28926
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33853,
+      "cached_input_tokens": 33280,
+      "output_tokens": 300,
+      "raw": {
+        "input_tokens": 33853,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 300,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34153
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:53:34Z"
+}

@@ -1,0 +1,339 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1054,
+  "input_text": "Tallinn is a city. The student carrying the books greeted the teacher. The bill was paid by John. Did John pay the bill?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Tallinn is a city.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Tallinn 1 is a city.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The student carrying the books greeted the teacher.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The student 2 who was carrying the books 3 greeted the teacher 4.",
+          "type": "situation",
+          "entities": [{"id": "student 2", "type": "concrete", "category": "person"},
+            {"id": "books 3", "type": "concrete", "category": "artifact"},
+            {"id": "teacher 4", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "carry", "mode": "event", "roles": {"actor": "student 2", "target": "books 3"}},
+            {
+              "root": "greet",
+              "mode": "event",
+              "roles": {"actor": "student 2", "target": "teacher 4"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The bill was paid by John.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 5 paid the bill 6.",
+          "type": "situation",
+          "entities": [{"id": "John 5", "type": "concrete", "category": "person"},
+            {"id": "bill 6", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "pay", "mode": "event", "roles": {"actor": "John 5", "target": "bill 6"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Did John pay the bill?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Did John 5 pay the bill 6?",
+          "type": "query",
+          "entities": [{"id": "John 5", "type": "concrete", "category": "person"},
+            {"id": "bill 6", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "pay", "mode": "event", "roles": {"actor": "John 5", "target": "bill 6"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","city","https://en.wikipedia.org/wiki/Tallinn"]]],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","student","student 2"],
+          ["isa","book","books 3"],
+          ["isa","teacher","teacher 4"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","carry"],
+              ["has actor","E1","student 2"],
+              ["has target","E1","books 3"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","greet"],
+              ["has actor","E2","student 2"],
+              ["has target","E2","teacher 4"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 5"],
+          ["isa","bill","bill 6"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","pay"],
+              ["has actor","E","John 5"],
+              ["has target","E","bill 6"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","pay"],
+            ["has actor","E","John 5"],
+            ["has target","E","bill 6"],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is a city."},
+{"@name": "entity_S2",
+ "@logic": ["isa","book","#:books 3"],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S1",
+ "@logic": ["isa","city","https://en.wikipedia.org/wiki/Tallinn"],
+ "@nl": "Tallinn 1 is a city."},
+{"@name": "sent_S2",
+ "@logic": ["isa","student","#:student 2"],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","book","#:books 3"],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","teacher","#:teacher 4"],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "carry", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:student 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "#:books 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "greet", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:student 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk1_activity", "#:teacher 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The student 2 who was carrying the books 3 greeted the teacher 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 5"],
+ "@nl": "John 5 paid the bill 6."},
+{"@name": "sent_S3",
+ "@logic": ["isa","bill","#:bill 6"],
+ "@nl": "John 5 paid the bill 6."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "John 5 paid the bill 6."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "pay", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 5 paid the bill 6."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:John 5", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 5 paid the bill 6."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk2_activity", "#:bill 6", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 5 paid the bill 6."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 5 paid the bill 6."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "John 5 paid the bill 6."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk3_activity"]],
+ "@nl": "Did John 5 pay the bill 6?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk3_activity", "pay", ["$ctxt","past","?:Fv13","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Did John 5 pay the bill 6?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk3_activity", "#:John 5", ["$ctxt","past","?:Fv15","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Did John 5 pay the bill 6?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk3_activity", "#:bill 6", ["$ctxt","past","?:Fv17","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Did John 5 pay the bill 6?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk3_activity", "past", "in", ["$ctxt","past","?:Fv19","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Did John 5 pay the bill 6?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk3_activity"]],
+ "@nl": "Did John 5 pay the bill 6?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "pay", ["$ctxt","past","?:Fv23","?:Fv7","?:Fv8"]],
+            ["-has actor", "?:E", "#:John 5", ["$ctxt","past","?:Fv25","?:Fv7","?:Fv8"]],
+            ["-has target", "?:E", "#:bill 6", ["$ctxt","past","?:Fv27","?:Fv7","?:Fv8"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did John 5 pay the bill 6?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Did John 5 pay the bill 6?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S4","assumption",1], [["$defq0"], ["-has type", "?:X", "pay", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has actor", "?:X", "#:John 5", ["$ctxt","past","?:V","?:Z","?:U"]], ["-has target", "?:X", "#:bill 6", ["$ctxt","past","?:W","?:Z","?:U"]], ["-isa","activity","?:X"], ["-actuality","?:X"]]],
+          [2, ["in","sent_S3","assumption",1], [["has type", "sk2_activity", "pay", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S4","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,1], 2, 3, "fromga", 1], [["-isa","activity","sk2_activity"], ["-actuality","sk2_activity"], ["-has actor", "sk2_activity", "#:John 5", ["$ctxt","past","?:X3","?:Y3","?:Z3"]], ["-has target", "sk2_activity", "#:bill 6", ["$ctxt","past","?:U3","?:Y3","?:Z3"]]]],
+          [5, ["in","sent_S3","assumption",1], [["isa","activity","sk2_activity"]]],
+          [6, ["in","sent_S3","assumption",1], [["actuality","sk2_activity"]]],
+          [7, ["simp",4,5,6,"fromga",1], [["-has actor", "sk2_activity", "#:John 5", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has target", "sk2_activity", "#:bill 6", ["$ctxt","past","?:U","?:Y","?:Z"]]]],
+          [8, ["in","sent_S3","assumption",1], [["has actor", "sk2_activity", "#:John 5", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [9, ["mp",7,8,"fromga",1], [["-has target", "sk2_activity", "#:bill 6", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [10, ["in","sent_S3","assumption",1], [["has target", "sk2_activity", "#:bill 6", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [11, ["mp",9,10,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) The bill was paid by John.",
+"  (2) Did John pay the bill?",
+"Proof steps (by contradiction):",
+"  (1) If X is a pay event and John performs X and X targets the bill G and X is an activity then answer holds  [sentence 2]",
+"  (2) The event act3 is a pay event  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) If the event act3 is an activity and John performs the act3 then the act3 does not target the bill G  [from steps 1, 2, 3]",
+"  (5) The event act3 is an activity  [sentence 1]",
+"  (6)   [sentence 1]",
+"  (7) If John performs the event act3 then the act3 does not target the bill G  [from steps 4, 5, 6]",
+"  (8) John performs the event act3  [sentence 1]",
+"  (9) The act3 does not target the bill G  [from steps 7, 8]",
+"  (10) The event act3 targets the bill G  [sentence 1]",
+"  (11) Contradiction  [from steps 9, 10]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28341,
+      "cached_input_tokens": 28288,
+      "output_tokens": 733,
+      "raw": {
+        "input_tokens": 28341,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 733,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29074
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33933,
+      "cached_input_tokens": 33408,
+      "output_tokens": 434,
+      "raw": {
+        "input_tokens": 33933,
+        "input_tokens_details": {"cached_tokens": 33408},
+        "output_tokens": 434,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34367
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:35:32Z"
+}

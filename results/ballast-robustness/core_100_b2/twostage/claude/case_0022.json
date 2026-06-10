@@ -1,0 +1,328 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 22,
+  "input_text": "John is glad. This was deep. If John is glad, then Mike is not glad. The hand of a man moved a wheel. Is Mike glad?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "John is glad.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is glad.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["glad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "This was deep.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 being glad was deep.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["deep","none","entity"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "If John is glad, then Mike is not glad.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "If John 1 is glad, then Mike 2 is not glad.",
+          "type": "strict_rule",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Mike 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["glad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "The hand of a man moved a wheel.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The hand 2 of a man 1 moved a wheel 3.",
+          "type": "situation",
+          "entities": [{"id": "man 1", "type": "concrete", "category": "person"},
+            {"id": "hand 2", "type": "concrete", "text": "hand", "category": "artifact"},
+            {"id": "wheel 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "move", "mode": "event", "roles": {"actor": "hand 2", "target": "wheel 3"}}],
+          "definites": [["hand of","hand 2","man 1"]],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S5",
+          "text": "The hand 2 is the hand of a man 1.",
+          "type": "situation",
+          "entities": [{"id": "hand 2", "type": "concrete", "text": "hand", "category": "artifact"},
+            {"id": "man 1", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["hand of","hand 2","man 1"]],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Is Mike glad?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Is Mike 2 glad?",
+          "type": "query",
+          "entities": [{"id": "Mike 2", "type": "concrete", "category": "person"}],
+          "adjectives": [["glad","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["has degree property","glad","John 1","none","person"]]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["has degree property", "deep", ["has degree property","glad","John 1","none","person"], "none", "entity"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["implies",
+          ["has degree property","glad","John 1","none","person"],
+          ["not", ["has degree property","glad","Mike 2","none","person"]]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","man 1"],
+            ["isa","hand","hand 2"],
+            ["isa","artifact","wheel 3"],
+            ["has part","man 1","hand 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","move"],
+                ["has actor","E","hand 2"],
+                ["has target","E","wheel 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["@definite","S4","W0","hand of","man 1","hand 2"],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","hand","hand 2"], ["isa","person","man 1"], ["has part","man 1","hand 2"]]
+        ],
+        ["@definite","S5","W0","hand of","man 1","hand 2"],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S6", ["question", ["has degree property","glad","Mike 2","none","person"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","person","#:Mike 2"],
+ "@nl": "If John 1 is glad, then Mike 2 is not glad."},
+{"@name": "entity_S4",
+ "@logic": ["isa","man","#:man 1"],
+ "@nl": "The hand 2 of a man 1 moved a wheel 3."},
+{"@name": "entity_S4",
+ "@logic": ["isa","hand","#:hand 2"],
+ "@nl": "The hand 2 of a man 1 moved a wheel 3."},
+{"@name": "entity_S4",
+ "@logic": ["isa","wheel","#:wheel 3"],
+ "@nl": "The hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is glad."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "glad", "#:John 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is glad."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 being glad was deep."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "deep", ["has degree property","glad","#:John 1","none","person"], "none", "?:Fv38", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 being glad was deep."},
+{"@name": "sent_S3",
+ "@logic": [["-has property", "glad", "#:John 1", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+            ["-has property", "glad", "#:Mike 2", ["$ctxt","present","W0","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "If John 1 is glad, then Mike 2 is not glad."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:man 1"],
+ "@nl": "The hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa", "hand", ["$theof1", "hand", "#:man 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]]],
+ "@nl": "The hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","artifact","#:wheel 3"],
+ "@nl": "The hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S4",
+ "@logic": ["has part", "#:man 1", ["$theof1", "hand", "#:man 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]], ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk0_activity", ["$theof1", "hand", "#:man 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]], ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk0_activity", "#:wheel 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S4",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S5",
+ "@logic": ["isa", "hand", ["$theof1", "hand", "#:man 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]]],
+ "@nl": "The hand 2 is the hand of a man 1."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:man 1"],
+ "@nl": "The hand 2 is the hand of a man 1."},
+{"@name": "sent_S5",
+ "@logic": ["has part", "#:man 1", ["$theof1", "hand", "#:man 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]], ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The hand 2 is the hand of a man 1."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "glad", "#:Mike 2", ["$ctxt","present","W1","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Is Mike 2 glad?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-has property", "glad", "#:Mike 2", ["$ctxt","present","W1","?:Fv11","?:Fv12"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is Mike 2 glad?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Is Mike 2 glad?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "glad", "#:Mike 2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "glad", "#:Mike 2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "glad", "#:Mike 2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is Mike 2 glad?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:man 1", ["$theof1", "hand", "#:man 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]], ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:man 1", ["$theof1", "hand", "#:man 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]], ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "hand of", ["$theof1","hand","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "hand", ["$theof1","hand","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "deep", "$some_deep_entity", "none", "?:Fv39", ["$ctxt","?:Fv33","?:Fv30","?:Fv31","?:Fv32"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","hand","?:Fv14"], ["has type","?:E","give","?:Fv14"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv15"], ["has type","?:E","go","?:Fv15"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "deep", "?:X", "none", "?:Fv40", ["$ctxt","past","?:Fv16","?:Fv17","?:Fv18"]],
+            ["has degree property", "deep", "?:X", "none", "?:Fv41", ["$ctxt","present","?:Fv16","?:Fv17","?:Fv18"]],
+            ["$block", 0, ["$not", ["has degree property", "deep", "?:X", "none", "?:Fv42", ["$ctxt","present","?:Fv16","?:Fv17","?:Fv18"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "deep", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv19","?:Fv20","?:Fv21"]],
+            ["has degree property", "deep", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv19","?:Fv20","?:Fv21"]],
+            ["$block", 0, ["$not", ["has degree property", "deep", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv19","?:Fv20","?:Fv21"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32080,
+      "cached_input_tokens": 32042,
+      "output_tokens": 903,
+      "raw": {
+        "input_tokens": 38,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 903,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39598,
+      "cached_input_tokens": 38891,
+      "output_tokens": 853,
+      "raw": {
+        "input_tokens": 707,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 853,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:19:20Z"
+}

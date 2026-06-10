@@ -1,0 +1,326 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1315,
+  "input_text": "Eve planned to travel. The letter written by Mary arrived. John is a nice and simple animal. Eve traveled?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Eve planned to travel.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Eve 1 planned to travel.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "plan",
+              "mode": "intention",
+              "roles": {
+                "actor": "Eve 1",
+                "content": {"root": "travel", "mode": "event", "roles": {"actor": "Eve 1"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The letter written by Mary arrived.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "A letter 2 was written by Mary 3 and the letter 2 arrived.",
+          "type": "situation",
+          "entities": [{"id": "letter 2", "type": "concrete", "category": "artifact"},
+            {"id": "Mary 3", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "write", "mode": "event", "roles": {"actor": "Mary 3", "target": "letter 2"}},
+            {"root": "arrive", "mode": "event", "roles": {"actor": "letter 2"}}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is a nice and simple animal.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 4 is an animal.",
+          "type": "situation",
+          "entities": [{"id": "John 4", "type": "concrete", "category": "animal"},
+            {"id": "animal", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S4",
+          "text": "John 4 is nice.",
+          "type": "situation",
+          "entities": [{"id": "John 4", "type": "concrete", "category": "animal"}],
+          "adjectives": [["nice","none","animal"]]
+        },
+        {
+          "unit_id": "S5",
+          "text": "John 4 is simple.",
+          "type": "situation",
+          "entities": [{"id": "John 4", "type": "concrete", "category": "animal"}],
+          "adjectives": [["simple","none","animal"]]
+        }
+      ]
+    },
+    {
+      "raw": "Eve traveled?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Did Eve 1 travel?",
+          "type": "query",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "travel", "mode": "event", "roles": {"actor": "Eve 1"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","plan"],
+              ["has actor","E1","Eve 1"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","travel"],
+                  ["has actor","E2","Eve 1"],
+                  ["has time","E2","past","in"]
+                ]
+              ],
+              ["intention","E1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","letter","letter 2"],
+          ["isa","person","Mary 3"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","write"],
+              ["has actor","E1","Mary 3"],
+              ["has target","E1","letter 2"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","arrive"],
+              ["has actor","E2","letter 2"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S3", ["holds", "W0", ["isa","animal","John 4"]]],
+    ["@id", "S4", ["holds", "W0", ["has degree property","nice","John 4","none","animal"]]],
+    ["@id", "S5", ["holds", "W0", ["has degree property","simple","John 4","none","animal"]]],
+    ["@id","S6",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","travel"],
+            ["has actor","E","Eve 1"],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "plan", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk1_activity", "go", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk1_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S1",
+ "@logic": ["intention","sk0_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S2",
+ "@logic": ["isa","letter","#:letter 2"],
+ "@nl": "A letter 2 was written by Mary 3 and the letter 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 3"],
+ "@nl": "A letter 2 was written by Mary 3 and the letter 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "A letter 2 was written by Mary 3 and the letter 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk2_activity", "write", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A letter 2 was written by Mary 3 and the letter 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk2_activity", "#:Mary 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A letter 2 was written by Mary 3 and the letter 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk2_activity", "#:letter 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A letter 2 was written by Mary 3 and the letter 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A letter 2 was written by Mary 3 and the letter 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "A letter 2 was written by Mary 3 and the letter 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk3_activity", "arrive", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A letter 2 was written by Mary 3 and the letter 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk3_activity", "#:letter 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A letter 2 was written by Mary 3 and the letter 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A letter 2 was written by Mary 3 and the letter 2 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["isa","animal","#:John 4"],
+ "@nl": "John 4 is an animal."},
+{"@name": "sent_S4",
+ "@logic": ["has degree property", "good", "#:John 4", "none", "animal", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "John 4 is nice."},
+{"@name": "sent_S5",
+ "@logic": ["has degree property", "simple", "#:John 4", "none", "animal", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "John 4 is simple."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk4_activity"]],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk4_activity", "go", ["$ctxt","past","?:Fv17","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk4_activity", "#:Eve 1", ["$ctxt","past","?:Fv19","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk4_activity", "past", "in", ["$ctxt","past","?:Fv21","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk4_activity"]],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "go", ["$ctxt","past","?:Fv25","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "#:Eve 1", ["$ctxt","past","?:Fv27","?:Fv11","?:Fv12"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Did Eve 1 travel?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv31"], ["has type","?:E","go","?:Fv31"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28337,
+      "cached_input_tokens": 28288,
+      "output_tokens": 776,
+      "raw": {
+        "input_tokens": 28337,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 776,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29113
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34004,
+      "cached_input_tokens": 33280,
+      "output_tokens": 518,
+      "raw": {
+        "input_tokens": 34004,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 518,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34522
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 35055,
+      "cached_input_tokens": 33920,
+      "output_tokens": 854,
+      "raw": {
+        "input_tokens": 35055,
+        "input_tokens_details": {"cached_tokens": 33920},
+        "output_tokens": 854,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 35909
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:43:27Z"
+}

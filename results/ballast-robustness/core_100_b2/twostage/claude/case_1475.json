@@ -1,0 +1,406 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1475,
+  "input_text": "If a bear eats red berries, it is big. John eats berries. Cars are nice and cool. John is a bear. Mary was in a room. John is big?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "If a bear eats red berries, it is big.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "If a bear eats red berries, the bear is big.",
+          "type": "normal_rule",
+          "entities": [{"id": "bear", "type": "generic", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "dependent", "category": "plant"}
+          ],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"target": "berries"}}],
+          "adjectives": [["red","none","none"], ["big","none","bear"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "John eats berries.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 eats berries.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "berries", "type": "generic", "scope": "dependent", "category": "plant"}
+          ],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"target": "berries"}}],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Cars are nice and cool.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Cars are nice.",
+          "type": "normal_rule",
+          "entities": [{"id": "cars", "type": "generic", "category": "artifact"}],
+          "adjectives": [["nice","none","car"]],
+          "confidence": 0.99
+        },
+        {
+          "unit_id": "S4",
+          "text": "Cars are cool.",
+          "type": "normal_rule",
+          "entities": [{"id": "cars", "type": "generic", "category": "artifact"}],
+          "adjectives": [["cool","none","car"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "John is a bear.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "John 1 is a bear.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "Mary was in a room.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Mary 2 was in a room 3.",
+          "type": "situation",
+          "entities": [{"id": "Mary 2", "type": "concrete", "category": "person"},
+            {"id": "room 3", "type": "concrete", "category": "place"}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is big?",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Is John 1 big?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","bear"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["normally",
+              ["implies",
+                ["and",
+                  ["isa","bear","X"],
+                  ["exists","E",
+                    ["and",
+                      ["isa","activity","E"],
+                      ["has type","E","eat"],
+                      ["has actor","E","X"],
+                      ["exists","Y",
+                        ["and",
+                          ["isa","berry","Y"],
+                          ["has degree property","red","Y","none","none"],
+                          ["has target","E","Y"]
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                ["has degree property","big","X","none","bear"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.95]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["normally",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","eat"],
+                ["has actor","E","John 1"],
+                ["exists", "Y", ["and", ["isa","berry","Y"], ["has target","E","Y"]]],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","car","X"],
+              ["normally", ["has degree property","nice","X","none","car"]]
+            ]
+          ]
+        ],
+        ["@p","S3",0.99]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","car","X"],
+              ["normally", ["has degree property","cool","X","none","car"]]
+            ]
+          ]
+        ],
+        ["@p","S4",0.99]
+      ]
+    ],
+    ["@id", "S5", ["holds", "W0", ["isa","bear","John 1"]]],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 2"],
+            ["isa","room","room 3"],
+            ["is rel2","in","Mary 2","room 3"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S7", ["question", ["has degree property","big","John 1","none","bear"]]]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "eat", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-isa","berry","?:Y"],
+            ["-has property", "red", "?:Y", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has target", "?:E", "?:Y", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["has degree property", "big", "?:X", "none", "bear", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","bear",5], ["$not", ["has degree property", "big", "?:X", "none", "bear", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "If a bear eats red berries, the bear is big."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1 eats berries."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "eat", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 eats berries."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:John 1", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 eats berries."},
+{"@name": "sent_S2",
+ "@logic": ["isa","berry","sk1_berry"],
+ "@nl": "John 1 eats berries."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "sk1_berry", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 eats berries."},
+{"@name": "sent_S2",
+ "@logic": [["typical", "sk0_activity", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$block", ["$","$generic",1], ["$not", ["typical", "sk0_activity", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "John 1 eats berries."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","car","?:X"],
+            ["has degree property", "good", "?:X", "none", "car", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","car",1], ["$not", ["has degree property", "good", "?:X", "none", "car", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Cars are nice."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","car","?:X"],
+            ["has degree property", "cool", "?:X", "none", "car", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["$block", ["$","car",1], ["$not", ["has degree property", "cool", "?:X", "none", "car", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Cars are cool."},
+{"@name": "sent_S5",
+ "@logic": ["isa","bear","#:John 1"],
+ "@nl": "John 1 is a bear."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Mary 2 was in a room 3."},
+{"@name": "sent_S6",
+ "@logic": ["isa","room","#:room 3"],
+ "@nl": "Mary 2 was in a room 3."},
+{"@name": "sent_S6",
+ "@logic": ["is rel2", "in", "#:Mary 2", "#:room 3", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 2 was in a room 3."},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "big", "#:John 1", "none", "bear", ["$ctxt","present","?:Fv23","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "Is John 1 big?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question",
+ "@logic": [["-has degree property", "big", "#:John 1", "none", "bear", ["$ctxt","present","?:Fv23","?:Fv21","?:Fv22"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 big?"},
+{"@name": "sent_S7",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 big?"},
+{"@name": "sent_S7",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "big", "#:John 1", "none", "bear", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "big", "#:John 1", "none", "bear", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "#:John 1", "none", "bear", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 big?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","berry","$some_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","berry","$some_not_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","car","$some_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","car","$some_not_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "red", "$some_red", ["$ctxt","?:Fv68","?:Fv65","?:Fv66","?:Fv67"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "red", "$some_not_red", ["$ctxt","?:Fv72","?:Fv69","?:Fv70","?:Fv71"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "big", "$some_big_bear", "none", "bear", ["$ctxt","?:Fv76","?:Fv73","?:Fv74","?:Fv75"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_big_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "big", "$some_not_big_bear", "none", "bear", ["$ctxt","?:Fv84","?:Fv81","?:Fv82","?:Fv83"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "good", "$some_nice_car", "none", "car", ["$ctxt","?:Fv88","?:Fv85","?:Fv86","?:Fv87"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","car","$some_nice_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "good", "$some_not_nice_car", "none", "car", ["$ctxt","?:Fv96","?:Fv93","?:Fv94","?:Fv95"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "cool", "$some_cool_car", "none", "car", ["$ctxt","?:Fv100","?:Fv97","?:Fv98","?:Fv99"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","car","$some_cool_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cool", "$some_not_cool_car", "none", "car", ["$ctxt","?:Fv108","?:Fv105","?:Fv106","?:Fv107"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv109", ["$ctxt","past","?:Fv25","?:Fv26","?:Fv27"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv110", ["$ctxt","present","?:Fv25","?:Fv26","?:Fv27"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv111", ["$ctxt","present","?:Fv25","?:Fv26","?:Fv27"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv28","?:Fv29","?:Fv30"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv28","?:Fv29","?:Fv30"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv28","?:Fv29","?:Fv30"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv31","?:Fv32","?:Fv33"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv31","?:Fv32","?:Fv33"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv31","?:Fv32","?:Fv33"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv34","?:Fv35","?:Fv36"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv34","?:Fv35","?:Fv36"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv34","?:Fv35","?:Fv36"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32088,
+      "cached_input_tokens": 32042,
+      "output_tokens": 931,
+      "raw": {
+        "input_tokens": 46,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 931,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39605,
+      "cached_input_tokens": 38891,
+      "output_tokens": 992,
+      "raw": {
+        "input_tokens": 714,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 992,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:52:40Z"
+}

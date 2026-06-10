@@ -1,0 +1,274 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 409,
+  "input_text": "Tallinn is a city. John has three nice cars. Winona is a sheep. How many nice cars does John have?",
+  "expected_answer": ["Three","3."],
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "3.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Tallinn is a city.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Tallinn 1 is a city.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John has three nice cars.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 has three nice cars.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "cars", "type": "generic", "category": "artifact"}
+          ],
+          "adjectives": [["nice","none","car"]]
+        }
+      ]
+    },
+    {
+      "raw": "Winona is a sheep.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Winona 1 is a sheep.",
+          "type": "situation",
+          "entities": [{"id": "Winona 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "How many nice cars does John have?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "How many nice cars does John 1 have?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "cars", "type": "generic", "category": "artifact"},
+            {"id": "number", "type": "generic", "wh_placeholder": true}
+          ],
+          "adjectives": [["nice","none","car"]]
+        }
+      ]
+    }
+  ],
+  "stage_1_retries": ["sanity #1: missing_wh_placeholder"],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","city","https://en.wikipedia.org/wiki/Tallinn"]]],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["=", 3, ["$count", ["$setof", "?:X", ["and", ["isa","car","?:X"], ["has degree property","nice","?:X","none","car"], ["have","John 1","?:X"]]]]]
+        ]
+      ]
+    ],
+    ["@id", "S3", ["holds", "W0", ["isa","sheep","Winona 1"]]],
+    ["@id","S4",
+      ["ask","X",
+        ["=", "X", ["$count", ["$setof", "?:X", ["and", ["isa","car","?:X"], ["has degree property","nice","?:X","none","car"], ["have","John 1","?:X"]]]]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is a city."},
+{"@name": "sent_S1",
+ "@logic": ["isa","city","https://en.wikipedia.org/wiki/Tallinn"],
+ "@nl": "Tallinn 1 is a city."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 has three nice cars."},
+{"@name": "sent_S2",
+ "@logic": ["=", 3, ["$count", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]],
+ "@nl": "John 1 has three nice cars."},
+{"@name": "sent_S2_el1",
+ "@logic": ["isa","car","$set1_el1"],
+ "@nl": "[generated: sent_S2_el1]"},
+{"@name": "sent_S2_el1",
+ "@logic": ["has degree property", "good", "$set1_el1", "none", "car", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: sent_S2_el1]"},
+{"@name": "sent_S2_el1",
+ "@logic": ["have", "#:John 1", "$set1_el1", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: sent_S2_el1]"},
+{"@name": "sent_S2_el1",
+ "@logic": ["member", "$set1_el1", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]],
+ "@nl": "[generated: sent_S2_el1]"},
+{"@name": "sent_S2_el2",
+ "@logic": ["isa","car","$set1_el2"],
+ "@nl": "[generated: sent_S2_el2]"},
+{"@name": "sent_S2_el2",
+ "@logic": ["has degree property", "good", "$set1_el2", "none", "car", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: sent_S2_el2]"},
+{"@name": "sent_S2_el2",
+ "@logic": ["have", "#:John 1", "$set1_el2", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: sent_S2_el2]"},
+{"@name": "sent_S2_el2",
+ "@logic": ["member", "$set1_el2", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]],
+ "@nl": "[generated: sent_S2_el2]"},
+{"@name": "sent_S2_el3",
+ "@logic": ["isa","car","$set1_el3"],
+ "@nl": "[generated: sent_S2_el3]"},
+{"@name": "sent_S2_el3",
+ "@logic": ["has degree property", "good", "$set1_el3", "none", "car", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: sent_S2_el3]"},
+{"@name": "sent_S2_el3",
+ "@logic": ["have", "#:John 1", "$set1_el3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: sent_S2_el3]"},
+{"@name": "sent_S2_el3",
+ "@logic": ["member", "$set1_el3", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]],
+ "@nl": "[generated: sent_S2_el3]"},
+{"@name": "sent_S2_dist",
+ "@logic": ["-=","$set1_el1","$set1_el2"],
+ "@nl": "[generated: sent_S2_dist]"},
+{"@name": "sent_S2_dist",
+ "@logic": ["-=","$set1_el1","$set1_el3"],
+ "@nl": "[generated: sent_S2_dist]"},
+{"@name": "sent_S2_dist",
+ "@logic": ["-=","$set1_el2","$set1_el3"],
+ "@nl": "[generated: sent_S2_dist]"},
+{"@name": "sent_S3",
+ "@logic": ["isa","sheep","#:Winona 1"],
+ "@nl": "Winona 1 is a sheep."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["=", "?:X", ["$count", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]]
+           ],
+ "@nl": "How many nice cars does John 1 have?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-=", "?:X", ["$count", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "How many nice cars does John 1 have?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@nl": "How many nice cars does John 1 have?"},
+{"@name": "frm_set",
+ "@logic": [["-isa","?:C","?:M"],
+            ["-has property","?:D","?:M"],
+            ["-have","?:S","?:M"],
+            ["member", "?:M", ["$setof", "have", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "have", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["isa","?:C","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "have", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["has property","?:D","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "have", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["have","?:S","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","receive","?:Fv11"], ["has type","?:E","have","?:Fv11"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans",3]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S4","assumption",1], [["-=", "?:0", ["$count", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]], ["$defq0","?:0"]]],
+          [2, ["in","sent_S2","assumption",1], [["=", 3, ["$count", ["$setof", "have", "#:John 1", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]]]],
+          [3, ["simp",1,2,"fromassumption",1], [["-=","?:X",3], ["$defq0","?:X"]]],
+          [4, ["r=", [3,0], "fromassumption", 1], [["$defq0",3]]],
+          [5, ["in","sent_S4","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [6, ["mp",4,5,"fromga",1], [["$ans",3]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John has three nice cars.",
+"  (2) How many nice cars does John have?",
+"Proof steps:",
+"  (1) If the number of good cars John has is E1 then some E1 is the answer  [sentence 2]",
+"  (2) The number of good cars John has is 3  [sentence 1]",
+"  (3) If some X equals 3 then X is the answer  [from steps 1, 2]",
+"  (4) 3 Is the answer  [from steps 3]",
+"  (5) technical answer unwrap step  [from question]",
+"  (6) 3 Is an answer  [from steps 4, 5]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32076,
+      "cached_input_tokens": 32042,
+      "output_tokens": 509,
+      "raw": {
+        "input_tokens": 34,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 509,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32985,
+      "cached_input_tokens": 32042,
+      "output_tokens": 625,
+      "raw": {
+        "input_tokens": 943,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 625,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39295,
+      "cached_input_tokens": 38891,
+      "output_tokens": 307,
+      "raw": {
+        "input_tokens": 404,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 307,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:24:22Z"
+}

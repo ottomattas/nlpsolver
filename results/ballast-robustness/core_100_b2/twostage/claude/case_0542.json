@@ -1,0 +1,264 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 542,
+  "input_text": "The red square has a nail. John is under a box. If X1 is a grandfather of Y1, Y1 is not a child of X1. A blue square has a hole. A red square has a hole?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The red square has a nail.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The red square 1 has a nail 2.",
+          "type": "situation",
+          "entities": [{"id": "square 1", "type": "concrete", "category": "artifact"},
+            {"id": "nail 2", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["red","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is under a box.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 is under a box 3.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "box 3", "type": "concrete", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a grandfather of Y1, Y1 is not a child of X1.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "If X1 is a grandfather of Y1, Y1 is not a child of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"}, {"id": "Y1", "type": "generic"}]
+        }
+      ]
+    },
+    {
+      "raw": "A blue square has a hole.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "A blue square 4 has a hole 5.",
+          "type": "situation",
+          "entities": [{"id": "square 4", "type": "concrete", "category": "artifact"},
+            {"id": "hole 5", "type": "concrete", "category": "abstract"}
+          ],
+          "adjectives": [["blue","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "A red square has a hole?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Does the red square 1 have a hole?",
+          "type": "query",
+          "entities": [{"id": "square 1", "type": "concrete", "category": "artifact"},
+            {"id": "hole", "type": "generic", "category": "abstract"}
+          ],
+          "adjectives": [["red","none","none"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","square","square 1"],
+          ["isa","nail","nail 2"],
+          ["has degree property","red","square 1","none","none"],
+          ["have","square 1","nail 2"]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","box","box 3"],
+          ["is rel2","under","John 1","box 3"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X",
+          ["forall","Y",
+            ["implies",
+              ["is rel2","grandfather of","X","Y"],
+              ["not", ["is rel2","child of","Y","X"]]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","square","square 4"],
+          ["isa","hole","hole 5"],
+          ["has degree property","blue","square 4","none","none"],
+          ["have","square 4","hole 5"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["question", ["exists", "X", ["and", ["isa","hole","X"], ["have","square 1","X"]]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["-isa","round","#:square 1"],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","nail","#:nail 2"],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "red", "#:square 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S1",
+ "@logic": ["have", "#:square 1", "#:nail 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is under a box 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","box","#:box 3"],
+ "@nl": "John 1 is under a box 3."},
+{"@name": "sent_S2",
+ "@logic": ["is rel2", "under", "#:John 1", "#:box 3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 is under a box 3."},
+{"@name": "sent_S3",
+ "@logic": [["-is rel2", "grandfather of", "?:X", "?:Y", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-is rel2", "child of", "?:Y", "?:X", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "If X1 is a grandfather of Y1, Y1 is not a child of X1."},
+{"@name": "sent_S4",
+ "@logic": ["-isa","round","#:square 4"],
+ "@nl": "A blue square 4 has a hole 5."},
+{"@name": "sent_S4",
+ "@logic": ["isa","hole","#:hole 5"],
+ "@nl": "A blue square 4 has a hole 5."},
+{"@name": "sent_S4",
+ "@logic": ["has property", "blue", "#:square 4", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "A blue square 4 has a hole 5."},
+{"@name": "sent_S4",
+ "@logic": ["have", "#:square 4", "#:hole 5", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "A blue square 4 has a hole 5."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","hole","sk0_hole"]],
+ "@nl": "Does the red square 1 have a hole?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["have", "#:square 1", "sk0_hole", ["$ctxt","present","?:Fv17","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Does the red square 1 have a hole?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-isa","hole","?:X"],
+            ["-have", "#:square 1", "?:X", ["$ctxt","present","?:Fv20","?:Fv11","?:Fv12"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does the red square 1 have a hole?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "Does the red square 1 have a hole?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "#:square 1", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "#:square 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "#:square 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Does the red square 1 have a hole?"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv21"],
+            ["-has property","red","?:X","?:Fv21"],
+            ["$block", 0, ["has property","red","?:X","?:Fv21"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv22"],
+            ["-has property","red","?:X","?:Fv22"],
+            ["$block", 0, ["has property","blue","?:X","?:Fv22"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv23","?:Fv24","?:Fv25"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv23","?:Fv24","?:Fv25"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv26","?:Fv27","?:Fv28"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv29","?:Fv30","?:Fv31"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv29","?:Fv30","?:Fv31"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv29","?:Fv30","?:Fv31"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv32","?:Fv33","?:Fv34"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32097,
+      "cached_input_tokens": 32042,
+      "output_tokens": 692,
+      "raw": {
+        "input_tokens": 55,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 692,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39423,
+      "cached_input_tokens": 38891,
+      "output_tokens": 394,
+      "raw": {
+        "input_tokens": 532,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 394,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:26:47Z"
+}

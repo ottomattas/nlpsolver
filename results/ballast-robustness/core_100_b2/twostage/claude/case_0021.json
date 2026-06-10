@@ -1,0 +1,272 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 21,
+  "input_text": "Eve kept the milk in the fridge. Animals have two nice legs. John is in Estonia?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Eve kept the milk in the fridge.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Eve 1 kept the milk 2 in the fridge 3.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "milk 2", "type": "concrete", "category": "substance"},
+            {"id": "fridge 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "keep",
+              "mode": "event",
+              "roles": {"actor": "Eve 1", "target": "milk 2", "location": "fridge 3", "location_prep": "in"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Animals have two nice legs.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Animals have two nice legs.",
+          "type": "normal_rule",
+          "entities": [{"id": "animals", "type": "generic", "category": "animal"},
+            {"id": "legs", "type": "generic", "scope": "dependent"}
+          ],
+          "adjectives": [["nice","none","leg"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "John is in Estonia?",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Is John 1 in Estonia 2?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {
+              "id": "Estonia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["isa","substance","milk 2"],
+          ["isa","fridge","fridge 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","keep"],
+              ["has actor","E","Eve 1"],
+              ["has target","E","milk 2"],
+              ["has location","E","fridge 3","in"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","animal","X"],
+              ["normally",
+                ["=", 2, ["$count", ["$setof", "?:Y", ["and", ["isa","leg","?:Y"], ["has degree property","nice","?:Y","none","leg"], ["has part","X","?:Y"]]]]]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id", "S3", ["question", ["is rel2","in","John 1","https://en.wikipedia.org/wiki/Estonia"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","milk","#:milk 2"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "entity_S3",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "Is John 1 in Estonia 2?"},
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Estonia 2"],
+ "@nl": "Is John 1 in Estonia 2?"},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","substance","#:milk 2"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","fridge","#:fridge 3"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "keep", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:milk 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["has location", "sk0_activity", "#:fridge 3", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","animal","?:X"],
+            ["=", 2, ["$count", ["$setof", "has part", "?:X", ["$and", ["$isa","leg","$arg1"], ["$has_degree_property","good","$arg1","none","leg"]]]]],
+            ["$block", ["$","animal",1], ["$not", ["=", 2, ["$count", ["$setof", "has part", "?:X", ["$and", ["$isa","leg","$arg1"], ["$has_degree_property","good","$arg1","none","leg"]]]]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Animals have two nice legs."},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Is John 1 in Estonia 2?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 in Estonia 2?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","?:C","?:Y"], ["-have","?:X","?:Y","?:Ctxt"], ["has part","?:X","?:Y","?:Ctxt"]],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S3",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 in Estonia 2?"},
+{"@name": "sent_S3",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 in Estonia 2?"},
+{"@name": "frm_set",
+ "@logic": [["-isa","?:C","?:M"],
+            ["-has property","?:D","?:M"],
+            ["-has part","?:S","?:M"],
+            ["member", "?:M", ["$setof", "has part", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "has part", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["isa","?:C","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "has part", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["has property","?:D","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "has part", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["has part","?:S","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","substance","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","substance","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","place","?:X"], ["-isa","substance","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","place","?:X"], ["-isa","substance","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32068,
+      "cached_input_tokens": 32042,
+      "output_tokens": 508,
+      "raw": {
+        "input_tokens": 26,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 508,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39297,
+      "cached_input_tokens": 38891,
+      "output_tokens": 708,
+      "raw": {
+        "input_tokens": 406,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 708,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:17:48Z"
+}

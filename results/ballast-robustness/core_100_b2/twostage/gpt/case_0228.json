@@ -1,0 +1,342 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 228,
+  "input_text": "Dole was defeated by Clinton. John's brother has a car. Squirrels can fly. John's sister has a car?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Dole was defeated by Clinton.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Clinton 1 defeated Dole 2.",
+          "type": "situation",
+          "entities": [{"id": "Clinton 1", "type": "concrete", "category": "person"},
+            {"id": "Dole 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "defeat", "mode": "event", "roles": {"actor": "Clinton 1", "target": "Dole 2"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John's brother has a car.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 3's brother 4 has a car 5.",
+          "type": "situation",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "person"},
+            {"id": "brother 4", "type": "concrete", "text": "brother", "category": "person"},
+            {"id": "car 5", "type": "concrete", "category": "artifact"}
+          ]
+        },
+        {
+          "unit_id": "S3",
+          "text": "Brother 4 is the brother of John 3.",
+          "type": "situation",
+          "entities": [{"id": "brother 4", "type": "concrete", "text": "brother", "category": "person"},
+            {"id": "John 3", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Squirrels can fly.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Squirrels can fly.",
+          "type": "normal_rule",
+          "entities": [{"id": "squirrels", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability", "roles": {"actor": "squirrels"}}],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "John's sister has a car?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Does John 3's sister 6 have a car?",
+          "type": "query",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "person"},
+            {"id": "sister 6", "type": "concrete", "text": "sister", "category": "person"},
+            {"id": "car", "type": "generic", "category": "artifact"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Clinton 1"],
+          ["isa","person","Dole 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","defeat"],
+              ["has actor","E","Clinton 1"],
+              ["has target","E","Dole 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 3"],
+          ["isa","brother","brother 4"],
+          ["isa","car","car 5"],
+          ["have","brother 4","car 5"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","brother","brother 4"],
+          ["isa","person","John 3"],
+          ["is rel2","brother of","brother 4","John 3"]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","squirrel","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","fly"],
+                    ["has actor","E","X"],
+                    ["capability","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S4",0.99]
+      ]
+    ],
+    ["@id","S5",
+      ["question",
+        ["exists","X",
+          ["and",
+            ["isa","car","X"],
+            ["isa","person","John 3"],
+            ["isa","sister","sister 6"],
+            ["have","sister 6","X"],
+            ["is rel2","sister of","sister 6","John 3"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S5",
+ "@logic": ["isa","sister","#:sister 6"],
+ "@nl": "Does John 3's sister 6 have a car?"},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Clinton 1"],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Dole 2"],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S1",
+ "@logic": ["-has type", "sk0_activity", "victory", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Clinton 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:Dole 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 3"],
+ "@nl": "John 3's brother 4 has a car 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","brother","#:brother 4"],
+ "@nl": "John 3's brother 4 has a car 5."},
+{"@name": "sent_S2",
+ "@logic": ["isa","car","#:car 5"],
+ "@nl": "John 3's brother 4 has a car 5."},
+{"@name": "sent_S2",
+ "@logic": ["have", "#:brother 4", "#:car 5", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 3's brother 4 has a car 5."},
+{"@name": "sent_S3",
+ "@logic": ["isa","brother","#:brother 4"],
+ "@nl": "Brother 4 is the brother of John 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 3"],
+ "@nl": "Brother 4 is the brother of John 3."},
+{"@name": "sent_S3",
+ "@logic": ["is rel2", "brother of", "#:brother 4", "#:John 3", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Brother 4 is the brother of John 3."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","squirrel","?:X"], ["isa", "activity", ["sk1","?:X"]]],
+ "@nl": "Squirrels can fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","squirrel","?:X"],
+            ["has type", ["sk1","?:X"], "fly", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Squirrels can fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","squirrel","?:X"],
+            ["has actor", ["sk1","?:X"], "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Squirrels can fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","squirrel","?:X"],
+            ["capability", ["sk1","?:X"]],
+            ["$block", ["$","squirrel",1], ["$not", ["capability", ["sk1","?:X"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Squirrels can fly."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","car","sk2_car"]],
+ "@nl": "Does John 3's sister 6 have a car?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:John 3"]],
+ "@nl": "Does John 3's sister 6 have a car?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","sister","#:sister 6"]],
+ "@nl": "Does John 3's sister 6 have a car?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["have", "#:sister 6", "sk2_car", ["$ctxt","present","?:Fv21","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Does John 3's sister 6 have a car?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "sister of", "#:sister 6", "#:John 3", ["$ctxt","present","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Does John 3's sister 6 have a car?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-isa","car","?:X"],
+            ["-isa","person","#:John 3"],
+            ["-isa","sister","#:sister 6"],
+            ["-have", "#:sister 6", "?:X", ["$ctxt","present","?:Fv28","?:Fv11","?:Fv12"]],
+            ["-is rel2", "sister of", "#:sister 6", "#:John 3", ["$ctxt","present","?:Fv13","?:Fv11","?:Fv12"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 3's sister 6 have a car?"},
+{"@name": "sent_S3",
+ "@logic": ["have", "#:John 3", "#:brother 4", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Brother 4 is the brother of John 3."},
+{"@name": "sent_S5",
+ "@logic": [["-$defq0"],
+            ["have", "#:John 3", "#:sister 6", ["$ctxt","present","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Does John 3's sister 6 have a car?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "Does John 3's sister 6 have a car?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "#:sister 6", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "#:sister 6", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "#:sister 6", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Does John 3's sister 6 have a car?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "sister of", "#:sister 6", "#:John 3", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "sister of", "#:sister 6", "#:John 3", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "sister of", "#:sister 6", "#:John 3", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Does John 3's sister 6 have a car?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","squirrel","$some_squirrel"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","squirrel","$some_not_squirrel"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv29"], ["has type","?:E","go","?:Fv29"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","brother","?:X","?:Fv30"], ["-has property","sister","?:X","?:Fv30"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_kin_excl",
+ "@logic": [["-isa","sister","?:X"], ["-isa","brother","?:X"]],
+ "@nl": "[generated: frm_kin_excl]"},
+{"@name": "frm_kin_excl",
+ "@logic": [["-is rel2","sister of","?:X","?:Y","?:Fv31"],
+            ["-is rel2","brother of","?:X","?:Y","?:Fv31"]
+           ],
+ "@nl": "[generated: frm_kin_excl]"},
+{"@name": "frm_kin_excl",
+ "@logic": [["-is rel2","sister of","?:X","?:Y","?:Fv32"], ["isa","sister","?:X"]],
+ "@nl": "[generated: frm_kin_excl]"},
+{"@name": "frm_kin_excl",
+ "@logic": [["-is rel2","brother of","?:X","?:Y","?:Fv33"], ["isa","brother","?:X"]],
+ "@nl": "[generated: frm_kin_excl]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28338,
+      "cached_input_tokens": 28288,
+      "output_tokens": 711,
+      "raw": {
+        "input_tokens": 28338,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 711,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29049
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33958,
+      "cached_input_tokens": 33280,
+      "output_tokens": 468,
+      "raw": {
+        "input_tokens": 33958,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 468,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34426
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:22:45Z"
+}

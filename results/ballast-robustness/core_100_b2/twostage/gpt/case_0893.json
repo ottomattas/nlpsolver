@@ -1,0 +1,337 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 893,
+  "input_text": "John is glad. The dog chased by the boy was black. The student who passed the test studied a lot. Did the student fail the test?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "John is glad.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is glad.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["glad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "The dog chased by the boy was black.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The dog 2 that the boy 3 chased was black.",
+          "type": "situation",
+          "entities": [{"id": "dog 2", "type": "concrete", "category": "animal"},
+            {"id": "boy 3", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "chase", "mode": "event", "roles": {"actor": "boy 3", "target": "dog 2"}}],
+          "adjectives": [["black","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "The student who passed the test studied a lot.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The student 4 who passed the test 5 studied a lot.",
+          "type": "situation",
+          "entities": [{"id": "student 4", "type": "concrete", "category": "person"},
+            {"id": "test 5", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "pass", "mode": "event", "roles": {"actor": "student 4", "target": "test 5"}},
+            {"root": "study", "mode": "event", "roles": {"actor": "student 4", "manner": "a lot"}}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Did the student fail the test?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Did the student 4 fail the test 5?",
+          "type": "query",
+          "entities": [{"id": "student 4", "type": "concrete", "category": "person"},
+            {"id": "test 5", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "fail", "mode": "event", "roles": {"actor": "student 4", "target": "test 5"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["has degree property","glad","John 1","none","person"]]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","dog","dog 2"],
+          ["isa","boy","boy 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","chase"],
+              ["has actor","E","boy 3"],
+              ["has target","E","dog 2"]
+            ]
+          ],
+          ["has degree property","black","dog 2","none","none"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","student","student 4"],
+          ["isa","test","test 5"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","pass"],
+              ["has actor","E1","student 4"],
+              ["has target","E1","test 5"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","study"],
+              ["has actor","E2","student 4"],
+              ["has manner","E2","a lot"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["and",
+          ["isa","student","student 4"],
+          ["isa","test","test 5"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","fail"],
+              ["has actor","E","student 4"],
+              ["has target","E","test 5"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is glad."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "glad", "#:John 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is glad."},
+{"@name": "sent_S2",
+ "@logic": ["isa","dog","#:dog 2"],
+ "@nl": "The dog 2 that the boy 3 chased was black."},
+{"@name": "sent_S2",
+ "@logic": ["isa","boy","#:boy 3"],
+ "@nl": "The dog 2 that the boy 3 chased was black."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The dog 2 that the boy 3 chased was black."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "chase", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The dog 2 that the boy 3 chased was black."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:boy 3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The dog 2 that the boy 3 chased was black."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "#:dog 2", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The dog 2 that the boy 3 chased was black."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The dog 2 that the boy 3 chased was black."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "black", "#:dog 2", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The dog 2 that the boy 3 chased was black."},
+{"@name": "sent_S3",
+ "@logic": ["isa","student","#:student 4"],
+ "@nl": "The student 4 who passed the test 5 studied a lot."},
+{"@name": "sent_S3",
+ "@logic": ["isa","test","#:test 5"],
+ "@nl": "The student 4 who passed the test 5 studied a lot."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The student 4 who passed the test 5 studied a lot."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "pass", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The student 4 who passed the test 5 studied a lot."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:student 4", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The student 4 who passed the test 5 studied a lot."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk1_activity", "#:test 5", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The student 4 who passed the test 5 studied a lot."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The student 4 who passed the test 5 studied a lot."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The student 4 who passed the test 5 studied a lot."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "study", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The student 4 who passed the test 5 studied a lot."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:student 4", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The student 4 who passed the test 5 studied a lot."},
+{"@name": "sent_S3",
+ "@logic": ["has manner", "sk2_activity", "a lot", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The student 4 who passed the test 5 studied a lot."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The student 4 who passed the test 5 studied a lot."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","student","#:student 4"]],
+ "@nl": "Did the student 4 fail the test 5?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","test","#:test 5"]],
+ "@nl": "Did the student 4 fail the test 5?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk3_activity"]],
+ "@nl": "Did the student 4 fail the test 5?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk3_activity", "fail", ["$ctxt","past","?:Fv17","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Did the student 4 fail the test 5?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk3_activity", "#:student 4", ["$ctxt","past","?:Fv19","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Did the student 4 fail the test 5?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk3_activity", "#:test 5", ["$ctxt","past","?:Fv21","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Did the student 4 fail the test 5?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk3_activity", "past", "in", ["$ctxt","past","?:Fv23","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Did the student 4 fail the test 5?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk3_activity"]],
+ "@nl": "Did the student 4 fail the test 5?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","student","#:student 4"],
+            ["-isa","test","#:test 5"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fail", ["$ctxt","past","?:Fv31","?:Fv7","?:Fv8"]],
+            ["-has actor", "?:E", "#:student 4", ["$ctxt","past","?:Fv33","?:Fv7","?:Fv8"]],
+            ["-has target", "?:E", "#:test 5", ["$ctxt","past","?:Fv35","?:Fv7","?:Fv8"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did the student 4 fail the test 5?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Did the student 4 fail the test 5?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv39"], ["has type","?:E","give","?:Fv39"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv40"], ["has type","?:E","go","?:Fv40"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_verb_excl",
+ "@logic": [["-has type","?:E1","pass","?:Fv41"],
+            ["-has actor","?:E1","?:Ag","?:Fv41"],
+            ["-has target","?:E1","?:Tg","?:Fv41"],
+            ["-has type","?:E2","fail","?:Fv41"],
+            ["-has actor","?:E2","?:Ag","?:Fv41"],
+            ["-has target","?:E2","?:Tg","?:Fv41"],
+            ["$block", 0, ["has type","?:E2","fail","?:Fv41"]]
+           ],
+ "@confidence": 0.85,
+ "@nl": "[generated: frm_verb_excl]"},
+{"@name": "frm_verb_excl",
+ "@logic": [["-has type","?:E1","fail","?:Fv42"],
+            ["-has actor","?:E1","?:Ag","?:Fv42"],
+            ["-has target","?:E1","?:Tg","?:Fv42"],
+            ["-has type","?:E2","pass","?:Fv42"],
+            ["-has actor","?:E2","?:Ag","?:Fv42"],
+            ["-has target","?:E2","?:Tg","?:Fv42"],
+            ["$block", 0, ["has type","?:E2","pass","?:Fv42"]]
+           ],
+ "@confidence": 0.85,
+ "@nl": "[generated: frm_verb_excl]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "black", "?:X", ["$ctxt","past","?:Fv43","?:Fv44","?:Fv45"]],
+            ["has property", "black", "?:X", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]],
+            ["$block", 0, ["$not", ["has property", "black", "?:X", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "black", "?:X", ["$ctxt","past","?:Fv46","?:Fv47","?:Fv48"]],
+            ["has property", "black", "?:X", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]],
+            ["$block", 0, ["$not", ["has property", "black", "?:X", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28343,
+      "cached_input_tokens": 28288,
+      "output_tokens": 729,
+      "raw": {
+        "input_tokens": 28343,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 729,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 29072
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33919,
+      "cached_input_tokens": 33408,
+      "output_tokens": 447,
+      "raw": {
+        "input_tokens": 33919,
+        "input_tokens_details": {"cached_tokens": 33408},
+        "output_tokens": 447,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34366
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:31:20Z"
+}

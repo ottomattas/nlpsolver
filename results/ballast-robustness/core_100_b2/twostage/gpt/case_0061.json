@@ -1,0 +1,295 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 61,
+  "input_text": "The car is red. John promised to help Mary. The bike is small. Mike is badly defeated. Is the bike red?",
+  "expected_answer": null,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The car is red.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The car 1 is red.",
+          "type": "situation",
+          "entities": [{"id": "car 1", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["red","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "John promised to help Mary.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 2 promised to help Mary 3.",
+          "type": "situation",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"},
+            {"id": "Mary 3", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "promise",
+              "mode": "speech_act",
+              "roles": {
+                "actor": "John 2",
+                "content": {
+                  "root": "help",
+                  "mode": "obligation",
+                  "roles": {"actor": "John 2", "target": "Mary 3"}
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The bike is small.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The bike 4 is small.",
+          "type": "situation",
+          "entities": [{"id": "bike 4", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["small","none","artifact"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is badly defeated.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mike 5 is badly defeated.",
+          "type": "situation",
+          "entities": [{"id": "Mike 5", "type": "concrete", "category": "person"}],
+          "adjectives": [["defeated","high","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Is the bike red?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Is the bike 4 red?",
+          "type": "query",
+          "entities": [{"id": "bike 4", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["red","none","none"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","car","car 1"], ["has degree property","red","car 1","none","none"]]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 2"],
+          ["isa","person","Mary 3"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","promise"],
+              ["has actor","E1","John 2"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","help"],
+                  ["has actor","E2","John 2"],
+                  ["has target","E2","Mary 3"],
+                  ["obligation","E2"]
+                ]
+              ],
+              ["speech_act","E1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and", ["isa","bike","bike 4"], ["has degree property","small","bike 4","none","artifact"]]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mike 5"],
+          ["has degree property","defeated","Mike 5","high","person"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["question",
+        ["and", ["isa","bike","bike 4"], ["has degree property","red","bike 4","none","none"]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "sent_S1",
+ "@logic": ["isa","car","#:car 1"],
+ "@nl": "The car 1 is red."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "red", "#:car 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The car 1 is red."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "John 2 promised to help Mary 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 3"],
+ "@nl": "John 2 promised to help Mary 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 2 promised to help Mary 3."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "promise", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 promised to help Mary 3."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:John 2", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 promised to help Mary 3."},
+{"@name": "sent_S2",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "John 2 promised to help Mary 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "John 2 promised to help Mary 3."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "help", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 promised to help Mary 3."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:John 2", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 promised to help Mary 3."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk1_activity", "#:Mary 3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 promised to help Mary 3."},
+{"@name": "sent_S2",
+ "@logic": ["obligation","sk1_activity"],
+ "@nl": "John 2 promised to help Mary 3."},
+{"@name": "sent_S2",
+ "@logic": ["speech_act","sk0_activity"],
+ "@nl": "John 2 promised to help Mary 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","bike","#:bike 4"],
+ "@nl": "The bike 4 is small."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "small", "#:bike 4", "none", "artifact", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The bike 4 is small."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mike 5"],
+ "@nl": "Mike 5 is badly defeated."},
+{"@name": "sent_S4",
+ "@logic": ["has property", "defeated", "#:Mike 5", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mike 5 is badly defeated."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","bike","#:bike 4"]],
+ "@nl": "Is the bike 4 red?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "red", "#:bike 4", ["$ctxt","present","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Is the bike 4 red?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-isa","bike","#:bike 4"],
+            ["-has property", "red", "#:bike 4", ["$ctxt","present","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is the bike 4 red?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "Is the bike 4 red?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "red", "#:bike 4", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "red", "#:bike 4", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "red", "#:bike 4", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the bike 4 red?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv39","?:Fv17"],
+            ["-has degree property","high","?:X","none","?:Fv40","?:Fv17"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv41","?:Fv18"],
+            ["has degree property","small","?:X","none","?:Fv42","?:Fv18"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv19","?:Fv20","?:Fv21"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv19","?:Fv20","?:Fv21"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv19","?:Fv20","?:Fv21"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv22","?:Fv23","?:Fv24"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv22","?:Fv23","?:Fv24"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv43", ["$ctxt","past","?:Fv25","?:Fv26","?:Fv27"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv44", ["$ctxt","present","?:Fv25","?:Fv26","?:Fv27"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv45", ["$ctxt","present","?:Fv25","?:Fv26","?:Fv27"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv28","?:Fv29","?:Fv30"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv28","?:Fv29","?:Fv30"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv28","?:Fv29","?:Fv30"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28339,
+      "cached_input_tokens": 28288,
+      "output_tokens": 607,
+      "raw": {
+        "input_tokens": 28339,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 607,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 28946
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33870,
+      "cached_input_tokens": 33280,
+      "output_tokens": 393,
+      "raw": {
+        "input_tokens": 33870,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 393,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34263
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:19:34Z"
+}

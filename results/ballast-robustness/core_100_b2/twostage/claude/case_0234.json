@@ -1,0 +1,302 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 234,
+  "input_text": "The roof of John's house is green. Gertrude is a wolf. Tallinn is in Estonia. John has a house?",
+  "expected_answer": true,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The roof of John's house is green.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The roof 2 of John 1's house 3 is green.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "roof 2", "type": "concrete", "text": "roof", "category": "artifact"},
+            {"id": "house 3", "type": "concrete", "category": "place"}
+          ],
+          "adjectives": [["green","none","none"]],
+          "definites": [["roof of","roof 2","house 3"]]
+        },
+        {
+          "unit_id": "S2",
+          "text": "The roof 2 is the roof of John 1's house 3.",
+          "type": "situation",
+          "entities": [{"id": "roof 2", "type": "concrete", "text": "roof", "category": "artifact"},
+            {"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "house 3", "type": "concrete", "category": "place"}
+          ],
+          "definites": [["roof of","roof 2","house 3"]]
+        },
+        {
+          "unit_id": "S3",
+          "text": "John 1 owns the house 3.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "house 3", "type": "concrete", "category": "place"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Gertrude is a wolf.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Gertrude 4 is a wolf.",
+          "type": "situation",
+          "entities": [{"id": "Gertrude 4", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is in Estonia.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Tallinn 5 is in Estonia 6.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 5",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Estonia 6",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John has a house?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Does John 1 have a house?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "house", "type": "generic", "category": "place"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["isa","roof","roof 2"],
+            ["isa","house","house 3"],
+            ["has degree property","green","roof 2","none","none"]
+          ]
+        ],
+        ["@definite","S1","W0","roof of","house 3","roof 2"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","roof","roof 2"],
+            ["isa","person","John 1"],
+            ["isa","house","house 3"],
+            ["have","John 1","house 3"],
+            ["has part","house 3","roof 2"]
+          ]
+        ],
+        ["@definite","S2","W0","roof of","house 3","roof 2"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["isa","house","house 3"], ["have","John 1","house 3"]]
+      ]
+    ],
+    ["@id", "S4", ["holds", "W0", ["isa","wolf","Gertrude 4"]]],
+    ["@id","S5",
+      ["holds","W0",
+        ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Estonia"]
+      ]
+    ],
+    ["@id","S6",
+      ["question", ["exists", "X", ["and", ["isa","house","X"], ["have","John 1","X"]]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","roof","#:roof 2"],
+ "@nl": "The roof 2 of John 1's house 3 is green."},
+{"@name": "entity_S5",
+ "@logic": ["isa","place","#:Tallinn 5"],
+ "@nl": "Tallinn 5 is in Estonia 6."},
+{"@name": "entity_S5",
+ "@logic": ["isa","place","#:Estonia 6"],
+ "@nl": "Tallinn 5 is in Estonia 6."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "The roof 2 of John 1's house 3 is green."},
+{"@name": "sent_S1",
+ "@logic": ["isa", "roof", ["$theof1", "roof", "#:house 3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]]],
+ "@nl": "The roof 2 of John 1's house 3 is green."},
+{"@name": "sent_S1",
+ "@logic": ["isa","house","#:house 3"],
+ "@nl": "The roof 2 of John 1's house 3 is green."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "green", ["$theof1", "roof", "#:house 3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]], ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The roof 2 of John 1's house 3 is green."},
+{"@name": "sent_S2",
+ "@logic": ["isa", "roof", ["$theof1", "roof", "#:house 3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]]],
+ "@nl": "The roof 2 is the roof of John 1's house 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "The roof 2 is the roof of John 1's house 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","house","#:house 3"],
+ "@nl": "The roof 2 is the roof of John 1's house 3."},
+{"@name": "sent_S2",
+ "@logic": ["have", "#:John 1", "#:house 3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The roof 2 is the roof of John 1's house 3."},
+{"@name": "sent_S2",
+ "@logic": ["has part", "#:house 3", ["$theof1", "roof", "#:house 3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]], ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The roof 2 is the roof of John 1's house 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 owns the house 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","house","#:house 3"],
+ "@nl": "John 1 owns the house 3."},
+{"@name": "sent_S3",
+ "@logic": ["have", "#:John 1", "#:house 3", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 owns the house 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","wolf","#:Gertrude 4"],
+ "@nl": "Gertrude 4 is a wolf."},
+{"@name": "sent_S5",
+ "@logic": ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Tallinn 5 is in Estonia 6."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","house","sk0_house"]],
+ "@nl": "Does John 1 have a house?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["have", "#:John 1", "sk0_house", ["$ctxt","present","?:Fv17","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Does John 1 have a house?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-isa","house","?:X"],
+            ["-have", "#:John 1", "?:X", ["$ctxt","present","?:Fv20","?:Fv11","?:Fv12"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 1 have a house?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Does John 1 have a house?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "#:John 1", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "#:John 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "#:John 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Does John 1 have a house?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:house 3", ["$theof1", "roof", "#:house 3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]], ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:house 3", ["$theof1", "roof", "#:house 3", ["$ctxt","present","W0","?:Fv3","?:Fv4"]], ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "roof of", ["$theof1","roof","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "roof", ["$theof1","roof","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "green", "?:X", ["$ctxt","past","?:Fv21","?:Fv22","?:Fv23"]],
+            ["has property", "green", "?:X", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]],
+            ["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "green", "?:X", ["$ctxt","past","?:Fv24","?:Fv25","?:Fv26"]],
+            ["has property", "green", "?:X", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]],
+            ["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Fv24","?:Fv25","?:Fv26"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S6","assumption",1], [["$defq0"], ["-have", "#:John 1", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-isa","house","?:X"]]],
+          [2, ["in","sent_S2","assumption",1], [["have", "#:John 1", "#:house 3", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S6","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,1], 2, 3, "fromga", 1], [["-isa","house","#:house 3"]]],
+          [5, ["in","sent_S3","assumption",1], [["isa","house","#:house 3"]]],
+          [6, ["simp",4,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) The roof of John's house is green.",
+"  (2) John has a house?",
+"Proof steps (by contradiction):",
+"  (1) If John has some X and X is a house then answer holds  [sentence 2]",
+"  (2) John has the house C  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) The house C is not a house  [from steps 1, 2, 3]",
+"  (5) The house C is a house  [sentence 1]",
+"  (6) Contradiction  [from steps 4, 5]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32077,
+      "cached_input_tokens": 32042,
+      "output_tokens": 838,
+      "raw": {
+        "input_tokens": 35,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 838,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39562,
+      "cached_input_tokens": 38891,
+      "output_tokens": 692,
+      "raw": {
+        "input_tokens": 671,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 692,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:20:47Z"
+}

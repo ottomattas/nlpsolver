@@ -1,0 +1,407 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1059,
+  "input_text": "No penguin can fly. Eve reported that Tom arrived. Unexpectedly, the door opened. Did Tom depart?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "No penguin can fly.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "No penguin can fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "Eve reported that Tom arrived.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Eve 1 reported that Tom 2 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "Tom 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "report",
+              "mode": "speech_act",
+              "roles": {
+                "actor": "Eve 1",
+                "content": {"root": "arrive", "mode": "event", "roles": {"actor": "Tom 2"}}
+              }
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "Tom 2 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Tom 2", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "arrive", "mode": "event", "roles": {"actor": "Tom 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Unexpectedly, the door opened.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The door 3 opened.",
+          "type": "situation",
+          "entities": [{"id": "door 3", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "open", "mode": "event", "roles": {"target": "door 3"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past",
+          "adjectives": [["unexpected","none","event"]]
+        }
+      ]
+    },
+    {
+      "raw": "Did Tom depart?",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Did Tom 2 depart?",
+          "type": "query",
+          "entities": [{"id": "Tom 2", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "depart", "mode": "event", "roles": {"actor": "Tom 2"}}],
+          "pre_state": "W2",
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Eve 1"],
+            ["isa","person","Tom 2"],
+            ["exists","E1",
+              ["and",
+                ["isa","activity","E1"],
+                ["has type","E1","report"],
+                ["has actor","E1","Eve 1"],
+                ["has time","E1","past","in"],
+                ["exists","E2",
+                  ["and",
+                    ["has content","E1","E2"],
+                    ["isa","activity","E2"],
+                    ["has type","E2","arrive"],
+                    ["has actor","E2","Tom 2"],
+                    ["has time","E2","past","in"]
+                  ]
+                ],
+                ["speech_act","E1"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Tom 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","arrive"],
+                ["has actor","E","Tom 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","artifact","door 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","open"],
+                ["has target","E","door 3"],
+                ["has time","E","past","in"],
+                ["has degree property","unexpected","E","none","event"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S5",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","depart"],
+            ["has actor","E","Tom 2"],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","door","#:door 3"],
+ "@nl": "The door 3 opened."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "No penguin can fly."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Tom 2"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "report", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "arrive", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:Tom 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["speech_act","sk0_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Tom 2"],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "arrive", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:Tom 2", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S4",
+ "@logic": ["isa","artifact","#:door 3"],
+ "@nl": "The door 3 opened."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The door 3 opened."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk3_activity", "open", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "The door 3 opened."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk3_activity", "#:door 3", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "The door 3 opened."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "The door 3 opened."},
+{"@name": "sent_S4",
+ "@logic": ["-has property", "expected", "sk3_activity", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "The door 3 opened."},
+{"@name": "sent_S4",
+ "@logic": ["next","W1","W2"],
+ "@nl": "The door 3 opened."},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk4_activity"]],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk4_activity", "depart", ["$ctxt","past","?:Fv16","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk4_activity", "#:Tom 2", ["$ctxt","past","?:Fv18","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk4_activity", "past", "in", ["$ctxt","past","?:Fv20","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S5",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "depart", ["$ctxt","past","?:Fv24","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "#:Tom 2", ["$ctxt","past","?:Fv26","?:Fv11","?:Fv12"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S5",
+ "@question": ["$defq0"],
+ "@nl": "Did Tom 2 depart?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "expected", "$some_unexpected_event", ["$ctxt","?:Fv54","?:Fv51","?:Fv52","?:Fv53"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","event","$some_unexpected_event"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "expected", "$some_not_unexpected_event", ["$ctxt","?:Fv62","?:Fv59","?:Fv60","?:Fv61"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv30"], ["has type","?:E","go","?:Fv30"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","report","?:Fv31"], ["has type","?:E","announce","?:Fv31"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","announce","?:Fv32"], ["has type","?:E","report","?:Fv32"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","open","?:X"], ["isa","outside","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","outside","?:X"], ["isa","open","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","event","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","event","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32074,
+      "cached_input_tokens": 32042,
+      "output_tokens": 825,
+      "raw": {
+        "input_tokens": 32,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 825,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39514,
+      "cached_input_tokens": 38891,
+      "output_tokens": 882,
+      "raw": {
+        "input_tokens": 623,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 882,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:38:54Z"
+}

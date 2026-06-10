@@ -1,0 +1,392 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 1188,
+  "input_text": "Amazon's length is 20 kilometers. A man liked a car. While John was cooking, Mary read a book. Mary read a book?",
+  "expected_answer": true,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Amazon's length is 20 kilometers.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The length 2 of Amazon 1 is 20 kilometers.",
+          "type": "real",
+          "entities": [{
+              "id": "Amazon 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Amazon_River"
+            },
+            {"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "20 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 2","Amazon 1"]]
+        },
+        {
+          "unit_id": "S2",
+          "text": "The length 2 is the length of Amazon 1.",
+          "type": "real",
+          "entities": [{"id": "length 2", "type": "concrete", "text": "length"},
+            {
+              "id": "Amazon 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Amazon_River"
+            }
+          ],
+          "definites": [["length of","length 2","Amazon 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "A man liked a car.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "A man 3 liked a car 4.",
+          "type": "situation",
+          "entities": [{"id": "man 3", "type": "concrete", "category": "person"},
+            {"id": "car 4", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["like","none","person"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "While John was cooking, Mary read a book.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "John 5 was cooking.",
+          "type": "situation",
+          "entities": [{"id": "John 5", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "cook", "mode": "event"}],
+          "pre_state": "W0",
+          "time": "past"
+        },
+        {
+          "unit_id": "S5",
+          "text": "Mary 6 read a book 7.",
+          "type": "situation",
+          "entities": [{"id": "Mary 6", "type": "concrete", "category": "person"},
+            {"id": "book 7", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "read", "mode": "event", "roles": {"target": "book 7"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary read a book?",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Did Mary 6 read a book?",
+          "type": "query",
+          "entities": [{"id": "Mary 6", "type": "concrete", "category": "person"},
+            {"id": "book", "type": "generic", "category": "artifact"}
+          ],
+          "actions": [{"root": "read", "mode": "event", "roles": {"target": "book"}}],
+          "pre_state": "W1",
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Amazon_River","W0"], ["$measure",20,"kilometer"]]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Amazon_River","W0"], ["$measure",20,"kilometer"]]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","man","man 3"],
+          ["isa","car","car 4"],
+          ["@time", "past", ["has degree rel2","like","man 3","car 4","none","person"]]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 5"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","cook"],
+              ["has actor","E","John 5"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 6"],
+            ["isa","book","book 7"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","read"],
+                ["has actor","E","Mary 6"],
+                ["has target","E","book 7"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S6",
+      ["question",
+        ["exists","X",
+          ["and",
+            ["isa","book","X"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","read"],
+                ["has actor","E","Mary 6"],
+                ["has target","E","X"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Amazon 1"],
+ "@nl": "The length 2 of Amazon 1 is 20 kilometers."},
+{"@name": "entity_S1",
+ "@logic": ["isa","measure","20 kilometers"],
+ "@nl": "The length 2 of Amazon 1 is 20 kilometers."},
+{"@name": "sent_S1",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Amazon_River","W0"], ["$list",20000,"#:meter"]],
+ "@nl": "The length 2 of Amazon 1 is 20 kilometers."},
+{"@name": "sent_S2",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Amazon_River","W0"], ["$list",20000,"#:meter"]],
+ "@nl": "The length 2 is the length of Amazon 1."},
+{"@name": "sent_S3",
+ "@logic": ["isa","man","#:man 3"],
+ "@nl": "A man 3 liked a car 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","car","#:car 4"],
+ "@nl": "A man 3 liked a car 4."},
+{"@name": "sent_S3",
+ "@logic": ["has degree rel2", "like", "#:man 3", "#:car 4", "none", "person", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "A man 3 liked a car 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:John 5"],
+ "@nl": "John 5 was cooking."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 5 was cooking."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk0_activity", "cook", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "John 5 was cooking."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk0_activity", "#:John 5", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "John 5 was cooking."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "John 5 was cooking."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "John 5 was cooking."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mary 6"],
+ "@nl": "Mary 6 read a book 7."},
+{"@name": "sent_S5",
+ "@logic": ["isa","book","#:book 7"],
+ "@nl": "Mary 6 read a book 7."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Mary 6 read a book 7."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk1_activity", "read", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 6 read a book 7."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk1_activity", "#:Mary 6", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 6 read a book 7."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk1_activity", "#:book 7", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 6 read a book 7."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 6 read a book 7."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Mary 6 read a book 7."},
+{"@name": "sent_S5",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Mary 6 read a book 7."},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","book","sk2_book"]],
+ "@nl": "Did Mary 6 read a book?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk3_activity"]],
+ "@nl": "Did Mary 6 read a book?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk3_activity", "read", ["$ctxt","past","?:Fv18","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did Mary 6 read a book?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk3_activity", "#:Mary 6", ["$ctxt","past","?:Fv20","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did Mary 6 read a book?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk3_activity", "sk2_book", ["$ctxt","past","?:Fv22","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did Mary 6 read a book?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk3_activity", "past", "in", ["$ctxt","past","?:Fv24","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Did Mary 6 read a book?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk3_activity"]],
+ "@nl": "Did Mary 6 read a book?"},
+{"@name": "sent_S6",
+ "@sourcetype": "question",
+ "@logic": [["-isa","book","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "read", ["$ctxt","past","?:Fv30","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "#:Mary 6", ["$ctxt","past","?:Fv32","?:Fv11","?:Fv12"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","past","?:Fv34","?:Fv11","?:Fv12"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Mary 6 read a book?"},
+{"@name": "sent_S6",
+ "@question": ["$defq0"],
+ "@nl": "Did Mary 6 read a book?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S6","assumption",1], [["$defq0"], ["-has type", "?:X", "read", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has actor", "?:X", "#:Mary 6", ["$ctxt","past","?:V","?:Z","?:U"]], ["-has target", "?:X", "?:W", ["$ctxt","past","?:2006","?:Z","?:U"]], ["-isa","book","?:W"], ["-isa","activity","?:X"], ["-actuality","?:X"]]],
+          [2, ["in","sent_S5","assumption",1], [["has target", "sk1_activity", "#:book 7", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S6","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,3], 2, 3, "fromga", 1], [["-isa","activity","sk1_activity"], ["-isa","book","#:book 7"], ["-actuality","sk1_activity"], ["-has type", "sk1_activity", "read", ["$ctxt","past","?:X3","?:Y3","?:Z3"]], ["-has actor", "sk1_activity", "#:Mary 6", ["$ctxt","past","?:U3","?:Y3","?:Z3"]]]],
+          [5, ["in","sent_S5","assumption",1], [["isa","book","#:book 7"]]],
+          [6, ["in","sent_S5","assumption",1], [["isa","activity","sk1_activity"]]],
+          [7, ["in","sent_S5","assumption",1], [["actuality","sk1_activity"]]],
+          [8, ["simp",4,5,6,7,"fromga",1], [["-has type", "sk1_activity", "read", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has actor", "sk1_activity", "#:Mary 6", ["$ctxt","past","?:U","?:Y","?:Z"]]]],
+          [9, ["in","sent_S5","assumption",1], [["has type", "sk1_activity", "read", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [10, ["mp",8,9,"fromga",1], [["-has actor", "sk1_activity", "#:Mary 6", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [11, ["in","sent_S5","assumption",1], [["has actor", "sk1_activity", "#:Mary 6", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [12, ["mp",10,11,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) While John was cooking, Mary read a book.",
+"  (2) Mary read a book?",
+"Proof steps (by contradiction):",
+"  (1) If X is a read event and Mary performs X and X targets some W and W is a book and X is an activity then answer holds  [sentence 2]",
+"  (2) The event act2 targets the book H  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) If the event act2 is an activity and the act2 is a read event then Mary does not perform the act2  [from steps 1, 2, 3]",
+"  (5) The book H is a book  [sentence 1]",
+"  (6) The event act2 is an activity  [sentence 1]",
+"  (7)   [sentence 1]",
+"  (8) If the event act2 is a read event then Mary does not perform the act2  [from steps 4, 5, 6, 7]",
+"  (9) The event act2 is a read event  [sentence 1]",
+"  (10) Mary does not perform the act2  [from steps 8, 9]",
+"  (11) Mary performs the event act2  [sentence 1]",
+"  (12) Contradiction  [from steps 10, 11]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 32078,
+      "cached_input_tokens": 32042,
+      "output_tokens": 947,
+      "raw": {
+        "input_tokens": 36,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 947,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39650,
+      "cached_input_tokens": 38891,
+      "output_tokens": 537,
+      "raw": {
+        "input_tokens": 759,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 537,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:39:57Z"
+}

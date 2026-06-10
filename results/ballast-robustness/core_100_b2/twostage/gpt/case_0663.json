@@ -1,0 +1,350 @@
+{
+  "test_name": "core_100_b2",
+  "case_id": 663,
+  "input_text": "The elephants saw a fox. The children playing in the garden laughed. The glass was broken by the boy. The children were in the garden?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Probably true.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The elephants saw a fox.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The elephants 1 saw a fox 2.",
+          "type": "situation",
+          "entities": [{"id": "elephants 1", "type": "concrete", "category": "animal"},
+            {"id": "fox 2", "type": "concrete", "category": "animal"}
+          ],
+          "actions": [{"root": "see", "mode": "event", "roles": {"actor": "elephants 1", "target": "fox 2"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The children playing in the garden laughed.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The children 3 who were in the garden 4 laughed.",
+          "type": "situation",
+          "entities": [{"id": "children 3", "type": "concrete", "category": "person"},
+            {"id": "garden 4", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "laugh",
+              "mode": "event",
+              "roles": {"actor": "children 3", "location": "garden 4"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The glass was broken by the boy.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The boy 5 broke the glass 6.",
+          "type": "situation",
+          "entities": [{"id": "boy 5", "type": "concrete", "category": "person"},
+            {"id": "glass 6", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "break", "mode": "event", "roles": {"actor": "boy 5", "target": "glass 6"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The children were in the garden?",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Were the children 3 in the garden 4?",
+          "type": "query",
+          "entities": [{"id": "children 3", "type": "concrete", "category": "person"},
+            {"id": "garden 4", "type": "concrete", "category": "place"}
+          ],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","elephant","elephants 1"],
+          ["isa","fox","fox 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","see"],
+              ["has actor","E","elephants 1"],
+              ["has target","E","fox 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","child","children 3"],
+          ["isa","garden","garden 4"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","laugh"],
+              ["has actor","E","children 3"],
+              ["has location","E","garden 4","in"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","boy","boy 5"],
+          ["isa","glass","glass 6"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","break"],
+              ["has actor","E","boy 5"],
+              ["has target","E","glass 6"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["question",
+        ["and",
+          ["isa","child","children 3"],
+          ["isa","garden","garden 4"],
+          ["is rel2","in","children 3","garden 4"]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","elephant","#:elephants 1"],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "entity_S2",
+ "@logic": ["isa","children","#:children 3"],
+ "@nl": "The children 3 who were in the garden 4 laughed."},
+{"@name": "sent_S1",
+ "@logic": ["isa","elephant","#:elephants 1"],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","fox","#:fox 2"],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "show", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["has recipient", "sk0_activity", "#:elephants 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:fox 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The elephants 1 saw a fox 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","child","#:children 3"],
+ "@nl": "The children 3 who were in the garden 4 laughed."},
+{"@name": "sent_S2",
+ "@logic": ["isa","garden","#:garden 4"],
+ "@nl": "The children 3 who were in the garden 4 laughed."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The children 3 who were in the garden 4 laughed."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "laugh", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The children 3 who were in the garden 4 laughed."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:children 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The children 3 who were in the garden 4 laughed."},
+{"@name": "sent_S2",
+ "@logic": ["has location", "sk1_activity", "#:garden 4", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The children 3 who were in the garden 4 laughed."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The children 3 who were in the garden 4 laughed."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The children 3 who were in the garden 4 laughed."},
+{"@name": "sent_S3",
+ "@logic": ["isa","boy","#:boy 5"],
+ "@nl": "The boy 5 broke the glass 6."},
+{"@name": "sent_S3",
+ "@logic": ["isa","glass","#:glass 6"],
+ "@nl": "The boy 5 broke the glass 6."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The boy 5 broke the glass 6."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "break", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The boy 5 broke the glass 6."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:boy 5", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The boy 5 broke the glass 6."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk2_activity", "#:glass 6", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The boy 5 broke the glass 6."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The boy 5 broke the glass 6."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The boy 5 broke the glass 6."},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","child","#:children 3"]],
+ "@nl": "Were the children 3 in the garden 4?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","garden","#:garden 4"]],
+ "@nl": "Were the children 3 in the garden 4?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "in", "#:children 3", "#:garden 4", ["$ctxt","past","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Were the children 3 in the garden 4?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question",
+ "@logic": [["-isa","child","#:children 3"],
+            ["-isa","garden","#:garden 4"],
+            ["-is rel2", "in", "#:children 3", "#:garden 4", ["$ctxt","past","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$defq0"]
+           ],
+ "@nl": "Were the children 3 in the garden 4?"},
+{"@name": "sent_S4",
+ "@question": ["$defq0"],
+ "@nl": "Were the children 3 in the garden 4?"},
+{"@name": "sent_S4",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "#:children 3", "#:garden 4", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["is rel2", "in", "#:children 3", "#:garden 4", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "#:children 3", "#:garden 4", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Were the children 3 in the garden 4?"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "break", ["$ctxt","?:Fv19","?:Fv20","?:Fv22","?:Fv23"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv19","?:Fv20","?:Fv22","?:Fv23"]],
+            ["-next","?:Fv20","?:Fv21"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv21","?:Fv22","?:Fv23"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "break", "?:X", ["$ctxt","?:Fv24","?:Fv25","?:Fv27","?:Fv28"]],
+            ["-next","?:Fv25","?:Fv26"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv26","?:Fv27","?:Fv28"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "blockers": [["$block", 0, ["$not", ["is rel2", "in", "#:children 3", "#:garden 4", ["$ctxt","past","W0","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.9,
+        "positive proof": [[1, ["in","frm_52","axiom",0.9], [["$block", 0, ["$not", ["is rel2","in","?:X","?:Y","?:Z"]]], ["is rel2","in","?:X","?:Y","?:Z"], ["-has location","?:U","?:Y","in","?:Z"], ["-has actor","?:U","?:X","?:Z"]]],
+          [2, ["in","sent_S2","assumption",1], [["has location", "sk1_activity", "#:garden 4", "in", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["mp", [1,2], 2, "fromassumption", 0.9], [["$block", 0, ["$not", ["is rel2", "in", "?:X", "#:garden 4", ["$ctxt","past","W0","?:Y","?:Z"]]]], ["is rel2", "in", "?:X", "#:garden 4", ["$ctxt","past","W0","?:Y","?:Z"]], ["-has actor", "sk1_activity", "?:X", ["$ctxt","past","W0","?:Y","?:Z"]]]],
+          [4, ["in","sent_S2","assumption",1], [["has actor", "sk1_activity", "#:children 3", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [5, ["mp", [3,2], 4, "fromassumption", 0.9], [["$block", 0, ["$not", ["is rel2", "in", "#:children 3", "#:garden 4", ["$ctxt","past","W0","?:X","?:Y"]]]], ["is rel2", "in", "#:children 3", "#:garden 4", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [6, ["in","sent_S4","assumption",1], [["-isa","garden","#:garden 4"], ["-isa","child","#:children 3"], ["$defq0"], ["-is rel2", "in", "#:children 3", "#:garden 4", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [7, ["in","sent_S4","goal",1], [["-$defq0"]]],
+          [8, ["mp", [5,1], [6,3], 7, "fromga", 0.9], [["-isa","garden","#:garden 4"], ["-isa","child","#:children 3"], ["$block", 0, ["$not", ["is rel2", "in", "#:children 3", "#:garden 4", ["$ctxt","past","W0","?:X","?:Y"]]]]]],
+          [9, ["in","sent_S2","assumption",1], [["isa","garden","#:garden 4"]]],
+          [10, ["mp",8,9,"fromga",0.9], [["-isa","child","#:children 3"], ["$block", 0, ["$not", ["is rel2", "in", "#:children 3", "#:garden 4", ["$ctxt","past","W0","?:X","?:Y"]]]]]],
+          [11, ["in","sent_S2","assumption",1], [["isa","child","#:children 3"]]],
+          [12, ["mp",10,11,"fromga",0.9], [["$block", 0, ["$not", ["is rel2", "in", "#:children 3", "#:garden 4", ["$ctxt","past","W0","?:X3","?:Y3"]]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 90%.",
+"Sentences used:",
+"  (1) The children playing in the garden laughed.",
+"  (2) The children were in the garden?",
+"Knowledge used:",
+"  If an event U takes place in some Y and some X performs U then normally X is in Y. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If an event U takes place in some Y and some X performs U then normally X is in Y  [background knowledge, confidence 90%]",
+"  (2) The event act2 takes place in the garden D  [sentence 1]",
+"  (3) If some X performs the event act2 then normally X is in the garden D  [from steps 1, 2, confidence 90%]",
+"  (4) The children C performs the event act2  [sentence 1]",
+"  (5) Normally the children C is in the garden D  [from steps 3, 4, confidence 90%]",
+"  (6) If the children C is a child and the children C is in the garden D then answer holds  [sentence 2]",
+"  (7) assume for contradiction: the answer is no  [from question]",
+"  (8) The children C is not a child, except when the children C is not in the garden D  [from steps 5, 6, 7, confidence 90%]",
+"  (9) The garden D is a garden  [sentence 1]",
+"  (10) The children C is not a child, except when the children C is not in the garden D  [from steps 8, 9, confidence 90%]",
+"  (11) The children C is a child  [sentence 1]",
+"  (12) Outstanding exception: the children C is not in the garden D  [from steps 10, 11, confidence 90%]",
+"Exceptions checked and not holding:",
+"  children C is not in garden D"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 28342,
+      "cached_input_tokens": 28288,
+      "output_tokens": 636,
+      "raw": {
+        "input_tokens": 28342,
+        "input_tokens_details": {"cached_tokens": 28288},
+        "output_tokens": 636,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 28978
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33895,
+      "cached_input_tokens": 33408,
+      "output_tokens": 404,
+      "raw": {
+        "input_tokens": 33895,
+        "input_tokens_details": {"cached_tokens": 33408},
+        "output_tokens": 404,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34299
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T06:34:10Z"
+}
