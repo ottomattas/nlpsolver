@@ -142,8 +142,8 @@ python3 runtests.py tests/tests_core_100.py -llms gemini -onestage struct    # B
 python3 runtests.py tests/tests_core_100.py -llms gemini -onestage direct    # C
 
 # overview + per-case win/loss (from repo root)
-python3 wip/status.py            # add: core 1600  for the full set
-python3 wip/winloss.py
+python3 tools/status.py          # add: core 1600  for the full set
+python3 tools/winloss.py
 
 # extensions (X2 needs new runs; the rest re-analyse the committed snapshot)
 cd llmpipe
