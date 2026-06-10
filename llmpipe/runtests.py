@@ -68,6 +68,8 @@ def _worker(args):
   from solve import english_to_answer
   import llmcall
   _solve_mod.llm = llm
+  if run_opts.get("max_tokens"):
+    _solve_mod.max_tokens = run_opts["max_tokens"]
 
   collect = {}
   error_payload = None
@@ -478,6 +480,12 @@ def main():
                   help="Re-run all cases (overwrite existing JSON files)")
   ap.add_argument("-geminicache", action="store_true",
                   help="Enable Gemini context caching (off by default)")
+  ap.add_argument("-maxtokens", type=int, default=0,
+                  help="Per-call LLM output-token budget (0 = llmcall default "
+                       "of 8000). Long inputs (e.g. ballast doses b8/b16) "
+                       "need more: reasoning tokens and per-sentence logic "
+                       "both count against it, and a truncated stage output "
+                       "fails the whole parse.")
   ap.add_argument("-onestage", default=None, choices=["direct", "struct", "refine"],
                   help="Parser architecture: omit for two-stage baseline "
                        "(Condition A); 'direct' = one-call direct (C); "
@@ -530,6 +538,8 @@ def main():
   run_opts = {}
   if args.geminicache:
     run_opts["use_gemini_cache_flag"] = True
+  if args.maxtokens:
+    run_opts["max_tokens"] = args.maxtokens
   if args.onestage:
     run_opts["onestage_mode"] = args.onestage
 

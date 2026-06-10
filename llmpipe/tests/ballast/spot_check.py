@@ -164,9 +164,14 @@ def main():
   ap.add_argument("-ids", required=True, help="Comma-separated case ids")
   ap.add_argument("-llm", default="gemini")
   ap.add_argument("-base", default="tests/tests_core_100.py")
+  ap.add_argument("-maxtokens", type=int, default=0,
+                  help="Per-call LLM output budget (0 = llmcall default of "
+                       "8000; heavy doses need more, see runtests -maxtokens)")
   args = ap.parse_args()
 
   solve_mod.llm = args.llm
+  if args.maxtokens:
+    solve_mod.max_tokens = args.maxtokens
   matcher = _import_matcher()
 
   base_path = os.path.join(LLMPIPE, args.base)
