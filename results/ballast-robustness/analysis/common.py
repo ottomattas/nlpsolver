@@ -58,6 +58,50 @@ def manifest(dose):
     return {e["case_id"]: e for e in json.load(f)["cases"]}
 
 
+def manifest_at_rev(dose, rev=None):
+  """Manifest for a dose at a git revision (None = working tree).
+
+  The collected gpt+claude Phase 1-2 cells ran on the PRE-regeneration
+  suites (see phase2_exclusions.json: b2 ~ a862b73 era, b4/b8/b16 =
+  88ca7b0; the 9a69fc8 splitter fix reshuffled all picks), so analyses
+  that need the ballast/original split must read the manifest the cell
+  actually ran on, not the current one.
+  """
+  if rev is None:
+    return manifest(dose)
+  import subprocess
+  rel = f"llmpipe/tests/ballast/tests_core_100_b{dose}.manifest.json"
+  out = subprocess.run(["git", "show", f"{rev}:{rel}"], cwd=REPO,
+                       capture_output=True, text=True, check=True).stdout
+  return {e["case_id"]: e for e in json.loads(out)["cases"]}
+
+
+# Candidate suite generations, newest first (see manifest_at_rev docstring).
+MANIFEST_REV_CANDIDATES = [None, "88ca7b0", "a64dd44", "a862b73"]
+
+
+def resolve_manifest(dose, cases):
+  """(manifest, rev) whose ballast texts all appear verbatim in the stored
+  input_text of every loaded case -- self-validating provenance per cell."""
+  for rev in MANIFEST_REV_CANDIDATES:
+    try:
+      man = manifest_at_rev(dose, rev)
+    except Exception:
+      continue
+    if cases and all(
+        all(b["text"] in c.get("input_text", "") for b in man[cid]["ballast"])
+        for cid, c in cases.items() if cid in man):
+      return man, rev
+  raise RuntimeError(f"no manifest revision matches the loaded b{dose} cell")
+
+
+def exclusions(dose):
+  """Contaminated case ids to drop for a dose (phase2_exclusions.json)."""
+  fp = os.path.join(BR_ROOT, "phase2_exclusions.json")
+  with open(fp) as f:
+    return set(json.load(f)["contaminated_by_dose"].get(str(dose), []))
+
+
 def is_correct(case):
   """Correct only if it produced an answer and matched (errors => wrong)."""
   return ("error" not in case) and bool(case.get("correctness"))
