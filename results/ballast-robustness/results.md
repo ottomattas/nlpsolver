@@ -641,9 +641,12 @@ Readings, against the gpt+claude map of §12.2:
 - **Stage-1 omission stays at zero** across all 400 Phase 3 runs — the
   no-sentence-dropped result now holds for all four models.
 - **`stage1-capture` becomes visible** (5 runs vs ~0 for gpt+claude):
-  case 107 ("Who is nice? The nice man / the quiet man") picks up a
-  ballast adjective on an original entity in *every* Phase 3 cell — the
-  wrong-answer channel for this model pair, where gpt's was id-merge.
+  case 107 ("A boy saw a girl. … He was nice. … Who was nice?", expected
+  *the (nice) boy*) re-binds the original pronoun to a ballast-introduced
+  *man* in *every* Phase 3 cell — "The nice man." at b8 ("The man
+  carrying a bag waved." lands right before "He was nice."), "The quiet
+  man." at b16 ("A tall and quiet man entered."). The wrong-answer
+  channel for this model pair, where gpt's was id-merge.
 - **gemini's b16 signature is stage-2 distortion** (5 of its 18 fails):
   stage 1 clean, logic of original sentences drifts vs b0. Consistent
   with gemini paying the largest accuracy cost at b16 (−17pt, §13.1).
