@@ -1,0 +1,772 @@
+{
+  "test_name": "core_100_b8",
+  "case_id": 1069,
+  "input_text": "A man did have a car. Tom refused to eat the soup. Daniel journeyed to the office. A flower was white. Mary's uncle arrived. Although John was tired, he finished the work. Tallinn is hardly in Latvia. If X1 is a grandfather of Y1, Y1 is a grandchild of X1. Gertrude is a cat. John finished the work?",
+  "expected_answer": true,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "A man did have a car.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "A man 1 had a car 2.",
+          "type": "situation",
+          "entities": [{"id": "man 1", "type": "concrete", "category": "person"},
+            {"id": "car 2", "type": "concrete", "category": "artifact"}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Tom refused to eat the soup.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Tom 3 refused to eat the soup 4.",
+          "type": "situation",
+          "entities": [{"id": "Tom 3", "type": "concrete", "category": "person"},
+            {"id": "soup 4", "type": "concrete", "category": "substance"}
+          ],
+          "actions": [{
+              "root": "refuse",
+              "mode": "event",
+              "roles": {
+                "actor": "Tom 3",
+                "content": {"root": "eat", "mode": "event", "roles": {"actor": "Tom 3", "target": "soup 4"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Daniel journeyed to the office.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Daniel 5 went to the office 6.",
+          "type": "situation",
+          "entities": [{"id": "Daniel 5", "type": "concrete", "category": "person"},
+            {"id": "office 6", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "go",
+              "mode": "event",
+              "roles": {"actor": "Daniel 5", "destination": "office 6"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A flower was white.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "A flower 7 was white.",
+          "type": "situation",
+          "entities": [{"id": "flower 7", "type": "concrete", "category": "plant"}],
+          "adjectives": [["white","none","none"]],
+          "pre_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary's uncle arrived.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Mary 8's uncle 9 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Mary 8", "type": "concrete", "category": "person"},
+            {"id": "uncle 9", "type": "concrete", "text": "uncle", "category": "person"}
+          ],
+          "actions": [{"root": "arrive", "mode": "event", "roles": {"actor": "uncle 9"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        },
+        {
+          "unit_id": "S6",
+          "text": "Uncle 9 is the uncle of Mary 8.",
+          "type": "situation",
+          "entities": [{"id": "uncle 9", "type": "concrete", "text": "uncle", "category": "person"},
+            {"id": "Mary 8", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["uncle of","uncle 9","Mary 8"]],
+          "pre_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Although John was tired, he finished the work.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "John 10 was tired.",
+          "type": "situation",
+          "entities": [{"id": "John 10", "type": "concrete", "category": "person"}],
+          "adjectives": [["tired","none","person"]],
+          "pre_state": "W2",
+          "time": "past"
+        },
+        {
+          "unit_id": "S8",
+          "text": "John 10 finished the work 11.",
+          "type": "situation",
+          "entities": [{"id": "John 10", "type": "concrete", "category": "person"},
+            {"id": "work 11", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "finish", "mode": "event", "roles": {"actor": "John 10", "target": "work 11"}}],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is hardly in Latvia.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Tallinn 12 is in Latvia 13.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 12",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 13",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ],
+          "confidence": 0.2
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a grandfather of Y1, Y1 is a grandchild of X1.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "If X1 is a grandfather of Y1, Y1 is a grandchild of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic", "category": "person"},
+            {"id": "Y1", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Gertrude is a cat.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Gertrude 14 is a cat.",
+          "type": "real",
+          "entities": [{"id": "Gertrude 14", "type": "concrete", "category": "animal"},
+            {"id": "cat", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John finished the work?",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Did John 10 finish the work 11?",
+          "type": "query",
+          "entities": [{"id": "John 10", "type": "concrete", "category": "person"},
+            {"id": "work 11", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "finish", "mode": "event", "roles": {"actor": "John 10", "target": "work 11"}}],
+          "pre_state": "W3",
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","man","man 1"],
+          ["isa","car","car 2"],
+          ["@time", "past", ["have","man 1","car 2"]]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Tom 3"],
+          ["isa","substance","soup 4"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","refuse"],
+              ["has actor","E1","Tom 3"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","eat"],
+                  ["has actor","E2","Tom 3"],
+                  ["has target","E2","soup 4"],
+                  ["has time","E2","past","in"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Daniel 5"],
+            ["isa","office","office 6"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","go"],
+                ["has actor","E","Daniel 5"],
+                ["has destination","E","office 6","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","flower","flower 7"],
+            ["has degree property","white","flower 7","none","none"]
+          ]
+        ],
+        ["state time","W1","past"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Mary 8"],
+            ["isa","uncle","uncle 9"],
+            ["is rel2","uncle of","uncle 9","Mary 8"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","arrive"],
+                ["has actor","E","uncle 9"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","uncle","uncle 9"],
+            ["isa","person","Mary 8"],
+            ["is rel2","uncle of","uncle 9","Mary 8"]
+          ]
+        ],
+        ["@definite","S6","W1","uncle of","Mary 8","uncle 9"],
+        ["state time","W1","past"]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","John 10"],
+            ["has degree property","tired","John 10","none","person"]
+          ]
+        ],
+        ["state time","W2","past"]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","John 10"],
+            ["isa","work","work 11"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","finish"],
+                ["has actor","E","John 10"],
+                ["has target","E","work 11"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+        ],
+        ["@p","S9",0.2]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies",
+              ["is rel2","grandfather of","X1","Y1"],
+              ["is rel2","grandchild of","Y1","X1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S11", ["holds", "W0", ["isa","cat","Gertrude 14"]]],
+    ["@id","S12",
+      ["question",
+        ["and",
+          ["isa","person","John 10"],
+          ["isa","work","work 11"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","finish"],
+              ["has actor","E","John 10"],
+              ["has target","E","work 11"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","soup","#:soup 4"],
+ "@nl": "Tom 3 refused to eat the soup 4."},
+{"@name": "entity_S5",
+ "@logic": ["isa","uncle","#:uncle 9"],
+ "@nl": "Mary 8's uncle 9 arrived."},
+{"@name": "entity_S9",
+ "@logic": ["isa","place","#:Tallinn 12"],
+ "@nl": "Tallinn 12 is in Latvia 13."},
+{"@name": "entity_S9",
+ "@logic": ["isa","place","#:Latvia 13"],
+ "@nl": "Tallinn 12 is in Latvia 13."},
+{"@name": "sent_S1",
+ "@logic": ["isa","man","#:man 1"],
+ "@nl": "A man 1 had a car 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","car","#:car 2"],
+ "@nl": "A man 1 had a car 2."},
+{"@name": "sent_S1",
+ "@logic": ["have", "#:man 1", "#:car 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "A man 1 had a car 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Tom 3"],
+ "@nl": "Tom 3 refused to eat the soup 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","substance","#:soup 4"],
+ "@nl": "Tom 3 refused to eat the soup 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Tom 3 refused to eat the soup 4."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "refuse", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 3 refused to eat the soup 4."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:Tom 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 3 refused to eat the soup 4."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 3 refused to eat the soup 4."},
+{"@name": "sent_S2",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "Tom 3 refused to eat the soup 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Tom 3 refused to eat the soup 4."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "eat", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 3 refused to eat the soup 4."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:Tom 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 3 refused to eat the soup 4."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk1_activity", "#:soup 4", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 3 refused to eat the soup 4."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Tom 3 refused to eat the soup 4."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Tom 3 refused to eat the soup 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Daniel 5"],
+ "@nl": "Daniel 5 went to the office 6."},
+{"@name": "sent_S3",
+ "@logic": ["isa","office","#:office 6"],
+ "@nl": "Daniel 5 went to the office 6."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Daniel 5 went to the office 6."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "go", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Daniel 5 went to the office 6."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:Daniel 5", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Daniel 5 went to the office 6."},
+{"@name": "sent_S3",
+ "@logic": ["has destination", "sk2_activity", "#:office 6", "at", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Daniel 5 went to the office 6."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Daniel 5 went to the office 6."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Daniel 5 went to the office 6."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Daniel 5 went to the office 6."},
+{"@name": "sent_S4",
+ "@logic": ["isa","flower","#:flower 7"],
+ "@nl": "A flower 7 was white."},
+{"@name": "sent_S4",
+ "@logic": ["has property", "white", "#:flower 7", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "A flower 7 was white."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mary 8"],
+ "@nl": "Mary 8's uncle 9 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["isa", "uncle", ["$theof1", "uncle", "#:Mary 8", ["$ctxt","past","W1","?:Fv9","?:Fv10"]]],
+ "@nl": "Mary 8's uncle 9 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Mary 8's uncle 9 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk3_activity", "arrive", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 8's uncle 9 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk3_activity", ["$theof1", "uncle", "#:Mary 8", ["$ctxt","past","W1","?:Fv9","?:Fv10"]], ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 8's uncle 9 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 8's uncle 9 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Mary 8's uncle 9 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Mary 8's uncle 9 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["isa", "uncle", ["$theof1", "uncle", "#:Mary 8", ["$ctxt","past","W1","?:Fv9","?:Fv10"]]],
+ "@nl": "Uncle 9 is the uncle of Mary 8."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Mary 8"],
+ "@nl": "Uncle 9 is the uncle of Mary 8."},
+{"@name": "sent_S6",
+ "@logic": ["is rel2", "uncle of", ["$theof1", "uncle", "#:Mary 8", ["$ctxt","past","W1","?:Fv9","?:Fv10"]], "#:Mary 8", ["$ctxt","past","W1","?:Fv11","?:Fv12"]],
+ "@nl": "Uncle 9 is the uncle of Mary 8."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:John 10"],
+ "@nl": "John 10 was tired."},
+{"@name": "sent_S7",
+ "@logic": ["has degree property", "tired", "#:John 10", "none", "person", ["$ctxt","past","W2","?:Fv13","?:Fv14"]],
+ "@nl": "John 10 was tired."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:John 10"],
+ "@nl": "John 10 finished the work 11."},
+{"@name": "sent_S8",
+ "@logic": ["isa","work","#:work 11"],
+ "@nl": "John 10 finished the work 11."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "John 10 finished the work 11."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk4_activity", "finish", ["$ctxt","past","W2","?:Fv15","?:Fv16"]],
+ "@nl": "John 10 finished the work 11."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk4_activity", "#:John 10", ["$ctxt","past","W2","?:Fv15","?:Fv16"]],
+ "@nl": "John 10 finished the work 11."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk4_activity", "#:work 11", ["$ctxt","past","W2","?:Fv15","?:Fv16"]],
+ "@nl": "John 10 finished the work 11."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W2","?:Fv15","?:Fv16"]],
+ "@nl": "John 10 finished the work 11."},
+{"@name": "sent_S8",
+ "@logic": ["actuality","sk4_activity"],
+ "@nl": "John 10 finished the work 11."},
+{"@name": "sent_S8",
+ "@logic": ["next","W2","W3"],
+ "@nl": "John 10 finished the work 11."},
+{"@name": "sent_S9",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@confidence": 0.6,
+ "@nl": "Tallinn 12 is in Latvia 13."},
+{"@name": "sent_S10",
+ "@logic": [["-is rel2", "grandfather of", "?:X1", "?:Y1", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]],
+            ["is rel2", "grandchild of", "?:Y1", "?:X1", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "If X1 is a grandfather of Y1, Y1 is a grandchild of X1."},
+{"@name": "sent_S11",
+ "@logic": ["isa","cat","#:Gertrude 14"],
+ "@nl": "Gertrude 14 is a cat."},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:John 10"]],
+ "@nl": "Did John 10 finish the work 11?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","work","#:work 11"]],
+ "@nl": "Did John 10 finish the work 11?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk5_activity"]],
+ "@nl": "Did John 10 finish the work 11?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk5_activity", "finish", ["$ctxt","past","?:Fv34","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Did John 10 finish the work 11?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk5_activity", "#:John 10", ["$ctxt","past","?:Fv36","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Did John 10 finish the work 11?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk5_activity", "#:work 11", ["$ctxt","past","?:Fv38","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Did John 10 finish the work 11?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk5_activity", "past", "in", ["$ctxt","past","?:Fv40","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Did John 10 finish the work 11?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk5_activity"]],
+ "@nl": "Did John 10 finish the work 11?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:John 10"],
+            ["-isa","work","#:work 11"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "finish", ["$ctxt","past","?:Fv48","?:Fv25","?:Fv26"]],
+            ["-has actor", "?:E", "#:John 10", ["$ctxt","past","?:Fv50","?:Fv25","?:Fv26"]],
+            ["-has target", "?:E", "#:work 11", ["$ctxt","past","?:Fv52","?:Fv25","?:Fv26"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did John 10 finish the work 11?"},
+{"@name": "sent_S6",
+ "@logic": ["have", "#:Mary 8", ["$theof1", "uncle", "#:Mary 8", ["$ctxt","past","W1","?:Fv9","?:Fv10"]], ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "Uncle 9 is the uncle of Mary 8."},
+{"@name": "sent_S12",
+ "@question": ["$defq0"],
+ "@nl": "Did John 10 finish the work 11?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:Mary 8", ["$theof1", "uncle", "#:Mary 8", ["$ctxt","past","W1","?:Fv9","?:Fv10"]], ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "uncle of", ["$theof1","uncle","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "uncle", ["$theof1","uncle","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv56"], ["has type","?:E","go","?:Fv56"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","place","?:X"], ["-isa","substance","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","place","?:X"], ["-isa","substance","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","substance","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","substance","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "white", "?:X", ["$ctxt","past","?:Fv57","?:Fv58","?:Fv59"]],
+            ["has property", "white", "?:X", ["$ctxt","present","?:Fv57","?:Fv58","?:Fv59"]],
+            ["$block", 0, ["$not", ["has property", "white", "?:X", ["$ctxt","present","?:Fv57","?:Fv58","?:Fv59"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "white", "?:X", ["$ctxt","past","?:Fv60","?:Fv61","?:Fv62"]],
+            ["has property", "white", "?:X", ["$ctxt","present","?:Fv60","?:Fv61","?:Fv62"]],
+            ["$block", 0, ["$not", ["has property", "white", "?:X", ["$ctxt","present","?:Fv60","?:Fv61","?:Fv62"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_neg_implicative",
+ "@logic": [["-has type","?:E1","refuse","?:Ct1"],
+            ["-has content","?:E1","?:E2"],
+            ["-has type","?:E2","?:V","?:Ct2"],
+            ["-has actor","?:E2","?:X","?:Ct2"],
+            ["-has target","?:E2","?:Y","?:Ct2"],
+            ["-has type","?:E3","?:V","?:Ct3"],
+            ["-has actor","?:E3","?:X","?:Ct3"],
+            ["-has target","?:E3","?:Y","?:Ct3"],
+            ["-actuality","?:E3"]
+           ],
+ "@nl": "[generated: frm_neg_implicative]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S12","assumption",1], [["-isa","person","#:John 10"], ["-isa","work","#:work 11"], ["$defq0"], ["-has type", "?:X", "finish", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has actor", "?:X", "#:John 10", ["$ctxt","past","?:V","?:Z","?:U"]], ["-has target", "?:X", "#:work 11", ["$ctxt","past","?:W","?:Z","?:U"]], ["-isa","activity","?:X"], ["-actuality","?:X"]]],
+          [2, ["in","sent_S8","assumption",1], [["has type", "sk4_activity", "finish", ["$ctxt","past","W2","?:X","?:Y"]]]],
+          [3, ["in","sent_S12","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,3], 2, 3, "fromga", 1], [["-isa","person","#:John 10"], ["-isa","activity","sk4_activity"], ["-isa","work","#:work 11"], ["-actuality","sk4_activity"], ["-has actor", "sk4_activity", "#:John 10", ["$ctxt","past","?:X3","?:Y3","?:Z3"]], ["-has target", "sk4_activity", "#:work 11", ["$ctxt","past","?:U3","?:Y3","?:Z3"]]]],
+          [5, ["in","sent_S8","assumption",1], [["isa","person","#:John 10"]]],
+          [6, ["in","sent_S8","assumption",1], [["isa","work","#:work 11"]]],
+          [7, ["in","sent_S8","assumption",1], [["isa","activity","sk4_activity"]]],
+          [8, ["in","sent_S8","assumption",1], [["actuality","sk4_activity"]]],
+          [9, ["simp",4,5,6,7,8,"fromga",1], [["-has actor", "sk4_activity", "#:John 10", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has target", "sk4_activity", "#:work 11", ["$ctxt","past","?:U","?:Y","?:Z"]]]],
+          [10, ["in","sent_S8","assumption",1], [["has actor", "sk4_activity", "#:John 10", ["$ctxt","past","W2","?:X","?:Y"]]]],
+          [11, ["mp",9,10,"fromga",1], [["-has target", "sk4_activity", "#:work 11", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [12, ["in","sent_S8","assumption",1], [["has target", "sk4_activity", "#:work 11", ["$ctxt","past","W2","?:X","?:Y"]]]],
+          [13, ["mp",11,12,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Although John was tired, he finished the work.",
+"  (2) John finished the work?",
+"Proof steps (by contradiction):",
+"  (1) If John is a person and X is a finish event and John performs X and X targets the work M and X is an activity then answer holds  [sentence 2]",
+"  (2) The event act5 is a finish event  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) If John is a person and the event act5 is an activity and John performs the act5 then the act5 does not target the work M  [from steps 1, 2, 3]",
+"  (5) John is a person  [sentence 1]",
+"  (6) The work M is a work  [sentence 1]",
+"  (7) The event act5 is an activity  [sentence 1]",
+"  (8)   [sentence 1]",
+"  (9) If John performs the event act5 then the act5 does not target the work M  [from steps 4, 5, 6, 7, 8]",
+"  (10) John performs the event act5  [sentence 1]",
+"  (11) The act5 does not target the work M  [from steps 9, 10]",
+"  (12) The event act5 targets the work M  [sentence 1]",
+"  (13) Contradiction  [from steps 11, 12]"
+],
+  "llm_usage": [{
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 30787,
+      "cached_input_tokens": 0,
+      "output_tokens": 5706,
+      "raw": {
+        "promptTokenCount": 30787,
+        "candidatesTokenCount": 2306,
+        "totalTokenCount": 36493,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 30787}],
+        "thoughtsTokenCount": 3400,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 38588,
+      "cached_input_tokens": 0,
+      "output_tokens": 3133,
+      "raw": {
+        "promptTokenCount": 38588,
+        "candidatesTokenCount": 1497,
+        "totalTokenCount": 41721,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 38588}],
+        "thoughtsTokenCount": 1636,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 41212,
+      "cached_input_tokens": 37862,
+      "output_tokens": 3856,
+      "raw": {
+        "promptTokenCount": 41212,
+        "candidatesTokenCount": 2057,
+        "totalTokenCount": 45068,
+        "cachedContentTokenCount": 37862,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 41212}],
+        "cacheTokensDetails": [{"modality": "TEXT", "tokenCount": 37862}],
+        "thoughtsTokenCount": 1799,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T21:16:54Z"
+}

@@ -1,0 +1,614 @@
+{
+  "test_name": "core_100_b8",
+  "case_id": 1316,
+  "input_text": "A surgeon, Dr. Smith, entered the room. Sparrows are birds. Probably Tallinn is in Estonia. The cake was eaten. The red square has a nail. John is nice. All elephants are animals. Mary tried to solve the puzzle. Tom and Eve greeted each other. Is it true that John is nice?",
+  "expected_answer": true,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "A surgeon, Dr. Smith, entered the room.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Dr. Smith 1 entered the room 2.",
+          "type": "situation",
+          "entities": [{"id": "Dr. Smith 1", "type": "concrete", "category": "person"},
+            {"id": "room 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "enter",
+              "mode": "event",
+              "roles": {"actor": "Dr. Smith 1", "target": "room 2"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "Dr. Smith 1 is a surgeon.",
+          "type": "real",
+          "entities": [{"id": "Dr. Smith 1", "type": "concrete", "category": "person"}],
+          "pre_state": "W0"
+        }
+      ]
+    },
+    {
+      "raw": "Sparrows are birds.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Sparrows are birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "sparrows", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Probably Tallinn is in Estonia.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Tallinn 1 is in Estonia 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Estonia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "The cake was eaten.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "The cake 1 was eaten.",
+          "type": "situation",
+          "entities": [{"id": "cake 1", "type": "concrete"}],
+          "actions": [{"root": "eat", "mode": "event", "roles": {"target": "cake 1"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The red square has a nail.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The red square 1 has a nail 2.",
+          "type": "situation",
+          "entities": [{"id": "square 1", "type": "concrete", "category": "artifact"},
+            {"id": "nail 2", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["red","none","square"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is nice.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "John 1 is nice.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "All elephants are animals.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "All elephants are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mary tried to solve the puzzle.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Mary 1 tried to solve the puzzle 2.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "puzzle 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "try", "mode": "event", "roles": {"actor": "Mary 1", "target": "puzzle 2"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Tom and Eve greeted each other.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Tom 1 and Eve 2 greeted each other.",
+          "type": "situation",
+          "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"},
+            {"id": "Eve 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "greet", "mode": "event", "roles": {"actor": ["Tom 1","Eve 2"]}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Is it true that John is nice?",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Is John 1 nice?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Dr. Smith 1"],
+            ["isa","room","room 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","enter"],
+                ["has actor","E","Dr. Smith 1"],
+                ["has target","E","room 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id", "S2", ["holds", "W0", ["isa","surgeon","Dr. Smith 1"]]],
+    ["@id","S3",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","sparrow","X"], ["isa","bird","X"]]]]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Estonia"]
+        ],
+        ["@p","S4",0.8]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","cake","cake 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","eat"],
+              ["has target","E","cake 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","square","square 1"],
+          ["isa","nail","nail 2"],
+          ["has degree property","red","square 1","none","square"],
+          ["have","square 1","nail 2"]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["has degree property","nice","John 1","none","person"]]
+      ]
+    ],
+    ["@id","S8",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 1"],
+          ["isa","puzzle","puzzle 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","try"],
+              ["has actor","E","Mary 1"],
+              ["has target","E","puzzle 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Tom 1"],
+          ["isa","person","Eve 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","greet"],
+              ["has actor","E","Tom 1"],
+              ["has actor","E","Eve 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["question",
+        ["and", ["isa","person","John 1"], ["has degree property","nice","John 1","none","person"]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:Estonia 2"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","Dr. Smith 1"],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","room","#:room 2"],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "enter", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "Dr. Smith 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:room 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","surgeon","Dr. Smith 1"],
+ "@nl": "Dr. Smith 1 is a surgeon."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","sparrow","?:X"], ["isa","bird","?:X"]],
+ "@nl": "Sparrows are birds."},
+{"@name": "sent_S4",
+ "@logic": ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@confidence": 0.6,
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","cake","#:cake 1"],
+ "@nl": "The cake 1 was eaten."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The cake 1 was eaten."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk1_activity", "eat", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The cake 1 was eaten."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk1_activity", "#:cake 1", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The cake 1 was eaten."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The cake 1 was eaten."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The cake 1 was eaten."},
+{"@name": "sent_S6",
+ "@logic": ["-isa","round","#:square 1"],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","nail","#:nail 2"],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S6",
+ "@logic": ["has property", "red", "#:square 1", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S6",
+ "@logic": ["have", "#:square 1", "#:nail 2", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is nice."},
+{"@name": "sent_S7",
+ "@logic": ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "John 1 is nice."},
+{"@name": "sent_S8",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"]],
+ "@nl": "All elephants are animals."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 tried to solve the puzzle 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","puzzle","#:puzzle 2"],
+ "@nl": "Mary 1 tried to solve the puzzle 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Mary 1 tried to solve the puzzle 2."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk2_activity", "try", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Mary 1 tried to solve the puzzle 2."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk2_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Mary 1 tried to solve the puzzle 2."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk2_activity", "#:puzzle 2", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Mary 1 tried to solve the puzzle 2."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Mary 1 tried to solve the puzzle 2."},
+{"@name": "sent_S9",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Mary 1 tried to solve the puzzle 2."},
+{"@name": "sent_S10",
+ "@logic": ["isa","person","#:Tom 1"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S10",
+ "@logic": ["isa","person","#:Eve 2"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S10",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S10",
+ "@logic": ["has type", "sk3_activity", "greet", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S10",
+ "@logic": ["has actor", "sk3_activity", "#:Tom 1", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S10",
+ "@logic": ["has actor", "sk3_activity", "#:Eve 2", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S10",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S10",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:John 1"]],
+ "@nl": "Is John 1 nice?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Is John 1 nice?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:John 1"],
+            ["-has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:Fv25","?:Fv26"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 nice?"},
+{"@name": "sent_S11",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 nice?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "good", "#:John 1", "none", "person", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 nice?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","sparrow","$some_sparrow"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","sparrow","$some_not_sparrow"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv32","?:Fv33","?:Fv34"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv35","?:Fv36","?:Fv37"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "blockers": [["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.995851,
+        "positive proof": [[1, ["in","frm_97","axiom",1], [["-has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","present","?:V","?:W","?:2006"]], ["has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","past","?:2007","?:W","?:2006"]], ["-before","?:V","?:2007"]]],
+          [2, ["in","sent_S7","assumption",1], [["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp",1,2,"fromassumption",1], [["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-before","W0","?:X"]]],
+          [4, ["in","frm_91","axiom",1], [["-next","?:X","?:Y"], ["before","?:X","?:Y"]]],
+          [5, ["in","sent_S1","assumption",1], [["next","W0","W1"]]],
+          [6, ["mp",4,5,"fromassumption",1], [["before","W0","W1"]]],
+          [7, ["mp", [3,1], 6, "fromassumption", 1], [["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [8, ["in","sent_S11","assumption",0.99], [["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["-has degree property", "good", "#:John 1", "none", "person", ["$ctxt","past","?:X","?:Y","?:Z"]], ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [9, ["mp", 7, [8,1], "fromassumption", 0.99], [["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [10, ["in","sent_S11","assumption",1], [["-isa","person","#:John 1"], ["$defq0"], ["-has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [11, ["in","sent_S11","goal",1], [["-$defq0"]]],
+          [12, ["mp", [9,1], [10,2], 11, "fromga", 0.99], [["-isa","person","#:John 1"], ["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]]]],
+          [13, ["in","sent_S7","assumption",1], [["isa","person","#:John 1"]]],
+          [14, ["mp",12,13,"fromga",0.99], [["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [15, ["in","frm_57","axiom",0.99], [["$block", 0, ["$not", ["has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","?:V","?:W","?:2006","?:2007"]]]], ["-has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","?:V","?:2008","?:2006","?:2007"]], ["has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","?:V","?:W","?:2006","?:2007"]], ["-next","?:2008","?:W"]]],
+          [16, ["mp", [15,1], 2, "fromassumption", 0.99], [["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]], ["-next","W0","?:X"]]],
+          [17, ["mp", [16,2], 5, "fromassumption", 0.99], [["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [18, ["mp", [17,1], [10,2], 11, "fromga", 0.99], [["-isa","person","#:John 1"], ["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]]]],
+          [19, ["mp",18,13,"fromga",0.99], [["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [20, ["cumul",14,19,"fromga",0.9933], [["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [21, ["in","frm_world_geom","assumption",1], [["next","W0","W1"]]],
+          [22, ["mp", [16,2], 21, "fromassumption", 0.99], [["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [23, ["mp", [22,1], [10,2], 11, "fromga", 0.99], [["-isa","person","#:John 1"], ["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X","?:Y"]]]]]],
+          [24, ["mp",23,13,"fromga",0.99], [["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [25, ["cumul",20,24,"fromga",0.995851], [["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 100%.",
+"Sentences used:",
+"  (1) A surgeon, Dr. Smith, entered the room.",
+"  (2) John is nice.",
+"  (3) Is it true that John is nice?",
+"Knowledge used:",
+"  If some Y is some z some X and a situation V is earlier than a situation E2 then Y is z X. Why: assumed basic knowledge.",
+"  If a situation X is followed by a situation Y then X is earlier than Y. Why: assumed basic knowledge.",
+"  If some Y is some z some X and a situation E3 is followed by a situation W then normally Y is z X. Why: assumed basic knowledge.",
+"  The situation W0 is followed by the situation W1. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If some Y is some z some X and a situation V is earlier than a situation E2 then Y is z X  [background knowledge]",
+"  (2) John is a good person  [sentence 2]",
+"  (3) If the situation W0 is earlier than a situation X then John is a good person  [from steps 1, 2]",
+"  (4) If a situation X is followed by a situation Y then X is earlier than Y  [background knowledge]",
+"  (5) The situation W0 is followed by the situation W1  [sentence 1]",
+"  (6) The situation W0 is earlier than the situation W1  [from steps 4, 5]",
+"  (7) John is a good person  [from steps 3, 6]",
+"  (8) If John is a good person then normally John is a good person  [sentence 3, confidence 99%]",
+"  (9) Normally John is a good person  [from steps 7, 8, confidence 99%]",
+"  (10) If John is a person and John is a good person then answer holds  [sentence 3]",
+"  (11) assume for contradiction: the answer is no  [from question]",
+"  (12) John is not a person, except when John is not a good person  [from steps 9, 10, 11, confidence 99%]",
+"  (13) John is a person  [sentence 2]",
+"  (14) Outstanding exception: John is not a good person  [from steps 12, 13, confidence 99%]",
+"  (15) If some Y is some z some X and a situation E3 is followed by a situation W then normally Y is z X  [background knowledge, confidence 99%]",
+"  (16) If the situation W0 is followed by a situation X then normally John is a good person  [from steps 15, 2, confidence 99%]",
+"  (17) Normally John is a good person  [from steps 16, 5, confidence 99%]",
+"  (18) John is not a person, except when John is not a good person  [from steps 17, 10, 11, confidence 99%]",
+"  (19) Outstanding exception: John is not a good person  [from steps 18, 13, confidence 99%]",
+"  (20) Outstanding exception: John is not a good person  [from steps 14, 19, confidence 99%]",
+"  (21) The situation W0 is followed by the situation W1  [background knowledge]",
+"  (22) Normally John is a good person  [from steps 16, 21, confidence 99%]",
+"  (23) John is not a person, except when John is not a good person  [from steps 22, 10, 11, confidence 99%]",
+"  (24) Outstanding exception: John is not a good person  [from steps 23, 13, confidence 99%]",
+"  (25) Outstanding exception: John is not a good person  [from steps 20, 24, confidence 100%]",
+"Exceptions checked and not holding:",
+"  John is not a good person"
+],
+  "llm_usage": [{
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 28789,
+      "cached_input_tokens": 28672,
+      "output_tokens": 6479,
+      "raw": {
+        "prompt_tokens": 28789,
+        "completion_tokens": 6479,
+        "total_tokens": 35268,
+        "prompt_tokens_details": {"cached_tokens": 28672},
+        "completion_tokens_details": {"reasoning_tokens": 5061},
+        "prompt_cache_hit_tokens": 28672,
+        "prompt_cache_miss_tokens": 117
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 35185,
+      "cached_input_tokens": 33920,
+      "output_tokens": 2698,
+      "raw": {
+        "prompt_tokens": 35185,
+        "completion_tokens": 2698,
+        "total_tokens": 37883,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1883},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 1265
+      }
+    }
+  ],
+  "timestamp": "2026-06-11T05:38:49Z"
+}

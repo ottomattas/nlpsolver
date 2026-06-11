@@ -1,0 +1,660 @@
+{
+  "test_name": "core_100_b8",
+  "case_id": 1149,
+  "input_text": "John is a big bear. \"Riga is not in America. Sara, the sister of Mike, left. Wolves are afraid of mice. This book is more interesting than that one. Susan bought herself a new car. If X is cool then X is red. Penguins do not fly. Eve introduced Mary. Did Tom buy a car?",
+  "expected_answer": null,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is a big bear.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a big bear.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["big","none","bear"]]
+        }
+      ]
+    },
+    {
+      "raw": "Riga is not in America.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Riga 1 is not in America 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Riga 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Riga"
+            },
+            {
+              "id": "America 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/America"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Sara, the sister of Mike, left.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Sara 1 left.",
+          "type": "situation",
+          "entities": [{"id": "Sara 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "leave", "mode": "event", "roles": {"actor": "Sara 1"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "Sara 1 is the sister of Mike 2.",
+          "type": "situation",
+          "entities": [{"id": "Sara 1", "type": "concrete", "category": "person"},
+            {"id": "Mike 2", "type": "concrete", "category": "person"}
+          ],
+          "pre_state": "W0"
+        }
+      ]
+    },
+    {
+      "raw": "Wolves are afraid of mice.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Wolves are afraid of mice.",
+          "type": "normal_rule",
+          "entities": [{"id": "wolves", "type": "generic", "category": "animal"},
+            {"id": "mice", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["afraid","none","wolf"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "This book is more interesting than that one.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "This book 1 is more interesting than that book 2.",
+          "type": "situation",
+          "entities": [{"id": "book 1", "type": "concrete", "category": "artifact"},
+            {"id": "book 2", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["interesting","high","book"]]
+        }
+      ]
+    },
+    {
+      "raw": "Susan bought herself a new car.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Susan 1 bought a car 2.",
+          "type": "situation",
+          "entities": [{"id": "Susan 1", "type": "concrete", "category": "person"},
+            {"id": "car 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "buy", "mode": "event", "roles": {"agent": "Susan 1", "target": "car 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S8",
+          "text": "The car 2 is new.",
+          "type": "situation",
+          "entities": [{"id": "car 2", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["new","none","car"]],
+          "pre_state": "W0"
+        }
+      ]
+    },
+    {
+      "raw": "If X is cool then X is red.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "If X is cool then X is red.",
+          "type": "normal_rule",
+          "entities": [{"id": "X", "type": "generic"}],
+          "adjectives": [["cool","none","entity"], ["red","none","entity"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "Penguins do not fly.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Penguins cannot fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability", "roles": {"actor": "penguins"}}]
+        }
+      ]
+    },
+    {
+      "raw": "Eve introduced Mary.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Eve 1 introduced Mary 3.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "Mary 3", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "introduce", "mode": "event", "roles": {"agent": "Eve 1", "target": "Mary 3"}}],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Did Tom buy a car?",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Did Tom 1 buy a car?",
+          "type": "query",
+          "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"},
+            {"id": "car", "type": "generic", "category": "artifact"}
+          ],
+          "actions": [{"root": "buy", "mode": "event", "roles": {"agent": "Tom 1", "target": "car"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and", ["isa","bear","John 1"], ["has degree property","big","John 1","none","bear"]]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["not",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Riga","https://en.wikipedia.org/wiki/America"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Sara 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","leave"],
+                ["has actor","E","Sara 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Sara 1"],
+          ["isa","person","Mike 2"],
+          ["is rel2","sister of","Sara 1","Mike 2"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","wolf","X"],
+              ["forall","Y",
+                ["implies",
+                  ["isa","mouse","Y"],
+                  ["normally", ["has degree rel2","afraid","X","Y","none","wolf"]]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S5",0.95]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","book","book 1"],
+          ["isa","book","book 2"],
+          ["has degree rel2","interesting","book 1","book 2","high","book"]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Susan 1"],
+            ["isa","car","car 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","buy"],
+                ["has actor","E","Susan 1"],
+                ["has target","E","car 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and", ["isa","car","car 2"], ["has degree property","new","car 2","none","car"]]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["normally",
+              ["implies",
+                ["has degree property","cool","X","none","entity"],
+                ["has degree property","red","X","none","entity"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S9",0.95]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["isa","person","Mary 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","introduce"],
+              ["has actor","E","Eve 1"],
+              ["has target","E","Mary 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S12",
+      ["question",
+        ["exists","X",
+          ["and",
+            ["isa","car","X"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","buy"],
+                ["has actor","E","Tom 1"],
+                ["has target","E","X"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:Riga 1"],
+ "@nl": "Riga 1 is not in America 2."},
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:America 2"],
+ "@nl": "Riga 1 is not in America 2."},
+{"@name": "entity_S12",
+ "@logic": ["isa","person","#:Tom 1"],
+ "@nl": "Did Tom 1 buy a car?"},
+{"@name": "sent_S1",
+ "@logic": ["isa","bear","#:John 1"],
+ "@nl": "John 1 is a big bear."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "big", "#:John 1", "none", "bear", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is a big bear."},
+{"@name": "sent_S2",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Riga", "https://en.wikipedia.org/wiki/America", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Riga 1 is not in America 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Sara 1"],
+ "@nl": "Sara 1 left."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Sara 1 left."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "leave", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Sara 1 left."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:Sara 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Sara 1 left."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Sara 1 left."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sara 1 left."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Sara 1"],
+ "@nl": "Sara 1 is the sister of Mike 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mike 2"],
+ "@nl": "Sara 1 is the sister of Mike 2."},
+{"@name": "sent_S4",
+ "@logic": ["is rel2", "sister of", "#:Sara 1", "#:Mike 2", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Sara 1 is the sister of Mike 2."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","wolf","?:X"],
+            ["-isa","mouse","?:Y"],
+            ["has degree rel2", "afraid", "?:X", "?:Y", "none", "wolf", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","mouse",1], ["$not", ["has degree rel2", "afraid", "?:X", "?:Y", "none", "wolf", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Wolves are afraid of mice."},
+{"@name": "sent_S6",
+ "@logic": ["isa","book","#:book 1"],
+ "@nl": "This book 1 is more interesting than that book 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","book","#:book 2"],
+ "@nl": "This book 1 is more interesting than that book 2."},
+{"@name": "sent_S6",
+ "@logic": ["has degree rel2", "interesting", "#:book 1", "#:book 2", "high", "book", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "This book 1 is more interesting than that book 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Susan 1"],
+ "@nl": "Susan 1 bought a car 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","car","#:car 2"],
+ "@nl": "Susan 1 bought a car 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Susan 1 bought a car 2."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk1_activity", "buy", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Susan 1 bought a car 2."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk1_activity", "#:Susan 1", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Susan 1 bought a car 2."},
+{"@name": "sent_S7",
+ "@logic": ["has target", "sk1_activity", "#:car 2", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Susan 1 bought a car 2."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Susan 1 bought a car 2."},
+{"@name": "sent_S7",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Susan 1 bought a car 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","car","#:car 2"],
+ "@nl": "The car 2 is new."},
+{"@name": "sent_S8",
+ "@logic": ["has degree property", "new", "#:car 2", "none", "car", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The car 2 is new."},
+{"@name": "sent_S9",
+ "@logic": [["-has degree property", "cool", "?:X", "none", "?:Fv137", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]],
+            ["has property", "red", "?:X", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]],
+            ["$block", ["$","$generic",2], ["$not", ["has property", "red", "?:X", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "If X is cool then X is red."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Penguins cannot fly."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 introduced Mary 3."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:Mary 3"],
+ "@nl": "Eve 1 introduced Mary 3."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Eve 1 introduced Mary 3."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk2_activity", "introduce", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "Eve 1 introduced Mary 3."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk2_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "Eve 1 introduced Mary 3."},
+{"@name": "sent_S11",
+ "@logic": ["has target", "sk2_activity", "#:Mary 3", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "Eve 1 introduced Mary 3."},
+{"@name": "sent_S11",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "Eve 1 introduced Mary 3."},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","car","sk3_car"]],
+ "@nl": "Did Tom 1 buy a car?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk4_activity"]],
+ "@nl": "Did Tom 1 buy a car?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk4_activity", "buy", ["$ctxt","past","?:Fv36","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Tom 1 buy a car?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk4_activity", "#:Tom 1", ["$ctxt","past","?:Fv38","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Tom 1 buy a car?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk4_activity", "sk3_car", ["$ctxt","past","?:Fv40","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Tom 1 buy a car?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-isa","car","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "buy", ["$ctxt","past","?:Fv46","?:Fv29","?:Fv30"]],
+            ["-has actor", "?:E", "#:Tom 1", ["$ctxt","past","?:Fv48","?:Fv29","?:Fv30"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","past","?:Fv50","?:Fv29","?:Fv30"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did Tom 1 buy a car?"},
+{"@name": "sent_S12",
+ "@question": ["$defq0"],
+ "@nl": "Did Tom 1 buy a car?"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","wolf","$some_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","wolf","$some_not_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","mouse","$some_mouse"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","mouse","$some_not_mouse"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "cool", "$some_cool_entity", "none", "?:Fv138", ["$ctxt","?:Fv116","?:Fv113","?:Fv114","?:Fv115"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cool", "$some_not_cool_entity", "none", "?:Fv139", ["$ctxt","?:Fv124","?:Fv121","?:Fv122","?:Fv123"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "red", "$some_red_entity", ["$ctxt","?:Fv128","?:Fv125","?:Fv126","?:Fv127"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "red", "$some_not_red_entity", ["$ctxt","?:Fv136","?:Fv133","?:Fv134","?:Fv135"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv52"], ["has type","?:E","go","?:Fv52"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","introduce","?:Fv53"], ["has type","?:E","present","?:Fv53"]],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv54","?:Fv55","?:Fv57","?:Fv58"]],
+            ["-has actor", "?:E", "?:Owner", ["$ctxt","?:Fv54","?:Fv55","?:Fv57","?:Fv58"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv54","?:Fv55","?:Fv57","?:Fv58"]],
+            ["-next","?:Fv55","?:Fv56"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv56","?:Fv57","?:Fv58"]],
+            ["$block", 0, ["$not", ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv56","?:Fv57","?:Fv58"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv59","?:Fv60","?:Fv62","?:Fv63"]],
+            ["-has beneficiary", "?:E", "?:Owner", ["$ctxt","?:Fv59","?:Fv60","?:Fv62","?:Fv63"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv59","?:Fv60","?:Fv62","?:Fv63"]],
+            ["-next","?:Fv60","?:Fv61"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv61","?:Fv62","?:Fv63"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_acquire_have",
+ "@logic": [["-has type", "?:E", "buy", ["$ctxt","?:Fv64","?:Fv65","?:Fv67","?:Fv68"]],
+            ["-has recipient", "?:E", "?:Owner", ["$ctxt","?:Fv64","?:Fv65","?:Fv67","?:Fv68"]],
+            ["-has target", "?:E", "?:Obj", ["$ctxt","?:Fv64","?:Fv65","?:Fv67","?:Fv68"]],
+            ["-next","?:Fv65","?:Fv66"],
+            ["have", "?:Owner", "?:Obj", ["$ctxt","present","?:Fv66","?:Fv67","?:Fv68"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_acquire_have]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv140", ["$ctxt","past","?:Fv69","?:Fv70","?:Fv71"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv141", ["$ctxt","present","?:Fv69","?:Fv70","?:Fv71"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv142", ["$ctxt","present","?:Fv69","?:Fv70","?:Fv71"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv72","?:Fv73","?:Fv74"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv72","?:Fv73","?:Fv74"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv72","?:Fv73","?:Fv74"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv75","?:Fv76","?:Fv77"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv75","?:Fv76","?:Fv77"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv75","?:Fv76","?:Fv77"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv78","?:Fv79","?:Fv80"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv78","?:Fv79","?:Fv80"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv78","?:Fv79","?:Fv80"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 28793,
+      "cached_input_tokens": 28672,
+      "output_tokens": 5036,
+      "raw": {
+        "prompt_tokens": 28793,
+        "completion_tokens": 5036,
+        "total_tokens": 33829,
+        "prompt_tokens_details": {"cached_tokens": 28672},
+        "completion_tokens_details": {"reasoning_tokens": 3417},
+        "prompt_cache_hit_tokens": 28672,
+        "prompt_cache_miss_tokens": 121
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 35349,
+      "cached_input_tokens": 33920,
+      "output_tokens": 5628,
+      "raw": {
+        "prompt_tokens": 35349,
+        "completion_tokens": 5628,
+        "total_tokens": 40977,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 4805},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 1429
+      }
+    }
+  ],
+  "timestamp": "2026-06-11T05:37:19Z"
+}

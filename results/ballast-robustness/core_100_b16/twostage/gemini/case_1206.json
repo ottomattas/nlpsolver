@@ -1,0 +1,1373 @@
+{
+  "test_name": "core_100_b16",
+  "case_id": 1206,
+  "input_text": "If X1 is not a parent of Y1, Y1 is not a child of X1. If a car is in a box, the car is in the house. All elephants have a head. Mike is a nice man. Tom refused to eat the soup. The city was destroyed. Mr Dursley is an American. The tree was cut by the farmer. John stopped smoking. Tallinn is hardly in Latvia. A blue square is cool. The letter was written by Eve. The dog chased by the boy escaped. The student carrying the books greeted the teacher. Emajogi is 20 meters long. The bike is small. Dr. Smith, a surgeon, entered the room. Does John smoke now?",
+  "expected_answer": false,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "If X1 is not a parent of Y1, Y1 is not a child of X1.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "If X1 is not a parent of Y1, Y1 is not a child of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"}, {"id": "Y1", "type": "generic"}]
+        }
+      ]
+    },
+    {
+      "raw": "If a car is in a box, the car is in the house.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "If a car is in a box, the car is in the house.",
+          "type": "normal_rule",
+          "entities": [{"id": "car", "type": "generic", "category": "artifact"},
+            {"id": "box", "type": "generic", "category": "artifact"},
+            {"id": "house", "type": "generic", "category": "place"}
+          ],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "All elephants have a head.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "All elephants have a head.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "head", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a nice man.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mike 1 is a nice man.",
+          "type": "situation",
+          "entities": [{"id": "Mike 1", "type": "concrete", "category": "person"},
+            {"id": "man", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["nice","none","person"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Tom refused to eat the soup.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Tom 2 refused eating the soup 3.",
+          "type": "situation",
+          "entities": [{"id": "Tom 2", "type": "concrete", "category": "person"},
+            {"id": "eating the soup", "type": "abstract"},
+            {"id": "soup 3", "type": "concrete", "category": "substance"}
+          ],
+          "actions": [{
+              "root": "refuse",
+              "mode": "event",
+              "roles": {"actor": "Tom 2", "target": "eating the soup"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The city was destroyed.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The city 4 was destroyed.",
+          "type": "situation",
+          "entities": [{"id": "city 4", "type": "concrete", "category": "place"}],
+          "actions": [{"root": "destroy", "mode": "event", "roles": {"target": "city 4"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is an American.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Mr Dursley 5 is an American.",
+          "type": "situation",
+          "entities": [{"id": "Mr Dursley 5", "type": "concrete", "category": "person"},
+            {"id": "American", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["American","none","person"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "The tree was cut by the farmer.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "The farmer 6 cut the tree 7.",
+          "type": "situation",
+          "entities": [{"id": "farmer 6", "type": "concrete", "category": "person"},
+            {"id": "tree 7", "type": "concrete", "category": "plant"}
+          ],
+          "actions": [{"root": "cut", "mode": "event", "roles": {"actor": "farmer 6", "target": "tree 7"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John stopped smoking.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "John 8 stopped smoking.",
+          "type": "situation",
+          "entities": [{"id": "John 8", "type": "concrete", "category": "person"},
+            {"id": "smoking", "type": "abstract"}
+          ],
+          "actions": [{"root": "stop", "mode": "event", "roles": {"actor": "John 8", "target": "smoking"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S10",
+          "text": "John 8 smoked.",
+          "type": "situation",
+          "entities": [{"id": "John 8", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 8"}}],
+          "pre_state": "W0",
+          "time": "past"
+        },
+        {
+          "unit_id": "S11",
+          "text": "John 8 does not smoke.",
+          "type": "situation",
+          "entities": [{"id": "John 8", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 8"}}],
+          "pre_state": "W1",
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is hardly in Latvia.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Tallinn 9 is in Latvia 10.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 9",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 10",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ],
+          "confidence": 0.05,
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "A blue square is cool.",
+      "units": [{
+          "unit_id": "S13",
+          "text": "A square that is blue is cool.",
+          "type": "normal_rule",
+          "entities": [{"id": "square", "type": "generic"}],
+          "adjectives": [["blue","none","none"], ["cool","none","square"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "The letter was written by Eve.",
+      "units": [{
+          "unit_id": "S14",
+          "text": "Eve 11 wrote the letter 12.",
+          "type": "situation",
+          "entities": [{"id": "Eve 11", "type": "concrete", "category": "person"},
+            {"id": "letter 12", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "write", "mode": "event", "roles": {"actor": "Eve 11", "target": "letter 12"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The dog chased by the boy escaped.",
+      "units": [{
+          "unit_id": "S15",
+          "text": "The dog 13 escaped.",
+          "type": "situation",
+          "entities": [{"id": "dog 13", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "escape", "mode": "event", "roles": {"actor": "dog 13"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S16",
+          "text": "The boy 14 chased the dog 13.",
+          "type": "situation",
+          "entities": [{"id": "boy 14", "type": "concrete", "category": "person"},
+            {"id": "dog 13", "type": "concrete", "category": "animal"}
+          ],
+          "actions": [{"root": "chase", "mode": "event", "roles": {"actor": "boy 14", "target": "dog 13"}}],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The student carrying the books greeted the teacher.",
+      "units": [{
+          "unit_id": "S17",
+          "text": "The student 15 greeted the teacher 16.",
+          "type": "situation",
+          "entities": [{"id": "student 15", "type": "concrete", "category": "person"},
+            {"id": "teacher 16", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "greet",
+              "mode": "event",
+              "roles": {"actor": "student 15", "target": "teacher 16"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S18",
+          "text": "The student 15 was carrying the books 17.",
+          "type": "situation",
+          "entities": [{"id": "student 15", "type": "concrete", "category": "person"},
+            {"id": "books 17", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "carry",
+              "mode": "event",
+              "roles": {"actor": "student 15", "target": "books 17"}
+            }
+          ],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Emajogi is 20 meters long.",
+      "units": [{
+          "unit_id": "S19",
+          "text": "The length 18 of Emajogi 19 is 20 meters.",
+          "type": "real",
+          "entities": [{"id": "length 18", "type": "concrete", "text": "length"},
+            {
+              "id": "Emajogi 19",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Emajõgi"
+            },
+            {"id": "20 meters", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 18","Emajogi 19"]],
+          "time": "present"
+        },
+        {
+          "unit_id": "S20",
+          "text": "The length 18 is the length of Emajogi 19.",
+          "type": "real",
+          "entities": [{"id": "length 18", "type": "concrete", "text": "length"},
+            {
+              "id": "Emajogi 19",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Emajõgi"
+            }
+          ],
+          "definites": [["length of","length 18","Emajogi 19"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "The bike is small.",
+      "units": [{
+          "unit_id": "S21",
+          "text": "The bike 20 is small.",
+          "type": "situation",
+          "entities": [{"id": "bike 20", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["small","none","bike"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Dr. Smith, a surgeon, entered the room.",
+      "units": [{
+          "unit_id": "S22",
+          "text": "Dr. Smith 21 entered the room 22.",
+          "type": "situation",
+          "entities": [{"id": "Dr. Smith 21", "type": "concrete", "category": "person"},
+            {"id": "room 22", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "enter",
+              "mode": "event",
+              "roles": {"actor": "Dr. Smith 21", "target": "room 22"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S23",
+          "text": "Dr. Smith 21 is a surgeon.",
+          "type": "real",
+          "entities": [{"id": "Dr. Smith 21", "type": "concrete", "category": "person"},
+            {"id": "surgeon", "type": "generic", "category": "person"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Does John smoke now?",
+      "units": [{
+          "unit_id": "S24",
+          "text": "Does John 8 smoke now?",
+          "type": "query",
+          "entities": [{"id": "John 8", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 8"}}],
+          "time": "present"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["forall","Y",
+            ["implies",
+              ["not", ["is rel2","parent of","X","Y"]],
+              ["not", ["is rel2","child of","Y","X"]]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["and",
+                ["isa","car","X"],
+                ["exists", "Y", ["and", ["isa","box","Y"], ["is rel2","in","X","Y"]]]
+              ],
+              ["normally", ["exists", "Z", ["and", ["isa","house","Z"], ["is rel2","in","X","Z"]]]]
+            ]
+          ]
+        ],
+        ["@p","S2",0.95]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","head","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S3",0.99]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and", ["isa","man","Mike 1"], ["has degree property","nice","Mike 1","none","person"]]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Tom 2"],
+          ["isa","soup","soup 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","refuse"],
+              ["has actor","E","Tom 2"],
+              ["has target","E","eating the soup"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","city","city 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","destroy"],
+                ["has target","E","city 4"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","American","Mr Dursley 5"],
+          ["has degree property","American","Mr Dursley 5","none","person"]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","farmer 6"],
+            ["isa","tree","tree 7"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","cut"],
+                ["has actor","E","farmer 6"],
+                ["has target","E","tree 7"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 8"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","stop"],
+                ["has actor","E","John 8"],
+                ["has target","E","smoking"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 8"],
+          ["normally",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","smoke"],
+                ["has actor","E","John 8"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["holds","W1",
+        ["and",
+          ["isa","person","John 8"],
+          ["not",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","smoke"],
+                ["has actor","E","John 8"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S12",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+        ],
+        ["@p","S12",0.05]
+      ]
+    ],
+    ["@id","S13",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["and", ["isa","square","X"], ["has degree property","blue","X","none","none"]],
+              ["normally", ["has degree property","cool","X","none","square"]]
+            ]
+          ]
+        ],
+        ["@p","S13",0.95]
+      ]
+    ],
+    ["@id","S14",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Eve 11"],
+            ["isa","letter","letter 12"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","write"],
+                ["has actor","E","Eve 11"],
+                ["has target","E","letter 12"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S15",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","dog","dog 13"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","escape"],
+                ["has actor","E","dog 13"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S16",
+      ["holds","W0",
+        ["and",
+          ["isa","person","boy 14"],
+          ["isa","dog","dog 13"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","chase"],
+              ["has actor","E","boy 14"],
+              ["has target","E","dog 13"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S17",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","student 15"],
+            ["isa","person","teacher 16"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","greet"],
+                ["has actor","E","student 15"],
+                ["has target","E","teacher 16"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S18",
+      ["holds","W0",
+        ["and",
+          ["isa","person","student 15"],
+          ["isa","artifact","books 17"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","carry"],
+              ["has actor","E","student 15"],
+              ["has target","E","books 17"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S19",
+      ["holds","W0",
+        ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajõgi","W0"], ["$measure",20,"meter"]]
+      ]
+    ],
+    ["@id","S20",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 18"],
+            ["isa","place","https://en.wikipedia.org/wiki/Emajõgi"],
+            ["is rel2","length of","length 18","https://en.wikipedia.org/wiki/Emajõgi"]
+          ]
+        ],
+        ["@definite","S20","W0","length of","https://en.wikipedia.org/wiki/Emajõgi","length 18"]
+      ]
+    ],
+    ["@id","S21",
+      ["holds","W0",
+        ["and", ["isa","bike","bike 20"], ["has degree property","small","bike 20","none","bike"]]
+      ]
+    ],
+    ["@id","S22",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Dr. Smith 21"],
+            ["isa","place","room 22"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","enter"],
+                ["has actor","E","Dr. Smith 21"],
+                ["has target","E","room 22"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id", "S23", ["holds", "W0", ["isa","surgeon","Dr. Smith 21"]]],
+    ["@id","S24",
+      ["question",
+        ["normally",
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","smoke"],
+              ["has actor","E","John 8"],
+              ["typical","E"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S8",
+ "@logic": ["isa","farmer","#:farmer 6"],
+ "@nl": "The farmer 6 cut the tree 7."},
+{"@name": "entity_S12",
+ "@logic": ["isa","place","#:Tallinn 9"],
+ "@nl": "Tallinn 9 is in Latvia 10."},
+{"@name": "entity_S12",
+ "@logic": ["isa","place","#:Latvia 10"],
+ "@nl": "Tallinn 9 is in Latvia 10."},
+{"@name": "entity_S16",
+ "@logic": ["isa","boy","#:boy 14"],
+ "@nl": "The boy 14 chased the dog 13."},
+{"@name": "entity_S17",
+ "@logic": ["isa","student","#:student 15"],
+ "@nl": "The student 15 greeted the teacher 16."},
+{"@name": "entity_S17",
+ "@logic": ["isa","teacher","#:teacher 16"],
+ "@nl": "The student 15 greeted the teacher 16."},
+{"@name": "entity_S18",
+ "@logic": ["isa","book","#:books 17"],
+ "@nl": "The student 15 was carrying the books 17."},
+{"@name": "entity_S18",
+ "@logic": ["isa","book","#:books 17"],
+ "@nl": "The student 15 was carrying the books 17."},
+{"@name": "entity_S19",
+ "@logic": ["isa","place","#:Emajogi 19"],
+ "@nl": "The length 18 of Emajogi 19 is 20 meters."},
+{"@name": "entity_S19",
+ "@logic": ["isa","measure","20 meters"],
+ "@nl": "The length 18 of Emajogi 19 is 20 meters."},
+{"@name": "entity_S22",
+ "@logic": ["isa","room","#:room 22"],
+ "@nl": "Dr. Smith 21 entered the room 22."},
+{"@name": "sent_S1",
+ "@logic": [["is rel2", "parent of", "?:X", "?:Y", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-is rel2", "child of", "?:Y", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "If X1 is not a parent of Y1, Y1 is not a child of X1."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","car","?:X"],
+            ["-isa","box","?:Y"],
+            ["-is rel2", "in", "?:X", "?:Y", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["isa", "house", ["sk0","?:X"]]
+           ],
+ "@nl": "If a car is in a box, the car is in the house."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","car","?:X"],
+            ["-isa","box","?:Y"],
+            ["-is rel2", "in", "?:X", "?:Y", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["is rel2", "in", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$block", ["$","box",2], ["$not", ["is rel2", "in", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "If a car is in a box, the car is in the house."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "head", ["sk1","?:X"]]],
+ "@nl": "All elephants have a head."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "All elephants have a head."},
+{"@name": "sent_S4",
+ "@logic": ["isa","man","#:Mike 1"],
+ "@nl": "Mike 1 is a nice man."},
+{"@name": "sent_S4",
+ "@logic": ["has degree property", "good", "#:Mike 1", "none", "person", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mike 1 is a nice man."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Tom 2"],
+ "@nl": "Tom 2 refused eating the soup 3."},
+{"@name": "sent_S5",
+ "@logic": ["isa","soup","#:soup 3"],
+ "@nl": "Tom 2 refused eating the soup 3."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Tom 2 refused eating the soup 3."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk2_activity", "refuse", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Tom 2 refused eating the soup 3."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:Tom 2", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Tom 2 refused eating the soup 3."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk2_activity", "eating the soup", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Tom 2 refused eating the soup 3."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Tom 2 refused eating the soup 3."},
+{"@name": "sent_S6",
+ "@logic": ["isa","city","#:city 4"],
+ "@nl": "The city 4 was destroyed."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The city 4 was destroyed."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk3_activity", "destroy", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The city 4 was destroyed."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk3_activity", "#:city 4", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The city 4 was destroyed."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The city 4 was destroyed."},
+{"@name": "sent_S6",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The city 4 was destroyed."},
+{"@name": "sent_S7",
+ "@logic": ["isa","american","#:Mr Dursley 5"],
+ "@nl": "Mr Dursley 5 is an American."},
+{"@name": "sent_S7",
+ "@logic": ["has property", "American", "#:Mr Dursley 5", ["$ctxt","present","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mr Dursley 5 is an American."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:farmer 6"],
+ "@nl": "The farmer 6 cut the tree 7."},
+{"@name": "sent_S8",
+ "@logic": ["isa","tree","#:tree 7"],
+ "@nl": "The farmer 6 cut the tree 7."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "The farmer 6 cut the tree 7."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk4_activity", "cut", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The farmer 6 cut the tree 7."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk4_activity", "#:farmer 6", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The farmer 6 cut the tree 7."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk4_activity", "#:tree 7", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The farmer 6 cut the tree 7."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The farmer 6 cut the tree 7."},
+{"@name": "sent_S8",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The farmer 6 cut the tree 7."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:John 8"],
+ "@nl": "John 8 stopped smoking."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "John 8 stopped smoking."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk5_activity", "stop", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "John 8 stopped smoking."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk5_activity", "#:John 8", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "John 8 stopped smoking."},
+{"@name": "sent_S9",
+ "@logic": ["isa","smoking","sk6_smoking"],
+ "@nl": "John 8 stopped smoking."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk5_activity", "sk6_smoking", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "John 8 stopped smoking."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "John 8 stopped smoking."},
+{"@name": "sent_S9",
+ "@logic": ["next","W0","W1"],
+ "@nl": "John 8 stopped smoking."},
+{"@name": "sent_S10",
+ "@logic": ["isa","person","#:John 8"],
+ "@nl": "John 8 smoked."},
+{"@name": "sent_S10",
+ "@logic": ["isa","activity","sk7_activity"],
+ "@nl": "John 8 smoked."},
+{"@name": "sent_S10",
+ "@logic": ["has type", "sk7_activity", "smoke", ["$ctxt","past","?:Fv27","?:Fv25","?:Fv26"]],
+ "@nl": "John 8 smoked."},
+{"@name": "sent_S10",
+ "@logic": ["has actor", "sk7_activity", "#:John 8", ["$ctxt","past","?:Fv27","?:Fv25","?:Fv26"]],
+ "@nl": "John 8 smoked."},
+{"@name": "sent_S10",
+ "@logic": [["typical", "sk7_activity", ["$ctxt","past","?:Fv27","?:Fv25","?:Fv26"]],
+            ["$block", ["$","$generic",1], ["$not", ["typical", "sk7_activity", ["$ctxt","past","?:Fv27","?:Fv25","?:Fv26"]]]]
+           ],
+ "@nl": "John 8 smoked."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:John 8"],
+ "@nl": "John 8 does not smoke."},
+{"@name": "sent_S11",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "smoke", ["$ctxt","present","W1","?:Fv29","?:Fv30"]],
+            ["-has actor", "?:E", "#:John 8", ["$ctxt","present","W1","?:Fv29","?:Fv30"]],
+            ["-typical", "?:E", ["$ctxt","present","W1","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "John 8 does not smoke."},
+{"@name": "sent_S12",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W0","?:Fv31","?:Fv32"]],
+ "@confidence": 0.9,
+ "@nl": "Tallinn 9 is in Latvia 10."},
+{"@name": "sent_S13",
+ "@logic": [["isa","round","?:X"],
+            ["-has property", "blue", "?:X", ["$ctxt","?:Fv36","?:Fv35","?:Fv33","?:Fv34"]],
+            ["-has degree property", "cool", "?:X", "none", "round", ["$ctxt","?:Fv36","?:Fv35","?:Fv33","?:Fv34"]],
+            ["$block", ["$","square",2], ["$not", ["has degree property", "cool", "?:X", "none", "square", ["$ctxt","?:Fv36","?:Fv35","?:Fv33","?:Fv34"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "A square that is blue is cool."},
+{"@name": "sent_S14",
+ "@logic": ["isa","person","#:Eve 11"],
+ "@nl": "Eve 11 wrote the letter 12."},
+{"@name": "sent_S14",
+ "@logic": ["isa","letter","#:letter 12"],
+ "@nl": "Eve 11 wrote the letter 12."},
+{"@name": "sent_S14",
+ "@logic": ["isa","activity","sk8_activity"],
+ "@nl": "Eve 11 wrote the letter 12."},
+{"@name": "sent_S14",
+ "@logic": ["has type", "sk8_activity", "write", ["$ctxt","past","W0","?:Fv37","?:Fv38"]],
+ "@nl": "Eve 11 wrote the letter 12."},
+{"@name": "sent_S14",
+ "@logic": ["has actor", "sk8_activity", "#:Eve 11", ["$ctxt","past","W0","?:Fv37","?:Fv38"]],
+ "@nl": "Eve 11 wrote the letter 12."},
+{"@name": "sent_S14",
+ "@logic": ["has target", "sk8_activity", "#:letter 12", ["$ctxt","past","W0","?:Fv37","?:Fv38"]],
+ "@nl": "Eve 11 wrote the letter 12."},
+{"@name": "sent_S14",
+ "@logic": ["has time", "sk8_activity", "past", "in", ["$ctxt","past","W0","?:Fv37","?:Fv38"]],
+ "@nl": "Eve 11 wrote the letter 12."},
+{"@name": "sent_S14",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Eve 11 wrote the letter 12."},
+{"@name": "sent_S15",
+ "@logic": ["isa","dog","#:dog 13"],
+ "@nl": "The dog 13 escaped."},
+{"@name": "sent_S15",
+ "@logic": ["isa","activity","sk9_activity"],
+ "@nl": "The dog 13 escaped."},
+{"@name": "sent_S15",
+ "@logic": ["has type", "sk9_activity", "escape", ["$ctxt","past","W0","?:Fv39","?:Fv40"]],
+ "@nl": "The dog 13 escaped."},
+{"@name": "sent_S15",
+ "@logic": ["has actor", "sk9_activity", "#:dog 13", ["$ctxt","past","W0","?:Fv39","?:Fv40"]],
+ "@nl": "The dog 13 escaped."},
+{"@name": "sent_S15",
+ "@logic": ["has time", "sk9_activity", "past", "in", ["$ctxt","past","W0","?:Fv39","?:Fv40"]],
+ "@nl": "The dog 13 escaped."},
+{"@name": "sent_S15",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The dog 13 escaped."},
+{"@name": "sent_S16",
+ "@logic": ["isa","person","#:boy 14"],
+ "@nl": "The boy 14 chased the dog 13."},
+{"@name": "sent_S16",
+ "@logic": ["isa","dog","#:dog 13"],
+ "@nl": "The boy 14 chased the dog 13."},
+{"@name": "sent_S16",
+ "@logic": ["isa","activity","sk10_activity"],
+ "@nl": "The boy 14 chased the dog 13."},
+{"@name": "sent_S16",
+ "@logic": ["has type", "sk10_activity", "chase", ["$ctxt","past","W0","?:Fv41","?:Fv42"]],
+ "@nl": "The boy 14 chased the dog 13."},
+{"@name": "sent_S16",
+ "@logic": ["has actor", "sk10_activity", "#:boy 14", ["$ctxt","past","W0","?:Fv41","?:Fv42"]],
+ "@nl": "The boy 14 chased the dog 13."},
+{"@name": "sent_S16",
+ "@logic": ["has target", "sk10_activity", "#:dog 13", ["$ctxt","past","W0","?:Fv41","?:Fv42"]],
+ "@nl": "The boy 14 chased the dog 13."},
+{"@name": "sent_S16",
+ "@logic": ["has time", "sk10_activity", "past", "in", ["$ctxt","past","W0","?:Fv41","?:Fv42"]],
+ "@nl": "The boy 14 chased the dog 13."},
+{"@name": "sent_S17",
+ "@logic": ["isa","person","#:student 15"],
+ "@nl": "The student 15 greeted the teacher 16."},
+{"@name": "sent_S17",
+ "@logic": ["isa","person","#:teacher 16"],
+ "@nl": "The student 15 greeted the teacher 16."},
+{"@name": "sent_S17",
+ "@logic": ["isa","activity","sk11_activity"],
+ "@nl": "The student 15 greeted the teacher 16."},
+{"@name": "sent_S17",
+ "@logic": ["has type", "sk11_activity", "greet", ["$ctxt","past","W0","?:Fv43","?:Fv44"]],
+ "@nl": "The student 15 greeted the teacher 16."},
+{"@name": "sent_S17",
+ "@logic": ["has actor", "sk11_activity", "#:student 15", ["$ctxt","past","W0","?:Fv43","?:Fv44"]],
+ "@nl": "The student 15 greeted the teacher 16."},
+{"@name": "sent_S17",
+ "@logic": ["has target", "sk11_activity", "#:teacher 16", ["$ctxt","past","W0","?:Fv43","?:Fv44"]],
+ "@nl": "The student 15 greeted the teacher 16."},
+{"@name": "sent_S17",
+ "@logic": ["has time", "sk11_activity", "past", "in", ["$ctxt","past","W0","?:Fv43","?:Fv44"]],
+ "@nl": "The student 15 greeted the teacher 16."},
+{"@name": "sent_S17",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The student 15 greeted the teacher 16."},
+{"@name": "sent_S18",
+ "@logic": ["isa","person","#:student 15"],
+ "@nl": "The student 15 was carrying the books 17."},
+{"@name": "sent_S18",
+ "@logic": ["isa","artifact","#:books 17"],
+ "@nl": "The student 15 was carrying the books 17."},
+{"@name": "sent_S18",
+ "@logic": ["isa","activity","sk12_activity"],
+ "@nl": "The student 15 was carrying the books 17."},
+{"@name": "sent_S18",
+ "@logic": ["has type", "sk12_activity", "carry", ["$ctxt","past","W0","?:Fv45","?:Fv46"]],
+ "@nl": "The student 15 was carrying the books 17."},
+{"@name": "sent_S18",
+ "@logic": ["has actor", "sk12_activity", "#:student 15", ["$ctxt","past","W0","?:Fv45","?:Fv46"]],
+ "@nl": "The student 15 was carrying the books 17."},
+{"@name": "sent_S18",
+ "@logic": ["has target", "sk12_activity", "#:books 17", ["$ctxt","past","W0","?:Fv45","?:Fv46"]],
+ "@nl": "The student 15 was carrying the books 17."},
+{"@name": "sent_S18",
+ "@logic": ["has time", "sk12_activity", "past", "in", ["$ctxt","past","W0","?:Fv45","?:Fv46"]],
+ "@nl": "The student 15 was carrying the books 17."},
+{"@name": "sent_S19",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajõgi","W0"], ["$list",20,"#:meter"]],
+ "@nl": "The length 18 of Emajogi 19 is 20 meters."},
+{"@name": "sent_S20",
+ "@logic": ["isa", "length", ["$theof1", "length", "https://en.wikipedia.org/wiki/Emajõgi", ["$ctxt","present","W0","?:Fv49","?:Fv50"]]],
+ "@nl": "The length 18 is the length of Emajogi 19."},
+{"@name": "sent_S20",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/Emajõgi"],
+ "@nl": "The length 18 is the length of Emajogi 19."},
+{"@name": "sent_S21",
+ "@logic": ["isa","bike","#:bike 20"],
+ "@nl": "The bike 20 is small."},
+{"@name": "sent_S21",
+ "@logic": ["has degree property", "small", "#:bike 20", "none", "bike", ["$ctxt","present","W0","?:Fv51","?:Fv52"]],
+ "@nl": "The bike 20 is small."},
+{"@name": "sent_S22",
+ "@logic": ["isa","person","Dr. Smith 21"],
+ "@nl": "Dr. Smith 21 entered the room 22."},
+{"@name": "sent_S22",
+ "@logic": ["isa","place","#:room 22"],
+ "@nl": "Dr. Smith 21 entered the room 22."},
+{"@name": "sent_S22",
+ "@logic": ["isa","activity","sk13_activity"],
+ "@nl": "Dr. Smith 21 entered the room 22."},
+{"@name": "sent_S22",
+ "@logic": ["has type", "sk13_activity", "enter", ["$ctxt","past","W0","?:Fv53","?:Fv54"]],
+ "@nl": "Dr. Smith 21 entered the room 22."},
+{"@name": "sent_S22",
+ "@logic": ["has actor", "sk13_activity", "Dr. Smith 21", ["$ctxt","past","W0","?:Fv53","?:Fv54"]],
+ "@nl": "Dr. Smith 21 entered the room 22."},
+{"@name": "sent_S22",
+ "@logic": ["has target", "sk13_activity", "#:room 22", ["$ctxt","past","W0","?:Fv53","?:Fv54"]],
+ "@nl": "Dr. Smith 21 entered the room 22."},
+{"@name": "sent_S22",
+ "@logic": ["has time", "sk13_activity", "past", "in", ["$ctxt","past","W0","?:Fv53","?:Fv54"]],
+ "@nl": "Dr. Smith 21 entered the room 22."},
+{"@name": "sent_S22",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Dr. Smith 21 entered the room 22."},
+{"@name": "sent_S23",
+ "@logic": ["isa","surgeon","Dr. Smith 21"],
+ "@nl": "Dr. Smith 21 is a surgeon."},
+{"@name": "sent_S24",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk14_activity"]],
+ "@nl": "Does John 8 smoke now?"},
+{"@name": "sent_S24",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk14_activity", "smoke", ["$ctxt","present","?:Fv59","?:Fv57","?:Fv58"]]
+           ],
+ "@nl": "Does John 8 smoke now?"},
+{"@name": "sent_S24",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk14_activity", "#:John 8", ["$ctxt","present","?:Fv59","?:Fv57","?:Fv58"]]
+           ],
+ "@nl": "Does John 8 smoke now?"},
+{"@name": "sent_S24",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["typical", "sk14_activity", ["$ctxt","present","?:Fv59","?:Fv57","?:Fv58"]]
+           ],
+ "@nl": "Does John 8 smoke now?"},
+{"@name": "sent_S24",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "smoke", ["$ctxt","present","?:Fv59","?:Fv57","?:Fv58"]],
+            ["-has actor", "?:E", "#:John 8", ["$ctxt","present","?:Fv59","?:Fv57","?:Fv58"]],
+            ["-typical", "?:E", ["$ctxt","present","?:Fv59","?:Fv57","?:Fv58"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 8 smoke now?"},
+{"@name": "sent_S24",
+ "@question": ["$defq0"],
+ "@nl": "Does John 8 smoke now?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Emajõgi", ["$theof1", "length", "https://en.wikipedia.org/wiki/Emajõgi", ["$ctxt","present","W0","?:Fv49","?:Fv50"]], ["$ctxt","present","W0","?:Fv49","?:Fv50"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Emajõgi", ["$theof1", "length", "https://en.wikipedia.org/wiki/Emajõgi", ["$ctxt","present","W0","?:Fv49","?:Fv50"]], ["$ctxt","present","W0","?:Fv49","?:Fv50"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "length of", ["$theof1","length","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "length", ["$theof1","length","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "destroy", ["$ctxt","?:Fv61","?:Fv62","?:Fv64","?:Fv65"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv61","?:Fv62","?:Fv64","?:Fv65"]],
+            ["-next","?:Fv62","?:Fv63"],
+            ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv63","?:Fv64","?:Fv65"]],
+            ["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv63","?:Fv64","?:Fv65"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "destroy", "?:X", ["$ctxt","?:Fv66","?:Fv67","?:Fv69","?:Fv70"]],
+            ["-next","?:Fv67","?:Fv68"],
+            ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv68","?:Fv69","?:Fv70"]],
+            ["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv68","?:Fv69","?:Fv70"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","car","$some_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","car","$some_not_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","box","$some_box"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","box","$some_not_box"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","house","$some_house"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","house","$some_not_house"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","head","$some_head"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","head","$some_not_head"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S13",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","round","$some_square"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S13",
+ "@sourcetype": "populate",
+ "@logic": ["isa","round","$some_not_square"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S13",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "blue", "$some_blue", ["$ctxt","?:Fv146","?:Fv143","?:Fv144","?:Fv145"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S13",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "blue", "$some_not_blue", ["$ctxt","?:Fv150","?:Fv147","?:Fv148","?:Fv149"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S13",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cool", "$some_cool_square", "none", "round", ["$ctxt","?:Fv154","?:Fv151","?:Fv152","?:Fv153"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S13",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","round","$some_cool_square"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S13",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "cool", "$some_not_cool_square", "none", "round", ["$ctxt","?:Fv162","?:Fv159","?:Fv160","?:Fv161"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S13",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","round","$some_blue_square"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S13",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "blue", "$some_blue_square", ["$ctxt","?:Fv170","?:Fv167","?:Fv168","?:Fv169"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","smoking","?:X"], ["isa","smoke","?:X"]],
+ "@confidence": 0.83,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","smoke","?:X"], ["isa","smoking","?:X"]],
+ "@confidence": 0.83,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv171","?:Fv73"],
+            ["-has degree property","high","?:X","none","?:Fv172","?:Fv73"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv173","?:Fv74"],
+            ["has degree property","small","?:X","none","?:Fv174","?:Fv74"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","house","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","house","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv75","?:Fv76","?:Fv77"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv75","?:Fv76","?:Fv77"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv75","?:Fv76","?:Fv77"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv78","?:Fv79","?:Fv80"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv78","?:Fv79","?:Fv80"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv78","?:Fv79","?:Fv80"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv175", ["$ctxt","past","?:Fv81","?:Fv82","?:Fv83"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv176", ["$ctxt","present","?:Fv81","?:Fv82","?:Fv83"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv177", ["$ctxt","present","?:Fv81","?:Fv82","?:Fv83"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv84","?:Fv85","?:Fv86"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv84","?:Fv85","?:Fv86"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv84","?:Fv85","?:Fv86"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_measure_rel_bridge",
+ "@logic": [["-=", ["$measure_of","length","?:S","?:W"], "?:V"],
+            ["is rel2","length of","?:V","?:S","?:Ctxt"]
+           ],
+ "@nl": "[generated: frm_measure_rel_bridge]"},
+{"@name": "frm_neg_implicative",
+ "@logic": [["-has type","?:E1","refuse","?:Ct1"],
+            ["-has content","?:E1","?:E2"],
+            ["-has type","?:E2","?:V","?:Ct2"],
+            ["-has actor","?:E2","?:X","?:Ct2"],
+            ["-has target","?:E2","?:Y","?:Ct2"],
+            ["-has type","?:E3","?:V","?:Ct3"],
+            ["-has actor","?:E3","?:X","?:Ct3"],
+            ["-has target","?:E3","?:Y","?:Ct3"],
+            ["-actuality","?:E3"]
+           ],
+ "@nl": "[generated: frm_neg_implicative]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S24","assumption",1], [["-$defq0"], ["has actor", "sk14_activity", "#:John 8", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [2, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [3, ["mp",1,2,"fromga",1], [["has actor", "sk14_activity", "#:John 8", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [4, ["in","sent_S11","assumption",1], [["-has type", "?:X", "smoke", ["$ctxt","present","W1","?:Y","?:Z"]], ["-has actor", "?:X", "#:John 8", ["$ctxt","present","W1","?:Y","?:Z"]], ["-typical", "?:X", ["$ctxt","present","W1","?:Y","?:Z"]], ["-isa","activity","?:X"]]],
+          [5, ["in","sent_S24","assumption",1], [["-$defq0"], ["isa","activity","sk14_activity"]]],
+          [6, ["mp",5,2,"fromga",1], [["isa","activity","sk14_activity"]]],
+          [7, ["mp", 3, [4,1], 6, "fromga", 1], [["-has type", "sk14_activity", "smoke", ["$ctxt","present","W1","?:X","?:Y"]], ["-typical", "sk14_activity", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [8, ["in","sent_S24","assumption",1], [["-$defq0"], ["has type", "sk14_activity", "smoke", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [9, ["mp",8,2,"fromga",1], [["has type", "sk14_activity", "smoke", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [10, ["mp",7,9,"fromga",1], [["-typical", "sk14_activity", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [11, ["in","sent_S24","assumption",1], [["-$defq0"], ["typical", "sk14_activity", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [12, ["mp",11,2,"fromga",1], [["typical", "sk14_activity", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [13, ["mp",10,12,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John stopped smoking.",
+"  (2) Does John smoke now?",
+"Proof steps (by contradiction):",
+"  (1) If answer holds then John performs the event act12  [sentence 2]",
+"  (2) Answer holds  [assumption]",
+"  (3) John performs the event act12  [from steps 1, 2]",
+"  (4) If X is a smoke event and John performs X and X is an activity then X is not typical  [sentence 1]",
+"  (5) If answer holds then the event act12 is an activity  [sentence 2]",
+"  (6) The event act12 is an activity  [from steps 5, 2]",
+"  (7) If the event act12 is a smoke event then the act12 is not typical  [from steps 3, 4, 6]",
+"  (8) If answer holds then the event act12 is a smoke event  [sentence 2]",
+"  (9) The event act12 is a smoke event  [from steps 8, 2]",
+"  (10) The act12 is not typical  [from steps 7, 9]",
+"  (11) If answer holds then the event act12 is typical  [sentence 2]",
+"  (12) The event act12 is typical  [from steps 11, 2]",
+"  (13) Contradiction  [from steps 10, 12]"
+],
+  "llm_usage": [{
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 30857,
+      "cached_input_tokens": 0,
+      "output_tokens": 13757,
+      "raw": {
+        "promptTokenCount": 30857,
+        "candidatesTokenCount": 3929,
+        "totalTokenCount": 44614,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 30857}],
+        "thoughtsTokenCount": 9828,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 40050,
+      "cached_input_tokens": 0,
+      "output_tokens": 4838,
+      "raw": {
+        "promptTokenCount": 40050,
+        "candidatesTokenCount": 3031,
+        "totalTokenCount": 44888,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 40050}],
+        "thoughtsTokenCount": 1807,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "timestamp": "2026-06-11T11:35:35Z"
+}

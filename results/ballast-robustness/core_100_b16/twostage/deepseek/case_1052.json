@@ -1,0 +1,1208 @@
+{
+  "test_name": "core_100_b16",
+  "case_id": 1052,
+  "input_text": "John is probably a child of Mike. An animal had two nice legs. The chef cooked a meal for the guests. Gertrude is a cat. Agatha is in trouble. Muggles can not disappear. Riga is not in Estonia. Tallinn is in Latvia with a probability 10 percent. The city was destroyed. Tom, a friend of Mary, laughed. Eve forgot to lock the door. The cup filled with water fell. If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1. Sandra travelled to the hallway. The book was read by Sara. A man was yellow. Paul, a carpenter, carried a box. Is the city intact?",
+  "expected_answer": false,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Likely false.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is probably a child of Mike.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a child of Mike 2.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Mike 2", "type": "concrete", "category": "person"}
+          ],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "An animal had two nice legs.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "An animal 3 had two nice legs.",
+          "type": "situation",
+          "entities": [{"id": "animal 3", "type": "concrete", "category": "animal"},
+            {"id": "legs", "type": "generic", "scope": "dependent"}
+          ],
+          "adjectives": [["nice","none","leg"]],
+          "time": "past",
+          "pre_state": "W0"
+        }
+      ]
+    },
+    {
+      "raw": "The chef cooked a meal for the guests.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The chef 5 cooked a meal 6 for the guests 7.",
+          "type": "situation",
+          "entities": [{"id": "chef 5", "type": "concrete", "category": "person"},
+            {"id": "meal 6", "type": "concrete", "category": "substance"},
+            {"id": "guests 7", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "cook",
+              "mode": "event",
+              "roles": {"actor": "chef 5", "target": "meal 6", "beneficiary": "guests 7"}
+            }
+          ],
+          "time": "past",
+          "pre_state": "W0"
+        }
+      ]
+    },
+    {
+      "raw": "Gertrude is a cat.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Gertrude 8 is a cat.",
+          "type": "real",
+          "entities": [{"id": "Gertrude 8", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "Agatha is in trouble.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Agatha 9 is in trouble.",
+          "type": "situation",
+          "entities": [{"id": "Agatha 9", "type": "concrete", "category": "person"}],
+          "adjectives": [["in trouble","none","person"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Muggles can not disappear.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Muggles cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "Muggles", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability", "roles": {"actor": "Muggles"}}]
+        }
+      ]
+    },
+    {
+      "raw": "Riga is not in Estonia.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Riga 10 is not in Estonia 11.",
+          "type": "real",
+          "entities": [{
+              "id": "Riga 10",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Riga"
+            },
+            {
+              "id": "Estonia 11",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is in Latvia with a probability 10 percent.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Tallinn 12 is in Latvia 13.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 12",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 13",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ],
+          "confidence": 0.1
+        }
+      ]
+    },
+    {
+      "raw": "The city was destroyed.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Tallinn 12 was destroyed.",
+          "type": "situation",
+          "entities": [{"id": "Tallinn 12", "type": "concrete", "category": "place"}],
+          "actions": [{"root": "destroy", "mode": "event", "roles": {"target": "Tallinn 12"}}],
+          "time": "past",
+          "pre_state": "W0",
+          "next_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "Tom, a friend of Mary, laughed.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Tom 14 laughed.",
+          "type": "situation",
+          "entities": [{"id": "Tom 14", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "laugh", "mode": "event"}],
+          "time": "past",
+          "pre_state": "W1"
+        },
+        {
+          "unit_id": "S11",
+          "text": "Tom 14 is a friend of Mary 15.",
+          "type": "real",
+          "entities": [{"id": "Tom 14", "type": "concrete", "category": "person"},
+            {"id": "Mary 15", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Eve forgot to lock the door.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Eve 16 forgot to lock the door 17.",
+          "type": "situation",
+          "entities": [{"id": "Eve 16", "type": "concrete", "category": "person"},
+            {"id": "door 17", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "forget",
+              "mode": "event",
+              "roles": {
+                "actor": "Eve 16",
+                "content": {"root": "lock", "mode": "event", "roles": {"actor": "Eve 16", "target": "door 17"}}
+              }
+            }
+          ],
+          "time": "past",
+          "pre_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "The cup filled with water fell.",
+      "units": [{
+          "unit_id": "S13",
+          "text": "The cup 18 was filled with water.",
+          "type": "situation",
+          "entities": [{"id": "cup 18", "type": "concrete", "category": "artifact"},
+            {"id": "water", "type": "generic", "scope": "kind", "category": "substance"}
+          ],
+          "adjectives": [["filled with water","none","cup"]],
+          "time": "past",
+          "pre_state": "W1"
+        },
+        {
+          "unit_id": "S14",
+          "text": "The cup 18 fell.",
+          "type": "situation",
+          "entities": [{"id": "cup 18", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "fall", "mode": "event"}],
+          "time": "past",
+          "pre_state": "W1",
+          "next_state": "W2"
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.",
+      "units": [{
+          "unit_id": "S15",
+          "text": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"},
+            {"id": "Y1", "type": "generic"},
+            {"id": "Z1", "type": "generic"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Sandra travelled to the hallway.",
+      "units": [{
+          "unit_id": "S16",
+          "text": "Sandra 19 travelled to the hallway 20.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 19", "type": "concrete", "category": "person"},
+            {"id": "hallway 20", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "travel", "mode": "event", "roles": {"destination": "hallway 20"}}],
+          "time": "past",
+          "pre_state": "W2",
+          "next_state": "W3"
+        }
+      ]
+    },
+    {
+      "raw": "The book was read by Sara.",
+      "units": [{
+          "unit_id": "S17",
+          "text": "Sara 21 read the book 22.",
+          "type": "situation",
+          "entities": [{"id": "Sara 21", "type": "concrete", "category": "person"},
+            {"id": "book 22", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "read", "mode": "event", "roles": {"actor": "Sara 21", "target": "book 22"}}],
+          "time": "past",
+          "pre_state": "W3"
+        }
+      ]
+    },
+    {
+      "raw": "A man was yellow.",
+      "units": [{
+          "unit_id": "S18",
+          "text": "A man 23 was yellow.",
+          "type": "situation",
+          "entities": [{"id": "man 23", "type": "concrete", "category": "person"}],
+          "adjectives": [["yellow","none","person"]],
+          "time": "past",
+          "pre_state": "W3"
+        }
+      ]
+    },
+    {
+      "raw": "Paul, a carpenter, carried a box.",
+      "units": [{
+          "unit_id": "S19",
+          "text": "Paul 24 is a carpenter.",
+          "type": "real",
+          "entities": [{"id": "Paul 24", "type": "concrete", "category": "person"}]
+        },
+        {
+          "unit_id": "S20",
+          "text": "Paul 24 carried a box 25.",
+          "type": "situation",
+          "entities": [{"id": "Paul 24", "type": "concrete", "category": "person"},
+            {"id": "box 25", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "carry", "mode": "event", "roles": {"actor": "Paul 24", "target": "box 25"}}],
+          "time": "past",
+          "pre_state": "W3"
+        }
+      ]
+    },
+    {
+      "raw": "Is the city intact?",
+      "units": [{
+          "unit_id": "S21",
+          "text": "Is Tallinn 12 intact?",
+          "type": "query",
+          "entities": [{"id": "Tallinn 12", "type": "concrete", "category": "place"}],
+          "adjectives": [["intact","none","city"]],
+          "pre_state": "W3"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and", ["holds", "W0", ["is rel2","child of","John 1","Mike 2"]], ["@p","S1",0.8]]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","animal","animal 3"],
+            ["=", 2, ["$count", ["$setof", "?:X", ["and", ["isa","leg","?:X"], ["has part","animal 3","?:X"], ["has degree property","nice","?:X","none","leg"]]]]]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","chef 5"],
+            ["isa","substance","meal 6"],
+            ["isa","person","guests 7"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","cook"],
+                ["has actor","E","chef 5"],
+                ["has target","E","meal 6"],
+                ["has beneficiary","E","guests 7"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S4", ["holds", "W0", ["isa","cat","Gertrude 8"]]],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Agatha 9"],
+            ["has degree property","in trouble","Agatha 9","none","person"]
+          ]
+        ],
+        ["state time","W0","present"]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","muggle","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["not",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Riga","https://en.wikipedia.org/wiki/Estonia"]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+        ],
+        ["@p","S8",0.1]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","place","Tallinn 12"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","destroy"],
+                ["has target","E","Tallinn 12"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Tom 14"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","laugh"],
+                ["has actor","E","Tom 14"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W1","past"]
+      ]
+    ],
+    ["@id", "S11", ["holds", "W0", ["is rel2","friend of","Tom 14","Mary 15"]]],
+    ["@id","S12",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Eve 16"],
+            ["isa","door","door 17"],
+            ["exists","E1",
+              ["and",
+                ["isa","activity","E1"],
+                ["has type","E1","forget"],
+                ["has actor","E1","Eve 16"],
+                ["has time","E1","past","in"],
+                ["exists","E2",
+                  ["and",
+                    ["has content","E1","E2"],
+                    ["isa","activity","E2"],
+                    ["has type","E2","lock"],
+                    ["has actor","E2","Eve 16"],
+                    ["has target","E2","door 17"],
+                    ["has time","E2","past","in"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W1","past"]
+      ]
+    ],
+    ["@id","S13",
+      ["and",
+        ["holds", "W1", ["and", ["isa","cup","cup 18"], ["is rel2","in","water","cup 18"]]],
+        ["state time","W1","past"]
+      ]
+    ],
+    ["@id","S14",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","cup","cup 18"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","fall"],
+                ["has actor","E","cup 18"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S15",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["forall","Z1",
+              ["implies",
+                ["and", ["is rel2","father of","X1","Y1"], ["is rel2","father of","Y1","Z1"]],
+                ["is rel2","grandfather of","X1","Z1"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S16",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","Sandra 19"],
+            ["isa","place","hallway 20"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","travel"],
+                ["has actor","E","Sandra 19"],
+                ["has destination","E","hallway 20","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S17",
+      ["and",
+        ["holds","W3",
+          ["and",
+            ["isa","person","Sara 21"],
+            ["isa","book","book 22"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","read"],
+                ["has actor","E","Sara 21"],
+                ["has target","E","book 22"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W3","past"]
+      ]
+    ],
+    ["@id","S18",
+      ["and",
+        ["holds","W3",
+          ["and",
+            ["isa","person","man 23"],
+            ["has degree property","yellow","man 23","none","person"]
+          ]
+        ],
+        ["state time","W3","past"]
+      ]
+    ],
+    ["@id", "S19", ["holds", "W0", ["isa","carpenter","Paul 24"]]],
+    ["@id","S20",
+      ["and",
+        ["holds","W3",
+          ["and",
+            ["isa","person","Paul 24"],
+            ["isa","box","box 25"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","carry"],
+                ["has actor","E","Paul 24"],
+                ["has target","E","box 25"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W3","past"]
+      ]
+    ],
+    ["@id","S21",
+      ["question",
+        ["and",
+          ["isa","city","Tallinn 12"],
+          ["has degree property","intact","Tallinn 12","none","city"]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time, multiword_property"],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:Mike 2"],
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "entity_S3",
+ "@logic": ["isa","chef","#:chef 5"],
+ "@nl": "The chef 5 cooked a meal 6 for the guests 7."},
+{"@name": "entity_S3",
+ "@logic": ["isa","meal","#:meal 6"],
+ "@nl": "The chef 5 cooked a meal 6 for the guests 7."},
+{"@name": "entity_S3",
+ "@logic": ["isa","guest","#:guests 7"],
+ "@nl": "The chef 5 cooked a meal 6 for the guests 7."},
+{"@name": "entity_S3",
+ "@logic": ["isa","guest","#:guests 7"],
+ "@nl": "The chef 5 cooked a meal 6 for the guests 7."},
+{"@name": "entity_S7",
+ "@logic": ["isa","place","#:Riga 10"],
+ "@nl": "Riga 10 is not in Estonia 11."},
+{"@name": "entity_S7",
+ "@logic": ["isa","place","#:Estonia 11"],
+ "@nl": "Riga 10 is not in Estonia 11."},
+{"@name": "entity_S8",
+ "@logic": ["isa","place","#:Latvia 13"],
+ "@nl": "Tallinn 12 is in Latvia 13."},
+{"@name": "entity_S11",
+ "@logic": ["isa","person","#:Mary 15"],
+ "@nl": "Tom 14 is a friend of Mary 15."},
+{"@name": "entity_S16",
+ "@logic": ["isa","hallway","#:hallway 20"],
+ "@nl": "Sandra 19 travelled to the hallway 20."},
+{"@name": "entity_S18",
+ "@logic": ["isa","man","#:man 23"],
+ "@nl": "A man 23 was yellow."},
+{"@name": "sent_S1",
+ "@logic": ["is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@confidence": 0.6,
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","animal","#:animal 3"],
+ "@nl": "An animal 3 had two nice legs."},
+{"@name": "sent_S2",
+ "@logic": ["=", 2, ["$count", ["$setof", "has part", "#:animal 3", ["$and", ["$isa","leg","$arg1"], ["$has_degree_property","good","$arg1","none","leg"]]]]],
+ "@nl": "An animal 3 had two nice legs."},
+{"@name": "sent_S2_el1",
+ "@logic": ["isa","leg","$set1_el1"],
+ "@nl": "[generated: sent_S2_el1]"},
+{"@name": "sent_S2_el1",
+ "@logic": ["has degree property", "good", "$set1_el1", "none", "leg", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: sent_S2_el1]"},
+{"@name": "sent_S2_el1",
+ "@logic": ["has part", "#:animal 3", "$set1_el1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: sent_S2_el1]"},
+{"@name": "sent_S2_el1",
+ "@logic": ["member", "$set1_el1", ["$setof", "has part", "#:animal 3", ["$and", ["$isa","leg","$arg1"], ["$has_degree_property","good","$arg1","none","leg"]]]],
+ "@nl": "[generated: sent_S2_el1]"},
+{"@name": "sent_S2_el2",
+ "@logic": ["isa","leg","$set1_el2"],
+ "@nl": "[generated: sent_S2_el2]"},
+{"@name": "sent_S2_el2",
+ "@logic": ["has degree property", "good", "$set1_el2", "none", "leg", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: sent_S2_el2]"},
+{"@name": "sent_S2_el2",
+ "@logic": ["has part", "#:animal 3", "$set1_el2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "[generated: sent_S2_el2]"},
+{"@name": "sent_S2_el2",
+ "@logic": ["member", "$set1_el2", ["$setof", "has part", "#:animal 3", ["$and", ["$isa","leg","$arg1"], ["$has_degree_property","good","$arg1","none","leg"]]]],
+ "@nl": "[generated: sent_S2_el2]"},
+{"@name": "sent_S2_dist",
+ "@logic": ["-=","$set1_el1","$set1_el2"],
+ "@nl": "[generated: sent_S2_dist]"},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:chef 5"],
+ "@nl": "The chef 5 cooked a meal 6 for the guests 7."},
+{"@name": "sent_S3",
+ "@logic": ["isa","substance","#:meal 6"],
+ "@nl": "The chef 5 cooked a meal 6 for the guests 7."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:guests 7"],
+ "@nl": "The chef 5 cooked a meal 6 for the guests 7."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The chef 5 cooked a meal 6 for the guests 7."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "cook", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The chef 5 cooked a meal 6 for the guests 7."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:chef 5", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The chef 5 cooked a meal 6 for the guests 7."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk0_activity", "#:meal 6", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The chef 5 cooked a meal 6 for the guests 7."},
+{"@name": "sent_S3",
+ "@logic": ["has beneficiary", "sk0_activity", "#:guests 7", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The chef 5 cooked a meal 6 for the guests 7."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The chef 5 cooked a meal 6 for the guests 7."},
+{"@name": "sent_S4",
+ "@logic": ["isa","cat","#:Gertrude 8"],
+ "@nl": "Gertrude 8 is a cat."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Agatha 9"],
+ "@nl": "Agatha 9 is in trouble."},
+{"@name": "sent_S5",
+ "@logic": ["has property", "in trouble", "#:Agatha 9", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Agatha 9 is in trouble."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","muggle","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Muggles cannot disappear."},
+{"@name": "sent_S7",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Riga", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Riga 10 is not in Estonia 11."},
+{"@name": "sent_S8",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@confidence": 0.8,
+ "@nl": "Tallinn 12 is in Latvia 13."},
+{"@name": "sent_S9",
+ "@logic": ["isa","place","#:Tallinn 12"],
+ "@nl": "Tallinn 12 was destroyed."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Tallinn 12 was destroyed."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk1_activity", "destroy", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Tallinn 12 was destroyed."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk1_activity", "#:Tallinn 12", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Tallinn 12 was destroyed."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Tallinn 12 was destroyed."},
+{"@name": "sent_S9",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Tallinn 12 was destroyed."},
+{"@name": "sent_S10",
+ "@logic": ["isa","person","#:Tom 14"],
+ "@nl": "Tom 14 laughed."},
+{"@name": "sent_S10",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Tom 14 laughed."},
+{"@name": "sent_S10",
+ "@logic": ["has type", "sk2_activity", "laugh", ["$ctxt","past","W1","?:Fv21","?:Fv22"]],
+ "@nl": "Tom 14 laughed."},
+{"@name": "sent_S10",
+ "@logic": ["has actor", "sk2_activity", "#:Tom 14", ["$ctxt","past","W1","?:Fv21","?:Fv22"]],
+ "@nl": "Tom 14 laughed."},
+{"@name": "sent_S10",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W1","?:Fv21","?:Fv22"]],
+ "@nl": "Tom 14 laughed."},
+{"@name": "sent_S11",
+ "@logic": ["is rel2", "friend of", "#:Tom 14", "#:Mary 15", ["$ctxt","present","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Tom 14 is a friend of Mary 15."},
+{"@name": "sent_S12",
+ "@logic": ["isa","person","#:Eve 16"],
+ "@nl": "Eve 16 forgot to lock the door 17."},
+{"@name": "sent_S12",
+ "@logic": ["isa","door","#:door 17"],
+ "@nl": "Eve 16 forgot to lock the door 17."},
+{"@name": "sent_S12",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Eve 16 forgot to lock the door 17."},
+{"@name": "sent_S12",
+ "@logic": ["has type", "sk3_activity", "forget", ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "Eve 16 forgot to lock the door 17."},
+{"@name": "sent_S12",
+ "@logic": ["has actor", "sk3_activity", "#:Eve 16", ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "Eve 16 forgot to lock the door 17."},
+{"@name": "sent_S12",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "Eve 16 forgot to lock the door 17."},
+{"@name": "sent_S12",
+ "@logic": ["has content","sk3_activity","sk4_activity"],
+ "@nl": "Eve 16 forgot to lock the door 17."},
+{"@name": "sent_S12",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Eve 16 forgot to lock the door 17."},
+{"@name": "sent_S12",
+ "@logic": ["has type", "sk4_activity", "lock", ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "Eve 16 forgot to lock the door 17."},
+{"@name": "sent_S12",
+ "@logic": ["has actor", "sk4_activity", "#:Eve 16", ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "Eve 16 forgot to lock the door 17."},
+{"@name": "sent_S12",
+ "@logic": ["has target", "sk4_activity", "#:door 17", ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "Eve 16 forgot to lock the door 17."},
+{"@name": "sent_S12",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "Eve 16 forgot to lock the door 17."},
+{"@name": "sent_S12",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Eve 16 forgot to lock the door 17."},
+{"@name": "sent_S13",
+ "@logic": ["isa","cup","#:cup 18"],
+ "@nl": "The cup 18 was filled with water."},
+{"@name": "sent_S13",
+ "@logic": ["is rel2", "in", "water", "#:cup 18", ["$ctxt","past","W1","?:Fv27","?:Fv28"]],
+ "@nl": "The cup 18 was filled with water."},
+{"@name": "sent_S14",
+ "@logic": ["isa","cup","#:cup 18"],
+ "@nl": "The cup 18 fell."},
+{"@name": "sent_S14",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "The cup 18 fell."},
+{"@name": "sent_S14",
+ "@logic": ["has type", "sk5_activity", "fall", ["$ctxt","past","W1","?:Fv29","?:Fv30"]],
+ "@nl": "The cup 18 fell."},
+{"@name": "sent_S14",
+ "@logic": ["has actor", "sk5_activity", "#:cup 18", ["$ctxt","past","W1","?:Fv29","?:Fv30"]],
+ "@nl": "The cup 18 fell."},
+{"@name": "sent_S14",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W1","?:Fv29","?:Fv30"]],
+ "@nl": "The cup 18 fell."},
+{"@name": "sent_S14",
+ "@logic": ["next","W1","W2"],
+ "@nl": "The cup 18 fell."},
+{"@name": "sent_S15",
+ "@logic": [["-is rel2", "father of", "?:X1", "?:Y1", ["$ctxt","?:Fv34","?:Fv33","?:Fv31","?:Fv32"]],
+            ["-is rel2", "father of", "?:Y1", "?:Z1", ["$ctxt","?:Fv34","?:Fv33","?:Fv31","?:Fv32"]],
+            ["is rel2", "grandfather of", "?:X1", "?:Z1", ["$ctxt","?:Fv34","?:Fv33","?:Fv31","?:Fv32"]]
+           ],
+ "@nl": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1."},
+{"@name": "sent_S16",
+ "@logic": ["isa","person","#:Sandra 19"],
+ "@nl": "Sandra 19 travelled to the hallway 20."},
+{"@name": "sent_S16",
+ "@logic": ["isa","place","#:hallway 20"],
+ "@nl": "Sandra 19 travelled to the hallway 20."},
+{"@name": "sent_S16",
+ "@logic": ["isa","activity","sk6_activity"],
+ "@nl": "Sandra 19 travelled to the hallway 20."},
+{"@name": "sent_S16",
+ "@logic": ["has type", "sk6_activity", "go", ["$ctxt","past","W2","?:Fv35","?:Fv36"]],
+ "@nl": "Sandra 19 travelled to the hallway 20."},
+{"@name": "sent_S16",
+ "@logic": ["has actor", "sk6_activity", "#:Sandra 19", ["$ctxt","past","W2","?:Fv35","?:Fv36"]],
+ "@nl": "Sandra 19 travelled to the hallway 20."},
+{"@name": "sent_S16",
+ "@logic": ["has destination", "sk6_activity", "#:hallway 20", "at", ["$ctxt","past","W2","?:Fv35","?:Fv36"]],
+ "@nl": "Sandra 19 travelled to the hallway 20."},
+{"@name": "sent_S16",
+ "@logic": ["has time", "sk6_activity", "past", "in", ["$ctxt","past","W2","?:Fv35","?:Fv36"]],
+ "@nl": "Sandra 19 travelled to the hallway 20."},
+{"@name": "sent_S16",
+ "@logic": ["next","W2","W3"],
+ "@nl": "Sandra 19 travelled to the hallway 20."},
+{"@name": "sent_S17",
+ "@logic": ["isa","person","#:Sara 21"],
+ "@nl": "Sara 21 read the book 22."},
+{"@name": "sent_S17",
+ "@logic": ["isa","book","#:book 22"],
+ "@nl": "Sara 21 read the book 22."},
+{"@name": "sent_S17",
+ "@logic": ["isa","activity","sk7_activity"],
+ "@nl": "Sara 21 read the book 22."},
+{"@name": "sent_S17",
+ "@logic": ["has type", "sk7_activity", "read", ["$ctxt","past","W3","?:Fv37","?:Fv38"]],
+ "@nl": "Sara 21 read the book 22."},
+{"@name": "sent_S17",
+ "@logic": ["has actor", "sk7_activity", "#:Sara 21", ["$ctxt","past","W3","?:Fv37","?:Fv38"]],
+ "@nl": "Sara 21 read the book 22."},
+{"@name": "sent_S17",
+ "@logic": ["has target", "sk7_activity", "#:book 22", ["$ctxt","past","W3","?:Fv37","?:Fv38"]],
+ "@nl": "Sara 21 read the book 22."},
+{"@name": "sent_S17",
+ "@logic": ["has time", "sk7_activity", "past", "in", ["$ctxt","past","W3","?:Fv37","?:Fv38"]],
+ "@nl": "Sara 21 read the book 22."},
+{"@name": "sent_S18",
+ "@logic": ["isa","person","#:man 23"],
+ "@nl": "A man 23 was yellow."},
+{"@name": "sent_S18",
+ "@logic": ["has property", "yellow", "#:man 23", ["$ctxt","past","W3","?:Fv39","?:Fv40"]],
+ "@nl": "A man 23 was yellow."},
+{"@name": "sent_S19",
+ "@logic": ["isa","carpenter","#:Paul 24"],
+ "@nl": "Paul 24 is a carpenter."},
+{"@name": "sent_S20",
+ "@logic": ["isa","person","#:Paul 24"],
+ "@nl": "Paul 24 carried a box 25."},
+{"@name": "sent_S20",
+ "@logic": ["isa","box","#:box 25"],
+ "@nl": "Paul 24 carried a box 25."},
+{"@name": "sent_S20",
+ "@logic": ["isa","activity","sk8_activity"],
+ "@nl": "Paul 24 carried a box 25."},
+{"@name": "sent_S20",
+ "@logic": ["has type", "sk8_activity", "carry", ["$ctxt","past","W3","?:Fv43","?:Fv44"]],
+ "@nl": "Paul 24 carried a box 25."},
+{"@name": "sent_S20",
+ "@logic": ["has actor", "sk8_activity", "#:Paul 24", ["$ctxt","past","W3","?:Fv43","?:Fv44"]],
+ "@nl": "Paul 24 carried a box 25."},
+{"@name": "sent_S20",
+ "@logic": ["has target", "sk8_activity", "#:box 25", ["$ctxt","past","W3","?:Fv43","?:Fv44"]],
+ "@nl": "Paul 24 carried a box 25."},
+{"@name": "sent_S20",
+ "@logic": ["has time", "sk8_activity", "past", "in", ["$ctxt","past","W3","?:Fv43","?:Fv44"]],
+ "@nl": "Paul 24 carried a box 25."},
+{"@name": "sent_S21",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","city","#:Tallinn 12"]],
+ "@nl": "Is Tallinn 12 intact?"},
+{"@name": "sent_S21",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "intact", "#:Tallinn 12", ["$ctxt","present","W3","?:Fv45","?:Fv46"]]
+           ],
+ "@nl": "Is Tallinn 12 intact?"},
+{"@name": "sent_S21",
+ "@sourcetype": "question",
+ "@logic": [["-isa","city","#:Tallinn 12"],
+            ["-has property", "intact", "#:Tallinn 12", ["$ctxt","present","W3","?:Fv45","?:Fv46"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is Tallinn 12 intact?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","?:C","?:Y"], ["-have","?:X","?:Y","?:Ctxt"], ["has part","?:X","?:Y","?:Ctxt"]],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S21",
+ "@question": ["$defq0"],
+ "@nl": "Is Tallinn 12 intact?"},
+{"@name": "sent_S21",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "intact", "#:Tallinn 12", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "intact", "#:Tallinn 12", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "intact", "#:Tallinn 12", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is Tallinn 12 intact?"},
+{"@name": "frm_set",
+ "@logic": [["-isa","?:C","?:M"],
+            ["-has property","?:D","?:M"],
+            ["-has part","?:S","?:M"],
+            ["member", "?:M", ["$setof", "has part", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "has part", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["isa","?:C","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "has part", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["has property","?:D","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "has part", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["has part","?:S","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "destroy", ["$ctxt","?:Fv52","?:Fv53","?:Fv55","?:Fv56"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv52","?:Fv53","?:Fv55","?:Fv56"]],
+            ["-next","?:Fv53","?:Fv54"],
+            ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]],
+            ["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "destroy", "?:X", ["$ctxt","?:Fv57","?:Fv58","?:Fv60","?:Fv61"]],
+            ["-next","?:Fv58","?:Fv59"],
+            ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv59","?:Fv60","?:Fv61"]],
+            ["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv59","?:Fv60","?:Fv61"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","muggle","$some_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","muggle","$some_not_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","chef","?:X"], ["isa","cook","?:X"]],
+ "@confidence": 0.86,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","cook","?:X"], ["isa","chef","?:X"]],
+ "@confidence": 0.86,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv64"], ["has type","?:E","go","?:Fv64"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","destroyed","?:X","?:Fv65"],
+            ["-has property","intact","?:X","?:Fv65"],
+            ["$block", 0, ["has property","intact","?:X","?:Fv65"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","destroyed","?:X","?:Fv66"],
+            ["-has property","intact","?:X","?:Fv66"],
+            ["$block", 0, ["has property","destroyed","?:X","?:Fv66"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","substance","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","substance","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","place","?:X"], ["-isa","substance","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","place","?:X"], ["-isa","substance","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "yellow", "?:X", ["$ctxt","past","?:Fv67","?:Fv68","?:Fv69"]],
+            ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv67","?:Fv68","?:Fv69"]],
+            ["$block", 0, ["$not", ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv67","?:Fv68","?:Fv69"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "yellow", "?:X", ["$ctxt","past","?:Fv70","?:Fv71","?:Fv72"]],
+            ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv70","?:Fv71","?:Fv72"]],
+            ["$block", 0, ["$not", ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv70","?:Fv71","?:Fv72"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_neg_implicative",
+ "@logic": [["-has type","?:E1","forget","?:Ct1"],
+            ["-has actor","?:E1","?:X","?:Ct1"],
+            ["-has content","?:E1","?:E2"],
+            ["-has type","?:E2","?:V","?:Ct2"],
+            ["-has actor","?:E2","?:X","?:Ct2"],
+            ["-has target","?:E2","?:Y","?:Ct2"],
+            ["-has type","?:E3","?:V","?:Ct3"],
+            ["-has actor","?:E3","?:X","?:Ct3"],
+            ["-has target","?:E3","?:Y","?:Ct3"],
+            ["-actuality","?:E3"]
+           ],
+ "@nl": "[generated: frm_neg_implicative]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "blockers": [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]],
+          ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X3","?:Y3"]]]],
+          ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X3","?:Y3"]]]],
+          ["$block", 0, ["has property", "intact", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]
+        ],
+        "confidence": 0.893878,
+        "negative proof": [[1, ["in","frm_verb_result","assumption",0.9], [["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["has property", "destroyed", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-has type", "?:V", "destroy", ["$ctxt","?:W","?:2006","?:Z","?:U"]], ["-has target", "?:V", "?:X", ["$ctxt","?:W","?:2006","?:Z","?:U"]], ["-next","?:2006","?:Y"]]],
+          [2, ["in","sent_S9","assumption",1], [["has type", "sk1_activity", "destroy", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["mp", [1,2], 2, "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["-has target", "sk1_activity", "?:X", ["$ctxt","past","W0","?:Z","?:U"]], ["has property", "destroyed", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-next","W0","?:Y"]]],
+          [4, ["in","sent_S9","assumption",1], [["has target", "sk1_activity", "#:Tallinn 12", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [5, ["mp", [3,1], 4, "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","?:X","?:Y","?:Z"]], ["-next","W0","?:X"]]],
+          [6, ["in","frm_world_geom","assumption",1], [["next","W0","W1"]]],
+          [7, ["mp", [5,2], 6, "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [8, ["in","frm_56","axiom",0.99], [["$block", 0, ["$not", ["has property", "?:X", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]]]], ["-has property", "?:X", "?:Y", ["$ctxt","?:Z","?:2006","?:V","?:W"]], ["has property", "?:X", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-next","?:2006","?:U"]]],
+          [9, ["mp", [7,1], [8,1], "fromassumption", 0.891], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","?:Z","?:X","?:Y"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","?:Z","?:X","?:Y"]], ["-next","W1","?:Z"]]],
+          [10, ["in","sent_S14","assumption",1], [["next","W1","W2"]]],
+          [11, ["mp", [9,3], 10, "fromassumption", 0.891], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [12, ["mp", [11,2], [8,1], "fromassumption", 0.88209], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","?:Z","?:X","?:Y"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","?:Z","?:X","?:Y"]], ["-next","W2","?:Z"]]],
+          [13, ["in","sent_S16","assumption",1], [["next","W2","W3"]]],
+          [14, ["mp", [12,4], 13, "fromassumption", 0.88209], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X","?:Y"]]]],
+          [15, ["in","frm_excl","assumption",0.95], [["$block", 0, ["has property","intact","?:X","?:Y"]], ["-has property","destroyed","?:X","?:Y"], ["-has property","intact","?:X","?:Y"]]],
+          [16, ["in","sent_S21","assumption",1], [["-$defq0"], ["has property", "intact", "#:Tallinn 12", ["$ctxt","present","W3","?:X","?:Y"]]]],
+          [17, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [18, ["mp",16,17,"fromga",1], [["has property", "intact", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]],
+          [19, ["mp", [14,3], [15,1], 18, "fromga", 0.837986], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["has property", "intact", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]]],
+          [20, ["in","sent_S9","assumption",1], [["next","W0","W1"]]],
+          [21, ["mp", [5,2], 20, "fromassumption", 0.9], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [22, ["mp", [21,1], [8,1], "fromassumption", 0.891], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","?:Z","?:X","?:Y"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","?:Z","?:X","?:Y"]], ["-next","W1","?:Z"]]],
+          [23, ["mp", [22,3], 10, "fromassumption", 0.891], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [24, ["mp", [23,2], [8,1], "fromassumption", 0.88209], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","?:Z","?:X","?:Y"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","?:Z","?:X","?:Y"]], ["-next","W2","?:Z"]]],
+          [25, ["mp", [24,4], 13, "fromassumption", 0.88209], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X","?:Y"]]]],
+          [26, ["mp", [25,3], [15,1], 18, "fromga", 0.837986], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["has property", "intact", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]]],
+          [27, ["cumul",19,26,"fromga",0.853071], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["has property", "intact", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]]],
+          [28, ["in","frm_world_geom","assumption",1], [["next","W2","W3"]]],
+          [29, ["mp", [24,4], 28, "fromassumption", 0.88209], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X","?:Y"]]]],
+          [30, ["mp", [29,3], [15,1], 18, "fromga", 0.837986], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["has property", "intact", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]]],
+          [31, ["cumul",27,30,"fromga",0.872511], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["has property", "intact", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]]],
+          [32, ["in","frm_world_geom","assumption",1], [["next","W1","W2"]]],
+          [33, ["mp", [22,3], 32, "fromassumption", 0.891], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [34, ["mp", [33,2], [8,1], "fromassumption", 0.88209], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","?:Z","?:X","?:Y"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","?:Z","?:X","?:Y"]], ["-next","W2","?:Z"]]],
+          [35, ["mp", [34,4], 13, "fromassumption", 0.88209], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X","?:Y"]]]],
+          [36, ["mp", [35,3], [15,1], 18, "fromga", 0.837986], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["has property", "intact", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]]],
+          [37, ["cumul",31,36,"fromga",0.893878], [["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W2","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "destroyed", "#:Tallinn 12", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["has property", "intact", "#:Tallinn 12", ["$ctxt","present","W3","?:X3","?:Y3"]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 89%.",
+"Sentences used:",
+"  (1) The city was destroyed.",
+"  (2) The cup filled with water fell.",
+"  (3) Sandra travelled to the hallway.",
+"  (4) Is the city intact?",
+"Knowledge used:",
+"  If V is a destroy event and V targets some X and a situation E1 is followed by a situation Y then normally X is destroyed. Why: assumed basic knowledge.",
+"  The situation W0 is followed by the situation W1. Why: assumed basic knowledge.",
+"  If some Y is some X and a situation E1 is followed by a situation U then normally Y is X. Why: assumed basic knowledge.",
+"  If some X is destroyed then X is not intact, except when X is intact. Why: assumed basic knowledge.",
+"  The situation W2 is followed by the situation W3. Why: assumed basic knowledge.",
+"  The situation W1 is followed by the situation W2. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If V is a destroy event and V targets some X and a situation E1 is followed by a situation Y then normally X is destroyed  [background knowledge, confidence 90%]",
+"  (2) The event act2 is a destroy event  [sentence 1]",
+"  (3) If the event act2 targets some X and the situation W0 is followed by a situation Y then normally X is destroyed  [from steps 1, 2, confidence 90%]",
+"  (4) The event act2 targets Tallinn  [sentence 1]",
+"  (5) If the situation W0 is followed by a situation X then normally Tallinn is destroyed  [from steps 3, 4, confidence 90%]",
+"  (6) The situation W0 is followed by the situation W1  [background knowledge]",
+"  (7) Normally Tallinn is destroyed  [from steps 5, 6, confidence 90%]",
+"  (8) If some Y is some X and a situation E1 is followed by a situation U then normally Y is X  [background knowledge, confidence 99%]",
+"  (9) If the situation W1 is followed by a situation Z then normally Tallinn is destroyed, except when Tallinn is not destroyed  [from steps 7, 8, confidence 89%]",
+"  (10) The situation W1 is followed by the situation W2  [sentence 2]",
+"  (11) Normally Tallinn is destroyed, except when Tallinn is not destroyed  [from steps 9, 10, confidence 89%]",
+"  (12) If the situation W2 is followed by a situation Z then normally Tallinn is destroyed, except when Tallinn is not destroyed and Tallinn is not destroyed  [from steps 11, 8, confidence 88%]",
+"  (13) The situation W2 is followed by the situation W3  [sentence 3]",
+"  (14) Normally Tallinn is destroyed, except when Tallinn is not destroyed and Tallinn is not destroyed  [from steps 12, 13, confidence 88%]",
+"  (15) If some X is destroyed then X is not intact, except when X is intact  [background knowledge, confidence 95%]",
+"  (16) If answer holds then Tallinn is intact  [sentence 4]",
+"  (17) Answer holds  [assumption]",
+"  (18) Tallinn is intact  [from steps 16, 17]",
+"  (19) Outstanding exception: Tallinn is not destroyed and Tallinn is not destroyed and Tallinn is not destroyed and Tallinn is intact  [from steps 14, 15, 18, confidence 84%]",
+"  (20) The situation W0 is followed by the situation W1  [sentence 1]",
+"  (21) Normally Tallinn is destroyed  [from steps 5, 20, confidence 90%]",
+"  (22) If the situation W1 is followed by a situation Z then normally Tallinn is destroyed, except when Tallinn is not destroyed  [from steps 21, 8, confidence 89%]",
+"  (23) Normally Tallinn is destroyed, except when Tallinn is not destroyed  [from steps 22, 10, confidence 89%]",
+"  (24) If the situation W2 is followed by a situation Z then normally Tallinn is destroyed, except when Tallinn is not destroyed and Tallinn is not destroyed  [from steps 23, 8, confidence 88%]",
+"  (25) Normally Tallinn is destroyed, except when Tallinn is not destroyed and Tallinn is not destroyed  [from steps 24, 13, confidence 88%]",
+"  (26) Outstanding exception: Tallinn is not destroyed and Tallinn is not destroyed and Tallinn is not destroyed and Tallinn is intact  [from steps 25, 15, 18, confidence 84%]",
+"  (27) Outstanding exception: Tallinn is not destroyed and Tallinn is not destroyed and Tallinn is not destroyed and Tallinn is intact  [from steps 19, 26, confidence 85%]",
+"  (28) The situation W2 is followed by the situation W3  [background knowledge]",
+"  (29) Normally Tallinn is destroyed, except when Tallinn is not destroyed and Tallinn is not destroyed  [from steps 24, 28, confidence 88%]",
+"  (30) Outstanding exception: Tallinn is not destroyed and Tallinn is not destroyed and Tallinn is not destroyed and Tallinn is intact  [from steps 29, 15, 18, confidence 84%]",
+"  (31) Outstanding exception: Tallinn is not destroyed and Tallinn is not destroyed and Tallinn is not destroyed and Tallinn is intact  [from steps 27, 30, confidence 87%]",
+"  (32) The situation W1 is followed by the situation W2  [background knowledge]",
+"  (33) Normally Tallinn is destroyed, except when Tallinn is not destroyed  [from steps 22, 32, confidence 89%]",
+"  (34) If the situation W2 is followed by a situation Z then normally Tallinn is destroyed, except when Tallinn is not destroyed and Tallinn is not destroyed  [from steps 33, 8, confidence 88%]",
+"  (35) Normally Tallinn is destroyed, except when Tallinn is not destroyed and Tallinn is not destroyed  [from steps 34, 13, confidence 88%]",
+"  (36) Outstanding exception: Tallinn is not destroyed and Tallinn is not destroyed and Tallinn is not destroyed and Tallinn is intact  [from steps 35, 15, 18, confidence 84%]",
+"  (37) Outstanding exception: Tallinn is not destroyed and Tallinn is not destroyed and Tallinn is not destroyed and Tallinn is intact  [from steps 31, 36, confidence 89%]",
+"Exceptions checked and not holding:",
+"  Tallinn is not destroyed",
+"  Tallinn is not destroyed",
+"  Tallinn is not destroyed",
+"  Tallinn is intact"
+],
+  "llm_usage": [{
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 36450,
+      "cached_input_tokens": 36352,
+      "output_tokens": 6428,
+      "raw": {
+        "prompt_tokens": 36450,
+        "completion_tokens": 6428,
+        "total_tokens": 42878,
+        "prompt_tokens_details": {"cached_tokens": 36352},
+        "completion_tokens_details": {"reasoning_tokens": 4830},
+        "prompt_cache_hit_tokens": 36352,
+        "prompt_cache_miss_tokens": 98
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 39898,
+      "cached_input_tokens": 36352,
+      "output_tokens": 3941,
+      "raw": {
+        "prompt_tokens": 39898,
+        "completion_tokens": 3941,
+        "total_tokens": 43839,
+        "prompt_tokens_details": {"cached_tokens": 36352},
+        "completion_tokens_details": {"reasoning_tokens": 920},
+        "prompt_cache_hit_tokens": 36352,
+        "prompt_cache_miss_tokens": 3546
+      }
+    }
+  ],
+  "timestamp": "2026-06-11T11:04:11Z"
+}

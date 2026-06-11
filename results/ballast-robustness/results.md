@@ -3,7 +3,8 @@
 Companion to `wip/plans/02-ballast-robustness-experiments.md` (Tanel's ask,
 2026-06-10: insert pure-ballast sentences into the test cases at increasing
 dose and measure when accuracy degrades).
-Status: **Phases 0–2 run (b2/b4/b8/b16 × gpt+claude on the 100-subset).**
+Status: **Phases 0–3 run** (b2/b4/b8/b16 × gpt+claude, plus b8/b16 ×
+gemini+deepseek on the 100-subset — §13).
 Post-run auditing caught a sentence-splitter bug that contaminated part of
 the collected suites (excluded analytically, generator fixed — §11.2) and
 an Anthropic credit outage inside claude's b16 (patched same evening —
@@ -16,7 +17,9 @@ The full 1600 runs (Phases 4–5) are gated on explicit sign-off.
 Run: `nlpsolver/llmpipe` on macOS (local `gk` ARM64), two-stage pipeline,
 LLM cache on, thinking off, prover at the default 2s. Date: 2026-06-10.
 **2026-06-11: §12 adds the failure cause map** (where the chain breaks as
-sentence count grows — Tanel's follow-up ask before he builds chunking).
+sentence count grows — Tanel's follow-up ask before he builds chunking)
+**and §13 adds Phase 3** (gemini+deepseek at b8/b16 on the regenerated
+clean suites).
 
 ---
 
@@ -263,7 +266,7 @@ gitignored. Suite + manifest: `llmpipe/tests/ballast/tests_core_100_b2.py`,
 | 0 | Generator + self-checks + clause spot-checks (6 cases, gemini) | **done** — all PASS after isa-cross-group fix |
 | 1 | 100-subset @ b2, gpt+claude | **done** — 200/200, 0 errors, $7.71 |
 | 2 | 100-subset @ b4/b8/b16, gpt+claude | **run, provisional** (§11) — clean rerun pending sign-off |
-| 3 | 100-subset @ N_light/N_heavy, gemini+deepseek | pending |
+| 3 | 100-subset @ b8/b16, gemini+deepseek | **done** (§13) — 400/400, $14.51 |
 | 4 | Full 1600 @ N_light, 4 models | **gated: explicit sign-off (large spend)** |
 | 5 | Full 1600 @ N_heavy, 4 models | **gated: explicit sign-off (large spend)** |
 
@@ -351,6 +354,12 @@ runs) so the dataset and the sqlite LLM cache are hole-free for replays.
   re-run with `-maxtokens 32000`** (the output budget is part of the cache
   key; b2 used the default 8000) — otherwise every call misses the cache
   and makes real API calls. Cache hits answer in <1s.
+- **`cache-snapshot-phases0-3.db.gz`** (2.3 MB; SHA256
+  `48c6789b5abeda7dec30ba8fa6a12d8b0ead005bd74002252615dbc500549146`) —
+  same procedure, taken after Phase 3 completed (2026-06-11); supersedes
+  the phases0-2 snapshot (strict superset: adds every gemini+deepseek
+  b8/b16 call). The phases0-2 file stays committed because sent emails
+  link to it. The same `-maxtokens 32000` rule applies.
 - **`gk-bug-case1011-minimal.gkin`** — minimal reproducer (17 clauses +
   question, delta-debugged from case 1011's 141-clause prover input) for
   the gk datarec allocator error of §11.1. Run:
@@ -381,6 +390,8 @@ same tokens), not 10×. Projections at measured per-case rates for the
 1600 runs: Phase 4 @ b8 ≈ **$270** (gpt $80 + claude $159 + gemini ~$25 +
 deepseek ~$3), Phase 5 @ b16 ≈ **$390** (gpt $133 + claude $214 + gemini
 ~$35 + deepseek ~$4) — both together comfortably under the €900 quote.
+**Superseded for gemini+deepseek by the measured Phase 3 rates — see
+§13.4** (revised total ≈ $817, still under the quote).
 The local sqlite cache (`llmpipe/cache.db`, gitignored, preserved) makes
 replays of unchanged prompts free — that is what enables Tanel's
 gk-strategy reruns at zero API cost.
@@ -567,3 +578,113 @@ except where the intervention provides causal evidence
 hand. The world-shift *signature* also occurs in passing runs — it is
 fatal only in combination with a stateless queried fact, which is why
 control rates are reported alongside.
+
+## 13. Phase 3 (b8/b16, gemini+deepseek) — the second model pair confirms the curve
+
+400 runs (2 doses × 2 models × 100 cases), completed 2026-06-11.
+Models: `gemini-2.5-flash`, `deepseek-v4-flash`. Same pipeline settings
+as Phase 2 (32K output budget,
+prover at 2s), plus `-timeout 300` (§13.3). Snapshots:
+`core_100_b8/twostage/{gemini,deepseek}/`, `core_100_b16/twostage/…`.
+
+**These cells ran on the regenerated post-splitter-fix suites** (current
+working tree; `resolve_manifest` confirms provenance), so they need **no
+contamination exclusions** — but they are also not draw-identical to the
+gpt+claude Phase 2 cells, which ran on the old suites. Same doses,
+different ballast draws; compare shapes, not individual cases.
+
+### 13.1 The curve
+
+```
+accuracy %       b0     b8    b16
+gemini         99.0   90.0   82.0
+deepseek       98.0   87.0   88.0
+```
+
+- Both models reproduce the Phase 2 finding: **clear degradation by b8**,
+  and for gemini b16 is again the clearly-hurting regime (−17pt vs b0).
+- deepseek is flat b8→b16 (87→88) — the same non-monotonicity gpt showed
+  at b4<b8, and the same explanation is available: each dose is an
+  independent ballast draw, so per-dose draw luck is ±a few points.
+  Phases 4–5 (n=1600/dose) settle this.
+- Failure decomposition is again entirely parse-side in signature:
+  **zero** `parse_fail`/`no_question`/`convert_fail` anywhere; `no_proof`
+  dominates (gemini 8 of 10 at b8, 12 of 18 at b16; deepseek 11/13 and
+  10/12), `wrong_answer` grows with dose for gemini (2→6).
+- Per-case flips vs b0: gemini b8 lost 10, b16 lost 18; deepseek lost 12
+  at both. **Cases 70, 107, 671, 1239 are lost by both models at both
+  doses** — the fragile-case classes of §3 (possessive presupposition,
+  wh-answer phrasing, comparatives) recur on an independent model pair
+  and independent ballast draws.
+
+### 13.2 Prover-side incidents: 3 "prover returned empty result" at b8
+
+All three b8 runs whose answer is "Error: prover returned empty result"
+were replayed from the stored clause JSON (strip `@nl`, feed to gk with
+the stored strategy):
+
+- **gemini b8 case 250 — the §11.1/§11.4b datarec allocator bug, second
+  confirmed instance** (108 clauses; deterministic, fails in <1s). First
+  sighting outside b16 — clause sets in the ~100+ range can hit it.
+- **gemini b8 1317 and deepseek b8 1011 replay correctly** on an idle
+  machine (both answer the expected `false` within the 2s budget) — these
+  two were load-sensitive prover timeouts during the batch run, not parse
+  losses. (1011 is the same base case as claude-b16's datarec hit in
+  §11.1 — different suite, different clause set; treated as coincidence
+  until the reproducer family says otherwise.)
+
+### 13.3 Operational incidents (all resolved, all instructive)
+
+- **deepseek read-timeouts:** heavy-dose generations routinely exceed
+  `llmcall.py`'s 60s default HTTP timeout; the first overnight attempt
+  produced silently empty case files (timeout → `None` → no error
+  recorded). Fix: `runtests.py -timeout` (commit `78efa1f`); Phase 3 ran
+  at 300s. Operationally: a read-timeout aborts the case *after* the
+  provider has generated (and bills) the output, so the provider
+  dashboard can show slightly more than the §13.4 ledger.
+- **gemini 503 "high demand" storms:** hundreds of occurrences across the
+  runs, concentrated in peak hours; the built-in retries absorbed most,
+  the refill passes picked up the rest.
+- **gemini prepay credit depletion** mid-b16 (2026-06-11) — same failure
+  class as §11.4 (Anthropic), caught after 7-retry exhaustion on 3 cases;
+  topped up and refilled the same day. Provider-credit exhaustion has now
+  hit 2 of 4 providers mid-run: worth a pre-run balance check before
+  Phases 4–5.
+
+### 13.4 Phase-3 cost (usage ledger, list prices)
+
+```
+dose     gemini  deepseek
+b8         5.84      0.44
+b16        7.58      0.65
+Phase 3   13.42      1.09   = $14.51
+```
+
+deepseek's ~96% provider-cache hit rate and ~20× cheaper tokens make it
+nearly free; gemini pays mostly for output (3.6M output tokens, ~68% of
+its bill) and its cache hit rate was only ~20%. Study total (Phases
+0–3): **≈ $73**.
+
+**This corrects the §11.5 gemini estimates.** At measured Phase 3
+per-case rates, the 1600-run projections become: Phase 4 @ b8 ≈ **$339**
+(gpt $80 + claude $159 + gemini $93 + deepseek $7), Phase 5 @ b16 ≈
+**$478** (gpt $133 + claude $214 + gemini $121 + deepseek $10) — together
+≈ **$817**: still under the €900 quote, but with far less margin than
+the §11.5 figures (which had guessed gemini at ~$25/$35). Part of
+gemini's measured rate is 503/timeout retry churn (real billed calls),
+so these are conservative-high; still, gemini is the second-largest cost
+in any full run.
+
+### 13.5 Reproduce
+
+```bash
+# from llmpipe/ — fills only missing case files, so a replay against the
+# committed cache snapshot (§11.4b, phases0-3) makes no API calls
+python3 runtests.py tests/ballast/tests_core_100_b8.py  -llms gemini,deepseek -maxtokens 32000 -timeout 300
+python3 runtests.py tests/ballast/tests_core_100_b16.py -llms gemini,deepseek -maxtokens 32000 -timeout 300
+
+# the §13.1 table and ledger
+cd results/ballast-robustness/analysis
+python3 dose_response.py -doses 8,16 -models gemini,deepseek
+python3 token_ledger.py  -doses 8,16 -models gemini,deepseek
+```

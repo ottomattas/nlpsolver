@@ -1,0 +1,611 @@
+{
+  "test_name": "core_100_b8",
+  "case_id": 21,
+  "input_text": "Eve kept the milk in the fridge. The mountain is higher than the hill. The toy of the child was broken. The road leading to the village was narrow. These links present the many viewpoints that existed. Bike's length is 10 kilometers. Foxes cannot fly. Elephants have no wings. John is in Estonia?",
+  "expected_answer": null,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Eve kept the milk in the fridge.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Eve 1 kept the milk 2 in the fridge 3.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "milk 2", "type": "concrete", "category": "substance"},
+            {"id": "fridge 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "keep",
+              "mode": "event",
+              "roles": {"actor": "Eve 1", "target": "milk 2", "location": "fridge 3", "location_prep": "in"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The mountain is higher than the hill.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The mountain 1 is higher than the hill 2.",
+          "type": "real",
+          "entities": [{"id": "mountain 1", "type": "concrete", "category": "place"},
+            {"id": "hill 2", "type": "concrete", "category": "place"}
+          ],
+          "adjectives": [["high","high","entity"]]
+        }
+      ]
+    },
+    {
+      "raw": "The toy of the child was broken.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The toy 1 of the child 2 was broken.",
+          "type": "situation",
+          "entities": [{"id": "toy 1", "type": "concrete", "category": "artifact"},
+            {"id": "child 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["broken","none","toy"]],
+          "definites": [["toy of","toy 1","child 2"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "The toy 1 is the toy of the child 2.",
+          "type": "situation",
+          "entities": [{"id": "toy 1", "type": "concrete", "category": "artifact"},
+            {"id": "child 2", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["toy of","toy 1","child 2"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The road leading to the village was narrow.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "The road 1 leading to the village 2 was narrow.",
+          "type": "situation",
+          "entities": [{"id": "road 1", "type": "concrete", "category": "place"},
+            {"id": "village 2", "type": "concrete", "category": "place"}
+          ],
+          "adjectives": [["narrow","none","road"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "These links present the many viewpoints that existed.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "These links 1 present the viewpoints 2 that existed.",
+          "type": "real",
+          "entities": [{"id": "links 1", "type": "concrete", "category": "artifact"},
+            {"id": "viewpoints 2", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{
+              "root": "present",
+              "mode": "habitual",
+              "roles": {"actor": "links 1", "target": "viewpoints 2"}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Bike's length is 10 kilometers.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Bike 1's length 2 is 10 kilometers.",
+          "type": "real",
+          "entities": [{"id": "Bike 1", "type": "concrete", "category": "artifact"},
+            {"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "10 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 2","Bike 1"]]
+        },
+        {
+          "unit_id": "S8",
+          "text": "Length 2 is the length of Bike 1.",
+          "type": "real",
+          "entities": [{"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "Bike 1", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["length of","length 2","Bike 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "Foxes cannot fly.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Foxes cannot fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "foxes", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability", "roles": {"actor": "foxes"}}]
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have no wings.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Elephants have no wings.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "wings", "type": "generic", "scope": "dependent"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is in Estonia?",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Is John 1 in Estonia 2?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {
+              "id": "Estonia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Eve 1"],
+            ["isa","milk","milk 2"],
+            ["isa","fridge","fridge 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","keep"],
+                ["has actor","E","Eve 1"],
+                ["has target","E","milk 2"],
+                ["has location","E","fridge 3","in"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","mountain","mountain 1"],
+          ["isa","hill","hill 2"],
+          ["has degree rel2","high","mountain 1","hill 2","high","entity"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","toy","toy 1"],
+            ["isa","child","child 2"],
+            ["is rel2","toy of","toy 1","child 2"],
+            ["has degree property","broken","toy 1","none","toy"]
+          ]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S3","W0","toy of","child 2","toy 1"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","toy","toy 1"],
+            ["isa","child","child 2"],
+            ["is rel2","toy of","toy 1","child 2"]
+          ]
+        ],
+        ["@definite","S4","W0","toy of","child 2","toy 1"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","road","road 1"],
+            ["isa","village","village 2"],
+            ["is rel2","leading to","road 1","village 2"],
+            ["has degree property","narrow","road 1","none","road"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","link","links 1"],
+          ["isa","viewpoint","viewpoints 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","present"],
+              ["has actor","E","links 1"],
+              ["has target","E","viewpoints 2"],
+              ["typical","E"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","bike","Bike 1"],
+            ["=", ["$measure_of","length","Bike 1","W0"], ["$measure",10,"kilometer"]]
+          ]
+        ],
+        ["@definite","S7","W0","length of","Bike 1","length 2"]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 2"],
+            ["isa","bike","Bike 1"],
+            ["is rel2","length of","length 2","Bike 1"]
+          ]
+        ],
+        ["@definite","S8","W0","length of","Bike 1","length 2"]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","fox","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","elephant","X"],
+            ["not", ["exists", "Y", ["and", ["isa","wing","Y"], ["has part","X","Y"]]]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["question",
+        ["and",
+          ["isa","person","John 1"],
+          ["is rel2","in","John 1","https://en.wikipedia.org/wiki/Estonia"]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","toy","#:toy 1"],
+ "@nl": "The toy 1 of the child 2 was broken."},
+{"@name": "entity_S6",
+ "@logic": ["isa","link","#:links 1"],
+ "@nl": "These links 1 present the viewpoints 2 that existed."},
+{"@name": "entity_S6",
+ "@logic": ["isa","viewpoint","#:viewpoints 2"],
+ "@nl": "These links 1 present the viewpoints 2 that existed."},
+{"@name": "entity_S7",
+ "@logic": ["isa","measure","10 kilometers"],
+ "@nl": "Bike 1's length 2 is 10 kilometers."},
+{"@name": "entity_S11",
+ "@logic": ["isa","place","#:Estonia 2"],
+ "@nl": "Is John 1 in Estonia 2?"},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","milk","#:milk 2"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","fridge","#:fridge 3"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "keep", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:milk 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["has location", "sk0_activity", "#:fridge 3", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","mountain","#:mountain 1"],
+ "@nl": "The mountain 1 is higher than the hill 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","hill","#:hill 2"],
+ "@nl": "The mountain 1 is higher than the hill 2."},
+{"@name": "sent_S2",
+ "@logic": ["has degree rel2", "high", "#:mountain 1", "#:hill 2", "high", "?:Fv71", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The mountain 1 is higher than the hill 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa", "toy", ["$theof1", "toy", "#:child 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]]],
+ "@nl": "The toy 1 of the child 2 was broken."},
+{"@name": "sent_S3",
+ "@logic": ["isa","child","#:child 2"],
+ "@nl": "The toy 1 of the child 2 was broken."},
+{"@name": "sent_S3",
+ "@logic": ["has property", "broken", ["$theof1", "toy", "#:child 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]], ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The toy 1 of the child 2 was broken."},
+{"@name": "sent_S4",
+ "@logic": ["isa", "toy", ["$theof1", "toy", "#:child 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]]],
+ "@nl": "The toy 1 is the toy of the child 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","child","#:child 2"],
+ "@nl": "The toy 1 is the toy of the child 2."},
+{"@name": "sent_S4",
+ "@logic": ["is rel2", "toy of", ["$theof1", "toy", "#:child 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]], "#:child 2", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The toy 1 is the toy of the child 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","road","#:road 1"],
+ "@nl": "The road 1 leading to the village 2 was narrow."},
+{"@name": "sent_S5",
+ "@logic": ["isa","village","#:village 2"],
+ "@nl": "The road 1 leading to the village 2 was narrow."},
+{"@name": "sent_S5",
+ "@logic": ["is rel2", "leading to", "#:road 1", "#:village 2", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The road 1 leading to the village 2 was narrow."},
+{"@name": "sent_S5",
+ "@logic": ["-has degree property", "wide", "#:road 1", "none", "road", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The road 1 leading to the village 2 was narrow."},
+{"@name": "sent_S6",
+ "@logic": ["isa","link","#:links 1"],
+ "@nl": "These links 1 present the viewpoints 2 that existed."},
+{"@name": "sent_S6",
+ "@logic": ["isa","viewpoint","#:viewpoints 2"],
+ "@nl": "These links 1 present the viewpoints 2 that existed."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "These links 1 present the viewpoints 2 that existed."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk1_activity", "present", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "These links 1 present the viewpoints 2 that existed."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk1_activity", "#:links 1", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "These links 1 present the viewpoints 2 that existed."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk1_activity", "#:viewpoints 2", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "These links 1 present the viewpoints 2 that existed."},
+{"@name": "sent_S6",
+ "@logic": ["typical", "sk1_activity", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "These links 1 present the viewpoints 2 that existed."},
+{"@name": "sent_S7",
+ "@logic": ["isa","bike","#:Bike 1"],
+ "@nl": "Bike 1's length 2 is 10 kilometers."},
+{"@name": "sent_S7",
+ "@logic": ["=", ["$measure_of","length","#:Bike 1","W0"], ["$list",10000,"#:meter"]],
+ "@nl": "Bike 1's length 2 is 10 kilometers."},
+{"@name": "sent_S8",
+ "@logic": ["isa", "length", ["$theof1", "length", "#:Bike 1", ["$ctxt","present","W0","?:Fv15","?:Fv16"]]],
+ "@nl": "Length 2 is the length of Bike 1."},
+{"@name": "sent_S8",
+ "@logic": ["isa","bike","#:Bike 1"],
+ "@nl": "Length 2 is the length of Bike 1."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","fox","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Foxes cannot fly."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-isa","wing","?:Y"],
+            ["-has part", "?:X", "?:Y", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "Elephants have no wings."},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:John 1"]],
+ "@nl": "Is John 1 in Estonia 2?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W1","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Is John 1 in Estonia 2?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:John 1"],
+            ["-is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W1","?:Fv25","?:Fv26"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 in Estonia 2?"},
+{"@name": "sent_S4",
+ "@logic": ["have", "#:child 2", ["$theof1", "toy", "#:child 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]], ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The toy 1 is the toy of the child 2."},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","wing","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S11",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 in Estonia 2?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "#:John 1", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 in Estonia 2?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:child 2", ["$theof1", "toy", "#:child 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]], ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:child 2", ["$theof1", "toy", "#:child 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]], ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:Bike 1", ["$theof1", "length", "#:Bike 1", ["$ctxt","present","W0","?:Fv15","?:Fv16"]], ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:Bike 1", ["$theof1", "length", "#:Bike 1", ["$ctxt","present","W0","?:Fv15","?:Fv16"]], ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "length of", ["$theof1","length","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "length", ["$theof1","length","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "toy of", ["$theof1","toy","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "toy", ["$theof1","toy","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fox","$some_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","fox","$some_not_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","wing","$some_wing"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","wing","$some_not_wing"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv32"], ["has type","?:E","go","?:Fv32"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "none", "?:Fv72", ["$ctxt","past","?:Fv33","?:Fv34","?:Fv35"]],
+            ["-has degree property", "wide", "?:X", "none", "?:Fv73", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "none", "?:Fv74", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv36","?:Fv37","?:Fv38"]],
+            ["-has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_measure_rel_bridge",
+ "@logic": [["-=", ["$measure_of","length","?:S","?:W"], "?:V"],
+            ["is rel2","length of","?:V","?:S","?:Ctxt"]
+           ],
+ "@nl": "[generated: frm_measure_rel_bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 28790,
+      "cached_input_tokens": 28672,
+      "output_tokens": 7865,
+      "raw": {
+        "prompt_tokens": 28790,
+        "completion_tokens": 7865,
+        "total_tokens": 36655,
+        "prompt_tokens_details": {"cached_tokens": 28672},
+        "completion_tokens_details": {"reasoning_tokens": 6326},
+        "prompt_cache_hit_tokens": 28672,
+        "prompt_cache_miss_tokens": 118
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 35366,
+      "cached_input_tokens": 33920,
+      "output_tokens": 6003,
+      "raw": {
+        "prompt_tokens": 35366,
+        "completion_tokens": 6003,
+        "total_tokens": 41369,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 4634},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 1446
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T19:44:20Z"
+}

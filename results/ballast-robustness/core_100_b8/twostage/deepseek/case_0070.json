@@ -1,0 +1,759 @@
+{
+  "test_name": "core_100_b8",
+  "case_id": 70,
+  "input_text": "Muggles can not disappear. The length of Nile is 10 meters. The man carrying a bag waved. Cats are afraid of wolves. Elephants have trunks or tails. The red car is in the house. John is an elephant. Estonia is not outside Europe. John has no trunk. Mary's uncle arrived. The window was broken. John has a tail?",
+  "expected_answer": true,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "Muggles can not disappear.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Muggles cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "Muggles", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "The length of Nile is 10 meters.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The length 1 of Nile 2 is 10 meters.",
+          "type": "real",
+          "entities": [{"id": "length 1", "type": "concrete", "text": "length"},
+            {
+              "id": "Nile 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            },
+            {"id": "10 meters", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 1","Nile 2"]]
+        },
+        {
+          "unit_id": "S3",
+          "text": "The length 1 is the length of Nile 2.",
+          "type": "real",
+          "entities": [{"id": "length 1", "type": "concrete", "text": "length"},
+            {
+              "id": "Nile 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            }
+          ],
+          "definites": [["length of","length 1","Nile 2"]]
+        }
+      ]
+    },
+    {
+      "raw": "The man carrying a bag waved.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "A man 1 carried a bag 2.",
+          "type": "situation",
+          "entities": [{"id": "man 1", "type": "concrete", "category": "person"},
+            {"id": "bag 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "carry", "mode": "event", "roles": {"target": "bag 2"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S5",
+          "text": "The man 1 waved.",
+          "type": "situation",
+          "entities": [{"id": "man 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "wave", "mode": "event"}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Cats are afraid of wolves.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Cats are afraid of wolves.",
+          "type": "normal_rule",
+          "entities": [{"id": "cats", "type": "generic", "category": "animal"},
+            {"id": "wolves", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["afraid","none","cat"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have trunks or tails.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Elephants have trunks or tails.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"},
+            {"id": "tails", "type": "generic", "scope": "dependent"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The red car is in the house.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "The red car 1 is in the house 2.",
+          "type": "situation",
+          "entities": [{"id": "car 1", "type": "concrete", "category": "artifact"},
+            {"id": "house 2", "type": "concrete", "category": "place"}
+          ],
+          "adjectives": [["red","none","none"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "John is an elephant.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "John 1 is an elephant.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "elephant", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Estonia is not outside Europe.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Estonia 1 is not outside Europe 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Estonia 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            },
+            {
+              "id": "Europe 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Europe"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John has no trunk.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "John 1 has no trunk.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "trunk", "type": "generic"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mary's uncle arrived.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Mary 1's uncle 2 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "uncle 2", "type": "concrete", "text": "uncle", "category": "person"}
+          ],
+          "definites": [["uncle of","uncle 2","Mary 1"]],
+          "actions": [{"root": "arrive", "mode": "event"}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S13",
+          "text": "Uncle 2 is the uncle of Mary 1.",
+          "type": "situation",
+          "entities": [{"id": "uncle 2", "type": "concrete", "text": "uncle", "category": "person"},
+            {"id": "Mary 1", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["uncle of","uncle 2","Mary 1"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The window was broken.",
+      "units": [{
+          "unit_id": "S14",
+          "text": "The window 1 was broken.",
+          "type": "situation",
+          "entities": [{"id": "window 1", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "break", "mode": "event", "roles": {"target": "window 1"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John has a tail?",
+      "units": [{
+          "unit_id": "S15",
+          "text": "Does John 1 have a tail?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "tail", "type": "generic"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","Muggles","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 1"],
+            ["isa","Nile","https://en.wikipedia.org/wiki/Nile"],
+            ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$measure",10,"meter"]]
+          ]
+        ],
+        ["@definite","S2","W0","length of","https://en.wikipedia.org/wiki/Nile","length 1"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","length","length 1"], ["isa","Nile","https://en.wikipedia.org/wiki/Nile"]]
+        ],
+        ["@definite","S3","W0","length of","https://en.wikipedia.org/wiki/Nile","length 1"]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","man","man 1"],
+          ["isa","bag","bag 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","carry"],
+              ["has actor","E","man 1"],
+              ["has target","E","bag 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","man","man 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","wave"],
+              ["has actor","E","man 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","cat","X"],
+              ["forall","Y",
+                ["implies",
+                  ["isa","wolf","Y"],
+                  ["normally", ["has degree rel2","afraid","X","Y","none","cat"]]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S6",0.99]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","elephant","X"],
+            ["normally",
+              ["or",
+                ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]],
+                ["exists", "Z", ["and", ["isa","tail","Z"], ["has part","X","Z"]]]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","car","car 1"],
+            ["isa","house","house 2"],
+            ["has degree property","red","car 1","none","none"],
+            ["is rel2","in","car 1","house 2"]
+          ]
+        ],
+        ["state time","W0","present"]
+      ]
+    ],
+    ["@id", "S9", ["holds", "W0", ["isa","elephant","John 1"]]],
+    ["@id","S10",
+      ["holds","W0",
+        ["and",
+          ["isa","Estonia","https://en.wikipedia.org/wiki/Estonia"],
+          ["isa","Europe","https://en.wikipedia.org/wiki/Europe"],
+          ["not",
+            ["is rel2","outside","https://en.wikipedia.org/wiki/Estonia","https://en.wikipedia.org/wiki/Europe"]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["holds", "W0", ["not", ["exists", "X", ["and", ["isa","trunk","X"], ["have","John 1","X"]]]]]
+    ],
+    ["@id","S12",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","Mary","Mary 1"],
+            ["isa","uncle","uncle 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","arrive"],
+                ["has actor","E","uncle 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["@definite","S12","W0","uncle of","Mary 1","uncle 2"],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S13",
+      ["and",
+        ["holds", "W0", ["and", ["isa","uncle","uncle 2"], ["isa","Mary","Mary 1"]]],
+        ["@definite","S13","W0","uncle of","Mary 1","uncle 2"]
+      ]
+    ],
+    ["@id","S14",
+      ["holds","W0",
+        ["and",
+          ["isa","window","window 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","break"],
+              ["has target","E","window 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S15",
+      ["question", ["exists", "X", ["and", ["isa","tail","X"], ["have","John 1","X"]]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:Nile 2"],
+ "@nl": "The length 1 of Nile 2 is 10 meters."},
+{"@name": "entity_S2",
+ "@logic": ["isa","measure","10 meters"],
+ "@nl": "The length 1 of Nile 2 is 10 meters."},
+{"@name": "entity_S10",
+ "@logic": ["isa","place","#:Estonia 1"],
+ "@nl": "Estonia 1 is not outside Europe 2."},
+{"@name": "entity_S10",
+ "@logic": ["isa","place","#:Europe 2"],
+ "@nl": "Estonia 1 is not outside Europe 2."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","muggles","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Muggles cannot disappear."},
+{"@name": "sent_S2",
+ "@logic": ["isa","length","#:length 1"],
+ "@nl": "The length 1 of Nile 2 is 10 meters."},
+{"@name": "sent_S2",
+ "@logic": ["isa","nile","https://en.wikipedia.org/wiki/Nile"],
+ "@nl": "The length 1 of Nile 2 is 10 meters."},
+{"@name": "sent_S2",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$list",10,"#:meter"]],
+ "@nl": "The length 1 of Nile 2 is 10 meters."},
+{"@name": "sent_S3",
+ "@logic": ["isa","length","#:length 1"],
+ "@nl": "The length 1 is the length of Nile 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","nile","https://en.wikipedia.org/wiki/Nile"],
+ "@nl": "The length 1 is the length of Nile 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","man","#:man 1"],
+ "@nl": "A man 1 carried a bag 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","bag","#:bag 2"],
+ "@nl": "A man 1 carried a bag 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "A man 1 carried a bag 2."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk0_activity", "carry", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "A man 1 carried a bag 2."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk0_activity", "#:man 1", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "A man 1 carried a bag 2."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk0_activity", "#:bag 2", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "A man 1 carried a bag 2."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "A man 1 carried a bag 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","man","#:man 1"],
+ "@nl": "The man 1 waved."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The man 1 waved."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk1_activity", "wave", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The man 1 waved."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk1_activity", "#:man 1", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The man 1 waved."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The man 1 waved."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","cat","?:X"],
+            ["-isa","wolf","?:Y"],
+            ["has degree rel2", "afraid", "?:X", "?:Y", "none", "cat", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["$block", ["$","wolf",1], ["$not", ["has degree rel2", "afraid", "?:X", "?:Y", "none", "cat", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Cats are afraid of wolves."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","elephant","?:X"],
+            ["isa", "trunk", ["sk2","?:X"]],
+            ["isa", "tail", ["sk3","?:X"]]
+           ],
+ "@nl": "Elephants have trunks or tails."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","elephant","?:X"],
+            ["isa", "trunk", ["sk2","?:X"]],
+            ["has part", "?:X", ["sk3","?:X"], ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk3","?:X"], ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]]]
+           ],
+ "@nl": "Elephants have trunks or tails."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","elephant","?:X"],
+            ["isa", "tail", ["sk3","?:X"]],
+            ["has part", "?:X", ["sk2","?:X"], ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk2","?:X"], ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]]]
+           ],
+ "@nl": "Elephants have trunks or tails."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk2","?:X"], ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["has part", "?:X", ["sk3","?:X"], ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk3","?:X"], ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]]]
+           ],
+ "@nl": "Elephants have trunks or tails."},
+{"@name": "sent_S8",
+ "@logic": ["isa","car","#:car 1"],
+ "@nl": "The red car 1 is in the house 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","house","#:house 2"],
+ "@nl": "The red car 1 is in the house 2."},
+{"@name": "sent_S8",
+ "@logic": ["has property", "red", "#:car 1", ["$ctxt","present","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The red car 1 is in the house 2."},
+{"@name": "sent_S8",
+ "@logic": ["is rel2", "in", "#:car 1", "#:house 2", ["$ctxt","present","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The red car 1 is in the house 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","elephant","#:John 1"],
+ "@nl": "John 1 is an elephant."},
+{"@name": "sent_S10",
+ "@logic": ["isa","estonia","https://en.wikipedia.org/wiki/Estonia"],
+ "@nl": "Estonia 1 is not outside Europe 2."},
+{"@name": "sent_S10",
+ "@logic": ["isa","europe","https://en.wikipedia.org/wiki/Europe"],
+ "@nl": "Estonia 1 is not outside Europe 2."},
+{"@name": "sent_S10",
+ "@logic": ["-is rel2", "outside", "https://en.wikipedia.org/wiki/Estonia", "https://en.wikipedia.org/wiki/Europe", ["$ctxt","present","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Estonia 1 is not outside Europe 2."},
+{"@name": "sent_S11",
+ "@logic": [["-isa","trunk","?:X"],
+            ["-have", "#:John 1", "?:X", ["$ctxt","present","W0","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "John 1 has no trunk."},
+{"@name": "sent_S12",
+ "@logic": ["isa","mary","#:Mary 1"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S12",
+ "@logic": ["isa","uncle","#:uncle 2"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S12",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S12",
+ "@logic": ["has type", "sk4_activity", "arrive", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S12",
+ "@logic": ["has actor", "sk4_activity", "#:uncle 2", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S12",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S12",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S13",
+ "@logic": ["isa","uncle","#:uncle 2"],
+ "@nl": "Uncle 2 is the uncle of Mary 1."},
+{"@name": "sent_S13",
+ "@logic": ["isa","mary","#:Mary 1"],
+ "@nl": "Uncle 2 is the uncle of Mary 1."},
+{"@name": "sent_S14",
+ "@logic": ["isa","window","#:window 1"],
+ "@nl": "The window 1 was broken."},
+{"@name": "sent_S14",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "The window 1 was broken."},
+{"@name": "sent_S14",
+ "@logic": ["has type", "sk5_activity", "break", ["$ctxt","past","W0","?:Fv33","?:Fv34"]],
+ "@nl": "The window 1 was broken."},
+{"@name": "sent_S14",
+ "@logic": ["has target", "sk5_activity", "#:window 1", ["$ctxt","past","W0","?:Fv33","?:Fv34"]],
+ "@nl": "The window 1 was broken."},
+{"@name": "sent_S14",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W0","?:Fv33","?:Fv34"]],
+ "@nl": "The window 1 was broken."},
+{"@name": "sent_S15",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","tail","sk6_tail"]],
+ "@nl": "Does John 1 have a tail?"},
+{"@name": "sent_S15",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["have", "#:John 1", "sk6_tail", ["$ctxt","present","?:Fv40","?:Fv35","?:Fv36"]]
+           ],
+ "@nl": "Does John 1 have a tail?"},
+{"@name": "sent_S15",
+ "@sourcetype": "question",
+ "@logic": [["-isa","tail","?:X"],
+            ["-have", "#:John 1", "?:X", ["$ctxt","present","?:Fv43","?:Fv35","?:Fv36"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 1 have a tail?"},
+{"@name": "sent_S15",
+ "@question": ["$defq0"],
+ "@nl": "Does John 1 have a tail?"},
+{"@name": "sent_S15",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "#:John 1", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "#:John 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "#:John 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Does John 1 have a tail?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "break", ["$ctxt","?:Fv44","?:Fv45","?:Fv47","?:Fv48"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv44","?:Fv45","?:Fv47","?:Fv48"]],
+            ["-next","?:Fv45","?:Fv46"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "break", "?:X", ["$ctxt","?:Fv49","?:Fv50","?:Fv52","?:Fv53"]],
+            ["-next","?:Fv50","?:Fv51"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","Muggles","$some_Muggles"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","Muggles","$some_not_Muggles"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","cat","$some_cat"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","cat","$some_not_cat"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","wolf","$some_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","wolf","$some_not_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","tail","$some_tail"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","tail","$some_not_tail"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","in","?:X","?:Fv54"],
+            ["-has property","outside","?:X","?:Fv54"],
+            ["$block", 0, ["has property","outside","?:X","?:Fv54"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","in","?:X","?:Fv55"],
+            ["-has property","outside","?:X","?:Fv55"],
+            ["$block", 0, ["has property","in","?:X","?:Fv55"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","house","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","house","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv56","?:Fv57","?:Fv58"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv56","?:Fv57","?:Fv58"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv56","?:Fv57","?:Fv58"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv59","?:Fv60","?:Fv61"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv59","?:Fv60","?:Fv61"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv59","?:Fv60","?:Fv61"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 28798,
+      "cached_input_tokens": 28672,
+      "output_tokens": 6676,
+      "raw": {
+        "prompt_tokens": 28798,
+        "completion_tokens": 6676,
+        "total_tokens": 35474,
+        "prompt_tokens_details": {"cached_tokens": 28672},
+        "completion_tokens_details": {"reasoning_tokens": 4781},
+        "prompt_cache_hit_tokens": 28672,
+        "prompt_cache_miss_tokens": 126
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 35655,
+      "cached_input_tokens": 33920,
+      "output_tokens": 6552,
+      "raw": {
+        "prompt_tokens": 35655,
+        "completion_tokens": 6552,
+        "total_tokens": 42207,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 5297},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 1735
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T19:38:33Z"
+}

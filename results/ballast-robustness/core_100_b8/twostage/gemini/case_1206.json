@@ -1,0 +1,1031 @@
+{
+  "test_name": "core_100_b8",
+  "case_id": 1206,
+  "input_text": "Elephants have long trunks and short tails. The letter was written. Birds fly and eat. The street is in Tallinn. John stopped smoking. Mike is a boxer. The brother of the friend of Eve arrived. The animal lifted the stone. The room was cleaned. Does John smoke now?",
+  "expected_answer": false,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Elephants have long trunks and short tails.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Elephants have long trunks.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"}
+          ],
+          "adjectives": [["long","none","trunk"]],
+          "confidence": 0.99
+        },
+        {
+          "unit_id": "S2",
+          "text": "Elephants have short tails.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "tails", "type": "generic", "scope": "dependent"}
+          ],
+          "adjectives": [["short","none","tail"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "The letter was written.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The letter 8 was written.",
+          "type": "situation",
+          "entities": [{"id": "letter 8", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "write", "mode": "event", "roles": {"target": "letter 8"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Birds fly and eat.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Birds can fly.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}],
+          "confidence": 0.95
+        },
+        {
+          "unit_id": "S5",
+          "text": "Birds eat.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "eat", "mode": "habitual"}],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "The street is in Tallinn.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The street 9 is in Tallinn 4.",
+          "type": "real",
+          "entities": [{"id": "street 9", "type": "concrete", "category": "place"},
+            {
+              "id": "Tallinn 4",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John stopped smoking.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "John 1 stopped smoking.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "stop",
+              "mode": "event",
+              "roles": {"target": {"root": "smoke", "mode": "habitual", "roles": {"actor": "John 1"}}}
+            }
+          ],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        },
+        {
+          "unit_id": "S8",
+          "text": "John 1 smoked.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 1"}}],
+          "pre_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S9",
+          "text": "John 1 does not smoke.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 1"}}],
+          "pre_state": "W2",
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a boxer.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Mike 2 is a boxer.",
+          "type": "real",
+          "entities": [{"id": "Mike 2", "type": "concrete", "category": "person"},
+            {"id": "boxer", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The brother of the friend of Eve arrived.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "The brother 5 arrived.",
+          "type": "situation",
+          "entities": [{"id": "brother 5", "type": "concrete", "text": "brother", "category": "person"}],
+          "actions": [{"root": "arrive", "mode": "event"}],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        },
+        {
+          "unit_id": "S12",
+          "text": "The brother 5 is the brother of the friend 6.",
+          "type": "situation",
+          "entities": [{"id": "brother 5", "type": "concrete", "text": "brother", "category": "person"},
+            {"id": "friend 6", "type": "concrete", "text": "friend", "category": "person"}
+          ],
+          "definites": [["brother of","brother 5","friend 6"]],
+          "pre_state": "W2",
+          "time": "past"
+        },
+        {
+          "unit_id": "S13",
+          "text": "The friend 6 is the friend of Eve 3.",
+          "type": "situation",
+          "entities": [{"id": "friend 6", "type": "concrete", "text": "friend", "category": "person"},
+            {"id": "Eve 3", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["friend of","friend 6","Eve 3"]],
+          "pre_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The animal lifted the stone.",
+      "units": [{
+          "unit_id": "S14",
+          "text": "The animal 7 lifted the stone 11.",
+          "type": "situation",
+          "entities": [{"id": "animal 7", "type": "concrete", "category": "animal"},
+            {"id": "stone 11", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "lift", "mode": "event", "roles": {"target": "stone 11"}}],
+          "pre_state": "W3",
+          "next_state": "W4",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The room was cleaned.",
+      "units": [{
+          "unit_id": "S15",
+          "text": "The room 10 was cleaned.",
+          "type": "situation",
+          "entities": [{"id": "room 10", "type": "concrete", "category": "place"}],
+          "actions": [{"root": "clean", "mode": "event", "roles": {"target": "room 10"}}],
+          "pre_state": "W4",
+          "next_state": "W5",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Does John smoke now?",
+      "units": [{
+          "unit_id": "S16",
+          "text": "Does John 1 smoke now?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual", "roles": {"actor": "John 1"}}],
+          "pre_state": "W5",
+          "time": "present"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally",
+                ["exists","Y",
+                  ["and",
+                    ["isa","trunk","Y"],
+                    ["has part","X","Y"],
+                    ["has degree property","long","Y","none","trunk"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally",
+                ["exists","Y",
+                  ["and",
+                    ["isa","tail","Y"],
+                    ["has part","X","Y"],
+                    ["has degree property","short","Y","none","tail"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","letter","letter 8"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","write"],
+                ["has target","E","letter 8"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","fly"],
+                    ["has actor","E","X"],
+                    ["capability","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S4",0.95]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","eat"],
+                    ["has actor","E","X"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S5",0.95]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","street","street 9"],
+          ["isa","city","https://en.wikipedia.org/wiki/Tallinn"],
+          ["is rel2","in","street 9","https://en.wikipedia.org/wiki/Tallinn"]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","John 1"],
+            ["exists","E1",
+              ["and",
+                ["isa","activity","E1"],
+                ["has type","E1","stop"],
+                ["has actor","E1","John 1"],
+                ["has time","E1","past","in"],
+                ["exists","E2",
+                  ["and",
+                    ["has content","E1","E2"],
+                    ["isa","activity","E2"],
+                    ["has type","E2","smoke"],
+                    ["has actor","E2","John 1"],
+                    ["typical","E2"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","John 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","smoke"],
+                ["has actor","E","John 1"],
+                ["has time","E","past","in"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W1","past"]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","John 1"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","smoke"],
+                  ["has actor","E","John 1"],
+                  ["typical","E"]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W2","present"]
+      ]
+    ],
+    ["@id", "S10", ["holds", "W0", ["and", ["isa","person","Mike 2"], ["isa","boxer","Mike 2"]]]],
+    ["@id","S11",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","brother","brother 5"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","arrive"],
+                ["has actor","E","brother 5"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S12",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","brother","brother 5"],
+            ["isa","friend","friend 6"],
+            ["is rel2","brother of","brother 5","friend 6"]
+          ]
+        ],
+        ["@definite","S12","W2","brother of","friend 6","brother 5"],
+        ["state time","W2","past"]
+      ]
+    ],
+    ["@id","S13",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","friend","friend 6"],
+            ["isa","person","Eve 3"],
+            ["is rel2","friend of","friend 6","Eve 3"]
+          ]
+        ],
+        ["@definite","S13","W2","friend of","Eve 3","friend 6"],
+        ["state time","W2","past"]
+      ]
+    ],
+    ["@id","S14",
+      ["and",
+        ["holds","W3",
+          ["and",
+            ["isa","animal","animal 7"],
+            ["isa","stone","stone 11"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","lift"],
+                ["has actor","E","animal 7"],
+                ["has target","E","stone 11"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W3","W4"]
+      ]
+    ],
+    ["@id","S15",
+      ["and",
+        ["holds","W4",
+          ["and",
+            ["isa","room","room 10"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","clean"],
+                ["has target","E","room 10"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W4","W5"]
+      ]
+    ],
+    ["@id","S16",
+      ["question",
+        ["normally",
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","smoke"],
+              ["has actor","E","John 1"],
+              ["has time","E","present","in"],
+              ["typical","E"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S6",
+ "@logic": ["isa","place","#:Tallinn 4"],
+ "@nl": "The street 9 is in Tallinn 4."},
+{"@name": "entity_S11",
+ "@logic": ["isa","brother","#:brother 5"],
+ "@nl": "The brother 5 arrived."},
+{"@name": "entity_S12",
+ "@logic": ["isa","friend","#:friend 6"],
+ "@nl": "The brother 5 is the brother of the friend 6."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk0","?:X"]]],
+ "@nl": "Elephants have long trunks."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "Elephants have long trunks."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has degree property", "long", ["sk0","?:X"], "none", "trunk", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","elephant",1], ["$not", ["has degree property", "long", ["sk0","?:X"], "none", "trunk", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have long trunks."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "tail", ["sk1","?:X"]]],
+ "@nl": "Elephants have short tails."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Elephants have short tails."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-has degree property", "long", ["sk1","?:X"], "none", "tail", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$block", ["$","elephant",1], ["$not", ["has degree property", "short", ["sk1","?:X"], "none", "tail", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have short tails."},
+{"@name": "sent_S3",
+ "@logic": ["isa","letter","#:letter 8"],
+ "@nl": "The letter 8 was written."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The letter 8 was written."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "write", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The letter 8 was written."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk2_activity", "#:letter 8", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The letter 8 was written."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The letter 8 was written."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The letter 8 was written."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk3","?:X"]]],
+ "@nl": "Birds can fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk3","?:X"], "fly", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Birds can fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk3","?:X"], "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Birds can fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"],
+            ["capability", ["sk3","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk3","?:X"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Birds can fly."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk4","?:X"]]],
+ "@nl": "Birds eat."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk4","?:X"], "eat", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Birds eat."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk4","?:X"], "?:X", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]]
+           ],
+ "@nl": "Birds eat."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","bird","?:X"],
+            ["typical", ["sk4","?:X"], ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]],
+            ["$block", ["$","bird",1], ["$not", ["typical", ["sk4","?:X"], ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Birds eat."},
+{"@name": "sent_S6",
+ "@logic": ["isa","street","#:street 9"],
+ "@nl": "The street 9 is in Tallinn 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","city","https://en.wikipedia.org/wiki/Tallinn"],
+ "@nl": "The street 9 is in Tallinn 4."},
+{"@name": "sent_S6",
+ "@logic": ["is rel2", "in", "#:street 9", "https://en.wikipedia.org/wiki/Tallinn", ["$ctxt","present","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The street 9 is in Tallinn 4."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk5_activity", "stop", ["$ctxt","past","W1","?:Fv21","?:Fv22"]],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk5_activity", "#:John 1", ["$ctxt","past","W1","?:Fv21","?:Fv22"]],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W1","?:Fv21","?:Fv22"]],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S7",
+ "@logic": ["has content","sk5_activity","sk6_activity"],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk6_activity"],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk6_activity", "smoke", ["$ctxt","past","W1","?:Fv21","?:Fv22"]],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk6_activity", "#:John 1", ["$ctxt","past","W1","?:Fv21","?:Fv22"]],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S7",
+ "@logic": ["typical", "sk6_activity", ["$ctxt","past","W1","?:Fv21","?:Fv22"]],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S7",
+ "@logic": ["actuality","sk5_activity"],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S7",
+ "@logic": ["next","W1","W2"],
+ "@nl": "John 1 stopped smoking."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 smoked."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk7_activity"],
+ "@nl": "John 1 smoked."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk7_activity", "smoke", ["$ctxt","past","W1","?:Fv23","?:Fv24"]],
+ "@nl": "John 1 smoked."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk7_activity", "#:John 1", ["$ctxt","past","W1","?:Fv23","?:Fv24"]],
+ "@nl": "John 1 smoked."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk7_activity", "past", "in", ["$ctxt","past","W1","?:Fv23","?:Fv24"]],
+ "@nl": "John 1 smoked."},
+{"@name": "sent_S8",
+ "@logic": ["typical", "sk7_activity", ["$ctxt","past","W1","?:Fv23","?:Fv24"]],
+ "@nl": "John 1 smoked."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 does not smoke."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "smoke", ["$ctxt","present","W2","?:Fv25","?:Fv26"]],
+            ["-has actor", "?:E", "#:John 1", ["$ctxt","present","W2","?:Fv25","?:Fv26"]],
+            ["-typical", "?:E", ["$ctxt","present","W2","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "John 1 does not smoke."},
+{"@name": "sent_S10",
+ "@logic": ["isa","person","#:Mike 2"],
+ "@nl": "Mike 2 is a boxer."},
+{"@name": "sent_S10",
+ "@logic": ["isa","boxer","#:Mike 2"],
+ "@nl": "Mike 2 is a boxer."},
+{"@name": "sent_S11",
+ "@logic": ["isa", "brother", ["$theof1", "brother", ["$theof1", "friend", "#:Eve 3", ["$ctxt","past","W2","?:Fv33","?:Fv34"]], ["$ctxt","past","W2","?:Fv31","?:Fv32"]]],
+ "@nl": "The brother 5 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk8_activity"],
+ "@nl": "The brother 5 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk8_activity", "arrive", ["$ctxt","past","W2","?:Fv29","?:Fv30"]],
+ "@nl": "The brother 5 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk8_activity", ["$theof1", "brother", ["$theof1", "friend", "#:Eve 3", ["$ctxt","past","W2","?:Fv33","?:Fv34"]], ["$ctxt","past","W2","?:Fv31","?:Fv32"]], ["$ctxt","past","W2","?:Fv29","?:Fv30"]],
+ "@nl": "The brother 5 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has time", "sk8_activity", "past", "in", ["$ctxt","past","W2","?:Fv29","?:Fv30"]],
+ "@nl": "The brother 5 arrived."},
+{"@name": "sent_S11",
+ "@logic": ["next","W2","W3"],
+ "@nl": "The brother 5 arrived."},
+{"@name": "sent_S12",
+ "@logic": ["isa", "brother", ["$theof1", "brother", ["$theof1", "friend", "#:Eve 3", ["$ctxt","past","W2","?:Fv33","?:Fv34"]], ["$ctxt","past","W2","?:Fv31","?:Fv32"]]],
+ "@nl": "The brother 5 is the brother of the friend 6."},
+{"@name": "sent_S12",
+ "@logic": ["isa", "friend", ["$theof1", "friend", "#:Eve 3", ["$ctxt","past","W2","?:Fv33","?:Fv34"]]],
+ "@nl": "The brother 5 is the brother of the friend 6."},
+{"@name": "sent_S13",
+ "@logic": ["isa", "friend", ["$theof1", "friend", "#:Eve 3", ["$ctxt","past","W2","?:Fv33","?:Fv34"]]],
+ "@nl": "The friend 6 is the friend of Eve 3."},
+{"@name": "sent_S13",
+ "@logic": ["isa","person","#:Eve 3"],
+ "@nl": "The friend 6 is the friend of Eve 3."},
+{"@name": "sent_S14",
+ "@logic": ["isa","animal","#:animal 7"],
+ "@nl": "The animal 7 lifted the stone 11."},
+{"@name": "sent_S14",
+ "@logic": ["isa","stone","#:stone 11"],
+ "@nl": "The animal 7 lifted the stone 11."},
+{"@name": "sent_S14",
+ "@logic": ["isa","activity","sk9_activity"],
+ "@nl": "The animal 7 lifted the stone 11."},
+{"@name": "sent_S14",
+ "@logic": ["has type", "sk9_activity", "lift", ["$ctxt","past","W3","?:Fv35","?:Fv36"]],
+ "@nl": "The animal 7 lifted the stone 11."},
+{"@name": "sent_S14",
+ "@logic": ["has actor", "sk9_activity", "#:animal 7", ["$ctxt","past","W3","?:Fv35","?:Fv36"]],
+ "@nl": "The animal 7 lifted the stone 11."},
+{"@name": "sent_S14",
+ "@logic": ["has target", "sk9_activity", "#:stone 11", ["$ctxt","past","W3","?:Fv35","?:Fv36"]],
+ "@nl": "The animal 7 lifted the stone 11."},
+{"@name": "sent_S14",
+ "@logic": ["has time", "sk9_activity", "past", "in", ["$ctxt","past","W3","?:Fv35","?:Fv36"]],
+ "@nl": "The animal 7 lifted the stone 11."},
+{"@name": "sent_S14",
+ "@logic": ["next","W3","W4"],
+ "@nl": "The animal 7 lifted the stone 11."},
+{"@name": "sent_S15",
+ "@logic": ["isa","room","#:room 10"],
+ "@nl": "The room 10 was cleaned."},
+{"@name": "sent_S15",
+ "@logic": ["isa","activity","sk10_activity"],
+ "@nl": "The room 10 was cleaned."},
+{"@name": "sent_S15",
+ "@logic": ["has type", "sk10_activity", "clean", ["$ctxt","past","W4","?:Fv37","?:Fv38"]],
+ "@nl": "The room 10 was cleaned."},
+{"@name": "sent_S15",
+ "@logic": ["has target", "sk10_activity", "#:room 10", ["$ctxt","past","W4","?:Fv37","?:Fv38"]],
+ "@nl": "The room 10 was cleaned."},
+{"@name": "sent_S15",
+ "@logic": ["has time", "sk10_activity", "past", "in", ["$ctxt","past","W4","?:Fv37","?:Fv38"]],
+ "@nl": "The room 10 was cleaned."},
+{"@name": "sent_S15",
+ "@logic": ["next","W4","W5"],
+ "@nl": "The room 10 was cleaned."},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk11_activity"]],
+ "@nl": "Does John 1 smoke now?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk11_activity", "smoke", ["$ctxt","present","?:Fv41","?:Fv39","?:Fv40"]]
+           ],
+ "@nl": "Does John 1 smoke now?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk11_activity", "#:John 1", ["$ctxt","present","?:Fv41","?:Fv39","?:Fv40"]]
+           ],
+ "@nl": "Does John 1 smoke now?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk11_activity", "present", "in", ["$ctxt","present","?:Fv41","?:Fv39","?:Fv40"]]
+           ],
+ "@nl": "Does John 1 smoke now?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["typical", "sk11_activity", ["$ctxt","present","?:Fv41","?:Fv39","?:Fv40"]]
+           ],
+ "@nl": "Does John 1 smoke now?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "smoke", ["$ctxt","present","?:Fv41","?:Fv39","?:Fv40"]],
+            ["-has actor", "?:E", "#:John 1", ["$ctxt","present","?:Fv41","?:Fv39","?:Fv40"]],
+            ["-typical", "?:E", ["$ctxt","present","?:Fv41","?:Fv39","?:Fv40"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 1 smoke now?"},
+{"@name": "sent_S16",
+ "@question": ["$defq0"],
+ "@nl": "Does John 1 smoke now?"},
+{"@name": "frm_theof",
+ "@logic": ["have", ["$theof1", "friend", "#:Eve 3", ["$ctxt","past","W2","?:Fv33","?:Fv34"]], ["$theof1", "brother", ["$theof1", "friend", "#:Eve 3", ["$ctxt","past","W2","?:Fv33","?:Fv34"]], ["$ctxt","past","W2","?:Fv31","?:Fv32"]], ["$ctxt","past","W2","?:Fv31","?:Fv32"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:Eve 3", ["$theof1", "friend", "#:Eve 3", ["$ctxt","past","W2","?:Fv33","?:Fv34"]], ["$ctxt","past","W2","?:Fv33","?:Fv34"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "brother of", ["$theof1","brother","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "brother", ["$theof1","brother","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "friend of", ["$theof1","friend","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "friend", ["$theof1","friend","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","tail","$some_tail"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","tail","$some_not_tail"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "long", "$some_long_trunk", "none", "trunk", ["$ctxt","?:Fv103","?:Fv100","?:Fv101","?:Fv102"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_long_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "long", "$some_not_long_trunk", "none", "trunk", ["$ctxt","?:Fv111","?:Fv108","?:Fv109","?:Fv110"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "long", "$some_short_tail", "none", "tail", ["$ctxt","?:Fv115","?:Fv112","?:Fv113","?:Fv114"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","tail","$some_short_tail"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "long", "$some_not_short_tail", "none", "tail", ["$ctxt","?:Fv123","?:Fv120","?:Fv121","?:Fv122"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","friend","?:X"], ["isa","person","?:X"]],
+ "@confidence": 0.75,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","person","?:X"], ["isa","friend","?:X"]],
+ "@confidence": 0.75,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","long","?:X","none","?:Fv124","?:Fv45"],
+            ["-has degree property","high","?:X","none","?:Fv125","?:Fv45"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv126","?:Fv46"],
+            ["-has degree property","long","?:X","none","?:Fv127","?:Fv46"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv47"], ["has type","?:E","go","?:Fv47"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "none", "?:Fv128", ["$ctxt","past","?:Fv48","?:Fv49","?:Fv50"]],
+            ["has degree property", "long", "?:X", "none", "?:Fv129", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "none", "?:Fv130", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv51","?:Fv52","?:Fv53"]],
+            ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "long", "?:X", "none", "?:Fv131", ["$ctxt","past","?:Fv54","?:Fv55","?:Fv56"]],
+            ["-has degree property", "long", "?:X", "none", "?:Fv132", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]],
+            ["$block", 0, ["$not", ["has degree property", "short", "?:X", "none", "?:Fv133", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv57","?:Fv58","?:Fv59"]],
+            ["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv57","?:Fv58","?:Fv59"]],
+            ["$block", 0, ["$not", ["has degree property", "short", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv57","?:Fv58","?:Fv59"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W3","W4"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W4","W5"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S9","assumption",1], [["-has type", "?:X", "smoke", ["$ctxt","present","W2","?:Y","?:Z"]], ["-has actor", "?:X", "#:John 1", ["$ctxt","present","W2","?:Y","?:Z"]], ["-typical", "?:X", ["$ctxt","present","W2","?:Y","?:Z"]], ["-isa","activity","?:X"]]],
+          [2, ["in","sent_S16","assumption",1], [["-$defq0"], ["has type", "sk11_activity", "smoke", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has type", "sk11_activity", "smoke", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["in","sent_S16","assumption",1], [["-$defq0"], ["isa","activity","sk11_activity"]]],
+          [6, ["mp",5,3,"fromga",1], [["isa","activity","sk11_activity"]]],
+          [7, ["mp",1,4,6,"fromga",1], [["-has actor", "sk11_activity", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]], ["-typical", "sk11_activity", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [8, ["in","sent_S16","assumption",1], [["-$defq0"], ["has actor", "sk11_activity", "#:John 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [9, ["mp",8,3,"fromga",1], [["has actor", "sk11_activity", "#:John 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [10, ["mp",7,9,"fromga",1], [["-typical", "sk11_activity", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [11, ["in","sent_S16","assumption",1], [["-$defq0"], ["typical", "sk11_activity", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [12, ["mp",11,3,"fromga",1], [["typical", "sk11_activity", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [13, ["mp",10,12,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John stopped smoking.",
+"  (2) Does John smoke now?",
+"Proof steps (by contradiction):",
+"  (1) If X is a smoke event and John performs X and X is an activity then X is not typical  [sentence 1]",
+"  (2) If answer holds then the event act8 is a smoke event  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) The event act8 is a smoke event  [from steps 2, 3]",
+"  (5) If answer holds then the event act8 is an activity  [sentence 2]",
+"  (6) The event act8 is an activity  [from steps 5, 3]",
+"  (7) If John performs the event act8 then the act8 is not typical  [from steps 1, 4, 6]",
+"  (8) If answer holds then John performs the event act8  [sentence 2]",
+"  (9) John performs the event act8  [from steps 8, 3]",
+"  (10) The act8 is not typical  [from steps 7, 9]",
+"  (11) If answer holds then the event act8 is typical  [sentence 2]",
+"  (12) The event act8 is typical  [from steps 11, 3]",
+"  (13) Contradiction  [from steps 10, 12]"
+],
+  "llm_usage": [{
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 30769,
+      "cached_input_tokens": 30692,
+      "output_tokens": 7312,
+      "raw": {
+        "promptTokenCount": 30769,
+        "candidatesTokenCount": 2735,
+        "totalTokenCount": 38081,
+        "cachedContentTokenCount": 30692,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 30769}],
+        "cacheTokensDetails": [{"modality": "TEXT", "tokenCount": 30692}],
+        "thoughtsTokenCount": 4577,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 38822,
+      "cached_input_tokens": 0,
+      "output_tokens": 5944,
+      "raw": {
+        "promptTokenCount": 38822,
+        "candidatesTokenCount": 1979,
+        "totalTokenCount": 44766,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 38822}],
+        "thoughtsTokenCount": 3965,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T21:43:08Z"
+}

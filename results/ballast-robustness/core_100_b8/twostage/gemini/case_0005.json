@@ -1,0 +1,808 @@
+{
+  "test_name": "core_100_b8",
+  "case_id": 5,
+  "input_text": "The street is in Tallinn. The cat sat on the mat and purred. Elephants are not birds. Sparrows are not animals. Mary was in a room. The children playing in the garden laughed. John is an elephant. If X1 is a grandfather of Y1, Y1 is a grandchild of X1. The man standing by the door coughed. The red straw is 10 meters long. John is a bird?",
+  "expected_answer": false,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "The street is in Tallinn.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The street 2 is in Tallinn 1.",
+          "type": "real",
+          "entities": [{"id": "street 2", "type": "concrete", "category": "place"},
+            {
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The cat sat on the mat and purred.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The cat 3 sat on the mat 4.",
+          "type": "situation",
+          "entities": [{"id": "cat 3", "type": "concrete", "category": "animal"},
+            {"id": "mat 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "sit", "mode": "event", "roles": {"location": "mat 4", "location_prep": "on"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "The cat 3 purred.",
+          "type": "situation",
+          "entities": [{"id": "cat 3", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "purr", "mode": "event"}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants are not birds.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Elephants are not birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Sparrows are not animals.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Sparrows are not animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "sparrows", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mary was in a room.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Mary 5 was in a room 6.",
+          "type": "situation",
+          "entities": [{"id": "Mary 5", "type": "concrete", "category": "person"},
+            {"id": "room 6", "type": "concrete", "category": "place"}
+          ],
+          "pre_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The children playing in the garden laughed.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "The children 7 were playing in the garden 8.",
+          "type": "situation",
+          "entities": [{"id": "children 7", "type": "concrete", "category": "person"},
+            {"id": "garden 8", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "play",
+              "mode": "event",
+              "roles": {"location": "garden 8", "location_prep": "in"}
+            }
+          ],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        },
+        {
+          "unit_id": "S8",
+          "text": "The children 7 laughed.",
+          "type": "situation",
+          "entities": [{"id": "children 7", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "laugh", "mode": "event"}],
+          "pre_state": "W3",
+          "next_state": "W4",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is an elephant.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "John 9 is an elephant.",
+          "type": "situation",
+          "entities": [{"id": "John 9", "type": "concrete", "category": "animal"},
+            {"id": "elephant", "type": "generic", "category": "animal"}
+          ],
+          "pre_state": "W4"
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a grandfather of Y1, Y1 is a grandchild of X1.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "If X1 is a grandfather of Y1, Y1 is a grandchild of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"},
+            {"id": "grandfather", "type": "generic", "text": "grandfather", "category": "person"},
+            {"id": "Y1", "type": "generic"},
+            {"id": "grandchild", "type": "generic", "text": "grandchild", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The man standing by the door coughed.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "The man 10 was standing by the door 11.",
+          "type": "situation",
+          "entities": [{"id": "man 10", "type": "concrete", "category": "person"},
+            {"id": "door 11", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "stand",
+              "mode": "event",
+              "roles": {"location": "door 11", "location_prep": "by"}
+            }
+          ],
+          "pre_state": "W4",
+          "next_state": "W5",
+          "time": "past"
+        },
+        {
+          "unit_id": "S12",
+          "text": "The man 10 coughed.",
+          "type": "situation",
+          "entities": [{"id": "man 10", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "cough", "mode": "event"}],
+          "pre_state": "W5",
+          "next_state": "W6",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The red straw is 10 meters long.",
+      "units": [{
+          "unit_id": "S13",
+          "text": "The straw 12 is red.",
+          "type": "real",
+          "entities": [{"id": "straw 12", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["red","none","none"]],
+          "pre_state": "W6"
+        },
+        {
+          "unit_id": "S14",
+          "text": "The length 13 of the straw 12 is 10 meters.",
+          "type": "real",
+          "entities": [{"id": "length 13", "type": "concrete", "text": "length"},
+            {"id": "straw 12", "type": "concrete", "category": "artifact"},
+            {"id": "10 meters", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 13","straw 12"]],
+          "pre_state": "W6"
+        },
+        {
+          "unit_id": "S15",
+          "text": "The length 13 is the length of the straw 12.",
+          "type": "real",
+          "entities": [{"id": "length 13", "type": "concrete", "text": "length"},
+            {"id": "straw 12", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["length of","length 13","straw 12"]],
+          "pre_state": "W6"
+        }
+      ]
+    },
+    {
+      "raw": "John is a bird?",
+      "units": [{
+          "unit_id": "S16",
+          "text": "Is John 9 a bird?",
+          "type": "query",
+          "entities": [{"id": "John 9", "type": "concrete", "category": "animal"},
+            {"id": "bird", "type": "generic", "category": "animal"}
+          ],
+          "pre_state": "W6"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","street","street 2"],
+          ["isa","place","https://en.wikipedia.org/wiki/Tallinn"],
+          ["is rel2","in","street 2","https://en.wikipedia.org/wiki/Tallinn"]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","cat","cat 3"],
+            ["isa","mat","mat 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","sit"],
+                ["has actor","E","cat 3"],
+                ["has location","E","mat 4","on"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","cat","cat 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","purr"],
+                ["has actor","E","cat 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["forall", "X", ["implies", ["isa","elephant","X"], ["not", ["isa","bird","X"]]]]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall", "X", ["implies", ["isa","sparrow","X"], ["not", ["isa","animal","X"]]]]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","Mary 5"],
+            ["isa","room","room 6"],
+            ["is rel2","in","Mary 5","room 6"]
+          ]
+        ],
+        ["state time","W2","past"]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","children 7"],
+            ["isa","garden","garden 8"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","play"],
+                ["has actor","E","children 7"],
+                ["has location","E","garden 8","in"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W3",
+          ["and",
+            ["isa","person","children 7"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","laugh"],
+                ["has actor","E","children 7"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W3","W4"]
+      ]
+    ],
+    ["@id", "S9", ["holds", "W4", ["isa","elephant","John 9"]]],
+    ["@id","S10",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies",
+              ["is rel2","grandfather of","X1","Y1"],
+              ["is rel2","grandchild of","Y1","X1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W4",
+          ["and",
+            ["isa","man","man 10"],
+            ["isa","door","door 11"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","stand"],
+                ["has actor","E","man 10"],
+                ["has location","E","door 11","by"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W4","W5"]
+      ]
+    ],
+    ["@id","S12",
+      ["and",
+        ["holds","W5",
+          ["and",
+            ["isa","man","man 10"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","cough"],
+                ["has actor","E","man 10"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W5","W6"]
+      ]
+    ],
+    ["@id","S13",
+      ["holds","W6",
+        ["and", ["isa","straw","straw 12"], ["has degree property","red","straw 12","none","none"]]
+      ]
+    ],
+    ["@id","S14",
+      ["and",
+        ["holds","W6",
+          ["and",
+            ["isa","length","length 13"],
+            ["isa","straw","straw 12"],
+            ["=", ["$measure_of","length","straw 12","W6"], ["$measure",10,"meter"]]
+          ]
+        ],
+        ["@definite","S14","W6","length of","straw 12","length 13"]
+      ]
+    ],
+    ["@id","S15",
+      ["and",
+        ["holds", "W6", ["and", ["isa","length","length 13"], ["isa","straw","straw 12"]]],
+        ["@definite","S15","W6","length of","straw 12","length 13"]
+      ]
+    ],
+    ["@id", "S16", ["question", ["isa","bird","John 9"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "The street 2 is in Tallinn 1."},
+{"@name": "entity_S7",
+ "@logic": ["isa","children","#:children 7"],
+ "@nl": "The children 7 were playing in the garden 8."},
+{"@name": "entity_S14",
+ "@logic": ["isa","measure","10 meters"],
+ "@nl": "The length 13 of the straw 12 is 10 meters."},
+{"@name": "sent_S1",
+ "@logic": ["isa","street","#:street 2"],
+ "@nl": "The street 2 is in Tallinn 1."},
+{"@name": "sent_S1",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/Tallinn"],
+ "@nl": "The street 2 is in Tallinn 1."},
+{"@name": "sent_S1",
+ "@logic": ["is rel2", "in", "#:street 2", "https://en.wikipedia.org/wiki/Tallinn", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The street 2 is in Tallinn 1."},
+{"@name": "sent_S2",
+ "@logic": ["isa","cat","#:cat 3"],
+ "@nl": "The cat 3 sat on the mat 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","mat","#:mat 4"],
+ "@nl": "The cat 3 sat on the mat 4."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The cat 3 sat on the mat 4."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "sit", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The cat 3 sat on the mat 4."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:cat 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The cat 3 sat on the mat 4."},
+{"@name": "sent_S2",
+ "@logic": ["has location", "sk0_activity", "#:mat 4", "on", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The cat 3 sat on the mat 4."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The cat 3 sat on the mat 4."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The cat 3 sat on the mat 4."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The cat 3 sat on the mat 4."},
+{"@name": "sent_S3",
+ "@logic": ["isa","cat","#:cat 3"],
+ "@nl": "The cat 3 purred."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The cat 3 purred."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "purr", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The cat 3 purred."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:cat 3", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The cat 3 purred."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The cat 3 purred."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The cat 3 purred."},
+{"@name": "sent_S3",
+ "@logic": ["next","W1","W2"],
+ "@nl": "The cat 3 purred."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Elephants are not birds."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","sparrow","?:X"], ["-isa","animal","?:X"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Mary 5"],
+ "@nl": "Mary 5 was in a room 6."},
+{"@name": "sent_S6",
+ "@logic": ["isa","room","#:room 6"],
+ "@nl": "Mary 5 was in a room 6."},
+{"@name": "sent_S6",
+ "@logic": ["is rel2", "in", "#:Mary 5", "#:room 6", ["$ctxt","past","W2","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 5 was in a room 6."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:children 7"],
+ "@nl": "The children 7 were playing in the garden 8."},
+{"@name": "sent_S7",
+ "@logic": ["isa","garden","#:garden 8"],
+ "@nl": "The children 7 were playing in the garden 8."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The children 7 were playing in the garden 8."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk2_activity", "play", ["$ctxt","past","W2","?:Fv17","?:Fv18"]],
+ "@nl": "The children 7 were playing in the garden 8."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk2_activity", "#:children 7", ["$ctxt","past","W2","?:Fv17","?:Fv18"]],
+ "@nl": "The children 7 were playing in the garden 8."},
+{"@name": "sent_S7",
+ "@logic": ["has location", "sk2_activity", "#:garden 8", "in", ["$ctxt","past","W2","?:Fv17","?:Fv18"]],
+ "@nl": "The children 7 were playing in the garden 8."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W2","?:Fv17","?:Fv18"]],
+ "@nl": "The children 7 were playing in the garden 8."},
+{"@name": "sent_S7",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The children 7 were playing in the garden 8."},
+{"@name": "sent_S7",
+ "@logic": ["next","W2","W3"],
+ "@nl": "The children 7 were playing in the garden 8."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:children 7"],
+ "@nl": "The children 7 laughed."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The children 7 laughed."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk3_activity", "laugh", ["$ctxt","past","W3","?:Fv19","?:Fv20"]],
+ "@nl": "The children 7 laughed."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk3_activity", "#:children 7", ["$ctxt","past","W3","?:Fv19","?:Fv20"]],
+ "@nl": "The children 7 laughed."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W3","?:Fv19","?:Fv20"]],
+ "@nl": "The children 7 laughed."},
+{"@name": "sent_S8",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "The children 7 laughed."},
+{"@name": "sent_S8",
+ "@logic": ["next","W3","W4"],
+ "@nl": "The children 7 laughed."},
+{"@name": "sent_S9",
+ "@logic": ["isa","elephant","#:John 9"],
+ "@nl": "John 9 is an elephant."},
+{"@name": "sent_S10",
+ "@logic": [["-is rel2", "grandfather of", "?:X1", "?:Y1", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["is rel2", "grandchild of", "?:Y1", "?:X1", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "If X1 is a grandfather of Y1, Y1 is a grandchild of X1."},
+{"@name": "sent_S11",
+ "@logic": ["isa","man","#:man 10"],
+ "@nl": "The man 10 was standing by the door 11."},
+{"@name": "sent_S11",
+ "@logic": ["isa","door","#:door 11"],
+ "@nl": "The man 10 was standing by the door 11."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "The man 10 was standing by the door 11."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk4_activity", "stand", ["$ctxt","past","W4","?:Fv27","?:Fv28"]],
+ "@nl": "The man 10 was standing by the door 11."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk4_activity", "#:man 10", ["$ctxt","past","W4","?:Fv27","?:Fv28"]],
+ "@nl": "The man 10 was standing by the door 11."},
+{"@name": "sent_S11",
+ "@logic": ["has location", "sk4_activity", "#:door 11", "by", ["$ctxt","past","W4","?:Fv27","?:Fv28"]],
+ "@nl": "The man 10 was standing by the door 11."},
+{"@name": "sent_S11",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W4","?:Fv27","?:Fv28"]],
+ "@nl": "The man 10 was standing by the door 11."},
+{"@name": "sent_S11",
+ "@logic": ["actuality","sk4_activity"],
+ "@nl": "The man 10 was standing by the door 11."},
+{"@name": "sent_S11",
+ "@logic": ["next","W4","W5"],
+ "@nl": "The man 10 was standing by the door 11."},
+{"@name": "sent_S12",
+ "@logic": ["isa","man","#:man 10"],
+ "@nl": "The man 10 coughed."},
+{"@name": "sent_S12",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "The man 10 coughed."},
+{"@name": "sent_S12",
+ "@logic": ["has type", "sk5_activity", "cough", ["$ctxt","past","W5","?:Fv29","?:Fv30"]],
+ "@nl": "The man 10 coughed."},
+{"@name": "sent_S12",
+ "@logic": ["has actor", "sk5_activity", "#:man 10", ["$ctxt","past","W5","?:Fv29","?:Fv30"]],
+ "@nl": "The man 10 coughed."},
+{"@name": "sent_S12",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W5","?:Fv29","?:Fv30"]],
+ "@nl": "The man 10 coughed."},
+{"@name": "sent_S12",
+ "@logic": ["actuality","sk5_activity"],
+ "@nl": "The man 10 coughed."},
+{"@name": "sent_S12",
+ "@logic": ["next","W5","W6"],
+ "@nl": "The man 10 coughed."},
+{"@name": "sent_S13",
+ "@logic": ["isa","straw","#:straw 12"],
+ "@nl": "The straw 12 is red."},
+{"@name": "sent_S13",
+ "@logic": ["has property", "red", "#:straw 12", ["$ctxt","present","W6","?:Fv31","?:Fv32"]],
+ "@nl": "The straw 12 is red."},
+{"@name": "sent_S14",
+ "@logic": ["isa","length","#:length 13"],
+ "@nl": "The length 13 of the straw 12 is 10 meters."},
+{"@name": "sent_S14",
+ "@logic": ["isa","straw","#:straw 12"],
+ "@nl": "The length 13 of the straw 12 is 10 meters."},
+{"@name": "sent_S14",
+ "@logic": ["=", ["$measure_of","length","#:straw 12","W6"], ["$list",10,"#:meter"]],
+ "@nl": "The length 13 of the straw 12 is 10 meters."},
+{"@name": "sent_S15",
+ "@logic": ["isa","length","#:length 13"],
+ "@nl": "The length 13 is the length of the straw 12."},
+{"@name": "sent_S15",
+ "@logic": ["isa","straw","#:straw 12"],
+ "@nl": "The length 13 is the length of the straw 12."},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","bird","#:John 9"]],
+ "@nl": "Is John 9 a bird?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-isa","bird","#:John 9"], ["$defq0"]],
+ "@nl": "Is John 9 a bird?"},
+{"@name": "sent_S16",
+ "@question": ["$defq0"],
+ "@nl": "Is John 9 a bird?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","sparrow","$some_sparrow"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","sparrow","$some_not_sparrow"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","place","?:Fv44"], ["has type","?:E","sit","?:Fv44"]],
+ "@confidence": 0.74,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","sit","?:Fv45"], ["has type","?:E","place","?:Fv45"]],
+ "@confidence": 0.74,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_carrier_lift",
+ "@logic": [["-isa","mat","?:X","?:Fv46"], ["isa","carrier","?:X","?:Fv46"]],
+ "@nl": "[generated: frm_carrier_lift]"},
+{"@name": "frm_positional_actor_loc",
+ "@logic": [["-has location","?:E","?:L","by","?:Fv47"],
+            ["-has actor","?:E","?:X","?:Fv47"],
+            ["is rel2","by","?:X","?:L","?:Fv47"],
+            ["$block", 0, ["$not", ["is rel2","by","?:X","?:L","?:Fv47"]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_positional_actor_loc]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv48","?:Fv49","?:Fv50"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv51","?:Fv52","?:Fv53"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W3","W4"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W4","W5"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W5","W6"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 4 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S4","assumption",1], [["-isa","elephant","?:X"], ["-isa","bird","?:X"]]],
+          [2, ["in","sent_S9","assumption",1], [["isa","elephant","#:John 9"]]],
+          [3, ["in","sent_S16","assumption",1], [["-$defq0"], ["isa","bird","#:John 9"]]],
+          [4, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [5, ["mp",3,4,"fromga",1], [["isa","bird","#:John 9"]]],
+          [6, ["mp",1,2,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Elephants are not birds.",
+"  (2) John is an elephant.",
+"  (3) John is a bird?",
+"Proof steps (by contradiction):",
+"  (1) If some X is an elephant then X is not a bird  [sentence 1]",
+"  (2) John is an elephant  [sentence 2]",
+"  (3) If answer holds then John is a bird  [sentence 3]",
+"  (4) Answer holds  [assumption]",
+"  (5) John is a bird  [from steps 3, 4]",
+"  (6) Contradiction  [from steps 1, 2, 5]"
+],
+  "llm_usage": [{
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 30800,
+      "cached_input_tokens": 0,
+      "output_tokens": 6803,
+      "raw": {
+        "promptTokenCount": 30800,
+        "candidatesTokenCount": 2789,
+        "totalTokenCount": 37603,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 30800}],
+        "thoughtsTokenCount": 4014,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 38898,
+      "cached_input_tokens": 0,
+      "output_tokens": 9706,
+      "raw": {
+        "promptTokenCount": 38898,
+        "candidatesTokenCount": 1749,
+        "totalTokenCount": 48604,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 38898}],
+        "thoughtsTokenCount": 7957,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "timestamp": "2026-06-10T19:40:14Z"
+}
