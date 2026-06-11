@@ -74,6 +74,12 @@ def _worker(args):
   run_opts = dict(run_opts)
   if run_opts.get("max_tokens"):
     _solve_mod.max_tokens = run_opts.pop("max_tokens")
+  # Same pattern for the per-call HTTP timeout: an llmcall module knob, not a
+  # globals.options key. Slow providers (deepseek) generating long outputs for
+  # heavy-ballast inputs routinely exceed the 60s default, and a read timeout
+  # aborts the case without a retry.
+  if run_opts.get("llm_timeout"):
+    llmcall.timeout = run_opts.pop("llm_timeout")
 
   collect = {}
   error_payload = None
@@ -484,6 +490,11 @@ def main():
                   help="Re-run all cases (overwrite existing JSON files)")
   ap.add_argument("-geminicache", action="store_true",
                   help="Enable Gemini context caching (off by default)")
+  ap.add_argument("-timeout", type=int, default=0,
+                  help="Per-call LLM HTTP timeout in seconds (0 = llmcall "
+                       "default of 60). Slow providers on long inputs need "
+                       "more; a read timeout is not retried and yields an "
+                       "empty case result.")
   ap.add_argument("-maxtokens", type=int, default=0,
                   help="Per-call LLM output-token budget (0 = llmcall default "
                        "of 8000). Long inputs (e.g. ballast doses b8/b16) "
@@ -544,6 +555,8 @@ def main():
     run_opts["use_gemini_cache_flag"] = True
   if args.maxtokens:
     run_opts["max_tokens"] = args.maxtokens
+  if args.timeout:
+    run_opts["llm_timeout"] = args.timeout
   if args.onestage:
     run_opts["onestage_mode"] = args.onestage
 
