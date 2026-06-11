@@ -12,6 +12,8 @@ Buckets (primary cause, one per failing run):
   stage1-omission     input sentence absent from the stage-1 output;
   stage1-capture      ballast/original entity merge in stage 1;
   stage1-id-break     one referent fractured into several entity ids;
+  stage1-merge        two referents collapsed into one entity id (the
+                      spurious-proof channel behind wrong answers);
   stage2-loss         stage-1 unit lost on the way into stage-2 logic;
   pipeline-world-shift
                       stage outputs equivalent to b0, but the question
@@ -53,9 +55,9 @@ import stage1_coverage as S1
 import stage2_fidelity as S2
 
 BUCKETS = ["gk-error", "stage2-malformed", "stage1-omission",
-           "stage1-capture", "stage1-id-break", "stage2-loss",
-           "pipeline-world-shift", "stage1-distortion", "stage2-distortion",
-           "convert/pipeline", "unexplained"]
+           "stage1-capture", "stage1-id-break", "stage1-merge",
+           "stage2-loss", "pipeline-world-shift", "stage1-distortion",
+           "stage2-distortion", "convert/pipeline", "unexplained"]
 
 
 # ======== clause-level evidence ========
@@ -241,6 +243,8 @@ def analyze_case(case, b0_case, man_entry, intervene=False):
     # normalised clause diff does not; a fractured referent is
     # proof-breaking on its own
     return "stage1-id-break", ev
+  if f1["id_merge"]:
+    return "stage1-merge", ev
   # heuristic world-shift attribution only when the causal test did NOT
   # run (if it ran and failed to rescue, the pin is not the cause)
   if world_shifted and not clause_diff and \

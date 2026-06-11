@@ -16,6 +16,9 @@ the stage-1 `raw` entries, tolerating LLM-side merges and splits.  Flags:
   id-break     the same concrete base-name carries MORE distinct numeric
                ids than in the b0 baseline run of the same case (one
                referent fractured into several entities);
+  id-merge     the dual: FEWER distinct ids than at b0 (two referents
+               collapsed into one entity -- the spurious-proof channel,
+               e.g. b16 case 542's red and blue squares both 'square 1');
   vs-b0        per original sentence: unit-count drop, unit-type flips,
                entity/action/adjective losses, confidence changes against
                the b0 (no-ballast) run of the same case+model.
@@ -199,7 +202,8 @@ def analyze_run(case, b0_case, man_entry):
   cover, owner = align([t for t, _s in expected], raws)
 
   flags = {"omission": [], "empty_units": [], "seg_drift": [],
-           "merged": [], "capture": [], "id_break": [], "b0": {}}
+           "merged": [], "capture": [], "id_break": [], "id_merge": [],
+           "b0": {}}
 
   # sentence -> units (merged sentences share the raw's units)
   sent_units = []
@@ -245,6 +249,9 @@ def analyze_run(case, b0_case, man_entry):
     n0 = len(base_census.get(name, [1])) if b0_case else 1
     if len(ids) > max(n0, 1):
       flags["id_break"].append((name, sorted(ids)))
+    elif b0_case and name in base_census and len(ids) < n0:
+      flags["id_merge"].append((name, sorted(base_census[name]),
+                                sorted(ids)))
 
   # vs b0, per original sentence (skip merged -- counts not attributable)
   if b0_case:
@@ -287,7 +294,8 @@ def analyze_run(case, b0_case, man_entry):
 def flag_summary(flags):
   """Short one-line tag list for a run's flags."""
   tags = []
-  for k in ("omission", "empty_units", "capture", "id_break", "seg_drift"):
+  for k in ("omission", "empty_units", "capture", "id_break", "id_merge",
+            "seg_drift"):
     if flags.get(k):
       tags.append(f"{k}x{len(flags[k])}")
   for k, v in (flags.get("b0") or {}).items():
@@ -337,7 +345,8 @@ def main():
           print(f"  case {cid:4d} {'PASS' if ok else 'FAIL'} "
                 f"[{', '.join(tags) if tags else 'clean stage1'}]")
           if args.verbose:
-            for k in ("omission", "empty_units", "capture", "id_break"):
+            for k in ("omission", "empty_units", "capture", "id_break",
+                      "id_merge"):
               for item in flags.get(k) or []:
                 print(f"        {k}: {item}")
             for k, v in (flags.get("b0") or {}).items():
