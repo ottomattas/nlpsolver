@@ -15,6 +15,8 @@ subset, so Phases 4–5 deliver the definitive numbers automatically.
 The full 1600 runs (Phases 4–5) are gated on explicit sign-off.
 Run: `nlpsolver/llmpipe` on macOS (local `gk` ARM64), two-stage pipeline,
 LLM cache on, thinking off, prover at the default 2s. Date: 2026-06-10.
+**2026-06-11: §12 adds the failure cause map** (where the chain breaks as
+sentence count grows — Tanel's follow-up ask before he builds chunking).
 
 ---
 
@@ -382,3 +384,186 @@ deepseek ~$3), Phase 5 @ b16 ≈ **$390** (gpt $133 + claude $214 + gemini
 The local sqlite cache (`llmpipe/cache.db`, gitignored, preserved) makes
 replays of unchanged prompts free — that is what enables Tanel's
 gk-strategy reruns at zero API cost.
+
+## 12. Failure cause map: where the chain breaks as sentence count grows
+
+Added 2026-06-11 (Tanel's follow-up ask: before building stage-2 chunking,
+find out *which phase of the pipeline breaks, and how*, when there are
+many sentences). Everything in this section is computed from the **stored
+traces** of the Phase 1–2 runs — zero new LLM spend — by four new scripts
+in `analysis/`: `stage1_coverage.py`, `stage2_fidelity.py`, `cause_map.py`,
+`spot_verify.py`.
+
+### 12.1 Method
+
+For every **valid** failing run of the complete gpt+claude b8/b16 cells
+(contaminated cases of §11.2 excluded; 38 failing runs in total), and for
+all passing runs as controls:
+
+1. **Stage-1 coverage** — align the input sentences (original + ballast,
+   classified through the manifest the cell actually ran on) to the
+   stage-1 `raw` packages, tolerating LLM-side merges/splits. Flags:
+   sentence omitted; empty unit list; entity base-name on both the
+   ballast and the original side (capture); one referent under more
+   numeric ids than in the b0 run of the same case (**id-break**) or
+   fewer (**id-merge**); per-sentence unit/entity/action/type/confidence
+   diffs vs b0.
+2. **Stage-2 fidelity** — stage-2 output is keyed by stage-1 unit ids
+   (`["@id","S7",…]`), so coverage is exact: units lost between stages,
+   hallucinated ids, missing/multiple question formulas, malformed trees;
+   plus a normalised per-sentence logic diff vs b0 (entity numbering,
+   variable names and world numbering normalised away).
+3. **Clause-level diff vs b0** — normalised clause sets restricted to
+   original-sentence clauses, and the world term the question clauses are
+   bound to.
+4. **Causal intervention** (`cause_map.py -intervene`) — each failing run
+   is replayed through logconvert+semnormalize+gk **from its stored
+   stage-1/2 JSON** (no LLM involved), with one surgical change: the
+   question clauses' pinned world constant is replaced by a fresh
+   variable. If that alone returns the exact b0 answer, the world binding
+   *is* the cause for that run.
+
+Every failing run gets one primary bucket; the same detectors run over
+the passing runs of the cell give each bucket's control rate.
+
+### 12.2 The map (valid failing runs; pass-side control counts in parentheses)
+
+```
+bucket                gpt b8    claude b8   gpt b16   claude b16   total
+------------------------------------------------------------------------
+pipeline-world-shift  2 ( 6)     4 (14)     6 ( 3)     5 ( 9)       17
+stage1-id-break       1 ( 2)     1 ( 0)     3 ( 2)     0 ( 0)        5
+stage2-distortion     1 (17)     0 (15)     1 (11)     2 (10)        4
+stage2-malformed      0 ( 0)     1 ( 0)     0 ( 0)     2 ( 1)        3
+stage1-merge          0 ( 0)     0 ( 0)     2 ( 1)     0 ( 0)        2
+convert/pipeline      1 ( 9)     0 ( 3)     1 ( 5)     0 ( 4)        2
+stage1-distortion     0 (14)     1 ( 8)     0 ( 8)     0 ( 6)        1
+gk-error              0 ( 0)     0 ( 0)     0 ( 0)     1 ( 0)        1
+unexplained           0          2          1          0             3
+fails analysed        5          9         14         10            38
+```
+
+Headline readings:
+
+- **No input sentence was ever dropped.** Across all 322 valid runs
+  (passes + fails, both models, both doses), stage 1 emitted ASUs for
+  every original and every ballast sentence — `stage1-omission` is empty.
+  Tanel's first suspicion ("kas lauseid on puudu?") is ruled out: the
+  semantic stage scales to b16-length inputs without losing content.
+- **The single largest cause is not the LLM at all.** 17/38 (45%) of the
+  failures are `pipeline-world-shift`, *causally verified* by the
+  intervention: re-running gk on the stored parse with only the question's
+  world binding freed returns the exact b0 answer. Mechanism: ballast
+  event sentences ("Eve introduced Mary.") legitimately advance the world
+  chain (`next W0 W1 …`); for a query with no `pre_state`,
+  `lc_packages.py` binds the question to the **latest** world; a stateless
+  original fact ("John is a child of Mike", confidence 0.2) stays asserted
+  in `W0`; nothing carries it forward, so the prover finds nothing. More
+  inert event sentences ⇒ more world transitions ⇒ more queries pinned
+  away from their facts — degradation that grows with input length but
+  lives in the **convert layer**, not the neural parse.
+- **Object tracking does break — in both directions** (Tanel's second
+  suspicion, confirmed but small): 5 id-breaks (one referent fractured
+  into two ids) and 2 id-merges (two referents collapsed into one).
+  Breaks kill proofs via entity UNA (`#:lamp 1` ≠ `#:lamp 2`); merges
+  *manufacture* proofs — both gpt-b16 wrong answers are merges.
+- **Stage-2 causes are real but the minority:** 4 distortions (changed
+  logic for an original sentence with clean stage 1), 3 malformed outputs
+  (claude only: "null at formula level" b8-1315, "several questions"
+  b16-193, empty stage-2 b16-562).
+- The high pass-side control rates for `pipeline-world-shift` (3–14 per
+  cell) and the distortion buckets show these signatures are *necessary
+  but not sufficient* — world pinning only kills cases whose queried fact
+  is stateless-in-W0, and most logic drift is harmless variation. That is
+  exactly why the bucket assignment leans on the causal intervention and
+  a b0-diff, not on flags alone.
+
+### 12.3 One worked example per bucket
+
+- **pipeline-world-shift — case 1521 @ b8/gpt** ("It is not probable that
+  John is a child of Mike. John is a child of Mike?", expected *Probably
+  false*). Stage 1 and stage 2 are byte-equivalent to b0 for the original
+  sentences. But b0 encodes the question world as a free variable, while
+  at b8 four ballast event sentences advance the chain to `W1` and the
+  question clause becomes
+  `["is rel2","child of","#:John","#:Mike",["$ctxt","present","W1",…]]`
+  with the fact pinned at `W0` → "Unknown." Replaying gk with `W1` freed
+  (`spot_verify.py -dose 8 -model gpt -case 1521 -freeworld`) returns
+  **"Probably false."** — the b0 answer — with no other change.
+- **stage1-id-break — case 671 @ b8/gpt** ("The woman holding a heavy
+  lamp sang. The lamp was light?", expected *False*). At b0 both mentions
+  are `lamp 1`; with 8 ballast sentences between them, the definite
+  anaphor "The lamp" gets a fresh `lamp 2`. UNA makes them distinct
+  constants, the heavy/light contradiction can no longer attach → Unknown.
+  Same pattern: 134/234/524 @ b16 ("She was in a room. / She was in the
+  room?" → `room 2` vs `room 3`).
+- **stage1-merge — case 542 @ b16/gpt** ("The red square has a nail. A
+  blue square has a hole. A red square has a hole?", expected *Unknown*).
+  b0 correctly makes `square 1` (red) and `square 2` (blue); at b16 gpt
+  reuses **`square 1` for both**, the entity is red+blue with nail+hole,
+  and the prover proves "True." — a spurious proof manufactured by entity
+  collapse. Case 550 (its "False." twin) is the same mechanism.
+- **stage2-distortion — case 1475 @ b8/gpt** ("If a bear eats red
+  berries, it is big. John eats berries. … John is big?", expected
+  *Unknown*). Stage 1 is clean; stage 2's encodings of all four original
+  sentences drift vs b0 and the drift loses the *red*-berries guard →
+  "Probably true."
+- **stage2-malformed — case 1315 @ b8/claude**: stage-2 logic with a
+  null at formula level, rejected by gk ("error in formula nr 3
+  sent_S1"); case 193 @ b16 emitted two `question` formulas ("several
+  questions given"). Pure LLM output-discipline failures at high dose.
+- **gk-error — case 1375 @ b16/claude**: "prover returned empty result"
+  (the §11.1 allocator-bug signature) on a structurally sound clause set.
+- **unexplained (3):** claude-b8 470 & 605, gpt-b16 747 — stage 1, stage
+  2 and clauses all look b0-equivalent and the question world is free;
+  these need a manual gk-side look (suspect: search-space growth from the
+  ballast clauses interacting with the 2s budget).
+
+### 12.4 What this implies for the chunking hypothesis
+
+The proposed fix (stage 1 over the whole text, stage 2 chunk-wise over
+stage-1 output, reassemble) targets the *neural* stages. The map says:
+
+1. **Stage 1 whole-text is viable** — nothing is omitted even at b16, so
+   the premise of the hypothesis holds. Its real enemy is entity
+   tracking over distance (id-breaks/merges, 7/38): any chunking design
+   should keep a global entity registry across chunks, or it will *add*
+   id-breaks at chunk boundaries rather than remove them.
+2. **Chunked stage 2 would address the genuinely stage-2 causes (7/38:
+   distortions + malformed)** — shorter per-call outputs should restore
+   the output discipline that claude loses at b8/b16 and reduce drift.
+3. **But the largest single cause (45%) is below both stages** and no
+   chunking will touch it: the question-world binding in the convert
+   layer. The cheap, surgical alternative the intervention points to:
+   bind stateless questions to a world *variable* (or carry stateless
+   facts across `next` transitions). That one change would have rescued
+   17 of the 38 failures outright — before any LLM-side work.
+
+### 12.5 Reproduce
+
+```bash
+cd results/ballast-robustness/analysis
+
+# the full map (static heuristics only, <2s)
+python3 cause_map.py -doses 8,16 -models gpt,claude
+
+# with the causal world-shift intervention (replays gk per failing run
+# from the stored stage-1/2 JSON; no LLM calls; ~2.5 min)
+python3 cause_map.py -doses 8,16 -models gpt,claude -intervene
+
+# per-stage detail
+python3 stage1_coverage.py -doses 8,16 -models gpt,claude [-verbose]
+python3 stage2_fidelity.py -doses 8,16 -models gpt,claude [-verbose]
+
+# single-case causal check (the §12.3 world-shift exemplar)
+python3 spot_verify.py -dose 8 -model gpt -case 1521 -freeworld
+```
+
+Caveats: n=38 failing runs, gpt+claude only, on the as-collected (old)
+suites with contaminated cases excluded; gemini+deepseek cells extend the
+map once the Phase 3 snapshot lands. Bucket assignment is heuristic
+except where the intervention provides causal evidence
+(`pipeline-world-shift`); the per-bucket exemplars above were verified by
+hand. The world-shift *signature* also occurs in passing runs — it is
+fatal only in combination with a stateless queried fact, which is why
+control rates are reported alongside.
