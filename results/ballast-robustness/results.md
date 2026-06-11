@@ -633,8 +633,9 @@ Readings, against the gpt+claude map of §12.2:
   independent ballast draws.** `pipeline-world-shift` is again the
   largest bucket (15/53, 28%; study-wide 30/91, 33%), again causally
   verified per run: unchanged replay reproduces the failure, freeing the
-  question world returns the exact b0 answer. Cases 1239 and 1521 land
-  in this bucket for **every model at every dose** — the mechanism is
+  question world returns the exact b0 answer. Case 1239 lands in this
+  bucket in **all eight cells** (every model at every dose), case 1521
+  in seven of eight (deepseek passes it at b8) — the mechanism is
   case-determined, not model-determined, as expected for a convert-layer
   cause.
 - **Stage-1 omission stays at zero** across all 400 Phase 3 runs — the
