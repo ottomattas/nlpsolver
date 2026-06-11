@@ -76,8 +76,13 @@ output regenerates byte-identically. Self-checks re-verify every condition
 from the written files. On the 100-subset @ b2 all 100 cases generated at
 the **strict** level (no relaxation; min 196 eligible pool sentences/case).
 
-Pool: 738 unique statement sentences from the 1600 set (4,179 raw − 1,600
-questions − 246 wh − 167 pronoun − 22 short − 1,406 duplicates).
+Pool: ~730 unique statement sentences from the 1600 set (b2-era generator:
+738 = 4,179 raw − 1,600 questions − 246 wh − 167 pronoun − 22 short −
+1,406 duplicates; 733 at rev `88ca7b0`, the suites the collected
+gpt+claude b4–b16 cells ran on; 732 with the current post-splitter-fix
+generator, which the regenerated suites incl. Phase 3 use — committed as
+`llmpipe/tests/ballast/ballast_pool.txt`; each manifest records its own
+`pool_stats`).
 
 ### 1.2 Validation before spending (plan §4)
 
