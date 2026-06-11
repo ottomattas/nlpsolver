@@ -19,7 +19,10 @@ LLM cache on, thinking off, prover at the default 2s. Date: 2026-06-10.
 **2026-06-11: §12 adds the failure cause map** (where the chain breaks as
 sentence count grows — Tanel's follow-up ask before he builds chunking)
 **and §13 adds Phase 3** (gemini+deepseek at b8/b16 on the regenerated
-clean suites).
+clean suites). §12.6 extends the map to the Phase 3 cells; §13.2 and the
+§12.2 table carry a same-day correction — every "prover returned empty
+result" run in the study is a deterministic gk datarec hit, not a
+timeout, and the bug is sensitive to the gk input serialisation.
 
 ---
 
@@ -368,8 +371,10 @@ runs) so the dataset and the sqlite LLM cache are hole-free for replays.
   results/ballast-robustness/gk-bug-case1011-minimal.gkin -defaults
   -confidence 0.1 -keepconfidence 0.1 --datafolder gk` → fails in ~0.3s
   with "cannot extend datarec area"; `-mbsize` 1000–16000 does not help;
-  removing the question makes it pass. Observed on macOS ARM64; ~1% of
-  b16 cases — relevant for Phase 5.
+  removing the question makes it pass. Observed on macOS ARM64; 6
+  deterministic instances across the study (3 at b8, 3 at b16, clause
+  sets 83–179 — see §13.2, incl. the input-serialisation sensitivity) —
+  relevant for Phases 4–5.
 
 ### 11.5 Phase-2 cost (usage ledger, list prices)
 
@@ -442,17 +447,26 @@ the passing runs of the cell give each bucket's control rate.
 ```
 bucket                gpt b8    claude b8   gpt b16   claude b16   total
 ------------------------------------------------------------------------
-pipeline-world-shift  2 ( 6)     4 (14)     6 ( 3)     5 ( 9)       17
+pipeline-world-shift  2 ( 6)     4 (14)     4 ( 3)     5 ( 9)       15
 stage1-id-break       1 ( 2)     1 ( 0)     3 ( 2)     0 ( 0)        5
 stage2-distortion     1 (17)     0 (15)     1 (11)     2 (10)        4
 stage2-malformed      0 ( 0)     1 ( 0)     0 ( 0)     2 ( 1)        3
+gk-error              0 ( 0)     0 ( 0)     2 ( 0)     1 ( 0)        3
 stage1-merge          0 ( 0)     0 ( 0)     2 ( 1)     0 ( 0)        2
 convert/pipeline      1 ( 9)     0 ( 3)     1 ( 5)     0 ( 4)        2
 stage1-distortion     0 (14)     1 ( 8)     0 ( 8)     0 ( 6)        1
-gk-error              0 ( 0)     0 ( 0)     0 ( 0)     1 ( 0)        1
 unexplained           0          2          1          0             3
 fails analysed        5          9         14         10            38
 ```
+
+*(Correction 2026-06-11, post-Phase-3: gpt-b16 cases 1052 and 1375 were
+initially bucketed `pipeline-world-shift` because the freeworld
+intervention rescued them. Their stored answer is a prover-side error,
+and for those the intervention is invalid evidence: freeing the question
+world changes the prover input and merely sidesteps the crash. An
+unchanged stored-clause gk replay reproduces both deterministically —
+they are datarec allocator hits (§12.6, §13.2) and now count as
+`gk-error`. The map above and all derived numbers reflect this.)*
 
 Headline readings:
 
@@ -461,10 +475,11 @@ Headline readings:
   every original and every ballast sentence — `stage1-omission` is empty.
   Tanel's first suspicion ("kas lauseid on puudu?") is ruled out: the
   semantic stage scales to b16-length inputs without losing content.
-- **The single largest cause is not the LLM at all.** 17/38 (45%) of the
+- **The single largest cause is not the LLM at all.** 15/38 (39%) of the
   failures are `pipeline-world-shift`, *causally verified* by the
   intervention: re-running gk on the stored parse with only the question's
-  world binding freed returns the exact b0 answer. Mechanism: ballast
+  world binding freed returns the exact b0 answer (and an unchanged
+  replay still reproduces the failure). Mechanism: ballast
   event sentences ("Eve introduced Mary.") legitimately advance the world
   chain (`next W0 W1 …`); for a query with no `pre_state`,
   `lc_packages.py` binds the question to the **latest** world; a stateless
@@ -523,8 +538,12 @@ Headline readings:
   null at formula level, rejected by gk ("error in formula nr 3
   sent_S1"); case 193 @ b16 emitted two `question` formulas ("several
   questions given"). Pure LLM output-discipline failures at high dose.
-- **gk-error — case 1375 @ b16/claude**: "prover returned empty result"
-  (the §11.1 allocator-bug signature) on a structurally sound clause set.
+- **gk-error — cases 1052 & 1375 @ b16/gpt, 1375 @ b16/claude**: "prover
+  returned empty result" on structurally sound clause sets (144–179
+  clauses). All three reproduce deterministically in <1s when gk is
+  replayed unchanged from the stored clauses in the live input
+  serialisation — the §11.1 datarec allocator bug, not timeouts (§13.2
+  has the full six-instance picture incl. Phase 3).
 - **unexplained (3):** claude-b8 470 & 605, gpt-b16 747 — stage 1, stage
   2 and clauses all look b0-equivalent and the question world is free;
   these need a manual gk-side look (suspect: search-space growth from the
@@ -543,12 +562,12 @@ stage-1 output, reassemble) targets the *neural* stages. The map says:
 2. **Chunked stage 2 would address the genuinely stage-2 causes (7/38:
    distortions + malformed)** — shorter per-call outputs should restore
    the output discipline that claude loses at b8/b16 and reduce drift.
-3. **But the largest single cause (45%) is below both stages** and no
+3. **But the largest single cause (39%) is below both stages** and no
    chunking will touch it: the question-world binding in the convert
    layer. The cheap, surgical alternative the intervention points to:
    bind stateless questions to a world *variable* (or carry stateless
    facts across `next` transitions). That one change would have rescued
-   17 of the 38 failures outright — before any LLM-side work.
+   15 of the 38 failures outright — before any LLM-side work.
 
 ### 12.5 Reproduce
 
@@ -559,8 +578,11 @@ cd results/ballast-robustness/analysis
 python3 cause_map.py -doses 8,16 -models gpt,claude
 
 # with the causal world-shift intervention (replays gk per failing run
-# from the stored stage-1/2 JSON; no LLM calls; ~2.5 min)
+# from the stored stage-1/2 JSON; no LLM calls; ~5 min)
 python3 cause_map.py -doses 8,16 -models gpt,claude -intervene
+
+# all four models incl. the Phase 3 cells (§12.6; ~10 min with -intervene)
+python3 cause_map.py -doses 8,16 -models gpt,claude,gemini,deepseek -intervene
 
 # per-stage detail
 python3 stage1_coverage.py -doses 8,16 -models gpt,claude [-verbose]
@@ -571,13 +593,67 @@ python3 spot_verify.py -dose 8 -model gpt -case 1521 -freeworld
 ```
 
 Caveats: n=38 failing runs, gpt+claude only, on the as-collected (old)
-suites with contaminated cases excluded; gemini+deepseek cells extend the
-map once the Phase 3 snapshot lands. Bucket assignment is heuristic
-except where the intervention provides causal evidence
-(`pipeline-world-shift`); the per-bucket exemplars above were verified by
-hand. The world-shift *signature* also occurs in passing runs — it is
-fatal only in combination with a stateless queried fact, which is why
-control rates are reported alongside.
+suites with contaminated cases excluded; §12.6 extends the map with the
+gemini+deepseek Phase 3 cells (n=53, clean regenerated suites). Bucket
+assignment is heuristic except where a replay provides causal evidence
+(`pipeline-world-shift` via the freeworld intervention, `gk-error` via
+the unchanged stored-clause replay); the per-bucket exemplars above were
+verified by hand. The world-shift *signature* also occurs in passing
+runs — it is fatal only in combination with a stateless queried fact,
+which is why control rates are reported alongside.
+
+### 12.6 Extension to gemini+deepseek (Phase 3 cells)
+
+Same scripts, same `-intervene` causal checks, run over the §13 snapshot
+(clean regenerated suites, no exclusions; 53 failing runs):
+
+```
+bucket               gemini b8  deepseek b8  gemini b16  deepseek b16  total
+-----------------------------------------------------------------------------
+pipeline-world-shift  2 (14)     3 (11)      7 (13)      3 (11)        15
+stage2-distortion     1 (21)     1 (14)      5 (17)      2 (12)         9
+stage1-capture        1 ( 1)     2 ( 1)      1 ( 1)      1 ( 3)         5
+stage1-id-break       1 ( 2)     1 ( 0)      1 ( 3)      1 ( 1)         4
+gk-error              2 ( 0)     1 ( 0)      0 ( 0)      0 ( 0)         3
+stage2-malformed      0 ( 1)     0 ( 4)      1 ( 4)      2 ( 5)         3
+stage1-distortion     1 (11)     2 (18)      0 (10)      0 (17)         3
+convert/pipeline      1 ( 3)     0 ( 2)      1 ( 5)      1 ( 3)         3
+unexplained           1          3           2           2              8
+fails analysed       10         13          18          12             53
+```
+
+Readings, against the gpt+claude map of §12.2:
+
+- **The cause structure replicates on an independent model pair and
+  independent ballast draws.** `pipeline-world-shift` is again the
+  largest bucket (15/53, 28%; study-wide 30/91, 33%), again causally
+  verified per run: unchanged replay reproduces the failure, freeing the
+  question world returns the exact b0 answer. Cases 1239 and 1521 land
+  in this bucket for **every model at every dose** — the mechanism is
+  case-determined, not model-determined, as expected for a convert-layer
+  cause.
+- **Stage-1 omission stays at zero** across all 400 Phase 3 runs — the
+  no-sentence-dropped result now holds for all four models.
+- **`stage1-capture` becomes visible** (5 runs vs ~0 for gpt+claude):
+  case 107 ("Who is nice? The nice man / the quiet man") picks up a
+  ballast adjective on an original entity in *every* Phase 3 cell — the
+  wrong-answer channel for this model pair, where gpt's was id-merge.
+- **gemini's b16 signature is stage-2 distortion** (5 of its 18 fails):
+  stage 1 clean, logic of original sentences drifts vs b0. Consistent
+  with gemini paying the largest accuracy cost at b16 (−17pt, §13.1).
+- **All three b8 "prover returned empty result" runs are gk datarec
+  hits** (gemini 250/1317, deepseek 1011) — deterministic, <1s, see the
+  §13.2 correction below. With gpt+claude's three b16 instances, the
+  allocator bug accounts for 6/91 failing runs study-wide.
+- The 8 unexplained include deepseek-b8 1335 (whose b0 run also fails —
+  not a ballast effect) and two odd-answer runs (409, 888) where the
+  model answered with the wrong surface form; the rest look like the
+  same search-budget suspects as §12.3's.
+
+The chunking implications of §12.4 carry over unchanged — the dominant
+cause is still below both LLM stages, entity tracking still breaks both
+ways (id-break/capture/merge: 9/53), and genuinely stage-2 causes
+(distortion+malformed, 12/53) remain the minority chunking could help.
 
 ## 13. Phase 3 (b8/b16, gemini+deepseek) — the second model pair confirms the curve
 
@@ -620,18 +696,32 @@ deepseek       98.0   87.0   88.0
 ### 13.2 Prover-side incidents: 3 "prover returned empty result" at b8
 
 All three b8 runs whose answer is "Error: prover returned empty result"
-were replayed from the stored clause JSON (strip `@nl`, feed to gk with
-the stored strategy):
+were replayed from the stored clause JSON. **Corrected finding
+(2026-06-11, superseding the first pass): all three are deterministic
+datarec allocator hits, not timeouts.**
 
-- **gemini b8 case 250 — the §11.1/§11.4b datarec allocator bug, second
-  confirmed instance** (108 clauses; deterministic, fails in <1s). First
-  sighting outside b16 — clause sets in the ~100+ range can hit it.
-- **gemini b8 1317 and deepseek b8 1011 replay correctly** on an idle
-  machine (both answer the expected `false` within the 2s budget) — these
-  two were load-sensitive prover timeouts during the batch run, not parse
-  losses. (1011 is the same base case as claude-b16's datarec hit in
-  §11.1 — different suite, different clause set; treated as coincidence
-  until the reproducer family says otherwise.)
+- The first replay pass stripped `@nl` and re-fed the clause list to gk
+  as **plain JSON** with the stored strategy. Under that protocol 1317
+  and 1011 answer the expected `false` in <1s and only 250 fails — which
+  was initially read as "250 = the §11.1 bug, 1317/1011 = load-sensitive
+  timeouts".
+- Replaying instead through the pipeline's own `prover.call_prover`
+  serialisation — identical clauses, but with the `//` ASU comment lines
+  the live runs actually feed gk (`spot_verify.gk_replay`) — **all three
+  fail deterministically in 0.15–0.6s on an idle machine** with
+  `db memory allocation error: cannot extend datarec area`. Not
+  timeouts: the 2s budget is never reached.
+- So the datarec bug is **sensitive to the input serialisation**: the
+  same clause set can pass as plain JSON and crash with comment lines
+  (or vice versa). Useful fact for the reproducer family; it also means
+  replay-based triage of prover errors must use the live serialisation
+  (`gk_replay` does; the §12.6 map is built on it).
+- Instances: gemini b8 250 (108 clauses), gemini b8 1317 (83), deepseek
+  b8 1011 (90); plus gpt b16 1052 (179), gpt b16 1375 (146), claude b16
+  1375 (144) from the Phase 2 cells — 6 study-wide, clause sets ≥83.
+  (deepseek-b8 1011 shares its base case with claude-b16's §11.1 hit —
+  different suite, different clause set; no longer looking like
+  coincidence now that the family has 6 members.)
 
 ### 13.3 Operational incidents (all resolved, all instructive)
 
