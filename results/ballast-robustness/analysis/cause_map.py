@@ -6,7 +6,15 @@ baseline run of the same case+model.
 
 Buckets (primary cause, one per failing run):
 
+  gk-transient        a prover-side error answer that does NOT reproduce
+                      when gk is replayed UNCHANGED from the stored clause
+                      list (would indicate a transient/load failure; only
+                      assigned in -intervene mode -- as of Phase 3 every
+                      prover-error run in the study reproduces
+                      deterministically, so this bucket is empty);
   gk-error            prover-side resource error (datarec allocator etc.);
+                      with -intervene, confirmed by an unchanged
+                      stored-clause gk replay;
   stage2-malformed    LLM emitted logic gk/convert rejects (null at formula
                       level, several questions, missing/duplicate units);
   stage1-omission     input sentence absent from the stage-1 output;
@@ -54,10 +62,11 @@ import common as C
 import stage1_coverage as S1
 import stage2_fidelity as S2
 
-BUCKETS = ["gk-error", "stage2-malformed", "stage1-omission",
-           "stage1-capture", "stage1-id-break", "stage1-merge",
-           "stage2-loss", "pipeline-world-shift", "stage1-distortion",
-           "stage2-distortion", "convert/pipeline", "unexplained"]
+BUCKETS = ["gk-transient", "gk-error", "stage2-malformed",
+           "stage1-omission", "stage1-capture", "stage1-id-break",
+           "stage1-merge", "stage2-loss", "pipeline-world-shift",
+           "stage1-distortion", "stage2-distortion", "convert/pipeline",
+           "unexplained"]
 
 
 # ======== clause-level evidence ========
@@ -172,18 +181,32 @@ def error_class(case):
 # ======== per-run cause assignment ========
 
 def freeworld_intervention(case, b0_case):
-  """Replay logconvert+gk from the stored stage-1/2 JSON with the question
-  world freed; returns (freed_answer, recovers_b0, world_was_pinned)."""
+  """Two gk replays from the stored stage-1/2 JSON (no LLM): first
+  UNCHANGED -- if that alone returns the b0 answer, the stored failure
+  was transient and no causal world claim is allowed; then with the
+  question world freed.  Returns (plain_answer, freed_answer, transient,
+  recovers_b0, world_was_pinned).  NOT valid evidence for prover-error
+  answers: freeing the question world changes the prover input and can
+  sidestep an allocator crash without the world binding being the cause
+  (gk-error runs are therefore routed to gk_replay before this)."""
   from spot_verify import replay
+  b0_ans = str(b0_case.get("answer")) if b0_case else None
+  stored = str(case.get("answer", ""))
   try:
-    ans, _n, subs = replay(case, freeworld=True)
+    plain, _n, _ = replay(case)
   except Exception as e:
-    return (f"replay-error: {e}", False, False)
-  ans = str(ans)
-  recovers = (bool(subs) and b0_case is not None
-              and ans == str(b0_case.get("answer"))
-              and ans != str(case.get("answer")))
-  return (ans, recovers, bool(subs))
+    return (f"replay-error: {e}", None, False, False, False)
+  plain = str(plain)
+  if b0_ans is not None and plain == b0_ans and plain != stored:
+    return (plain, None, True, False, False)
+  try:
+    freed, _n, subs = replay(case, freeworld=True)
+  except Exception as e:
+    return (plain, f"replay-error: {e}", False, False, False)
+  freed = str(freed)
+  recovers = (bool(subs) and b0_ans is not None
+              and freed == b0_ans and freed != plain)
+  return (plain, freed, False, recovers, bool(subs))
 
 
 def analyze_case(case, b0_case, man_entry, intervene=False):
@@ -210,6 +233,19 @@ def analyze_case(case, b0_case, man_entry, intervene=False):
   err = error_class(case)
   ev["error_class"] = err
 
+  # ---- gk-side errors: decided FIRST, by an unchanged stored-clause
+  # replay, never by the freeworld intervention (which mutates the
+  # prover input and can sidestep an allocator crash -- §13.2) ----
+  if err == "gk-error" and not C.is_correct(case):
+    if intervene:
+      from spot_verify import gk_replay
+      re_ans = gk_replay(case)
+      ev["replay"] = {"stored_clauses": re_ans}
+      b0_ans = str(b0_case.get("answer")) if b0_case else None
+      if b0_ans is not None and re_ans == b0_ans:
+        return "gk-transient", ev
+    return "gk-error", ev
+
   s1_diff = any((f1.get("b0") or {}).values())
   s2_diff = bool((f2.get("b0") or {}).get("logic_changed"))
   clause_diff = bool(lost)
@@ -220,9 +256,13 @@ def analyze_case(case, b0_case, man_entry, intervene=False):
 
   # ---- causal intervention (fails only, when -intervene) ----
   if intervene and not C.is_correct(case):
-    freed, recovers, pinned = freeworld_intervention(case, b0_case)
-    ev["freeworld"] = {"answer": freed, "recovers_b0": recovers,
-                       "world_was_pinned": pinned}
+    plain, freed, transient, recovers, pinned = \
+        freeworld_intervention(case, b0_case)
+    ev["replay"] = {"plain": plain, "freed": freed,
+                    "transient": transient, "recovers_b0": recovers,
+                    "world_was_pinned": pinned}
+    if transient:
+      return "gk-transient", ev
     if recovers:
       return "pipeline-world-shift", ev
 
@@ -283,14 +323,18 @@ def main():
   controls = {}  # (model, dose) -> {bucket: count among passes}
 
   for d in doses:
-    excl = C.exclusions(d)
     for m in models:
       cc = C.load(d, m, source)
-      cc = {cid: c for cid, c in cc.items() if cid not in excl}
       if not cc:
         print(f"b{d} {m}: no data")
         continue
       man, rev = C.resolve_manifest(d, cc)
+      # the splitter-bug exclusions only apply to cells that ran on the
+      # PRE-regeneration suites (rev != None); the regenerated suites
+      # (gemini/deepseek Phase 3) are clean by construction
+      if rev is not None:
+        excl = C.exclusions(d)
+        cc = {cid: c for cid, c in cc.items() if cid not in excl}
       b0 = C.load(0, m)
       print(f"\n=== b{d} {m} ({len(cc)} valid cases; manifest rev "
             f"{rev or 'worktree'}) ===")

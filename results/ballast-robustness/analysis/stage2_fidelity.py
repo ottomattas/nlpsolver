@@ -207,14 +207,16 @@ def main():
   source = "live" if args.live else "snapshot"
 
   for d in [int(s) for s in args.doses.split(",") if s.strip()]:
-    excl = C.exclusions(d)
     for m in [x for x in args.models.split(",") if x]:
       cc = C.load(d, m, source)
-      cc = {cid: c for cid, c in cc.items() if cid not in excl}
       if not cc:
         print(f"b{d} {m}: no data")
         continue
       man, rev = C.resolve_manifest(d, cc)
+      # exclusions only apply to cells collected on the old suites
+      if rev is not None:
+        excl = C.exclusions(d)
+        cc = {cid: c for cid, c in cc.items() if cid not in excl}
       b0 = C.load(0, m)
       print(f"\n=== b{d} {m} ({len(cc)} valid cases; manifest rev "
             f"{rev or 'worktree'}) ===")

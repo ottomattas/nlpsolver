@@ -60,6 +60,29 @@ def free_question_world(logic):
   return subs
 
 
+def gk_replay(case):
+  """Replay gk UNCHANGED from the STORED clause list (only the @nl
+  decoration is stripped -- the prover's parser rejects it on question
+  clauses), through the same prover.call_prover path the live run used,
+  i.e. the same input serialisation incl. the // ASU comment lines.
+  This is the ground-truth reproduction test for prover-side error
+  answers: the gk datarec allocator bug is sensitive to the input
+  serialisation, so a plain-JSON re-feed of the same clauses can pass
+  while the live format crashes deterministically (results.md §13.2)."""
+  import prover
+  from procproofs import process_proof
+  logic = [{k: v for k, v in cl.items() if k != "@nl"}
+           if isinstance(cl, dict) else cl
+           for cl in copy.deepcopy(case.get("clauses") or [])]
+  if not logic:
+    return "Error: stored trace has no clauses."
+  pr = prover.call_prover(logic, s1_json=case.get("stage1"))
+  return str(process_proof(pr, text=case["input_text"],
+                           s1_json=case.get("stage1"),
+                           s2_json=case.get("stage2"),
+                           logic=logic, options=None))
+
+
 def replay(case, freeworld=False):
   """(answer, n_clauses, world_subs) from the stored stage-1/2 JSON."""
   from logconvert import rawlogic_convert
