@@ -326,8 +326,8 @@ def build_compound_subsumption(items, ultra=False, extra_clauses=(), degree_comp
       ],
       "@confidence": 0.95
     })
-    # (s2split) Rule 2 in property shape: a sentence encoded in isolation
-    # renders the modifier as a degree/simple property of X, not as an isa
+    # (slightcoarse) Rule 2 in property shape: Stage-2 (isolated -s2split
+    # sentences most of all) renders the modifier as a degree/simple property of X, not as an isa
     # ("John is a small fish?" -> isa(fish,X) ∧ has_degree_property(small,X)),
     # so the isa-shaped composition above never matches.  Emit the same
     # composition with the modifier as a property; single-word modifiers only.

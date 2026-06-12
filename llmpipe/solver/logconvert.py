@@ -115,7 +115,7 @@ from lc_post_inject import (
   inject_occasion_location_bridges as _inject_occasion_location_bridges,
   inject_in_haspart_bridge as _inject_in_haspart_bridge,
   inject_reflexive_property_bridge as _inject_reflexive_property_bridge,
-  inject_s2split_shape_bridges as _inject_s2split_shape_bridges,
+  inject_slightcoarse_shape_bridges as _inject_slightcoarse_shape_bridges,
   inject_attribute_relation_bridges as _inject_attribute_relation_bridges,
   inject_stable_adjective_persistence as _inject_stable_adjective_persistence,
   inject_world_geometry as _inject_world_geometry,
@@ -385,8 +385,8 @@ def _sdc_widen_negation(ant, cons):
   return new_conjs[0] if len(new_conjs) == 1 else ["and"] + new_conjs
 
 
-# (s2split) Off-inventory predicate names the isolated per-sentence Stage-2
-# calls drift into, mapped to their inventory forms.
+# (slightcoarse) Off-inventory predicate names Stage-2 drifts into (isolated
+# -s2split calls most of all), mapped to their inventory forms.
 _OFFINV_PRED_RENAME = {"has": "have", "has rel2": "is rel2"}
 
 
@@ -823,7 +823,7 @@ def _build_entity_category_clauses(s1_json, skip_entities=frozenset()):
         # checkpoint behavior.
         elif (category in _BROAD_SUPERTYPES
               and (_g_options.get("coarse_flag", False)
-                   or _g_options.get("s2split_flag", False))):
+                   or _g_options.get("slightcoarse_flag", False))):
           clauses.append({"@name": name, "@logic": ["isa", category, eid]})
         # (b2, ultracoarse) Gender from a first-name table: isa(man/woman, E),
         # so a rule guarded by "man"/"woman" can fire ("a man is either kind or
@@ -908,11 +908,11 @@ def rawlogic_convert(logic, s1_json=None, fixes=None):
   logic = _repair_self_defeating_conditional(logic)
   _note_repair(_b, logic, "repair self-defeating conditional")
 
-  # (s2split) Normalize off-inventory predicate-name drift: an isolated
-  # per-sentence Stage-2 call sometimes writes "has" for "have" or "has rel2"
-  # for "is rel2" (cases 190/248).  Whole-head rename, before any other pass
-  # reads predicate names.
-  if _g_options.get("s2split_flag", False):
+  # (slightcoarse) Normalize off-inventory predicate-name drift: Stage-2
+  # sometimes writes "has" for "have" or "has rel2" for "is rel2" (cases
+  # 190/248; isolated -s2split calls drift most).  Whole-head rename, before
+  # any other pass reads predicate names.
+  if _g_options.get("slightcoarse_flag", False):
     _b = logic
     logic = _rename_offinventory_preds(logic)
     _note_repair(_b, logic, "rename off-inventory predicates (s2split)")
@@ -1039,7 +1039,7 @@ def rawlogic_convert(logic, s1_json=None, fixes=None):
   compound_subs = _build_compound_subsumption(
       items, ultra=_ultra_flag,
       extra_clauses=(entity_cat_clauses if _ultra_flag else ()),
-      degree_comp=_g_options.get("s2split_flag", False))
+      degree_comp=_g_options.get("slightcoarse_flag", False))
 
   # Track how many times each unit_id has been seen so we can generate
   # globally unique clause names (sent_S1, sent_S1_2, sent_S1_3, ...).
@@ -1156,8 +1156,8 @@ def rawlogic_convert(logic, s1_json=None, fixes=None):
                     + _inject_occasion_location_bridges(result)
                     + _inject_in_haspart_bridge(result)
                     + _inject_reflexive_property_bridge(result))
-    if _g_options.get("s2split_flag"):
-      sem_axioms = sem_axioms + _inject_s2split_shape_bridges(result)
+    if _g_options.get("slightcoarse_flag"):
+      sem_axioms = sem_axioms + _inject_slightcoarse_shape_bridges(result)
 
   # Append population facts, synonym axioms, and exclusion axioms after
   # all sentence clauses (assertions + questions come first).

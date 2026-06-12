@@ -475,6 +475,8 @@ def _parse_cmd_line():
       opts["prenorm_flag"] = True
     elif el in ["-s2split", "--s2split"]:
       opts["s2split_flag"] = True
+    elif el in ["-slightcoarse", "--slightcoarse"]:
+      opts["slightcoarse_flag"] = True
     elif el in ["-nocrossstage", "--nocrossstage"]:
       opts["crossstage_retry_flag"] = False
     elif el in ["-llm", "--llm"]:
@@ -633,6 +635,11 @@ split Stage 2:
  -s2split     : one Stage-2 LLM call per Stage-1 sentence package; outputs joined
                 into one logic (failed sentences skipped unless they hold the
                 question; locally-invented worlds renumbered to fresh indices)
+ -slightcoarse: light shape unification: off-inventory predicate rename
+                (has->have, has rel2->is rel2), shape bridges (destination->
+                location, beneficiary/recipient lift, measure<->comparative),
+                property-shape compound composition, broad-supertype isa.
+                Composable with -s2split (whose divergences it was built for)
 
 combined single-stage parsing (one LLM call, English -> logic; no Stage-1 JSON):
  -combined-instr FILE     : combined instructions prompt file (enables single-stage mode)

@@ -47,6 +47,7 @@ options={
   "ultracoarse_flag":False,  # if True, also fold relational events into binary is_rel2 and fold habitual (typical) events
   "prenorm_flag":False,  # if True, run an experimental pre-Stage-1 LLM phase that unifies repeated entity/property/relation wordings
   "s2split_flag":False,  # if True, run Stage 2 sentence-by-sentence: one LLM call per Stage-1 sentence package, outputs joined (worlds renumbered, rule c')
+  "slightcoarse_flag":False,  # if True, enable the light shape-unification pack: off-inventory predicate rename, shape bridges (destination/location, beneficiary lift, measure/comparative), property-shape compound composition, broad-supertype isa
   "crossstage_retry_flag":True,  # if False, disable the ultracoarse cross-stage unsatisfiable-guard retry (avoids live corrective LLM calls)
   "nokb_flag":True,  # if True, do not use the shared memory knowledge base
   "prover_axiomfiles":False,  # if not False, use these as axioms instead of the default prover_axiomfile below
