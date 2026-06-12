@@ -43,6 +43,10 @@ options={
   "nocontext_flag":False, # if True, do not insert context information (time, situation) into logic
   "noexceptions_flag":False, # if True, do not insert exception information (blockers) into logic
   "noproptypes_flag":False,  # if True, remove prop strength and type information
+  "coarse_flag":False,  # if True, fold collapsible Davidsonian events into one flat "do" literal
+  "ultracoarse_flag":False,  # if True, also fold relational events into binary is_rel2 and fold habitual (typical) events
+  "prenorm_flag":False,  # if True, run an experimental pre-Stage-1 LLM phase that unifies repeated entity/property/relation wordings
+  "crossstage_retry_flag":True,  # if False, disable the ultracoarse cross-stage unsatisfiable-guard retry (avoids live corrective LLM calls)
   "nokb_flag":True,  # if True, do not use the shared memory knowledge base
   "prover_axiomfiles":False,  # if not False, use these as axioms instead of the default prover_axiomfile below
   "prover_print":False,  # if not False, use the argument integer for gk printout level, instead of the default
@@ -74,6 +78,22 @@ options={
   "json_flag": False,   # if True, show logic in raw JSON; if False, use traditional syntax
   "show_details_flag": False, # if True, show stage-1/2 JSON and prover input/output
   "gkin_file": None,          # if set, save GK input to this file
+  # Combined single-stage parsing: OFF by default.
+  # When combined_flag is True, the parser makes ONE LLM call (English -> logic)
+  # using the explicitly named combined prompt files below, instead of the
+  # two-stage stage1/stage2 calls.  There is no Stage-1 JSON in this mode.
+  # Set by -combined-instr (which also names the instructions file).
+  "combined_flag": False,
+  "combined_instr_file": None,      # path to combined instructions prompt file
+  "combined_examples_file": None,   # path to combined examples prompt file (optional)
+  "combined_checklist_file": None,  # path to combined checklist prompt file (optional)
+  # Direct-answer mode: OFF by default.
+  # When directanswer_flag is True, the solver answers the question with ONE LLM
+  # call using directanswer_file as the system prompt and the input text as the
+  # user message, bypassing the parse->logic->prover pipeline entirely.  Works
+  # for any test set.  Set by -directanswer FILE.
+  "directanswer_flag": False,
+  "directanswer_file": None,        # path to the direct-answer prompt file
   # runtests artifact collector: when set, populated with gk_command etc.
   # Not user-facing; set by english_to_answer(collect=...).
   "_collect": None,

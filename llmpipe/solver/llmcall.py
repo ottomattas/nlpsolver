@@ -442,20 +442,45 @@ def call_gemini(version, sentences, sysprompt, max_tokens, think=False):
 
 # ======== claude ========
 
+def _claude_uses_effort_api(version):
+  """Newer Claude models (Opus 4.8, Fable 5, Mythos 5) deprecate `temperature`
+  and replace thinking.budget_tokens with adaptive thinking + output_config.effort
+  (adaptive thinking is always on for Fable/Mythos)."""
+  v = (version or "").lower()
+  return "opus-4-8" in v or "fable" in v or "mythos" in v
+
+
+def _claude_effort(think):
+  """Map a -think value to an effort level for the adaptive-thinking API."""
+  if isinstance(think, str) and think.lower() in ("low", "medium", "high"):
+    return think.lower()
+  if isinstance(think, int):
+    if think <= 1500: return "low"
+    if think <= 5000: return "medium"
+    return "high"
+  return "medium"
+
+
 def call_claude(version, sentences, sysprompt, max_tokens, think=False):
   key = _read_api_key(claude_secrets_file, "Claude")
   if key is None: return None
 
   messages = [{"role": "user", "content": sentences}]
+  use_effort = _claude_uses_effort_api(version)
   call = {
     "model": version,
     "messages": messages,
-    "temperature": 1 if think else temperature,
     "max_tokens": max_tokens
   }
+  if not use_effort:                       # newer models deprecate temperature
+    call["temperature"] = 1 if think else temperature
   if think:
-    budget = think if isinstance(think, int) else 8000
-    call["thinking"] = {"type": "enabled", "budget_tokens": budget}
+    if use_effort:
+      call["thinking"] = {"type": "adaptive"}
+      call["output_config"] = {"effort": _claude_effort(think)}
+    else:
+      budget = think if isinstance(think, int) else 8000
+      call["thinking"] = {"type": "enabled", "budget_tokens": budget}
   if sysprompt:
     call["system"] = [{"type": "text", "text": sysprompt, "cache_control": {"type": "ephemeral"}}]
 

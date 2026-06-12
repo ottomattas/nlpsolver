@@ -33,8 +33,37 @@
 
 import json
 import copy
+import re
+import hashlib
 
 from globals import options as _g_options
+
+
+_SETLABEL_SK_RE = re.compile(r"^sk\d")
+
+
+def _content_label(cond_term):
+  """(ultracoarse) Stable short id keyed on a $setof body's predicate skeleton,
+  with variables and skolems abstracted to one placeholder so two structurally-
+  identical sets (a rule's "copies of E", a fact's "copies of sk1") share a
+  label.  $arg1 and ordinary constants (class / relation names) are kept, so
+  genuinely different sets ("copies" vs "reviews") still differ."""
+  def _varlike(s):
+    return (s.startswith("?:")
+            or _SETLABEL_SK_RE.match(s) is not None
+            or (len(s) <= 2 and s[:1].isupper()))   # Stage-2 vars: E, X, ...
+
+  def norm(n):
+    if isinstance(n, list):
+      return [norm(e) for e in n]
+    if isinstance(n, str):
+      if n == "$arg1":
+        return n
+      return "#V" if _varlike(n) else n
+    return n
+
+  return hashlib.md5(
+      json.dumps(norm(cond_term), sort_keys=True).encode()).hexdigest()[:8]
 
 
 # Module-level counter for unique set identifiers (reset externally if needed).
@@ -269,18 +298,26 @@ def _rewrite_setof(node, depth):
   else:
     info.anchored = False
     info.anchor = "id"
-    # Use set_id from Stage-1 if provided, otherwise generate one
+    # No $ prefix for conditions-only form
+    conds_replaced = [_replace_var(c, var, info.arg_name) for c in remaining]
+    sorted_conds = _sort_and_conditions(conds_replaced)
+    cond_term = ["$and"] + sorted_conds
+    # Set label.  Default: a per-occurrence counter.  Under -ultracoarse: a
+    # CONTENT-derived label keyed on the body's predicate skeleton (variables
+    # and skolems abstracted), so two structurally-identical sets -- a rule's
+    # "copies of E" and a fact's "copies of sk1" -- get the SAME label and their
+    # $count terms unify (the bodies still disambiguate via normal unification).
+    # The per-occurrence counter otherwise makes them set_1 vs set_2, which
+    # never unify even when the bodies match (case 15).
     if explicit_set_id is not None:
       set_id = explicit_set_id
+    elif _g_options.get("ultracoarse_flag", False):
+      set_id = "set_" + _content_label(cond_term)
     else:
       global _set_counter
       _set_counter += 1
       set_id = "set_" + str(_set_counter)
     info.subject = set_id
-    # No $ prefix for conditions-only form
-    conds_replaced = [_replace_var(c, var, info.arg_name) for c in remaining]
-    sorted_conds = _sort_and_conditions(conds_replaced)
-    cond_term = ["$and"] + sorted_conds
     info.canonical = ["$setof", "id", set_id, cond_term]
 
   info.conditions = info.canonical[-1]

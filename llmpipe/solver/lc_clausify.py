@@ -181,6 +181,24 @@ def singularize_isa_classes_in_node(node):
           for x in node]
 
 
+def lower_isa_classes_in_node(node):
+  """Recursively lower-case the CLASS argument (index 1) of every `isa` / `-isa`
+  atom, so capitalization variants of the same category ("American national" vs
+  "american national") unify.  Only arg 1 (the class/type) is touched; the
+  entity instance (arg 2) and every other position keep their case.  (Used under
+  -ultracoarse, where FOLIO's mixed-case nationality/proper-adjective classes
+  otherwise split into distinct predicates.)"""
+  if not isinstance(node, list) or not node:
+    return node
+  head = node[0]
+  if (isinstance(head, str) and head in ("isa", "-isa")
+      and len(node) >= 2 and isinstance(node[1], str)):
+    return [head, node[1].lower()] + [
+      lower_isa_classes_in_node(x) for x in node[2:]]
+  return [lower_isa_classes_in_node(x) if isinstance(x, list) else x
+          for x in node]
+
+
 def _expand_generic_objects(frm):
   """Replace bare plural type names in object positions with fresh vars + isa.
 

@@ -21,6 +21,7 @@
 
 import os
 import sys
+import re
 import json
 import time
 import argparse
@@ -38,7 +39,14 @@ DEFAULT_OUTROOT = "testresults"
 def load_tests(path):
   with open(path) as f:
     src = f.read()
-  data = eval(src, {"__builtins__": {}}, {})
+  try:
+    data = eval(src, {"__builtins__": {}}, {})
+  except SyntaxError:
+    # Module-style test file (e.g. "tests = [...]" with comments, like the FOLIO
+    # subsets): exec the source and pick up the `tests` list.
+    ns = {}
+    exec(src, {"__builtins__": {}}, ns)
+    data = ns.get("tests")
   if not isinstance(data, list):
     raise ValueError(f"{path}: top-level is not a list")
   out = []
@@ -58,6 +66,25 @@ def testname_from_path(path):
   return stem
 
 
+def combined_tag(instr_file, examples_file, explicit_tag):
+  """Best-effort short label for the combined output dir suffix.
+  explicit_tag wins; otherwise derive from the instructions + examples basenames
+  (e.g. combined_v2_instructions_full + combined_examples_pure -> 'v2_pure')."""
+  if explicit_tag:
+    return re.sub(r"[^0-9A-Za-z]+", "_", explicit_tag).strip("_") or "combined"
+  def piece(path, strip):
+    if not path:
+      return ""
+    s = os.path.splitext(os.path.basename(path))[0]
+    for token in strip:
+      s = s.replace(token, "")
+    return s.strip("_")
+  instr = piece(instr_file, ["combined_", "_instructions_full", "instructions"])
+  ex = piece(examples_file, ["combined_examples_", "combined_", "_examples", "examples"])
+  parts = [p for p in (instr, ex) if p]
+  return "_".join(parts) or "combined"
+
+
 # ======== worker (runs in a separate process) ========
 
 def _worker(args):
@@ -69,10 +96,21 @@ def _worker(args):
   import llmcall
   _solve_mod.llm = llm
 
+  # Pop the private version/max_tokens overrides (solve module globals, not option
+  # keys) before they reach set_global_options.
+  ro = dict(run_opts)
+  _ver = ro.pop("_version_override", None)
+  _mt = ro.pop("_maxtokens_override", None)
+  if _ver:
+    _solve_mod.llm_version = _ver
+    setattr(llmcall, llm + "version", _ver)   # so version_map records the override
+  if _mt:
+    _solve_mod.max_tokens = _mt
+
   collect = {}
   error_payload = None
   try:
-    english_to_answer(input_text, options=dict(run_opts), collect=collect)
+    english_to_answer(input_text, options=ro, collect=collect)
   except KeyboardInterrupt:
     raise
   except Exception as e:
@@ -91,6 +129,12 @@ def _worker(args):
     "deepseek": getattr(llmcall, "deepseekversion", None),
   }
   collect["_llm_version"] = version_map.get(llm)
+  if run_opts.get("combined_flag"):
+    collect["combined"] = {
+      "instr": run_opts.get("combined_instr_file"),
+      "examples": run_opts.get("combined_examples_file"),
+      "checklist": run_opts.get("combined_checklist_file"),
+    }
   if error_payload is not None:
     collect["_error"] = error_payload
   return (case_id, llm, collect)
@@ -133,7 +177,10 @@ def build_case_json(testname, case_id, input_text, expected, llm, collect, match
   correctness = None
   if answer is not None and "_error" not in collect:
     try:
-      correctness = bool(matcher(expected, answer, input_text))
+      # One-stage (combined-prompt) runs enable the lenient rendering-artefact
+      # fallback in the matcher; two-stage runs do not.
+      correctness = bool(matcher(expected, answer, input_text,
+                                 single_stage=bool(collect.get("combined"))))
     except Exception:
       correctness = None
 
@@ -149,7 +196,8 @@ def build_case_json(testname, case_id, input_text, expected, llm, collect, match
     out["answer"] = answer
   if correctness is not None:
     out["correctness"] = correctness
-  for k in ("stage1", "stage_1_fixes", "stage_1_retries",
+  for k in ("combined", "directanswer",
+            "stage1", "stage_1_fixes", "stage_1_retries",
             "stage2", "stage_2_fixes", "stage_2_retries",
             "clauses", "gk_command", "proof", "nl_proof"):
     v = collect.get(k)
@@ -482,6 +530,40 @@ def main():
                   help="Run the requested LLMs SEQUENTIALLY in-process (no "
                        "parallel Pool). Best for cache-served reruns where the "
                        "LLM calls hit the local SQLite cache.")
+  ap.add_argument("-combined-instr", dest="combined_instr", default=None,
+                  help="Combined single-stage instructions prompt file (enables "
+                       "one-call English->logic parsing; results go to a "
+                       "<set>_<tag> output dir so they don't clash with two-stage runs)")
+  ap.add_argument("-combined-examples", dest="combined_examples", default=None,
+                  help="Combined examples prompt file (optional)")
+  ap.add_argument("-combined-checklist", dest="combined_checklist", default=None,
+                  help="Combined checklist prompt file (optional)")
+  ap.add_argument("-combined-tag", dest="combined_tag", default=None,
+                  help="Label for the combined output dir suffix; if omitted, "
+                       "derived from the prompt filenames")
+  ap.add_argument("-directanswer", dest="directanswer", default=None,
+                  help="Direct-answer prompt file: answer each case with ONE LLM "
+                       "call (no logic, no prover). Output goes to a <set>_<tag> dir.")
+  ap.add_argument("-prenorm", action="store_true",
+                  help="Enable the pre-Stage-1 normalization LLM phase")
+  ap.add_argument("-ultracoarse", action="store_true",
+                  help="Enable -ultracoarse abstraction (event-folding, simple "
+                       "properties, entity canonicalization)")
+  ap.add_argument("-nocrossstage", action="store_true",
+                  help="Disable the ultracoarse cross-stage unsatisfiable-guard "
+                       "retry (avoids live corrective LLM calls)")
+  ap.add_argument("-version", dest="version", default=None,
+                  help="Override the model version for the chosen LLM "
+                       "(e.g. claude-opus-4-8). Applies to all -llms in the run.")
+  ap.add_argument("-think", dest="think", type=int, default=None,
+                  help="Enable extended thinking with this token budget "
+                       "(Claude budget_tokens / Gemini thinkingBudget). "
+                       "Must be below -maxtokens.")
+  ap.add_argument("-maxtokens", dest="maxtokens", type=int, default=None,
+                  help="Override max output tokens (must exceed the -think budget).")
+  ap.add_argument("-tag", dest="tag", default=None,
+                  help="General output-dir suffix: results go to testresults/<set>_<tag>/. "
+                       "Use to keep a variant (directanswer, ultracoarse, ...) separate.")
   args = ap.parse_args()
 
   llms = [s.strip() for s in args.llms.split(",") if s.strip()]
@@ -491,8 +573,23 @@ def main():
 
   tests = load_tests(args.testfile)
   testname = testname_from_path(args.testfile)
+  # Variant modes suffix the set name so results live beside (not on top of) the
+  # plain two-stage testresults/<set>/ data.
+  combined_on = bool(args.combined_instr)
+  directanswer_on = bool(args.directanswer)
+  if combined_on:
+    tag = args.tag or combined_tag(args.combined_instr, args.combined_examples, args.combined_tag)
+  elif directanswer_on:
+    tag = args.tag or "directanswer"
+  else:
+    tag = args.tag
+  if tag:
+    testname = testname + "_" + re.sub(r"[^0-9A-Za-z]+", "_", tag).strip("_")
   print(f"Loaded {len(tests)} cases from {args.testfile} (testname={testname})")
   print(f"LLMs: {llms}")
+  if combined_on:
+    print(f"Combined single-stage: instr={args.combined_instr} "
+          f"examples={args.combined_examples} checklist={args.combined_checklist}")
   print(f"Output: {os.path.join(args.out, testname)}/<llm>/case_NNNN.json")
 
   # ID / limit / filter selection
@@ -517,6 +614,32 @@ def main():
   run_opts = {}
   if args.geminicache:
     run_opts["use_gemini_cache_flag"] = True
+  if combined_on:
+    # Only solver-known keys go into run_opts (set_global_options rejects unknowns).
+    run_opts["combined_flag"] = True
+    run_opts["combined_instr_file"] = args.combined_instr
+    run_opts["combined_examples_file"] = args.combined_examples
+    run_opts["combined_checklist_file"] = args.combined_checklist
+  if directanswer_on:
+    run_opts["directanswer_flag"] = True
+    run_opts["directanswer_file"] = args.directanswer
+  if args.prenorm:
+    run_opts["prenorm_flag"] = True
+  if args.ultracoarse:
+    run_opts["coarse_flag"] = True
+    run_opts["ultracoarse_flag"] = True
+    run_opts["noproptypes_flag"] = True
+  if args.nocrossstage:
+    run_opts["crossstage_retry_flag"] = False
+  if args.think is not None:
+    run_opts["think_flag"] = args.think
+  # version / max_tokens are solve module globals, not option keys; carry them
+  # under private keys that _worker pops before english_to_answer (set_global_options
+  # rejects unknown keys).
+  if args.version:
+    run_opts["_version_override"] = args.version
+  if args.maxtokens:
+    run_opts["_maxtokens_override"] = args.maxtokens
 
   # Per-case parallel: one worker per (case, llm).  Pool size = len(llms).
   ctx = get_context("fork")

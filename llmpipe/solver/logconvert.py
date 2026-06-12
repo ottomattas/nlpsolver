@@ -43,6 +43,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------
 
+import re
 import os as _os
 
 from globals import options as _g_options
@@ -51,7 +52,8 @@ import lc_clausify
 import lc_questions
 
 from lc_clausify import (clausify, is_skolem_const, is_skolem_fn,
-                         singularize_isa_classes_in_node)
+                         singularize_isa_classes_in_node,
+                         lower_isa_classes_in_node)
 
 from lc_questions import (
   simplify_contradictory_and,
@@ -92,6 +94,7 @@ from lc_post_normalize import (
 )
 from lc_post_reify import (
   rewrite_definites as _rewrite_definites,
+  emit_definite_identities as _emit_definite_identities,
   rewrite_measure_terms as _rewrite_measure_terms,
 )
 from lc_post_inject import (
@@ -109,6 +112,9 @@ from lc_post_inject import (
   inject_acquire_have_axioms as _inject_acquire_have_axioms,
   inject_positional_actor_bridges as _inject_positional_actor_bridges,
   inject_containment_bridges as _inject_containment_bridges,
+  inject_occasion_location_bridges as _inject_occasion_location_bridges,
+  inject_in_haspart_bridge as _inject_in_haspart_bridge,
+  inject_reflexive_property_bridge as _inject_reflexive_property_bridge,
   inject_attribute_relation_bridges as _inject_attribute_relation_bridges,
   inject_stable_adjective_persistence as _inject_stable_adjective_persistence,
   inject_world_geometry as _inject_world_geometry,
@@ -246,6 +252,153 @@ def _repair_misnested_normally_implies(logic):
     logic = ["normally", ["implies", logic[1][1], logic[2]]]
   return [_repair_misnested_normally_implies(c) if isinstance(c, list) else c
           for c in logic]
+
+
+# ======== self-defeating-conditional repair (negation scope) ========
+#
+# Stage-2 sometimes mis-scopes "X is not A and B": it reads "(not A) and B"
+# when the sentence means "not (A and B)".  The resulting conditional
+# ["implies", ["and", ["not", A], B], CONS] is SELF-DEFEATING when CONS is
+# false under every antecedent-satisfying assignment -- the whole rule then
+# collapses to just ¬antecedent, losing the intended content (case 41: premise
+# "if Rina is not dependent and a student, then ..." parsed as ¬dep∧student,
+# reducing to student→dependent).
+#
+# Detection is a tiny boolean truth-table over the (few) atoms of the
+# implication; a *correctly* scoped conditional is never self-defeating, so the
+# signal is clean.  Repair only the unambiguous two-conjunct mixed-polarity
+# antecedent, by widening the negation to ¬(A∧B), and ONLY when that removes
+# the self-defeat -- so we never flip a genuinely narrow-scope "(not A) and B".
+# Ultracoarse-gated.
+
+_SDC_CONNECTIVES = frozenset({"and", "or", "not", "xor", "implies",
+                              "equivalent", "iff"})
+
+
+def _sdc_atom_key(atom):
+  """Canonical hashable form of an atom, ignoring $ctxt sub-terms."""
+  if isinstance(atom, list):
+    parts = []
+    for x in atom:
+      if (isinstance(x, list) and x and isinstance(x[0], str)
+          and x[0].startswith("$ctxt")):
+        continue
+      parts.append(_sdc_atom_key(x))
+    return tuple(parts)
+  return atom
+
+
+def _sdc_collect_atoms(node, out):
+  if not isinstance(node, list) or not node or not isinstance(node[0], str):
+    return
+  if node[0] in _SDC_CONNECTIVES:
+    for c in node[1:]:
+      _sdc_collect_atoms(c, out)
+  else:
+    out.add(_sdc_atom_key(node))
+
+
+def _sdc_eval(node, assign):
+  """Evaluate a boolean formula; return True/False, or None if not evaluable."""
+  if not isinstance(node, list) or not node or not isinstance(node[0], str):
+    return None
+  h = node[0]
+  if h == "not":
+    v = _sdc_eval(node[1], assign) if len(node) >= 2 else None
+    return None if v is None else (not v)
+  if h in ("and", "or", "xor"):
+    vs = [_sdc_eval(c, assign) for c in node[1:]]
+    if any(v is None for v in vs):
+      return None
+    if h == "and":
+      return all(vs)
+    if h == "or":
+      return any(vs)
+    return (sum(1 for v in vs if v) % 2) == 1
+  if h == "implies" and len(node) >= 3:
+    a = _sdc_eval(node[1], assign); b = _sdc_eval(node[2], assign)
+    return None if (a is None or b is None) else ((not a) or b)
+  if h in ("equivalent", "iff") and len(node) >= 3:
+    a = _sdc_eval(node[1], assign); b = _sdc_eval(node[2], assign)
+    return None if (a is None or b is None) else (a == b)
+  # atom
+  return assign.get(_sdc_atom_key(node))
+
+
+def _sdc_is_self_defeating(ant, cons):
+  """True iff ant is satisfiable but cons is false in every ant-true row."""
+  atoms = set()
+  _sdc_collect_atoms(ant, atoms)
+  _sdc_collect_atoms(cons, atoms)
+  atoms = sorted(atoms)
+  if not atoms or len(atoms) > 5:
+    return False
+  n = len(atoms)
+  ant_sat = False
+  for mask in range(1 << n):
+    assign = {atoms[i]: bool(mask >> i & 1) for i in range(n)}
+    a = _sdc_eval(ant, assign)
+    if a is None:
+      return False                      # not fully evaluable -> don't flag
+    if a:
+      ant_sat = True
+      c = _sdc_eval(cons, assign)
+      if c is None:
+        return False
+      if c:
+        return False                    # an ant-true row with cons true
+  return ant_sat
+
+
+def _sdc_overlaps(conj, cons_atoms):
+  a = set()
+  _sdc_collect_atoms(conj, a)
+  return bool(a & cons_atoms)
+
+
+def _sdc_widen_negation(ant, cons):
+  """For an ["and", ...] antecedent with EXACTLY ONE negated conjunct ["not", P],
+  widen that negation over P plus the other "content" conjuncts (those whose
+  atoms appear in the consequent), leaving guard conjuncts (e.g. isa(person,X),
+  whose atoms the consequent never mentions) outside.  Returns the rewritten
+  antecedent, or None if the shape doesn't qualify.
+  "not (a person dependent on caffeine) and a student" ->
+  person ∧ ¬(dependent ∧ student)."""
+  if not (isinstance(ant, list) and len(ant) >= 2 and ant[0] == "and"):
+    return None
+  conjs = ant[1:]
+  negated = [c for c in conjs
+             if isinstance(c, list) and len(c) == 2 and c[0] == "not"]
+  if len(negated) != 1:
+    return None
+  negc = negated[0]
+  positives = [c for c in conjs if c is not negc]
+  cons_atoms = set()
+  _sdc_collect_atoms(cons, cons_atoms)
+  content = [c for c in positives if _sdc_overlaps(c, cons_atoms)]
+  guards = [c for c in positives if not _sdc_overlaps(c, cons_atoms)]
+  if not content:
+    return None
+  new_neg = ["not", ["and", negc[1]] + content]
+  new_conjs = guards + [new_neg]
+  return new_conjs[0] if len(new_conjs) == 1 else ["and"] + new_conjs
+
+
+def _repair_self_defeating_conditional(logic):
+  if not _g_options.get("ultracoarse_flag"):
+    return logic
+  return _rsdc(logic)
+
+
+def _rsdc(node):
+  if not isinstance(node, list) or not node:
+    return node
+  node = [_rsdc(c) if isinstance(c, list) else c for c in node]
+  if node[0] == "implies" and len(node) >= 3 and _sdc_is_self_defeating(node[1], node[2]):
+    widened = _sdc_widen_negation(node[1], node[2])
+    if widened is not None and not _sdc_is_self_defeating(widened, node[2]):
+      node = ["implies", widened] + node[2:]
+  return node
 
 
 # ======== @definite tag stripping ========
@@ -584,6 +737,17 @@ def _try_singularize(word):
   return None
 
 
+# Broad biological supertypes that are always sound to assert as a superclass of
+# a more specific Stage-2 type (gentleman->person, alligator->animal).
+_BROAD_SUPERTYPES = frozenset({"person", "animal"})
+
+try:
+  from data_names import gender_of as _name_gender
+except Exception:
+  def _name_gender(_first):
+    return None
+
+
 def _build_entity_category_clauses(s1_json, skip_entities=frozenset()):
   """Build isa clauses for concrete entities that carry a category annotation.
 
@@ -634,6 +798,22 @@ def _build_entity_category_clauses(s1_json, skip_entities=frozenset()):
         # Category isa (e.g. isa(person, man 1)) — skip if Stage-2 already has it.
         if eid not in skip_entities:
           clauses.append({"@name": name, "@logic": ["isa", category, eid]})
+        # (b) Broad biological supertypes are always emitted, even when Stage-2
+        # already gave a subtype (isa(gentleman,Harry) / isa(alligator,Ted)):
+        # a gentleman IS a person, an alligator IS an animal, and rules in the
+        # problem are quantified over "person"/"animal" that nothing else
+        # establishes for the entity.  Sound supertype facts -- never skipped.
+        elif category in _BROAD_SUPERTYPES:
+          clauses.append({"@name": name, "@logic": ["isa", category, eid]})
+        # (b2, ultracoarse) Gender from a first-name table: isa(man/woman, E),
+        # so a rule guarded by "man"/"woman" can fire ("a man is either kind or
+        # evil").  Sound when the name is known.
+        if (category == "person"
+            and _g_options.get("ultracoarse_flag", False)):
+          first = eid.split(" ", 1)[0]
+          g = _name_gender(first)
+          if g:
+            clauses.append({"@name": name, "@logic": ["isa", g, eid]})
         # Base-word isa (e.g. isa(man, man 1)) — always add when the base
         # is a lowercase type word different from the category, even if
         # skip_entities contains the entity (Stage-2 may have isa(person,...)
@@ -649,6 +829,16 @@ def _build_entity_category_clauses(s1_json, skip_entities=frozenset()):
             if (singular and singular != base
                 and singular.lower() != category.lower()):
               clauses.append({"@name": name, "@logic": ["isa", singular, eid]})
+        # (ultracoarse) Name-as-type: a multiword proper name is also typed by
+        # its own name lowercased, so a generic existential ("a winter olympics")
+        # can bind to the named constant ("Winter Olympics") that is otherwise
+        # typed only by its category (isa(event,...)).
+        if _g_options.get("ultracoarse_flag", False):
+          name_base = re.sub(r"\s+\d+$", "", eid).strip()
+          name_type = name_base.lower()
+          if (" " in name_base and re.search(r"[A-Z]", name_base)
+              and name_type != category.lower()):
+            clauses.append({"@name": name, "@logic": ["isa", name_type, eid]})
   return clauses
 
 
@@ -689,6 +879,14 @@ def rawlogic_convert(logic, s1_json=None, fixes=None):
   _b = logic
   logic = _repair_misnested_normally_implies(logic)
   _note_repair(_b, logic, "repair misnested normally/implies")
+
+  # Repair a self-defeating conditional caused by a "not A and B" negation-scope
+  # mis-parse: widen ["implies", ["and", ["not", A], B], CONS] to ¬(A∧B) when the
+  # current reading makes CONS impossible under its antecedent (ultracoarse,
+  # case 41).
+  _b = logic
+  logic = _repair_self_defeating_conditional(logic)
+  _note_repair(_b, logic, "repair self-defeating conditional")
 
   # Lower outer `normally` into the consequent of forall...implies bodies:
   # ["normally", ["forall", X, ["implies", A, B]]] →
@@ -734,6 +932,16 @@ def rawlogic_convert(logic, s1_json=None, fixes=None):
   # classifier.  Pipeline-only marker; Stage 2 doesn't emit it.  Skips
   # inner content events of two-event reifications (has_content second arg).
   logic = _inject_actuality(logic)
+
+  # -coarse experiment: fold collapsible Davidsonian events (no modal, no
+  # content nest, no world change, template roles only) into one flat "do"
+  # literal.  Runs after actuality injection and tense-has_time stripping so
+  # the eligibility test sees the final event shape.  $ctxt is attached to the
+  # "do" literal later (lc_ctxt) exactly as for reified roles.
+  if _g_options.get("coarse_flag", False):
+    import lc_coarse as _lc_coarse
+    logic = _lc_coarse.coarsen_events(logic,
+                                      ultra=_g_options.get("ultracoarse_flag", False))
 
   # Strip @definite tags from the logic tree.  These are metadata annotations
   # produced by Stage 2 but not consumed by the pipeline (definite info comes
@@ -795,7 +1003,13 @@ def rawlogic_convert(logic, s1_json=None, fixes=None):
   pop_facts = _populate_clauses(items)
 
   # Build compound type subsumption rules (e.g. "baby bird" -> "bird").
-  compound_subs = _build_compound_subsumption(items)
+  # Under -ultracoarse also scan the Stage-1 entity-category clauses, so a
+  # compound that only appears as an entity category ("harding pegmatite mine")
+  # still gets its head subsumption (-> "mine").  See case 112.
+  _ultra_flag = _g_options.get("ultracoarse_flag", False)
+  compound_subs = _build_compound_subsumption(
+      items, ultra=_ultra_flag,
+      extra_clauses=(entity_cat_clauses if _ultra_flag else ()))
 
   # Track how many times each unit_id has been seen so we can generate
   # globally unique clause names (sent_S1, sent_S1_2, sent_S1_3, ...).
@@ -829,7 +1043,13 @@ def rawlogic_convert(logic, s1_json=None, fixes=None):
   # Rewrite definite functional descriptions to $theof1 terms (global pass).
   # Runs after all packages are collected so question packages can find
   # is_rel2/have+isa matches from assertion packages.
-  if asu_index:
+  # Under -ultracoarse, skip $theof1 reification: the function-term rewrite can
+  # absorb a named subject's relation ("Andrew was the script editor for X" ->
+  # the relation is folded into $theof1 and the Andrew link is lost).  Leaving
+  # definites as plain relations keeps those links and matches FOLIO's atomic
+  # relation style.
+  if asu_index and not _g_options.get("ultracoarse_flag", False):
+    _emit_definite_identities(result, asu_index)
     for sid_key in asu_index:
       _rewrite_definites(result, asu_index, sid_key, theof_relations)
 
@@ -895,6 +1115,12 @@ def rawlogic_convert(logic, s1_json=None, fixes=None):
                   + _inject_containment_bridges(result)
                   + _inject_attribute_relation_bridges(result)
                   + _inject_stable_adjective_persistence(result))
+    if _g_options.get("ultracoarse_flag"):
+      import lc_coarse as _lcc
+      sem_axioms = (sem_axioms + _lcc.rel2_event_axiom_clauses()
+                    + _inject_occasion_location_bridges(result)
+                    + _inject_in_haspart_bridge(result)
+                    + _inject_reflexive_property_bridge(result))
 
   # Append population facts, synonym axioms, and exclusion axioms after
   # all sentence clauses (assertions + questions come first).
@@ -969,11 +1195,18 @@ def rawlogic_convert(logic, s1_json=None, fixes=None):
   # with the singular form and with the population witness isa(animal,
   # $some_animal).  Runs after all injection so no later pass can reintroduce a
   # plural class name.
+  _ultra = _g_options.get("ultracoarse_flag", False)
   for _c in result:
     if isinstance(_c, dict):
       for _k in ("@logic", "@question"):
         if isinstance(_c.get(_k), list):
           _c[_k] = singularize_isa_classes_in_node(_c[_k])
+          if _ultra:
+            # (ultracoarse) fold isa-class case so "American national" and
+            # "american national" become one predicate.  Runs after all
+            # injection (incl. compound subsumption) so no later pass can
+            # reintroduce a capitalized class.
+            _c[_k] = lower_isa_classes_in_node(_c[_k])
 
   # Drop vacuous negative tense-agreement has_time escapes from query goal
   # clauses (-has time(E, T, _, $ctxt(T, ...)) with the value equal to the
@@ -991,12 +1224,59 @@ def rawlogic_convert(logic, s1_json=None, fixes=None):
   # ASU-derived clauses.  It is stripped in clause_list_to_json_commented
   # before serialization for the prover.
 
+  # (b, ultracoarse) Gendered-noun -> gender axioms.  For each gendered role
+  # noun that occurs as a type in the clauses (gentleman, actress, waitress,
+  # ...), inject isa(noun,X) -> isa(man/woman,X), so a rule guarded by
+  # "man"/"woman" fires for an entity typed only with the role noun.  Gated to
+  # nouns actually present, so at most a handful of axioms are added.
+  if _g_options.get("ultracoarse_flag", False):
+    try:
+      from data_names import GENDERED_NOUN as _GN
+    except Exception:
+      _GN = {}
+    if _GN:
+      present = set()
+      def _scan_types(node):
+        if isinstance(node, list):
+          if (len(node) >= 3 and node[0] in ("isa", "-isa")
+              and isinstance(node[1], str) and node[1] in _GN):
+            present.add(node[1])
+          for x in node:
+            _scan_types(x)
+      for obj in result:
+        if isinstance(obj, dict):
+          _scan_types(obj.get("@logic") or obj.get("@question"))
+      for noun in sorted(present):
+        result.append({"@name": "frm_gender",
+                       "@logic": [["-isa", noun, "?:Xg"], ["isa", _GN[noun], "?:Xg"]]})
+
   # UNA wrapping: prefix every Stage-1 numbered entity with "#:" so the gk
   # prover treats distinct entity constants as definitely unequal. Required
   # by axioms_std.js §7h (X2 direct-support uniqueness).
   stage1_entities = _collect_stage1_entities(s1_json)
   if stage1_entities:
     result = _apply_una(result, stage1_entities)
+
+  # (ultracoarse) Decouple $ctxt: replace every $ctxt term with its own fresh
+  # variable, so no two atoms are forced to share tense / world / location.
+  # FOLIO is timeless, and a single shared $ctxt across a rule's antecedent
+  # literals otherwise blocks rules whose facts differ in tense (case 112: a
+  # "donated" [past] mine vs its [present] location can't satisfy one shared
+  # context).  Runs last, after every $ctxt-reading pass.
+  if _ultra:
+    _ctxt_ctr = [0]
+    def _freshen_ctxt(node):
+      if isinstance(node, list):
+        if node and node[0] == "$ctxt":
+          _ctxt_ctr[0] += 1
+          return "?:Cu" + str(_ctxt_ctr[0])
+        return [_freshen_ctxt(x) for x in node]
+      return node
+    for _c in result:
+      if isinstance(_c, dict):
+        for _k in ("@logic", "@question"):
+          if isinstance(_c.get(_k), list):
+            _c[_k] = _freshen_ctxt(_c[_k])
 
   return result
 

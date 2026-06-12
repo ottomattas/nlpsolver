@@ -37,12 +37,14 @@ CTXT_ELIGIBLE = frozenset({
   "has beneficiary", "has accompaniment", "has path", "has result",
   "has topic", "has cause",
   "typical", "typically",
+  "do",
 })
 
 # Descriptive predicates in questions: these identify/describe the referent
 # and should use free-variable world in $ctxt.
 DESC_PREDS = frozenset({
   "isa",
+  "do",
   "has type", "has actor", "has target", "has time",
   "has location", "has instrument", "has manner", "has direction",
   "has destination", "has recipient", "has source",

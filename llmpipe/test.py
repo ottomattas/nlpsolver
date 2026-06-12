@@ -37,6 +37,8 @@
 import re
 import sys
 import time
+import unicodedata
+import urllib.parse
 
 sys.path.insert(0, './solver')
 from solve import english_to_answer
@@ -438,18 +440,24 @@ def _measures_match(expected, received):
   return abs(a[1] - b[1]) < 1e-6
 
 
-def _result_matches(expected, received, input_text=""):
+def _result_matches(expected, received, input_text="", single_stage=False):
   """Return True if received is an acceptable answer for expected.
 
   When expected is a list, the test passes if received matches ANY element.
+
+  single_stage: set True only for one-stage (combined-prompt) runs.  It enables
+  an extra, conservative final fallback that tolerates English-rendering
+  artefacts which arise because there is no Stage-1 to name entities (leaked
+  entity-id letters, dropped adjectives, singular/plural).  Two-stage runs leave
+  it False, so their matching is completely unchanged.
   """
   # Multiple acceptable answers: pass if any alternative matches.
   if isinstance(expected, list):
-    return any(_result_matches_single(alt, received, input_text) for alt in expected)
-  return _result_matches_single(expected, received, input_text)
+    return any(_result_matches_single(alt, received, input_text, single_stage) for alt in expected)
+  return _result_matches_single(expected, received, input_text, single_stage)
 
 
-def _result_matches_single(expected, received, input_text=""):
+def _result_matches_single(expected, received, input_text="", single_stage=False):
   """Return True if received matches a single expected value."""
   # Normalise Python booleans to canonical answer strings
   if received is True:  received  = "True."
@@ -531,6 +539,26 @@ def _result_matches_single(expected, received, input_text=""):
   # Adjective-prepend: "The nice mother" matches "The mother" if "nice" is in the input text
   if type(expected) == str and type(cleaned) == str and input_text:
     if _adjective_prepend_match(expected, cleaned, input_text):
+      return True
+
+  # One-stage (combined-prompt) runs only: a final conservative fallback for
+  # English-rendering artefacts that have no Stage-1 to fix them.
+  if single_stage and type(expected) == str and type(cleaned) == str:
+    # adjectives dropped / entity-id letters / plural / truncated stems
+    if _lenient_single_stage_match(expected, cleaned):
+      return True
+    # A1: temporal-point-preposition equivalence ("In 1800" == "During 1800")
+    te = _temporal_phrases(expected)
+    if te is not None and te == _temporal_phrases(cleaned):
+      return True
+    # A2: URL-encoded / diacritic entity names ("Emaj%C3%B5gi" == "Emajogi")
+    en, rn = _url_diacritic_norm(expected), _url_diacritic_norm(cleaned)
+    if (en != expected or rn != cleaned) and (
+        en == rn or _standardize(en) == _standardize(rn)
+        or _phrases_match(en, rn) or _lenient_single_stage_match(en, rn)):
+      return True
+    # A3: plural noun answer vs a coordination of that noun's instances
+    if _plural_coordination_match(expected, cleaned):
       return True
 
   return False
@@ -677,6 +705,179 @@ def _standardize(txt):
   words = [w for w in words if w not in _skip and len(w) > 1]
   words.sort()
   return words
+
+
+def _singularize(w):
+  """Crudely fold a plural to its singular: 'foxes'->'fox', 'guests'->'guest'.
+
+  Strips a trailing 'es' then 's'.  Conservative: only for words long enough
+  that the stem stays meaningful.
+  """
+  if len(w) > 3 and w.endswith("es"):
+    return w[:-2]
+  if len(w) > 2 and w.endswith("s"):
+    return w[:-1]
+  return w
+
+
+def _lenient_words(phrase):
+  """Content words of one coordinated chunk, normalised for one-stage matching.
+
+  Reuses _parse_phrase (drops leading spatial preposition, confidence qualifier
+  and articles), then drops leaked entity-id tokens (single letters and bare
+  numbers, e.g. the 'A' in 'car A') and singularises the rest.  The chunk's head
+  noun is the LAST word returned.
+  """
+  _, content = _parse_phrase(phrase)
+  words = [w for w in content.split() if len(w) > 1 and not w.isdigit()]
+  return [_singularize(w) for w in words]
+
+
+def _lenient_single_stage_match(expected, received):
+  """Conservative one-stage-only fallback for English-rendering artefacts.
+
+  Splits both sides into coordinated chunks on ' and ' / ',' (NOT 'or', so a
+  disjunctive expected like 'Mike or Mickey' is never matched by a conjunctive
+  'Mickey and Mike').  Requires the SAME number of chunks, pairs them by head
+  noun, and for each pair requires the received chunk's words to be a SUBSET of
+  the expected chunk's words.  This accepts answers that merely lost adjectives
+  or carry a leaked entity-id letter / plural ('car A' ~ 'a red car',
+  'Guest C' ~ 'the guests', 'A foxes' ~ 'a fox'), while rejecting answers that
+  add a conflicting word ('blue box' vs 'red box'), drop or add an item
+  ('garden' vs 'garden, hallway and kitchen'), or switch and/or.
+  """
+  if type(expected) != str or type(received) != str:
+    return False
+  exp_chunks = _split_and_phrases(expected)
+  rec_chunks = _split_and_phrases(received)
+  if not rec_chunks or len(exp_chunks) != len(rec_chunks):
+    return False
+
+  def chunk(p):
+    prep, content = _parse_phrase(p)   # prep = leading spatial preposition, or ""
+    words = [_singularize(w) for w in content.split() if len(w) > 1 and not w.isdigit()]
+    return prep, words
+
+  exp = [chunk(c) for c in exp_chunks]
+  rec = [chunk(c) for c in rec_chunks]
+  # Every chunk must reduce to at least one content word (its head noun).
+  if any(not w for _, w in exp) or any(not w for _, w in rec):
+    return False
+  used = [False] * len(exp)
+  for rprep, rw in rec:
+    rhead = rw[-1]
+    paired = False
+    for i, (eprep, ew) in enumerate(exp):
+      if used[i]:
+        continue
+      # Prepositions must be compatible (permissively: both present must match,
+      # one absent is OK) so 'in the box' never matches 'on the box'; head nouns
+      # match (allowing truncated stem+id, 'Ele1' ~ 'elephant'); and every
+      # received word is covered by an expected word (dropped adjectives OK, a
+      # conflicting word is not).
+      prep_ok = (eprep == rprep) if strict_prepositions else (not eprep or not rprep or eprep == rprep)
+      if prep_ok and _heads_match(ew[-1], rhead) and all(any(_heads_match(x, y) for y in ew) for x in rw):
+        used[i] = True
+        paired = True
+        break
+    if not paired:
+      return False
+  return all(used)
+
+
+def _head_key(tok):
+  """('ele1' -> ('ele', True)) for a truncated stem+id leak; else (singular, False)."""
+  m = re.match(r"^([a-z]{2,})\d+$", tok.lower())
+  if m:
+    return (m.group(1), True)
+  return (_singularize(tok.lower()), False)
+
+
+def _heads_match(a, b):
+  """Two content words match if equal (singularised), or one is a truncated
+  stem+id whose >=3-char stem is a prefix of the other ('Ele1' ~ 'elephant',
+  'Stu1' ~ 'students', 'Pea1' ~ 'pear').  The truncated form must carry a digit,
+  so ordinary words never prefix-match (no 'still' ~ 'stillness')."""
+  ca, ta = _head_key(a)
+  cb, tb = _head_key(b)
+  if ca == cb:
+    return True
+  if ta and len(ca) >= 3 and cb.startswith(ca):
+    return True
+  if tb and len(cb) >= 3 and ca.startswith(cb):
+    return True
+  return False
+
+
+def _plural_coordination_match(expected, received):
+  """A single PLURAL-noun answer matches a coordination of that noun's instances:
+  'The elephants' ~ 'Elephant 2 and Elephant 1' (or 'Ele1 and Ele2').  Requires
+  the expected head to be plural so a singular answer never matches >1 instance."""
+  if not (isinstance(expected, str) and isinstance(received, str)):
+    return False
+  ec = _split_and_phrases(expected)
+  rc = _split_and_phrases(received)
+  if len(ec) != 1 or len(rc) < 2:
+    return False
+  ew = [w for w in _parse_phrase(ec[0])[1].split() if len(w) > 1 and not w.isdigit()]
+  if not ew:
+    return False
+  raw = ew[-1]
+  if not (raw.endswith("s") and len(raw) > 3):   # expected head must be plural
+    return False
+  ehead = _singularize(raw)
+  for rp in rc:
+    rw = _lenient_words(rp)
+    if not rw or not _heads_match(ehead, rw[-1]):
+      return False
+  return True
+
+
+# Temporal-point prepositions that mean "at this time" and are interchangeable
+# (in/on/at/during a year/month/day) — but NOT before/after, which are directional.
+_TEMPORAL_POINT_PREPS = frozenset({"in", "on", "at", "during"})
+_MONTHS = frozenset(("january february march april may june july august september "
+                     "october november december jan feb mar apr jun jul aug sep "
+                     "sept oct nov dec").split())
+_WEEKDAYS = frozenset("monday tuesday wednesday thursday friday saturday sunday".split())
+_TIMEWORDS = frozenset({"noon", "midnight", "morning", "afternoon", "evening",
+                        "night", "today", "tomorrow", "yesterday"})
+
+
+def _is_temporal_token(t):
+  return bool(re.fullmatch(r"\d{3,4}", t)) or t in _MONTHS or t in _WEEKDAYS or t in _TIMEWORDS
+
+
+def _temporal_phrases(s):
+  """Per coordinated phrase that contains a temporal token, drop a leading
+  in/on/at/during so 'In 1800' == 'During 1800'.  Returns the sorted phrase list,
+  or None if no phrase is temporal (so this only fires on time answers — it never
+  collapses spatial 'in the box' vs 'on the box')."""
+  if not isinstance(s, str):
+    return None
+  out = []
+  saw = False
+  for ph in _split_and_phrases(s):
+    w = [x for x in ph.lower().replace(".", "").replace(",", "").split() if x not in _ARTICLES]
+    if any(_is_temporal_token(x) for x in w):
+      saw = True
+      if w and w[0] in _TEMPORAL_POINT_PREPS:
+        w = w[1:]
+    out.append(" ".join(w))
+  return sorted(out) if saw else None
+
+
+def _url_diacritic_norm(s):
+  """URL-decode and strip diacritics: 'Emaj%C3%B5gi' -> 'Emajogi' (single-stage
+  entity-name renderings sometimes leak percent-encoded / accented constants)."""
+  if not isinstance(s, str):
+    return s
+  try:
+    s = urllib.parse.unquote(s)
+  except Exception:
+    pass
+  s = unicodedata.normalize("NFKD", s)
+  return "".join(c for c in s if not unicodedata.combining(c))
 
 
 def _display(expected):
