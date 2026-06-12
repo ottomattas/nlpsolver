@@ -54,9 +54,28 @@ from procproofs import process_proof
 
 # semantic normalisation of GK clauses
 import semnormalize
+import unicodedata
 
 # gk theorem prover caller
 import prover
+
+
+def _ascii_fold_logic(obj):
+  """Recursively transliterate every string in a parsed-logic structure to plain
+  ASCII (NFKD decompose, drop combining marks, drop any remaining non-ASCII).
+  Keeps the prover input pure ASCII so its ASCII-decoded output never crashes on
+  accented entity names.  No-op for already-ASCII input; returns None unchanged."""
+  if obj is None:
+    return None
+  if isinstance(obj, str):
+    s = unicodedata.normalize("NFKD", obj)
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    return s.encode("ascii", "ignore").decode("ascii")
+  if isinstance(obj, list):
+    return [_ascii_fold_logic(x) for x in obj]
+  if isinstance(obj, dict):
+    return {_ascii_fold_logic(k): _ascii_fold_logic(v) for k, v in obj.items()}
+  return obj
 
 # cache utilities
 import cache
@@ -151,6 +170,35 @@ def english_to_answer(text, options=None, collect=None):
     print(text)
 
   think_flag = globals.options.get("think_flag", False)
+
+  # Direct-answer mode: answer with ONE LLM call using the given prompt, skipping
+  # the parse -> logic -> prover pipeline.  Works for any test set.
+  if globals.options.get("directanswer_flag"):
+    import directanswer
+    prompt_file = globals.options.get("directanswer_file")
+    answer = directanswer.answer_directly(
+      text, prompt_file, llm=llm, version=llm_version, tokens=max_tokens, think=think_flag)
+    if collect is not None:
+      collect["answer"] = answer
+      collect["directanswer"] = {"prompt": prompt_file}
+    if show_logic or show_details:
+      print(answer)
+    return answer
+
+  llmparse.prenorm_enabled = globals.options.get("prenorm_flag", False)
+  llmparse.canon_entities_enabled = globals.options.get("ultracoarse_flag", False)
+  llmparse.crossstage_guard_retry = globals.options.get("crossstage_retry_flag", True)
+  llmparse.combined_enabled        = globals.options.get("combined_flag", False)
+  llmparse.combined_instr_file     = globals.options.get("combined_instr_file")
+  llmparse.combined_examples_file  = globals.options.get("combined_examples_file")
+  llmparse.combined_checklist_file = globals.options.get("combined_checklist_file")
+  llmparse.s2split_enabled         = globals.options.get("s2split_flag", False)
+  if llmparse.s2split_enabled and llmparse.combined_enabled:
+    return "Error: -s2split is incompatible with combined single-stage parsing (-combined-instr)"
+
+  # Parsing-architecture experiment modes (Conditions B/C/D, see wip/plans)
+  # bypass the two-stage path; otherwise the standard two-stage parse_text
+  # (which honours s2split_enabled and the coarse machinery).
   onestage_mode = globals.options.get("onestage_mode")
   if onestage_mode == "refine":
     s1_json, s2_json, parse_stats = llmparse.parse_text_refine(
@@ -164,6 +212,14 @@ def english_to_answer(text, options=None, collect=None):
     s1_json, s2_json, parse_stats = llmparse.parse_text(
       text, llm=llm, version=llm_version, tokens=max_tokens, think=think_flag
     )
+
+  # ASCII-fold the parsed logic before clausification so accented entity names
+  # (e.g. "Náutico", "Świątek", "Oñate") become plain ASCII ("Nautico",
+  # "Swiatek", "Onate").  The prover reads the gk subprocess output as ASCII
+  # (prover.py), so a non-ASCII byte otherwise crashes the proof step (answer
+  # None).  Folding both stages keeps entity names consistent between them.
+  s1_json = _ascii_fold_logic(s1_json)
+  s2_json = _ascii_fold_logic(s2_json)
 
   if collect is not None:
     if s1_json is not None:
@@ -423,6 +479,20 @@ def _parse_cmd_line():
     elif el in ["-simpleproperties", "--simpleproperties"]:
       opts["noproptypes_flag"] = True
       opts["noexceptions_flag"] = True
+    elif el in ["-coarse", "--coarse"]:
+      opts["coarse_flag"] = True
+    elif el in ["-ultracoarse", "--ultracoarse"]:
+      opts["coarse_flag"] = True
+      opts["ultracoarse_flag"] = True
+      opts["noproptypes_flag"] = True   # (a) collapse gradables to simple properties
+    elif el in ["-prenorm", "--prenorm"]:
+      opts["prenorm_flag"] = True
+    elif el in ["-s2split", "--s2split"]:
+      opts["s2split_flag"] = True
+    elif el in ["-slightcoarse", "--slightcoarse"]:
+      opts["slightcoarse_flag"] = True
+    elif el in ["-nocrossstage", "--nocrossstage"]:
+      opts["crossstage_retry_flag"] = False
     elif el in ["-llm", "--llm"]:
       if elpos + 1 >= len(params):
         print("-llm requires a provider name: gpt, claude, gemini, or deepseek")
@@ -444,6 +514,32 @@ def _parse_cmd_line():
         print("-version requires a model version string")
         sys.exit(0)
       llm_version = params[elpos + 1]
+      skippos = 1
+    elif el in ["-combined-instr", "--combined-instr"]:
+      if elpos + 1 >= len(params):
+        print("-combined-instr requires a path to a combined instructions prompt file")
+        sys.exit(0)
+      opts["combined_instr_file"] = params[elpos + 1]
+      opts["combined_flag"] = True   # presence of -combined-instr turns single-stage mode on
+      skippos = 1
+    elif el in ["-combined-examples", "--combined-examples"]:
+      if elpos + 1 >= len(params):
+        print("-combined-examples requires a path to a combined examples prompt file")
+        sys.exit(0)
+      opts["combined_examples_file"] = params[elpos + 1]
+      skippos = 1
+    elif el in ["-combined-checklist", "--combined-checklist"]:
+      if elpos + 1 >= len(params):
+        print("-combined-checklist requires a path to a combined checklist prompt file")
+        sys.exit(0)
+      opts["combined_checklist_file"] = params[elpos + 1]
+      skippos = 1
+    elif el in ["-directanswer", "--directanswer"]:
+      if elpos + 1 >= len(params):
+        print("-directanswer requires a path to a direct-answer prompt file")
+        sys.exit(0)
+      opts["directanswer_file"] = params[elpos + 1]
+      opts["directanswer_flag"] = True   # answer with one LLM call, no pipeline
       skippos = 1
     elif el in ["-seconds", "--seconds"]:
       if elpos + 1 >= len(params):
@@ -563,6 +659,24 @@ parser architecture (default: two-stage, English -> ASUs -> logic):
 LLM selection:
  -llm NAME    : LLM provider: gpt, claude, gemini, or deepseek (default: from llmcall.py config)
  -version VER : model version string, e.g. claude-sonnet-4-6, gpt-5.1
+
+split Stage 2:
+ -s2split     : one Stage-2 LLM call per Stage-1 sentence package; outputs joined
+                into one logic (failed sentences skipped unless they hold the
+                question; locally-invented worlds renumbered to fresh indices)
+ -slightcoarse: light shape unification: off-inventory predicate rename
+                (has->have, has rel2->is rel2), shape bridges (destination->
+                location, beneficiary/recipient lift, measure<->comparative),
+                property-shape compound composition, broad-supertype isa.
+                Composable with -s2split (whose divergences it was built for)
+
+combined single-stage parsing (one LLM call, English -> logic; no Stage-1 JSON):
+ -combined-instr FILE     : combined instructions prompt file (enables single-stage mode)
+ -combined-examples FILE  : combined examples prompt file (optional)
+ -combined-checklist FILE : combined checklist prompt file (optional)
+
+direct-answer mode (one LLM call, answer the question directly; no logic, no prover):
+ -directanswer FILE       : direct-answer prompt file (system prompt); test-set agnostic
  -think       : enable medium reasoning/thinking mode (GPT: reasoning_effort=medium;
                 Claude: extended thinking; Gemini: requires 2.5+ model;
                 DeepSeek: switches to deepseek-reasoner)

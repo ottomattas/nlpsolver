@@ -207,8 +207,22 @@ def _walk_assertion_for_pos(frm, cls, prop, deg):
 
 # ======== compound type rules ========
 
-def scan_compound_types(items):
-  """Scan all @id items for isa / -isa atoms with space-containing type names.
+def _walk_clause_dicts(extra_clauses, walk):
+  """Apply walk() to the @logic / @question body of each clause-dict in
+  extra_clauses (e.g. Stage-1 entity-category clauses, which are not @id
+  items)."""
+  for obj in extra_clauses or ():
+    if not isinstance(obj, dict):
+      continue
+    for key in ("@logic", "@question"):
+      body = obj.get(key)
+      if isinstance(body, list):
+        walk(body)
+
+
+def scan_compound_types(items, extra_clauses=()):
+  """Scan all @id items (and any extra clause-dicts) for isa / -isa atoms with
+  space-containing type names.
 
   Returns a set of compound type strings (e.g. {"baby bird"}).
   """
@@ -230,11 +244,37 @@ def scan_compound_types(items):
     if not isinstance(item, list) or len(item) < 3 or item[0] != "@id":
       continue
     _walk(item[2])
+  _walk_clause_dicts(extra_clauses, _walk)
 
   return compounds
 
 
-def build_compound_subsumption(items):
+def scan_all_isa_types(items, extra_clauses=()):
+  """Scan all @id items (and any extra clause-dicts) for every isa / -isa class
+  name (any word count), including question packages.  Returns a set of class
+  strings."""
+  classes = set()
+
+  def _walk(frm):
+    if not isinstance(frm, list) or not frm:
+      return
+    op = frm[0]
+    if (isinstance(op, str) and op in ("isa", "-isa") and len(frm) >= 3
+        and isinstance(frm[1], str)):
+      classes.add(frm[1])
+    for el in frm[1:]:
+      if isinstance(el, list):
+        _walk(el)
+
+  for item in items:
+    if not isinstance(item, list) or len(item) < 3 or item[0] != "@id":
+      continue
+    _walk(item[2])
+  _walk_clause_dicts(extra_clauses, _walk)
+  return classes
+
+
+def build_compound_subsumption(items, ultra=False, extra_clauses=(), degree_comp=False):
   """Build subsumption and composition rules for compound type names.
 
   For each compound type like "baby bird", emits:
@@ -242,18 +282,40 @@ def build_compound_subsumption(items):
       [-isa, "baby bird", "?:X"], ["isa", "bird", "?:X"]
     Rule 2 (composition, confidence 0.95, no blocker):
       [-isa, "baby", "?:X"], [-isa, "bird", "?:X"], ["isa", "baby bird", "?:X"]
+
+  Under -ultracoarse, Rule 1 subsumes not only to the bare head but to every
+  attested intermediate word-suffix, so "American professional basketball
+  player" -> "professional basketball player" (not just -> "player").  The
+  intermediate target must be an isa class actually present in the problem
+  (attestation, case-insensitive); an unattested suffix would only ever produce
+  a dead clause.  See FOLIO cases 191/192.
+
+  extra_clauses (clause-dicts, e.g. Stage-1 entity-category isa facts) are
+  scanned too, so a compound type that only appears as an entity category
+  ("harding pegmatite mine" from entity_S*) still gets its head subsumption
+  (-> "mine").  See case 112.
   """
-  compounds = scan_compound_types(items)
+  compounds = scan_compound_types(items, extra_clauses)
+  all_lower = ({c.lower() for c in scan_all_isa_types(items, extra_clauses)}
+               if ultra else set())
   result = []
   for ctype in sorted(compounds):
     parts = ctype.split()
     head = parts[-1]
     modifier = " ".join(parts[:-1])
-    # Rule 1: subsumption (strict) — baby bird -> bird
-    result.append({
-      "@name": "compound_sub",
-      "@logic": [["-isa", ctype, "?:X"], ["isa", head, "?:X"]]
-    })
+    # Rule 1: subsumption (strict) — baby bird -> bird; under -ultracoarse also
+    # -> every attested intermediate suffix.
+    targets = [head]
+    if ultra:
+      for k in range(1, len(parts) - 1):       # drop k leading modifier words
+        suffix = " ".join(parts[k:])
+        if suffix.lower() in all_lower:
+          targets.append(suffix)
+    for tgt in dict.fromkeys(targets):
+      result.append({
+        "@name": "compound_sub",
+        "@logic": [["-isa", ctype, "?:X"], ["isa", tgt, "?:X"]]
+      })
     # Rule 2: composition (semi-strict) — baby + bird -> baby bird
     result.append({
       "@name": "compound_comp",
@@ -264,6 +326,30 @@ def build_compound_subsumption(items):
       ],
       "@confidence": 0.95
     })
+    # (slightcoarse) Rule 2 in property shape: Stage-2 (isolated -s2split
+    # sentences most of all) renders the modifier as a degree/simple property of X, not as an isa
+    # ("John is a small fish?" -> isa(fish,X) ∧ has_degree_property(small,X)),
+    # so the isa-shaped composition above never matches.  Emit the same
+    # composition with the modifier as a property; single-word modifiers only.
+    if degree_comp and " " not in modifier:
+      result.append({
+        "@name": "compound_comp",
+        "@logic": [
+          ["-has degree property", modifier, "?:X", "?:Dg", "?:Rc", "?:Ct"],
+          ["-isa", head, "?:X"],
+          ["isa", ctype, "?:X"]
+        ],
+        "@confidence": 0.95
+      })
+      result.append({
+        "@name": "compound_comp",
+        "@logic": [
+          ["-has property", modifier, "?:X", "?:Ct"],
+          ["-isa", head, "?:X"],
+          ["isa", ctype, "?:X"]
+        ],
+        "@confidence": 0.95
+      })
   return result
 
 # ======== RELCLASS coercion ========

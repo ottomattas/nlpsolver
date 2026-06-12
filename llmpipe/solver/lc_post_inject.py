@@ -1162,6 +1162,180 @@ def inject_containment_bridges(result, axiom_vocab=frozenset()):
   return axioms
 
 
+# ======== occasion co-location bridge (case 178) ========
+#
+# An event located <prep> a place is also located <prep> any OCCASION that is
+# itself <prep> that place.  Lets "US won medals IN Tokyo" + "the Olympics was
+# IN Tokyo" derive "US won medals IN the Olympics":
+#
+#   is_rel2(P, Occ, Place) & has_location(E, Place, P) -> has_location(E, Occ, P)
+#
+# Emitted per preposition P only when BOTH an is_rel2(P,...) relation AND a
+# has_location(...,P) atom are present (so it never fires on unrelated problems).
+# The bridge is spatially loose (everything <prep> the place inherits the
+# occasion), so it is gated to the ultracoarse encoding (caller-side).
+
+_OCCASION_LOC_PREPS = frozenset({"in", "on", "at", "near"})
+
+# Physical-location classes.  The bridge only fires when its Place is typed as
+# one of these, so abstract "in" containment ("in the six-way tie", "in the
+# leaderboard") does not inherit the occasion (case 195 regression).
+_LOCATION_CLASSES = frozenset({
+    "place", "location", "city", "country", "town", "village", "region",
+    "area", "state", "province", "continent", "island", "airport", "venue",
+})
+
+
+def inject_occasion_location_bridges(result, axiom_vocab=frozenset()):
+  """Co-location bridge for {in,on,at,near}: has_location(E,Place,P) plus
+  is_rel2(P,Occ,Place) and Place is a physical location ->
+  has_location(E,Occ,P).  See case 178 (and the case-195 guard)."""
+  del axiom_vocab  # gated on atom presence in the clause list
+  have_rel = set()       # prepositions seen as an is_rel2 relation
+  have_loc = set()       # prepositions seen as a has_location preposition
+  place_classes = set()  # physical-location classes asserted in the problem
+
+  def walk(n):
+    if isinstance(n, list) and n and isinstance(n[0], str):
+      neg = n[0].startswith("-")
+      base = n[0][1:] if neg else n[0]
+      if (base == "is rel2" and len(n) >= 2 and isinstance(n[1], str)
+          and n[1] in _OCCASION_LOC_PREPS):
+        have_rel.add(n[1])
+      if (base == "has location" and len(n) >= 4 and isinstance(n[3], str)
+          and n[3] in _OCCASION_LOC_PREPS):
+        have_loc.add(n[3])
+      if (not neg and base == "isa" and len(n) >= 2 and isinstance(n[1], str)
+          and n[1] in _LOCATION_CLASSES):
+        place_classes.add(n[1])
+      for c in n[1:]:
+        walk(c)
+    elif isinstance(n, list):
+      for c in n:
+        walk(c)
+
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    body = obj.get("@logic")
+    if body is None:
+      body = obj.get("@question")
+    walk(body)
+
+  axioms = []
+  for prep in sorted(have_rel & have_loc):
+    for cls in sorted(place_classes):
+      c1 = _fresh_fv()
+      c2 = _fresh_fv()
+      clause = [["-is rel2", prep, "?:Occ", "?:Place", c1],
+                ["-has location", "?:E", "?:Place", prep, c2],
+                ["-isa", cls, "?:Place"],
+                ["has location", "?:E", "?:Occ", prep, c2]]
+      axioms.append({"@name": "frm_occasion_loc", "@logic": clause})
+  return axioms
+
+
+# ======== containment -> has_part bridge (cases 112/114) ========
+#
+# An entity located "in" a whole is a part of that whole:
+#
+#   is_rel2("in", X, Y, C) -> has_part(Y, X, C)
+#
+# ("X in Y" makes the container Y the whole and X the part.)  Emitted once, only
+# when the clause set contains BOTH an is_rel2("in", ...) atom and a has_part
+# atom, so the consequent can be consumed and no dead clause is added.  Untyped:
+# under -ultracoarse FOLIO uses "in" for physical part-of containment (a mine
+# in a mountain range), so the bridge is gated to the ultracoarse encoding
+# (caller-side) rather than to a part-noun type.
+
+def inject_in_haspart_bridge(result, axiom_vocab=frozenset()):
+  """Containment->part bridge is_rel2("in",X,Y,C) -> has_part(Y,X,C), emitted
+  only when both an is_rel2("in",...) and a has_part atom are present.  See
+  cases 112/114.  Ultracoarse-only (caller-side gate)."""
+  del axiom_vocab  # gated on atom presence in the clause list
+  state = {"in": False, "haspart": False}
+
+  def walk(n):
+    if isinstance(n, list) and n and isinstance(n[0], str):
+      base = n[0][1:] if n[0].startswith("-") else n[0]
+      if base == "is rel2" and len(n) >= 2 and n[1] == "in":
+        state["in"] = True
+      elif base == "has part":
+        state["haspart"] = True
+      for c in n[1:]:
+        walk(c)
+    elif isinstance(n, list):
+      for c in n:
+        walk(c)
+
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    body = obj.get("@logic")
+    if body is None:
+      body = obj.get("@question")
+    walk(body)
+
+  if not (state["in"] and state["haspart"]):
+    return []
+  return [{"@name": "frm_in_haspart",
+           "@logic": [["-is rel2", "in", "?:X", "?:Y", "?:C"],
+                      ["has part", "?:Y", "?:X", "?:C"]]}]
+
+
+# ======== reflexive relation <-> property bridge (case 89) ========
+#
+# A degenerate self-comparison "X is ADJ-er than [X-]before" parses to the
+# reflexive relation is_rel2(ADJ, X, X), but the same adjective on a rule
+# consequent ("become smarter") is the unary has_property(ADJ, X).  Bridge the
+# two so either satisfies the other:
+#
+#   has_property(ADJ, X, C) <-> is_rel2(ADJ, X, X, C)
+#
+# Emitted per predicate P only when P appears BOTH as a reflexive is_rel2
+# (equal args) AND as a has_property in the clause set, so it never fires on an
+# ordinary two-place relation.  Ultracoarse-only (caller-side gate).
+
+def inject_reflexive_property_bridge(result, axiom_vocab=frozenset()):
+  """Bridge has_property(P,X,C) <-> is_rel2(P,X,X,C) for each P present both as
+  a reflexive is_rel2(P,A,A) and as a has_property(P,...).  See case 89."""
+  del axiom_vocab  # gated on atom presence in the clause list
+  refl_props = set()   # P seen as reflexive is_rel2(P, A, A)
+  prop_props = set()   # P seen as has_property(P, ...)
+
+  def walk(n):
+    if isinstance(n, list) and n and isinstance(n[0], str):
+      base = n[0][1:] if n[0].startswith("-") else n[0]
+      if (base == "is rel2" and len(n) >= 4 and isinstance(n[1], str)
+          and n[2] == n[3]):
+        refl_props.add(n[1])
+      elif base == "has property" and len(n) >= 3 and isinstance(n[1], str):
+        prop_props.add(n[1])
+      for c in n[1:]:
+        walk(c)
+    elif isinstance(n, list):
+      for c in n:
+        walk(c)
+
+  for obj in result:
+    if not isinstance(obj, dict):
+      continue
+    body = obj.get("@logic")
+    if body is None:
+      body = obj.get("@question")
+    walk(body)
+
+  axioms = []
+  for p in sorted(refl_props & prop_props):
+    axioms.append({"@name": "frm_reflexive_prop",
+                   "@logic": [["-has property", p, "?:X", "?:C"],
+                              ["is rel2", p, "?:X", "?:X", "?:C"]]})
+    axioms.append({"@name": "frm_reflexive_prop",
+                   "@logic": [["-is rel2", p, "?:X", "?:X", "?:C"],
+                              ["has property", p, "?:X", "?:C"]]})
+  return axioms
+
+
 # ======== attribute property↔relation bridges (case 901) ========
 #
 # A property VALUE that belongs to an attribute family (color/shape/material/
@@ -1482,4 +1656,135 @@ def inject_world_geometry(result):
     axioms.append({"@name": "frm_world_geom",
                    "@sourcetype": "world_geometry",
                    "@logic": ["next", "W" + str(i), "W" + str(i + 1)]})
+  return axioms
+
+
+# ======== light shape-unification bridges (-slightcoarse) ========
+#
+# Stage-2 output sometimes uses near-synonymous constructions inconsistently:
+# the question says has_location where the fact said has_destination, a role on
+# the target entity where the fact put it on the event, a measure comparison
+# where the question uses a comparative.  Per-sentence -s2split calls diverge
+# this way most of all, but joint calls do too.  These bridges let the shapes
+# interderive.  Each is emitted only when BOTH shapes (or the bridged
+# predicate) actually occur in the clause list, and only under -slightcoarse
+# (caller-side gate in logconvert), so the default path and the coarse
+# encodings are untouched.
+
+def _scan_predicates(result):
+  """Set of positive base predicate names occurring in the clause list."""
+  preds = set()
+
+  def walk(n):
+    if isinstance(n, list) and n and isinstance(n[0], str):
+      h = n[0]
+      preds.add(h[1:] if h.startswith("-") else h)
+      for c in n[1:]:
+        walk(c)
+    elif isinstance(n, list):
+      for c in n:
+        walk(c)
+
+  for obj in result:
+    if isinstance(obj, dict):
+      body = obj.get("@logic")
+      if body is None:
+        body = obj.get("@question")
+      walk(body)
+  return preds
+
+
+def inject_slightcoarse_shape_bridges(result):
+  """Bridges between near-synonymous constructions (-slightcoarse).
+
+  - have <-> has_part: a part is had and a had part-ish thing is a part
+    ("Who has a grey trunk?" vs rule "elephants have trunks" encoded has_part).
+  - has_destination -> has_location: a motion event's destination answers a
+    location question ("Where did Mary go?").
+  - beneficiary lift: an event's beneficiary is also its target's beneficiary
+    ("cooked a meal for the guests" -> "the meal is for the guests").
+  """
+  preds = _scan_predicates(result)
+  axioms = []
+  # have / has_part needs NO bridge here: has_part -> have (the sound
+  # direction) is a static axiom (axioms_std.js top), and the risky
+  # have -> has_part direction is covered conservatively by the always-on,
+  # per-problem-typed lc_post_normalize.add_haspart_for_typed_have.  Case 190
+  # only needed the has->have predicate rename for the static axiom to reach
+  # the question atom.
+  if "has destination" in preds and "has location" in preds:
+    axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
+      ["-has destination", "?:Esb", "?:Xsb", "?:Psb", "?:Csb"],
+      ["has location", "?:Esb", "?:Xsb", "?:Psb", "?:Csb"]]})
+  if "has beneficiary" in preds:
+    axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
+      ["-has target", "?:Esb", "?:Ysb", "?:Csb"],
+      ["-has beneficiary", "?:Esb", "?:Xsb", "?:Csb"],
+      ["has beneficiary", "?:Ysb", "?:Xsb", "?:Csb"]]})
+  if "has recipient" in preds:
+    axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
+      ["-has target", "?:Esb", "?:Ysb", "?:Csb"],
+      ["-has recipient", "?:Esb", "?:Xsb", "?:Csb"],
+      ["has recipient", "?:Ysb", "?:Xsb", "?:Csb"]]})
+  axioms.extend(_measure_comparative_bridges(result))
+  return axioms
+
+
+# Measurement dimension -> the comparative adjective whose has_degree_rel2 it
+# grounds (less_measure(m(D,X), m(D,Y)) means X measures less in D than Y).
+_MEASURE_DIM_ADJ = {
+  "height": "high", "weight": "heavy", "length": "long", "size": "big",
+  "age": "old", "speed": "fast", "width": "wide", "depth": "deep",
+  "temperature": "hot", "distance": "far",
+}
+
+
+def _measure_comparative_bridges(result):
+  """(slightcoarse) Bridge the measurement shape to the comparative shape:
+  one Stage-2 output encodes "X is higher than Y" as less_measure($measure_of(height,Y),
+  $measure_of(height,X)) while the question split uses
+  has_degree_rel2(high, ...).  Per dimension/adjective pair present on both
+  sides, emit:
+    less_measure(m(D,X,W), m(D,Y,W)) -> has_degree_rel2(ADJ, Y, X, ...)
+    less_measure(m(D,X,W), m(D,Y,W)) -> -has_degree_rel2(ADJ, X, Y, ...)
+  (X measures strictly less than Y, so Y is ADJ-er and X is not.)"""
+  dims = set()
+  adjs = set()
+
+  def walk(n):
+    if isinstance(n, list) and n and isinstance(n[0], str):
+      base = n[0][1:] if n[0].startswith("-") else n[0]
+      if base == "less_measure":
+        for a in n[1:]:
+          if (isinstance(a, list) and len(a) >= 2 and a[0] == "$measure_of"
+              and isinstance(a[1], str)):
+            dims.add(a[1])
+      elif base == "has degree rel2" and len(n) >= 2 and isinstance(n[1], str):
+        adjs.add(n[1])
+      for c in n[1:]:
+        walk(c)
+    elif isinstance(n, list):
+      for c in n:
+        walk(c)
+
+  for obj in result:
+    if isinstance(obj, dict):
+      body = obj.get("@logic")
+      if body is None:
+        body = obj.get("@question")
+      walk(body)
+
+  axioms = []
+  for dim in sorted(dims):
+    adj = _MEASURE_DIM_ADJ.get(dim)
+    if not adj or adj not in adjs:
+      continue
+    mx = ["$measure_of", dim, "?:Xsb", "?:Wsb"]
+    my = ["$measure_of", dim, "?:Ysb", "?:Wsb"]
+    axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
+      ["-less_measure", mx, my],
+      ["has degree rel2", adj, "?:Ysb", "?:Xsb", "?:Dsb", "?:Rsb", "?:Csb"]]})
+    axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
+      ["-less_measure", mx, my],
+      ["-has degree rel2", adj, "?:Xsb", "?:Ysb", "?:Dsb2", "?:Rsb2", "?:Csb2"]]})
   return axioms

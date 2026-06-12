@@ -41,6 +41,7 @@
 
 import globals
 import pretty
+import axiom_vocab
 from data_antonyms import ANTONYMS
 from data_canonicals import CANONICALS
 
@@ -77,7 +78,7 @@ _DEGREE_SLOT = {
 }
 
 
-def _normalize_atom(atom, allow_flip=True):
+def _normalize_atom(atom, present, allow_flip=True):
   """Normalise a single atom (list) in place; return change count.
 
   Recurses into list-valued arguments. Position 0 (predicate name) is never
@@ -89,6 +90,10 @@ def _normalize_atom(atom, allow_flip=True):
   and prover have no way to interpret.
   For GK disjunctive clauses (first element is a list), recurses into
   every element — there is no predicate name to skip.
+
+  `present` is the set of words occurring in the problem (∪ axiom vocab);
+  antonym folding fires only when its target word is in `present`, so it never
+  invents a fresh predicate disconnected from the rest of the problem.
   """
   if not isinstance(atom, list) or len(atom) == 0:
     return 0
@@ -97,7 +102,7 @@ def _normalize_atom(atom, allow_flip=True):
   if isinstance(atom[0], list):
     changes = 0
     for sub in atom:
-      changes += _normalize_atom(sub, allow_flip=True)
+      changes += _normalize_atom(sub, present, allow_flip=True)
     return changes
   changes = 0
   pred = atom[0]
@@ -119,12 +124,17 @@ def _normalize_atom(atom, allow_flip=True):
         pass
       else:
         # Function term: canonical substitution only, never polarity flip.
-        changes += _normalize_atom(arg, allow_flip=False)
+        changes += _normalize_atom(arg, present, allow_flip=False)
     elif _eligible(arg):
       word = arg
       # Pass 1: antonym resolution — flip polarity and swap to antonym.
       # Only at the top-level literal; function terms have no polarity.
-      if allow_flip and word in ANTONYMS:
+      # Under the coarse encodings, gated on the target being present
+      # (present=None means no gating), so we never introduce a predicate that
+      # appears nowhere else (case 22: "evil"↛"good" when "good" is absent).
+      # The default path folds unconditionally (core-2026-06-03 behavior).
+      if (allow_flip and word in ANTONYMS
+          and (present is None or ANTONYMS[word] in present)):
         antonym = ANTONYMS[word]
         # flip predicate polarity
         if negated:
@@ -146,14 +156,23 @@ def _normalize_atom(atom, allow_flip=True):
 
 # ======== clause-level normalisation ========
 
-def _normalize_clause(clause):
+def _collect_words(node, out):
+  """Collect every eligible (content) word occurring in a clause body."""
+  if isinstance(node, list):
+    for x in node:
+      _collect_words(x, out)
+  elif _eligible(node):
+    out.add(node)
+
+
+def _normalize_clause(clause, present):
   """Normalise one clause dict; return change count."""
   if not isinstance(clause, dict):
     return 0
   changes = 0
   for key in ("@logic", "@question"):
     if key in clause:
-      changes += _normalize_atom(clause[key])
+      changes += _normalize_atom(clause[key], present)
   return changes
 
 
@@ -173,9 +192,26 @@ def sem_normalize_clauses(clauses):
   if debug:
     before_str = pretty.pp_str(clauses)
 
+  # Gating vocabulary for antonym folding (coarse encodings only): words
+  # present in the problem plus axiom content words.  On the default path
+  # present stays None and antonym folding is unconditional (core-2026-06-03
+  # checkpoint behavior).
+  present = None
+  if globals.options.get("coarse_flag", False):
+    present = set()
+    for clause in clauses:
+      if isinstance(clause, dict):
+        for key in ("@logic", "@question"):
+          if key in clause:
+            _collect_words(clause[key], present)
+    try:
+      present |= axiom_vocab.load_axiom_vocab()
+    except Exception:
+      pass
+
   total = 0
   for clause in clauses:
-    total += _normalize_clause(clause)
+    total += _normalize_clause(clause, present)
 
   if total > 0 and debug:
     print("\n=== semantic normalization: {:d} substitution(s) ===\n".format(total))

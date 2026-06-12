@@ -15,6 +15,7 @@ For implementation details see `DOCUMENTATION.md`.
 3. [GK Prover Input: Clause List](#3-gk-prover-input-clause-list)
 4. [End-to-End Example](#4-end-to-end-example)
 5. [Simplification Flags](#5-simplification-flags)
+6. [Coarse and Ultracoarse Encodings](#6-coarse-and-ultracoarse-encodings)
 
 ---
 
@@ -1370,3 +1371,121 @@ Combines all three: `-nocontext` + `-noexceptions` + `-simpleproperties`.
 Default: has_degree_property(big, cat_1, none, cat, $ctxt(present, W0, ?:Fv1, ?:Fv2))
 -simple: has_property(big, cat_1, "$c")
 ```
+
+---
+
+## 6. Coarse and Ultracoarse Encodings
+
+The flags `-coarse` and `-ultracoarse` produce progressively flatter event encodings,
+built for deductive benchmarks (FOLIO) whose gold logic uses atomic n-ary relations
+rather than reified Davidsonian events.  `-ultracoarse` implies `-coarse` and
+`-simpleproperties`.  Both are post-LLM: Stage 1 and Stage 2 are unchanged; the folds
+run inside `logconvert` (machinery reference: DOCUMENTATION.md §11).
+
+### 6.1 `-coarse`: the flat `do` literal
+
+A *collapsible* Davidsonian event is replaced by one combined literal
+
+```
+do(TYPE, ACTOR, TARGET, RECIPIENT)
+```
+
+with `"none"` filling absent roles.  The event variable and its `exists` wrapper
+disappear; `$ctxt` is attached to `do` exactly as it would be to the reified roles, so
+tense survives:
+
+```
+Default:  exists E. isa(activity,E) ∧ has_type(E,feed) ∧ has_actor(E,"John 1")
+                  ∧ has_target(E,"dog 2") ∧ has_time(E,past,in) ∧ actuality(E)
+-coarse:  do(feed, "John 1", "dog 2", none, $ctxt(past, W0, ?:Fv1, ?:Fv2))
+```
+
+Collapsible means: no modal classifier (`capability`, `necessity`, …, including
+`typical`), not part of a `has_content` two-event reification, and only template
+roles `{type, actor, target, recipient}` (a tense-valued `has_time` is tolerated and
+moved to `$ctxt`).  Anything else — an instrument, a location, an explicit time, a
+modal — keeps the event reified, so the two shapes coexist in one clause set.
+
+### 6.2 `-ultracoarse`: relational folds
+
+Everything `-coarse` does, plus aggressive folds that produce FOLIO-style binary
+atoms.  An event with an actor and exactly one object role
+(`target`/`beneficiary`/`source`/`recipient`) becomes a binary relation; an event
+with an actor and no object becomes a unary property:
+
+```
+"Real Madrid signed Mbappe":   is_rel2(sign, "Real Madrid 1", "Mbappe 2", CTX)
+"The good guys always win":    has_property(win, ?:X, CTX)
+```
+
+Further fold rules:
+- **Habituals fold.**  The `typical` classifier no longer blocks folding; it is
+  stripped, so "X plays for Y" in a rule and in the question reduce to the same
+  `is_rel2(play, X, Y)` literal.  Other modal classifiers still block.
+- **Topic fold:** actor + `has_topic`, no object role → `is_rel2(verb, actor, topic)`
+  ("jokes about caffeine").
+- **Passive fold:** target but no actor → `has_property(verb, target)`, dropping a
+  `from`/`at` adjunct ("X was suspended from Y" → `has_property(suspend, X)`).
+- **Two-event reifications** fold the inner content event to its verb:
+  "X wants to fly" → `is_rel2(want, X, fly)`.
+- **Rule antecedents** fold too: an event introduced as bare conjuncts under `forall`
+  (no `exists` wrapper) is folded in place, so the rule's literal unifies with the
+  folded fact.
+- **Degree collapse:** `has_degree_*` literals collapse to `is_rel2`/`has_property`
+  early (the `-simpleproperties` transformation, applied pre-clausification).
+
+### 6.3 `-ultracoarse`: guard dropping and predicate unification
+
+- **Redundant guards:** in a rule antecedent, an `isa(T,V)` guard is dropped when `V`
+  is already bound by a folded `is_rel2`/`do` literal in the same antecedent, or when
+  `T` is a near-universal type (`thing`, `object`, `entity`, …).  A lone
+  universal-type antecedent (`"a thing is either A or B"`) drops entirely.
+- **Class-name case folding:** the class argument of every `isa` is lowercased
+  ("American national" and "american national" become one predicate).
+- **Entity-constant canonicalization:** proper-noun entities whose ids differ by
+  wording variants ("Summer Olympics" / "2008 Summer Olympics", typo-level edits)
+  are merged to one constant — both at the Stage-1 level (id remapping) and at the
+  tree level; Stage-2 Wikipedia-URL constants are folded into the matching Stage-1
+  entity id.  Indefinites (`bear 1` / `bear 2`) are never merged.
+- **Name-as-type:** a multiword proper name is also typed by its own lowercased name
+  (`isa("winter olympics", "Winter Olympics 1")`), so a generic existential can bind
+  to the named constant.
+- **Extra typing facts:** broad supertypes `isa(person/animal, E)` are emitted even
+  when Stage 2 already typed the entity with a subtype; gendered role nouns
+  (gentleman, actress, …) get `isa(noun,X) → isa(man/woman,X)` axioms; a known first
+  name adds `isa(man/woman, E)` directly.
+- **Compound suffix subsumption** extends to every attested intermediate word-suffix
+  ("American professional basketball player" → "professional basketball player",
+  not just → "player"), and also scans entity-category clauses.
+- **Antonym folding** (semantic normalisation) only fires when the target word occurs
+  in the problem ∪ axiom vocabulary, so it never rewrites into a predicate nothing
+  else mentions.
+- **`$theof1` reification is skipped** — definites stay plain relations, matching
+  FOLIO's atomic style (under plain `-coarse`, reification runs, with named-subject
+  identity clauses `= (N, $theof1(R,B))` added and strict placeholder-only matching).
+- **`$ctxt` decoupling:** as the LAST pass, every `$ctxt` term is replaced by its own
+  fresh variable, so no two atoms are forced to share tense/world (FOLIO is
+  timeless).  This makes `-ultracoarse` strictly more permissive than the default
+  shared-context encoding.
+- **`$setof` labels** become content-derived hashes (`set_3fa2c1d0`) instead of
+  per-occurrence counters, so structurally identical sets in a rule and a fact unify.
+
+### 6.4 `-ultracoarse`: dynamic bridge axioms
+
+Emitted into the clause list when (and only when) both sides of the bridge occur in
+the problem:
+
+| axiom | shape |
+|---|---|
+| relation ↔ event | `is_rel2(V,A,O) ↔ ∃E. isa(activity,E) ∧ has_type(E,V) ∧ has_actor(E,A) ∧ has_target(E,O)` (Skolem `$ev_of(V,A,O)`) — a folded relation and a still-reified event of the same verb interderive |
+| occasion co-location | `is_rel2(P,Occ,Place) ∧ has_location(E,Place,P) ∧ isa(place-class,Place) → has_location(E,Occ,P)` for P ∈ {in,on,at,near} ("won medals IN Tokyo" + "Olympics IN Tokyo" → "won medals IN the Olympics") |
+| containment → part | `is_rel2("in",X,Y) → has_part(Y,X)` |
+| reflexive ↔ property | `has_property(P,X) ↔ is_rel2(P,X,X)` for predicates appearing in both shapes |
+
+### 6.5 What stays shared with the default encoding
+
+Two recent changes apply on every path, not just the coarse ones: Stage-1/Stage-2
+parses are transliterated to plain ASCII before clausification (accented entity names
+otherwise crash the prover-output decoding), and corrective sanity-retry prompts are
+serialized canonically (sorted keys and issue order) so their LLM-cache keys are
+byte-stable across runs.

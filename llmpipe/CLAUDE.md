@@ -43,6 +43,21 @@ Simplification (see ENCODINGS.md §5 for details):
 -simpleproperties  Degree predicates → simple (+ -noexceptions)
 -simple          All three combined
 
+Coarse encodings and alternative modes (DOCUMENTATION.md §11–12, ENCODINGS.md §6):
+-coarse          Fold collapsible Davidsonian events to flat `do` literals
+-ultracoarse     + relational folds, guard drops, entity canonicalization
+                 (implies -coarse, -simpleproperties)
+-prenorm         Pre-Stage-1 LLM wording normalisation (composable)
+-nocrossstage    Disable the ultracoarse cross-stage guard retry
+-s2split         One Stage-2 LLM call per Stage-1 sentence; outputs joined
+                 (worlds renumbered; failed sentences skipped unless the question)
+-slightcoarse    Light shape unification: predicate rename, shape bridges,
+                 property-shape compound composition, broad-supertype isa
+                 (built for -s2split divergences; composable, not implied)
+-combined-instr FILE   Single-stage parsing: ONE LLM call English → logic
+                 (+ optional -combined-examples / -combined-checklist)
+-directanswer FILE     ONE LLM call answers directly; no logic, no prover
+
 Other:
 -llm NAME        LLM provider: gpt, claude, gemini, or deepseek
 -version VER     Model version string, e.g. claude-sonnet-4-6
