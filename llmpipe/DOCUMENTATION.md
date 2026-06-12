@@ -2957,7 +2957,9 @@ arithmetic, plus off-inventory predicate drift `has`/`has rel2`).  Under
 - an off-inventory rename pass (`has` → `have`, `has rel2` → `is rel2`) in
   `logconvert`;
 - dynamic shape bridges (`lc_post_inject.inject_s2split_shape_bridges`, confidence
-  0.99, each gated on both shapes being present): `have` ↔ `has_part`,
+  0.99, each gated on both shapes being present): `has_part` → `have` (the sound
+  direction only; the risky `have` → `has_part` direction stays with the
+  always-on, per-problem-typed `add_haspart_for_typed_have`),
   `has_destination` → `has_location`, beneficiary/recipient lift from the event to
   its target, and `less_measure($measure_of(D,…))` ↔ `has_degree_rel2(ADJ,…)` via a
   dimension→adjective table;

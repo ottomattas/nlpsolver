@@ -1706,9 +1706,11 @@ def inject_s2split_shape_bridges(result):
   preds = _scan_predicates(result)
   axioms = []
   if "have" in preds and "has part" in preds:
-    axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
-      ["-have", "?:Xsb", "?:Ysb", "?:Csb"],
-      ["has part", "?:Xsb", "?:Ysb", "?:Csb"]]})
+    # Only the sound direction: a part is had (has_part -> have).  The reverse
+    # (have -> has_part) is rarely correct ("John has a car") and is already
+    # covered conservatively by lc_post_normalize.add_haspart_for_typed_have,
+    # which converts a have-fact only when THIS problem contains a has_part
+    # rule typed on the same noun.
     axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
       ["-has part", "?:Xsb", "?:Ysb", "?:Csb"],
       ["have", "?:Xsb", "?:Ysb", "?:Csb"]]})
