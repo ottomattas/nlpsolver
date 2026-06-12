@@ -1657,3 +1657,134 @@ def inject_world_geometry(result):
                    "@sourcetype": "world_geometry",
                    "@logic": ["next", "W" + str(i), "W" + str(i + 1)]})
   return axioms
+
+
+# ======== split-mode shape bridges (-s2split) ========
+#
+# Per-sentence Stage-2 calls (-s2split) make locally-valid but mutually
+# inconsistent construction choices: the question says have(X,Y) where the rule
+# said has_part(X,Y), has_location where the fact said has_destination, a role
+# on the target entity where the fact put it on the event.  These bridges let
+# the near-synonymous shapes interderive.  Each is emitted only when BOTH
+# shapes (or the bridged predicate) actually occur in the clause list, and only
+# under -s2split (caller-side gate in logconvert), so the default path and the
+# coarse encodings are untouched.
+
+def _scan_predicates(result):
+  """Set of positive base predicate names occurring in the clause list."""
+  preds = set()
+
+  def walk(n):
+    if isinstance(n, list) and n and isinstance(n[0], str):
+      h = n[0]
+      preds.add(h[1:] if h.startswith("-") else h)
+      for c in n[1:]:
+        walk(c)
+    elif isinstance(n, list):
+      for c in n:
+        walk(c)
+
+  for obj in result:
+    if isinstance(obj, dict):
+      body = obj.get("@logic")
+      if body is None:
+        body = obj.get("@question")
+      walk(body)
+  return preds
+
+
+def inject_s2split_shape_bridges(result):
+  """Bridges between near-synonymous constructions for -s2split runs.
+
+  - have <-> has_part: a part is had and a had part-ish thing is a part
+    ("Who has a grey trunk?" vs rule "elephants have trunks" encoded has_part).
+  - has_destination -> has_location: a motion event's destination answers a
+    location question ("Where did Mary go?").
+  - beneficiary lift: an event's beneficiary is also its target's beneficiary
+    ("cooked a meal for the guests" -> "the meal is for the guests").
+  """
+  preds = _scan_predicates(result)
+  axioms = []
+  if "have" in preds and "has part" in preds:
+    axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
+      ["-have", "?:Xsb", "?:Ysb", "?:Csb"],
+      ["has part", "?:Xsb", "?:Ysb", "?:Csb"]]})
+    axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
+      ["-has part", "?:Xsb", "?:Ysb", "?:Csb"],
+      ["have", "?:Xsb", "?:Ysb", "?:Csb"]]})
+  if "has destination" in preds and "has location" in preds:
+    axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
+      ["-has destination", "?:Esb", "?:Xsb", "?:Psb", "?:Csb"],
+      ["has location", "?:Esb", "?:Xsb", "?:Psb", "?:Csb"]]})
+  if "has beneficiary" in preds:
+    axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
+      ["-has target", "?:Esb", "?:Ysb", "?:Csb"],
+      ["-has beneficiary", "?:Esb", "?:Xsb", "?:Csb"],
+      ["has beneficiary", "?:Ysb", "?:Xsb", "?:Csb"]]})
+  if "has recipient" in preds:
+    axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
+      ["-has target", "?:Esb", "?:Ysb", "?:Csb"],
+      ["-has recipient", "?:Esb", "?:Xsb", "?:Csb"],
+      ["has recipient", "?:Ysb", "?:Xsb", "?:Csb"]]})
+  axioms.extend(_measure_comparative_bridges(result))
+  return axioms
+
+
+# Measurement dimension -> the comparative adjective whose has_degree_rel2 it
+# grounds (less_measure(m(D,X), m(D,Y)) means X measures less in D than Y).
+_MEASURE_DIM_ADJ = {
+  "height": "high", "weight": "heavy", "length": "long", "size": "big",
+  "age": "old", "speed": "fast", "width": "wide", "depth": "deep",
+  "temperature": "hot", "distance": "far",
+}
+
+
+def _measure_comparative_bridges(result):
+  """(s2split) Bridge the measurement shape to the comparative shape: one
+  split encodes "X is higher than Y" as less_measure($measure_of(height,Y),
+  $measure_of(height,X)) while the question split uses
+  has_degree_rel2(high, ...).  Per dimension/adjective pair present on both
+  sides, emit:
+    less_measure(m(D,X,W), m(D,Y,W)) -> has_degree_rel2(ADJ, Y, X, ...)
+    less_measure(m(D,X,W), m(D,Y,W)) -> -has_degree_rel2(ADJ, X, Y, ...)
+  (X measures strictly less than Y, so Y is ADJ-er and X is not.)"""
+  dims = set()
+  adjs = set()
+
+  def walk(n):
+    if isinstance(n, list) and n and isinstance(n[0], str):
+      base = n[0][1:] if n[0].startswith("-") else n[0]
+      if base == "less_measure":
+        for a in n[1:]:
+          if (isinstance(a, list) and len(a) >= 2 and a[0] == "$measure_of"
+              and isinstance(a[1], str)):
+            dims.add(a[1])
+      elif base == "has degree rel2" and len(n) >= 2 and isinstance(n[1], str):
+        adjs.add(n[1])
+      for c in n[1:]:
+        walk(c)
+    elif isinstance(n, list):
+      for c in n:
+        walk(c)
+
+  for obj in result:
+    if isinstance(obj, dict):
+      body = obj.get("@logic")
+      if body is None:
+        body = obj.get("@question")
+      walk(body)
+
+  axioms = []
+  for dim in sorted(dims):
+    adj = _MEASURE_DIM_ADJ.get(dim)
+    if not adj or adj not in adjs:
+      continue
+    mx = ["$measure_of", dim, "?:Xsb", "?:Wsb"]
+    my = ["$measure_of", dim, "?:Ysb", "?:Wsb"]
+    axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
+      ["-less_measure", mx, my],
+      ["has degree rel2", adj, "?:Ysb", "?:Xsb", "?:Dsb", "?:Rsb", "?:Csb"]]})
+    axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
+      ["-less_measure", mx, my],
+      ["-has degree rel2", adj, "?:Xsb", "?:Ysb", "?:Dsb2", "?:Rsb2", "?:Csb2"]]})
+  return axioms

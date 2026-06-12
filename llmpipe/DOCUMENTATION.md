@@ -2946,3 +2946,24 @@ split; `english_to_answer` returns an error if both are set); composes with
 `_stage1_then_stage2`, so the ultracoarse cross-stage retry re-splits).  Each slice
 is its own LLM-cache key.  `runtests.py -s2split` writes to
 `testresults/<set>_s2split/` unless `-tag` overrides.
+
+**Split-mode shape bridges.**  The dominant `-s2split` failure is cross-sentence
+predicate-choice divergence: each isolated call makes a locally-valid encoding choice
+that disagrees with the sibling sentence it must unify with (`have` vs `has part`,
+`has location` vs `has destination`, a role on the target entity vs on the event,
+`small fish` as a compound isa vs adjective + noun, a comparative vs `less_measure`
+arithmetic, plus off-inventory predicate drift `has`/`has rel2`).  Under
+`-s2split` the pipeline therefore adds (all inert on other paths):
+- an off-inventory rename pass (`has` → `have`, `has rel2` → `is rel2`) in
+  `logconvert`;
+- dynamic shape bridges (`lc_post_inject.inject_s2split_shape_bridges`, confidence
+  0.99, each gated on both shapes being present): `have` ↔ `has_part`,
+  `has_destination` → `has_location`, beneficiary/recipient lift from the event to
+  its target, and `less_measure($measure_of(D,…))` ↔ `has_degree_rel2(ADJ,…)` via a
+  dimension→adjective table;
+- compound composition in property shape (`build_compound_subsumption(degree_comp=True)`):
+  the modifier may arrive as a degree/simple property instead of an `isa`;
+- broad-supertype `isa(person/animal, E)` emission (shared with the coarse gate).
+
+On the curated 100-subset with gpt these bridges raise split-mode accuracy from
+93/100 to 100/100 (= the joint two-stage score) with no regressions.

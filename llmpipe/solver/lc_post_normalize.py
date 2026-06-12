@@ -274,7 +274,7 @@ def scan_all_isa_types(items, extra_clauses=()):
   return classes
 
 
-def build_compound_subsumption(items, ultra=False, extra_clauses=()):
+def build_compound_subsumption(items, ultra=False, extra_clauses=(), degree_comp=False):
   """Build subsumption and composition rules for compound type names.
 
   For each compound type like "baby bird", emits:
@@ -326,6 +326,30 @@ def build_compound_subsumption(items, ultra=False, extra_clauses=()):
       ],
       "@confidence": 0.95
     })
+    # (s2split) Rule 2 in property shape: a sentence encoded in isolation
+    # renders the modifier as a degree/simple property of X, not as an isa
+    # ("John is a small fish?" -> isa(fish,X) ∧ has_degree_property(small,X)),
+    # so the isa-shaped composition above never matches.  Emit the same
+    # composition with the modifier as a property; single-word modifiers only.
+    if degree_comp and " " not in modifier:
+      result.append({
+        "@name": "compound_comp",
+        "@logic": [
+          ["-has degree property", modifier, "?:X", "?:Dg", "?:Rc", "?:Ct"],
+          ["-isa", head, "?:X"],
+          ["isa", ctype, "?:X"]
+        ],
+        "@confidence": 0.95
+      })
+      result.append({
+        "@name": "compound_comp",
+        "@logic": [
+          ["-has property", modifier, "?:X", "?:Ct"],
+          ["-isa", head, "?:X"],
+          ["isa", ctype, "?:X"]
+        ],
+        "@confidence": 0.95
+      })
   return result
 
 # ======== RELCLASS coercion ========
