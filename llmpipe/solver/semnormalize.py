@@ -129,9 +129,12 @@ def _normalize_atom(atom, present, allow_flip=True):
       word = arg
       # Pass 1: antonym resolution — flip polarity and swap to antonym.
       # Only at the top-level literal; function terms have no polarity.
-      # Gated on the target being present, so we never introduce a predicate
-      # that appears nowhere else (case 22: "evil"↛"good" when "good" is absent).
-      if allow_flip and word in ANTONYMS and ANTONYMS[word] in present:
+      # Under the coarse encodings, gated on the target being present
+      # (present=None means no gating), so we never introduce a predicate that
+      # appears nowhere else (case 22: "evil"↛"good" when "good" is absent).
+      # The default path folds unconditionally (core-2026-06-03 behavior).
+      if (allow_flip and word in ANTONYMS
+          and (present is None or ANTONYMS[word] in present)):
         antonym = ANTONYMS[word]
         # flip predicate polarity
         if negated:
@@ -189,18 +192,22 @@ def sem_normalize_clauses(clauses):
   if debug:
     before_str = pretty.pp_str(clauses)
 
-  # Gating vocabulary for antonym folding: words present in the problem plus
-  # axiom content words.
-  present = set()
-  for clause in clauses:
-    if isinstance(clause, dict):
-      for key in ("@logic", "@question"):
-        if key in clause:
-          _collect_words(clause[key], present)
-  try:
-    present |= axiom_vocab.load_axiom_vocab()
-  except Exception:
-    pass
+  # Gating vocabulary for antonym folding (coarse encodings only): words
+  # present in the problem plus axiom content words.  On the default path
+  # present stays None and antonym folding is unconditional (core-2026-06-03
+  # checkpoint behavior).
+  present = None
+  if globals.options.get("coarse_flag", False):
+    present = set()
+    for clause in clauses:
+      if isinstance(clause, dict):
+        for key in ("@logic", "@question"):
+          if key in clause:
+            _collect_words(clause[key], present)
+    try:
+      present |= axiom_vocab.load_axiom_vocab()
+    except Exception:
+      pass
 
   total = 0
   for clause in clauses:

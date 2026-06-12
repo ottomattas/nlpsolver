@@ -798,12 +798,15 @@ def _build_entity_category_clauses(s1_json, skip_entities=frozenset()):
         # Category isa (e.g. isa(person, man 1)) — skip if Stage-2 already has it.
         if eid not in skip_entities:
           clauses.append({"@name": name, "@logic": ["isa", category, eid]})
-        # (b) Broad biological supertypes are always emitted, even when Stage-2
-        # already gave a subtype (isa(gentleman,Harry) / isa(alligator,Ted)):
-        # a gentleman IS a person, an alligator IS an animal, and rules in the
-        # problem are quantified over "person"/"animal" that nothing else
-        # establishes for the entity.  Sound supertype facts -- never skipped.
-        elif category in _BROAD_SUPERTYPES:
+        # (b, coarse/ultracoarse) Broad biological supertypes are emitted even
+        # when Stage-2 already gave a subtype (isa(gentleman,Harry) /
+        # isa(alligator,Ted)): a gentleman IS a person, an alligator IS an
+        # animal, and rules in the problem are quantified over "person"/
+        # "animal" that nothing else establishes for the entity.  Gated to the
+        # coarse encodings so the default path matches the core-2026-06-03
+        # checkpoint behavior.
+        elif (category in _BROAD_SUPERTYPES
+              and _g_options.get("coarse_flag", False)):
           clauses.append({"@name": name, "@logic": ["isa", category, eid]})
         # (b2, ultracoarse) Gender from a first-name table: isa(man/woman, E),
         # so a rule guarded by "man"/"woman" can fire ("a man is either kind or
@@ -1049,7 +1052,12 @@ def rawlogic_convert(logic, s1_json=None, fixes=None):
   # definites as plain relations keeps those links and matches FOLIO's atomic
   # relation style.
   if asu_index and not _g_options.get("ultracoarse_flag", False):
-    _emit_definite_identities(result, asu_index)
+    # (coarse) The named-subject identity clauses and the strict
+    # placeholder-only is_rel2 matching inside rewrite_definites are gated to
+    # the coarse encoding; the default path keeps the core-2026-06-03
+    # checkpoint behavior (first-match, no identities).
+    if _g_options.get("coarse_flag", False):
+      _emit_definite_identities(result, asu_index)
     for sid_key in asu_index:
       _rewrite_definites(result, asu_index, sid_key, theof_relations)
 
