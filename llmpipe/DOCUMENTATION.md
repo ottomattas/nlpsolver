@@ -61,6 +61,8 @@ representation so that a developer or LLM can quickly start extending or modifyi
    - 9.4 [Full build pipeline](#94-full-build-pipeline)
    - 9.5 [Spatial and temporal preposition handling](#95-spatial-and-temporal-preposition-handling)
 10. [Extending and modifying the pipeline](#10-extending-and-modifying-the-pipeline)
+11. [Coarse and ultracoarse machinery](#11-coarse-and-ultracoarse-machinery)
+12. [Alternative parsing modes: prenorm, combined single-stage, direct answer](#12-alternative-parsing-modes-prenorm-combined-single-stage-direct-answer)
 
 ---
 
@@ -534,7 +536,22 @@ Output format and other flags:
 -geminicache       Enable Gemini server-side context caching (off by default; see §5.3)
 -seconds N         Prover time limit (default 2)
 -simple            No context, no exceptions, simple properties
+-think [N]         Enable reasoning/thinking mode (optional token budget)
+-coarse            Fold collapsible Davidsonian events to flat `do` literals (§11)
+-ultracoarse       + relational folds, guard drops, entity canonicalization (§11);
+                   implies -coarse and -simpleproperties
+-prenorm           Pre-Stage-1 LLM wording normalisation (§12.1)
+-nocrossstage      Disable the ultracoarse cross-stage guard retry (§11.5)
+-combined-instr F  Combined single-stage parsing: ONE LLM call English -> logic (§12.2);
+                   optional -combined-examples F / -combined-checklist F
+-directanswer F    Answer with ONE LLM call using prompt file F; no logic, no prover (§12.3)
 ```
+
+Before clausification, `english_to_answer` ASCII-folds both parses
+(`_ascii_fold_logic`): every string in the Stage-1/Stage-2 JSON is transliterated to
+plain ASCII (NFKD decompose, drop combining marks — "Náutico" → "Nautico").  The gk
+subprocess output is decoded as ASCII, so a non-ASCII constant would otherwise crash
+proof reading (answer `None`).  This runs on every path, including the default one.
 
 ### 5.2 llmparse.py
 
@@ -572,6 +589,19 @@ commas, balancing brackets.
 **Prompt composition:** `_compose_prompt(instructions_file, examples_file)` concatenates
 instructions + `"\n\nExamples:\n\n"` + examples into a single system prompt string.
 
+**Mode branches inside `parse_text`** (all off by default, set by `solve.py` from
+`globals.options`):
+- `prenorm_enabled` — rewrite the input English first via `normalize_text` (§12.1).
+- `combined_enabled` — make ONE LLM call (English → Stage-2 logic) with the explicitly
+  named combined prompt files and return `(None, s2_json, stats)`; there is no Stage-1
+  JSON in this mode (§12.2).
+- `canon_entities_enabled` (set by `-ultracoarse`) — aggressive Stage-1 entity-id
+  canonicalization (`canonicalize_entity_ids`) and Stage-2 Wikipedia-URL folding
+  (`canonicalize_entity_urls`) (§11.4).
+- `crossstage_guard_retry` ∧ `canon_entities_enabled` — after Stage 2, re-run BOTH
+  stages once with a corrective hint when a rule antecedent names a class/property/
+  relation nothing can satisfy (§11.5).
+
 ### 5.3 llmcall.py
 
 **Role:** Low-level LLM API wrapper.
@@ -596,6 +626,12 @@ cache key encodes: provider, version, temperature, seed, max_tokens, think, sysp
 If a match is found, the cached response is returned immediately.  The result of every new LLM
 call is stored in the cache before returning.  Caching is controlled by
 `globals.options["use_llm_cache_flag"]` (default `True`).
+
+**Newer Claude models (Opus 4.8 / Fable 5 / Mythos 5):** `_claude_uses_effort_api`
+detects these versions; for them `call_claude` omits `temperature` (deprecated) and
+replaces `thinking.budget_tokens` with adaptive thinking plus `output_config.effort`
+(a `-think` integer budget maps to low/medium/high via `_claude_effort`).  Older
+models (sonnet-4-6 etc.) use the original request shape, byte-identical to before.
 
 **Rate-limit (429) backoff:** In addition to the generic HTTP retry, `_post_with_retry`
 gives 429 (Too Many Requests) responses their own exponential-backoff loop, capped at
@@ -1372,6 +1408,9 @@ Examples:
 | `stage1_examples.txt` | ~30 worked input→output examples for Stage 1; one per `---` separator |
 | `stage2_instructions_full.txt` | Full specification of Stage-2 output format; entity handling (concrete/generic/kind/wh), quantification rules by ASU type, predicate inventory, property/relation selection rule |
 | `stage2_checklist_full.txt` | Short procedural checklist appended to the Stage-2 system prompt |
+| `prenorm_full.txt` | Pre-Stage-1 wording-normalisation prompt (`-prenorm`, §12.1) |
+| `combined_*_instructions_full.txt`, `combined_examples_*.txt`, `combined_*_checklist_full.txt` | Combined single-stage constructions (`-combined-*`, §12.2); per-file descriptions in `prompts/README.md` |
+| `folio_directanswer_instructions[_noworld].txt` | Direct-answer prompts (`-directanswer`, §12.3) |
 | `stage2_examples.txt` | ~40 worked input→output examples for Stage 2; one per `----` separator |
 
 **Editing the prompts** is the primary way to improve Stage-1 and Stage-2 accuracy.  Both
@@ -1690,6 +1729,18 @@ plus the flawed output and a description of what went wrong.
 flaw), so it hashes to a distinct cache key via `cache.make_llm_cache_key`.  Retries benefit
 from the normal cache: a repeated run with the same input and flawed first response will
 reuse the cached retry instead of re-calling the LLM.
+
+**Canonical retry serialization:** `format_retry_suffix` dumps the flawed JSON with
+`sort_keys=True` and sorts the issue list before formatting.  Checkers may collect
+issues via sets/dicts whose iteration order varies across processes under hash
+randomization; without the sorting, the corrective prompt — and hence its LLM-cache
+key — would differ byte-for-byte between runs and miss the cache on every fresh run.
+This applies on every path, including the default one.
+
+**Coarse-gated check:** `_check_stage2_constant_vs_class` (enabled only when
+`stage_sanity.aggressive_repair` is set by the ultracoarse path) flags a name used
+both as a specific entity (a constant) and as a class (an `isa` type) and re-prompts
+Stage 2 to make the reading consistent; see §11.5.
 
 **Stats tracked** (per stage, added to the `parse_text` stats dict):
 
@@ -2185,6 +2236,12 @@ tiers with a tight per-request input-token cap; see §5.3):
 english_to_answer(text, {"use_gemini_cache_flag": True})   # or pass -geminicache on the CLI
 ```
 
+**Mode option keys** (all off by default; see §11 and §12 for what they do):
+`coarse_flag`, `ultracoarse_flag`, `prenorm_flag`, `crossstage_retry_flag` (default
+`True`, but inert unless ultracoarse), `combined_flag` + `combined_instr_file` /
+`combined_examples_file` / `combined_checklist_file`, `directanswer_flag` +
+`directanswer_file`.
+
 ---
 
 ## 9. The mkdata toolkit and solver integration
@@ -2669,7 +2726,31 @@ python3 runtests.py -llms gemini tests/tests_core_100.py -geminicache
 python3 runtests.py -ids 11,15,18          # only these case ids
 python3 runtests.py -limit 50              # first 50 cases
 python3 runtests.py -filter penguin        # cases whose input contains "penguin"
+
+# run sequentially in-process (best for cache-served reruns)
+python3 runtests.py -sequential -llms claude tests/tests_folio_v2.py
+
+# model/decoding overrides (apply to all -llms in the run)
+python3 runtests.py -version claude-opus-4-8 -think 3000 -maxtokens 16000 ...
+
+# pipeline-mode flags (mirror solve.py; see DOCUMENTATION §11/§12)
+python3 runtests.py -ultracoarse -prenorm [-nocrossstage] ...
+python3 runtests.py -combined-instr prompts/combined_v2_instructions_full.txt \
+                    -combined-examples prompts/combined_examples_pure.txt ...
+python3 runtests.py -directanswer prompts/folio_directanswer_instructions.txt ...
+
+# output-dir suffix: results go to testresults/<set>_<tag>/ instead of testresults/<set>/
+python3 runtests.py -tag myexperiment ...
 ```
+
+Variant modes auto-suffix the set name (`-combined-*` derives a tag from the prompt
+filenames; `-directanswer` uses `directanswer`; `-tag` overrides), so variant results
+live beside — never on top of — the plain two-stage `testresults/<set>/` data.
+
+**Provenance stamp:** every `summary.json` carries a `pipeline_git` object —
+`{"commit": ..., "dirty": ..., "tags": [...]}` — recorded at run start
+(`pipeline_git_state()`; the dirty flag covers tracked files only).  This ties each
+results dir to the exact pipeline state that produced it.
 
 **Resumption:** a `(case, llm)` is skipped if its JSON already exists.  Re-running therefore
 continues where a quota-exhausted or interrupted run stopped.  Pass `-redo-errors` to also
@@ -2686,3 +2767,148 @@ To regenerate the logconvert pretty-print check file after changes to `logconver
 ```bash
 python3 run_pretty_check.py > logconvert_check.txt
 ```
+
+---
+
+## 11. Coarse and ultracoarse machinery
+
+The `-coarse` and `-ultracoarse` flags select progressively flatter event encodings,
+built for deductive benchmarks (FOLIO) whose gold logic uses atomic n-ary relations.
+What the *encodings* look like is described in ENCODINGS.md §6; this chapter describes
+the machinery.  Both modes are post-LLM: the Stage-1/Stage-2 prompts and calls are
+unchanged (and cache-shared with default runs); everything happens between Stage 2 and
+the prover, plus one optional cross-stage LLM retry.
+
+Flag wiring: `-coarse` sets `coarse_flag`; `-ultracoarse` sets `coarse_flag`,
+`ultracoarse_flag` and `noproptypes_flag` (gradables collapse to simple properties).
+`-prenorm` (§12.1) is a separate, composable flag — the FOLIO F3 configuration is
+`-ultracoarse -prenorm`.
+
+### 11.1 The event folds (`lc_coarse.py`)
+
+`coarsen_events(tree, ultra)` is called from `rawlogic_convert` after actuality
+injection and tense-`has_time` stripping, so the eligibility test sees the final event
+shape.  Under plain `-coarse`, `_fold_event` conservatively folds a collapsible event
+(template roles only, no modal classifier, no `has_content` nest) into one
+`do(type, actor, target, recipient)` literal.  Under `-ultracoarse` it applies the
+aggressive folds (relational `is_rel2`, unary `has_property`, topic/passive/
+intransitive variants, `typical` stripped) — see ENCODINGS.md §6.2 for the rule list.
+`lc_ctxt` registers `do` in `CTXT_ELIGIBLE` and `DESC_PREDS`, so the folded literal
+receives `$ctxt` exactly as reified roles would.
+
+Supporting passes inside `lc_coarse` (ultracoarse only, in order):
+- `_canonicalize_entities` — tree-level merge of split proper-noun constants
+  (type-sharing + surface-similarity union-find);
+- `_collapse_degree_node` — early degree→simple collapse, before guard analysis;
+- `_fold_antecedent_events` — folds an event introduced as bare conjuncts in a rule
+  antecedent (no `exists` wrapper), so rules and folded facts unify; uses
+  `_rewrite_rel2_event_object` to free event variables that appear as `is_rel2`
+  objects;
+- `_drop_redundant_guards` — drops antecedent `isa` guards that are vacuous
+  (near-universal types) or redundant (variable already bound by a folded literal).
+
+`inject_verb_bridges` (per-verb bidirectional event↔relation bridges) is defined but
+not wired; the generic `rel2_event_axiom_clauses()` equivalence (§11.3) is used
+instead.
+
+### 11.2 Compile-level ultracoarse passes outside `lc_coarse`
+
+All gated on `ultracoarse_flag` (or `coarse_flag` where noted):
+
+| pass | where | what |
+|---|---|---|
+| self-defeating-conditional repair | `logconvert._repair_self_defeating_conditional` | widens a mis-scoped `¬A ∧ B` antecedent to `¬(A∧B)` when a truth-table check shows the conditional can never produce its consequent |
+| broad-supertype isa | `logconvert._build_entity_category_clauses` | `isa(person/animal,E)` emitted even when Stage 2 already typed E (gated on `coarse_flag`) |
+| gender from first name | same | `isa(man/woman, E)` from `data_names.gender_of` |
+| name-as-type isa | same | a multiword proper name also typed by its lowercased name |
+| gendered-noun axioms | `rawlogic_convert` tail | `isa(gentleman,X) → isa(man,X)` etc., for role nouns present in the clauses (`data_names.GENDERED_NOUN`) |
+| compound suffix subsumption | `lc_post_normalize.build_compound_subsumption(ultra=True, extra_clauses=…)` | subsume to every attested intermediate suffix; also scans entity-category clauses |
+| isa-class lowercasing | `lc_clausify.lower_isa_classes_in_node` | run after all injection, folds class-name case |
+| `$theof1` skip | `rawlogic_convert` | definite reification skipped entirely under ultracoarse; under plain `-coarse`, `lc_post_reify.emit_definite_identities` + strict placeholder-only matching run instead |
+| antonym presence-gating | `semnormalize` | antonym folding fires only when the target word is in problem ∪ axiom vocab (gated on `coarse_flag`) |
+| `$setof` content labels | `lc_sets._content_label` | set ids become content-derived hashes so structurally identical sets unify |
+| `$ctxt` decoupling | `rawlogic_convert` last pass | every `$ctxt` term replaced by a fresh variable |
+
+### 11.3 Dynamic bridge axioms (`lc_post_inject.py` + `lc_coarse.py`)
+
+Appended to the clause list under ultracoarse, each gated on both bridge sides being
+present in the problem: `rel2_event_axiom_clauses` (relation ↔ reified event, Skolem
+`$ev_of(V,A,O)`), `inject_occasion_location_bridges` (co-location through an occasion,
+typed on physical place classes), `inject_in_haspart_bridge` (`in` → `has_part`),
+`inject_reflexive_property_bridge` (`has_property(P,X) ↔ is_rel2(P,X,X)`).  Shapes in
+ENCODINGS.md §6.4.
+
+### 11.4 Entity unification at the parse level (`llmparse.py`, ultracoarse)
+
+`canonicalize_entity_ids(s1_json)` merges Stage-1 entity ids by normalized form,
+suffix-stripped base, head-sharing token subset, and high-threshold Levenshtein —
+proper nouns only, longest-id-first whole-id replacement (no substring corruption).
+`canonicalize_entity_urls(s1_json, s2_json)` rewrites Stage-2 Wikipedia-URL constants
+to the best-matching Stage-1 entity id (page-title similarity; ambiguous ties left
+alone).  Both record their remaps in the parse stats.
+
+### 11.5 Cross-stage unsatisfiable-guard retry (`llmparse.py` + `stage_sanity.py`)
+
+After Stage 2 (ultracoarse only, at most once, disable with `-nocrossstage`):
+`stage_sanity.check_unsatisfiable_guards` collects content guards — a class
+(`isa`), property (`has property`) or relation (`is rel2`) appearing positively in a
+rule antecedent that no fact states and no rule consequent produces.  Such a rule can
+never fire, which usually means Stage 1 dropped a word.  If guards exist, BOTH stages
+re-run on the ORIGINAL text (not the prenormed one — prenorm itself can be the
+dropper) plus a neutral hint (`format_guard_retry_suffix`) naming each guard.  The
+retry is kept only if it resolves ALL originally-flagged guards; otherwise the
+original parse stands, so a genuinely-absent class is never invented.  The related
+`_check_stage2_constant_vs_class` sanity check (a name used as both constant and
+class; re-prompts Stage 2) is enabled on the same path via
+`stage_sanity.aggressive_repair`.
+
+### 11.6 Default-path footprint
+
+The coarse/ultracoarse work leaves exactly two behaviors on the default path: the
+ASCII fold of parses (§5.1) and the canonical sanity-retry serialization (§7.8).
+Everything else in this chapter is flag-gated; with no flags the pipeline is
+answer-equivalent to the `core-2026-06-03` checkpoint (verified on a stratified
+40-case × 4-LLM sample — byte-identical clauses modulo set-iteration order and
+fresh-variable numbering).
+
+---
+
+## 12. Alternative parsing modes: prenorm, combined single-stage, direct answer
+
+Three opt-in modes replace or augment the two-LLM-call parse.  All are selected per
+run (CLI flags / option keys), share the LLM cache keyed on their own prompts, and
+are available in `runtests.py` with auto-suffixed output dirs (§10).
+
+### 12.1 `-prenorm` — pre-Stage-1 wording normalisation
+
+`llmparse.normalize_text` makes one extra LLM call with
+`prompts/prenorm_full.txt` to rewrite the input English so the same entity /
+property / relation is always worded identically, then feeds the rewritten text to
+Stage 1.  Returns the original text on any error.  Composable with every other mode;
+part of the FOLIO F3 configuration.
+
+### 12.2 Combined single-stage parsing (`-combined-instr` etc.)
+
+ONE LLM call converts English directly to Stage-2 logic; the ASU analysis is worked
+out "in the head" and never printed.  Prompt = explicitly named files composed by the
+same `_compose_prompt` (instructions required, examples/checklist optional;
+constructions described in `prompts/README.md`).  `parse_text` returns
+`(None, s2_json, stats)` — there is no Stage-1 JSON, so s1-derived processing
+(entity-category `isa` injection, `$ctxt` tense from ASUs, richer NL rendering) is
+absent by design; downstream code guards `s1_json=None` throughout.  The Stage-2
+sanity checks and corrective retries run unchanged.  Batch scoring: `runtests`
+passes `single_stage=True` to the matcher, enabling a conservative
+rendering-artefact fallback (temporal-preposition, URL/diacritic, plural-coordination
+and truncated-stem leniences in `test.py`); two-stage runs are scored strictly as
+before.
+
+### 12.3 Direct answer (`-directanswer FILE`)
+
+`solver/directanswer.py` answers the question with ONE LLM call using FILE as the
+system prompt — no logic, no prover, test-set agnostic.  The reply is normalised by
+`_extract_verdict`: if it contains a True/False/Unknown/Uncertain token, the LAST one
+wins (reasoning models often write a chain of thought ending in the verdict),
+normalised to `"True." / "False." / "Unknown."`; otherwise the stripped reply is the
+answer (phrase-style prompts).  `collect` gets `answer` and a `directanswer` metadata
+field.  Used for the FOLIO direct-answer reference runs
+(`prompts/folio_directanswer_instructions[_noworld].txt`).
