@@ -576,6 +576,10 @@ def main():
                        "call (no logic, no prover). Output goes to a <set>_<tag> dir.")
   ap.add_argument("-prenorm", action="store_true",
                   help="Enable the pre-Stage-1 normalization LLM phase")
+  ap.add_argument("-s2split", action="store_true",
+                  help="Run Stage 2 sentence-by-sentence: one Stage-2 LLM call "
+                       "per Stage-1 sentence package, outputs joined. Output "
+                       "goes to a <set>_s2split dir unless -tag is given.")
   ap.add_argument("-ultracoarse", action="store_true",
                   help="Enable -ultracoarse abstraction (event-folding, simple "
                        "properties, entity canonicalization)")
@@ -611,6 +615,8 @@ def main():
     tag = args.tag or combined_tag(args.combined_instr, args.combined_examples, args.combined_tag)
   elif directanswer_on:
     tag = args.tag or "directanswer"
+  elif args.s2split:
+    tag = args.tag or "s2split"
   else:
     tag = args.tag
   if tag:
@@ -655,6 +661,8 @@ def main():
     run_opts["directanswer_file"] = args.directanswer
   if args.prenorm:
     run_opts["prenorm_flag"] = True
+  if args.s2split:
+    run_opts["s2split_flag"] = True
   if args.ultracoarse:
     run_opts["coarse_flag"] = True
     run_opts["ultracoarse_flag"] = True

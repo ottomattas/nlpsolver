@@ -192,6 +192,9 @@ def english_to_answer(text, options=None, collect=None):
   llmparse.combined_instr_file     = globals.options.get("combined_instr_file")
   llmparse.combined_examples_file  = globals.options.get("combined_examples_file")
   llmparse.combined_checklist_file = globals.options.get("combined_checklist_file")
+  llmparse.s2split_enabled         = globals.options.get("s2split_flag", False)
+  if llmparse.s2split_enabled and llmparse.combined_enabled:
+    return "Error: -s2split is incompatible with combined single-stage parsing (-combined-instr)"
   s1_json, s2_json, parse_stats = llmparse.parse_text(
     text, llm=llm, version=llm_version, tokens=max_tokens, think=think_flag
   )
@@ -470,6 +473,8 @@ def _parse_cmd_line():
       opts["noproptypes_flag"] = True   # (a) collapse gradables to simple properties
     elif el in ["-prenorm", "--prenorm"]:
       opts["prenorm_flag"] = True
+    elif el in ["-s2split", "--s2split"]:
+      opts["s2split_flag"] = True
     elif el in ["-nocrossstage", "--nocrossstage"]:
       opts["crossstage_retry_flag"] = False
     elif el in ["-llm", "--llm"]:
@@ -623,6 +628,11 @@ semantic normalisation (ON by default):
 LLM selection:
  -llm NAME    : LLM provider: gpt, claude, gemini, or deepseek (default: from llmcall.py config)
  -version VER : model version string, e.g. claude-sonnet-4-6, gpt-5.1
+
+split Stage 2:
+ -s2split     : one Stage-2 LLM call per Stage-1 sentence package; outputs joined
+                into one logic (failed sentences skipped unless they hold the
+                question; locally-invented worlds renumbered to fresh indices)
 
 combined single-stage parsing (one LLM call, English -> logic; no Stage-1 JSON):
  -combined-instr FILE     : combined instructions prompt file (enables single-stage mode)

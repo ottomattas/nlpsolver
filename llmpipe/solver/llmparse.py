@@ -30,6 +30,7 @@ import pretty
 from stage_sanity import (
   check_stage1 as _check_stage1,
   check_stage2 as _check_stage2,
+  check_stage2_id_coverage as _check_id_coverage,
   format_retry_suffix as _format_retry_suffix,
   issue_fingerprints as _issue_fingerprints,
 )
@@ -96,6 +97,12 @@ combined_enabled = False
 combined_instr_file = None      # path to combined instructions prompt file
 combined_examples_file = None   # path to combined examples prompt file (optional)
 combined_checklist_file = None  # path to combined checklist prompt file (optional)
+
+# Split Stage 2 (-s2split): one Stage-2 LLM call per Stage-1 sentence package;
+# the per-sentence outputs are joined into one ["and", ...] logic with world
+# constants renumbered (rule c': slice-anchored worlds and W0 keep their
+# numbers, locally-invented worlds get fresh global indices).  Set by solve.py.
+s2split_enabled = False
 
 
 def _canon_norm(s):
@@ -407,6 +414,133 @@ def load_combined_prompt():
   _combined_loaded_key = key
 
 
+# ======== split Stage 2 (-s2split) ========
+
+_WORLD_RE = re.compile(r"^W\d+$")
+
+
+def _slice_anchored_worlds(pkg):
+  """World constants that are globally meaningful for this Stage-1 sentence
+  package: W0 (the shared initial world) plus any pre_state / post_state
+  annotation on the package's units.  These keep their numbers; everything
+  else the model emits for this slice is locally invented and gets renumbered."""
+  anchored = {"W0"}
+  for u in (pkg.get("units", []) if isinstance(pkg, dict) else []):
+    if not isinstance(u, dict):
+      continue
+    for key in ("pre_state", "post_state"):
+      v = u.get(key)
+      if isinstance(v, str) and _WORLD_RE.match(v):
+        anchored.add(v)
+  return anchored
+
+
+def _package_has_query(pkg):
+  """True if the Stage-1 sentence package contains the question."""
+  if not isinstance(pkg, dict):
+    return False
+  for u in pkg.get("units", []):
+    if isinstance(u, dict) and u.get("type") in ("query", "question"):
+      return True
+  raw = pkg.get("raw")
+  return isinstance(raw, str) and raw.strip().endswith("?")
+
+
+def _collect_worlds(node, out):
+  if isinstance(node, str):
+    if _WORLD_RE.match(node):
+      out.add(node)
+  elif isinstance(node, list):
+    for x in node:
+      _collect_worlds(x, out)
+
+
+def _renumber_split_worlds(pkgs, anchored, max_seen):
+  """Rule c': renumber the locally-invented worlds of one split's packages.
+
+  Worlds in `anchored` (W0 + the slice's pre/post_state annotations) keep
+  their numbers.  Every other world constant is remapped, in ascending index
+  order, to the next free global index (starting at max_seen + 1, skipping
+  indices used by anchored worlds present in this split).  Returns
+  (renumbered_pkgs, new_max_seen); new_max_seen covers anchored worlds too."""
+  worlds = set()
+  _collect_worlds(pkgs, worlds)
+  if not worlds:
+    return (pkgs, max_seen)
+  present_anchored = {int(w[1:]) for w in worlds if w in anchored}
+  unanchored = sorted(int(w[1:]) for w in worlds if w not in anchored)
+  mapping = {}
+  used = set(present_anchored)
+  nxt = max_seen + 1
+  for i in unanchored:
+    while nxt in used:
+      nxt += 1
+    mapping["W%d" % i] = "W%d" % nxt
+    used.add(nxt)
+    nxt += 1
+  new_max = max([max_seen] + sorted(used)) if used else max_seen
+  if not mapping:
+    return (pkgs, new_max)
+
+  def _t(node):
+    if isinstance(node, str):
+      return mapping.get(node, node)
+    if isinstance(node, list):
+      return [_t(x) for x in node]
+    return node
+  return (_t(pkgs), new_max)
+
+
+def _run_stage2_split(s1_json, eff_llm, eff_version, eff_tokens, eff_think, stats):
+  """One Stage-2 call per Stage-1 sentence package; join the outputs.
+
+  A failed sentence is skipped (recorded in stats) UNLESS it contains the
+  question, in which case the whole Stage 2 fails (returns None).  Each
+  split's worlds are renumbered per rule c' (see _renumber_split_worlds)."""
+  packages = []
+  max_seen = -1
+  skipped = []
+  stats["s2_splits"] = len(s1_json) if isinstance(s1_json, list) else 0
+  for idx, pkg in enumerate(s1_json if isinstance(s1_json, list) else []):
+    if not isinstance(pkg, dict):
+      continue
+    expected_ids = [u.get("unit_id") for u in pkg.get("units", [])
+                    if isinstance(u, dict) and u.get("unit_id")]
+    s2_input = json.dumps([pkg])
+
+    def _chk(parsed, _pkg=pkg, _ids=tuple(expected_ids)):
+      return (_check_stage2(parsed, [_pkg])
+              + _check_id_coverage(parsed, list(_ids)))
+
+    sj, _raw, s2_err = _run_stage(2, s2_input, _stage2_sysprompt,
+                                  eff_llm, eff_version, eff_tokens, eff_think,
+                                  stats, check_fn=_chk)
+    pkgs = None
+    if isinstance(sj, list) and sj:
+      if sj[0] == "and":
+        pkgs = [x for x in sj[1:] if isinstance(x, list)]
+      elif sj[0] == "@id":
+        pkgs = [sj]
+    if not pkgs:
+      if _package_has_query(pkg):
+        _debug_write("S2SPLIT: question sentence %d failed (%s) -> stage 2 fails"
+                     % (idx + 1, s2_err))
+        return None
+      skipped.append(pkg.get("raw") or ("sentence %d" % (idx + 1)))
+      _debug_write("S2SPLIT: sentence %d failed (%s) -> skipped" % (idx + 1, s2_err))
+      continue
+    anchored = _slice_anchored_worlds(pkg)
+    pkgs, max_seen = _renumber_split_worlds(pkgs, anchored, max_seen)
+    packages.extend(pkgs)
+  if skipped:
+    stats["s2_split_skipped"] = skipped
+  if not packages:
+    return None
+  _debug_write("S2SPLIT: joined %d packages from %d sentences (%d skipped)"
+               % (len(packages), stats["s2_splits"], len(skipped)))
+  return ["and"] + packages
+
+
 # ======== main entry point ========
 
 def parse_text(text, llm=None, version=None, tokens=None, think=None):
@@ -474,14 +608,21 @@ def parse_text(text, llm=None, version=None, tokens=None, think=None):
       s1_json = canonicalize_entity_ids(s1_json, stats)
     # (ultracoarse) Enable the constant-vs-class / dropped-fact repair check.
     _ss.aggressive_repair = canon_entities_enabled
-    s2_input = json.dumps(s1_json)
-    s2_json, s2_raw, s2_err = _run_stage(2, s2_input, _stage2_sysprompt,
-                                          eff_llm, eff_version, eff_tokens, eff_think, stats,
-                                          check_fn=lambda parsed: _check_stage2(parsed, s1_json))
-    if s2_err:
-      _debug_write("STAGE 2 ERROR: " + s2_err)
+    if s2split_enabled:
+      # -s2split: one Stage-2 call per Stage-1 sentence package, joined.
+      s2_json = _run_stage2_split(s1_json, eff_llm, eff_version, eff_tokens,
+                                  eff_think, stats)
+      _debug_write("STAGE 2 (split) " + ("FAILED" if s2_json is None else "OK"))
     else:
-      _debug_write("STAGE 2 OK")
+      s2_input = json.dumps(s1_json)
+      s2_json, s2_raw, s2_err = _run_stage(2, s2_input, _stage2_sysprompt,
+                                            eff_llm, eff_version, eff_tokens, eff_think, stats,
+                                            check_fn=lambda parsed: _check_stage2(parsed, s1_json))
+      if s2_err:
+        _debug_write("STAGE 2 ERROR: " + s2_err)
+      else:
+        _debug_write("STAGE 2 OK")
+    if s2_json is not None:
       # (ultracoarse) Fold Stage-2 Wikipedia-URL constants into the matching
       # Stage-1 entity id so split constants reunify.
       s2_json = canonicalize_entity_urls(s1_json, s2_json, stats)

@@ -49,6 +49,8 @@ Coarse encodings and alternative modes (DOCUMENTATION.md §11–12, ENCODINGS.md
                  (implies -coarse, -simpleproperties)
 -prenorm         Pre-Stage-1 LLM wording normalisation (composable)
 -nocrossstage    Disable the ultracoarse cross-stage guard retry
+-s2split         One Stage-2 LLM call per Stage-1 sentence; outputs joined
+                 (worlds renumbered; failed sentences skipped unless the question)
 -combined-instr FILE   Single-stage parsing: ONE LLM call English → logic
                  (+ optional -combined-examples / -combined-checklist)
 -directanswer FILE     ONE LLM call answers directly; no logic, no prover

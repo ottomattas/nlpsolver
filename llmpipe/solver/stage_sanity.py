@@ -2238,3 +2238,38 @@ def format_guard_retry_suffix(guards):
                    'in %s; check whether any should.' % (name, name))
   lines.append("]")
   return "\n".join(lines)
+
+
+# ======== split-mode @id coverage check (Stage-2, -s2split) ================
+
+def check_stage2_id_coverage(logic, expected_ids):
+  """For a single-sentence Stage-2 call (-s2split): the top-level ["@id", ...]
+  packages must use exactly the unit_ids of the input slice.  The main split-
+  mode failure is the LLM renumbering ids to S1.. when a sentence is shown in
+  isolation; this check routes that into the normal corrective retry."""
+  if not expected_ids:
+    return []
+  emitted = []
+  if isinstance(logic, list) and logic and logic[0] == "and":
+    for x in logic[1:]:
+      if isinstance(x, list) and len(x) >= 2 and x[0] == "@id" and isinstance(x[1], str):
+        emitted.append(x[1])
+  elif isinstance(logic, list) and len(logic) >= 2 and logic[0] == "@id":
+    emitted.append(logic[1])
+  exp, got = set(expected_ids), set(emitted)
+  if exp == got:
+    return []
+  missing = sorted(exp - got)
+  extra = sorted(got - exp)
+  desc = ('The input contains exactly the units with unit_id '
+          + ", ".join(sorted(exp))
+          + '. Output exactly one ["@id", ...] package per unit, using those '
+            'exact unit ids (do NOT renumber them).')
+  if missing:
+    desc += " Missing: " + ", ".join(missing) + "."
+  if extra:
+    desc += " Unexpected ids: " + ", ".join(extra) + "."
+  return [Issue(kind="split_id_mismatch",
+                location=",".join(sorted(exp)),
+                description=desc,
+                evidence=",".join(sorted(got)) or "(no @id packages)")]

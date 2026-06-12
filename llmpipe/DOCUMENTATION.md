@@ -62,7 +62,7 @@ representation so that a developer or LLM can quickly start extending or modifyi
    - 9.5 [Spatial and temporal preposition handling](#95-spatial-and-temporal-preposition-handling)
 10. [Extending and modifying the pipeline](#10-extending-and-modifying-the-pipeline)
 11. [Coarse and ultracoarse machinery](#11-coarse-and-ultracoarse-machinery)
-12. [Alternative parsing modes: prenorm, combined single-stage, direct answer](#12-alternative-parsing-modes-prenorm-combined-single-stage-direct-answer)
+12. [Alternative parsing modes: prenorm, combined single-stage, direct answer, split Stage 2](#12-alternative-parsing-modes-prenorm-combined-single-stage-direct-answer-split-stage-2)
 
 ---
 
@@ -2873,7 +2873,7 @@ fresh-variable numbering).
 
 ---
 
-## 12. Alternative parsing modes: prenorm, combined single-stage, direct answer
+## 12. Alternative parsing modes: prenorm, combined single-stage, direct answer, split Stage 2
 
 Three opt-in modes replace or augment the two-LLM-call parse.  All are selected per
 run (CLI flags / option keys), share the LLM cache keyed on their own prompts, and
@@ -2912,3 +2912,37 @@ normalised to `"True." / "False." / "Unknown."`; otherwise the stripped reply is
 answer (phrase-style prompts).  `collect` gets `answer` and a `directanswer` metadata
 field.  Used for the FOLIO direct-answer reference runs
 (`prompts/folio_directanswer_instructions[_noworld].txt`).
+
+### 12.4 Split Stage 2 (`-s2split`)
+
+One Stage-2 LLM call **per Stage-1 sentence package** instead of one call for the
+whole text.  Each call's input is `json.dumps([package])` — a single-element list,
+exactly the input format the unchanged Stage-2 prompt specifies — and gets the full
+JSON-fix + sanity-retry machinery, scoped to its own sentence, plus a split-only
+sanity check (`check_stage2_id_coverage`): the emitted `["@id", ...]` ids must equal
+the slice's `unit_id` set (the main isolated-sentence failure is the LLM renumbering
+ids to S1…), routed through the normal corrective retry.  The per-sentence outputs
+are joined in order into one `["and", pkg...]`, indistinguishable downstream.
+
+**Failure policy:** a sentence whose Stage-2 call fails after retries is skipped
+(recorded in `stats["s2_split_skipped"]`) — unless it contains the question
+(a Stage-1 unit of type `query`, or `raw` ending in `?`), in which case the whole
+Stage 2 fails.
+
+**World renumbering (rule c′):** Stage-2 world constants (`W0, W1, …`) are numbered
+globally across sentences in state-tracking narratives, so per-sentence outputs must
+be re-aligned at join time.  Per split: worlds *anchored* by the slice itself — `W0`
+(the shared initial world) plus any `pre_state`/`post_state` annotation on the
+slice's Stage-1 units — keep their numbers; every other (locally-invented) world is
+remapped, in ascending order, to the next free global index (starting at
+max-seen-so-far + 1, skipping anchored indices).  Static text (everything in `W0`)
+is therefore untouched, Stage-1-annotated state chains keep their global numbering,
+and locally-invented result worlds never collide across splits.
+`inject_world_geometry` chains whatever distinct worlds the join produces.
+
+Mode interaction: incompatible with combined single-stage parsing (no Stage-1 to
+split; `english_to_answer` returns an error if both are set); composes with
+`-prenorm` and `-coarse`/`-ultracoarse` (the split runs inside
+`_stage1_then_stage2`, so the ultracoarse cross-stage retry re-splits).  Each slice
+is its own LLM-cache key.  `runtests.py -s2split` writes to
+`testresults/<set>_s2split/` unless `-tag` overrides.
