@@ -1705,15 +1705,12 @@ def inject_s2split_shape_bridges(result):
   """
   preds = _scan_predicates(result)
   axioms = []
-  if "have" in preds and "has part" in preds:
-    # Only the sound direction: a part is had (has_part -> have).  The reverse
-    # (have -> has_part) is rarely correct ("John has a car") and is already
-    # covered conservatively by lc_post_normalize.add_haspart_for_typed_have,
-    # which converts a have-fact only when THIS problem contains a has_part
-    # rule typed on the same noun.
-    axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
-      ["-has part", "?:Xsb", "?:Ysb", "?:Csb"],
-      ["have", "?:Xsb", "?:Ysb", "?:Csb"]]})
+  # have / has_part needs NO bridge here: has_part -> have (the sound
+  # direction) is a static axiom (axioms_std.js top), and the risky
+  # have -> has_part direction is covered conservatively by the always-on,
+  # per-problem-typed lc_post_normalize.add_haspart_for_typed_have.  Case 190
+  # only needed the has->have predicate rename for the static axiom to reach
+  # the question atom.
   if "has destination" in preds and "has location" in preds:
     axioms.append({"@name": "frm_s2bridge", "@confidence": 0.99, "@logic": [
       ["-has destination", "?:Esb", "?:Xsb", "?:Psb", "?:Csb"],

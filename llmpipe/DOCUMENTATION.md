@@ -2949,7 +2949,8 @@ is its own LLM-cache key.  `runtests.py -s2split` writes to
 
 **Split-mode shape bridges.**  The dominant `-s2split` failure is cross-sentence
 predicate-choice divergence: each isolated call makes a locally-valid encoding choice
-that disagrees with the sibling sentence it must unify with (`have` vs `has part`,
+that disagrees with the sibling sentence it must unify with (`have` vs `has part` —
+covered by the static `has_part`→`have` axiom once the rename below applies,
 `has location` vs `has destination`, a role on the target entity vs on the event,
 `small fish` as a compound isa vs adjective + noun, a comparative vs `less_measure`
 arithmetic, plus off-inventory predicate drift `has`/`has rel2`).  Under
@@ -2957,10 +2958,8 @@ arithmetic, plus off-inventory predicate drift `has`/`has rel2`).  Under
 - an off-inventory rename pass (`has` → `have`, `has rel2` → `is rel2`) in
   `logconvert`;
 - dynamic shape bridges (`lc_post_inject.inject_s2split_shape_bridges`, confidence
-  0.99, each gated on both shapes being present): `has_part` → `have` (the sound
-  direction only; the risky `have` → `has_part` direction stays with the
-  always-on, per-problem-typed `add_haspart_for_typed_have`),
-  `has_destination` → `has_location`, beneficiary/recipient lift from the event to
+  0.99, each gated on both shapes being present): `has_destination` → `has_location`
+  (axioms_std.js has only verb-specific location/destination siblings), beneficiary/recipient lift from the event to
   its target, and `less_measure($measure_of(D,…))` ↔ `has_degree_rel2(ADJ,…)` via a
   dimension→adjective table;
 - compound composition in property shape (`build_compound_subsumption(degree_comp=True)`):
