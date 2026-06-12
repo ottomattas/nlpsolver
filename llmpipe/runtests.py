@@ -466,6 +466,32 @@ def write_case_file(outpath, payload):
   os.replace(tmp, outpath)
 
 
+def pipeline_git_state():
+  """Pipeline provenance for summary.json: commit hash, dirty flag (tracked
+  files only — the working tree always carries untracked scratch), and any
+  tags pointing at the commit.  Returns None when git is unavailable."""
+  import subprocess
+  here = os.path.dirname(os.path.abspath(__file__))
+  def run(args):
+    try:
+      return subprocess.run(["git"] + args, cwd=here, capture_output=True,
+                            text=True, timeout=10).stdout.strip()
+    except Exception:
+      return ""
+  commit = run(["rev-parse", "HEAD"])
+  if not commit:
+    return None
+  return {
+    "commit": commit,
+    "dirty": bool(run(["status", "--porcelain", "--untracked-files=no"])),
+    "tags": run(["tag", "--points-at", "HEAD"]).split(),
+  }
+
+
+# Computed once in main(); embedded in every summary.json the run writes.
+_pipeline_git = None
+
+
 def update_summary(outdir, llm):
   """Scan the LLM's output dir, rebuild summary.json from per-case .py files."""
   if not os.path.isdir(outdir):
@@ -500,6 +526,8 @@ def update_summary(outdir, llm):
     "failed_or_errored": by_case,
     "updated": datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
   }
+  if _pipeline_git:
+    summary["pipeline_git"] = _pipeline_git
   with open(os.path.join(outdir, "summary.json"), "w") as f:
     json.dump(summary, f, indent=2, ensure_ascii=False)
 
@@ -507,6 +535,8 @@ def update_summary(outdir, llm):
 # ======== main loop ========
 
 def main():
+  global _pipeline_git
+  _pipeline_git = pipeline_git_state()
   ap = argparse.ArgumentParser(description="Batch test runner for nlpsolver.")
   ap.add_argument("testfile", nargs="?", default=DEFAULT_TESTFILE,
                   help=f"Test file (default: {DEFAULT_TESTFILE})")
