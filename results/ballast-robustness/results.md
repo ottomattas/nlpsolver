@@ -406,6 +406,21 @@ runs) so the dataset and the sqlite LLM cache are hole-free for replays.
   the phases0-2 snapshot (strict superset: adds every gemini+deepseek
   b8/b16 call). The phases0-2 file stays committed because sent emails
   link to it. The same `-maxtokens 32000` rule applies.
+- **`cache-snapshot-phases0-3-b32-chunking.db.gz`** (5.9 MB; SHA256
+  `4cc3a40998f5f3968e5aec7b76cdf175596def2eac601c0726cd71bf2e2573f9`) — same
+  `VACUUM INTO` procedure, taken 2026-06-13 after the §14 b32 and §15
+  chunking cells completed; supersedes phases0-3 (strict superset, 17,547 vs
+  4,560 cache rows, adding every b32 call and every `-slightcoarse` /
+  `-s2split -slightcoarse` call for all four models). This is the complete
+  cache for the whole study to date (b0–b32 + chunking). The earlier
+  snapshots stay committed because earlier sent emails link to them. Replay:
+  gunzip → place as `llmpipe/cache.db`, then re-run each cell with the SAME
+  flags it was collected under — `-maxtokens 32000` for b8/b16 and the
+  chunking cells, `-maxtokens 64000` for b32 (§14.4/§15.6), plus
+  `-slightcoarse` or `-s2split -slightcoarse` for the chunking cells. Output
+  budget and flags are part of the cache key, so a mismatch misses the cache
+  and makes real API calls. The §16 probes need no cache (they replay gk from
+  the committed clause JSONs).
 - **`gk-bug-case1011-minimal.gkin`** — minimal reproducer (17 clauses +
   question, delta-debugged from case 1011's 141-clause prover input) for
   the gk datarec allocator error of §11.1. Run:
