@@ -110,15 +110,23 @@ became generator condition 5 above.
 (`results/parsing-architecture/core_100/twostage/`), same 100 cases, same
 pipeline, no ballast.
 
-## 2. Dose-response (the headline table, to be extended per dose)
+## 2. Dose-response (the headline table)
+
+Full four-model curve on the 100-subset (as-collected; per-dose incidents,
+valid-only variants and per-case flips in §11/§13/§14):
 
 ```
-accuracy %        b0       b2
-gpt            100.0     98.0
-claude          98.0     96.0
+accuracy %    b0     b2     b4     b8    b16    b32
+gpt          100     98     84     93     78     72
+claude        98     96     94     89     83     71
+gemini        99      -      -     90     82     66
+deepseek      98      -      -     87     88     74
 ```
 
-Per-case flips vs b0 (not just the aggregate):
+b2/b4 cells exist only for gpt+claude (Phases 1–2); gemini+deepseek entered
+the study at b8 (§13). **Smooth degradation, no cliff at any dose** (§14).
+
+Per-case flips vs b0 at the light anchor (b2; full per-dose flips in §11/§13):
 
 ```
 gpt    b2: lost 553, 893            | gained none
