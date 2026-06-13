@@ -17,8 +17,17 @@ the regenerated HEAD suites, so for those models HEAD is the right pairing.
 
 Validation does not require these files: the committed per-case JSONs
 under core_100_b*_*/twostage/<llm>/ embed input_text, so dose_response.py
-reconstructs accuracy self-contained. These files are here only so the
-gpt+claude chunking cells can be RE-RUN from HEAD without git archaeology:
+reconstructs accuracy self-contained. To confirm the case-identity claim
+(each model's chunking cell used the SAME inputs as its baseline cell),
+run the bundled check -- it pairs each model with its baseline and reports
+same_input n/n plus the resolved suite rev (gpt+claude -> 88ca7b0,
+gemini+deepseek -> HEAD):
+
+  python3 analysis/dose_response.py -doses 8,16 \
+      -tag s2split_slightcoarse -models gpt,claude,gemini,deepseek -provenance
+
+These files are here only so the gpt+claude chunking cells can be RE-RUN
+from HEAD without git archaeology:
 
   python3 runtests.py results/ballast-robustness/oldsuites/tests_core_100_b8.py \
       -llms gpt,claude -maxtokens 32000 -timeout 300 -slightcoarse -tag slightcoarse

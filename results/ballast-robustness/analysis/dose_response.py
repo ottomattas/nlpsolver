@@ -54,6 +54,11 @@ def main():
                   help="condition-variant cell suffix to read for doses>0 "
                        "(e.g. slightcoarse, s2split_slightcoarse); b0 stays "
                        "the plain baseline. Omit for the two-stage baseline.")
+  ap.add_argument("-provenance", action="store_true",
+                  help="confirm case-identity: per (model,dose), report how "
+                       "many cases share the SAME input_text as the plain "
+                       "baseline cell (so a -tag condition is comparable "
+                       "case-by-case), plus the resolved ballast suite rev.")
   args = ap.parse_args()
   source = "live" if args.live else "snapshot"
   doses = [0] + [int(s) for s in args.doses.split(",") if s.strip()]
@@ -110,6 +115,32 @@ def main():
                       if not C.is_correct(base[cid]) and C.is_correct(cc[cid]))
       print(f"{m} b{d}: lost {len(lost)} {lost}  | gained {len(gained)} {gained}")
   print()
+
+  if args.provenance:
+    print("Case-identity vs the plain baseline cell (same dose, same model):\n")
+    print(f"  {'model':9} {'dose':>5} {'n':>4} {'same_input':>11} {'suite_rev':>10}")
+    print("  " + "-" * 43)
+    for m in models:
+      for d in doses[1:]:
+        cc = data[(m, d)]
+        if not cc:
+          print(f"  {m:9} {'b'+str(d):>5} {'--':>4}")
+          continue
+        base = C.load(d, m, source, tag=None)   # plain baseline cell
+        both = [cid for cid in cc if cid in base]
+        same = sum(1 for cid in both
+                   if cc[cid].get("input_text") == base[cid].get("input_text"))
+        try:
+          _, rev = C.resolve_manifest(d, cc)
+          rev = rev or "HEAD"
+        except Exception:
+          rev = "?"
+        print(f"  {m:9} {'b'+str(d):>5} {len(cc):4d} "
+              f"{str(same)+'/'+str(len(both)):>11} {rev:>10}")
+    print("\n  same_input = n cases whose tagged-cell input equals the baseline\n"
+          "  cell input (full match => the condition is comparable 1:1).\n"
+          "  suite_rev = ballast generation the cell resolves to "
+          "(88ca7b0 = gpt+claude pre-fix; HEAD = regenerated).\n")
 
 
 if __name__ == "__main__":
