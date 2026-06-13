@@ -238,6 +238,30 @@ TOTAL Phase 1                                               7.71
   no constraint links it to the case's tense. Inertness conditions make
   cross-tense interference impossible at clause level, but it may still
   distract the parse — that is part of the measured phenomenon.
+- **Suite provenance (some cells ran on older commits) — and why the
+  results still stand.** The collected gpt+claude cells (Phase 1–2 baselines
+  and their `-slightcoarse`/`-s2split` chunking cells) ran on the
+  PRE-splitter-fix suites in git history (b4–b16 at rev `88ca7b0`, b2 at the
+  `a862b73` era); gemini+deepseek (Phase 3), all b32 cells, and their
+  chunking cells ran on the REGENERATED post-fix suites (`9a69fc8`, ≈HEAD).
+  *Why the old→new split:* the §11.2 splitter bug was fixed by regenerating
+  all four suites, which reshuffled every pick (the pool size changed), so a
+  regenerated suite no longer contains the exact inputs the already-collected
+  (and expensive) gpt+claude runs used. Rather than re-collect, each cell is
+  kept paired with the precise suite it actually ran on. *Why the results are
+  usable regardless:* (1) every per-case JSON embeds its own `input_text`, so
+  the analyses reconstruct accuracy self-contained, independent of any suite
+  file; (2) each analysis self-validates provenance — `common.resolve_manifest`
+  accepts a manifest revision only if every ballast text appears verbatim in
+  the loaded cases, and `dose_response.py -provenance` reports `same_input n/n`
+  plus the resolved rev (gpt+claude → `88ca7b0`, gemini+deepseek → HEAD), so a
+  baseline↔chunking comparison is provably case-identical; (3) the splitter-bug
+  contaminated cases are dropped per dose via `phase2_exclusions.json` on the
+  old-suite cells only (the regenerated suites are clean by construction); and
+  (4) the dose-response curve reproduces independently on the clean
+  regenerated suites for gemini+deepseek (§13), so the finding does not hinge
+  on the old generation. Full detail: §11.2, §13, §15, and
+  `oldsuites/PROVENANCE.txt`.
 
 ## 8. Reproduce
 
@@ -1010,4 +1034,120 @@ python3 runtests.py tests/ballast/tests_core_100_b8.py                          
 cd results/ballast-robustness/analysis
 python3 dose_response.py -doses 8,16 -tag slightcoarse        -models gpt,claude,gemini,deepseek
 python3 dose_response.py -doses 8,16 -tag s2split_slightcoarse -models gpt,claude,gemini,deepseek -provenance
+```
+
+## 16. Three follow-up probes (offline, stored traces + cache, ~$0)
+
+Three sharper questions raised after the chunking run, each answered from the
+stored traces with no new LLM calls (gk is replayed locally where needed).
+New scripts: `prover_budget.py`, `tracking_horizon.py`, `reconcile_s2split.py`.
+
+### 16.1 Is the high-dose `no_proof` a prover TIME limit or a PARSE loss?
+
+The headline claim is that ballast degrades only the neural parse, the
+symbolic prover staying indifferent at a fixed budget; that budget check had
+only been done at b2 (§3). `prover_budget.py` re-tests it at scale. Every
+`no_proof` failure (stored "Unknown.", expected something else, clauses
+present) over b8/b16/b32 × 4 models is triaged, then the genuine
+"clauses-look-sufficient" cases are replayed UNCHANGED at a 30s budget
+(~15× the ~2s live budget):
+
+```
+no_proof failures analysed : 166
+  clause-loss (parse)      :  73   original-sentence clauses missing vs b0
+  world-shift (convert)    :  38   freeing the question world recovers b0
+  non-reproducing          :   4   stored fail not reproduced at 2s
+  candidates (sufficient)  :  51   clauses sufficient, world not the cause
+    of which flip @ 30s    :   4   ALL at b32 (claude 28, 888; gemini 663, 1099)
+```
+
+So 67% of the `no_proof` mass is already explained by parse loss (73) or the
+convert-layer world binding (38), neither of which more prover time can fix.
+Of the 51 residual sufficient-clause candidates, only 4 (8%) close with 15×
+the time, and **all four are at b32** — none at b8 or b16. The symbolic prover
+is therefore time-indifferent across the studied range, with only a thin
+search tail emerging at the most extreme dose. The "loss enters through the
+parse" claim survives at scale; the b32 tail is the one place a longer budget
+buys a handful of answers (consistent with the §14.2 prover stress at b32).
+
+(Flip grading uses the pipeline's own `test._result_matches`, so "Probably
+true." counts for an expected "True.".)
+
+### 16.2 Does id-break track mention DISTANCE rather than total dose?
+
+`tracking_horizon.py` measures, for every concrete referent mentioned more
+than once (an original sentence plus, usually, the question), the number of
+ballast sentences sitting between its first and last mention, and splits
+referents into BROKEN (id-break vs b0, §15.1) and HELD. Break hazard by gap,
+all models and doses pooled:
+
+```
+ballast_gap   referents  broken    rate
+0-1                  68       0    0.0%
+2-3                 200       5    2.5%
+4-6                 313      10    3.2%
+7-10                220       5    2.3%
+11-15               199      12    6.0%
+16-+                171      13    7.6%
+```
+
+Per model, broken referents sit at a markedly larger median gap than held
+ones (gpt 9 vs 6, claude 12 vs 7, gemini 9 vs 6, deepseek 12 vs 6), and **no
+referent fractures when its mentions are within 2 ballast sentences** (0/68).
+This is a soft but real tracking horizon: the models hold a referent reliably
+across a couple of intervening sentences, the hazard stays ~2.5-3% out to a
+gap of 10, then roughly doubles to 6-8% past 11-16. id-break is thus
+modulated by mention distance, not by raw dose — and a chunker that keeps
+co-referring sentences within ~10 sentences of each other would roughly halve
+the break hazard. (The hazard is a probability, not a cliff: most far-apart
+referents still survive, so distance raises risk rather than forcing a break.)
+
+### 16.3 Would symbolic cross-chunk reconciliation make `-s2split` a net win?
+
+§12.4 predicted a "global entity registry" is needed or chunking adds
+id-breaks. `reconcile_s2split.py` tests the cheapest symbolic version of that
+idea, applied to the stored s2split clauses (no LLM): canonicalise entity ids
+(one id per base name), merge worlds (every `W<k>`→`W0`), dedupe identical
+facts; then gk is replayed unchanged and graded, and the §15.2 flip table is
+recomputed. Accuracy over the eight b8/b16 cells (valid graded cases):
+
+```
+                       base   s2split   +reconcile
+sum of 8 cells          631      618          637      (world-merge on)
+net vs baseline           —      -13           +6
+sum of 8 cells          631      618          612      (world-merge OFF: ids+dedupe only)
+net vs baseline           —      -13          -19
+```
+
+The decomposition is the point. **Entity-id canonicalisation + dedupe alone is
+net-NEGATIVE (-19, worse than plain s2split):** collapsing every same-name id
+rescues some chunk-boundary fractures but creates more spurious proofs by
+merging genuinely-distinct same-name referents (over-merge breaks recur on
+the same cases across cells — 1318 nearly everywhere, plus 542/612/550 — the
+exact §12.4 spurious-proof channel, e.g. b16 542's red and blue squares both
+"square 1"). **The entire +6 of the full reconciliation comes from the
+world-merge component**, which is a cruder, more aggressive form of the §12.4
+convert-layer fix (bind the stateless question to a world variable) and needs
+no chunking at all. Even with both components, the cell s2split hurt most —
+gpt b8 — stays net-negative (recon 79/76 vs split 80 vs base 88).
+
+**Verdict:** a post-hoc symbolic entity registry does not rescue `-s2split`;
+on its own it makes robustness worse. The only piece that helps is world
+unification, i.e. the §12.4 lever re-derived — confirming §15.4 that the
+convert-layer world-binding fix, not chunking plus a symbolic registry, is
+the higher-leverage change. A real registry would have to be passed INTO the
+per-sentence stage-2 calls (so the LLM keeps one id per referent) rather than
+reconstructed symbolically afterwards.
+
+### 16.4 Reproduce
+
+```bash
+cd results/ballast-robustness/analysis
+# 16.1 — triage + 30s budget sweep on the no_proof failures (gk runs locally)
+python3 prover_budget.py -doses 8,16,32 -models gpt,claude,gemini,deepseek -budgets 30
+# 16.2 — mention-distance horizon (offline, no prover)
+python3 tracking_horizon.py -doses 8,16,32 -models gpt,claude,gemini,deepseek
+# 16.3 — reconciliation, both with and without world-merge
+python3 reconcile_s2split.py -doses 8,16 -models gpt,claude,gemini,deepseek -verbose
+python3 reconcile_s2split.py -doses 8,16 -models gpt,claude,gemini,deepseek -no-world-merge
 ```
