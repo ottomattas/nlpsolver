@@ -1,0 +1,2244 @@
+{
+  "test_name": "core_100_b32",
+  "case_id": 541,
+  "input_text": "Sparrows are not animals. Eve forgot to lock the door. The head of Mary is clean. Dole was defeated by Clinton. The teacher showed the map to the students. Elephants, foxes and rabbits are neither birds nor small fish. Muggles cannot disappear. The guide offered the tourists tea. Earth contains Europe. These links present the many viewpoints that existed. The red square has a nail. John is nice and cool. Mr Dursley is a catholic. If X1 is not a parent of Y1, Y1 is not a child of X1. Sara, the sister of Mike, left. Bike's length is 10 kilometers. Gertrude is a wolf. Tallinn is in Estonia. Daniel journeyed to the hallway. Jessica is a mouse. \"Riga is not in America. The cat slept on the velvet sofa. The woman holding a heavy lamp sang. This book is more interesting than that one. A blue square has a hole. Penguins live in water. Sandra moved to the garden. Mark is not in the box. The glass was broken by the boy. The letter was written. Agatha is in trouble. The picture was painted by Leo. A chocolate cake fell. The horse kept in the stable was calm. A blue square has a hole?",
+  "expected_answer": true,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Sparrows are not animals.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Sparrows are not animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "sparrows", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Eve forgot to lock the door.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Eve 1 did not lock the door 2.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "door 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "lock", "mode": "event", "roles": {"actor": "Eve 1", "target": "door 2"}}],
+          "time": "past",
+          "pre_state": "W0"
+        }
+      ]
+    },
+    {
+      "raw": "The head of Mary is clean.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The head 1 of Mary 2 is clean.",
+          "type": "situation",
+          "entities": [{"id": "head 1", "type": "concrete", "text": "head", "category": "abstract"},
+            {"id": "Mary 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["clean","none","head"]],
+          "definites": [["head of","head 1","Mary 2"]],
+          "time": "present"
+        },
+        {
+          "unit_id": "S2",
+          "text": "The head 1 is the head of Mary 2.",
+          "type": "situation",
+          "entities": [{"id": "head 1", "type": "concrete", "text": "head", "category": "abstract"},
+            {"id": "Mary 2", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["head of","head 1","Mary 2"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Dole was defeated by Clinton.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Clinton 4 defeated Dole 3.",
+          "type": "situation",
+          "entities": [{
+              "id": "Clinton 4",
+              "type": "concrete",
+              "category": "person",
+              "url": "https://en.wikipedia.org/wiki/Bill_Clinton"
+            },
+            {
+              "id": "Dole 3",
+              "type": "concrete",
+              "category": "person",
+              "url": "https://en.wikipedia.org/wiki/Bob_Dole"
+            }
+          ],
+          "actions": [{"root": "defeat", "mode": "event", "roles": {"actor": "Clinton 4", "target": "Dole 3"}}],
+          "time": "past",
+          "pre_state": "W0",
+          "next_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "The teacher showed the map to the students.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The teacher 5 showed the map 6 to the students 7.",
+          "type": "situation",
+          "entities": [{"id": "teacher 5", "type": "concrete", "category": "person"},
+            {"id": "map 6", "type": "concrete", "category": "artifact"},
+            {"id": "students 7", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 5", "target": "map 6", "recipient": "students 7"}
+            }
+          ],
+          "time": "past",
+          "pre_state": "W0",
+          "next_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants, foxes and rabbits are neither birds nor small fish.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Elephants are not birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S2",
+          "text": "Elephants are not small fish.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "fish", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["small","none","fish"]]
+        },
+        {
+          "unit_id": "S3",
+          "text": "Foxes are not birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "foxes", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S4",
+          "text": "Foxes are not small fish.",
+          "type": "strict_rule",
+          "entities": [{"id": "foxes", "type": "generic", "category": "animal"},
+            {"id": "fish", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["small","none","fish"]]
+        },
+        {
+          "unit_id": "S5",
+          "text": "Rabbits are not birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "rabbits", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S6",
+          "text": "Rabbits are not small fish.",
+          "type": "strict_rule",
+          "entities": [{"id": "rabbits", "type": "generic", "category": "animal"},
+            {"id": "fish", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["small","none","fish"]]
+        }
+      ]
+    },
+    {
+      "raw": "Muggles cannot disappear.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Muggles cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "Muggles", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability", "roles": {"actor": "Muggles"}}]
+        }
+      ]
+    },
+    {
+      "raw": "The guide offered the tourists tea.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The guide 8 offered the tourists 9 tea.",
+          "type": "situation",
+          "entities": [{"id": "guide 8", "type": "concrete", "category": "person"},
+            {"id": "tourists 9", "type": "concrete", "category": "person"},
+            {"id": "tea", "type": "generic", "scope": "kind", "category": "substance"}
+          ],
+          "actions": [{
+              "root": "offer",
+              "mode": "event",
+              "roles": {"actor": "guide 8", "recipient": "tourists 9", "target": "tea"}
+            }
+          ],
+          "time": "past",
+          "pre_state": "W0",
+          "next_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "Earth contains Europe.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Earth 10 contains Europe 11.",
+          "type": "real",
+          "entities": [{
+              "id": "Earth 10",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Earth"
+            },
+            {
+              "id": "Europe 11",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Europe"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "These links present the many viewpoints that existed.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "These links 12 present many viewpoints 13.",
+          "type": "situation",
+          "entities": [{"id": "links 12", "type": "concrete", "category": "artifact"},
+            {"id": "viewpoints 13", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{
+              "root": "present",
+              "mode": "event",
+              "roles": {"actor": "links 12", "target": "viewpoints 13"}
+            }
+          ],
+          "time": "present"
+        },
+        {
+          "unit_id": "S2",
+          "text": "The viewpoints 13 existed.",
+          "type": "situation",
+          "entities": [{"id": "viewpoints 13", "type": "concrete", "category": "abstract"}],
+          "actions": [{"root": "exist", "mode": "event", "roles": {"actor": "viewpoints 13"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The red square has a nail.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The red square 14 has a nail 15.",
+          "type": "situation",
+          "entities": [{"id": "square 14", "type": "concrete", "category": "artifact"},
+            {"id": "nail 15", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["red","none","none"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "John is nice and cool.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 16 is nice.",
+          "type": "situation",
+          "entities": [{"id": "John 16", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]],
+          "time": "present"
+        },
+        {
+          "unit_id": "S2",
+          "text": "John 16 is cool.",
+          "type": "situation",
+          "entities": [{"id": "John 16", "type": "concrete", "category": "person"}],
+          "adjectives": [["cool","none","person"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is a catholic.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mr Dursley 17 is a catholic.",
+          "type": "situation",
+          "entities": [{"id": "Mr Dursley 17", "type": "concrete", "category": "person"},
+            {"id": "catholic", "type": "generic", "category": "person"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is not a parent of Y1, Y1 is not a child of X1.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "If X1 is not a parent of Y1, Y1 is not a child of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"}, {"id": "Y1", "type": "generic"}]
+        }
+      ]
+    },
+    {
+      "raw": "Sara, the sister of Mike, left.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Sara 18 left.",
+          "type": "situation",
+          "entities": [{"id": "Sara 18", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "leave", "mode": "event", "roles": {"actor": "Sara 18"}}],
+          "time": "past",
+          "pre_state": "W0",
+          "next_state": "W1"
+        },
+        {
+          "unit_id": "S2",
+          "text": "Sara 18 is the sister of Mike 19.",
+          "type": "situation",
+          "entities": [{"id": "Sara 18", "type": "concrete", "category": "person"},
+            {"id": "sister", "type": "concrete", "text": "sister", "category": "person"},
+            {"id": "Mike 19", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["sister of","sister","Mike 19"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Bike's length is 10 kilometers.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The length 1 of the bike 20 is 10 kilometers.",
+          "type": "situation",
+          "entities": [{"id": "length 1", "type": "concrete", "text": "length", "category": "abstract"},
+            {"id": "bike 20", "type": "concrete", "category": "artifact"},
+            {"id": "10 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 1","bike 20"]],
+          "time": "present"
+        },
+        {
+          "unit_id": "S2",
+          "text": "The length 1 is the length of the bike 20.",
+          "type": "situation",
+          "entities": [{"id": "length 1", "type": "concrete", "text": "length", "category": "abstract"},
+            {"id": "bike 20", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["length of","length 1","bike 20"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Gertrude is a wolf.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Gertrude 21 is a wolf.",
+          "type": "situation",
+          "entities": [{"id": "Gertrude 21", "type": "concrete", "category": "animal"},
+            {"id": "wolf", "type": "generic", "category": "animal"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is in Estonia.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Tallinn 22 is in Estonia 23.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 22",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Estonia 23",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Daniel journeyed to the hallway.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Daniel 24 journeyed to the hallway 25.",
+          "type": "situation",
+          "entities": [{"id": "Daniel 24", "type": "concrete", "category": "person"},
+            {"id": "hallway 25", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "journey",
+              "mode": "event",
+              "roles": {"actor": "Daniel 24", "destination": "hallway 25"}
+            }
+          ],
+          "time": "past",
+          "pre_state": "W0",
+          "next_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "Jessica is a mouse.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Jessica 26 is a mouse.",
+          "type": "situation",
+          "entities": [{"id": "Jessica 26", "type": "concrete", "category": "animal"},
+            {"id": "mouse", "type": "generic", "category": "animal"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Riga is not in America.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Riga 27 is not in America 28.",
+          "type": "real",
+          "entities": [{
+              "id": "Riga 27",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Riga"
+            },
+            {
+              "id": "America 28",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/United_States"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The cat slept on the velvet sofa.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The cat 29 slept on the velvet sofa 30.",
+          "type": "situation",
+          "entities": [{"id": "cat 29", "type": "concrete", "category": "animal"},
+            {"id": "sofa 30", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["velvet","none","none"]],
+          "actions": [{
+              "root": "sleep",
+              "mode": "event",
+              "roles": {"actor": "cat 29", "location": "sofa 30", "location_prep": "on"}
+            }
+          ],
+          "time": "past",
+          "pre_state": "W0",
+          "next_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "The woman holding a heavy lamp sang.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The woman 31 sang.",
+          "type": "situation",
+          "entities": [{"id": "woman 31", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "sing", "mode": "event", "roles": {"actor": "woman 31"}}],
+          "time": "past",
+          "pre_state": "W0",
+          "next_state": "W1"
+        },
+        {
+          "unit_id": "S2",
+          "text": "The woman 31 held a heavy lamp 32.",
+          "type": "situation",
+          "entities": [{"id": "woman 31", "type": "concrete", "category": "person"},
+            {"id": "lamp 32", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["heavy","none","lamp"]],
+          "actions": [{"root": "hold", "mode": "event", "roles": {"actor": "woman 31", "target": "lamp 32"}}],
+          "time": "past",
+          "pre_state": "W0"
+        }
+      ]
+    },
+    {
+      "raw": "This book is more interesting than that one.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "This book 33 is more interesting than that book 34.",
+          "type": "situation",
+          "entities": [{"id": "book 33", "type": "concrete", "category": "artifact"},
+            {"id": "book 34", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["interesting","high","book"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "A blue square has a hole.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "A blue square 35 has a hole 36.",
+          "type": "situation",
+          "entities": [{"id": "square 35", "type": "concrete", "category": "artifact"},
+            {"id": "hole 36", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["blue","none","none"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Penguins live in water.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Penguins live in water.",
+          "type": "normal_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"},
+            {"id": "water", "type": "generic", "scope": "kind", "category": "substance"}
+          ],
+          "actions": [{
+              "root": "live",
+              "mode": "habitual",
+              "roles": {"actor": "penguins", "location": "water"}
+            }
+          ],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "Sandra moved to the garden.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Sandra 37 moved to the garden 38.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 37", "type": "concrete", "category": "person"},
+            {"id": "garden 38", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "move",
+              "mode": "event",
+              "roles": {"actor": "Sandra 37", "destination": "garden 38"}
+            }
+          ],
+          "time": "past",
+          "pre_state": "W0",
+          "next_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "Mark is not in the box.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mark 39 is not in the box 40.",
+          "type": "situation",
+          "entities": [{"id": "Mark 39", "type": "concrete", "category": "person"},
+            {"id": "box 40", "type": "concrete", "category": "artifact"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "The glass was broken by the boy.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The boy 42 broke the glass 41.",
+          "type": "situation",
+          "entities": [{"id": "boy 42", "type": "concrete", "category": "person"},
+            {"id": "glass 41", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "break", "mode": "event", "roles": {"actor": "boy 42", "target": "glass 41"}}],
+          "time": "past",
+          "pre_state": "W0",
+          "next_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "The letter was written.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The letter 43 was written.",
+          "type": "situation",
+          "entities": [{"id": "letter 43", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "write", "mode": "event", "roles": {"target": "letter 43"}}],
+          "time": "past",
+          "pre_state": "W0",
+          "next_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "Agatha is in trouble.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Agatha 44 is in trouble.",
+          "type": "situation",
+          "entities": [{"id": "Agatha 44", "type": "concrete", "category": "person"},
+            {"id": "trouble", "type": "generic", "category": "abstract"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "The picture was painted by Leo.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Leo 46 painted the picture 45.",
+          "type": "situation",
+          "entities": [{"id": "Leo 46", "type": "concrete", "category": "person"},
+            {"id": "picture 45", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "paint", "mode": "event", "roles": {"actor": "Leo 46", "target": "picture 45"}}],
+          "time": "past",
+          "pre_state": "W0",
+          "next_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "A chocolate cake fell.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "A chocolate cake 47 fell.",
+          "type": "situation",
+          "entities": [{"id": "cake 47", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["chocolate","none","none"]],
+          "actions": [{"root": "fall", "mode": "event", "roles": {"actor": "cake 47"}}],
+          "time": "past",
+          "pre_state": "W0",
+          "next_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "The horse kept in the stable was calm.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The horse 48 was calm.",
+          "type": "situation",
+          "entities": [{"id": "horse 48", "type": "concrete", "category": "animal"}],
+          "adjectives": [["calm","none","horse"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S2",
+          "text": "The horse 48 was kept in the stable 49.",
+          "type": "situation",
+          "entities": [{"id": "horse 48", "type": "concrete", "category": "animal"},
+            {"id": "stable 49", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "keep",
+              "mode": "event",
+              "roles": {"target": "horse 48", "location": "stable 49", "location_prep": "in"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A blue square has a hole?",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Does a blue square have a hole?",
+          "type": "query",
+          "entities": [{"id": "square", "type": "generic", "category": "artifact"},
+            {"id": "hole", "type": "generic", "category": "artifact"}
+          ],
+          "adjectives": [["blue","none","none"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall", "X", ["implies", ["isa","sparrow","X"], ["not", ["isa","animal","X"]]]]
+      ]
+    ],
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["isa","door","door 2"],
+          ["not",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","lock"],
+                ["has actor","E","Eve 1"],
+                ["has target","E","door 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","head","head 1"],
+          ["isa","person","Mary 2"],
+          ["has part","Mary 2","head 1"],
+          ["has degree property","clean","head 1","none","head"]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","head","head 1"],
+            ["isa","person","Mary 2"],
+            ["has part","Mary 2","head 1"]
+          ]
+        ],
+        ["@definite","S2","W0","head of","Mary 2","head 1"]
+      ]
+    ],
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","https://en.wikipedia.org/wiki/Bill_Clinton"],
+            ["isa","person","https://en.wikipedia.org/wiki/Bob_Dole"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","defeat"],
+                ["has actor","E","https://en.wikipedia.org/wiki/Bill_Clinton"],
+                ["has target","E","https://en.wikipedia.org/wiki/Bob_Dole"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","teacher","teacher 5"],
+            ["isa","map","map 6"],
+            ["isa","student","students 7"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","show"],
+                ["has actor","E","teacher 5"],
+                ["has target","E","map 6"],
+                ["has recipient","E","students 7"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S1",
+      ["holds","W0",
+        ["forall", "X", ["implies", ["isa","elephant","X"], ["not", ["isa","bird","X"]]]]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","elephant","X"],
+            ["not", ["and", ["isa","fish","X"], ["has degree property","small","X","none","fish"]]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","fox","X"], ["not", ["isa","bird","X"]]]]]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","fox","X"],
+            ["not", ["and", ["isa","fish","X"], ["has degree property","small","X","none","fish"]]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall", "X", ["implies", ["isa","rabbit","X"], ["not", ["isa","bird","X"]]]]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","rabbit","X"],
+            ["not", ["and", ["isa","fish","X"], ["has degree property","small","X","none","fish"]]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","Muggle","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","guide","guide 8"],
+            ["isa","tourist","tourists 9"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","offer"],
+                ["has actor","E","guide 8"],
+                ["has recipient","E","tourists 9"],
+                ["has target","E","tea"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S1",
+      ["holds","W0",
+        ["is rel2","in","https://en.wikipedia.org/wiki/Europe","https://en.wikipedia.org/wiki/Earth"]
+      ]
+    ],
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","link","links 12"],
+          ["isa","viewpoint","viewpoints 13"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","present"],
+              ["has actor","E","links 12"],
+              ["has target","E","viewpoints 13"],
+              ["has time","E","present","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","viewpoint","viewpoints 13"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","exist"],
+              ["has actor","E","viewpoints 13"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","square","square 14"],
+          ["isa","nail","nail 15"],
+          ["has degree property","red","square 14","none","none"],
+          ["have","square 14","nail 15"]
+        ]
+      ]
+    ],
+    ["@id", "S1", ["holds", "W0", ["has degree property","nice","John 16","none","person"]]],
+    ["@id", "S2", ["holds", "W0", ["has degree property","cool","John 16","none","person"]]],
+    ["@id", "S1", ["holds", "W0", ["isa","catholic","Mr Dursley 17"]]],
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies",
+              ["not", ["is rel2","parent of","X1","Y1"]],
+              ["not", ["is rel2","child of","Y1","X1"]]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Sara 18"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","leave"],
+                ["has actor","E","Sara 18"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Sara 18"],
+            ["isa","sister","sister"],
+            ["isa","person","Mike 19"],
+            ["is rel2","sister of","Sara 18","Mike 19"]
+          ]
+        ],
+        ["@definite","S2","W0","sister of","Mike 19","sister"]
+      ]
+    ],
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","bike","bike 20"],
+          ["=", ["$measure_of","length","bike 20","W0"], ["$measure",10,"kilometer"]]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 1"],
+            ["isa","bike","bike 20"],
+            ["is rel2","length of","length 1","bike 20"]
+          ]
+        ],
+        ["@definite","S2","W0","length of","bike 20","length 1"]
+      ]
+    ],
+    ["@id", "S1", ["holds", "W0", ["isa","wolf","Gertrude 21"]]],
+    ["@id","S1",
+      ["holds","W0",
+        ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Estonia"]
+      ]
+    ],
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Daniel 24"],
+            ["isa","hallway","hallway 25"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","journey"],
+                ["has actor","E","Daniel 24"],
+                ["has destination","E","hallway 25","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id", "S1", ["holds", "W0", ["isa","mouse","Jessica 26"]]],
+    ["@id","S1",
+      ["holds","W0",
+        ["not",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Riga","https://en.wikipedia.org/wiki/United_States"]
+        ]
+      ]
+    ],
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","cat","cat 29"],
+            ["isa","sofa","sofa 30"],
+            ["has degree property","velvet","sofa 30","none","none"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","sleep"],
+                ["has actor","E","cat 29"],
+                ["has location","E","sofa 30","on"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","woman","woman 31"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","sing"],
+                ["has actor","E","woman 31"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","woman","woman 31"],
+          ["isa","lamp","lamp 32"],
+          ["has degree property","heavy","lamp 32","none","lamp"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","hold"],
+              ["has actor","E","woman 31"],
+              ["has target","E","lamp 32"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","book","book 33"],
+          ["isa","book","book 34"],
+          ["has degree rel2","interesting","book 33","book 34","high","book"]
+        ]
+      ]
+    ],
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","square","square 35"],
+          ["isa","hole","hole 36"],
+          ["has degree property","blue","square 35","none","none"],
+          ["have","square 35","hole 36"]
+        ]
+      ]
+    ],
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","penguin","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","live"],
+                    ["has actor","E","X"],
+                    ["has location","E","water","in"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.95]
+      ]
+    ],
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Sandra 37"],
+            ["isa","garden","garden 38"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","move"],
+                ["has actor","E","Sandra 37"],
+                ["has destination","E","garden 38","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mark 39"],
+          ["isa","box","box 40"],
+          ["not", ["is rel2","in","Mark 39","box 40"]]
+        ]
+      ]
+    ],
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","boy","boy 42"],
+            ["isa","glass","glass 41"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","break"],
+                ["has actor","E","boy 42"],
+                ["has target","E","glass 41"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","letter","letter 43"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","write"],
+                ["has target","E","letter 43"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Agatha 44"],
+          ["isa","trouble","trouble"],
+          ["is rel2","in","Agatha 44","trouble"]
+        ]
+      ]
+    ],
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Leo 46"],
+            ["isa","picture","picture 45"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","paint"],
+                ["has actor","E","Leo 46"],
+                ["has target","E","picture 45"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","cake","cake 47"],
+            ["has degree property","chocolate","cake 47","none","none"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","fall"],
+                ["has actor","E","cake 47"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","horse","horse 48"],
+            ["has degree property","calm","horse 48","none","horse"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","horse","horse 48"],
+            ["isa","stable","stable 49"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","keep"],
+                ["has target","E","horse 48"],
+                ["has location","E","stable 49","in"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S1",
+      ["question",
+        ["exists","X",
+          ["exists","Y",
+            ["and",
+              ["isa","square","X"],
+              ["isa","hole","Y"],
+              ["has degree property","blue","X","none","none"],
+              ["have","X","Y"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:Clinton 4"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:Dole 3"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "entity_S1",
+ "@logic": ["isa","student","#:students 7"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "entity_S1",
+ "@logic": ["isa","tourist","#:tourists 9"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Earth 10"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Europe 11"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "entity_S1",
+ "@logic": ["isa","link","#:links 12"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "entity_S1",
+ "@logic": ["isa","viewpoint","#:viewpoints 13"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:John 16"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "entity_S1",
+ "@logic": ["isa","measure","10 kilometers"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Tallinn 22"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Estonia 23"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Riga 27"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:America 28"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","sparrow","?:X"], ["-isa","animal","?:X"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_2",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_2",
+ "@logic": ["isa","door","#:door 2"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_2",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "lock", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+            ["-has actor", "?:E", "#:Eve 1", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+            ["-has target", "?:E", "#:door 2", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+            ["-has time", "?:E", "past", "in", ["$ctxt","present","W0","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_3",
+ "@logic": ["isa","head","#:head 1"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_3",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_3",
+ "@logic": ["has part", "#:Mary 2", "#:head 1", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_3",
+ "@logic": ["has degree property", "clean", "#:head 1", "none", "head", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S2",
+ "@logic": ["isa","head","#:head 1"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2",
+ "@logic": ["has part", "#:Mary 2", "#:head 1", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S1_4",
+ "@logic": ["isa","person","https://en.wikipedia.org/wiki/Bill_Clinton"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_4",
+ "@logic": ["isa","person","https://en.wikipedia.org/wiki/Bob_Dole"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_4",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_4",
+ "@logic": ["-has type", "sk0_activity", "victory", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_4",
+ "@logic": ["has actor", "sk0_activity", "https://en.wikipedia.org/wiki/Bill_Clinton", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_4",
+ "@logic": ["has target", "sk0_activity", "https://en.wikipedia.org/wiki/Bob_Dole", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_4",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_4",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_5",
+ "@logic": ["isa","teacher","#:teacher 5"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_5",
+ "@logic": ["isa","map","#:map 6"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_5",
+ "@logic": ["isa","student","#:students 7"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_5",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_5",
+ "@logic": ["has type", "sk1_activity", "show", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_5",
+ "@logic": ["has actor", "sk1_activity", "#:teacher 5", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_5",
+ "@logic": ["has target", "sk1_activity", "#:map 6", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_5",
+ "@logic": ["has recipient", "sk1_activity", "#:students 7", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_5",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_5",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_6",
+ "@logic": [["-isa","elephant","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S2_2",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-isa","fish","?:X"],
+            ["-has degree property", "small", "?:X", "none", "fish", ["$ctxt","past","?:Fv21","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","fox","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Foxes are not birds."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","fox","?:X"],
+            ["-isa","fish","?:X"],
+            ["-has degree property", "small", "?:X", "none", "fish", ["$ctxt","?:Fv30","?:Fv29","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Foxes are not small fish."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","rabbit","?:X"], ["-isa","bird","?:X"]],
+ "@nl": "Rabbits are not birds."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","rabbit","?:X"],
+            ["-isa","fish","?:X"],
+            ["-has degree property", "small", "?:X", "none", "fish", ["$ctxt","?:Fv38","?:Fv37","?:Fv35","?:Fv36"]]
+           ],
+ "@nl": "Rabbits are not small fish."},
+{"@name": "sent_S1_7",
+ "@logic": [["-isa","muggle","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv42","?:Fv41","?:Fv39","?:Fv40"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv42","?:Fv41","?:Fv39","?:Fv40"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_8",
+ "@logic": ["isa","guide","#:guide 8"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_8",
+ "@logic": ["isa","tourist","#:tourists 9"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_8",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_8",
+ "@logic": ["has type", "sk2_activity", "offer", ["$ctxt","present","W0","?:Fv43","?:Fv44"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_8",
+ "@logic": ["has actor", "sk2_activity", "#:guide 8", ["$ctxt","present","W0","?:Fv43","?:Fv44"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_8",
+ "@logic": ["has recipient", "sk2_activity", "#:tourists 9", ["$ctxt","present","W0","?:Fv43","?:Fv44"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_8",
+ "@logic": ["isa","tea","sk3_tea"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_8",
+ "@logic": ["has target", "sk2_activity", "sk3_tea", ["$ctxt","present","W0","?:Fv43","?:Fv44"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_8",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","present","W0","?:Fv43","?:Fv44"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_8",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_9",
+ "@logic": ["is rel2", "in", "https://en.wikipedia.org/wiki/Europe", "https://en.wikipedia.org/wiki/Earth", ["$ctxt","present","W0","?:Fv45","?:Fv46"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_10",
+ "@logic": ["isa","link","#:links 12"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_10",
+ "@logic": ["isa","viewpoint","#:viewpoints 13"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_10",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_10",
+ "@logic": ["has type", "sk4_activity", "present", ["$ctxt","present","W0","?:Fv47","?:Fv48"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_10",
+ "@logic": ["has actor", "sk4_activity", "#:links 12", ["$ctxt","present","W0","?:Fv47","?:Fv48"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_10",
+ "@logic": ["has target", "sk4_activity", "#:viewpoints 13", ["$ctxt","present","W0","?:Fv47","?:Fv48"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_10",
+ "@logic": ["has time", "sk4_activity", "present", "in", ["$ctxt","present","W0","?:Fv47","?:Fv48"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S2_3",
+ "@logic": ["isa","viewpoint","#:viewpoints 13"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_3",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_3",
+ "@logic": ["has type", "sk5_activity", "exist", ["$ctxt","past","W0","?:Fv49","?:Fv50"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_3",
+ "@logic": ["has actor", "sk5_activity", "#:viewpoints 13", ["$ctxt","past","W0","?:Fv49","?:Fv50"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_3",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W0","?:Fv49","?:Fv50"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S1_11",
+ "@logic": ["-isa","round","#:square 14"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_11",
+ "@logic": ["isa","nail","#:nail 15"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_11",
+ "@logic": ["has property", "red", "#:square 14", ["$ctxt","present","W0","?:Fv51","?:Fv52"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_11",
+ "@logic": ["have", "#:square 14", "#:nail 15", ["$ctxt","present","W0","?:Fv51","?:Fv52"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_12",
+ "@logic": ["has degree property", "good", "#:John 16", "none", "person", ["$ctxt","present","W0","?:Fv53","?:Fv54"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S2_4",
+ "@logic": ["has degree property", "cool", "#:John 16", "none", "person", ["$ctxt","past","W0","?:Fv55","?:Fv56"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S1_13",
+ "@logic": ["isa","catholic","#:Mr Dursley 17"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_14",
+ "@logic": [["is rel2", "parent of", "?:X1", "?:Y1", ["$ctxt","?:Fv62","?:Fv61","?:Fv59","?:Fv60"]],
+            ["-is rel2", "child of", "?:Y1", "?:X1", ["$ctxt","?:Fv62","?:Fv61","?:Fv59","?:Fv60"]]
+           ],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_15",
+ "@logic": ["isa","person","#:Sara 18"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_15",
+ "@logic": ["isa","activity","sk6_activity"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_15",
+ "@logic": ["has type", "sk6_activity", "leave", ["$ctxt","present","W0","?:Fv63","?:Fv64"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_15",
+ "@logic": ["has actor", "sk6_activity", "#:Sara 18", ["$ctxt","present","W0","?:Fv63","?:Fv64"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_15",
+ "@logic": ["has time", "sk6_activity", "past", "in", ["$ctxt","present","W0","?:Fv63","?:Fv64"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_15",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S2_5",
+ "@logic": ["isa","person","#:Sara 18"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_5",
+ "@logic": ["isa","sister","sister"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_5",
+ "@logic": ["isa","person","#:Mike 19"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_5",
+ "@logic": ["is rel2", "sister of", "#:Sara 18", "#:Mike 19", ["$ctxt","past","W0","?:Fv65","?:Fv66"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S1_16",
+ "@logic": ["isa","bike","#:bike 20"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_16",
+ "@logic": ["=", ["$measure_of","length","#:bike 20","W0"], ["$list",10000,"#:meter"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S2_6",
+ "@logic": ["isa","length","#:length 1"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_6",
+ "@logic": ["isa","bike","#:bike 20"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_6",
+ "@logic": ["is rel2", "length of", "#:length 1", "#:bike 20", ["$ctxt","past","W0","?:Fv69","?:Fv70"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S1_17",
+ "@logic": ["isa","wolf","#:Gertrude 21"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_18",
+ "@logic": ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W0","?:Fv73","?:Fv74"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_19",
+ "@logic": ["isa","person","#:Daniel 24"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_19",
+ "@logic": ["isa","hallway","#:hallway 25"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_19",
+ "@logic": ["isa","activity","sk7_activity"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_19",
+ "@logic": ["has type", "sk7_activity", "go", ["$ctxt","present","W0","?:Fv75","?:Fv76"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_19",
+ "@logic": ["has actor", "sk7_activity", "#:Daniel 24", ["$ctxt","present","W0","?:Fv75","?:Fv76"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_19",
+ "@logic": ["has destination", "sk7_activity", "#:hallway 25", "at", ["$ctxt","present","W0","?:Fv75","?:Fv76"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_19",
+ "@logic": ["has time", "sk7_activity", "past", "in", ["$ctxt","present","W0","?:Fv75","?:Fv76"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_19",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_20",
+ "@logic": ["isa","mouse","#:Jessica 26"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_21",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Riga", "https://en.wikipedia.org/wiki/United_States", ["$ctxt","present","W0","?:Fv79","?:Fv80"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_22",
+ "@logic": ["isa","cat","#:cat 29"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_22",
+ "@logic": ["isa","sofa","#:sofa 30"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_22",
+ "@logic": ["has property", "velvet", "#:sofa 30", ["$ctxt","present","W0","?:Fv81","?:Fv82"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_22",
+ "@logic": ["isa","activity","sk8_activity"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_22",
+ "@logic": ["has type", "sk8_activity", "sleep", ["$ctxt","present","W0","?:Fv81","?:Fv82"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_22",
+ "@logic": ["has actor", "sk8_activity", "#:cat 29", ["$ctxt","present","W0","?:Fv81","?:Fv82"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_22",
+ "@logic": ["has location", "sk8_activity", "#:sofa 30", "on", ["$ctxt","present","W0","?:Fv81","?:Fv82"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_22",
+ "@logic": ["has time", "sk8_activity", "past", "in", ["$ctxt","present","W0","?:Fv81","?:Fv82"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_22",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_23",
+ "@logic": ["isa","woman","#:woman 31"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_23",
+ "@logic": ["isa","activity","sk9_activity"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_23",
+ "@logic": ["has type", "sk9_activity", "sing", ["$ctxt","present","W0","?:Fv83","?:Fv84"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_23",
+ "@logic": ["has actor", "sk9_activity", "#:woman 31", ["$ctxt","present","W0","?:Fv83","?:Fv84"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_23",
+ "@logic": ["has time", "sk9_activity", "past", "in", ["$ctxt","present","W0","?:Fv83","?:Fv84"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_23",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S2_7",
+ "@logic": ["isa","woman","#:woman 31"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_7",
+ "@logic": ["isa","lamp","#:lamp 32"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_7",
+ "@logic": ["-has degree property", "light", "#:lamp 32", "none", "lamp", ["$ctxt","past","W0","?:Fv85","?:Fv86"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_7",
+ "@logic": ["isa","activity","sk10_activity"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_7",
+ "@logic": ["has type", "sk10_activity", "hold", ["$ctxt","past","W0","?:Fv85","?:Fv86"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_7",
+ "@logic": ["has actor", "sk10_activity", "#:woman 31", ["$ctxt","past","W0","?:Fv85","?:Fv86"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_7",
+ "@logic": ["has target", "sk10_activity", "#:lamp 32", ["$ctxt","past","W0","?:Fv85","?:Fv86"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_7",
+ "@logic": ["has time", "sk10_activity", "past", "in", ["$ctxt","past","W0","?:Fv85","?:Fv86"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S1_24",
+ "@logic": ["isa","book","#:book 33"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_24",
+ "@logic": ["isa","book","#:book 34"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_24",
+ "@logic": ["has degree rel2", "interesting", "#:book 33", "#:book 34", "high", "book", ["$ctxt","present","W0","?:Fv87","?:Fv88"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_25",
+ "@logic": ["-isa","round","#:square 35"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_25",
+ "@logic": ["isa","hole","#:hole 36"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_25",
+ "@logic": ["has property", "blue", "#:square 35", ["$ctxt","present","W0","?:Fv89","?:Fv90"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_25",
+ "@logic": ["have", "#:square 35", "#:hole 36", ["$ctxt","present","W0","?:Fv89","?:Fv90"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_26",
+ "@logic": [["-isa","penguin","?:X"], ["isa", "activity", ["sk11","?:X"]]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_26",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has type", ["sk11","?:X"], "live", ["$ctxt","?:Fv94","?:Fv93","?:Fv91","?:Fv92"]]
+           ],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_26",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has actor", ["sk11","?:X"], "?:X", ["$ctxt","?:Fv94","?:Fv93","?:Fv91","?:Fv92"]]
+           ],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_26",
+ "@logic": [["-isa","penguin","?:X"], ["isa", "water", ["sk12","?:X"]]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_26",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has location", ["sk11","?:X"], ["sk12","?:X"], "in", ["$ctxt","?:Fv94","?:Fv93","?:Fv91","?:Fv92"]]
+           ],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_26",
+ "@logic": [["-isa","penguin","?:X"],
+            ["typical", ["sk11","?:X"], ["$ctxt","?:Fv94","?:Fv93","?:Fv91","?:Fv92"]],
+            ["$block", ["$","penguin",1], ["$not", ["typical", ["sk11","?:X"], ["$ctxt","?:Fv94","?:Fv93","?:Fv91","?:Fv92"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_27",
+ "@logic": ["isa","person","#:Sandra 37"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_27",
+ "@logic": ["isa","garden","#:garden 38"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_27",
+ "@logic": ["isa","activity","sk13_activity"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_27",
+ "@logic": ["has type", "sk13_activity", "go", ["$ctxt","present","W0","?:Fv95","?:Fv96"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_27",
+ "@logic": ["has actor", "sk13_activity", "#:Sandra 37", ["$ctxt","present","W0","?:Fv95","?:Fv96"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_27",
+ "@logic": ["has destination", "sk13_activity", "#:garden 38", "at", ["$ctxt","present","W0","?:Fv95","?:Fv96"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_27",
+ "@logic": ["has time", "sk13_activity", "past", "in", ["$ctxt","present","W0","?:Fv95","?:Fv96"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_27",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_28",
+ "@logic": ["isa","person","#:Mark 39"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_28",
+ "@logic": ["isa","box","#:box 40"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_28",
+ "@logic": ["-is rel2", "in", "#:Mark 39", "#:box 40", ["$ctxt","present","W0","?:Fv97","?:Fv98"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_29",
+ "@logic": ["isa","boy","#:boy 42"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_29",
+ "@logic": ["isa","glass","#:glass 41"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_29",
+ "@logic": ["isa","activity","sk14_activity"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_29",
+ "@logic": ["has type", "sk14_activity", "break", ["$ctxt","present","W0","?:Fv99","?:Fv100"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_29",
+ "@logic": ["has actor", "sk14_activity", "#:boy 42", ["$ctxt","present","W0","?:Fv99","?:Fv100"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_29",
+ "@logic": ["has target", "sk14_activity", "#:glass 41", ["$ctxt","present","W0","?:Fv99","?:Fv100"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_29",
+ "@logic": ["has time", "sk14_activity", "past", "in", ["$ctxt","present","W0","?:Fv99","?:Fv100"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_29",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_30",
+ "@logic": ["isa","letter","#:letter 43"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_30",
+ "@logic": ["isa","activity","sk15_activity"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_30",
+ "@logic": ["has type", "sk15_activity", "write", ["$ctxt","present","W0","?:Fv101","?:Fv102"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_30",
+ "@logic": ["has target", "sk15_activity", "#:letter 43", ["$ctxt","present","W0","?:Fv101","?:Fv102"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_30",
+ "@logic": ["has time", "sk15_activity", "past", "in", ["$ctxt","present","W0","?:Fv101","?:Fv102"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_30",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_31",
+ "@logic": ["isa","person","#:Agatha 44"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_31",
+ "@logic": ["isa","trouble","trouble"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_31",
+ "@logic": ["is rel2", "in", "#:Agatha 44", "trouble", ["$ctxt","present","W0","?:Fv103","?:Fv104"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_32",
+ "@logic": ["isa","person","#:Leo 46"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_32",
+ "@logic": ["isa","picture","#:picture 45"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_32",
+ "@logic": ["isa","activity","sk16_activity"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_32",
+ "@logic": ["has type", "sk16_activity", "paint", ["$ctxt","present","W0","?:Fv105","?:Fv106"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_32",
+ "@logic": ["has actor", "sk16_activity", "#:Leo 46", ["$ctxt","present","W0","?:Fv105","?:Fv106"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_32",
+ "@logic": ["has target", "sk16_activity", "#:picture 45", ["$ctxt","present","W0","?:Fv105","?:Fv106"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_32",
+ "@logic": ["has time", "sk16_activity", "past", "in", ["$ctxt","present","W0","?:Fv105","?:Fv106"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_32",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_33",
+ "@logic": ["isa","cake","#:cake 47"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_33",
+ "@logic": ["has property", "chocolate", "#:cake 47", ["$ctxt","present","W0","?:Fv107","?:Fv108"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_33",
+ "@logic": ["isa","activity","sk17_activity"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_33",
+ "@logic": ["has type", "sk17_activity", "fall", ["$ctxt","present","W0","?:Fv107","?:Fv108"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_33",
+ "@logic": ["has actor", "sk17_activity", "#:cake 47", ["$ctxt","present","W0","?:Fv107","?:Fv108"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_33",
+ "@logic": ["has time", "sk17_activity", "past", "in", ["$ctxt","present","W0","?:Fv107","?:Fv108"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_33",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_34",
+ "@logic": ["isa","horse","#:horse 48"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_34",
+ "@logic": ["has degree property", "calm", "#:horse 48", "none", "horse", ["$ctxt","present","W0","?:Fv109","?:Fv110"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S2_8",
+ "@logic": ["isa","horse","#:horse 48"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_8",
+ "@logic": ["isa","stable","#:stable 49"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_8",
+ "@logic": ["isa","activity","sk18_activity"],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_8",
+ "@logic": ["has type", "sk18_activity", "keep", ["$ctxt","past","W0","?:Fv111","?:Fv112"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_8",
+ "@logic": ["has target", "sk18_activity", "#:horse 48", ["$ctxt","past","W0","?:Fv111","?:Fv112"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_8",
+ "@logic": ["has location", "sk18_activity", "#:stable 49", "in", ["$ctxt","past","W0","?:Fv111","?:Fv112"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S2_8",
+ "@logic": ["has time", "sk18_activity", "past", "in", ["$ctxt","past","W0","?:Fv111","?:Fv112"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S1_35",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","round","sk19"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_35",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","hole","sk20_hole"]],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_35",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "blue", "sk19", ["$ctxt","?:Fv122","?:Fv121","?:Fv113","?:Fv114"]]
+           ],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_35",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["have", "sk19", "sk20_hole", ["$ctxt","present","?:Fv123","?:Fv113","?:Fv114"]]
+           ],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_35",
+ "@sourcetype": "question",
+ "@logic": [["isa","round","?:X"],
+            ["-isa","hole","?:Y"],
+            ["-has property", "blue", "?:X", ["$ctxt","?:Fv129","?:Fv128","?:Fv113","?:Fv114"]],
+            ["-have", "?:X", "?:Y", ["$ctxt","present","?:Fv130","?:Fv113","?:Fv114"]],
+            ["$defq0"]
+           ],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S2_6",
+ "@logic": ["have", "#:bike 20", "#:length 1", ["$ctxt","past","W0","?:Fv69","?:Fv70"]],
+ "@nl": "The head 1 is the head of Mary 2."},
+{"@name": "sent_S1_35",
+ "@question": ["$defq0"],
+ "@nl": "Sparrows are not animals."},
+{"@name": "sent_S1_35",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "?:Br1", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Sparrows are not animals."},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "break", ["$ctxt","?:Fv131","?:Fv132","?:Fv134","?:Fv135"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv131","?:Fv132","?:Fv134","?:Fv135"]],
+            ["-next","?:Fv132","?:Fv133"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv133","?:Fv134","?:Fv135"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv133","?:Fv134","?:Fv135"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "break", "?:X", ["$ctxt","?:Fv136","?:Fv137","?:Fv139","?:Fv140"]],
+            ["-next","?:Fv137","?:Fv138"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv138","?:Fv139","?:Fv140"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv138","?:Fv139","?:Fv140"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","sparrow","$some_sparrow"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","sparrow","$some_not_sparrow"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fish","$some_fish"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","fish","$some_not_fish"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fox","$some_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","fox","$some_not_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","rabbit","$some_rabbit"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","rabbit","$some_not_rabbit"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","Muggle","$some_Muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","Muggle","$some_not_Muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "small", "$some_small_fish", "none", "fish", ["$ctxt","?:Fv253","?:Fv250","?:Fv251","?:Fv252"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fish","$some_small_fish"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "small", "$some_not_small_fish", "none", "fish", ["$ctxt","?:Fv261","?:Fv258","?:Fv259","?:Fv260"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv262","?:Fv141"],
+            ["-has degree property","high","?:X","none","?:Fv263","?:Fv141"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv264","?:Fv142"],
+            ["has degree property","small","?:X","none","?:Fv265","?:Fv142"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv143"], ["has type","?:E","go","?:Fv143"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","bird","?:X"], ["-isa","fish","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","bird","?:X"], ["-isa","fish","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv144"],
+            ["-has property","red","?:X","?:Fv144"],
+            ["$block", 0, ["has property","red","?:X","?:Fv144"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv145"],
+            ["-has property","red","?:X","?:Fv145"],
+            ["$block", 0, ["has property","blue","?:X","?:Fv145"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","fish","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","fish","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv146","?:Fv147","?:Fv148"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv146","?:Fv147","?:Fv148"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv146","?:Fv147","?:Fv148"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv149","?:Fv150","?:Fv151"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv149","?:Fv150","?:Fv151"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv149","?:Fv150","?:Fv151"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "light", "?:X", "none", "?:Fv266", ["$ctxt","past","?:Fv152","?:Fv153","?:Fv154"]],
+            ["-has degree property", "light", "?:X", "none", "?:Fv267", ["$ctxt","present","?:Fv152","?:Fv153","?:Fv154"]],
+            ["$block", 0, ["$not", ["has degree property", "heavy", "?:X", "none", "?:Fv268", ["$ctxt","present","?:Fv152","?:Fv153","?:Fv154"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv155","?:Fv156","?:Fv157"]],
+            ["-has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv155","?:Fv156","?:Fv157"]],
+            ["$block", 0, ["$not", ["has degree property", "heavy", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv155","?:Fv156","?:Fv157"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv158","?:Fv159","?:Fv160"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv158","?:Fv159","?:Fv160"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv158","?:Fv159","?:Fv160"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv161","?:Fv162","?:Fv163"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv161","?:Fv162","?:Fv163"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv161","?:Fv162","?:Fv163"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv269", ["$ctxt","past","?:Fv164","?:Fv165","?:Fv166"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv270", ["$ctxt","present","?:Fv164","?:Fv165","?:Fv166"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv271", ["$ctxt","present","?:Fv164","?:Fv165","?:Fv166"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv167","?:Fv168","?:Fv169"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv167","?:Fv168","?:Fv169"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv167","?:Fv168","?:Fv169"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_measure_rel_bridge",
+ "@logic": [["-=", ["$measure_of","length","?:S","?:W"], "?:V"],
+            ["is rel2","length of","?:V","?:S","?:Ctxt"]
+           ],
+ "@nl": "[generated: frm_measure_rel_bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S1_35","assumption",1], [["$defq0"], ["-has property", "blue", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-have", "?:X", "?:W", ["$ctxt","present","?:2006","?:U","?:V"]], ["-isa","hole","?:W"], ["isa","round","?:X"]]],
+          [2, ["in","sent_S1_25","assumption",1], [["has property", "blue", "#:square 35", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S1_35","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,1], 2, 3, "fromga", 1], [["isa","round","#:square 35"], ["-have", "#:square 35", "?:X3", ["$ctxt","present","?:Y3","?:Z3","?:U3"]], ["-isa","hole","?:X3"]]],
+          [5, ["in","sent_S1_25","assumption",1], [["-isa","round","#:square 35"]]],
+          [6, ["simp",4,5,"fromga",1], [["-have", "#:square 35", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-isa","hole","?:X"]]],
+          [7, ["in","sent_S1_25","assumption",1], [["isa","hole","#:hole 36"]]],
+          [8, ["mp", [6,1], 7, "fromga", 1], [["-have", "#:square 35", "#:hole 36", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [9, ["in","sent_S1_25","assumption",1], [["have", "#:square 35", "#:hole 36", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [10, ["mp",8,9,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) A blue square has a hole.",
+"  (2) A blue square has a hole?",
+"Proof steps (by contradiction):",
+"  (1) If some X is blue and X has some W and W is a hole then answer holds or X is a round  [sentence 2]",
+"  (2) The the blue square is blue  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) If the the blue square has some X3 and X3 is a hole then the the blue square is a round  [from steps 1, 2, 3]",
+"  (5) The the blue square is not a round  [sentence 1]",
+"  (6) The the blue square does not have X  [from steps 4, 5]",
+"  (7) The hole 36 is a hole  [sentence 1]",
+"  (8) The the blue square does not have the hole 36  [from steps 6, 7]",
+"  (9) The the blue square has the hole 36  [sentence 1]",
+"  (10) Contradiction  [from steps 8, 9]"
+],
+  "llm_usage": [{
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 30970,
+      "cached_input_tokens": 0,
+      "output_tokens": 19324,
+      "raw": {
+        "promptTokenCount": 30970,
+        "candidatesTokenCount": 8782,
+        "totalTokenCount": 50294,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 30970}],
+        "thoughtsTokenCount": 10542,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 42653,
+      "cached_input_tokens": 0,
+      "output_tokens": 14499,
+      "raw": {
+        "promptTokenCount": 42653,
+        "candidatesTokenCount": 5392,
+        "totalTokenCount": 57152,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 42653}],
+        "thoughtsTokenCount": 9107,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T23:01:41Z"
+}

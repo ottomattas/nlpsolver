@@ -1,0 +1,641 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 1316,
+  "input_text": "A surgeon, Dr. Tallinn is hardly in Latvia. The cake was eaten. The red square has a nail. John is nice. All elephants are animals. Sparrows are birds. Tom and Eve greeted each other. The dog chased by the boy escaped. Is it true that John is nice?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "A surgeon, Dr. Tallinn is hardly in Latvia.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Dr. Tallinn 1 is a surgeon.",
+          "type": "real",
+          "entities": [{"id": "Dr. Tallinn 1", "type": "concrete", "category": "person"},
+            {"id": "surgeon", "type": "generic", "category": "person"}
+          ]
+        },
+        {
+          "unit_id": "S2",
+          "text": "Dr. Tallinn 1 is hardly in Latvia 2.",
+          "type": "situation",
+          "entities": [{"id": "Dr. Tallinn 1", "type": "concrete", "category": "person"},
+            {
+              "id": "Latvia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The cake was eaten.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The cake 1 was eaten.",
+          "type": "situation",
+          "entities": [{"id": "cake 1", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "eat", "mode": "event", "roles": {"target": "cake 1"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The red square has a nail.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The red square 1 has a nail 2.",
+          "type": "situation",
+          "entities": [{"id": "square 1", "type": "concrete"},
+            {"id": "nail 2", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["red","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is nice.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "John 1 is nice.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "All elephants are animals.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "All elephants are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Sparrows are birds.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Sparrows are birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "sparrows", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Tom and Eve greeted each other.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Tom 1 and Eve 2 greeted each other.",
+          "type": "situation",
+          "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"},
+            {"id": "Eve 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "greet", "mode": "event", "roles": {"actor": ["Tom 1","Eve 2"]}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The dog chased by the boy escaped.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "The dog 1 escaped.",
+          "type": "situation",
+          "entities": [{"id": "dog 1", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "escape", "mode": "event", "roles": {"actor": "dog 1"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S10",
+          "text": "A boy 2 chased the dog 1.",
+          "type": "situation",
+          "entities": [{"id": "boy 2", "type": "concrete", "category": "person"},
+            {"id": "dog 1", "type": "concrete", "category": "animal"}
+          ],
+          "actions": [{"root": "chase", "mode": "event", "roles": {"actor": "boy 2", "target": "dog 1"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Is it true that John is nice?",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Is it true that John 1 is nice?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","surgeon","Dr. Tallinn 1"]]],
+    ["@id","S2",
+      ["and",
+        ["holds", "W0", ["is rel2","in","Dr. Tallinn 1","https://en.wikipedia.org/wiki/Latvia"]],
+        ["@p","S2",0.05]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","cake","cake 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","eat"],
+              ["has target","E","cake 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","square","square 1"],
+          ["isa","nail","nail 2"],
+          ["has degree property","red","square 1","none","none"],
+          ["have","square 1","nail 2"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["has degree property","nice","John 1","none","person"]]
+      ]
+    ],
+    ["@id","S6",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S7",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","sparrow","X"], ["isa","bird","X"]]]]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Tom 1"],
+          ["isa","person","Eve 2"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","greet"],
+              ["has actor","E1","Tom 1"],
+              ["has target","E1","Eve 2"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","greet"],
+              ["has actor","E2","Eve 2"],
+              ["has target","E2","Tom 1"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["and",
+          ["isa","dog","dog 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","escape"],
+              ["has actor","E","dog 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["and",
+          ["isa","boy","boy 2"],
+          ["isa","dog","dog 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","chase"],
+              ["has actor","E","boy 2"],
+              ["has target","E","dog 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S11", ["question", ["has degree property","nice","John 1","none","person"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","Dr. Tallinn 1"],
+ "@nl": "Dr. Tallinn 1 is a surgeon."},
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:Latvia 2"],
+ "@nl": "Dr. Tallinn 1 is hardly in Latvia 2."},
+{"@name": "entity_S9",
+ "@logic": ["isa","animal","#:dog 1"],
+ "@nl": "The dog 1 escaped."},
+{"@name": "entity_S10",
+ "@logic": ["isa","person","#:boy 2"],
+ "@nl": "A boy 2 chased the dog 1."},
+{"@name": "sent_S1",
+ "@logic": ["isa","surgeon","Dr. Tallinn 1"],
+ "@nl": "Dr. Tallinn 1 is a surgeon."},
+{"@name": "sent_S2",
+ "@logic": ["-is rel2", "in", "Dr. Tallinn 1", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@confidence": 0.9,
+ "@nl": "Dr. Tallinn 1 is hardly in Latvia 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","cake","#:cake 1"],
+ "@nl": "The cake 1 was eaten."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The cake 1 was eaten."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "eat", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The cake 1 was eaten."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk0_activity", "#:cake 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The cake 1 was eaten."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The cake 1 was eaten."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The cake 1 was eaten."},
+{"@name": "sent_S4",
+ "@logic": ["-isa","round","#:square 1"],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","nail","#:nail 2"],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S4",
+ "@logic": ["has property", "red", "#:square 1", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S4",
+ "@logic": ["have", "#:square 1", "#:nail 2", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The red square 1 has a nail 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is nice."},
+{"@name": "sent_S5",
+ "@logic": ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "John 1 is nice."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"]],
+ "@nl": "All elephants are animals."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","sparrow","?:X"], ["isa","bird","?:X"]],
+ "@nl": "Sparrows are birds."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Tom 1"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Eve 2"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk1_activity", "greet", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk1_activity", "#:Tom 1", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk1_activity", "#:Eve 2", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S8",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk2_activity", "greet", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk2_activity", "#:Eve 2", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk2_activity", "#:Tom 1", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S8",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S9",
+ "@logic": ["isa","dog","#:dog 1"],
+ "@nl": "The dog 1 escaped."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The dog 1 escaped."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk3_activity", "escape", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The dog 1 escaped."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk3_activity", "#:dog 1", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The dog 1 escaped."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The dog 1 escaped."},
+{"@name": "sent_S9",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "The dog 1 escaped."},
+{"@name": "sent_S10",
+ "@logic": ["isa","boy","#:boy 2"],
+ "@nl": "A boy 2 chased the dog 1."},
+{"@name": "sent_S10",
+ "@logic": ["isa","dog","#:dog 1"],
+ "@nl": "A boy 2 chased the dog 1."},
+{"@name": "sent_S10",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "A boy 2 chased the dog 1."},
+{"@name": "sent_S10",
+ "@logic": ["has type", "sk4_activity", "chase", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "A boy 2 chased the dog 1."},
+{"@name": "sent_S10",
+ "@logic": ["has actor", "sk4_activity", "#:boy 2", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "A boy 2 chased the dog 1."},
+{"@name": "sent_S10",
+ "@logic": ["has target", "sk4_activity", "#:dog 1", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "A boy 2 chased the dog 1."},
+{"@name": "sent_S10",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "A boy 2 chased the dog 1."},
+{"@name": "sent_S10",
+ "@logic": ["actuality","sk4_activity"],
+ "@nl": "A boy 2 chased the dog 1."},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:Fv27","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Is it true that John 1 is nice?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:Fv27","?:Fv25","?:Fv26"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is it true that John 1 is nice?"},
+{"@name": "sent_S11",
+ "@question": ["$defq0"],
+ "@nl": "Is it true that John 1 is nice?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "good", "#:John 1", "none", "person", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is it true that John 1 is nice?"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","sparrow","$some_sparrow"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","sparrow","$some_not_sparrow"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv29","?:Fv30","?:Fv31"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv29","?:Fv30","?:Fv31"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv29","?:Fv30","?:Fv31"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv32","?:Fv33","?:Fv34"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S5","assumption",1], [["has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [2, ["in","sent_S11","assumption",1], [["$defq0"], ["-has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","sent_S11","goal",1], [["-$defq0"]]],
+          [4, ["mp", 1, [2,1], 3, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John is nice.",
+"  (2) Is it true that John is nice?",
+"Proof steps (by contradiction):",
+"  (1) John is a good person  [sentence 1]",
+"  (2) If John is a good person then answer holds  [sentence 2]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) Contradiction  [from steps 1, 2, 3]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33587,
+      "cached_input_tokens": 33280,
+      "output_tokens": 108,
+      "raw": {
+        "input_tokens": 33587,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 108,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33695
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33497,
+      "cached_input_tokens": 33280,
+      "output_tokens": 102,
+      "raw": {
+        "input_tokens": 33497,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 102,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33599
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33501,
+      "cached_input_tokens": 33280,
+      "output_tokens": 90,
+      "raw": {
+        "input_tokens": 33501,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 90,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33591
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33476,
+      "cached_input_tokens": 33280,
+      "output_tokens": 65,
+      "raw": {
+        "input_tokens": 33476,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 65,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33541
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33478,
+      "cached_input_tokens": 33280,
+      "output_tokens": 65,
+      "raw": {
+        "input_tokens": 33478,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 65,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33543
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33480,
+      "cached_input_tokens": 33280,
+      "output_tokens": 65,
+      "raw": {
+        "input_tokens": 33480,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 65,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33545
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33533,
+      "cached_input_tokens": 33280,
+      "output_tokens": 204,
+      "raw": {
+        "input_tokens": 33533,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 204,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33737
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33616,
+      "cached_input_tokens": 33280,
+      "output_tokens": 212,
+      "raw": {
+        "input_tokens": 33616,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 212,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33828
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33484,
+      "cached_input_tokens": 33280,
+      "output_tokens": 46,
+      "raw": {
+        "input_tokens": 33484,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 46,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33530
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T22:43:07Z"
+}

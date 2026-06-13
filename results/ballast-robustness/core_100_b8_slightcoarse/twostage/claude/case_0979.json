@@ -1,0 +1,686 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 979,
+  "input_text": "If X is cool then X is red. Sandra moved to the kitchen. Any person is male or female. A chocolate cake fell. If X1 is a grandfather of Y1, Y1 is a grandchild of X1. John works at the hospital every day. \"Riga is outside America. An elephant was strong. Sue is a true patriot. Where does John work?",
+  "expected_answer": "At the hospital.",
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "At the hospital.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "If X is cool then X is red.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "If X is cool, X is red.",
+          "type": "strict_rule",
+          "entities": [{"id": "X", "type": "generic"}],
+          "adjectives": [["cool","none","entity"], ["red","none","entity"]]
+        }
+      ]
+    },
+    {
+      "raw": "Sandra moved to the kitchen.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Sandra 1 moved to the kitchen 2.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 1", "type": "concrete", "category": "person"},
+            {"id": "kitchen 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "move",
+              "mode": "event",
+              "roles": {"actor": "Sandra 1", "destination": "kitchen 2"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Any person is male or female.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Any person is male or female.",
+          "type": "strict_rule",
+          "entities": [{"id": "person", "type": "generic", "category": "person"}],
+          "adjectives": [["male","none","person"], ["female","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "A chocolate cake fell.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "A chocolate cake 1 fell.",
+          "type": "situation",
+          "entities": [{
+              "id": "chocolate cake 1",
+              "type": "concrete",
+              "subtype": "compound",
+              "category": "artifact"
+            }
+          ],
+          "actions": [{"root": "fall", "mode": "event", "roles": {"actor": "chocolate cake 1"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a grandfather of Y1, Y1 is a grandchild of X1.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "If X1 is a grandfather of Y1, Y1 is a grandchild of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"}, {"id": "Y1", "type": "generic"}]
+        }
+      ]
+    },
+    {
+      "raw": "John works at the hospital every day.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "John 1 works at the hospital 2 every day.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "hospital 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "work",
+              "mode": "habitual",
+              "roles": {"actor": "John 1", "location": "hospital 2", "location_prep": "at"}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Riga is outside America.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Riga 1 is outside America 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Riga 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Riga"
+            },
+            {
+              "id": "America 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/United_States"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "An elephant was strong.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "An elephant 1 was strong.",
+          "type": "situation",
+          "entities": [{"id": "elephant 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["strong","none","elephant"]],
+          "pre_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Sue is a true patriot.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Sue 1 is a true patriot.",
+          "type": "real",
+          "entities": [{"id": "Sue 1", "type": "concrete", "category": "person"},
+            {"id": "patriot", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["true","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Where does John work?",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Which entity does John 1 work at?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "John 1", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "work",
+              "mode": "habitual",
+              "roles": {"actor": "John 1", "location": "entity", "location_prep": "at"}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["has degree property","cool","X","none","entity"],
+            ["has degree property","red","X","none","entity"]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Sandra 1"],
+            ["isa","kitchen","kitchen 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","move"],
+                ["has actor","E","Sandra 1"],
+                ["has destination","E","kitchen 2","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","person","X"],
+            ["xor",
+              ["has degree property","male","X","none","person"],
+              ["has degree property","female","X","none","person"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","chocolate cake","chocolate cake 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","fall"],
+                ["has actor","E","chocolate cake 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies",
+              ["is rel2","grandfather of","X1","Y1"],
+              ["is rel2","grandchild of","Y1","X1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","hospital","hospital 2"],
+          ["normally",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","work"],
+                ["has actor","E","John 1"],
+                ["has location","E","hospital 2","at"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["is rel2","outside","https://en.wikipedia.org/wiki/Riga","https://en.wikipedia.org/wiki/United_States"]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","elephant","elephant 1"],
+            ["has degree property","strong","elephant 1","none","elephant"]
+          ]
+        ],
+        ["state time","W2","past"]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["and", ["isa","patriot","Sue 1"], ["has degree property","true","Sue 1","none","person"]]
+      ]
+    ],
+    ["@id","S10",
+      ["ask","X",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","work"],
+            ["has actor","E","John 1"],
+            ["has location","E","X","at"],
+            ["typical","E"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S7",
+ "@logic": ["isa","place","#:Riga 1"],
+ "@nl": "Riga 1 is outside America 2."},
+{"@name": "entity_S7",
+ "@logic": ["isa","place","#:America 2"],
+ "@nl": "Riga 1 is outside America 2."},
+{"@name": "entity_S8",
+ "@logic": ["isa","animal","#:elephant 1"],
+ "@nl": "An elephant 1 was strong."},
+{"@name": "entity_S9",
+ "@logic": ["isa","person","#:Sue 1"],
+ "@nl": "Sue 1 is a true patriot."},
+{"@name": "sent_S1",
+ "@logic": [["-has degree property", "cool", "?:X", "none", "?:Fv138", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["has property", "red", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "If X is cool, X is red."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Sandra 1"],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","kitchen","#:kitchen 2"],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:Sandra 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["has destination", "sk0_activity", "#:kitchen 2", "at", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sandra 1 moved to the kitchen 2."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","person","?:X"],
+            ["has property", "male", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["has property", "female", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Any person is male or female."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","person","?:X"],
+            ["-has property", "male", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-has property", "female", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Any person is male or female."},
+{"@name": "sent_S4",
+ "@logic": ["isa","chocolate cake","#:chocolate cake 1"],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "fall", ["$ctxt","past","W1","?:Fv11","?:Fv12"]],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk1_activity", "#:chocolate cake 1", ["$ctxt","past","W1","?:Fv11","?:Fv12"]],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv11","?:Fv12"]],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S4",
+ "@logic": ["next","W1","W2"],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S5",
+ "@logic": [["-is rel2", "grandfather of", "?:X1", "?:Y1", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["is rel2", "grandchild of", "?:Y1", "?:X1", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "If X1 is a grandfather of Y1, Y1 is a grandchild of X1."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S6",
+ "@logic": ["isa","hospital","#:hospital 2"],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk2_activity", "work", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk2_activity", "#:John 1", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S6",
+ "@logic": ["has location", "sk2_activity", "#:hospital 2", "at", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S6",
+ "@logic": [["typical", "sk2_activity", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["$block", ["$","$generic",1], ["$not", ["typical", "sk2_activity", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]]]
+           ],
+ "@nl": "John 1 works at the hospital 2 every day."},
+{"@name": "sent_S7",
+ "@logic": ["is rel2", "outside", "https://en.wikipedia.org/wiki/Riga", "https://en.wikipedia.org/wiki/United_States", ["$ctxt","present","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Riga 1 is outside America 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","elephant","#:elephant 1"],
+ "@nl": "An elephant 1 was strong."},
+{"@name": "sent_S8",
+ "@logic": ["has degree property", "strong", "#:elephant 1", "none", "elephant", ["$ctxt","past","W2","?:Fv23","?:Fv24"]],
+ "@nl": "An elephant 1 was strong."},
+{"@name": "sent_S9",
+ "@logic": ["isa","patriot","#:Sue 1"],
+ "@nl": "Sue 1 is a true patriot."},
+{"@name": "sent_S9",
+ "@logic": ["has degree property", "true", "#:Sue 1", "none", "person", ["$ctxt","present","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Sue 1 is a true patriot."},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"], ["isa", "activity", ["sk3","?:X","?:_Prep"]]],
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["has type", ["sk3","?:X","?:_Prep"], "work", ["$ctxt","?:Fv33","?:Fv32","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["has actor", ["sk3","?:X","?:_Prep"], "#:John 1", ["$ctxt","?:Fv35","?:Fv34","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["has location", ["sk3","?:X","?:_Prep"], "?:X", "?:_Prep", ["$ctxt","?:Fv37","?:Fv36","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["typical", ["sk3","?:X","?:_Prep"], ["$ctxt","?:Fv39","?:Fv38","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "work", ["$ctxt","?:Fv43","?:Fv42","?:Fv27","?:Fv28"]],
+            ["-has actor", "?:E", "#:John 1", ["$ctxt","?:Fv45","?:Fv44","?:Fv27","?:Fv28"]],
+            ["-has location", "?:E", "?:X", "?:_Prep", ["$ctxt","?:Fv47","?:Fv46","?:Fv27","?:Fv28"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv49","?:Fv48","?:Fv27","?:Fv28"]],
+            ["$defq0","?:_Prep","?:X"]
+           ],
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S10",
+ "@question": ["$defq0","?:Rel","?:X"],
+ "@askvars": 2,
+ "@where_query": true,
+ "@nl": "Which entity does John 1 work at?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","person","$some_not_person"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "cool", "$some_cool_entity", "none", "?:Fv139", ["$ctxt","?:Fv85","?:Fv82","?:Fv83","?:Fv84"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cool", "$some_not_cool_entity", "none", "?:Fv140", ["$ctxt","?:Fv93","?:Fv90","?:Fv91","?:Fv92"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "red", "$some_red_entity", ["$ctxt","?:Fv97","?:Fv94","?:Fv95","?:Fv96"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "red", "$some_not_red_entity", ["$ctxt","?:Fv105","?:Fv102","?:Fv103","?:Fv104"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "male", "$some_male_person", ["$ctxt","?:Fv109","?:Fv106","?:Fv107","?:Fv108"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","person","$some_male_person"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "female", "$some_female_person", ["$ctxt","?:Fv117","?:Fv114","?:Fv115","?:Fv116"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","person","$some_female_person"],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","chocolate cake","?:X"], ["isa","cake","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","chocolate","?:X"], ["-isa","cake","?:X"], ["isa","chocolate cake","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property","chocolate","?:X","?:Ct"],
+            ["-isa","cake","?:X"],
+            ["isa","chocolate cake","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property", "chocolate", "?:X", "?:Ct", ["$ctxt","?:Fv137","?:Fv134","?:Fv135","?:Fv136"]],
+            ["-isa","cake","?:X"],
+            ["isa","chocolate cake","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","animal","?:X"], ["isa","female","?:X"]],
+ "@confidence": 0.8,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","female","?:X"], ["isa","animal","?:X"]],
+ "@confidence": 0.8,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","animal","?:X"], ["isa","male","?:X"]],
+ "@confidence": 0.8,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","male","?:X"], ["isa","animal","?:X"]],
+ "@confidence": 0.8,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv54"], ["has type","?:E","go","?:Fv54"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","female","?:X","?:Fv55"], ["-has property","male","?:X","?:Fv55"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","in","?:X","?:Fv56"],
+            ["-has property","outside","?:X","?:Fv56"],
+            ["$block", 0, ["has property","outside","?:X","?:Fv56"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","in","?:X","?:Fv57"],
+            ["-has property","outside","?:X","?:Fv57"],
+            ["$block", 0, ["has property","in","?:X","?:Fv57"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","hospital","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","hospital","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv58","?:Fv59","?:Fv60"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv58","?:Fv59","?:Fv60"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv58","?:Fv59","?:Fv60"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv61","?:Fv62","?:Fv63"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv61","?:Fv62","?:Fv63"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv61","?:Fv62","?:Fv63"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv141", ["$ctxt","past","?:Fv64","?:Fv65","?:Fv66"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv142", ["$ctxt","present","?:Fv64","?:Fv65","?:Fv66"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv143", ["$ctxt","present","?:Fv64","?:Fv65","?:Fv66"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv67","?:Fv68","?:Fv69"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv67","?:Fv68","?:Fv69"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv67","?:Fv68","?:Fv69"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has destination","?:Esb","?:Xsb","?:Psb","?:Csb"],
+            ["has location","?:Esb","?:Xsb","?:Psb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "pop_what",
+ "@logic": ["isa","patriot","$some_patriot"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","place","$some_place"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","kitchen","$some_kitchen"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","hospital","$some_hospital"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","chocolate cake","$some_chocolate_cake"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","at","#:hospital 2"]],
+        "blockers": [["$block", ["$","$generic",1], ["$not", ["typical", "sk2_activity", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]]
+        ],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S10","assumption",1], [["-has location", "?:X", "?:Y", "?:Z", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["-has type", "?:X", "work", ["$ctxt","?:2007","?:2008","?:W","?:2006"]], ["-has actor", "?:X", "#:John 1", ["$ctxt","?:2009","?:2010","?:W","?:2006"]], ["-typical", "?:X", ["$ctxt","?:2011","?:2012","?:W","?:2006"]], ["-isa","activity","?:X"], ["$defq0","?:Z","?:Y"]]],
+          [2, ["in","sent_S6","assumption",1], [["has type", "sk2_activity", "work", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 1], [["-isa","activity","sk2_activity"], ["-has location", "sk2_activity", "?:X3", "?:Y3", ["$ctxt","?:Z3","?:U3","?:V3","?:W3"]], ["-has actor", "sk2_activity", "#:John 1", ["$ctxt","?:3006","?:3007","?:V3","?:W3"]], ["-typical", "sk2_activity", ["$ctxt","?:3008","?:3009","?:V3","?:W3"]], ["$defq0","?:Y3","?:X3"]]],
+          [4, ["in","sent_S6","assumption",1], [["isa","activity","sk2_activity"]]],
+          [5, ["simp",3,4,"fromassumption",1], [["-has location", "sk2_activity", "?:X", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-has actor", "sk2_activity", "#:John 1", ["$ctxt","?:2006","?:2007","?:V","?:W"]], ["-typical", "sk2_activity", ["$ctxt","?:2008","?:2009","?:V","?:W"]], ["$defq0","?:Y","?:X"]]],
+          [6, ["in","sent_S6","assumption",1], [["has actor", "sk2_activity", "#:John 1", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [7, ["mp", [5,1], 6, "fromassumption", 1], [["-has location", "sk2_activity", "?:X", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-typical", "sk2_activity", ["$ctxt","?:2006","?:2007","?:V","?:W"]], ["$defq0","?:Y","?:X"]]],
+          [8, ["in","sent_S6","assumption",1], [["$block", ["$","$generic",1], ["$not", ["typical", "sk2_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["typical", "sk2_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [9, ["mp", [7,1], [8,1], "fromassumption", 1], [["$block", ["$","$generic",1], ["$not", ["typical", "sk2_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]], ["-has location", "sk2_activity", "?:V", "?:W", ["$ctxt","?:2006","?:2007","?:Z","?:U"]], ["$defq0","?:W","?:V"]]],
+          [10, ["in","sent_S6","assumption",1], [["has location", "sk2_activity", "#:hospital 2", "at", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [11, ["mp", [9,1], 10, "fromassumption", 1], [["$defq0","at","#:hospital 2"], ["$block", ["$","$generic",1], ["$not", ["typical", "sk2_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]]]],
+          [12, ["in","sent_S10","goal",1], [["-$defq0","?:X","?:Y"], ["$ans","?:X","?:Y"]]],
+          [13, ["mp",11,12,"fromga",1], [["$block", ["$","$generic",1], ["$not", ["typical", "sk2_activity", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]], ["$ans","at","#:hospital 2"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John works at the hospital every day.",
+"  (2) Where does John work?",
+"Proof steps:",
+"  (1) If X takes place some Z some Y and X is a work event and John performs X and X is typical and X is an activity then [Z, Y] is the answer  [sentence 2]",
+"  (2) The event act3 is a work event  [sentence 1]",
+"  (3) If the event act3 is an activity and the act3 takes place some Y3 some X3 and John performs the act3 and the act3 is typical then [Y3, X3] is the answer  [from steps 1, 2]",
+"  (4) The event act3 is an activity  [sentence 1]",
+"  (5) If the event act3 takes place some Y some X and John performs the act3 and the act3 is typical then [Y, X] is the answer  [from steps 3, 4]",
+"  (6) John performs the event act3  [sentence 1]",
+"  (7) If the event act3 takes place some Y some X and the act3 is typical then [Y, X] is the answer  [from steps 5, 6]",
+"  (8) Normally the event act3 is typical  [sentence 1]",
+"  (9) If the event act3 takes place some W some V then [W, V] is the answer, except when the act3 is not typical  [from steps 7, 8]",
+"  (10) The event act3 takes place at the hospital B  [sentence 1]",
+"  (11) 'At the hospital B' is the answer, except when the event act3 is not typical  [from steps 9, 10]",
+"  (12) technical answer unwrap step  [from question]",
+"  (13) 'At the hospital B' is an answer, except when the event act3 is not typical  [from steps 11, 12]",
+"Exceptions checked and not holding:",
+"  act3 is not typical"
+],
+  "timestamp": "2026-06-12T21:17:45Z"
+}

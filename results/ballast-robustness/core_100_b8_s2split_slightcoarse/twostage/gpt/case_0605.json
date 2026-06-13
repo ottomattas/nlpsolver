@@ -1,0 +1,938 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 605,
+  "input_text": "Mary journeyed to the bathroom. Estonia is not outside Europe. Birds fly and eat. Americans can not disappear. The students studied hard and passed the exam. John is in a cave with a probability 90%. Animals have two legs. Penguins live in the water. Emajogi's length is 80 kilometers. Did the students fail the exam?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "Mary journeyed to the bathroom.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mary 1 journeyed to the bathroom 2.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "bathroom 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "journey",
+              "mode": "event",
+              "roles": {"actor": "Mary 1", "destination": "bathroom 2"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Estonia is not outside Europe.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Estonia 1 is not outside Europe 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Estonia 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            },
+            {
+              "id": "Europe 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Europe"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Birds fly and eat.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Birds fly.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "habitual", "roles": {"actor": "birds"}}],
+          "confidence": 0.99
+        },
+        {
+          "unit_id": "S4",
+          "text": "Birds eat.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"actor": "birds"}}],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Americans can not disappear.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Americans cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "americans", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability", "roles": {"actor": "americans"}}]
+        }
+      ]
+    },
+    {
+      "raw": "The students studied hard and passed the exam.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The students 1 studied hard.",
+          "type": "situation",
+          "entities": [{"id": "students 1", "type": "concrete", "category": "person"},
+            {"id": "exam 2", "type": "concrete", "category": "event"}
+          ],
+          "actions": [{"root": "study", "mode": "event", "roles": {"actor": "students 1", "manner": "hard"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S7",
+          "text": "The students 1 passed the exam 2.",
+          "type": "situation",
+          "entities": [{"id": "students 1", "type": "concrete", "category": "person"},
+            {"id": "exam 2", "type": "concrete", "category": "event"}
+          ],
+          "actions": [{"root": "pass", "mode": "event", "roles": {"actor": "students 1", "target": "exam 2"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is in a cave with a probability 90%.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "John 1 is in a cave.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "cave", "type": "generic", "category": "place"}
+          ],
+          "confidence": 0.9
+        }
+      ]
+    },
+    {
+      "raw": "Animals have two legs.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Animals have two legs.",
+          "type": "normal_rule",
+          "entities": [{"id": "animals", "type": "generic", "category": "animal"},
+            {"id": "legs", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Penguins live in the water.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Penguins live in the water.",
+          "type": "normal_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"},
+            {"id": "water", "type": "generic", "scope": "kind", "category": "substance"}
+          ],
+          "actions": [{
+              "root": "live",
+              "mode": "habitual",
+              "roles": {"actor": "penguins", "location": "water", "location_prep": "in"}
+            }
+          ],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "Emajogi's length is 80 kilometers.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "The length 2 of Emajogi 1 is 80 kilometers.",
+          "type": "real",
+          "entities": [{
+              "id": "Emajogi 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Emajogi"
+            },
+            {"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "80 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 2","Emajogi 1"]]
+        },
+        {
+          "unit_id": "S12",
+          "text": "The length 2 is the length of Emajogi 1.",
+          "type": "real",
+          "entities": [{"id": "length 2", "type": "concrete", "text": "length"},
+            {
+              "id": "Emajogi 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Emajogi"
+            }
+          ],
+          "definites": [["length of","length 2","Emajogi 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "Did the students fail the exam?",
+      "units": [{
+          "unit_id": "S13",
+          "text": "Did the students 1 fail the exam 2?",
+          "type": "query",
+          "entities": [{"id": "students 1", "type": "concrete", "category": "person"},
+            {"id": "exam 2", "type": "concrete", "category": "event"}
+          ],
+          "actions": [{"root": "fail", "mode": "event", "roles": {"actor": "students 1", "target": "exam 2"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 1"],
+            ["isa","bathroom","bathroom 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","journey"],
+                ["has actor","E","Mary 1"],
+                ["has destination","E","bathroom 2","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["not",
+          ["is rel2","outside","https://en.wikipedia.org/wiki/Estonia","https://en.wikipedia.org/wiki/Europe"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","fly"],
+                    ["has actor","E","X"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S3",0.99]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","eat"],
+                    ["has actor","E","X"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S4",0.99]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","american","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","person","students 1"],
+          ["isa","exam","exam 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","study"],
+              ["has actor","E","students 1"],
+              ["has manner","E","hard"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","person","students 1"],
+          ["isa","exam","exam 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","pass"],
+              ["has actor","E","students 1"],
+              ["has target","E","exam 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds", "W0", ["exists", "X", ["and", ["isa","cave","X"], ["is rel2","in","John 1","X"]]]],
+        ["@p","S8",0.9]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","animal","X"],
+              ["normally",
+                ["=", 2, ["$count", ["$setof", "?:L", ["and", ["isa","leg","?:L"], ["has part","X","?:L"]]]]]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S9",0.99]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","penguin","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","live"],
+                    ["has actor","E","X"],
+                    ["has location","E","water","in"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S10",0.95]
+      ]
+    ],
+    ["@id","S11",
+      ["holds","W0",
+        ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$measure",80,"kilometer"]]
+      ]
+    ],
+    ["@id","S12",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 2"],
+            ["is rel2","length of","length 2","https://en.wikipedia.org/wiki/Emajogi"]
+          ]
+        ],
+        ["@definite","S12","W0","length of","https://en.wikipedia.org/wiki/Emajogi","length 2"]
+      ]
+    ],
+    ["@id","S13",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","fail"],
+            ["has actor","E","students 1"],
+            ["has target","E","exam 2"],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:Estonia 1"],
+ "@nl": "Estonia 1 is not outside Europe 2."},
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:Europe 2"],
+ "@nl": "Estonia 1 is not outside Europe 2."},
+{"@name": "entity_S6",
+ "@logic": ["isa","student","#:students 1"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "entity_S6",
+ "@logic": ["isa","student","#:students 1"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "entity_S8",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is in a cave."},
+{"@name": "entity_S11",
+ "@logic": ["isa","place","#:Emajogi 1"],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "entity_S11",
+ "@logic": ["isa","measure","80 kilometers"],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","bathroom","#:bathroom 2"],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S1",
+ "@logic": ["has destination", "sk0_activity", "#:bathroom 2", "at", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S2",
+ "@logic": ["-is rel2", "outside", "https://en.wikipedia.org/wiki/Estonia", "https://en.wikipedia.org/wiki/Europe", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Estonia 1 is not outside Europe 2."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk1","?:X"]]],
+ "@nl": "Birds fly."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk1","?:X"], "fly", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Birds fly."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk1","?:X"], "?:X", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Birds fly."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"],
+            ["typical", ["sk1","?:X"], ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$block", ["$","bird",1], ["$not", ["typical", ["sk1","?:X"], ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Birds fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk2","?:X"]]],
+ "@nl": "Birds eat."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk2","?:X"], "eat", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Birds eat."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk2","?:X"], "?:X", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Birds eat."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"],
+            ["typical", ["sk2","?:X"], ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","bird",1], ["$not", ["typical", ["sk2","?:X"], ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Birds eat."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","american","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Americans cannot disappear."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:students 1"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S6",
+ "@logic": ["isa","exam","#:exam 2"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk3_activity", "study", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk3_activity", "#:students 1", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S6",
+ "@logic": ["has manner", "sk3_activity", "hard", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:students 1"],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","exam","#:exam 2"],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk4_activity", "pass", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk4_activity", "#:students 1", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S7",
+ "@logic": ["has target", "sk4_activity", "#:exam 2", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","cave","sk5_cave"],
+ "@confidence": 0.8944,
+ "@nl": "John 1 is in a cave."},
+{"@name": "sent_S8",
+ "@logic": ["is rel2", "in", "#:John 1", "sk5_cave", ["$ctxt","present","W0","?:Fv21","?:Fv22"]],
+ "@confidence": 0.8944,
+ "@nl": "John 1 is in a cave."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","animal","?:X"],
+            ["=", 2, ["$count", ["$setof", "has part", "?:X", ["$and", ["$isa","leg","$arg1"]]]]],
+            ["$block", ["$","animal",1], ["$not", ["=", 2, ["$count", ["$setof", "has part", "?:X", ["$and", ["$isa","leg","$arg1"]]]]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Animals have two legs."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","penguin","?:X"], ["isa", "activity", ["sk6","?:X"]]],
+ "@nl": "Penguins live in the water."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has type", ["sk6","?:X"], "live", ["$ctxt","?:Fv30","?:Fv29","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Penguins live in the water."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has actor", ["sk6","?:X"], "?:X", ["$ctxt","?:Fv30","?:Fv29","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Penguins live in the water."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","penguin","?:X"], ["isa", "water", ["sk7","?:X"]]],
+ "@nl": "Penguins live in the water."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has location", ["sk6","?:X"], ["sk7","?:X"], "in", ["$ctxt","?:Fv30","?:Fv29","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Penguins live in the water."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","penguin","?:X"],
+            ["typical", ["sk6","?:X"], ["$ctxt","?:Fv30","?:Fv29","?:Fv27","?:Fv28"]],
+            ["$block", ["$","penguin",1], ["$not", ["typical", ["sk6","?:X"], ["$ctxt","?:Fv30","?:Fv29","?:Fv27","?:Fv28"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Penguins live in the water."},
+{"@name": "sent_S11",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "sent_S12",
+ "@logic": ["isa", "length", ["$theof1", "length", "https://en.wikipedia.org/wiki/Emajogi", ["$ctxt","present","W0","?:Fv33","?:Fv34"]]],
+ "@nl": "The length 2 is the length of Emajogi 1."},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk8_activity"]],
+ "@nl": "Did the students 1 fail the exam 2?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk8_activity", "fail", ["$ctxt","past","?:Fv40","?:Fv35","?:Fv36"]]
+           ],
+ "@nl": "Did the students 1 fail the exam 2?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk8_activity", "#:students 1", ["$ctxt","past","?:Fv42","?:Fv35","?:Fv36"]]
+           ],
+ "@nl": "Did the students 1 fail the exam 2?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk8_activity", "#:exam 2", ["$ctxt","past","?:Fv44","?:Fv35","?:Fv36"]]
+           ],
+ "@nl": "Did the students 1 fail the exam 2?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk8_activity", "past", "in", ["$ctxt","past","?:Fv46","?:Fv35","?:Fv36"]]
+           ],
+ "@nl": "Did the students 1 fail the exam 2?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "fail", ["$ctxt","past","?:Fv50","?:Fv35","?:Fv36"]],
+            ["-has actor", "?:E", "#:students 1", ["$ctxt","past","?:Fv52","?:Fv35","?:Fv36"]],
+            ["-has target", "?:E", "#:exam 2", ["$ctxt","past","?:Fv54","?:Fv35","?:Fv36"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did the students 1 fail the exam 2?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","?:C","?:Y"], ["-have","?:X","?:Y","?:Ctxt"], ["has part","?:X","?:Y","?:Ctxt"]],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S13",
+ "@question": ["$defq0"],
+ "@nl": "Did the students 1 fail the exam 2?"},
+{"@name": "frm_set",
+ "@logic": [["-isa","?:C","?:M"],
+            ["-has part","?:S","?:M"],
+            ["member", "?:M", ["$setof", "has part", "?:S", ["$and", ["$isa","?:C","$arg1"]]]]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "has part", "?:S", ["$and", ["$isa","?:C","$arg1"]]]],
+            ["isa","?:C","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "has part", "?:S", ["$and", ["$isa","?:C","$arg1"]]]],
+            ["has part","?:S","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Emajogi", ["$theof1", "length", "https://en.wikipedia.org/wiki/Emajogi", ["$ctxt","present","W0","?:Fv33","?:Fv34"]], ["$ctxt","present","W0","?:Fv33","?:Fv34"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Emajogi", ["$theof1", "length", "https://en.wikipedia.org/wiki/Emajogi", ["$ctxt","present","W0","?:Fv33","?:Fv34"]], ["$ctxt","present","W0","?:Fv33","?:Fv34"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "length of", ["$theof1","length","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "length", ["$theof1","length","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","american","$some_american"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","american","$some_not_american"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["isa","cave","$some_cave"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","cave","$some_not_cave"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv58"], ["has type","?:E","go","?:Fv58"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv59"], ["has type","?:E","go","?:Fv59"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv60"], ["has type","?:E","give","?:Fv60"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","in","?:X","?:Fv61"],
+            ["-has property","outside","?:X","?:Fv61"],
+            ["$block", 0, ["has property","outside","?:X","?:Fv61"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","in","?:X","?:Fv62"],
+            ["-has property","outside","?:X","?:Fv62"],
+            ["$block", 0, ["has property","in","?:X","?:Fv62"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_verb_excl",
+ "@logic": [["-has type","?:E1","pass","?:Fv63"],
+            ["-has actor","?:E1","?:Ag","?:Fv63"],
+            ["-has target","?:E1","?:Tg","?:Fv63"],
+            ["-has type","?:E2","fail","?:Fv63"],
+            ["-has actor","?:E2","?:Ag","?:Fv63"],
+            ["-has target","?:E2","?:Tg","?:Fv63"],
+            ["$block", 0, ["has type","?:E2","fail","?:Fv63"]]
+           ],
+ "@confidence": 0.85,
+ "@nl": "[generated: frm_verb_excl]"},
+{"@name": "frm_verb_excl",
+ "@logic": [["-has type","?:E1","fail","?:Fv64"],
+            ["-has actor","?:E1","?:Ag","?:Fv64"],
+            ["-has target","?:E1","?:Tg","?:Fv64"],
+            ["-has type","?:E2","pass","?:Fv64"],
+            ["-has actor","?:E2","?:Ag","?:Fv64"],
+            ["-has target","?:E2","?:Tg","?:Fv64"],
+            ["$block", 0, ["has type","?:E2","pass","?:Fv64"]]
+           ],
+ "@confidence": 0.85,
+ "@nl": "[generated: frm_verb_excl]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has destination","?:Esb","?:Xsb","?:Psb","?:Csb"],
+            ["has location","?:Esb","?:Xsb","?:Psb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_measure_rel_bridge",
+ "@logic": [["-=", ["$measure_of","length","?:S","?:W"], "?:V"],
+            ["is rel2","length of","?:V","?:S","?:Ctxt"]
+           ],
+ "@nl": "[generated: frm_measure_rel_bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33551,
+      "cached_input_tokens": 33280,
+      "output_tokens": 145,
+      "raw": {
+        "input_tokens": 33551,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 145,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33696
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33518,
+      "cached_input_tokens": 33280,
+      "output_tokens": 66,
+      "raw": {
+        "input_tokens": 33518,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 66,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33584
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33572,
+      "cached_input_tokens": 33280,
+      "output_tokens": 240,
+      "raw": {
+        "input_tokens": 33572,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 240,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33812
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33489,
+      "cached_input_tokens": 33280,
+      "output_tokens": 110,
+      "raw": {
+        "input_tokens": 33489,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 110,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33599
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33645,
+      "cached_input_tokens": 33280,
+      "output_tokens": 230,
+      "raw": {
+        "input_tokens": 33645,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 230,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33875
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33499,
+      "cached_input_tokens": 33280,
+      "output_tokens": 88,
+      "raw": {
+        "input_tokens": 33499,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 88,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33587
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33485,
+      "cached_input_tokens": 33280,
+      "output_tokens": 130,
+      "raw": {
+        "input_tokens": 33485,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 130,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33615
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33538,
+      "cached_input_tokens": 33280,
+      "output_tokens": 139,
+      "raw": {
+        "input_tokens": 33538,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 139,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33677
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33671,
+      "cached_input_tokens": 33280,
+      "output_tokens": 160,
+      "raw": {
+        "input_tokens": 33671,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 160,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33831
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33531,
+      "cached_input_tokens": 33280,
+      "output_tokens": 94,
+      "raw": {
+        "input_tokens": 33531,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 94,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33625
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T22:18:56Z"
+}

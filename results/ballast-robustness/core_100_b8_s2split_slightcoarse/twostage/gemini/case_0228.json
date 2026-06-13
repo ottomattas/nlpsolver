@@ -1,0 +1,881 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 228,
+  "input_text": "If X is cool and nice then X is red. Eve failed to finish the report. Tom wanted to leave. The cake was eaten by the child. Jessica is a mouse. An elephant was strong. John's brother has a car. Sadly, Mary lost the letter. The bike's length is 10 kilometers. John's sister has a car?",
+  "expected_answer": null,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "If X is cool and nice then X is red.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "If X is cool and nice, then X is red.",
+          "type": "normal_rule",
+          "entities": [{"id": "X", "type": "generic"}],
+          "adjectives": [["cool","none","entity"], ["nice","none","entity"], ["red","none","none"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "Eve failed to finish the report.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Eve 1 did not finish the report 2.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "report 2", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "finish", "mode": "event", "roles": {"actor": "Eve 1", "target": "report 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Tom wanted to leave.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Tom 3 wanted to leave.",
+          "type": "situation",
+          "entities": [{"id": "Tom 3", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "want",
+              "mode": "volition",
+              "roles": {
+                "actor": "Tom 3",
+                "content": {"root": "leave", "mode": "event", "roles": {"actor": "Tom 3"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The cake was eaten by the child.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The child 4 ate the cake 5.",
+          "type": "situation",
+          "entities": [{"id": "child 4", "type": "concrete", "category": "person"},
+            {"id": "cake 5", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "eat", "mode": "event", "roles": {"actor": "child 4", "target": "cake 5"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Jessica is a mouse.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Jessica 6 is a mouse.",
+          "type": "situation",
+          "entities": [{"id": "Jessica 6", "type": "concrete", "category": "person"},
+            {"id": "mouse", "type": "generic", "category": "animal"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "An elephant was strong.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "An elephant 7 was strong.",
+          "type": "situation",
+          "entities": [{"id": "elephant 7", "type": "concrete", "category": "animal"}],
+          "adjectives": [["strong","none","elephant"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John's brother has a car.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "John 8's brother 9 has a car.",
+          "type": "situation",
+          "entities": [{"id": "John 8", "type": "concrete", "category": "person"},
+            {"id": "brother 9", "type": "concrete", "text": "brother", "category": "person"},
+            {"id": "car", "type": "generic", "category": "artifact"}
+          ],
+          "definites": [["brother of","brother 9","John 8"]],
+          "time": "present"
+        },
+        {
+          "unit_id": "S8",
+          "text": "The brother 9 is the brother of John 8.",
+          "type": "situation",
+          "entities": [{"id": "brother 9", "type": "concrete", "text": "brother", "category": "person"},
+            {"id": "John 8", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["brother of","brother 9","John 8"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Sadly, Mary lost the letter.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Mary 10 lost the letter 11.",
+          "type": "situation",
+          "entities": [{"id": "Mary 10", "type": "concrete", "category": "person"},
+            {"id": "letter 11", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "lose", "mode": "event", "roles": {"actor": "Mary 10", "target": "letter 11"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The bike's length is 10 kilometers.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "The length 13 of the bike 12 is 10 kilometers.",
+          "type": "real",
+          "entities": [{"id": "length 13", "type": "concrete", "text": "length", "category": "abstract"},
+            {"id": "bike 12", "type": "concrete", "category": "artifact"},
+            {"id": "10 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 13","bike 12"]],
+          "time": "present"
+        },
+        {
+          "unit_id": "S11",
+          "text": "The length 13 is the length of the bike 12.",
+          "type": "real",
+          "entities": [{"id": "length 13", "type": "concrete", "text": "length", "category": "abstract"},
+            {"id": "bike 12", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["length of","length 13","bike 12"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "John's sister has a car?",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Does John 8's sister 14 have a car?",
+          "type": "query",
+          "entities": [{"id": "John 8", "type": "concrete", "category": "person"},
+            {"id": "sister 14", "type": "concrete", "text": "sister", "category": "person"},
+            {"id": "car", "type": "generic", "category": "artifact"}
+          ],
+          "definites": [["sister of","sister 14","John 8"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["normally",
+              ["implies",
+                ["and",
+                  ["has degree property","cool","X","none","entity"],
+                  ["has degree property","nice","X","none","entity"]
+                ],
+                ["has degree property","red","X","none","none"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.95]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Eve 1"],
+            ["isa","abstract","report 2"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","finish"],
+                  ["has actor","E","Eve 1"],
+                  ["has target","E","report 2"],
+                  ["has time","E","past","in"]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Tom 3"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","want"],
+              ["has actor","E1","Tom 3"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","leave"],
+                  ["has actor","E2","Tom 3"],
+                  ["has time","E2","past","in"]
+                ]
+              ],
+              ["volition","E1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","child 4"],
+            ["isa","artifact","cake 5"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","eat"],
+                ["has actor","E","child 4"],
+                ["has target","E","cake 5"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W2"]
+      ]
+    ],
+    ["@id","S5",
+      ["and", ["holds", "W0", ["isa","mouse","Jessica 6"]], ["state time","W0","present"]]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","elephant","elephant 7"],
+            ["has degree property","strong","elephant 7","none","elephant"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 8"],
+            ["isa","brother","brother 9"],
+            ["is rel2","brother of","brother 9","John 8"],
+            ["exists", "X", ["and", ["isa","car","X"], ["have","brother 9","X"]]]
+          ]
+        ],
+        ["@definite","S7","W0","brother of","John 8","brother 9"]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","brother","brother 9"],
+            ["isa","person","John 8"],
+            ["is rel2","brother of","brother 9","John 8"]
+          ]
+        ],
+        ["@definite","S8","W0","brother of","John 8","brother 9"]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 10"],
+            ["isa","letter","letter 11"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","lose"],
+                ["has actor","E","Mary 10"],
+                ["has target","E","letter 11"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W3"]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","bike","bike 12"],
+            ["=", ["$measure_of","length","bike 12","W0"], ["$measure",10,"kilometer"]]
+          ]
+        ],
+        ["state time","W0","present"]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds", "W0", ["and", ["isa","length","length 13"], ["isa","bike","bike 12"]]],
+        ["state time","W0","present"],
+        ["@definite","S11","W0","length of","bike 12","length 13"]
+      ]
+    ],
+    ["@id","S12",
+      ["and",
+        ["question", ["exists", "X", ["and", ["isa","car","X"], ["have","sister 14","X"]]]],
+        ["@definite","S12","W0","sister of","John 8","sister 14"]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","report","#:report 2"],
+ "@nl": "Eve 1 did not finish the report 2."},
+{"@name": "entity_S4",
+ "@logic": ["isa","child","#:child 4"],
+ "@nl": "The child 4 ate the cake 5."},
+{"@name": "entity_S4",
+ "@logic": ["isa","cake","#:cake 5"],
+ "@nl": "The child 4 ate the cake 5."},
+{"@name": "entity_S5",
+ "@logic": ["isa","person","#:Jessica 6"],
+ "@nl": "Jessica 6 is a mouse."},
+{"@name": "entity_S6",
+ "@logic": ["isa","animal","#:elephant 7"],
+ "@nl": "An elephant 7 was strong."},
+{"@name": "entity_S7",
+ "@logic": ["isa","person","#:brother 9"],
+ "@nl": "John 8's brother 9 has a car."},
+{"@name": "entity_S7",
+ "@logic": ["isa","brother","#:brother 9"],
+ "@nl": "John 8's brother 9 has a car."},
+{"@name": "entity_S10",
+ "@logic": ["isa","measure","10 kilometers"],
+ "@nl": "The length 13 of the bike 12 is 10 kilometers."},
+{"@name": "entity_S12",
+ "@logic": ["isa","person","#:sister 14"],
+ "@nl": "Does John 8's sister 14 have a car?"},
+{"@name": "entity_S12",
+ "@logic": ["isa","sister","#:sister 14"],
+ "@nl": "Does John 8's sister 14 have a car?"},
+{"@name": "sent_S1",
+ "@logic": [["-has degree property", "cool", "?:X", "none", "?:Fv100", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has degree property", "good", "?:X", "none", "?:Fv101", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["has property", "red", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","$generic",3], ["$not", ["has property", "red", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "If X is cool and nice, then X is red."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 did not finish the report 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","abstract","#:report 2"],
+ "@nl": "Eve 1 did not finish the report 2."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "finish", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+            ["-has actor", "?:E", "#:Eve 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+            ["-has target", "?:E", "#:report 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+            ["-actuality","?:E"]
+           ],
+ "@nl": "Eve 1 did not finish the report 2."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Eve 1 did not finish the report 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Tom 3"],
+ "@nl": "Tom 3 wanted to leave."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Tom 3 wanted to leave."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "want", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 3 wanted to leave."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:Tom 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 3 wanted to leave."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 3 wanted to leave."},
+{"@name": "sent_S3",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "Tom 3 wanted to leave."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Tom 3 wanted to leave."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "leave", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 3 wanted to leave."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:Tom 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 3 wanted to leave."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 3 wanted to leave."},
+{"@name": "sent_S3",
+ "@logic": ["volition","sk0_activity"],
+ "@nl": "Tom 3 wanted to leave."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:child 4"],
+ "@nl": "The child 4 ate the cake 5."},
+{"@name": "sent_S4",
+ "@logic": ["isa","artifact","#:cake 5"],
+ "@nl": "The child 4 ate the cake 5."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The child 4 ate the cake 5."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk2_activity", "eat", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The child 4 ate the cake 5."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk2_activity", "#:child 4", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The child 4 ate the cake 5."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk2_activity", "#:cake 5", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The child 4 ate the cake 5."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The child 4 ate the cake 5."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The child 4 ate the cake 5."},
+{"@name": "sent_S4",
+ "@logic": ["next","W0","W2"],
+ "@nl": "The child 4 ate the cake 5."},
+{"@name": "sent_S5",
+ "@logic": ["isa","mouse","#:Jessica 6"],
+ "@nl": "Jessica 6 is a mouse."},
+{"@name": "sent_S6",
+ "@logic": ["isa","elephant","#:elephant 7"],
+ "@nl": "An elephant 7 was strong."},
+{"@name": "sent_S6",
+ "@logic": ["has degree property", "strong", "#:elephant 7", "none", "elephant", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "An elephant 7 was strong."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:John 8"],
+ "@nl": "John 8's brother 9 has a car."},
+{"@name": "sent_S7",
+ "@logic": ["isa", "brother", ["$theof1", "brother", "#:John 8", ["$ctxt","present","W0","?:Fv15","?:Fv16"]]],
+ "@nl": "John 8's brother 9 has a car."},
+{"@name": "sent_S7",
+ "@logic": ["isa","car","sk3_car"],
+ "@nl": "John 8's brother 9 has a car."},
+{"@name": "sent_S7",
+ "@logic": ["have", ["$theof1", "brother", "#:John 8", ["$ctxt","present","W0","?:Fv15","?:Fv16"]], "sk3_car", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "John 8's brother 9 has a car."},
+{"@name": "sent_S8",
+ "@logic": ["isa", "brother", ["$theof1", "brother", "#:John 8", ["$ctxt","present","W0","?:Fv15","?:Fv16"]]],
+ "@nl": "The brother 9 is the brother of John 8."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:John 8"],
+ "@nl": "The brother 9 is the brother of John 8."},
+{"@name": "sent_S8",
+ "@logic": ["is rel2", "brother of", ["$theof1", "brother", "#:John 8", ["$ctxt","present","W0","?:Fv15","?:Fv16"]], "#:John 8", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The brother 9 is the brother of John 8."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Mary 10"],
+ "@nl": "Mary 10 lost the letter 11."},
+{"@name": "sent_S9",
+ "@logic": ["isa","letter","#:letter 11"],
+ "@nl": "Mary 10 lost the letter 11."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Mary 10 lost the letter 11."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk4_activity", "lose", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 10 lost the letter 11."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk4_activity", "#:Mary 10", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 10 lost the letter 11."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk4_activity", "#:letter 11", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 10 lost the letter 11."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 10 lost the letter 11."},
+{"@name": "sent_S9",
+ "@logic": ["actuality","sk4_activity"],
+ "@nl": "Mary 10 lost the letter 11."},
+{"@name": "sent_S9",
+ "@logic": ["next","W0","W3"],
+ "@nl": "Mary 10 lost the letter 11."},
+{"@name": "sent_S10",
+ "@logic": ["isa","bike","#:bike 12"],
+ "@nl": "The length 13 of the bike 12 is 10 kilometers."},
+{"@name": "sent_S10",
+ "@logic": ["=", ["$measure_of","length","#:bike 12","W0"], ["$list",10000,"#:meter"]],
+ "@nl": "The length 13 of the bike 12 is 10 kilometers."},
+{"@name": "sent_S11",
+ "@logic": ["isa","length","#:length 13"],
+ "@nl": "The length 13 is the length of the bike 12."},
+{"@name": "sent_S11",
+ "@logic": ["isa","bike","#:bike 12"],
+ "@nl": "The length 13 is the length of the bike 12."},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","car","sk5_car"]],
+ "@nl": "Does John 8's sister 14 have a car?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["have", "#:sister 14", "sk5_car", ["$ctxt","present","?:Fv30","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Does John 8's sister 14 have a car?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-isa","car","?:X"],
+            ["-have", "#:sister 14", "?:X", ["$ctxt","present","?:Fv33","?:Fv25","?:Fv26"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 8's sister 14 have a car?"},
+{"@name": "sent_S8",
+ "@logic": ["have", "#:John 8", ["$theof1", "brother", "#:John 8", ["$ctxt","present","W0","?:Fv15","?:Fv16"]], ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The brother 9 is the brother of John 8."},
+{"@name": "sent_S12",
+ "@question": ["$defq0"],
+ "@nl": "Does John 8's sister 14 have a car?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "#:sister 14", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "#:sister 14", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "#:sister 14", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Does John 8's sister 14 have a car?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:John 8", ["$theof1", "brother", "#:John 8", ["$ctxt","present","W0","?:Fv15","?:Fv16"]], ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:John 8", ["$theof1", "brother", "#:John 8", ["$ctxt","present","W0","?:Fv15","?:Fv16"]], ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "brother of", ["$theof1","brother","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "brother", ["$theof1","brother","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","car","$some_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","car","$some_not_car"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "cool", "$some_cool_entity", "none", "?:Fv102", ["$ctxt","?:Fv71","?:Fv68","?:Fv69","?:Fv70"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cool", "$some_not_cool_entity", "none", "?:Fv103", ["$ctxt","?:Fv79","?:Fv76","?:Fv77","?:Fv78"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "good", "$some_nice_entity", "none", "?:Fv104", ["$ctxt","?:Fv83","?:Fv80","?:Fv81","?:Fv82"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "good", "$some_not_nice_entity", "none", "?:Fv105", ["$ctxt","?:Fv91","?:Fv88","?:Fv89","?:Fv90"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "red", "$some_red", ["$ctxt","?:Fv95","?:Fv92","?:Fv93","?:Fv94"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "red", "$some_not_red", ["$ctxt","?:Fv99","?:Fv96","?:Fv97","?:Fv98"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","report","?:Fv34"], ["has type","?:E","announce","?:Fv34"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","announce","?:Fv35"], ["has type","?:E","report","?:Fv35"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","brother","?:X","?:Fv36"], ["-has property","sister","?:X","?:Fv36"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","car","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","car","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_kin_excl",
+ "@logic": [["-isa","sister","?:X"], ["-isa","brother","?:X"]],
+ "@nl": "[generated: frm_kin_excl]"},
+{"@name": "frm_kin_excl",
+ "@logic": [["-is rel2","sister of","?:X","?:Y","?:Fv37"],
+            ["-is rel2","brother of","?:X","?:Y","?:Fv37"]
+           ],
+ "@nl": "[generated: frm_kin_excl]"},
+{"@name": "frm_kin_excl",
+ "@logic": [["-is rel2","sister of","?:X","?:Y","?:Fv38"], ["isa","sister","?:X"]],
+ "@nl": "[generated: frm_kin_excl]"},
+{"@name": "frm_kin_excl",
+ "@logic": [["-is rel2","brother of","?:X","?:Y","?:Fv39"], ["isa","brother","?:X"]],
+ "@nl": "[generated: frm_kin_excl]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv40","?:Fv41","?:Fv42"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv40","?:Fv41","?:Fv42"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv43","?:Fv44","?:Fv45"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv43","?:Fv44","?:Fv45"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv106", ["$ctxt","past","?:Fv46","?:Fv47","?:Fv48"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv107", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv108", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv49","?:Fv50","?:Fv51"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv49","?:Fv50","?:Fv51"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv49","?:Fv50","?:Fv51"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37233,
+      "cached_input_tokens": 0,
+      "output_tokens": 867,
+      "raw": {
+        "promptTokenCount": 37233,
+        "candidatesTokenCount": 134,
+        "totalTokenCount": 38100,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37233}],
+        "thoughtsTokenCount": 733,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37272,
+      "cached_input_tokens": 36836,
+      "output_tokens": 1651,
+      "raw": {
+        "promptTokenCount": 37272,
+        "candidatesTokenCount": 183,
+        "totalTokenCount": 38923,
+        "cachedContentTokenCount": 36836,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37272}],
+        "cacheTokensDetails": [{"modality": "TEXT", "tokenCount": 36836}],
+        "thoughtsTokenCount": 1468,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37248,
+      "cached_input_tokens": 0,
+      "output_tokens": 1105,
+      "raw": {
+        "promptTokenCount": 37248,
+        "candidatesTokenCount": 192,
+        "totalTokenCount": 38353,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37248}],
+        "thoughtsTokenCount": 913,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37835,
+      "cached_input_tokens": 0,
+      "output_tokens": 836,
+      "raw": {
+        "promptTokenCount": 37835,
+        "candidatesTokenCount": 319,
+        "totalTokenCount": 38671,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37835}],
+        "thoughtsTokenCount": 517,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37272,
+      "cached_input_tokens": 0,
+      "output_tokens": 1015,
+      "raw": {
+        "promptTokenCount": 37272,
+        "candidatesTokenCount": 155,
+        "totalTokenCount": 38287,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37272}],
+        "thoughtsTokenCount": 860,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37211,
+      "cached_input_tokens": 0,
+      "output_tokens": 1524,
+      "raw": {
+        "promptTokenCount": 37211,
+        "candidatesTokenCount": 58,
+        "totalTokenCount": 38735,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37211}],
+        "thoughtsTokenCount": 1466,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37208,
+      "cached_input_tokens": 0,
+      "output_tokens": 473,
+      "raw": {
+        "promptTokenCount": 37208,
+        "candidatesTokenCount": 88,
+        "totalTokenCount": 37681,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37208}],
+        "thoughtsTokenCount": 385,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37374,
+      "cached_input_tokens": 0,
+      "output_tokens": 2347,
+      "raw": {
+        "promptTokenCount": 37374,
+        "candidatesTokenCount": 285,
+        "totalTokenCount": 39721,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37374}],
+        "thoughtsTokenCount": 2062,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37276,
+      "cached_input_tokens": 0,
+      "output_tokens": 1330,
+      "raw": {
+        "promptTokenCount": 37276,
+        "candidatesTokenCount": 159,
+        "totalTokenCount": 38606,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37276}],
+        "thoughtsTokenCount": 1171,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37397,
+      "cached_input_tokens": 36836,
+      "output_tokens": 2474,
+      "raw": {
+        "promptTokenCount": 37397,
+        "candidatesTokenCount": 205,
+        "totalTokenCount": 39871,
+        "cachedContentTokenCount": 36836,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37397}],
+        "cacheTokensDetails": [{"modality": "TEXT", "tokenCount": 36836}],
+        "thoughtsTokenCount": 2269,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37264,
+      "cached_input_tokens": 0,
+      "output_tokens": 2395,
+      "raw": {
+        "promptTokenCount": 37264,
+        "candidatesTokenCount": 98,
+        "totalTokenCount": 39659,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37264}],
+        "thoughtsTokenCount": 2297,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T23:09:45Z"
+}

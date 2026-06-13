@@ -1,0 +1,1170 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 1310,
+  "input_text": "John is a big strong bear. Mark is an animal. Tom opened the door and the window. Sandra travelled to the kitchen. The length of Emajogi is 80 kilometers. Sandra travelled to the hallway. Winona is a cat. Cities in Estonia are estonian. The manager, Anna, called Eve. Mary went to the bathroom. Greg is a bad man. Sandra moved to the garden. Where is Sandra?",
+  "expected_answer": ["garden","In the garden.","At the garden."],
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "John is a big strong bear.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a bear.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","bear"], ["strong","none","bear"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mark is an animal.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Mark 1 is an animal.",
+          "type": "real",
+          "entities": [{"id": "Mark 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "Tom opened the door and the window.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Tom 1 opened the door 2.",
+          "type": "situation",
+          "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"},
+            {"id": "door 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "open", "mode": "event", "roles": {"actor": "Tom 1", "target": "door 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "Tom 1 opened the window 3.",
+          "type": "situation",
+          "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"},
+            {"id": "window 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "open", "mode": "event", "roles": {"actor": "Tom 1", "target": "window 3"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Sandra travelled to the kitchen.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Sandra 1 travelled to the kitchen 2.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 1", "type": "concrete", "category": "person"},
+            {"id": "kitchen 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "travel",
+              "mode": "event",
+              "roles": {"actor": "Sandra 1", "destination": "kitchen 2"}
+            }
+          ],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The length of Emajogi is 80 kilometers.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The length 4 of Emajogi 3 is 80 kilometers.",
+          "type": "real",
+          "entities": [{
+              "id": "Emajogi 3",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Emajogi"
+            },
+            {"id": "length 4", "type": "concrete", "text": "length"},
+            {"id": "80 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 4","Emajogi 3"]]
+        },
+        {
+          "unit_id": "S7",
+          "text": "The length 4 is the length of Emajogi 3.",
+          "type": "real",
+          "entities": [{"id": "length 4", "type": "concrete", "text": "length"},
+            {
+              "id": "Emajogi 3",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Emajogi"
+            }
+          ],
+          "definites": [["length of","length 4","Emajogi 3"]]
+        }
+      ]
+    },
+    {
+      "raw": "Sandra travelled to the hallway.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Sandra 1 travelled to the hallway 5.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 1", "type": "concrete", "category": "person"},
+            {"id": "hallway 5", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "travel",
+              "mode": "event",
+              "roles": {"actor": "Sandra 1", "destination": "hallway 5"}
+            }
+          ],
+          "pre_state": "W3",
+          "next_state": "W4",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Winona is a cat.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Winona 1 is a cat.",
+          "type": "real",
+          "entities": [{"id": "Winona 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "Cities in Estonia are estonian.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Cities in Estonia 1 are Estonian.",
+          "type": "strict_rule",
+          "entities": [{"id": "cities", "type": "generic", "category": "place"},
+            {
+              "id": "Estonia 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ],
+          "adjectives": [["Estonian","none","city"]]
+        }
+      ]
+    },
+    {
+      "raw": "The manager, Anna, called Eve.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Anna 1 called Eve 2.",
+          "type": "situation",
+          "entities": [{"id": "Anna 1", "type": "concrete", "category": "person"},
+            {"id": "Eve 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "call", "mode": "event", "roles": {"actor": "Anna 1", "target": "Eve 2"}}],
+          "pre_state": "W4",
+          "next_state": "W5",
+          "time": "past"
+        },
+        {
+          "unit_id": "S12",
+          "text": "Anna 1 is a manager.",
+          "type": "real",
+          "entities": [{"id": "Anna 1", "type": "concrete", "category": "person"}]
+        }
+      ]
+    },
+    {
+      "raw": "Mary went to the bathroom.",
+      "units": [{
+          "unit_id": "S13",
+          "text": "Mary 1 went to the bathroom 3.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "bathroom 3", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "go",
+              "mode": "event",
+              "roles": {"actor": "Mary 1", "destination": "bathroom 3"}
+            }
+          ],
+          "pre_state": "W5",
+          "next_state": "W6",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Greg is a bad man.",
+      "units": [{
+          "unit_id": "S14",
+          "text": "Greg 1 is a man.",
+          "type": "real",
+          "entities": [{"id": "Greg 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["bad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Sandra moved to the garden.",
+      "units": [{
+          "unit_id": "S15",
+          "text": "Sandra 1 moved to the garden 4.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 1", "type": "concrete", "category": "person"},
+            {"id": "garden 4", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "move",
+              "mode": "event",
+              "roles": {"actor": "Sandra 1", "destination": "garden 4"}
+            }
+          ],
+          "pre_state": "W6",
+          "next_state": "W7",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Where is Sandra?",
+      "units": [{
+          "unit_id": "S16",
+          "text": "Which entity is Sandra 1 located in?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "Sandra 1", "type": "concrete", "category": "person"}
+          ],
+          "pre_state": "W7"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","bear","John 1"],
+          ["has degree property","big","John 1","none","bear"],
+          ["has degree property","strong","John 1","none","bear"]
+        ]
+      ]
+    ],
+    ["@id", "S2", ["holds", "W0", ["isa","animal","Mark 1"]]],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Tom 1"],
+            ["isa","door","door 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","open"],
+                ["has actor","E","Tom 1"],
+                ["has target","E","door 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Tom 1"],
+            ["isa","window","window 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","open"],
+                ["has actor","E","Tom 1"],
+                ["has target","E","window 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","Sandra 1"],
+            ["isa","kitchen","kitchen 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","travel"],
+                ["has actor","E","Sandra 1"],
+                ["has destination","E","kitchen 2","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$measure",80,"kilometer"]]
+        ],
+        ["@definite","S6","W0","length of","Emajogi 3","length 4"]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$measure",80,"kilometer"]]
+        ],
+        ["@definite","S7","W0","length of","Emajogi 3","length 4"]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W3",
+          ["and",
+            ["isa","person","Sandra 1"],
+            ["isa","hallway","hallway 5"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","travel"],
+                ["has actor","E","Sandra 1"],
+                ["has destination","E","hallway 5","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W3","W4"]
+      ]
+    ],
+    ["@id", "S9", ["holds", "W0", ["isa","cat","Winona 1"]]],
+    ["@id","S10",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["and",
+              ["isa","city","X"],
+              ["is rel2","in","X","https://en.wikipedia.org/wiki/Estonia"]
+            ],
+            ["has degree property","Estonian","X","none","city"]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W4",
+          ["and",
+            ["isa","person","Anna 1"],
+            ["isa","person","Eve 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","call"],
+                ["has actor","E","Anna 1"],
+                ["has target","E","Eve 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W4","W5"]
+      ]
+    ],
+    ["@id", "S12", ["holds", "W0", ["and", ["isa","person","Anna 1"], ["isa","manager","Anna 1"]]]],
+    ["@id","S13",
+      ["and",
+        ["holds","W5",
+          ["and",
+            ["isa","person","Mary 1"],
+            ["isa","bathroom","bathroom 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","go"],
+                ["has actor","E","Mary 1"],
+                ["has destination","E","bathroom 3","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W5","W6"]
+      ]
+    ],
+    ["@id","S14",
+      ["holds","W0",
+        ["and", ["isa","man","Greg 1"], ["has degree property","bad","Greg 1","none","person"]]
+      ]
+    ],
+    ["@id","S15",
+      ["and",
+        ["holds","W6",
+          ["and",
+            ["isa","person","Sandra 1"],
+            ["isa","garden","garden 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","move"],
+                ["has actor","E","Sandra 1"],
+                ["has destination","E","garden 4","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W6","W7"]
+      ]
+    ],
+    ["@id", "S16", ["ask", "X", ["is rel2","in","Sandra 1","X"]]]
+  ],
+  "stage_2_retries": ["json-fail retry: Extra data: line 10 column 1 (char 270)"],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","animal","#:John 1"],
+ "@nl": "John 1 is a bear."},
+{"@name": "entity_S6",
+ "@logic": ["isa","place","#:Emajogi 3"],
+ "@nl": "The length 4 of Emajogi 3 is 80 kilometers."},
+{"@name": "entity_S6",
+ "@logic": ["isa","measure","80 kilometers"],
+ "@nl": "The length 4 of Emajogi 3 is 80 kilometers."},
+{"@name": "entity_S9",
+ "@logic": ["isa","animal","#:Winona 1"],
+ "@nl": "Winona 1 is a cat."},
+{"@name": "entity_S10",
+ "@logic": ["isa","place","#:Estonia 1"],
+ "@nl": "Cities in Estonia 1 are Estonian."},
+{"@name": "entity_S14",
+ "@logic": ["isa","person","#:Greg 1"],
+ "@nl": "Greg 1 is a man."},
+{"@name": "sent_S1",
+ "@logic": ["isa","bear","#:John 1"],
+ "@nl": "John 1 is a bear."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "big", "#:John 1", "none", "bear", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is a bear."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "strong", "#:John 1", "none", "bear", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is a bear."},
+{"@name": "sent_S2",
+ "@logic": ["isa","animal","#:Mark 1"],
+ "@nl": "Mark 1 is an animal."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Tom 1"],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","door","#:door 2"],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "open", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:Tom 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk0_activity", "#:door 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Tom 1 opened the door 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Tom 1"],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","window","#:window 3"],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "open", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk1_activity", "#:Tom 1", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk1_activity", "#:window 3", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S4",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Tom 1 opened the window 3."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Sandra 1"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","kitchen","#:kitchen 2"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk2_activity", "go", ["$ctxt","past","W2","?:Fv9","?:Fv10"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:Sandra 1", ["$ctxt","past","W2","?:Fv9","?:Fv10"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["has destination", "sk2_activity", "#:kitchen 2", "at", ["$ctxt","past","W2","?:Fv9","?:Fv10"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W2","?:Fv9","?:Fv10"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S5",
+ "@logic": ["next","W2","W3"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S6",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The length 4 of Emajogi 3 is 80 kilometers."},
+{"@name": "sent_S7",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The length 4 is the length of Emajogi 3."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Sandra 1"],
+ "@nl": "Sandra 1 travelled to the hallway 5."},
+{"@name": "sent_S8",
+ "@logic": ["isa","hallway","#:hallway 5"],
+ "@nl": "Sandra 1 travelled to the hallway 5."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Sandra 1 travelled to the hallway 5."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk3_activity", "go", ["$ctxt","past","W3","?:Fv15","?:Fv16"]],
+ "@nl": "Sandra 1 travelled to the hallway 5."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk3_activity", "#:Sandra 1", ["$ctxt","past","W3","?:Fv15","?:Fv16"]],
+ "@nl": "Sandra 1 travelled to the hallway 5."},
+{"@name": "sent_S8",
+ "@logic": ["has destination", "sk3_activity", "#:hallway 5", "at", ["$ctxt","past","W3","?:Fv15","?:Fv16"]],
+ "@nl": "Sandra 1 travelled to the hallway 5."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W3","?:Fv15","?:Fv16"]],
+ "@nl": "Sandra 1 travelled to the hallway 5."},
+{"@name": "sent_S8",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Sandra 1 travelled to the hallway 5."},
+{"@name": "sent_S8",
+ "@logic": ["next","W3","W4"],
+ "@nl": "Sandra 1 travelled to the hallway 5."},
+{"@name": "sent_S9",
+ "@logic": ["isa","cat","#:Winona 1"],
+ "@nl": "Winona 1 is a cat."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","city","?:X"],
+            ["-is rel2", "in", "?:X", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]],
+            ["has property", "Estonian", "?:X", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Cities in Estonia 1 are Estonian."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:Anna 1"],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:Eve 2"],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk4_activity", "call", ["$ctxt","past","W4","?:Fv23","?:Fv24"]],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk4_activity", "#:Anna 1", ["$ctxt","past","W4","?:Fv23","?:Fv24"]],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S11",
+ "@logic": ["has target", "sk4_activity", "#:Eve 2", ["$ctxt","past","W4","?:Fv23","?:Fv24"]],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S11",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W4","?:Fv23","?:Fv24"]],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S11",
+ "@logic": ["actuality","sk4_activity"],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S11",
+ "@logic": ["next","W4","W5"],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S12",
+ "@logic": ["isa","person","#:Anna 1"],
+ "@nl": "Anna 1 is a manager."},
+{"@name": "sent_S12",
+ "@logic": ["isa","manager","#:Anna 1"],
+ "@nl": "Anna 1 is a manager."},
+{"@name": "sent_S13",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 went to the bathroom 3."},
+{"@name": "sent_S13",
+ "@logic": ["isa","bathroom","#:bathroom 3"],
+ "@nl": "Mary 1 went to the bathroom 3."},
+{"@name": "sent_S13",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "Mary 1 went to the bathroom 3."},
+{"@name": "sent_S13",
+ "@logic": ["has type", "sk5_activity", "go", ["$ctxt","past","W5","?:Fv27","?:Fv28"]],
+ "@nl": "Mary 1 went to the bathroom 3."},
+{"@name": "sent_S13",
+ "@logic": ["has actor", "sk5_activity", "#:Mary 1", ["$ctxt","past","W5","?:Fv27","?:Fv28"]],
+ "@nl": "Mary 1 went to the bathroom 3."},
+{"@name": "sent_S13",
+ "@logic": ["has destination", "sk5_activity", "#:bathroom 3", "at", ["$ctxt","past","W5","?:Fv27","?:Fv28"]],
+ "@nl": "Mary 1 went to the bathroom 3."},
+{"@name": "sent_S13",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W5","?:Fv27","?:Fv28"]],
+ "@nl": "Mary 1 went to the bathroom 3."},
+{"@name": "sent_S13",
+ "@logic": ["actuality","sk5_activity"],
+ "@nl": "Mary 1 went to the bathroom 3."},
+{"@name": "sent_S13",
+ "@logic": ["next","W5","W6"],
+ "@nl": "Mary 1 went to the bathroom 3."},
+{"@name": "sent_S14",
+ "@logic": ["isa","man","#:Greg 1"],
+ "@nl": "Greg 1 is a man."},
+{"@name": "sent_S14",
+ "@logic": ["-has degree property", "good", "#:Greg 1", "none", "person", ["$ctxt","present","W0","?:Fv29","?:Fv30"]],
+ "@nl": "Greg 1 is a man."},
+{"@name": "sent_S15",
+ "@logic": ["isa","person","#:Sandra 1"],
+ "@nl": "Sandra 1 moved to the garden 4."},
+{"@name": "sent_S15",
+ "@logic": ["isa","garden","#:garden 4"],
+ "@nl": "Sandra 1 moved to the garden 4."},
+{"@name": "sent_S15",
+ "@logic": ["isa","activity","sk6_activity"],
+ "@nl": "Sandra 1 moved to the garden 4."},
+{"@name": "sent_S15",
+ "@logic": ["has type", "sk6_activity", "go", ["$ctxt","past","W6","?:Fv31","?:Fv32"]],
+ "@nl": "Sandra 1 moved to the garden 4."},
+{"@name": "sent_S15",
+ "@logic": ["has actor", "sk6_activity", "#:Sandra 1", ["$ctxt","past","W6","?:Fv31","?:Fv32"]],
+ "@nl": "Sandra 1 moved to the garden 4."},
+{"@name": "sent_S15",
+ "@logic": ["has destination", "sk6_activity", "#:garden 4", "at", ["$ctxt","past","W6","?:Fv31","?:Fv32"]],
+ "@nl": "Sandra 1 moved to the garden 4."},
+{"@name": "sent_S15",
+ "@logic": ["has time", "sk6_activity", "past", "in", ["$ctxt","past","W6","?:Fv31","?:Fv32"]],
+ "@nl": "Sandra 1 moved to the garden 4."},
+{"@name": "sent_S15",
+ "@logic": ["actuality","sk6_activity"],
+ "@nl": "Sandra 1 moved to the garden 4."},
+{"@name": "sent_S15",
+ "@logic": ["next","W6","W7"],
+ "@nl": "Sandra 1 moved to the garden 4."},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "in", "#:Sandra 1", "?:Q1", ["$ctxt","present","W7","?:Fv33","?:Fv34"]],
+            ["$defq0","in","?:Q1"]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","in","?:Q1"],
+            ["is rel2", "in", "#:Sandra 1", "?:Q1", ["$ctxt","present","W7","?:Fv33","?:Fv34"]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "on", "#:Sandra 1", "?:Q1", ["$ctxt","present","W7","?:Fv33","?:Fv34"]],
+            ["$defq0","on","?:Q1"]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","on","?:Q1"],
+            ["is rel2", "on", "#:Sandra 1", "?:Q1", ["$ctxt","present","W7","?:Fv33","?:Fv34"]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "at", "#:Sandra 1", "?:Q1", ["$ctxt","present","W7","?:Fv33","?:Fv34"]],
+            ["$defq0","at","?:Q1"]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","at","?:Q1"],
+            ["is rel2", "at", "#:Sandra 1", "?:Q1", ["$ctxt","present","W7","?:Fv33","?:Fv34"]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-has degree rel2", "near", "#:Sandra 1", "?:Q1", "none", "?:Fv98", ["$ctxt","present","W7","?:Fv33","?:Fv34"]],
+            ["$defq0","near","?:Q1"]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","near","?:Q1"],
+            ["has degree rel2", "near", "#:Sandra 1", "?:Q1", "none", "?:Fv99", ["$ctxt","present","W7","?:Fv33","?:Fv34"]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "above", "#:Sandra 1", "?:Q1", ["$ctxt","present","W7","?:Fv33","?:Fv34"]],
+            ["$defq0","above","?:Q1"]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","above","?:Q1"],
+            ["is rel2", "above", "#:Sandra 1", "?:Q1", ["$ctxt","present","W7","?:Fv33","?:Fv34"]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-is rel2", "under", "#:Sandra 1", "?:Q1", ["$ctxt","present","W7","?:Fv33","?:Fv34"]],
+            ["$defq0","under","?:Q1"]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","under","?:Q1"],
+            ["is rel2", "under", "#:Sandra 1", "?:Q1", ["$ctxt","present","W7","?:Fv33","?:Fv34"]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@question": ["$defq0","?:Rel","?:Q1"],
+ "@askvars": 2,
+ "@where_query": true,
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "at", "#:Sandra 1", "?:Br1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "at", "#:Sandra 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "at", "#:Sandra 1", "?:Br1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "on", "#:Sandra 1", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "on", "#:Sandra 1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "on", "#:Sandra 1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "under", "#:Sandra 1", "?:Br3", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "under", "#:Sandra 1", "?:Br3", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "under", "#:Sandra 1", "?:Br3", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "in", "#:Sandra 1", "?:Br4", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "in", "#:Sandra 1", "?:Br4", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "in", "#:Sandra 1", "?:Br4", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-has degree rel2", "near", "#:Sandra 1", "?:Br5", "none", "?:Fv89", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree rel2", "near", "#:Sandra 1", "?:Br5", "none", "?:Fv90", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree rel2", "near", "#:Sandra 1", "?:Br5", "none", "?:Fv91", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "above", "#:Sandra 1", "?:Br6", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "above", "#:Sandra 1", "?:Br6", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "above", "#:Sandra 1", "?:Br6", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity is Sandra 1 located in?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","city","$some_city"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","city","$some_not_city"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "Estonian", "$some_Estonian_city", ["$ctxt","?:Fv70","?:Fv67","?:Fv68","?:Fv69"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","city","$some_Estonian_city"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "Estonian", "$some_not_Estonian_city", ["$ctxt","?:Fv78","?:Fv75","?:Fv76","?:Fv77"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","city","$some_city_in_Estonia"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["is rel2", "in", "$some_city_in_Estonia", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","?:Fv86","?:Fv83","?:Fv84","?:Fv85"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","open","?:X"], ["isa","outside","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","outside","?:X"], ["isa","open","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv38"], ["has type","?:E","go","?:Fv38"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv92", ["$ctxt","past","?:Fv39","?:Fv40","?:Fv41"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv93", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv94", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv95", ["$ctxt","past","?:Fv45","?:Fv46","?:Fv47"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv96", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv97", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv48","?:Fv49","?:Fv50"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "pop_what",
+ "@logic": ["isa","window","$some_window"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","measure","$some_measure"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","garden","$some_garden"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","bathroom","$some_bathroom"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","place","$some_place"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","kitchen","$some_kitchen"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","hallway","$some_hallway"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","cat","$some_cat"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","man","$some_man"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","manager","$some_manager"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","door","$some_door"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W3","W4"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W4","W5"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W5","W6"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W6","W7"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 10 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no answers found"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38991,
+      "cached_input_tokens": 38891,
+      "output_tokens": 64,
+      "raw": {
+        "input_tokens": 100,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 64,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38965,
+      "cached_input_tokens": 38891,
+      "output_tokens": 31,
+      "raw": {
+        "input_tokens": 74,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 31,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39189,
+      "cached_input_tokens": 38891,
+      "output_tokens": 304,
+      "raw": {
+        "input_tokens": 298,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 304,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39051,
+      "cached_input_tokens": 38891,
+      "output_tokens": 115,
+      "raw": {
+        "input_tokens": 160,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 115,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39055,
+      "cached_input_tokens": 38891,
+      "output_tokens": 118,
+      "raw": {
+        "input_tokens": 164,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 118,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38971,
+      "cached_input_tokens": 38891,
+      "output_tokens": 33,
+      "raw": {
+        "input_tokens": 80,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 33,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39020,
+      "cached_input_tokens": 38891,
+      "output_tokens": 77,
+      "raw": {
+        "input_tokens": 129,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 77,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39104,
+      "cached_input_tokens": 38891,
+      "output_tokens": 211,
+      "raw": {
+        "input_tokens": 213,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 211,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39051,
+      "cached_input_tokens": 38891,
+      "output_tokens": 115,
+      "raw": {
+        "input_tokens": 160,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 115,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38981,
+      "cached_input_tokens": 38891,
+      "output_tokens": 49,
+      "raw": {
+        "input_tokens": 90,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 49,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39051,
+      "cached_input_tokens": 38891,
+      "output_tokens": 115,
+      "raw": {
+        "input_tokens": 160,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 115,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38997,
+      "cached_input_tokens": 38891,
+      "output_tokens": 33,
+      "raw": {
+        "input_tokens": 106,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 33,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T22:41:25Z"
+}

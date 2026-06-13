@@ -1,0 +1,887 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 1427,
+  "input_text": "Winona is a cat. The book was read by Sara. Penguins are birds. Elephants have long trunks and short tails. Mike or Mickey are not female. Penguins do not fly. A chocolate cake fell. Mr Dursley is a catholic. Birds fly. Tallinn is in Latvia with a probability 10 percent. The letter written by Mary arrived. John is a penguin. John is a bird?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Winona is a cat.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Winona 1 is a cat.",
+          "type": "situation",
+          "entities": [{"id": "Winona 1", "type": "concrete", "category": "animal"},
+            {"id": "cat", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The book was read by Sara.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Sara 1 read the book 2.",
+          "type": "situation",
+          "entities": [{"id": "Sara 1", "type": "concrete", "category": "person"},
+            {"id": "book 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "read", "mode": "event", "roles": {"actor": "Sara 1", "target": "book 2"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Penguins are birds.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Penguins are birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have long trunks and short tails.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Elephants have trunks that are long and tails that are short.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"},
+            {"id": "tails", "type": "generic", "scope": "dependent"}
+          ],
+          "adjectives": [["long","none","trunk"], ["short","none","tail"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Mike or Mickey are not female.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Mike 1 or Mickey 2 are not female.",
+          "type": "situation",
+          "entities": [{"id": "Mike 1", "type": "concrete", "category": "person"},
+            {"id": "Mickey 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["female","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Penguins do not fly.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Penguins do not fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "A chocolate cake fell.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "A chocolate cake 1 fell.",
+          "type": "situation",
+          "entities": [{"id": "cake 1", "type": "concrete", "category": "artifact"},
+            {"id": "chocolate", "type": "generic", "scope": "kind", "category": "substance"}
+          ],
+          "actions": [{"root": "fall", "mode": "event"}],
+          "adjectives": [["chocolate","none","cake"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is a catholic.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Mr Dursley 1 is a catholic.",
+          "type": "situation",
+          "entities": [{"id": "Mr Dursley 1", "type": "concrete", "category": "person"},
+            {"id": "catholic", "type": "generic", "category": "abstract"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Birds fly.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Birds fly.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is in Latvia with a probability 10 percent.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Tallinn 1 is in Latvia 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ],
+          "confidence": 0.1
+        }
+      ]
+    },
+    {
+      "raw": "The letter written by Mary arrived.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "The letter 1 that Mary 2 wrote arrived.",
+          "type": "situation",
+          "entities": [{"id": "letter 1", "type": "concrete", "category": "artifact"},
+            {"id": "Mary 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "write", "mode": "event", "roles": {"actor": "Mary 2", "target": "letter 1"}},
+            {"root": "arrive", "mode": "event", "roles": {"target": "letter 1"}}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is a penguin.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "John 1 is a penguin.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"},
+            {"id": "penguin", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is a bird?",
+      "units": [{
+          "unit_id": "S13",
+          "text": "Is John 1 a bird?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"},
+            {"id": "bird", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","cat","Winona 1"]]],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Sara 1"],
+          ["isa","book","book 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","read"],
+              ["has actor","E","Sara 1"],
+              ["has target","E","book 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","penguin","X"], ["isa","bird","X"]]]]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally",
+                ["and",
+                  ["exists","Y",
+                    ["and",
+                      ["isa","trunk","Y"],
+                      ["has part","X","Y"],
+                      ["has degree property","long","Y","none","trunk"]
+                    ]
+                  ],
+                  ["exists","Z",
+                    ["and",
+                      ["isa","tail","Z"],
+                      ["has part","X","Z"],
+                      ["has degree property","short","Z","none","tail"]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S4",0.99]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mike 1"],
+          ["isa","person","Mickey 2"],
+          ["or",
+            ["not", ["has degree property","female","Mike 1","none","person"]],
+            ["not", ["has degree property","female","Mickey 2","none","person"]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","cake","cake 1"],
+          ["has degree property","chocolate","cake 1","none","cake"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","fall"],
+              ["has actor","E","cake 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds", "W0", ["and", ["isa","person","Mr Dursley 1"], ["isa","catholic","Mr Dursley 1"]]]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","fly"],
+                    ["has actor","E","X"],
+                    ["capability","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S9",0.99]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+        ],
+        ["@p","S10",0.1]
+      ]
+    ],
+    ["@id","S11",
+      ["holds","W0",
+        ["and",
+          ["isa","letter","letter 1"],
+          ["isa","person","Mary 2"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","write"],
+              ["has actor","E1","Mary 2"],
+              ["has target","E1","letter 1"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","arrive"],
+              ["has target","E2","letter 1"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S12", ["holds", "W0", ["and", ["isa","person","John 1"], ["isa","penguin","John 1"]]]],
+    ["@id", "S13", ["question", ["isa","bird","John 1"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","animal","#:Winona 1"],
+ "@nl": "Winona 1 is a cat."},
+{"@name": "entity_S10",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is in Latvia 2."},
+{"@name": "entity_S10",
+ "@logic": ["isa","place","#:Latvia 2"],
+ "@nl": "Tallinn 1 is in Latvia 2."},
+{"@name": "entity_S12",
+ "@logic": ["isa","animal","#:John 1"],
+ "@nl": "John 1 is a penguin."},
+{"@name": "sent_S1",
+ "@logic": ["isa","cat","#:Winona 1"],
+ "@nl": "Winona 1 is a cat."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Sara 1"],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","book","#:book 2"],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "read", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:Sara 1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "#:book 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","penguin","?:X"], ["isa","bird","?:X"]],
+ "@nl": "Penguins are birds."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk1","?:X"]]],
+ "@nl": "Elephants have trunks that are long and tails that are short."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk1","?:X"], ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Elephants have trunks that are long and tails that are short."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has degree property", "long", ["sk1","?:X"], "none", "trunk", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Elephants have trunks that are long and tails that are short."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "tail", ["sk2","?:X"]]],
+ "@nl": "Elephants have trunks that are long and tails that are short."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk2","?:X"], ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Elephants have trunks that are long and tails that are short."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-has degree property", "long", ["sk2","?:X"], "none", "tail", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","elephant",1], ["$not", ["has degree property", "short", ["sk2","?:X"], "none", "tail", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have trunks that are long and tails that are short."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mike 1"],
+ "@nl": "Mike 1 or Mickey 2 are not female."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mickey 2"],
+ "@nl": "Mike 1 or Mickey 2 are not female."},
+{"@name": "sent_S5",
+ "@logic": [["-has property", "female", "#:Mike 1", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+            ["-has property", "female", "#:Mickey 2", ["$ctxt","present","W0","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Mike 1 or Mickey 2 are not female."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Penguins do not fly."},
+{"@name": "sent_S7",
+ "@logic": ["isa","cake","#:cake 1"],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S7",
+ "@logic": ["has property", "chocolate", "#:cake 1", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk3_activity", "fall", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk3_activity", "#:cake 1", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Mr Dursley 1"],
+ "@nl": "Mr Dursley 1 is a catholic."},
+{"@name": "sent_S8",
+ "@logic": ["isa","catholic","#:Mr Dursley 1"],
+ "@nl": "Mr Dursley 1 is a catholic."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk4","?:X"]]],
+ "@nl": "Birds fly."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk4","?:X"], "fly", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Birds fly."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk4","?:X"], "?:X", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Birds fly."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["capability", ["sk4","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk4","?:X"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Birds fly."},
+{"@name": "sent_S10",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W0","?:Fv27","?:Fv28"]],
+ "@confidence": 0.8,
+ "@nl": "Tallinn 1 is in Latvia 2."},
+{"@name": "sent_S11",
+ "@logic": ["isa","letter","#:letter 1"],
+ "@nl": "The letter 1 that Mary 2 wrote arrived."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "The letter 1 that Mary 2 wrote arrived."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "The letter 1 that Mary 2 wrote arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk5_activity", "write", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "The letter 1 that Mary 2 wrote arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk5_activity", "#:Mary 2", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "The letter 1 that Mary 2 wrote arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has target", "sk5_activity", "#:letter 1", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "The letter 1 that Mary 2 wrote arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "The letter 1 that Mary 2 wrote arrived."},
+{"@name": "sent_S11",
+ "@logic": ["actuality","sk5_activity"],
+ "@nl": "The letter 1 that Mary 2 wrote arrived."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk6_activity"],
+ "@nl": "The letter 1 that Mary 2 wrote arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk6_activity", "arrive", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "The letter 1 that Mary 2 wrote arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has target", "sk6_activity", "#:letter 1", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "The letter 1 that Mary 2 wrote arrived."},
+{"@name": "sent_S11",
+ "@logic": ["has time", "sk6_activity", "past", "in", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "The letter 1 that Mary 2 wrote arrived."},
+{"@name": "sent_S11",
+ "@logic": ["actuality","sk6_activity"],
+ "@nl": "The letter 1 that Mary 2 wrote arrived."},
+{"@name": "sent_S12",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is a penguin."},
+{"@name": "sent_S12",
+ "@logic": ["isa","penguin","#:John 1"],
+ "@nl": "John 1 is a penguin."},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","bird","#:John 1"]],
+ "@nl": "Is John 1 a bird?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-isa","bird","#:John 1"], ["$defq0"]],
+ "@nl": "Is John 1 a bird?"},
+{"@name": "sent_S13",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 a bird?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","tail","$some_tail"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","tail","$some_not_tail"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "long", "$some_long_trunk", "none", "trunk", ["$ctxt","?:Fv105","?:Fv102","?:Fv103","?:Fv104"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_long_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "long", "$some_not_long_trunk", "none", "trunk", ["$ctxt","?:Fv113","?:Fv110","?:Fv111","?:Fv112"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "long", "$some_short_tail", "none", "tail", ["$ctxt","?:Fv117","?:Fv114","?:Fv115","?:Fv116"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","tail","$some_short_tail"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "long", "$some_not_short_tail", "none", "tail", ["$ctxt","?:Fv125","?:Fv122","?:Fv123","?:Fv124"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "female", "$some_female_person", ["$ctxt","?:Fv129","?:Fv126","?:Fv127","?:Fv128"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","person","$some_female_person"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","animal","?:X"], ["isa","female","?:X"]],
+ "@confidence": 0.8,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","female","?:X"], ["isa","animal","?:X"]],
+ "@confidence": 0.8,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","long","?:X","none","?:Fv134","?:Fv43"],
+            ["-has degree property","high","?:X","none","?:Fv135","?:Fv43"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv136","?:Fv44"],
+            ["-has degree property","long","?:X","none","?:Fv137","?:Fv44"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv45"], ["has type","?:E","go","?:Fv45"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "none", "?:Fv138", ["$ctxt","past","?:Fv46","?:Fv47","?:Fv48"]],
+            ["has degree property", "long", "?:X", "none", "?:Fv139", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "none", "?:Fv140", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv49","?:Fv50","?:Fv51"]],
+            ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv49","?:Fv50","?:Fv51"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv49","?:Fv50","?:Fv51"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "long", "?:X", "none", "?:Fv141", ["$ctxt","past","?:Fv52","?:Fv53","?:Fv54"]],
+            ["-has degree property", "long", "?:X", "none", "?:Fv142", ["$ctxt","present","?:Fv52","?:Fv53","?:Fv54"]],
+            ["$block", 0, ["$not", ["has degree property", "short", "?:X", "none", "?:Fv143", ["$ctxt","present","?:Fv52","?:Fv53","?:Fv54"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv55","?:Fv56","?:Fv57"]],
+            ["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv55","?:Fv56","?:Fv57"]],
+            ["$block", 0, ["$not", ["has degree property", "short", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv55","?:Fv56","?:Fv57"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S3","assumption",1], [["-isa","penguin","?:X"], ["isa","bird","?:X"]]],
+          [2, ["in","sent_S12","assumption",1], [["isa","penguin","#:John 1"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["isa","bird","#:John 1"]]],
+          [4, ["in","sent_S13","assumption",1], [["-isa","bird","#:John 1"], ["$defq0"]]],
+          [5, ["in","sent_S13","goal",1], [["-$defq0"]]],
+          [6, ["mp",3,4,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Penguins are birds.",
+"  (2) John is a penguin.",
+"  (3) John is a bird?",
+"Proof steps (by contradiction):",
+"  (1) If some X is a penguin then X is a bird  [sentence 1]",
+"  (2) John is a penguin  [sentence 2]",
+"  (3) John is a bird  [from steps 1, 2]",
+"  (4) If John is a bird then answer holds  [sentence 3]",
+"  (5) assume for contradiction: the answer is no  [from question]",
+"  (6) Contradiction  [from steps 3, 4, 5]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33530,
+      "cached_input_tokens": 33408,
+      "output_tokens": 123,
+      "raw": {
+        "input_tokens": 33530,
+        "input_tokens_details": {"cached_tokens": 33408},
+        "output_tokens": 123,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33653
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33478,
+      "cached_input_tokens": 33280,
+      "output_tokens": 65,
+      "raw": {
+        "input_tokens": 33478,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 65,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33543
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33542,
+      "cached_input_tokens": 33280,
+      "output_tokens": 179,
+      "raw": {
+        "input_tokens": 33542,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 179,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33721
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33507,
+      "cached_input_tokens": 33280,
+      "output_tokens": 106,
+      "raw": {
+        "input_tokens": 33507,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 106,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33613
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33479,
+      "cached_input_tokens": 33280,
+      "output_tokens": 110,
+      "raw": {
+        "input_tokens": 33479,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 110,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33589
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33528,
+      "cached_input_tokens": 33408,
+      "output_tokens": 119,
+      "raw": {
+        "input_tokens": 33528,
+        "input_tokens_details": {"cached_tokens": 33408},
+        "output_tokens": 119,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33647
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33493,
+      "cached_input_tokens": 33408,
+      "output_tokens": 67,
+      "raw": {
+        "input_tokens": 33493,
+        "input_tokens_details": {"cached_tokens": 33408},
+        "output_tokens": 67,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33560
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33482,
+      "cached_input_tokens": 33280,
+      "output_tokens": 127,
+      "raw": {
+        "input_tokens": 33482,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 127,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33609
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33532,
+      "cached_input_tokens": 33280,
+      "output_tokens": 79,
+      "raw": {
+        "input_tokens": 33532,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 79,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33611
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33557,
+      "cached_input_tokens": 33280,
+      "output_tokens": 188,
+      "raw": {
+        "input_tokens": 33557,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 188,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33745
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33485,
+      "cached_input_tokens": 33280,
+      "output_tokens": 60,
+      "raw": {
+        "input_tokens": 33485,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 60,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33545
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33481,
+      "cached_input_tokens": 33280,
+      "output_tokens": 40,
+      "raw": {
+        "input_tokens": 33481,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 40,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33521
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T22:51:57Z"
+}

@@ -1,0 +1,678 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 184,
+  "input_text": "Mike and Mickey are not female. No penguin can fly. The teacher showed a map to the students. Tom and Eve greeted each other. Elephants have a trunk. Cats are afraid of wolves. John smokes with a probability 0.1. Nile's length is 80 kilometers. Mary managed to solve the puzzle. Birds have a trunk?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Mike and Mickey are not female.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mike 1 is not female.",
+          "type": "real",
+          "entities": [{"id": "Mike 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["female","none","person"]]
+        },
+        {
+          "unit_id": "S2",
+          "text": "Mickey 2 is not female.",
+          "type": "real",
+          "entities": [{"id": "Mickey 2", "type": "concrete", "category": "person"}],
+          "adjectives": [["female","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "No penguin can fly.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "No penguin can fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "The teacher showed a map to the students.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The teacher 1 showed a map 2 to the students 3.",
+          "type": "situation",
+          "entities": [{"id": "teacher 1", "type": "concrete", "category": "person"},
+            {"id": "map 2", "type": "concrete", "category": "artifact"},
+            {"id": "students 3", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 1", "target": "map 2", "recipient": "students 3"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Tom and Eve greeted each other.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Tom 1 and Eve 2 greeted each other.",
+          "type": "situation",
+          "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"},
+            {"id": "Eve 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "greet", "mode": "event", "roles": {"actor": "Tom 1", "target": "Eve 2"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have a trunk.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Elephants have a trunk.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunk", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Cats are afraid of wolves.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Cats are afraid of wolves.",
+          "type": "normal_rule",
+          "entities": [{"id": "cats", "type": "generic", "category": "animal"},
+            {"id": "wolves", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["afraid of","none","cat"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "John smokes with a probability 0.1.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "John 1 smokes.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "smoke", "mode": "habitual"}],
+          "confidence": 0.1
+        }
+      ]
+    },
+    {
+      "raw": "Nile's length is 80 kilometers.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "The Nile 1's length 2 is 80 kilometers.",
+          "type": "real",
+          "entities": [{
+              "id": "Nile 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            },
+            {"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "80 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 2","Nile 1"]]
+        },
+        {
+          "unit_id": "S10",
+          "text": "The length 2 is the length of the Nile 1.",
+          "type": "real",
+          "entities": [{"id": "length 2", "type": "concrete", "text": "length"},
+            {
+              "id": "Nile 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            }
+          ],
+          "definites": [["length of","length 2","Nile 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mary managed to solve the puzzle.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Mary 1 managed to solve the puzzle 2.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "puzzle 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "manage",
+              "mode": "event",
+              "roles": {
+                "actor": "Mary 1",
+                "content": {
+                  "root": "solve",
+                  "mode": "event",
+                  "roles": {"actor": "Mary 1", "target": "puzzle 2"}
+                }
+              }
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Birds have a trunk?",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Do birds have a trunk?",
+          "type": "query",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"},
+            {"id": "trunk", "type": "generic", "scope": "dependent"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds", "W0", ["not", ["has degree property","female","Mike 1","none","person"]]]
+    ],
+    ["@id","S2",
+      ["holds", "W0", ["not", ["has degree property","female","Mickey 2","none","person"]]]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","teacher 1"],
+          ["isa","artifact","map 2"],
+          ["isa","person","students 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","show"],
+              ["has actor","E","teacher 1"],
+              ["has target","E","map 2"],
+              ["has recipient","E","students 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Tom 1"],
+          ["isa","person","Eve 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","greet"],
+              ["has actor","E","Tom 1"],
+              ["has target","E","Eve 2"],
+              ["has time","E","past","in"]
+            ]
+          ],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","greet"],
+              ["has actor","E1","Eve 2"],
+              ["has target","E1","Tom 1"],
+              ["has time","E1","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S6",0.99]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","cat","X"],
+              ["forall","Y",
+                ["implies",
+                  ["isa","wolf","Y"],
+                  ["normally", ["has degree rel2","afraid of","X","Y","none","cat"]]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S7",0.99]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["normally",
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","smoke"],
+                ["has actor","E","John 1"],
+                ["typical","E"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S8",0.1]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$measure",80,"kilometer"]]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W0",
+          ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$measure",80,"kilometer"]]
+        ],
+        ["@definite","S10","W0","length of","https://en.wikipedia.org/wiki/Nile","length 2"]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 1"],
+            ["isa","puzzle","puzzle 2"],
+            ["exists","E1",
+              ["and",
+                ["isa","activity","E1"],
+                ["has type","E1","manage"],
+                ["has actor","E1","Mary 1"],
+                ["has time","E1","past","in"],
+                ["exists","E2",
+                  ["and",
+                    ["has content","E1","E2"],
+                    ["isa","activity","E2"],
+                    ["has type","E2","solve"],
+                    ["has actor","E2","Mary 1"],
+                    ["has target","E2","puzzle 2"],
+                    ["has time","E2","past","in"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S12",
+      ["question",
+        ["forall","X",
+          ["implies",
+            ["isa","bird","X"],
+            ["normally", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:Mike 1"],
+ "@nl": "Mike 1 is not female."},
+{"@name": "entity_S2",
+ "@logic": ["isa","person","#:Mickey 2"],
+ "@nl": "Mickey 2 is not female."},
+{"@name": "entity_S4",
+ "@logic": ["isa","teacher","#:teacher 1"],
+ "@nl": "The teacher 1 showed a map 2 to the students 3."},
+{"@name": "entity_S4",
+ "@logic": ["isa","map","#:map 2"],
+ "@nl": "The teacher 1 showed a map 2 to the students 3."},
+{"@name": "entity_S4",
+ "@logic": ["isa","student","#:students 3"],
+ "@nl": "The teacher 1 showed a map 2 to the students 3."},
+{"@name": "entity_S4",
+ "@logic": ["isa","student","#:students 3"],
+ "@nl": "The teacher 1 showed a map 2 to the students 3."},
+{"@name": "entity_S8",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 smokes."},
+{"@name": "entity_S9",
+ "@logic": ["isa","place","#:Nile 1"],
+ "@nl": "The Nile 1's length 2 is 80 kilometers."},
+{"@name": "entity_S9",
+ "@logic": ["isa","measure","80 kilometers"],
+ "@nl": "The Nile 1's length 2 is 80 kilometers."},
+{"@name": "sent_S1",
+ "@logic": ["-has property", "female", "#:Mike 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mike 1 is not female."},
+{"@name": "sent_S2",
+ "@logic": ["-has property", "female", "#:Mickey 2", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mickey 2 is not female."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "No penguin can fly."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:teacher 1"],
+ "@nl": "The teacher 1 showed a map 2 to the students 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","artifact","#:map 2"],
+ "@nl": "The teacher 1 showed a map 2 to the students 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:students 3"],
+ "@nl": "The teacher 1 showed a map 2 to the students 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The teacher 1 showed a map 2 to the students 3."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk0_activity", "show", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The teacher 1 showed a map 2 to the students 3."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk0_activity", "#:teacher 1", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The teacher 1 showed a map 2 to the students 3."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk0_activity", "#:map 2", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The teacher 1 showed a map 2 to the students 3."},
+{"@name": "sent_S4",
+ "@logic": ["has recipient", "sk0_activity", "#:students 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The teacher 1 showed a map 2 to the students 3."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The teacher 1 showed a map 2 to the students 3."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Tom 1"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Eve 2"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk1_activity", "greet", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk1_activity", "#:Tom 1", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk1_activity", "#:Eve 2", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk2_activity", "greet", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:Eve 2", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk2_activity", "#:Tom 1", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Tom 1 and Eve 2 greeted each other."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk3","?:X"]]],
+ "@nl": "Elephants have a trunk."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk3","?:X"], ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk3","?:X"], ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have a trunk."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","cat","?:X"],
+            ["-isa","wolf","?:Y"],
+            ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["$block", ["$","wolf",1], ["$not", ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Cats are afraid of wolves."},
+{"@name": "sent_S8",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "smoke", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["-has actor", "?:E", "#:John 1", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["$block", ["$","$generic",1], ["$not", ["or", ["-isa","activity","?:E"], ["-has type", "?:E", "smoke", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]], ["-has actor", "?:E", "#:John 1", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]], ["-typical", "?:E", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]]]]]
+           ],
+ "@confidence": 0.8,
+ "@nl": "John 1 smokes."},
+{"@name": "sent_S9",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The Nile 1's length 2 is 80 kilometers."},
+{"@name": "sent_S10",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The length 2 is the length of the Nile 1."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 managed to solve the puzzle 2."},
+{"@name": "sent_S11",
+ "@logic": ["isa","puzzle","#:puzzle 2"],
+ "@nl": "Mary 1 managed to solve the puzzle 2."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Mary 1 managed to solve the puzzle 2."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk4_activity", "manage", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "Mary 1 managed to solve the puzzle 2."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk4_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "Mary 1 managed to solve the puzzle 2."},
+{"@name": "sent_S11",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "Mary 1 managed to solve the puzzle 2."},
+{"@name": "sent_S11",
+ "@logic": ["has content","sk4_activity","sk5_activity"],
+ "@nl": "Mary 1 managed to solve the puzzle 2."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "Mary 1 managed to solve the puzzle 2."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk5_activity", "solve", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "Mary 1 managed to solve the puzzle 2."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk5_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "Mary 1 managed to solve the puzzle 2."},
+{"@name": "sent_S11",
+ "@logic": ["has target", "sk5_activity", "#:puzzle 2", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "Mary 1 managed to solve the puzzle 2."},
+{"@name": "sent_S11",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "Mary 1 managed to solve the puzzle 2."},
+{"@name": "sent_S11",
+ "@logic": ["actuality","sk4_activity"],
+ "@nl": "Mary 1 managed to solve the puzzle 2."},
+{"@name": "sent_S11",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Mary 1 managed to solve the puzzle 2."},
+{"@name": "sent_S12",
+ "@sourcetype": "question_subject",
+ "@logic": ["isa","bird","skq_S12_bird"],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","trunk","sk6_trunk"]],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has part", "skq_S12_bird", "sk6_trunk", ["$ctxt","?:Fv34","?:Fv33","?:Fv31","?:Fv32"]]
+           ],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-has part", "skq_S12_bird", "?:Y", ["$ctxt","?:Fv34","?:Fv33","?:Fv31","?:Fv32"]],
+            ["$defq0"]
+           ],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S12",
+ "@question": ["$defq0"],
+ "@nl": "Do birds have a trunk?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","cat","$some_cat"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","cat","$some_not_cat"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","wolf","$some_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","wolf","$some_not_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "female", "$some_female_person", ["$ctxt","?:Fv87","?:Fv84","?:Fv85","?:Fv86"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","person","$some_female_person"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv35"], ["has type","?:E","go","?:Fv35"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","bird","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","bird","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has target","?:Esb","?:Ysb","?:Csb"],
+            ["-has recipient","?:Esb","?:Xsb","?:Csb"],
+            ["has recipient","?:Ysb","?:Xsb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "timestamp": "2026-06-12T21:16:39Z"
+}

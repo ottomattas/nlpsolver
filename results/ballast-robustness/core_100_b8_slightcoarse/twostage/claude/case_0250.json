@@ -1,0 +1,719 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 250,
+  "input_text": "This book is more interesting than that one. Sandra travelled to the kitchen. Tallinn is probably in Estonia. The bicycle of Tom was new. John is a nice white bear. The letter written by Mary was long. A hand of a man moved a wheel. Frogs are small. If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1. Was the bicycle old?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "This book is more interesting than that one.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "This book 1 is more interesting than that book 2.",
+          "type": "real",
+          "entities": [{"id": "book 1", "type": "concrete", "category": "artifact"},
+            {"id": "book 2", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["interesting","high","book"]]
+        }
+      ]
+    },
+    {
+      "raw": "Sandra travelled to the kitchen.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Sandra 1 travelled to the kitchen 2.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 1", "type": "concrete", "category": "person"},
+            {"id": "kitchen 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "travel", "mode": "event", "roles": {"destination": "kitchen 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is probably in Estonia.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Tallinn 1 is in Estonia 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Estonia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "The bicycle of Tom was new.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The bicycle 2 is the bicycle of Tom 1.",
+          "type": "situation",
+          "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"},
+            {"id": "bicycle 2", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["bicycle of","bicycle 2","Tom 1"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S5",
+          "text": "The bicycle 2 was new.",
+          "type": "situation",
+          "entities": [{"id": "bicycle 2", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["new","none","bicycle"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is a nice white bear.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "John 1 is a bear.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}]
+        },
+        {
+          "unit_id": "S7",
+          "text": "John 1 is nice and white.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["nice","none","bear"], ["white","none","bear"]]
+        }
+      ]
+    },
+    {
+      "raw": "The letter written by Mary was long.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Mary 1 wrote the letter 2.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "letter 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "write", "mode": "event", "roles": {"target": "letter 2"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S9",
+          "text": "The letter 2 was long.",
+          "type": "situation",
+          "entities": [{"id": "letter 2", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["long","none","letter"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A hand of a man moved a wheel.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "A hand 2 of a man 1 moved a wheel 3.",
+          "type": "situation",
+          "entities": [{"id": "man 1", "type": "concrete", "category": "person"},
+            {"id": "hand 2", "type": "concrete", "text": "hand"},
+            {"id": "wheel 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "move", "mode": "event", "roles": {"target": "wheel 3"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        },
+        {
+          "unit_id": "S11",
+          "text": "The hand 2 is a hand of the man 1.",
+          "type": "situation",
+          "entities": [{"id": "hand 2", "type": "concrete", "text": "hand"},
+            {"id": "man 1", "type": "concrete", "category": "person"}
+          ],
+          "pre_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "Frogs are small.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Frogs are small.",
+          "type": "normal_rule",
+          "entities": [{"id": "frogs", "type": "generic", "category": "animal"}],
+          "adjectives": [["small","none","frog"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.",
+      "units": [{
+          "unit_id": "S13",
+          "text": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic", "category": "person"},
+            {"id": "Y1", "type": "generic", "category": "person"},
+            {"id": "Z1", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Was the bicycle old?",
+      "units": [{
+          "unit_id": "S14",
+          "text": "Was the bicycle 2 old?",
+          "type": "query",
+          "entities": [{"id": "bicycle 2", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["old","none","bicycle"]],
+          "pre_state": "W2",
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","artifact","book 1"],
+          ["isa","artifact","book 2"],
+          ["has degree rel2","interesting","book 1","book 2","high","book"]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Sandra 1"],
+            ["isa","kitchen","kitchen 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","travel"],
+                ["has actor","E","Sandra 1"],
+                ["has destination","E","kitchen 2","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Estonia"]
+        ],
+        ["@p","S3",0.8]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Tom 1"],
+            ["isa","bicycle","bicycle 2"],
+            ["have","Tom 1","bicycle 2"]
+          ]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S4","W0","bicycle of","Tom 1","bicycle 2"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","bicycle","bicycle 2"],
+            ["has degree property","new","bicycle 2","none","bicycle"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S6", ["holds", "W0", ["isa","bear","John 1"]]],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["has degree property","nice","John 1","none","bear"],
+          ["has degree property","white","John 1","none","bear"]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 1"],
+          ["isa","letter","letter 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","write"],
+              ["has actor","E","Mary 1"],
+              ["has target","E","letter 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","letter","letter 2"],
+            ["has degree property","long","letter 2","none","letter"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","man 1"],
+            ["isa","hand","hand 2"],
+            ["isa","artifact","wheel 3"],
+            ["has part","man 1","hand 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","move"],
+                ["has actor","E","hand 2"],
+                ["has target","E","wheel 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S11",
+      ["holds","W1",
+        ["and", ["isa","hand","hand 2"], ["isa","person","man 1"], ["has part","man 1","hand 2"]]
+      ]
+    ],
+    ["@id","S12",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","frog","X"],
+              ["normally", ["has degree property","small","X","none","frog"]]
+            ]
+          ]
+        ],
+        ["@p","S12",0.99]
+      ]
+    ],
+    ["@id","S13",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["forall","Z1",
+              ["implies",
+                ["and", ["is rel2","father of","X1","Y1"], ["is rel2","father of","Y1","Z1"]],
+                ["is rel2","grandfather of","X1","Z1"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S14",
+      ["question",
+        ["and",
+          ["isa","bicycle","bicycle 2"],
+          ["has degree property","old","bicycle 2","none","bicycle"]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","book","#:book 1"],
+ "@nl": "This book 1 is more interesting than that book 2."},
+{"@name": "entity_S1",
+ "@logic": ["isa","book","#:book 2"],
+ "@nl": "This book 1 is more interesting than that book 2."},
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Estonia 2"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "entity_S4",
+ "@logic": ["isa","bicycle","#:bicycle 2"],
+ "@nl": "The bicycle 2 is the bicycle of Tom 1."},
+{"@name": "entity_S6",
+ "@logic": ["isa","animal","#:John 1"],
+ "@nl": "John 1 is a bear."},
+{"@name": "entity_S10",
+ "@logic": ["isa","man","#:man 1"],
+ "@nl": "A hand 2 of a man 1 moved a wheel 3."},
+{"@name": "entity_S10",
+ "@logic": ["isa","wheel","#:wheel 3"],
+ "@nl": "A hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","artifact","#:book 1"],
+ "@nl": "This book 1 is more interesting than that book 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","artifact","#:book 2"],
+ "@nl": "This book 1 is more interesting than that book 2."},
+{"@name": "sent_S1",
+ "@logic": ["has degree rel2", "interesting", "#:book 1", "#:book 2", "high", "book", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "This book 1 is more interesting than that book 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Sandra 1"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","kitchen","#:kitchen 2"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:Sandra 1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["has destination", "sk0_activity", "#:kitchen 2", "at", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Sandra 1 travelled to the kitchen 2."},
+{"@name": "sent_S3",
+ "@logic": ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@confidence": 0.6,
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Tom 1"],
+ "@nl": "The bicycle 2 is the bicycle of Tom 1."},
+{"@name": "sent_S4",
+ "@logic": ["isa", "bicycle", ["$theof1", "bicycle", "#:Tom 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]]],
+ "@nl": "The bicycle 2 is the bicycle of Tom 1."},
+{"@name": "sent_S4",
+ "@logic": ["have", "#:Tom 1", ["$theof1", "bicycle", "#:Tom 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]], ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The bicycle 2 is the bicycle of Tom 1."},
+{"@name": "sent_S5",
+ "@logic": ["isa", "bicycle", ["$theof1", "bicycle", "#:Tom 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]]],
+ "@nl": "The bicycle 2 was new."},
+{"@name": "sent_S5",
+ "@logic": ["has degree property", "new", ["$theof1", "bicycle", "#:Tom 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]], "none", "bicycle", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The bicycle 2 was new."},
+{"@name": "sent_S6",
+ "@logic": ["isa","bear","#:John 1"],
+ "@nl": "John 1 is a bear."},
+{"@name": "sent_S7",
+ "@logic": ["has degree property", "good", "#:John 1", "none", "bear", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John 1 is nice and white."},
+{"@name": "sent_S7",
+ "@logic": ["has property", "white", "#:John 1", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "John 1 is nice and white."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 wrote the letter 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","letter","#:letter 2"],
+ "@nl": "Mary 1 wrote the letter 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Mary 1 wrote the letter 2."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk1_activity", "write", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 1 wrote the letter 2."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk1_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 1 wrote the letter 2."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk1_activity", "#:letter 2", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 1 wrote the letter 2."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 1 wrote the letter 2."},
+{"@name": "sent_S8",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Mary 1 wrote the letter 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","letter","#:letter 2"],
+ "@nl": "The letter 2 was long."},
+{"@name": "sent_S9",
+ "@logic": ["has degree property", "long", "#:letter 2", "none", "letter", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The letter 2 was long."},
+{"@name": "sent_S10",
+ "@logic": ["isa","person","#:man 1"],
+ "@nl": "A hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S10",
+ "@logic": ["isa","hand","#:hand 2"],
+ "@nl": "A hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S10",
+ "@logic": ["isa","artifact","#:wheel 3"],
+ "@nl": "A hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S10",
+ "@logic": ["has part", "#:man 1", "#:hand 2", ["$ctxt","past","W1","?:Fv19","?:Fv20"]],
+ "@nl": "A hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S10",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "A hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S10",
+ "@logic": ["has type", "sk2_activity", "go", ["$ctxt","past","W1","?:Fv19","?:Fv20"]],
+ "@nl": "A hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S10",
+ "@logic": ["has actor", "sk2_activity", "#:hand 2", ["$ctxt","past","W1","?:Fv19","?:Fv20"]],
+ "@nl": "A hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S10",
+ "@logic": ["has target", "sk2_activity", "#:wheel 3", ["$ctxt","past","W1","?:Fv19","?:Fv20"]],
+ "@nl": "A hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S10",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W1","?:Fv19","?:Fv20"]],
+ "@nl": "A hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S10",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "A hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S10",
+ "@logic": ["next","W1","W2"],
+ "@nl": "A hand 2 of a man 1 moved a wheel 3."},
+{"@name": "sent_S11",
+ "@logic": ["isa","hand","#:hand 2"],
+ "@nl": "The hand 2 is a hand of the man 1."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:man 1"],
+ "@nl": "The hand 2 is a hand of the man 1."},
+{"@name": "sent_S11",
+ "@logic": ["has part", "#:man 1", "#:hand 2", ["$ctxt","present","W1","?:Fv21","?:Fv22"]],
+ "@nl": "The hand 2 is a hand of the man 1."},
+{"@name": "sent_S12",
+ "@logic": [["-isa","frog","?:X"],
+            ["has degree property", "small", "?:X", "none", "frog", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["$block", ["$","frog",1], ["$not", ["has degree property", "small", "?:X", "none", "frog", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Frogs are small."},
+{"@name": "sent_S13",
+ "@logic": [["-is rel2", "father of", "?:X1", "?:Y1", ["$ctxt","?:Fv30","?:Fv29","?:Fv27","?:Fv28"]],
+            ["-is rel2", "father of", "?:Y1", "?:Z1", ["$ctxt","?:Fv30","?:Fv29","?:Fv27","?:Fv28"]],
+            ["is rel2", "grandfather of", "?:X1", "?:Z1", ["$ctxt","?:Fv30","?:Fv29","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1."},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["isa", "bicycle", ["$theof1", "bicycle", "#:Tom 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]]]
+           ],
+ "@nl": "Was the bicycle 2 old?"},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-has degree property", "new", ["$theof1", "bicycle", "#:Tom 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]], "none", "bicycle", ["$ctxt","past","W2","?:Fv31","?:Fv32"]]
+           ],
+ "@nl": "Was the bicycle 2 old?"},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-isa", "bicycle", ["$theof1", "bicycle", "#:Tom 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]]],
+            ["has degree property", "new", ["$theof1", "bicycle", "#:Tom 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]], "none", "bicycle", ["$ctxt","past","W2","?:Fv31","?:Fv32"]],
+            ["$defq0"]
+           ],
+ "@nl": "Was the bicycle 2 old?"},
+{"@name": "sent_S14",
+ "@question": ["$defq0"],
+ "@nl": "Was the bicycle 2 old?"},
+{"@name": "sent_S14",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["has degree property", "new", ["$theof1", "bicycle", "#:Tom 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]], "none", "bicycle", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["-has degree property", "new", ["$theof1", "bicycle", "#:Tom 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]], "none", "bicycle", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "old", ["$theof1", "bicycle", "#:Tom 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]], "none", "bicycle", ["$ctxt","past","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Was the bicycle 2 old?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:Tom 1", ["$theof1", "bicycle", "#:Tom 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]], ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "bicycle of", ["$theof1","bicycle","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "bicycle", ["$theof1","bicycle","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["isa","frog","$some_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","frog","$some_not_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "small", "$some_small_frog", "none", "frog", ["$ctxt","?:Fv85","?:Fv82","?:Fv83","?:Fv84"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["isa","frog","$some_small_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "small", "$some_not_small_frog", "none", "frog", ["$ctxt","?:Fv93","?:Fv90","?:Fv91","?:Fv92"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv38"], ["has type","?:E","go","?:Fv38"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","hand","?:Fv39"], ["has type","?:E","give","?:Fv39"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv94","?:Fv40"],
+            ["-has degree property","high","?:X","none","?:Fv95","?:Fv40"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv96","?:Fv41"],
+            ["has degree property","small","?:X","none","?:Fv97","?:Fv41"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","bicycle","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","bicycle","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bicycle","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bicycle","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "none", "?:Fv98", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has degree property", "long", "?:X", "none", "?:Fv99", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "none", "?:Fv100", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv45","?:Fv46","?:Fv47"]],
+            ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "new", "?:X", "none", "?:Fv101", ["$ctxt","past","?:Fv48","?:Fv49","?:Fv50"]],
+            ["-has degree property", "new", "?:X", "none", "?:Fv102", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]],
+            ["$block", 0, ["$not", ["has degree property", "old", "?:X", "none", "?:Fv103", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "new", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv51","?:Fv52","?:Fv53"]],
+            ["-has degree property", "new", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has degree property", "old", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv104", ["$ctxt","past","?:Fv54","?:Fv55","?:Fv56"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv105", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv106", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv57","?:Fv58","?:Fv59"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv57","?:Fv58","?:Fv59"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv57","?:Fv58","?:Fv59"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "white", "?:X", ["$ctxt","past","?:Fv60","?:Fv61","?:Fv62"]],
+            ["has property", "white", "?:X", ["$ctxt","present","?:Fv60","?:Fv61","?:Fv62"]],
+            ["$block", 0, ["$not", ["has property", "white", "?:X", ["$ctxt","present","?:Fv60","?:Fv61","?:Fv62"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "white", "?:X", ["$ctxt","past","?:Fv63","?:Fv64","?:Fv65"]],
+            ["has property", "white", "?:X", ["$ctxt","present","?:Fv63","?:Fv64","?:Fv65"]],
+            ["$block", 0, ["$not", ["has property", "white", "?:X", ["$ctxt","present","?:Fv63","?:Fv64","?:Fv65"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "timestamp": "2026-06-12T21:16:39Z"
+}

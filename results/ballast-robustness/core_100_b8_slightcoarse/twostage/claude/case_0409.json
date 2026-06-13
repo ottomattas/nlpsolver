@@ -1,0 +1,639 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 409,
+  "input_text": "Emajogi is 20 meters long. Muggles cannot disappear. The glass was broken by the boy. These links present the many viewpoints that existed. John has three nice cars. Mike and Mickey are not female. This book is more interesting than that one. A flower was white. The manager, Anna, called Eve. How many nice cars does John have?",
+  "expected_answer": ["Three","3."],
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "3.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Emajogi is 20 meters long.",
+      "units": [{
+          "entities": [{
+              "category": "place",
+              "id": "Emajogi 1",
+              "type": "concrete",
+              "url": "https://en.wikipedia.org/wiki/Emajogi"
+            },
+            {"category": "measure", "id": "20 meters", "type": "concrete"}
+          ],
+          "text": "Emajogi 1 is 20 meters long.",
+          "type": "real",
+          "unit_id": "S1"
+        }
+      ]
+    },
+    {
+      "raw": "Muggles cannot disappear.",
+      "units": [{
+          "actions": [{"mode": "capability", "root": "disappear"}],
+          "entities": [{"category": "person", "id": "muggles", "type": "generic"}],
+          "text": "Muggles cannot disappear.",
+          "type": "strict_rule",
+          "unit_id": "S2"
+        }
+      ]
+    },
+    {
+      "raw": "The glass was broken by the boy.",
+      "units": [{
+          "actions": [{"mode": "event", "roles": {"actor": "boy 1", "target": "glass 2"}, "root": "break"}],
+          "entities": [{"category": "person", "id": "boy 1", "type": "concrete"},
+            {"category": "artifact", "id": "glass 2", "type": "concrete"}
+          ],
+          "next_state": "W1",
+          "pre_state": "W0",
+          "text": "The boy 1 broke the glass 2.",
+          "time": "past",
+          "type": "situation",
+          "unit_id": "S3"
+        }
+      ]
+    },
+    {
+      "raw": "These links present the many viewpoints that existed.",
+      "units": [{
+          "entities": [{"category": "artifact", "id": "links 1", "type": "concrete"},
+            {"category": "abstract", "id": "viewpoints 2", "type": "concrete"}
+          ],
+          "text": "These links 1 present the many viewpoints 2 that existed.",
+          "type": "situation",
+          "unit_id": "S4"
+        }
+      ]
+    },
+    {
+      "raw": "John has three nice cars.",
+      "units": [{
+          "adjectives": [["nice","none","car"]],
+          "entities": [{"category": "person", "id": "John 2", "type": "concrete"},
+            {"category": "artifact", "id": "cars", "type": "generic"}
+          ],
+          "text": "John 2 has three nice cars.",
+          "type": "situation",
+          "unit_id": "S5"
+        }
+      ]
+    },
+    {
+      "raw": "Mike and Mickey are not female.",
+      "units": [{
+          "adjectives": [["female","none","person"]],
+          "entities": [{"category": "person", "id": "Mike 3", "type": "concrete"}],
+          "text": "Mike 3 is not female.",
+          "type": "situation",
+          "unit_id": "S6"
+        },
+        {
+          "adjectives": [["female","none","person"]],
+          "entities": [{"category": "person", "id": "Mickey 4", "type": "concrete"}],
+          "text": "Mickey 4 is not female.",
+          "type": "situation",
+          "unit_id": "S7"
+        }
+      ]
+    },
+    {
+      "raw": "This book is more interesting than that one.",
+      "units": [{
+          "adjectives": [["interesting","high","book"]],
+          "entities": [{"category": "artifact", "id": "book 1", "type": "concrete"},
+            {"category": "artifact", "id": "book 2", "type": "concrete"}
+          ],
+          "text": "This book 1 is more interesting than that book 2.",
+          "type": "situation",
+          "unit_id": "S8"
+        }
+      ]
+    },
+    {
+      "raw": "A flower was white.",
+      "units": [{
+          "adjectives": [["white","none","none"]],
+          "entities": [{"category": "plant", "id": "flower 1", "type": "concrete"}],
+          "text": "A flower 1 was white.",
+          "time": "past",
+          "type": "situation",
+          "unit_id": "S9"
+        }
+      ]
+    },
+    {
+      "raw": "The manager, Anna, called Eve.",
+      "units": [{
+          "actions": [{"mode": "event", "roles": {"actor": "Anna 1", "target": "Eve 2"}, "root": "call"}],
+          "entities": [{"category": "person", "id": "Anna 1", "type": "concrete"},
+            {"category": "person", "id": "Eve 2", "type": "concrete"}
+          ],
+          "text": "Anna 1 called Eve 2.",
+          "time": "past",
+          "type": "situation",
+          "unit_id": "S10"
+        },
+        {
+          "entities": [{"category": "person", "id": "Anna 1", "type": "concrete"}],
+          "text": "Anna 1 is the manager.",
+          "type": "situation",
+          "unit_id": "S11"
+        }
+      ]
+    },
+    {
+      "raw": "How many nice cars does John have?",
+      "units": [{
+          "adjectives": [["nice","none","car"]],
+          "entities": [{"category": "person", "id": "John 2", "type": "concrete"},
+            {"category": "artifact", "id": "cars", "type": "generic"},
+            {"id": "number", "type": "generic", "wh_placeholder": true}
+          ],
+          "text": "How many nice cars does John 2 have?",
+          "type": "query",
+          "unit_id": "S12"
+        }
+      ]
+    }
+  ],
+  "stage_1_retries": ["sanity #1: missing_wh_placeholder"],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$measure",20,"meter"]]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","muggle","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","boy 1"],
+            ["isa","glass","glass 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","break"],
+                ["has actor","E","boy 1"],
+                ["has target","E","glass 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","artifact","links 1"],
+          ["isa","abstract","viewpoints 2"],
+          ["is rel2","present","links 1","viewpoints 2"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 2"],
+          ["=", 3, ["$count", ["$setof", "?:X", ["and", ["isa","car","?:X"], ["has degree property","nice","?:X","none","car"], ["have","John 2","?:X"]]]]]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mike 3"],
+          ["not", ["has degree property","female","Mike 3","none","person"]]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mickey 4"],
+          ["not", ["has degree property","female","Mickey 4","none","person"]]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","book","book 1"],
+          ["isa","book","book 2"],
+          ["has degree rel2","interesting","book 1","book 2","high","book"]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","flower","flower 1"],
+            ["has degree property","white","flower 1","none","none"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Anna 1"],
+          ["isa","person","Eve 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","call"],
+              ["has actor","E","Anna 1"],
+              ["has target","E","Eve 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S11", ["holds", "W0", ["and", ["isa","person","Anna 1"], ["isa","manager","Anna 1"]]]],
+    ["@id","S12",
+      ["ask","X",
+        ["=", "X", ["$count", ["$setof", "?:C", ["and", ["isa","car","?:C"], ["has degree property","nice","?:C","none","car"], ["have","John 2","?:C"]]]]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Emajogi 1"],
+ "@nl": "Emajogi 1 is 20 meters long."},
+{"@name": "entity_S1",
+ "@logic": ["isa","measure","20 meters"],
+ "@nl": "Emajogi 1 is 20 meters long."},
+{"@name": "entity_S3",
+ "@logic": ["isa","boy","#:boy 1"],
+ "@nl": "The boy 1 broke the glass 2."},
+{"@name": "entity_S4",
+ "@logic": ["isa","link","#:links 1"],
+ "@nl": "These links 1 present the many viewpoints 2 that existed."},
+{"@name": "entity_S4",
+ "@logic": ["isa","link","#:links 1"],
+ "@nl": "These links 1 present the many viewpoints 2 that existed."},
+{"@name": "entity_S4",
+ "@logic": ["isa","viewpoint","#:viewpoints 2"],
+ "@nl": "These links 1 present the many viewpoints 2 that existed."},
+{"@name": "entity_S4",
+ "@logic": ["isa","viewpoint","#:viewpoints 2"],
+ "@nl": "These links 1 present the many viewpoints 2 that existed."},
+{"@name": "sent_S1",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$list",20,"#:meter"]],
+ "@nl": "Emajogi 1 is 20 meters long."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","muggle","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Muggles cannot disappear."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:boy 1"],
+ "@nl": "The boy 1 broke the glass 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","glass","#:glass 2"],
+ "@nl": "The boy 1 broke the glass 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The boy 1 broke the glass 2."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "break", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The boy 1 broke the glass 2."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:boy 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The boy 1 broke the glass 2."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk0_activity", "#:glass 2", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The boy 1 broke the glass 2."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The boy 1 broke the glass 2."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The boy 1 broke the glass 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","artifact","#:links 1"],
+ "@nl": "These links 1 present the many viewpoints 2 that existed."},
+{"@name": "sent_S4",
+ "@logic": ["isa","abstract","#:viewpoints 2"],
+ "@nl": "These links 1 present the many viewpoints 2 that existed."},
+{"@name": "sent_S4",
+ "@logic": ["is rel2", "present", "#:links 1", "#:viewpoints 2", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "These links 1 present the many viewpoints 2 that existed."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "John 2 has three nice cars."},
+{"@name": "sent_S5",
+ "@logic": ["=", 3, ["$count", ["$setof", "have", "#:John 2", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]],
+ "@nl": "John 2 has three nice cars."},
+{"@name": "sent_S5_el1",
+ "@logic": ["isa","car","$set1_el1"],
+ "@nl": "[generated: sent_S5_el1]"},
+{"@name": "sent_S5_el1",
+ "@logic": ["has degree property", "good", "$set1_el1", "none", "car", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "[generated: sent_S5_el1]"},
+{"@name": "sent_S5_el1",
+ "@logic": ["have", "#:John 2", "$set1_el1", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "[generated: sent_S5_el1]"},
+{"@name": "sent_S5_el1",
+ "@logic": ["member", "$set1_el1", ["$setof", "have", "#:John 2", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]],
+ "@nl": "[generated: sent_S5_el1]"},
+{"@name": "sent_S5_el2",
+ "@logic": ["isa","car","$set1_el2"],
+ "@nl": "[generated: sent_S5_el2]"},
+{"@name": "sent_S5_el2",
+ "@logic": ["has degree property", "good", "$set1_el2", "none", "car", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "[generated: sent_S5_el2]"},
+{"@name": "sent_S5_el2",
+ "@logic": ["have", "#:John 2", "$set1_el2", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "[generated: sent_S5_el2]"},
+{"@name": "sent_S5_el2",
+ "@logic": ["member", "$set1_el2", ["$setof", "have", "#:John 2", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]],
+ "@nl": "[generated: sent_S5_el2]"},
+{"@name": "sent_S5_el3",
+ "@logic": ["isa","car","$set1_el3"],
+ "@nl": "[generated: sent_S5_el3]"},
+{"@name": "sent_S5_el3",
+ "@logic": ["has degree property", "good", "$set1_el3", "none", "car", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "[generated: sent_S5_el3]"},
+{"@name": "sent_S5_el3",
+ "@logic": ["have", "#:John 2", "$set1_el3", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "[generated: sent_S5_el3]"},
+{"@name": "sent_S5_el3",
+ "@logic": ["member", "$set1_el3", ["$setof", "have", "#:John 2", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]],
+ "@nl": "[generated: sent_S5_el3]"},
+{"@name": "sent_S5_dist",
+ "@logic": ["-=","$set1_el1","$set1_el2"],
+ "@nl": "[generated: sent_S5_dist]"},
+{"@name": "sent_S5_dist",
+ "@logic": ["-=","$set1_el1","$set1_el3"],
+ "@nl": "[generated: sent_S5_dist]"},
+{"@name": "sent_S5_dist",
+ "@logic": ["-=","$set1_el2","$set1_el3"],
+ "@nl": "[generated: sent_S5_dist]"},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Mike 3"],
+ "@nl": "Mike 3 is not female."},
+{"@name": "sent_S6",
+ "@logic": ["-has property", "female", "#:Mike 3", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mike 3 is not female."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Mickey 4"],
+ "@nl": "Mickey 4 is not female."},
+{"@name": "sent_S7",
+ "@logic": ["-has property", "female", "#:Mickey 4", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mickey 4 is not female."},
+{"@name": "sent_S8",
+ "@logic": ["isa","book","#:book 1"],
+ "@nl": "This book 1 is more interesting than that book 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","book","#:book 2"],
+ "@nl": "This book 1 is more interesting than that book 2."},
+{"@name": "sent_S8",
+ "@logic": ["has degree rel2", "interesting", "#:book 1", "#:book 2", "high", "book", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "This book 1 is more interesting than that book 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","flower","#:flower 1"],
+ "@nl": "A flower 1 was white."},
+{"@name": "sent_S9",
+ "@logic": ["has property", "white", "#:flower 1", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "A flower 1 was white."},
+{"@name": "sent_S10",
+ "@logic": ["isa","person","#:Anna 1"],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S10",
+ "@logic": ["isa","person","#:Eve 2"],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S10",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S10",
+ "@logic": ["has type", "sk1_activity", "call", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S10",
+ "@logic": ["has actor", "sk1_activity", "#:Anna 1", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S10",
+ "@logic": ["has target", "sk1_activity", "#:Eve 2", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S10",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Anna 1 called Eve 2."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:Anna 1"],
+ "@nl": "Anna 1 is the manager."},
+{"@name": "sent_S11",
+ "@logic": ["isa","manager","#:Anna 1"],
+ "@nl": "Anna 1 is the manager."},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["=", "?:X", ["$count", ["$setof", "have", "#:John 2", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]]
+           ],
+ "@nl": "How many nice cars does John 2 have?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-=", "?:X", ["$count", ["$setof", "have", "#:John 2", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "How many nice cars does John 2 have?"},
+{"@name": "sent_S12",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@nl": "How many nice cars does John 2 have?"},
+{"@name": "frm_set",
+ "@logic": [["-isa","?:C","?:M"],
+            ["-has property","?:D","?:M"],
+            ["-have","?:S","?:M"],
+            ["member", "?:M", ["$setof", "have", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "have", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["isa","?:C","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "have", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["has property","?:D","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_set",
+ "@logic": [["-member", "?:M", ["$setof", "have", "?:S", ["$and", ["$isa","?:C","$arg1"], ["$has_degree_property","?:D","$arg1","?:E","?:C"]]]],
+            ["have","?:S","?:M"]
+           ],
+ "@nl": "[generated: frm_set]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "break", ["$ctxt","?:Fv28","?:Fv29","?:Fv31","?:Fv32"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv28","?:Fv29","?:Fv31","?:Fv32"]],
+            ["-next","?:Fv29","?:Fv30"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv30","?:Fv31","?:Fv32"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "break", "?:X", ["$ctxt","?:Fv33","?:Fv34","?:Fv36","?:Fv37"]],
+            ["-next","?:Fv34","?:Fv35"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","muggle","$some_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","muggle","$some_not_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "female", "$some_female_person", ["$ctxt","?:Fv64","?:Fv61","?:Fv62","?:Fv63"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","person","$some_female_person"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","receive","?:Fv38"], ["has type","?:E","have","?:Fv38"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "white", "?:X", ["$ctxt","past","?:Fv39","?:Fv40","?:Fv41"]],
+            ["has property", "white", "?:X", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]],
+            ["$block", 0, ["$not", ["has property", "white", "?:X", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "white", "?:X", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has property", "white", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has property", "white", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans",3]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S12","assumption",1], [["-=", "?:0", ["$count", ["$setof", "have", "#:John 2", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]], ["$defq0","?:0"]]],
+          [2, ["in","sent_S5","assumption",1], [["=", 3, ["$count", ["$setof", "have", "#:John 2", ["$and", ["$isa","car","$arg1"], ["$has_degree_property","good","$arg1","none","car"]]]]]]],
+          [3, ["simp",1,2,"fromassumption",1], [["-=","?:X",3], ["$defq0","?:X"]]],
+          [4, ["r=", [3,0], "fromassumption", 1], [["$defq0",3]]],
+          [5, ["in","sent_S12","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [6, ["mp",4,5,"fromga",1], [["$ans",3]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John has three nice cars.",
+"  (2) How many nice cars does John have?",
+"Proof steps:",
+"  (1) If the number of good cars John has is E1 then some E1 is the answer  [sentence 2]",
+"  (2) The number of good cars John has is 3  [sentence 1]",
+"  (3) If some X equals 3 then X is the answer  [from steps 1, 2]",
+"  (4) 3 Is the answer  [from steps 3]",
+"  (5) technical answer unwrap step  [from question]",
+"  (6) 3 Is an answer  [from steps 4, 5]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 34360,
+      "cached_input_tokens": 32042,
+      "output_tokens": 1948,
+      "raw": {
+        "input_tokens": 2318,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 32042,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1948,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 40141,
+      "cached_input_tokens": 38891,
+      "output_tokens": 1337,
+      "raw": {
+        "input_tokens": 1250,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1337,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T21:17:30Z"
+}

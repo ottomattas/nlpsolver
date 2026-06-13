@@ -1,0 +1,929 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 1156,
+  "input_text": "The woman holding a lamp sang. Mary journeyed to the bathroom. The length of Nile is 80 kilometers. Eve reported that Tom arrived. The teacher showed the students a map. John is badly defeated. Elephants have a trunk. A chocolate cake fell. The stone was heavy. The students saw a map?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "The woman holding a lamp sang.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "The woman 1 holding a lamp 2 sang.",
+          "type": "situation",
+          "entities": [{"id": "woman 1", "type": "concrete", "category": "person"},
+            {"id": "lamp 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "hold", "mode": "event", "roles": {"actor": "woman 1", "target": "lamp 2"}},
+            {"root": "sing", "mode": "event", "roles": {"actor": "woman 1"}}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary journeyed to the bathroom.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Mary 1 journeyed to the bathroom 2.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "bathroom 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "journey",
+              "mode": "event",
+              "roles": {"actor": "Mary 1", "destination": "bathroom 2"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The length of Nile is 80 kilometers.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The length 2 of Nile 1 is 80 kilometers.",
+          "type": "real",
+          "entities": [{
+              "id": "Nile 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            },
+            {"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "80 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 2","Nile 1"]]
+        },
+        {
+          "unit_id": "S4",
+          "text": "The length 2 is the length of Nile 1.",
+          "type": "real",
+          "entities": [{"id": "length 2", "type": "concrete", "text": "length"},
+            {
+              "id": "Nile 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            }
+          ],
+          "definites": [["length of","length 2","Nile 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "Eve reported that Tom arrived.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Tom 2 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Tom 2", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "arrive", "mode": "event", "roles": {"actor": "Tom 2"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        },
+        {
+          "unit_id": "S6",
+          "text": "Eve 1 reported that Tom 2 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "Tom 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "report",
+              "mode": "speech_act",
+              "roles": {
+                "actor": "Eve 1",
+                "content": {"root": "arrive", "mode": "event", "roles": {"actor": "Tom 2"}}
+              }
+            }
+          ],
+          "pre_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The teacher showed the students a map.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "The teacher 1 showed the students 2 a map 3.",
+          "type": "situation",
+          "entities": [{"id": "teacher 1", "type": "concrete", "category": "person"},
+            {"id": "students 2", "type": "concrete", "category": "person"},
+            {"id": "map 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 1", "recipient": "students 2", "target": "map 3"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is badly defeated.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "John 1 is badly defeated.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["defeated","high","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have a trunk.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Elephants have a trunk.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunk", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "A chocolate cake fell.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "A chocolate cake 1 fell.",
+          "type": "situation",
+          "entities": [{
+              "id": "chocolate cake 1",
+              "type": "concrete",
+              "subtype": "compound",
+              "category": "artifact"
+            }
+          ],
+          "actions": [{"root": "fall", "mode": "event", "roles": {"actor": "chocolate cake 1"}}],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The stone was heavy.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "The stone 1 was heavy.",
+          "type": "situation",
+          "entities": [{"id": "stone 1", "type": "concrete"}],
+          "adjectives": [["heavy","none","stone"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The students saw a map?",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Did the students see a map?",
+          "type": "query",
+          "entities": [{"id": "students", "type": "generic", "category": "person"},
+            {"id": "map", "type": "generic", "category": "artifact"}
+          ],
+          "actions": [{"root": "see", "mode": "event", "roles": {"actor": "students", "target": "map"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","woman","woman 1"],
+          ["isa","lamp","lamp 2"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","hold"],
+              ["has actor","E1","woman 1"],
+              ["has target","E1","lamp 2"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","sing"],
+              ["has actor","E2","woman 1"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 1"],
+            ["isa","bathroom","bathroom 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","journey"],
+                ["has actor","E","Mary 1"],
+                ["has destination","E","bathroom 2","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$measure",80,"kilometer"]]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","length","length 2"],
+          ["is rel2","length of","length 2","https://en.wikipedia.org/wiki/Nile"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Tom 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","arrive"],
+                ["has actor","E","Tom 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","Eve 1"],
+            ["isa","person","Tom 2"],
+            ["exists","E1",
+              ["and",
+                ["isa","activity","E1"],
+                ["has type","E1","report"],
+                ["has actor","E1","Eve 1"],
+                ["has time","E1","past","in"],
+                ["exists","E2",
+                  ["and",
+                    ["has content","E1","E2"],
+                    ["isa","activity","E2"],
+                    ["has type","E2","arrive"],
+                    ["has actor","E2","Tom 2"],
+                    ["has time","E2","past","in"]
+                  ]
+                ],
+                ["speech_act","E1"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","person","teacher 1"],
+          ["isa","person","students 2"],
+          ["isa","map","map 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","show"],
+              ["has actor","E","teacher 1"],
+              ["has recipient","E","students 2"],
+              ["has target","E","map 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["has degree property","defeated","John 1","high","person"]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S9",0.99]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","chocolate cake","chocolate cake 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","fall"],
+                ["has actor","E","chocolate cake 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","stone","stone 1"],
+            ["has degree property","heavy","stone 1","none","stone"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S12",
+      ["question",
+        ["forall","X",
+          ["implies",
+            ["isa","student","X"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","see"],
+                ["has actor","E","X"],
+                ["exists", "Y", ["and", ["isa","map","Y"], ["has target","E","Y"]]],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:woman 1"],
+ "@nl": "The woman 1 holding a lamp 2 sang."},
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Nile 1"],
+ "@nl": "The length 2 of Nile 1 is 80 kilometers."},
+{"@name": "entity_S3",
+ "@logic": ["isa","measure","80 kilometers"],
+ "@nl": "The length 2 of Nile 1 is 80 kilometers."},
+{"@name": "entity_S7",
+ "@logic": ["isa","teacher","#:teacher 1"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "entity_S7",
+ "@logic": ["isa","student","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "entity_S7",
+ "@logic": ["isa","student","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","woman","#:woman 1"],
+ "@nl": "The woman 1 holding a lamp 2 sang."},
+{"@name": "sent_S1",
+ "@logic": ["isa","lamp","#:lamp 2"],
+ "@nl": "The woman 1 holding a lamp 2 sang."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The woman 1 holding a lamp 2 sang."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "hold", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The woman 1 holding a lamp 2 sang."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:woman 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The woman 1 holding a lamp 2 sang."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:lamp 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The woman 1 holding a lamp 2 sang."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The woman 1 holding a lamp 2 sang."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The woman 1 holding a lamp 2 sang."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk1_activity", "sing", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The woman 1 holding a lamp 2 sang."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk1_activity", "#:woman 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The woman 1 holding a lamp 2 sang."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The woman 1 holding a lamp 2 sang."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","bathroom","#:bathroom 2"],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk2_activity", "go", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk2_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S2",
+ "@logic": ["has destination", "sk2_activity", "#:bathroom 2", "at", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The length 2 of Nile 1 is 80 kilometers."},
+{"@name": "sent_S4",
+ "@logic": ["isa", "length", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv7","?:Fv8"]]],
+ "@nl": "The length 2 is the length of Nile 1."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Tom 2"],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk3_activity", "arrive", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk3_activity", "#:Tom 2", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Tom 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Tom 2"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk4_activity", "report", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk4_activity", "#:Eve 1", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["has content","sk4_activity","sk5_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk5_activity", "arrive", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk5_activity", "#:Tom 2", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W2","?:Fv11","?:Fv12"]],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["speech_act","sk4_activity"],
+ "@nl": "Eve 1 reported that Tom 2 arrived."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:teacher 1"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S7",
+ "@logic": ["isa","map","#:map 3"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk6_activity"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk6_activity", "show", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk6_activity", "#:teacher 1", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S7",
+ "@logic": ["has recipient", "sk6_activity", "#:students 2", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S7",
+ "@logic": ["has target", "sk6_activity", "#:map 3", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk6_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S7",
+ "@logic": ["actuality","sk6_activity"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is badly defeated."},
+{"@name": "sent_S8",
+ "@logic": ["has property", "defeated", "#:John 1", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "John 1 is badly defeated."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk7","?:X"]]],
+ "@nl": "Elephants have a trunk."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk7","?:X"], ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk7","?:X"], ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have a trunk."},
+{"@name": "sent_S10",
+ "@logic": ["isa","chocolate cake","#:chocolate cake 1"],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S10",
+ "@logic": ["isa","activity","sk8_activity"],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S10",
+ "@logic": ["has type", "sk8_activity", "fall", ["$ctxt","past","W2","?:Fv21","?:Fv22"]],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S10",
+ "@logic": ["has actor", "sk8_activity", "#:chocolate cake 1", ["$ctxt","past","W2","?:Fv21","?:Fv22"]],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S10",
+ "@logic": ["has time", "sk8_activity", "past", "in", ["$ctxt","past","W2","?:Fv21","?:Fv22"]],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S10",
+ "@logic": ["actuality","sk8_activity"],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S10",
+ "@logic": ["next","W2","W3"],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S11",
+ "@logic": ["isa","stone","#:stone 1"],
+ "@nl": "The stone 1 was heavy."},
+{"@name": "sent_S11",
+ "@logic": ["-has degree property", "light", "#:stone 1", "none", "stone", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The stone 1 was heavy."},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","student","?:X"], ["isa","activity","sk9_activity"]],
+ "@nl": "Did the students see a map?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-isa","student","?:X"],
+            ["has type", "sk9_activity", "show", ["$ctxt","past","?:Fv27","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Did the students see a map?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-isa","student","?:X"],
+            ["has recipient", "sk9_activity", "?:X", ["$ctxt","past","?:Fv27","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Did the students see a map?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","student","?:X"], ["isa","map","sk10_map"]],
+ "@nl": "Did the students see a map?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-isa","student","?:X"],
+            ["has target", "sk9_activity", "sk10_map", ["$ctxt","past","?:Fv27","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Did the students see a map?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-isa","student","?:X"],
+            ["has time", "sk9_activity", "past", "in", ["$ctxt","past","?:Fv27","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Did the students see a map?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","student","?:X"], ["actuality","sk9_activity"]],
+ "@nl": "Did the students see a map?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["isa","student","sk11_student"], ["$defq0"]],
+ "@nl": "Did the students see a map?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "show", ["$ctxt","past","?:Fv27","?:Fv25","?:Fv26"]],
+            ["-has recipient", "?:E", "sk11_student", ["$ctxt","past","?:Fv27","?:Fv25","?:Fv26"]],
+            ["-isa","map","?:Y"],
+            ["-has target", "?:E", "?:Y", ["$ctxt","past","?:Fv27","?:Fv25","?:Fv26"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did the students see a map?"},
+{"@name": "sent_S12",
+ "@question": ["$defq0"],
+ "@nl": "Did the students see a map?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Nile", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv7","?:Fv8"]], ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Nile", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv7","?:Fv8"]], ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "length of", ["$theof1","length","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "length", ["$theof1","length","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","chocolate cake","?:X"], ["isa","cake","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","chocolate","?:X"], ["-isa","cake","?:X"], ["isa","chocolate cake","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property","chocolate","?:X","?:Ct"],
+            ["-isa","cake","?:X"],
+            ["isa","chocolate cake","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property", "chocolate", "?:X", "?:Ct", ["$ctxt","?:Fv77","?:Fv74","?:Fv75","?:Fv76"]],
+            ["-isa","cake","?:X"],
+            ["isa","chocolate cake","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv29"], ["has type","?:E","go","?:Fv29"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","report","?:Fv30"], ["has type","?:E","announce","?:Fv30"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","announce","?:Fv31"], ["has type","?:E","report","?:Fv31"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "light", "?:X", "none", "?:Fv78", ["$ctxt","past","?:Fv32","?:Fv33","?:Fv34"]],
+            ["-has degree property", "light", "?:X", "none", "?:Fv79", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]],
+            ["$block", 0, ["$not", ["has degree property", "heavy", "?:X", "none", "?:Fv80", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv35","?:Fv36","?:Fv37"]],
+            ["-has degree property", "light", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]],
+            ["$block", 0, ["$not", ["has degree property", "heavy", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has target","?:Esb","?:Ysb","?:Csb"],
+            ["-has recipient","?:Esb","?:Xsb","?:Csb"],
+            ["has recipient","?:Ysb","?:Xsb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_measure_rel_bridge",
+ "@logic": [["-=", ["$measure_of","length","?:S","?:W"], "?:V"],
+            ["is rel2","length of","?:V","?:S","?:Ctxt"]
+           ],
+ "@nl": "[generated: frm_measure_rel_bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33556,
+      "cached_input_tokens": 33280,
+      "output_tokens": 187,
+      "raw": {
+        "input_tokens": 33556,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 187,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33743
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33551,
+      "cached_input_tokens": 33280,
+      "output_tokens": 145,
+      "raw": {
+        "input_tokens": 33551,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 145,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33696
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33662,
+      "cached_input_tokens": 33280,
+      "output_tokens": 296,
+      "raw": {
+        "input_tokens": 33662,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 296,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33958
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34359,
+      "cached_input_tokens": 33536,
+      "output_tokens": 498,
+      "raw": {
+        "input_tokens": 34359,
+        "input_tokens_details": {"cached_tokens": 33536},
+        "output_tokens": 498,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34857
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33565,
+      "cached_input_tokens": 33280,
+      "output_tokens": 144,
+      "raw": {
+        "input_tokens": 33565,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 144,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33709
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33481,
+      "cached_input_tokens": 33280,
+      "output_tokens": 67,
+      "raw": {
+        "input_tokens": 33481,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 67,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33548
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33489,
+      "cached_input_tokens": 33280,
+      "output_tokens": 113,
+      "raw": {
+        "input_tokens": 33489,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 113,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33602
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33524,
+      "cached_input_tokens": 33408,
+      "output_tokens": 124,
+      "raw": {
+        "input_tokens": 33524,
+        "input_tokens_details": {"cached_tokens": 33408},
+        "output_tokens": 124,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33648
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33479,
+      "cached_input_tokens": 33280,
+      "output_tokens": 81,
+      "raw": {
+        "input_tokens": 33479,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 81,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33560
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33516,
+      "cached_input_tokens": 33280,
+      "output_tokens": 135,
+      "raw": {
+        "input_tokens": 33516,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 135,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33651
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T22:35:36Z"
+}

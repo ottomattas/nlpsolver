@@ -1,0 +1,933 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 1089,
+  "input_text": "Agatha is in trouble. The animal lifted a stone. Mike is nice. John went to Paris and Mary to London. Wolves are afraid of mice. The length of Nile is 80 kilometers. A bear was strong. Tallinn is a city. The man standing by the door coughed. Where did Mary go?",
+  "expected_answer": ["London.","To London."],
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "London.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Agatha is in trouble.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Agatha 1 is in trouble.",
+          "type": "situation",
+          "entities": [{"id": "Agatha 1", "type": "concrete", "category": "person"}],
+          "pre_state": "W0"
+        }
+      ]
+    },
+    {
+      "raw": "The animal lifted a stone.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The animal 2 lifted a stone 3.",
+          "type": "situation",
+          "entities": [{"id": "animal 2", "type": "concrete", "category": "animal"},
+            {"id": "stone 3", "type": "concrete"}
+          ],
+          "actions": [{"root": "lift", "mode": "event", "roles": {"actor": "animal 2", "target": "stone 3"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mike is nice.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Mike 4 is nice.",
+          "type": "situation",
+          "entities": [{"id": "Mike 4", "type": "concrete", "category": "person"}],
+          "adjectives": [["nice","none","person"]],
+          "pre_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "John went to Paris and Mary to London.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "John 5 went to Paris 6.",
+          "type": "situation",
+          "entities": [{"id": "John 5", "type": "concrete", "category": "person"},
+            {
+              "id": "Paris 6",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Paris"
+            }
+          ],
+          "actions": [{"root": "go", "mode": "event", "roles": {"actor": "John 5", "destination": "Paris 6"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        },
+        {
+          "unit_id": "S5",
+          "text": "Mary 7 went to London 8.",
+          "type": "situation",
+          "entities": [{"id": "Mary 7", "type": "concrete", "category": "person"},
+            {
+              "id": "London 8",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/London"
+            }
+          ],
+          "actions": [{"root": "go", "mode": "event", "roles": {"actor": "Mary 7", "destination": "London 8"}}],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Wolves are afraid of mice.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Wolves are afraid of mice.",
+          "type": "normal_rule",
+          "entities": [{"id": "wolves", "type": "generic", "category": "animal"},
+            {"id": "mice", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["afraid","none","wolf"]]
+        }
+      ]
+    },
+    {
+      "raw": "The length of Nile is 80 kilometers.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "The length 10 of Nile 9 is 80 kilometers 11.",
+          "type": "real",
+          "entities": [{
+              "id": "Nile 9",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            },
+            {"id": "length 10", "type": "concrete", "text": "length"},
+            {"id": "80 kilometers 11", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 10","Nile 9"]]
+        },
+        {
+          "unit_id": "S8",
+          "text": "The length 10 is the length of Nile 9.",
+          "type": "real",
+          "entities": [{"id": "length 10", "type": "concrete", "text": "length"},
+            {
+              "id": "Nile 9",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            }
+          ],
+          "definites": [["length of","length 10","Nile 9"]]
+        }
+      ]
+    },
+    {
+      "raw": "A bear was strong.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "A bear 12 was strong.",
+          "type": "situation",
+          "entities": [{"id": "bear 12", "type": "concrete", "category": "animal"}],
+          "adjectives": [["strong","none","bear"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is a city.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Tallinn 13 is a city.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 13",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The man standing by the door coughed.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "The man 14 is standing by the door 15.",
+          "type": "situation",
+          "entities": [{"id": "man 14", "type": "concrete", "category": "person"},
+            {"id": "door 15", "type": "concrete", "category": "artifact"}
+          ],
+          "time": "past"
+        },
+        {
+          "unit_id": "S12",
+          "text": "The man 14 coughed.",
+          "type": "situation",
+          "entities": [{"id": "man 14", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "cough", "mode": "event", "roles": {"actor": "man 14"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Where did Mary go?",
+      "units": [{
+          "unit_id": "S13",
+          "text": "Which entity did Mary 7 go to?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "Mary 7", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "go", "mode": "event", "roles": {"actor": "Mary 7", "destination": "entity"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds", "W0", ["and", ["isa","person","Agatha 1"], ["has property","trouble","Agatha 1"]]]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","animal","animal 2"],
+            ["isa","stone","stone 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","lift"],
+                ["has actor","E","animal 2"],
+                ["has target","E","stone 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W1",
+        ["and", ["isa","person","Mike 4"], ["has degree property","nice","Mike 4","none","person"]]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","John 5"],
+            ["isa","place","https://en.wikipedia.org/wiki/Paris"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","go"],
+                ["has actor","E","John 5"],
+                ["has destination","E","https://en.wikipedia.org/wiki/Paris","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","Mary 7"],
+            ["isa","place","https://en.wikipedia.org/wiki/London"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","go"],
+                ["has actor","E","Mary 7"],
+                ["has destination","E","https://en.wikipedia.org/wiki/London","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["forall","Y",
+              ["implies",
+                ["and", ["isa","wolf","X"], ["isa","mouse","Y"]],
+                ["normally", ["has degree rel2","afraid of","X","Y","none","wolf"]]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","length","length 10"],
+          ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$measure",80,"kilometer"]]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 10"],
+            ["is rel2","length of","length 10","https://en.wikipedia.org/wiki/Nile"]
+          ]
+        ],
+        ["@definite","S8","W0","length of","https://en.wikipedia.org/wiki/Nile","length 10"]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","bear","bear 12"],
+            ["has degree property","strong","bear 12","none","bear"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S10", ["holds", "W0", ["isa","city","https://en.wikipedia.org/wiki/Tallinn"]]],
+    ["@id","S11",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","man 14"],
+            ["isa","door","door 15"],
+            ["is rel2","stand by","man 14","door 15"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S12",
+      ["holds","W0",
+        ["and",
+          ["isa","person","man 14"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","cough"],
+              ["has actor","E","man 14"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S13",
+      ["ask","X",
+        ["and",
+          ["isa","person","Mary 7"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","go"],
+              ["has actor","E","Mary 7"],
+              ["has destination","E","X","at"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:Paris 6"],
+ "@nl": "John 5 went to Paris 6."},
+{"@name": "entity_S5",
+ "@logic": ["isa","place","#:London 8"],
+ "@nl": "Mary 7 went to London 8."},
+{"@name": "entity_S7",
+ "@logic": ["isa","place","#:Nile 9"],
+ "@nl": "The length 10 of Nile 9 is 80 kilometers 11."},
+{"@name": "entity_S7",
+ "@logic": ["isa","measure","80 kilometers 11"],
+ "@nl": "The length 10 of Nile 9 is 80 kilometers 11."},
+{"@name": "entity_S9",
+ "@logic": ["isa","animal","#:bear 12"],
+ "@nl": "A bear 12 was strong."},
+{"@name": "entity_S10",
+ "@logic": ["isa","place","#:Tallinn 13"],
+ "@nl": "Tallinn 13 is a city."},
+{"@name": "entity_S11",
+ "@logic": ["isa","man","#:man 14"],
+ "@nl": "The man 14 is standing by the door 15."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Agatha 1"],
+ "@nl": "Agatha 1 is in trouble."},
+{"@name": "sent_S1",
+ "@logic": ["has property", "trouble", "#:Agatha 1", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Agatha 1 is in trouble."},
+{"@name": "sent_S2",
+ "@logic": ["isa","animal","#:animal 2"],
+ "@nl": "The animal 2 lifted a stone 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","stone","#:stone 3"],
+ "@nl": "The animal 2 lifted a stone 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The animal 2 lifted a stone 3."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "lift", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The animal 2 lifted a stone 3."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:animal 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The animal 2 lifted a stone 3."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "#:stone 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The animal 2 lifted a stone 3."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The animal 2 lifted a stone 3."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The animal 2 lifted a stone 3."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The animal 2 lifted a stone 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Mike 4"],
+ "@nl": "Mike 4 is nice."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "good", "#:Mike 4", "none", "person", ["$ctxt","present","W1","?:Fv5","?:Fv6"]],
+ "@nl": "Mike 4 is nice."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:John 5"],
+ "@nl": "John 5 went to Paris 6."},
+{"@name": "sent_S4",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/Paris"],
+ "@nl": "John 5 went to Paris 6."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "John 5 went to Paris 6."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "go", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "John 5 went to Paris 6."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk1_activity", "#:John 5", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "John 5 went to Paris 6."},
+{"@name": "sent_S4",
+ "@logic": ["has destination", "sk1_activity", "https://en.wikipedia.org/wiki/Paris", "at", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "John 5 went to Paris 6."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "John 5 went to Paris 6."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "John 5 went to Paris 6."},
+{"@name": "sent_S4",
+ "@logic": ["next","W1","W2"],
+ "@nl": "John 5 went to Paris 6."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mary 7"],
+ "@nl": "Mary 7 went to London 8."},
+{"@name": "sent_S5",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/London"],
+ "@nl": "Mary 7 went to London 8."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Mary 7 went to London 8."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk2_activity", "go", ["$ctxt","past","W2","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 7 went to London 8."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:Mary 7", ["$ctxt","past","W2","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 7 went to London 8."},
+{"@name": "sent_S5",
+ "@logic": ["has destination", "sk2_activity", "https://en.wikipedia.org/wiki/London", "at", ["$ctxt","past","W2","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 7 went to London 8."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W2","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 7 went to London 8."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Mary 7 went to London 8."},
+{"@name": "sent_S5",
+ "@logic": ["next","W2","W3"],
+ "@nl": "Mary 7 went to London 8."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","wolf","?:X"],
+            ["-isa","mouse","?:Y"],
+            ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["$block", ["$","mouse",1], ["$not", ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]]]
+           ],
+ "@nl": "Wolves are afraid of mice."},
+{"@name": "sent_S7",
+ "@logic": ["isa", "length", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv17","?:Fv18"]]],
+ "@nl": "The length 10 of Nile 9 is 80 kilometers 11."},
+{"@name": "sent_S7",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The length 10 of Nile 9 is 80 kilometers 11."},
+{"@name": "sent_S8",
+ "@logic": ["isa", "length", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv17","?:Fv18"]]],
+ "@nl": "The length 10 is the length of Nile 9."},
+{"@name": "sent_S9",
+ "@logic": ["isa","bear","#:bear 12"],
+ "@nl": "A bear 12 was strong."},
+{"@name": "sent_S9",
+ "@logic": ["has degree property", "strong", "#:bear 12", "none", "bear", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "A bear 12 was strong."},
+{"@name": "sent_S10",
+ "@logic": ["isa","city","https://en.wikipedia.org/wiki/Tallinn"],
+ "@nl": "Tallinn 13 is a city."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:man 14"],
+ "@nl": "The man 14 is standing by the door 15."},
+{"@name": "sent_S11",
+ "@logic": ["isa","door","#:door 15"],
+ "@nl": "The man 14 is standing by the door 15."},
+{"@name": "sent_S11",
+ "@logic": ["is rel2", "stand by", "#:man 14", "#:door 15", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The man 14 is standing by the door 15."},
+{"@name": "sent_S12",
+ "@logic": ["isa","person","#:man 14"],
+ "@nl": "The man 14 coughed."},
+{"@name": "sent_S12",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The man 14 coughed."},
+{"@name": "sent_S12",
+ "@logic": ["has type", "sk3_activity", "cough", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "The man 14 coughed."},
+{"@name": "sent_S12",
+ "@logic": ["has actor", "sk3_activity", "#:man 14", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "The man 14 coughed."},
+{"@name": "sent_S12",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "The man 14 coughed."},
+{"@name": "sent_S12",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "The man 14 coughed."},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa","person","#:Mary 7"]],
+ "@nl": "Which entity did Mary 7 go to?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "activity", ["sk4","?:X"]]],
+ "@nl": "Which entity did Mary 7 go to?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has type", ["sk4","?:X"], "go", ["$ctxt","past","?:Fv34","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Which entity did Mary 7 go to?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has actor", ["sk4","?:X"], "#:Mary 7", ["$ctxt","past","?:Fv36","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Which entity did Mary 7 go to?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has destination", ["sk4","?:X"], "?:X", "at", ["$ctxt","past","?:Fv38","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Which entity did Mary 7 go to?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["has time", ["sk4","?:X"], "past", "in", ["$ctxt","past","?:Fv40","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Which entity did Mary 7 go to?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["actuality", ["sk4","?:X"]]],
+ "@nl": "Which entity did Mary 7 go to?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:Mary 7"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "go", ["$ctxt","past","?:Fv46","?:Fv27","?:Fv28"]],
+            ["-has actor", "?:E", "#:Mary 7", ["$ctxt","past","?:Fv48","?:Fv27","?:Fv28"]],
+            ["-has destination", "?:E", "?:X", "at", ["$ctxt","past","?:Fv50","?:Fv27","?:Fv28"]],
+            ["-actuality","?:E"],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which entity did Mary 7 go to?"},
+{"@name": "sent_S13",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@nl": "Which entity did Mary 7 go to?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Nile", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv17","?:Fv18"]], ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Nile", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv17","?:Fv18"]], ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "length of", ["$theof1","length","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "length", ["$theof1","length","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","wolf","$some_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","wolf","$some_not_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","mouse","$some_mouse"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","mouse","$some_not_mouse"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv54"], ["has type","?:E","go","?:Fv54"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv85", ["$ctxt","past","?:Fv55","?:Fv56","?:Fv57"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv86", ["$ctxt","present","?:Fv55","?:Fv56","?:Fv57"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv87", ["$ctxt","present","?:Fv55","?:Fv56","?:Fv57"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv58","?:Fv59","?:Fv60"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv58","?:Fv59","?:Fv60"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv58","?:Fv59","?:Fv60"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_measure_rel_bridge",
+ "@logic": [["-=", ["$measure_of","length","?:S","?:W"], "?:V"],
+            ["is rel2","length of","?:V","?:S","?:Ctxt"]
+           ],
+ "@nl": "[generated: frm_measure_rel_bridge]"},
+{"@name": "pop_what",
+ "@logic": ["isa","stone","$some_stone"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","measure","$some_measure"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","city","$some_city"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","man","$some_man"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","place","$some_place"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","door","$some_door"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","https://en.wikipedia.org/wiki/London"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S13","assumption",1], [["-isa","person","#:Mary 7"], ["-has destination", "?:X", "?:Y", "at", ["$ctxt","past","?:Z","?:U","?:V"]], ["-has type", "?:X", "go", ["$ctxt","past","?:W","?:U","?:V"]], ["-has actor", "?:X", "#:Mary 7", ["$ctxt","past","?:2006","?:U","?:V"]], ["-isa","activity","?:X"], ["-actuality","?:X"], ["$defq0","?:Y"]]],
+          [2, ["in","sent_S5","assumption",1], [["isa","person","#:Mary 7"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["-has destination", "?:X", "?:Y", "at", ["$ctxt","past","?:Z","?:U","?:V"]], ["-has type", "?:X", "go", ["$ctxt","past","?:W","?:U","?:V"]], ["-has actor", "?:X", "#:Mary 7", ["$ctxt","past","?:2006","?:U","?:V"]], ["-isa","activity","?:X"], ["-actuality","?:X"], ["$defq0","?:Y"]]],
+          [4, ["in","sent_S13","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [5, ["mp", [3,5], 4, "fromga", 1], [["-has destination", "?:X", "?:Y", "at", ["$ctxt","past","?:Z","?:U","?:V"]], ["-has type", "?:X", "go", ["$ctxt","past","?:W","?:U","?:V"]], ["-has actor", "?:X", "#:Mary 7", ["$ctxt","past","?:2006","?:U","?:V"]], ["-isa","activity","?:X"], ["-actuality","?:X"], ["$ans","?:Y"]]],
+          [6, ["in","sent_S5","assumption",1], [["isa","activity","sk2_activity"]]],
+          [7, ["mp", [1,4], 6, "fromassumption", 1], [["-isa","person","#:Mary 7"], ["-actuality","sk2_activity"], ["-has destination", "sk2_activity", "?:X", "at", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has type", "sk2_activity", "go", ["$ctxt","past","?:V","?:Z","?:U"]], ["-has actor", "sk2_activity", "#:Mary 7", ["$ctxt","past","?:W","?:Z","?:U"]], ["$defq0","?:X"]]],
+          [8, ["in","sent_S5","assumption",1], [["actuality","sk2_activity"]]],
+          [9, ["mp", [7,1], 8, "fromassumption", 1], [["-isa","person","#:Mary 7"], ["-has destination", "sk2_activity", "?:X3", "at", ["$ctxt","past","?:Y3","?:Z3","?:U3"]], ["-has type", "sk2_activity", "go", ["$ctxt","past","?:V3","?:Z3","?:U3"]], ["-has actor", "sk2_activity", "#:Mary 7", ["$ctxt","past","?:W3","?:Z3","?:U3"]], ["$defq0","?:X3"]]],
+          [10, ["simp",9,2,"fromassumption",1], [["-has destination", "sk2_activity", "?:X", "at", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has type", "sk2_activity", "go", ["$ctxt","past","?:V","?:Z","?:U"]], ["-has actor", "sk2_activity", "#:Mary 7", ["$ctxt","past","?:W","?:Z","?:U"]], ["$defq0","?:X"]]],
+          [11, ["in","sent_S5","assumption",1], [["has destination", "sk2_activity", "https://en.wikipedia.org/wiki/London", "at", ["$ctxt","past","W2","?:X","?:Y"]]]],
+          [12, ["mp",10,11,"fromassumption",1], [["$defq0","https://en.wikipedia.org/wiki/London"], ["-has type", "sk2_activity", "go", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has actor", "sk2_activity", "#:Mary 7", ["$ctxt","past","?:U","?:Y","?:Z"]]]],
+          [13, ["in","sent_S5","assumption",1], [["has type", "sk2_activity", "go", ["$ctxt","past","W2","?:X","?:Y"]]]],
+          [14, ["mp", [12,1], 13, "fromassumption", 1], [["$defq0","https://en.wikipedia.org/wiki/London"], ["-has actor", "sk2_activity", "#:Mary 7", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [15, ["in","sent_S5","assumption",1], [["has actor", "sk2_activity", "#:Mary 7", ["$ctxt","past","W2","?:X","?:Y"]]]],
+          [16, ["mp", [14,1], 15, "fromassumption", 1], [["$defq0","https://en.wikipedia.org/wiki/London"]]],
+          [17, ["in","sent_S13","assumption",1], [["has destination", ["sk4","?:X"], "?:X", "at", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-$defq0","?:X"]]],
+          [18, ["mp", 16, [17,1], "fromassumption", 1], [["has destination", ["sk4","https://en.wikipedia.org/wiki/London"], "https://en.wikipedia.org/wiki/London", "at", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [19, ["mp",5,18,"fromga",1], [["-isa", "activity", ["sk4","https://en.wikipedia.org/wiki/London"]], ["-actuality", ["sk4","https://en.wikipedia.org/wiki/London"]], ["$ans","https://en.wikipedia.org/wiki/London"], ["-has type", ["sk4","https://en.wikipedia.org/wiki/London"], "go", ["$ctxt","past","?:X3","?:Y3","?:Z3"]], ["-has actor", ["sk4","https://en.wikipedia.org/wiki/London"], "#:Mary 7", ["$ctxt","past","?:U3","?:Y3","?:Z3"]]]],
+          [20, ["mp", [1,1], 11, "fromassumption", 1], [["-isa","activity","sk2_activity"], ["-isa","person","#:Mary 7"], ["-actuality","sk2_activity"], ["$defq0","https://en.wikipedia.org/wiki/London"], ["-has type", "sk2_activity", "go", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has actor", "sk2_activity", "#:Mary 7", ["$ctxt","past","?:U","?:Y","?:Z"]]]],
+          [21, ["mp", [20,4], 13, "fromassumption", 1], [["-isa","activity","sk2_activity"], ["-isa","person","#:Mary 7"], ["-actuality","sk2_activity"], ["$defq0","https://en.wikipedia.org/wiki/London"], ["-has actor", "sk2_activity", "#:Mary 7", ["$ctxt","past","?:X3","?:Y3","?:Z3"]]]],
+          [22, ["simp",21,6,2,8,"fromassumption",1], [["$defq0","https://en.wikipedia.org/wiki/London"], ["-has actor", "sk2_activity", "#:Mary 7", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [23, ["mp", [22,1], 15, "fromassumption", 1], [["$defq0","https://en.wikipedia.org/wiki/London"]]],
+          [24, ["in","sent_S13","assumption",1], [["has type", ["sk4","?:X"], "go", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-$defq0","?:X"]]],
+          [25, ["mp", 23, [24,1], "fromassumption", 1], [["has type", ["sk4","https://en.wikipedia.org/wiki/London"], "go", ["$ctxt","past","?:X3","?:Y3","?:Z3"]]]],
+          [26, ["in","sent_S13","assumption",1], [["isa", "activity", ["sk4","?:X"]], ["-$defq0","?:X"]]],
+          [27, ["mp", 23, [26,1], "fromassumption", 1], [["isa", "activity", ["sk4","https://en.wikipedia.org/wiki/London"]]]],
+          [28, ["in","sent_S13","assumption",1], [["actuality", ["sk4","?:X"]], ["-$defq0","?:X"]]],
+          [29, ["mp", 23, [28,1], "fromassumption", 1], [["actuality", ["sk4","https://en.wikipedia.org/wiki/London"]]]],
+          [30, ["simp",19,25,27,29,"fromga",1], [["$ans","https://en.wikipedia.org/wiki/London"], ["-has actor", ["sk4","https://en.wikipedia.org/wiki/London"], "#:Mary 7", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [31, ["in","sent_S13","assumption",1], [["has actor", ["sk4","?:X"], "#:Mary 7", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-$defq0","?:X"]]],
+          [32, ["mp", [30,1], 31, "fromga", 1], [["-$defq0","https://en.wikipedia.org/wiki/London"], ["$ans","https://en.wikipedia.org/wiki/London"]]],
+          [33, ["simp",32,23,"fromga",1], [["$ans","https://en.wikipedia.org/wiki/London"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John went to Paris and Mary to London.",
+"  (2) Where did Mary go?",
+"Proof steps:",
+"  (1) If Mary is a person and some Y is a destination of X and X is a go event and Mary performs X and X is an activity then Y is the answer  [sentence 2]",
+"  (2) Mary is a person  [sentence 1]",
+"  (3) If some Y is a destination of X and X is a go event and Mary performs X and X is an activity then Y is the answer  [from steps 1, 2]",
+"  (4) technical answer unwrap step  [from question]",
+"  (5) If some Y is a destination of X and X is a go event and Mary performs X and X is an activity then Y is an answer  [from steps 3, 4]",
+"  (6) The event act3 is an activity  [sentence 1]",
+"  (7) If Mary is a person and some X is the destination of the event act3 and the act3 is a go event and Mary performs the act3 then X is the answer  [from steps 1, 6]",
+"  (8)   [sentence 1]",
+"  (9) If Mary is a person and some X3 is the destination of the event act3 and the act3 is a go event and Mary performs the act3 then X3 is the answer  [from steps 7, 8]",
+"  (10) If some X is the destination of the event act3 and the act3 is a go event and Mary performs the act3 then X is the answer  [from steps 9, 2]",
+"  (11) London is the destination of the event act3  [sentence 1]",
+"  (12) If the event act3 is a go event and Mary performs the act3 then London is the answer  [from steps 10, 11]",
+"  (13) The event act3 is a go event  [sentence 1]",
+"  (14) If Mary performs the event act3 then London is the answer  [from steps 12, 13]",
+"  (15) Mary performs the event act3  [sentence 1]",
+"  (16) London is the answer  [from steps 14, 15]",
+"  (17) If some X is the answer then X is the destination of the going event sk4 of X  [sentence 2]",
+"  (18) London is the destination of the going event sk4 of https://en.wikipedia.org/wiki/London  [from steps 16, 17]",
+"  (19) If the going event sk4 of https://en.wikipedia.org/wiki/London is an activity and sk4 of https://en.wikipedia.org/wiki/London is a go event and Mary performs sk4 of https://en.wikipedia.org/wiki/London then London is an answer  [from steps 5, 18]",
+"  (20) If the event act3 is an activity and Mary is a person and the act3 is a go event and Mary performs the act3 then London is the answer  [from steps 1, 11]",
+"  (21) If the event act3 is an activity and Mary is a person and Mary performs the act3 then London is the answer  [from steps 20, 13]",
+"  (22) If Mary performs the event act3 then London is the answer  [from steps 21, 6, 2, 8]",
+"  (23) London is the answer  [from steps 22, 15]",
+"  (24) If some X is the answer then sk4 of X is a go event  [sentence 2]",
+"  (25) sk4 of https://en.wikipedia.org/wiki/London is a go event  [from steps 23, 24]",
+"  (26) If some X is the answer then the going event sk4 of X is an activity  [sentence 2]",
+"  (27) The going event sk4 of https://en.wikipedia.org/wiki/London is an activity  [from steps 23, 26]",
+"  (28) X is not the answer  [sentence 2]",
+"  (29)   [from steps 23, 28]",
+"  (30) If Mary performs the going event sk4 of https://en.wikipedia.org/wiki/London then London is an answer  [from steps 19, 25, 27, 29]",
+"  (31) If some X is the answer then Mary performs the going event sk4 of X  [sentence 2]",
+"  (32) technical answer unwrap step  [from steps 30, 31]",
+"  (33) London is an answer  [from steps 32, 23]"
+],
+  "llm_usage": [{
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34099,
+      "cached_input_tokens": 34048,
+      "output_tokens": 701,
+      "raw": {
+        "prompt_tokens": 34099,
+        "completion_tokens": 701,
+        "total_tokens": 34800,
+        "prompt_tokens_details": {"cached_tokens": 34048},
+        "completion_tokens_details": {"reasoning_tokens": 655},
+        "prompt_cache_hit_tokens": 34048,
+        "prompt_cache_miss_tokens": 51
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34166,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1006,
+      "raw": {
+        "prompt_tokens": 34166,
+        "completion_tokens": 1006,
+        "total_tokens": 35172,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 889},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 246
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34109,
+      "cached_input_tokens": 33920,
+      "output_tokens": 349,
+      "raw": {
+        "prompt_tokens": 34109,
+        "completion_tokens": 349,
+        "total_tokens": 34458,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 302},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 189
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34334,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1867,
+      "raw": {
+        "prompt_tokens": 34334,
+        "completion_tokens": 1867,
+        "total_tokens": 36201,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1588},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 414
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34124,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1590,
+      "raw": {
+        "prompt_tokens": 34124,
+        "completion_tokens": 1590,
+        "total_tokens": 35714,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1499},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 204
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34292,
+      "cached_input_tokens": 33920,
+      "output_tokens": 3090,
+      "raw": {
+        "prompt_tokens": 34292,
+        "completion_tokens": 3090,
+        "total_tokens": 37382,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 2926},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 372
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34109,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1032,
+      "raw": {
+        "prompt_tokens": 34109,
+        "completion_tokens": 1032,
+        "total_tokens": 35141,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 960},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 189
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34104,
+      "cached_input_tokens": 33920,
+      "output_tokens": 226,
+      "raw": {
+        "prompt_tokens": 34104,
+        "completion_tokens": 226,
+        "total_tokens": 34330,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 192},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 184
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34214,
+      "cached_input_tokens": 33920,
+      "output_tokens": 2338,
+      "raw": {
+        "prompt_tokens": 34214,
+        "completion_tokens": 2338,
+        "total_tokens": 36552,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 2166},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 294
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34149,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1261,
+      "raw": {
+        "prompt_tokens": 34149,
+        "completion_tokens": 1261,
+        "total_tokens": 35410,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1158},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 229
+      }
+    }
+  ],
+  "timestamp": "2026-06-13T00:39:21Z"
+}

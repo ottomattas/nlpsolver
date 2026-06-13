@@ -1,0 +1,1173 @@
+{
+  "test_name": "core_100_b16_slightcoarse",
+  "case_id": 536,
+  "input_text": "If X1 is a grandfather of Y1, Y1 is not a child of X1. Birds fly and eat. John, a doctor, arrived. The blue straw is 5 meters long. Anna handed Mark a key. Dole was defeated by Clinton. The tree was cut by the farmer. Emajogi's length is 80 kilometers. The road leading to the village was narrow. Elephants are animals. Eve kept the milk in the fridge. Apparently, Tom left early. Dr. Smith, a surgeon, entered the room. The student carrying the books greeted the teacher. Mary managed to solve the puzzle. Unexpectedly, the door opened. The street is in Tallinn. All elephants are not animals?",
+  "expected_answer": false,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "If X1 is a grandfather of Y1, Y1 is not a child of X1.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "If X1 is a grandfather of Y1, Y1 is not a child of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"}, {"id": "Y1", "type": "generic"}]
+        }
+      ]
+    },
+    {
+      "raw": "Birds fly and eat.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Birds fly.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}],
+          "confidence": 0.99
+        },
+        {
+          "unit_id": "S3",
+          "text": "Birds eat.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "eat", "mode": "habitual"}],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "John, a doctor, arrived.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "John 1 is a doctor.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}]
+        },
+        {
+          "unit_id": "S5",
+          "text": "John 1 arrived.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "arrive", "mode": "event"}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The blue straw is 5 meters long.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The blue straw 1 is 5 meters long.",
+          "type": "situation",
+          "entities": [{"id": "straw 1", "type": "concrete", "category": "artifact"},
+            {"id": "5 meters", "type": "concrete", "category": "measure"}
+          ],
+          "adjectives": [["blue","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "Anna handed Mark a key.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Anna 1 handed Mark 2 a key 3.",
+          "type": "situation",
+          "entities": [{"id": "Anna 1", "type": "concrete", "category": "person"},
+            {"id": "Mark 2", "type": "concrete", "category": "person"},
+            {"id": "key 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "hand",
+              "mode": "event",
+              "roles": {"actor": "Anna 1", "recipient": "Mark 2", "target": "key 3"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Dole was defeated by Clinton.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Clinton 1 defeated Dole 2.",
+          "type": "situation",
+          "entities": [{"id": "Clinton 1", "type": "concrete", "category": "person"},
+            {"id": "Dole 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "defeat", "mode": "event", "roles": {"actor": "Clinton 1", "target": "Dole 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The tree was cut by the farmer.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "The farmer 1 cut the tree 2.",
+          "type": "situation",
+          "entities": [{"id": "farmer 1", "type": "concrete", "category": "person"},
+            {"id": "tree 2", "type": "concrete", "category": "plant"}
+          ],
+          "actions": [{"root": "cut", "mode": "event", "roles": {"actor": "farmer 1", "target": "tree 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Emajogi's length is 80 kilometers.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "The length 2 of Emajogi 1 is 80 kilometers.",
+          "type": "real",
+          "entities": [{
+              "id": "Emajogi 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Emajogi"
+            },
+            {"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "80 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 2","Emajogi 1"]]
+        },
+        {
+          "unit_id": "S11",
+          "text": "The length 2 is the length of Emajogi 1.",
+          "type": "real",
+          "entities": [{"id": "length 2", "type": "concrete", "text": "length"},
+            {
+              "id": "Emajogi 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Emajogi"
+            }
+          ],
+          "definites": [["length of","length 2","Emajogi 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "The road leading to the village was narrow.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "The road 1 led to the village 2.",
+          "type": "situation",
+          "entities": [{"id": "road 1", "type": "concrete", "category": "place"},
+            {"id": "village 2", "type": "concrete", "category": "place"}
+          ],
+          "time": "past"
+        },
+        {
+          "unit_id": "S13",
+          "text": "The road 1 was narrow.",
+          "type": "situation",
+          "entities": [{"id": "road 1", "type": "concrete", "category": "place"}],
+          "adjectives": [["narrow","none","road"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants are animals.",
+      "units": [{
+          "unit_id": "S14",
+          "text": "Elephants are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Eve kept the milk in the fridge.",
+      "units": [{
+          "unit_id": "S15",
+          "text": "Eve 1 kept the milk 2 in the fridge 3.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "milk 2", "type": "concrete", "category": "substance"},
+            {"id": "fridge 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "keep",
+              "mode": "event",
+              "roles": {"target": "milk 2", "location": "fridge 3", "location_prep": "in"}
+            }
+          ],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Apparently, Tom left early.",
+      "units": [{
+          "unit_id": "S16",
+          "text": "Tom 1 left early.",
+          "type": "situation",
+          "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "leave", "mode": "event"}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Dr. Smith, a surgeon, entered the room.",
+      "units": [{
+          "unit_id": "S17",
+          "text": "Dr. Smith 1 is a surgeon.",
+          "type": "situation",
+          "entities": [{"id": "Dr. Smith 1", "type": "concrete", "category": "person"}]
+        },
+        {
+          "unit_id": "S18",
+          "text": "Dr. Smith 1 entered the room 2.",
+          "type": "situation",
+          "entities": [{"id": "Dr. Smith 1", "type": "concrete", "category": "person"},
+            {"id": "room 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "enter", "mode": "event", "roles": {"destination": "room 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The student carrying the books greeted the teacher.",
+      "units": [{
+          "unit_id": "S19",
+          "text": "The student 1 carried the books 2.",
+          "type": "situation",
+          "entities": [{"id": "student 1", "type": "concrete", "category": "person"},
+            {"id": "books 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "carry", "mode": "event", "roles": {"target": "books 2"}}],
+          "pre_state": "W0",
+          "time": "past"
+        },
+        {
+          "unit_id": "S20",
+          "text": "The student 1 greeted the teacher 3.",
+          "type": "situation",
+          "entities": [{"id": "student 1", "type": "concrete", "category": "person"},
+            {"id": "teacher 3", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "greet", "mode": "event", "roles": {"target": "teacher 3"}}],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary managed to solve the puzzle.",
+      "units": [{
+          "unit_id": "S21",
+          "text": "Mary 1 solved the puzzle 2.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "puzzle 2", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "solve", "mode": "event", "roles": {"target": "puzzle 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Unexpectedly, the door opened.",
+      "units": [{
+          "unit_id": "S22",
+          "text": "The door 1 opened.",
+          "type": "situation",
+          "entities": [{"id": "door 1", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "open", "mode": "event"}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The street is in Tallinn.",
+      "units": [{
+          "unit_id": "S23",
+          "text": "The street 1 is in Tallinn 2.",
+          "type": "real",
+          "entities": [{"id": "street 1", "type": "concrete", "category": "place"},
+            {
+              "id": "Tallinn 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "All elephants are not animals?",
+      "units": [{
+          "unit_id": "S24",
+          "text": "Are all elephants not animals?",
+          "type": "query",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies",
+              ["is rel2","grandfather of","X1","Y1"],
+              ["not", ["is rel2","child of","Y1","X1"]]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","fly"],
+                    ["has actor","E","X"],
+                    ["capability","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","eat"],
+                    ["has actor","E","X"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S3",0.99]
+      ]
+    ],
+    ["@id", "S4", ["holds", "W0", ["isa","doctor","John 1"]]],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","arrive"],
+              ["has actor","E","John 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","straw","straw 1"],
+          ["has degree property","blue","straw 1","none","none"],
+          ["=", ["$measure_of","length","straw 1","W0"], ["$measure",5,"meter"]]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Anna 1"],
+            ["isa","person","Mark 2"],
+            ["isa","key","key 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","hand"],
+                ["has actor","E","Anna 1"],
+                ["has recipient","E","Mark 2"],
+                ["has target","E","key 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Clinton 1"],
+            ["isa","person","Dole 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","defeat"],
+                ["has actor","E","Clinton 1"],
+                ["has target","E","Dole 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","farmer 1"],
+            ["isa","tree","tree 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","cut"],
+                ["has actor","E","farmer 1"],
+                ["has target","E","tree 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$measure",80,"kilometer"]]
+      ]
+    ],
+    ["@id","S11",
+      ["holds","W0",
+        ["and",
+          ["isa","length","length 2"],
+          ["@definite","S11","W0","length of","https://en.wikipedia.org/wiki/Emajogi","length 2"]
+        ]
+      ]
+    ],
+    ["@id", "S12", ["holds", "W0", ["@time", "past", ["is rel2","lead to","road 1","village 2"]]]],
+    ["@id","S13",
+      ["holds","W0",
+        ["and",
+          ["isa","road","road 1"],
+          ["@time", "past", ["has degree property","narrow","road 1","none","road"]]
+        ]
+      ]
+    ],
+    ["@id","S14",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S15",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["isa","milk","milk 2"],
+          ["isa","fridge","fridge 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","keep"],
+              ["has actor","E","Eve 1"],
+              ["has target","E","milk 2"],
+              ["has location","E","fridge 3","in"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S16",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Tom 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","leave"],
+              ["has actor","E","Tom 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S17", ["holds", "W0", ["isa","surgeon","Dr. Smith 1"]]],
+    ["@id","S18",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Dr. Smith 1"],
+            ["isa","room","room 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","enter"],
+                ["has actor","E","Dr. Smith 1"],
+                ["has destination","E","room 2","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S19",
+      ["holds","W0",
+        ["and",
+          ["isa","person","student 1"],
+          ["isa","book","books 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","carry"],
+              ["has actor","E","student 1"],
+              ["has target","E","books 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S20",
+      ["holds","W0",
+        ["and",
+          ["isa","person","student 1"],
+          ["isa","person","teacher 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","greet"],
+              ["has actor","E","student 1"],
+              ["has target","E","teacher 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S21",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 1"],
+            ["isa","puzzle","puzzle 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","solve"],
+                ["has actor","E","Mary 1"],
+                ["has target","E","puzzle 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S22",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","door","door 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","open"],
+                ["has actor","E","door 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S23",
+      ["holds","W0",
+        ["and",
+          ["isa","street","street 1"],
+          ["isa","Tallinn","https://en.wikipedia.org/wiki/Tallinn"],
+          ["is rel2","in","street 1","https://en.wikipedia.org/wiki/Tallinn"]
+        ]
+      ]
+    ],
+    ["@id","S24",
+      ["question",
+        ["forall", "X", ["implies", ["isa","elephant","X"], ["not", ["isa","animal","X"]]]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is a doctor."},
+{"@name": "entity_S6",
+ "@logic": ["isa","measure","5 meters"],
+ "@nl": "The blue straw 1 is 5 meters long."},
+{"@name": "entity_S9",
+ "@logic": ["isa","farmer","#:farmer 1"],
+ "@nl": "The farmer 1 cut the tree 2."},
+{"@name": "entity_S10",
+ "@logic": ["isa","place","#:Emajogi 1"],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "entity_S10",
+ "@logic": ["isa","measure","80 kilometers"],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "entity_S12",
+ "@logic": ["isa","place","#:village 2"],
+ "@nl": "The road 1 led to the village 2."},
+{"@name": "entity_S12",
+ "@logic": ["isa","village","#:village 2"],
+ "@nl": "The road 1 led to the village 2."},
+{"@name": "entity_S19",
+ "@logic": ["isa","student","#:student 1"],
+ "@nl": "The student 1 carried the books 2."},
+{"@name": "entity_S19",
+ "@logic": ["isa","book","#:books 2"],
+ "@nl": "The student 1 carried the books 2."},
+{"@name": "entity_S20",
+ "@logic": ["isa","teacher","#:teacher 3"],
+ "@nl": "The student 1 greeted the teacher 3."},
+{"@name": "entity_S23",
+ "@logic": ["isa","place","#:Tallinn 2"],
+ "@nl": "The street 1 is in Tallinn 2."},
+{"@name": "sent_S1",
+ "@logic": [["-is rel2", "grandfather of", "?:X1", "?:Y1", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-is rel2", "child of", "?:Y1", "?:X1", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]
+           ],
+ "@nl": "If X1 is a grandfather of Y1, Y1 is not a child of X1."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk0","?:X"]]],
+ "@nl": "Birds fly."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk0","?:X"], "fly", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Birds fly."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk0","?:X"], "?:X", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Birds fly."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bird","?:X"],
+            ["capability", ["sk0","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk0","?:X"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Birds fly."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk1","?:X"]]],
+ "@nl": "Birds eat."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk1","?:X"], "eat", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Birds eat."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk1","?:X"], "?:X", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "Birds eat."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"],
+            ["typical", ["sk1","?:X"], ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","bird",1], ["$not", ["typical", ["sk1","?:X"], ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Birds eat."},
+{"@name": "sent_S4",
+ "@logic": ["isa","doctor","#:John 1"],
+ "@nl": "John 1 is a doctor."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "John 1 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk2_activity", "arrive", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "John 1 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:John 1", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "John 1 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "John 1 arrived."},
+{"@name": "sent_S5",
+ "@logic": ["next","W0","W1"],
+ "@nl": "John 1 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["isa","straw","#:straw 1"],
+ "@nl": "The blue straw 1 is 5 meters long."},
+{"@name": "sent_S6",
+ "@logic": ["has property", "blue", "#:straw 1", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The blue straw 1 is 5 meters long."},
+{"@name": "sent_S6",
+ "@logic": ["=", ["$measure_of","length","#:straw 1","W0"], ["$list",5,"#:meter"]],
+ "@nl": "The blue straw 1 is 5 meters long."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Anna 1"],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Mark 2"],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S7",
+ "@logic": ["isa","important","#:key 3"],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk3_activity", "give", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk3_activity", "#:Anna 1", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S7",
+ "@logic": ["has recipient", "sk3_activity", "#:Mark 2", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S7",
+ "@logic": ["has target", "sk3_activity", "#:key 3", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S7",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Clinton 1"],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Dole 2"],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S8",
+ "@logic": ["-has type", "sk4_activity", "victory", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk4_activity", "#:Clinton 1", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk4_activity", "#:Dole 2", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S8",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Clinton 1 defeated Dole 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:farmer 1"],
+ "@nl": "The farmer 1 cut the tree 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","tree","#:tree 2"],
+ "@nl": "The farmer 1 cut the tree 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "The farmer 1 cut the tree 2."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk5_activity", "cut", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The farmer 1 cut the tree 2."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk5_activity", "#:farmer 1", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The farmer 1 cut the tree 2."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk5_activity", "#:tree 2", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The farmer 1 cut the tree 2."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The farmer 1 cut the tree 2."},
+{"@name": "sent_S9",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The farmer 1 cut the tree 2."},
+{"@name": "sent_S10",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "sent_S11",
+ "@logic": ["isa","length","#:length 2"],
+ "@nl": "The length 2 is the length of Emajogi 1."},
+{"@name": "sent_S12",
+ "@logic": ["is rel2", "lead to", "#:road 1", "#:village 2", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "The road 1 led to the village 2."},
+{"@name": "sent_S13",
+ "@logic": ["isa","road","#:road 1"],
+ "@nl": "The road 1 was narrow."},
+{"@name": "sent_S13",
+ "@logic": ["-has degree property", "wide", "#:road 1", "none", "road", ["$ctxt","past","W0","?:Fv31","?:Fv32"]],
+ "@nl": "The road 1 was narrow."},
+{"@name": "sent_S14",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Elephants are animals."},
+{"@name": "sent_S15",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S15",
+ "@logic": ["isa","milk","#:milk 2"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S15",
+ "@logic": ["isa","fridge","#:fridge 3"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S15",
+ "@logic": ["isa","activity","sk6_activity"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S15",
+ "@logic": ["has type", "sk6_activity", "keep", ["$ctxt","past","W0","?:Fv37","?:Fv38"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S15",
+ "@logic": ["has actor", "sk6_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv37","?:Fv38"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S15",
+ "@logic": ["has target", "sk6_activity", "#:milk 2", ["$ctxt","past","W0","?:Fv37","?:Fv38"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S15",
+ "@logic": ["has location", "sk6_activity", "#:fridge 3", "in", ["$ctxt","past","W0","?:Fv37","?:Fv38"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S15",
+ "@logic": ["has time", "sk6_activity", "past", "in", ["$ctxt","past","W0","?:Fv37","?:Fv38"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S16",
+ "@logic": ["isa","person","#:Tom 1"],
+ "@nl": "Tom 1 left early."},
+{"@name": "sent_S16",
+ "@logic": ["isa","activity","sk7_activity"],
+ "@nl": "Tom 1 left early."},
+{"@name": "sent_S16",
+ "@logic": ["has type", "sk7_activity", "leave", ["$ctxt","past","W0","?:Fv39","?:Fv40"]],
+ "@nl": "Tom 1 left early."},
+{"@name": "sent_S16",
+ "@logic": ["has actor", "sk7_activity", "#:Tom 1", ["$ctxt","past","W0","?:Fv39","?:Fv40"]],
+ "@nl": "Tom 1 left early."},
+{"@name": "sent_S16",
+ "@logic": ["has time", "sk7_activity", "past", "in", ["$ctxt","past","W0","?:Fv39","?:Fv40"]],
+ "@nl": "Tom 1 left early."},
+{"@name": "sent_S17",
+ "@logic": ["isa","surgeon","Dr. Smith 1"],
+ "@nl": "Dr. Smith 1 is a surgeon."},
+{"@name": "sent_S18",
+ "@logic": ["isa","person","Dr. Smith 1"],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S18",
+ "@logic": ["isa","room","#:room 2"],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S18",
+ "@logic": ["isa","activity","sk8_activity"],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S18",
+ "@logic": ["has type", "sk8_activity", "enter", ["$ctxt","past","W0","?:Fv43","?:Fv44"]],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S18",
+ "@logic": ["has actor", "sk8_activity", "Dr. Smith 1", ["$ctxt","past","W0","?:Fv43","?:Fv44"]],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S18",
+ "@logic": ["has destination", "sk8_activity", "#:room 2", "at", ["$ctxt","past","W0","?:Fv43","?:Fv44"]],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S18",
+ "@logic": ["has time", "sk8_activity", "past", "in", ["$ctxt","past","W0","?:Fv43","?:Fv44"]],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S18",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Dr. Smith 1 entered the room 2."},
+{"@name": "sent_S19",
+ "@logic": ["isa","person","#:student 1"],
+ "@nl": "The student 1 carried the books 2."},
+{"@name": "sent_S19",
+ "@logic": ["isa","book","#:books 2"],
+ "@nl": "The student 1 carried the books 2."},
+{"@name": "sent_S19",
+ "@logic": ["isa","activity","sk9_activity"],
+ "@nl": "The student 1 carried the books 2."},
+{"@name": "sent_S19",
+ "@logic": ["has type", "sk9_activity", "carry", ["$ctxt","past","W0","?:Fv45","?:Fv46"]],
+ "@nl": "The student 1 carried the books 2."},
+{"@name": "sent_S19",
+ "@logic": ["has actor", "sk9_activity", "#:student 1", ["$ctxt","past","W0","?:Fv45","?:Fv46"]],
+ "@nl": "The student 1 carried the books 2."},
+{"@name": "sent_S19",
+ "@logic": ["has target", "sk9_activity", "#:books 2", ["$ctxt","past","W0","?:Fv45","?:Fv46"]],
+ "@nl": "The student 1 carried the books 2."},
+{"@name": "sent_S19",
+ "@logic": ["has time", "sk9_activity", "past", "in", ["$ctxt","past","W0","?:Fv45","?:Fv46"]],
+ "@nl": "The student 1 carried the books 2."},
+{"@name": "sent_S20",
+ "@logic": ["isa","person","#:student 1"],
+ "@nl": "The student 1 greeted the teacher 3."},
+{"@name": "sent_S20",
+ "@logic": ["isa","person","#:teacher 3"],
+ "@nl": "The student 1 greeted the teacher 3."},
+{"@name": "sent_S20",
+ "@logic": ["isa","activity","sk10_activity"],
+ "@nl": "The student 1 greeted the teacher 3."},
+{"@name": "sent_S20",
+ "@logic": ["has type", "sk10_activity", "greet", ["$ctxt","past","W0","?:Fv47","?:Fv48"]],
+ "@nl": "The student 1 greeted the teacher 3."},
+{"@name": "sent_S20",
+ "@logic": ["has actor", "sk10_activity", "#:student 1", ["$ctxt","past","W0","?:Fv47","?:Fv48"]],
+ "@nl": "The student 1 greeted the teacher 3."},
+{"@name": "sent_S20",
+ "@logic": ["has target", "sk10_activity", "#:teacher 3", ["$ctxt","past","W0","?:Fv47","?:Fv48"]],
+ "@nl": "The student 1 greeted the teacher 3."},
+{"@name": "sent_S20",
+ "@logic": ["has time", "sk10_activity", "past", "in", ["$ctxt","past","W0","?:Fv47","?:Fv48"]],
+ "@nl": "The student 1 greeted the teacher 3."},
+{"@name": "sent_S21",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 solved the puzzle 2."},
+{"@name": "sent_S21",
+ "@logic": ["isa","puzzle","#:puzzle 2"],
+ "@nl": "Mary 1 solved the puzzle 2."},
+{"@name": "sent_S21",
+ "@logic": ["isa","activity","sk11_activity"],
+ "@nl": "Mary 1 solved the puzzle 2."},
+{"@name": "sent_S21",
+ "@logic": ["has type", "sk11_activity", "solve", ["$ctxt","past","W0","?:Fv49","?:Fv50"]],
+ "@nl": "Mary 1 solved the puzzle 2."},
+{"@name": "sent_S21",
+ "@logic": ["has actor", "sk11_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv49","?:Fv50"]],
+ "@nl": "Mary 1 solved the puzzle 2."},
+{"@name": "sent_S21",
+ "@logic": ["has target", "sk11_activity", "#:puzzle 2", ["$ctxt","past","W0","?:Fv49","?:Fv50"]],
+ "@nl": "Mary 1 solved the puzzle 2."},
+{"@name": "sent_S21",
+ "@logic": ["has time", "sk11_activity", "past", "in", ["$ctxt","past","W0","?:Fv49","?:Fv50"]],
+ "@nl": "Mary 1 solved the puzzle 2."},
+{"@name": "sent_S21",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Mary 1 solved the puzzle 2."},
+{"@name": "sent_S22",
+ "@logic": ["isa","door","#:door 1"],
+ "@nl": "The door 1 opened."},
+{"@name": "sent_S22",
+ "@logic": ["isa","activity","sk12_activity"],
+ "@nl": "The door 1 opened."},
+{"@name": "sent_S22",
+ "@logic": ["has type", "sk12_activity", "open", ["$ctxt","past","W0","?:Fv51","?:Fv52"]],
+ "@nl": "The door 1 opened."},
+{"@name": "sent_S22",
+ "@logic": ["has actor", "sk12_activity", "#:door 1", ["$ctxt","past","W0","?:Fv51","?:Fv52"]],
+ "@nl": "The door 1 opened."},
+{"@name": "sent_S22",
+ "@logic": ["has time", "sk12_activity", "past", "in", ["$ctxt","past","W0","?:Fv51","?:Fv52"]],
+ "@nl": "The door 1 opened."},
+{"@name": "sent_S22",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The door 1 opened."},
+{"@name": "sent_S23",
+ "@logic": ["isa","street","#:street 1"],
+ "@nl": "The street 1 is in Tallinn 2."},
+{"@name": "sent_S23",
+ "@logic": ["isa","tallinn","https://en.wikipedia.org/wiki/Tallinn"],
+ "@nl": "The street 1 is in Tallinn 2."},
+{"@name": "sent_S23",
+ "@logic": ["is rel2", "in", "#:street 1", "https://en.wikipedia.org/wiki/Tallinn", ["$ctxt","present","W0","?:Fv53","?:Fv54"]],
+ "@nl": "The street 1 is in Tallinn 2."},
+{"@name": "sent_S24",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","elephant","?:X"], ["-isa","animal","?:X"]],
+ "@nl": "Are all elephants not animals?"},
+{"@name": "sent_S24",
+ "@sourcetype": "question",
+ "@logic": [["isa","elephant","sk13_elephant"], ["$defq0"]],
+ "@nl": "Are all elephants not animals?"},
+{"@name": "sent_S24",
+ "@sourcetype": "question",
+ "@logic": [["isa","animal","sk13_elephant"], ["$defq0"]],
+ "@nl": "Are all elephants not animals?"},
+{"@name": "sent_S24",
+ "@question": ["$defq0"],
+ "@nl": "Are all elephants not animals?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S14",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S14",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S14",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S14",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv59"], ["has type","?:E","go","?:Fv59"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv60"], ["has type","?:E","give","?:Fv60"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","open","?:X"], ["isa","outside","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","outside","?:X"], ["isa","open","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv63","?:Fv64","?:Fv65"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv63","?:Fv64","?:Fv65"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv63","?:Fv64","?:Fv65"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv66","?:Fv67","?:Fv68"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv66","?:Fv67","?:Fv68"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv66","?:Fv67","?:Fv68"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "none", "?:Fv107", ["$ctxt","past","?:Fv69","?:Fv70","?:Fv71"]],
+            ["-has degree property", "wide", "?:X", "none", "?:Fv108", ["$ctxt","present","?:Fv69","?:Fv70","?:Fv71"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "none", "?:Fv109", ["$ctxt","present","?:Fv69","?:Fv70","?:Fv71"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv72","?:Fv73","?:Fv74"]],
+            ["-has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv72","?:Fv73","?:Fv74"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv72","?:Fv73","?:Fv74"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has destination","?:Esb","?:Xsb","?:Psb","?:Csb"],
+            ["has location","?:Esb","?:Xsb","?:Psb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has target","?:Esb","?:Ysb","?:Csb"],
+            ["-has recipient","?:Esb","?:Xsb","?:Csb"],
+            ["has recipient","?:Ysb","?:Xsb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S14","assumption",1], [["isa","elephant","$some_elephant"]]],
+          [2, ["in","sent_S24","assumption",1], [["-$defq0"], ["-isa","elephant","?:X"], ["-isa","animal","?:X"]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp", 1, [2,1], 3, "fromga", 1], [["-isa","animal","$some_elephant"]]],
+          [5, ["in","sent_S14","assumption",1], [["-isa","elephant","?:X"], ["isa","animal","?:X"]]],
+          [6, ["mp",1,5,"fromassumption",1], [["isa","animal","$some_elephant"]]],
+          [7, ["simp",4,6,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Elephants are animals.",
+"  (2) All elephants are not animals?",
+"Proof steps (by contradiction):",
+"  (1) An elephant is an elephant  [sentence 1]",
+"  (2) If answer holds and some X is an elephant then X is not an animal  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) An elephant is not an animal  [from steps 1, 2, 3]",
+"  (5) If some X is an elephant then X is an animal  [sentence 1]",
+"  (6) An elephant is an animal  [from steps 1, 5]",
+"  (7) Contradiction  [from steps 4, 6]"
+],
+  "timestamp": "2026-06-12T21:52:35Z"
+}

@@ -1,0 +1,704 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 1176,
+  "input_text": "Cities in Estonia are estonian. John eats big carrots. The tree was cut by the farmer. If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1. The train leaves at noon. The red square is nice. Emily is a cat. Elephants have trunks. Eve failed to finish the report. When does the train leave?",
+  "expected_answer": "At noon.",
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "At the noon.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Cities in Estonia are estonian.",
+      "units": [{
+          "adjectives": [["estonian","none","city"]],
+          "confidence": 0.95,
+          "entities": [{"category": "place", "id": "cities", "type": "generic"},
+            {
+              "category": "place",
+              "id": "Estonia 1",
+              "type": "concrete",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ],
+          "text": "Cities in Estonia 1 are estonian.",
+          "type": "normal_rule",
+          "unit_id": "S1"
+        }
+      ]
+    },
+    {
+      "raw": "John eats big carrots.",
+      "units": [{
+          "actions": [{"mode": "habitual", "roles": {"target": "carrots"}, "root": "eat"}],
+          "adjectives": [["big","none","carrot"]],
+          "entities": [{"category": "person", "id": "John 1", "type": "concrete"},
+            {"category": "plant", "id": "carrots", "scope": "dependent", "type": "generic"}
+          ],
+          "text": "John 1 eats big carrots.",
+          "type": "real",
+          "unit_id": "S2"
+        }
+      ]
+    },
+    {
+      "raw": "The tree was cut by the farmer.",
+      "units": [{
+          "actions": [{"mode": "event", "roles": {"actor": "farmer 2", "target": "tree 3"}, "root": "cut"}],
+          "entities": [{"category": "person", "id": "farmer 2", "type": "concrete"},
+            {"category": "plant", "id": "tree 3", "type": "concrete"}
+          ],
+          "next_state": "W1",
+          "pre_state": "W0",
+          "text": "The farmer 2 cut the tree 3.",
+          "time": "past",
+          "type": "situation",
+          "unit_id": "S3"
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.",
+      "units": [{
+          "entities": [{"category": "person", "id": "X1", "type": "generic"},
+            {"category": "person", "id": "Y1", "type": "generic"},
+            {"category": "person", "id": "Z1", "type": "generic"}
+          ],
+          "text": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.",
+          "type": "strict_rule",
+          "unit_id": "S4"
+        }
+      ]
+    },
+    {
+      "raw": "The train leaves at noon.",
+      "units": [{
+          "actions": [{"mode": "event", "root": "leave"}],
+          "entities": [{"category": "artifact", "id": "train 4", "type": "concrete"},
+            {"category": "abstract", "id": "noon", "type": "concrete"}
+          ],
+          "state_tense": "present",
+          "text": "The train 4 leaves at noon.",
+          "time": "noon",
+          "time_prep": "at",
+          "type": "situation",
+          "unit_id": "S5"
+        }
+      ]
+    },
+    {
+      "raw": "The red square is nice.",
+      "units": [{
+          "adjectives": [["nice","none","place"]],
+          "entities": [{
+              "category": "place",
+              "id": "Red Square 5",
+              "subtype": "compound",
+              "type": "concrete",
+              "url": "https://en.wikipedia.org/wiki/Red_Square"
+            }
+          ],
+          "text": "The Red Square 5 is nice.",
+          "time": "present",
+          "type": "situation",
+          "unit_id": "S6"
+        }
+      ]
+    },
+    {
+      "raw": "Emily is a cat.",
+      "units": [{
+          "entities": [{"category": "animal", "id": "Emily 6", "type": "concrete"},
+            {"category": "animal", "id": "cat", "type": "generic"}
+          ],
+          "text": "Emily 6 is a cat.",
+          "type": "situation",
+          "unit_id": "S7"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have trunks.",
+      "units": [{
+          "confidence": 0.99,
+          "entities": [{"category": "animal", "id": "elephants", "type": "generic"},
+            {"id": "trunks", "scope": "dependent", "type": "generic"}
+          ],
+          "text": "Elephants have trunks.",
+          "type": "normal_rule",
+          "unit_id": "S8"
+        }
+      ]
+    },
+    {
+      "raw": "Eve failed to finish the report.",
+      "units": [{
+          "actions": [{"mode": "event", "roles": {"actor": "Eve 7", "target": "report 8"}, "root": "finish"}],
+          "entities": [{"category": "person", "id": "Eve 7", "type": "concrete"},
+            {"category": "abstract", "id": "report 8", "type": "concrete"}
+          ],
+          "next_state": "W1",
+          "pre_state": "W0",
+          "text": "Eve 7 did not finish the report 8.",
+          "time": "past",
+          "type": "situation",
+          "unit_id": "S9"
+        }
+      ]
+    },
+    {
+      "raw": "When does the train leave?",
+      "units": [{
+          "actions": [{"mode": "event", "root": "leave"}],
+          "entities": [{"id": "time", "type": "generic", "wh_placeholder": true, "category": "abstract"},
+            {"category": "artifact", "id": "train 4", "type": "concrete"}
+          ],
+          "text": "When does the train 4 leave?",
+          "type": "query",
+          "unit_id": "S10"
+        }
+      ]
+    }
+  ],
+  "stage_1_retries": ["sanity #1: missing_wh_placeholder"],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["and",
+                ["isa","city","X"],
+                ["is rel2","in","X","https://en.wikipedia.org/wiki/Estonia"]
+              ],
+              ["normally", ["has degree property","estonian","X","none","city"]]
+            ]
+          ]
+        ],
+        ["@p","S1",0.95]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","eat"],
+              ["has actor","E","John 1"],
+              ["exists","Y",
+                ["and",
+                  ["isa","carrot","Y"],
+                  ["has degree property","big","Y","none","carrot"],
+                  ["has target","E","Y"]
+                ]
+              ],
+              ["typical","E"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","farmer","farmer 2"],
+            ["isa","tree","tree 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","cut"],
+                ["has actor","E","farmer 2"],
+                ["has target","E","tree 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["forall","X",
+          ["forall","Y",
+            ["forall","Z",
+              ["implies",
+                ["and", ["is rel2","father of","X","Y"], ["is rel2","father of","Y","Z"]],
+                ["is rel2","grandfather of","X","Z"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","train","train 4"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","leave"],
+              ["has actor","E","train 4"],
+              ["has time","E","noon","at"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","square","https://en.wikipedia.org/wiki/Red_Square"],
+          ["has degree property","nice","https://en.wikipedia.org/wiki/Red_Square","none","place"]
+        ]
+      ]
+    ],
+    ["@id", "S7", ["holds", "W0", ["isa","cat","Emily 6"]]],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S8",0.99]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Eve 7"],
+            ["isa","report","report 8"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","finish"],
+                  ["has actor","E","Eve 7"],
+                  ["has target","E","report 8"]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S10",
+      ["ask","X",
+        ["and",
+          ["isa","train","train 4"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","leave"],
+              ["has actor","E","train 4"],
+              ["has time","E","X","in"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","place","#:Estonia 1"],
+ "@nl": "Cities in Estonia 1 are estonian."},
+{"@name": "entity_S3",
+ "@logic": ["isa","person","#:farmer 2"],
+ "@nl": "The farmer 2 cut the tree 3."},
+{"@name": "entity_S5",
+ "@logic": ["isa","abstract","noon"],
+ "@nl": "The train 4 leaves at noon."},
+{"@name": "entity_S6",
+ "@logic": ["isa","place","#:Red Square 5"],
+ "@nl": "The Red Square 5 is nice."},
+{"@name": "entity_S7",
+ "@logic": ["isa","animal","#:Emily 6"],
+ "@nl": "Emily 6 is a cat."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","city","?:X"],
+            ["-is rel2", "in", "?:X", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["has property", "estonian", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","city",2], ["$not", ["has property", "estonian", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Cities in Estonia 1 are estonian."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 eats big carrots."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1 eats big carrots."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "eat", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 eats big carrots."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:John 1", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 eats big carrots."},
+{"@name": "sent_S2",
+ "@logic": ["isa","carrot","sk1_carrot"],
+ "@nl": "John 1 eats big carrots."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "big", "sk1_carrot", "none", "carrot", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 eats big carrots."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "sk1_carrot", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 eats big carrots."},
+{"@name": "sent_S2",
+ "@logic": ["typical", "sk0_activity", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 eats big carrots."},
+{"@name": "sent_S3",
+ "@logic": ["isa","farmer","#:farmer 2"],
+ "@nl": "The farmer 2 cut the tree 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","tree","#:tree 3"],
+ "@nl": "The farmer 2 cut the tree 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The farmer 2 cut the tree 3."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk2_activity", "cut", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The farmer 2 cut the tree 3."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk2_activity", "#:farmer 2", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The farmer 2 cut the tree 3."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk2_activity", "#:tree 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The farmer 2 cut the tree 3."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The farmer 2 cut the tree 3."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The farmer 2 cut the tree 3."},
+{"@name": "sent_S4",
+ "@logic": [["-is rel2", "father of", "?:X", "?:Y", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-is rel2", "father of", "?:Y", "?:Z", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["is rel2", "grandfather of", "?:X", "?:Z", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]
+           ],
+ "@nl": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1."},
+{"@name": "sent_S5",
+ "@logic": ["isa","train","#:train 4"],
+ "@nl": "The train 4 leaves at noon."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The train 4 leaves at noon."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk3_activity", "leave", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The train 4 leaves at noon."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk3_activity", "#:train 4", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The train 4 leaves at noon."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk3_activity", "noon", "at", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The train 4 leaves at noon."},
+{"@name": "sent_S5",
+ "@logic": ["=", ["$theof1","time","W0","?:Fv15"], ["$datetime","noon"]],
+ "@nl": "The train 4 leaves at noon."},
+{"@name": "sent_S6",
+ "@logic": ["-isa","round","https://en.wikipedia.org/wiki/Red_Square"],
+ "@nl": "The Red Square 5 is nice."},
+{"@name": "sent_S6",
+ "@logic": ["has degree property", "good", "https://en.wikipedia.org/wiki/Red_Square", "none", "place", ["$ctxt","present","W0","?:Fv16","?:Fv17"]],
+ "@nl": "The Red Square 5 is nice."},
+{"@name": "sent_S7",
+ "@logic": ["isa","cat","#:Emily 6"],
+ "@nl": "Emily 6 is a cat."},
+{"@name": "sent_S8",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk4","?:X"]]],
+ "@nl": "Elephants have trunks."},
+{"@name": "sent_S8",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk4","?:X"], ["$ctxt","?:Fv23","?:Fv22","?:Fv20","?:Fv21"]],
+            ["$block", ["$","elephant",1], ["$not", ["has part", "?:X", ["sk4","?:X"], ["$ctxt","?:Fv23","?:Fv22","?:Fv20","?:Fv21"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have trunks."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Eve 7"],
+ "@nl": "Eve 7 did not finish the report 8."},
+{"@name": "sent_S9",
+ "@logic": ["isa","report","#:report 8"],
+ "@nl": "Eve 7 did not finish the report 8."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "finish", ["$ctxt","past","W0","?:Fv24","?:Fv25"]],
+            ["-has actor", "?:E", "#:Eve 7", ["$ctxt","past","W0","?:Fv24","?:Fv25"]],
+            ["-has target", "?:E", "#:report 8", ["$ctxt","past","W0","?:Fv24","?:Fv25"]]
+           ],
+ "@nl": "Eve 7 did not finish the report 8."},
+{"@name": "sent_S9",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Eve 7 did not finish the report 8."},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"], ["isa","train","#:train 4"]],
+ "@nl": "When does the train 4 leave?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"], ["isa", "activity", ["sk5","?:X","?:_Prep"]]],
+ "@nl": "When does the train 4 leave?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["has type", ["sk5","?:X","?:_Prep"], "leave", ["$ctxt","?:Fv34","?:Fv33","?:Fv26","?:Fv27"]]
+           ],
+ "@nl": "When does the train 4 leave?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["has actor", ["sk5","?:X","?:_Prep"], "#:train 4", ["$ctxt","?:Fv36","?:Fv35","?:Fv26","?:Fv27"]]
+           ],
+ "@nl": "When does the train 4 leave?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:_Prep","?:X"],
+            ["has time", ["sk5","?:X","?:_Prep"], "?:X", "?:_Prep", ["$ctxt","?:Fv38","?:Fv37","?:Fv26","?:Fv27"]]
+           ],
+ "@nl": "When does the train 4 leave?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-isa","train","#:train 4"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "leave", ["$ctxt","?:Fv44","?:Fv43","?:Fv26","?:Fv27"]],
+            ["-has actor", "?:E", "#:train 4", ["$ctxt","?:Fv46","?:Fv45","?:Fv26","?:Fv27"]],
+            ["-has time", "?:E", "?:X", "?:_Prep", ["$ctxt","?:Fv48","?:Fv47","?:Fv26","?:Fv27"]],
+            ["$defq0","?:_Prep","?:X"]
+           ],
+ "@nl": "When does the train 4 leave?"},
+{"@name": "sent_S10",
+ "@question": ["$defq0","?:Rel","?:X"],
+ "@askvars": 2,
+ "@when_query": true,
+ "@nl": "When does the train 4 leave?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","city","$some_city"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","city","$some_not_city"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","carrot","$some_carrot"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","carrot","$some_not_carrot"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "estonian", "$some_estonian_city", ["$ctxt","?:Fv100","?:Fv97","?:Fv98","?:Fv99"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","city","$some_estonian_city"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "estonian", "$some_not_estonian_city", ["$ctxt","?:Fv108","?:Fv105","?:Fv106","?:Fv107"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "big", "$some_big_carrot", "none", "carrot", ["$ctxt","?:Fv112","?:Fv109","?:Fv110","?:Fv111"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","carrot","$some_big_carrot"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "big", "$some_not_big_carrot", "none", "carrot", ["$ctxt","?:Fv120","?:Fv117","?:Fv118","?:Fv119"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","city","$some_city_in_Estonia"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["is rel2", "in", "$some_city_in_Estonia", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","?:Fv128","?:Fv125","?:Fv126","?:Fv127"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","report","?:Fv49"], ["has type","?:E","announce","?:Fv49"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","announce","?:Fv50"], ["has type","?:E","report","?:Fv50"]],
+ "@confidence": 0.71,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","train","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","train","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","place","?:X"], ["-isa","train","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","place","?:X"], ["-isa","train","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv129", ["$ctxt","past","?:Fv51","?:Fv52","?:Fv53"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv130", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv131", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv54","?:Fv55","?:Fv56"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","at","noon"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S10","assumption",1], [["-isa","train","#:train 4"], ["-has time", "?:X", "?:Y", "?:Z", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["-has type", "?:X", "leave", ["$ctxt","?:2007","?:2008","?:W","?:2006"]], ["-has actor", "?:X", "#:train 4", ["$ctxt","?:2009","?:2010","?:W","?:2006"]], ["-isa","activity","?:X"], ["$defq0","?:Z","?:Y"]]],
+          [2, ["in","sent_S5","assumption",1], [["isa","train","#:train 4"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["-has time", "?:X", "?:Y", "?:Z", ["$ctxt","?:U","?:V","?:W","?:2006"]], ["-has type", "?:X", "leave", ["$ctxt","?:2007","?:2008","?:W","?:2006"]], ["-has actor", "?:X", "#:train 4", ["$ctxt","?:2009","?:2010","?:W","?:2006"]], ["-isa","activity","?:X"], ["$defq0","?:Z","?:Y"]]],
+          [4, ["in","sent_S5","assumption",1], [["isa","activity","sk3_activity"]]],
+          [5, ["mp", [3,3], 4, "fromassumption", 1], [["-has time", "sk3_activity", "?:X", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-has type", "sk3_activity", "leave", ["$ctxt","?:2006","?:2007","?:V","?:W"]], ["-has actor", "sk3_activity", "#:train 4", ["$ctxt","?:2008","?:2009","?:V","?:W"]], ["$defq0","?:Y","?:X"]]],
+          [6, ["in","frm_100","axiom",1], [["-has type", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]], ["has type", "?:X", "?:Y", ["$ctxt","past","?:W","?:U","?:V"]], ["-before","?:Z","?:W"]]],
+          [7, ["in","sent_S5","assumption",1], [["has type", "sk3_activity", "leave", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [8, ["mp",6,7,"fromassumption",1], [["has type", "sk3_activity", "leave", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-before","W0","?:X"]]],
+          [9, ["in","frm_91","axiom",1], [["-next","?:X","?:Y"], ["before","?:X","?:Y"]]],
+          [10, ["in","sent_S3","assumption",1], [["next","W0","W1"]]],
+          [11, ["mp",9,10,"fromassumption",1], [["before","W0","W1"]]],
+          [12, ["mp", [8,1], 11, "fromassumption", 1], [["has type", "sk3_activity", "leave", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [13, ["mp", [5,1], 12, "fromassumption", 1], [["-has time", "sk3_activity", "?:X", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-has actor", "sk3_activity", "#:train 4", ["$ctxt","?:2006","?:2007","?:V","?:W"]], ["$defq0","?:Y","?:X"]]],
+          [14, ["in","frm_101","axiom",1], [["-has actor", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]], ["has actor", "?:X", "?:Y", ["$ctxt","past","?:W","?:U","?:V"]], ["-before","?:Z","?:W"]]],
+          [15, ["in","sent_S5","assumption",1], [["has actor", "sk3_activity", "#:train 4", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [16, ["mp",14,15,"fromassumption",1], [["has actor", "sk3_activity", "#:train 4", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-before","W0","?:X"]]],
+          [17, ["mp", [16,1], 11, "fromassumption", 1], [["has actor", "sk3_activity", "#:train 4", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [18, ["mp", [13,1], 17, "fromassumption", 1], [["-has time", "sk3_activity", "?:X", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["$defq0","?:Y","?:X"]]],
+          [19, ["in","sent_S5","assumption",1], [["has time", "sk3_activity", "noon", "at", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [20, ["mp",18,19,"fromassumption",1], [["$defq0","at","noon"]]],
+          [21, ["in","sent_S10","goal",1], [["-$defq0","?:X","?:Y"], ["$ans","?:X","?:Y"]]],
+          [22, ["mp",20,21,"fromga",1], [["$ans","at","noon"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) The tree was cut by the farmer.",
+"  (2) The train leaves at noon.",
+"  (3) When does the train leave?",
+"Knowledge used:",
+"  If X has type Y and a situation Z is earlier than a situation W then X has type Y. Why: assumed basic knowledge.",
+"  If a situation X is followed by a situation Y then X is earlier than Y. Why: assumed basic knowledge.",
+"  If some Y performs an event X and a situation Z is earlier than a situation W then Y performs X. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If X happens some Z time some Y and X is a leave event and the train D performs X and X is an activity then [Z, Y] is the answer  [sentence 3]",
+"  (2) The train D is a train  [sentence 2]",
+"  (3) If X happens some Z time some Y and X is a leave event and the train D performs X and X is an activity then [Z, Y] is the answer  [from steps 1, 2]",
+"  (4) The event act3 is an activity  [sentence 2]",
+"  (5) If the event act3 happens some Y time some X and the act3 is a leave event and the train D performs the act3 then [Y, X] is the answer  [from steps 3, 4]",
+"  (6) If X has type Y and a situation Z is earlier than a situation W then X has type Y  [background knowledge]",
+"  (7) The event act3 is a leave event  [sentence 2]",
+"  (8) If the situation W0 is earlier than a situation X then the event act3 is a leave event  [from steps 6, 7]",
+"  (9) If a situation X is followed by a situation Y then X is earlier than Y  [background knowledge]",
+"  (10) The situation W0 is followed by the situation W1  [sentence 1]",
+"  (11) The situation W0 is earlier than the situation W1  [from steps 9, 10]",
+"  (12) The event act3 is a leave event  [from steps 8, 11]",
+"  (13) If the event act3 happens some Y time some X and the train D performs the act3 then [Y, X] is the answer  [from steps 5, 12]",
+"  (14) If some Y performs an event X and a situation Z is earlier than a situation W then Y performs X  [background knowledge]",
+"  (15) The train D performs the event act3  [sentence 2]",
+"  (16) If the situation W0 is earlier than a situation X then the train D performs the event act3  [from steps 14, 15]",
+"  (17) The train D performs the event act3  [from steps 16, 11]",
+"  (18) If the event act3 happens some Y time some X then [Y, X] is the answer  [from steps 13, 17]",
+"  (19) The event act3 happens at the noon  [sentence 2]",
+"  (20) 'At the noon' is the answer  [from steps 18, 19]",
+"  (21) technical answer unwrap step  [from question]",
+"  (22) 'At the noon' is an answer  [from steps 20, 21]"
+],
+  "llm_usage": [{
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 32979,
+      "cached_input_tokens": 0,
+      "output_tokens": 3360,
+      "raw": {
+        "promptTokenCount": 32979,
+        "candidatesTokenCount": 1947,
+        "totalTokenCount": 36339,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 32979}],
+        "thoughtsTokenCount": 1413,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 38338,
+      "cached_input_tokens": 0,
+      "output_tokens": 3342,
+      "raw": {
+        "promptTokenCount": 38338,
+        "candidatesTokenCount": 1260,
+        "totalTokenCount": 41680,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 38338}],
+        "thoughtsTokenCount": 2082,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T21:27:38Z"
+}

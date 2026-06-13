@@ -1,0 +1,920 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 524,
+  "input_text": "Frogs are small animals. Cats are afraid of wolves. Birds can fly. Eve forgot to lock the door. The letter was written. John likes all boxers. The toy of the child was broken. The hand of a man is nice. Riga is not in Estonia. Mike is a boxer. John likes Mike?",
+  "expected_answer": true,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Frogs are small animals.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Frogs are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "frogs", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        },
+        {
+          "unit_id": "S2",
+          "text": "Frogs are small.",
+          "type": "strict_rule",
+          "entities": [{"id": "frogs", "type": "generic", "category": "animal"}],
+          "adjectives": [["small","none","animal"]]
+        }
+      ]
+    },
+    {
+      "raw": "Cats are afraid of wolves.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Cats are afraid of wolves.",
+          "type": "normal_rule",
+          "entities": [{"id": "cats", "type": "generic", "category": "animal"},
+            {"id": "wolves", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["afraid of","none","cat"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Birds can fly.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Birds can fly.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Eve forgot to lock the door.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Eve 1 forgot to lock the door 2.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "door 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "forget",
+              "mode": "event",
+              "roles": {
+                "actor": "Eve 1",
+                "content": {"root": "lock", "mode": "event", "roles": {"actor": "Eve 1", "target": "door 2"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The letter was written.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The letter 3 was written.",
+          "type": "situation",
+          "entities": [{"id": "letter 3", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "write", "mode": "event", "roles": {"target": "letter 3"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John likes all boxers.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "John 4 likes all boxers.",
+          "type": "real",
+          "entities": [{"id": "John 4", "type": "concrete", "category": "person"},
+            {"id": "boxers", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The toy of the child was broken.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "The toy 5 of the child 6 was broken.",
+          "type": "situation",
+          "entities": [{"id": "toy 5", "type": "concrete", "category": "artifact"},
+            {"id": "child 6", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["broken","none","toy"]],
+          "definites": [["toy of","toy 5","child 6"]],
+          "pre_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S9",
+          "text": "The toy 5 is the toy of the child 6.",
+          "type": "situation",
+          "entities": [{"id": "toy 5", "type": "concrete", "category": "artifact"},
+            {"id": "child 6", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["toy of","toy 5","child 6"]],
+          "pre_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "The hand of a man is nice.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "The hand of a man is nice.",
+          "type": "normal_rule",
+          "entities": [{"id": "hand", "type": "generic", "scope": "dependent"},
+            {"id": "man", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["nice","none","entity"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Riga is not in Estonia.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Riga 7 is not in Estonia 8.",
+          "type": "real",
+          "entities": [{
+              "id": "Riga 7",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Riga"
+            },
+            {
+              "id": "Estonia 8",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a boxer.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Mike 9 is a boxer.",
+          "type": "situation",
+          "entities": [{"id": "Mike 9", "type": "concrete", "category": "person"}]
+        }
+      ]
+    },
+    {
+      "raw": "John likes Mike?",
+      "units": [{
+          "unit_id": "S13",
+          "text": "Does John 4 like Mike 9?",
+          "type": "query",
+          "entities": [{"id": "John 4", "type": "concrete", "category": "person"},
+            {"id": "Mike 9", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","frog","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X",
+          ["implies", ["isa","frog","X"], ["has degree property","small","X","none","animal"]]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","cat","X"],
+              ["forall","Y",
+                ["implies",
+                  ["isa","wolf","Y"],
+                  ["normally", ["has degree rel2","afraid of","X","Y","none","cat"]]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S3",0.99]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","fly"],
+                    ["has actor","E","X"],
+                    ["capability","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S4",0.99]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["isa","door","door 2"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","forget"],
+              ["has actor","E1","Eve 1"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","lock"],
+                  ["has actor","E2","Eve 1"],
+                  ["has target","E2","door 2"],
+                  ["has time","E2","past","in"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","letter","letter 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","write"],
+                ["has target","E","letter 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 4"],
+          ["forall", "X", ["implies", ["isa","boxer","X"], ["is rel2","like","John 4","X"]]]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","toy","toy 5"],
+            ["isa","child","child 6"],
+            ["have","child 6","toy 5"],
+            ["has degree property","broken","toy 5","none","toy"]
+          ]
+        ],
+        ["state time","W1","past"],
+        ["@definite","S8","W1","toy of","child 6","toy 5"]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W1",
+          ["and", ["isa","toy","toy 5"], ["isa","child","child 6"], ["have","child 6","toy 5"]]
+        ],
+        ["@definite","S9","W1","toy of","child 6","toy 5"]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","man","X"],
+              ["normally",
+                ["exists","Y",
+                  ["and",
+                    ["isa","hand","Y"],
+                    ["has part","X","Y"],
+                    ["has degree property","nice","Y","none","entity"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S10",0.99]
+      ]
+    ],
+    ["@id","S11",
+      ["holds","W0",
+        ["not",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Riga","https://en.wikipedia.org/wiki/Estonia"]
+        ]
+      ]
+    ],
+    ["@id", "S12", ["holds", "W0", ["isa","boxer","Mike 9"]]],
+    ["@id", "S13", ["question", ["is rel2","like","John 4","Mike 9"]]]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "entity_S8",
+ "@logic": ["isa","toy","#:toy 5"],
+ "@nl": "The toy 5 of the child 6 was broken."},
+{"@name": "entity_S8",
+ "@logic": ["isa","person","#:child 6"],
+ "@nl": "The toy 5 of the child 6 was broken."},
+{"@name": "entity_S11",
+ "@logic": ["isa","place","#:Riga 7"],
+ "@nl": "Riga 7 is not in Estonia 8."},
+{"@name": "entity_S11",
+ "@logic": ["isa","place","#:Estonia 8"],
+ "@nl": "Riga 7 is not in Estonia 8."},
+{"@name": "entity_S12",
+ "@logic": ["isa","person","#:Mike 9"],
+ "@nl": "Mike 9 is a boxer."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","frog","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Frogs are animals."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","frog","?:X"],
+            ["has degree property", "small", "?:X", "none", "animal", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Frogs are small."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","cat","?:X"],
+            ["-isa","wolf","?:Y"],
+            ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","wolf",1], ["$not", ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Cats are afraid of wolves."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk0","?:X"]]],
+ "@nl": "Birds can fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk0","?:X"], "fly", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Birds can fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk0","?:X"], "?:X", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]
+           ],
+ "@nl": "Birds can fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","bird","?:X"],
+            ["capability", ["sk0","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk0","?:X"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Birds can fly."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","door","#:door 2"],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk1_activity", "forget", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk1_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S5",
+ "@logic": ["has content","sk1_activity","sk2_activity"],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk2_activity", "lock", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk2_activity", "#:door 2", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Eve 1 forgot to lock the door 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","letter","#:letter 3"],
+ "@nl": "The letter 3 was written."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The letter 3 was written."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk3_activity", "write", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The letter 3 was written."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk3_activity", "#:letter 3", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The letter 3 was written."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The letter 3 was written."},
+{"@name": "sent_S6",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The letter 3 was written."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:John 4"],
+ "@nl": "John 4 likes all boxers."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","boxer","?:X"],
+            ["has degree rel2", "like", "#:John 4", "?:X", "none", "?:Fv142", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "John 4 likes all boxers."},
+{"@name": "sent_S8",
+ "@logic": ["isa", "toy", ["$theof1", "toy", "#:child 6", ["$ctxt","past","W1","?:Fv25","?:Fv26"]]],
+ "@nl": "The toy 5 of the child 6 was broken."},
+{"@name": "sent_S8",
+ "@logic": ["isa","child","#:child 6"],
+ "@nl": "The toy 5 of the child 6 was broken."},
+{"@name": "sent_S8",
+ "@logic": ["have", "#:child 6", ["$theof1", "toy", "#:child 6", ["$ctxt","past","W1","?:Fv25","?:Fv26"]], ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "The toy 5 of the child 6 was broken."},
+{"@name": "sent_S8",
+ "@logic": ["has property", "broken", ["$theof1", "toy", "#:child 6", ["$ctxt","past","W1","?:Fv25","?:Fv26"]], ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "The toy 5 of the child 6 was broken."},
+{"@name": "sent_S9",
+ "@logic": ["isa", "toy", ["$theof1", "toy", "#:child 6", ["$ctxt","past","W1","?:Fv25","?:Fv26"]]],
+ "@nl": "The toy 5 is the toy of the child 6."},
+{"@name": "sent_S9",
+ "@logic": ["isa","child","#:child 6"],
+ "@nl": "The toy 5 is the toy of the child 6."},
+{"@name": "sent_S9",
+ "@logic": ["have", "#:child 6", ["$theof1", "toy", "#:child 6", ["$ctxt","past","W1","?:Fv25","?:Fv26"]], ["$ctxt","present","W1","?:Fv27","?:Fv28"]],
+ "@nl": "The toy 5 is the toy of the child 6."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","man","?:X"], ["isa", "hand", ["sk4","?:X"]]],
+ "@nl": "The hand of a man is nice."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","man","?:X"],
+            ["has part", "?:X", ["sk4","?:X"], ["$ctxt","?:Fv32","?:Fv31","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "The hand of a man is nice."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","man","?:X"],
+            ["has degree property", "good", ["sk4","?:X"], "none", "?:Fv143", ["$ctxt","?:Fv32","?:Fv31","?:Fv29","?:Fv30"]],
+            ["$block", ["$","man",1], ["$not", ["has degree property", "good", ["sk4","?:X"], "none", "?:Fv144", ["$ctxt","?:Fv32","?:Fv31","?:Fv29","?:Fv30"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "The hand of a man is nice."},
+{"@name": "sent_S11",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Riga", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W0","?:Fv33","?:Fv34"]],
+ "@nl": "Riga 7 is not in Estonia 8."},
+{"@name": "sent_S12",
+ "@logic": ["isa","boxer","#:Mike 9"],
+ "@nl": "Mike 9 is a boxer."},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree rel2", "like", "#:John 4", "#:Mike 9", "none", "?:Fv159", ["$ctxt","present","W1","?:Fv37","?:Fv38"]]
+           ],
+ "@nl": "Does John 4 like Mike 9?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-has degree rel2", "like", "#:John 4", "#:Mike 9", "none", "?:Fv160", ["$ctxt","present","W1","?:Fv37","?:Fv38"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 4 like Mike 9?"},
+{"@name": "sent_S13",
+ "@question": ["$defq0"],
+ "@nl": "Does John 4 like Mike 9?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-has degree rel2", "like", "#:John 4", "#:Mike 9", "none", "?:Fv147", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree rel2", "like", "#:John 4", "#:Mike 9", "none", "?:Fv148", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree rel2", "like", "#:John 4", "#:Mike 9", "none", "?:Fv149", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Does John 4 like Mike 9?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:child 6", ["$theof1", "toy", "#:child 6", ["$ctxt","past","W1","?:Fv25","?:Fv26"]], ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:child 6", ["$theof1", "toy", "#:child 6", ["$ctxt","past","W1","?:Fv25","?:Fv26"]], ["$ctxt","past","W1","?:Fv25","?:Fv26"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "toy of", ["$theof1","toy","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "toy", ["$theof1","toy","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","frog","$some_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","frog","$some_not_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","cat","$some_cat"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","cat","$some_not_cat"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","wolf","$some_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","wolf","$some_not_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","boxer","$some_not_boxer"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","man","$some_man"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","man","$some_not_man"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","hand","$some_hand"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","hand","$some_not_hand"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "small", "$some_small_animal", "none", "animal", ["$ctxt","?:Fv121","?:Fv118","?:Fv119","?:Fv120"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_small_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "small", "$some_not_small_animal", "none", "animal", ["$ctxt","?:Fv129","?:Fv126","?:Fv127","?:Fv128"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "good", "$some_nice_entity", "none", "?:Fv150", ["$ctxt","?:Fv133","?:Fv130","?:Fv131","?:Fv132"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "good", "$some_not_nice_entity", "none", "?:Fv151", ["$ctxt","?:Fv141","?:Fv138","?:Fv139","?:Fv140"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv152","?:Fv40"],
+            ["-has degree property","high","?:X","none","?:Fv153","?:Fv40"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv154","?:Fv41"],
+            ["has degree property","small","?:X","none","?:Fv155","?:Fv41"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv42"], ["has type","?:E","go","?:Fv42"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","hand","?:Fv43"], ["has type","?:E","give","?:Fv43"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv156", ["$ctxt","past","?:Fv44","?:Fv45","?:Fv46"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv157", ["$ctxt","present","?:Fv44","?:Fv45","?:Fv46"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv158", ["$ctxt","present","?:Fv44","?:Fv45","?:Fv46"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv47","?:Fv48","?:Fv49"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv47","?:Fv48","?:Fv49"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv47","?:Fv48","?:Fv49"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_neg_implicative",
+ "@logic": [["-has type","?:E1","forget","?:Ct1"],
+            ["-has actor","?:E1","?:X","?:Ct1"],
+            ["-has content","?:E1","?:E2"],
+            ["-has type","?:E2","?:V","?:Ct2"],
+            ["-has actor","?:E2","?:X","?:Ct2"],
+            ["-has target","?:E2","?:Y","?:Ct2"],
+            ["-has type","?:E3","?:V","?:Ct3"],
+            ["-has actor","?:E3","?:X","?:Ct3"],
+            ["-has target","?:E3","?:Y","?:Ct3"],
+            ["-actuality","?:E3"]
+           ],
+ "@nl": "[generated: frm_neg_implicative]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S7","assumption",1], [["has degree rel2", "like", "#:John 4", "?:X", "none", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-isa","boxer","?:X"]]],
+          [2, ["in","sent_S12","assumption",1], [["isa","boxer","#:Mike 9"]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 1], [["has degree rel2", "like", "#:John 4", "#:Mike 9", "none", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]],
+          [4, ["in","sent_S13","assumption",1], [["$defq0"], ["-has degree rel2", "like", "#:John 4", "#:Mike 9", "none", "?:X", ["$ctxt","present","W1","?:Y","?:Z"]]]],
+          [5, ["in","sent_S13","goal",1], [["-$defq0"]]],
+          [6, ["mp", 3, [4,1], 5, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John likes all boxers.",
+"  (2) Mike is a boxer.",
+"  (3) John likes Mike?",
+"Proof steps (by contradiction):",
+"  (1) If some X is a boxer then John is like of X  [sentence 1]",
+"  (2) Mike is a boxer  [sentence 2]",
+"  (3) John is like of Mike  [from steps 1, 2]",
+"  (4) If John is like of Mike then answer holds  [sentence 3]",
+"  (5) assume for contradiction: the answer is no  [from question]",
+"  (6) Contradiction  [from steps 3, 4, 5]"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39052,
+      "cached_input_tokens": 38891,
+      "output_tokens": 139,
+      "raw": {
+        "input_tokens": 161,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 139,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39009,
+      "cached_input_tokens": 38891,
+      "output_tokens": 92,
+      "raw": {
+        "input_tokens": 118,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 92,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38985,
+      "cached_input_tokens": 38891,
+      "output_tokens": 148,
+      "raw": {
+        "input_tokens": 94,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 148,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39062,
+      "cached_input_tokens": 38891,
+      "output_tokens": 209,
+      "raw": {
+        "input_tokens": 171,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 209,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39727,
+      "cached_input_tokens": 38891,
+      "output_tokens": 165,
+      "raw": {
+        "input_tokens": 836,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 165,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39018,
+      "cached_input_tokens": 38891,
+      "output_tokens": 93,
+      "raw": {
+        "input_tokens": 127,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 93,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38987,
+      "cached_input_tokens": 38891,
+      "output_tokens": 95,
+      "raw": {
+        "input_tokens": 96,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 95,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39154,
+      "cached_input_tokens": 38891,
+      "output_tokens": 236,
+      "raw": {
+        "input_tokens": 263,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 236,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39010,
+      "cached_input_tokens": 38891,
+      "output_tokens": 145,
+      "raw": {
+        "input_tokens": 119,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 145,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39030,
+      "cached_input_tokens": 38891,
+      "output_tokens": 57,
+      "raw": {
+        "input_tokens": 139,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 57,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38965,
+      "cached_input_tokens": 38891,
+      "output_tokens": 31,
+      "raw": {
+        "input_tokens": 74,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 31,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38989,
+      "cached_input_tokens": 38891,
+      "output_tokens": 33,
+      "raw": {
+        "input_tokens": 98,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 33,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T22:08:11Z"
+}

@@ -1,0 +1,730 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 511,
+  "input_text": "Mice are afraid of cats. The window was broken by John. Emily is a wolf. Muggles cannot disappear. The picture was painted by Leo. Mary journeyed to the bathroom. All elephants are animals. The book was read by Sara. Sue is a true patriot. Elephants are not animals?",
+  "expected_answer": false,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Mice are afraid of cats.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mice are afraid of cats.",
+          "type": "normal_rule",
+          "entities": [{"id": "mice", "type": "generic", "category": "animal"},
+            {"id": "cats", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["afraid of","none","animal"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "The window was broken by John.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 1 broke the window 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "window 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "break", "mode": "event", "roles": {"actor": "John 1", "target": "window 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Emily is a wolf.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Emily 1 is a wolf.",
+          "type": "situation",
+          "entities": [{"id": "Emily 1", "type": "concrete", "category": "animal"},
+            {"id": "wolf", "type": "generic", "category": "animal"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Muggles cannot disappear.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Muggles cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "Muggles", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "The picture was painted by Leo.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Leo 1 painted the picture 2.",
+          "type": "situation",
+          "entities": [{"id": "Leo 1", "type": "concrete", "category": "person"},
+            {"id": "picture 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "paint", "mode": "event", "roles": {"actor": "Leo 1", "target": "picture 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary journeyed to the bathroom.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Mary 1 went to the bathroom 2.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "bathroom 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "go",
+              "mode": "event",
+              "roles": {"actor": "Mary 1", "destination": "bathroom 2"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "All elephants are animals.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "All elephants are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The book was read by Sara.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Sara 1 read the book 2.",
+          "type": "situation",
+          "entities": [{"id": "Sara 1", "type": "concrete", "category": "person"},
+            {"id": "book 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "read", "mode": "event", "roles": {"actor": "Sara 1", "target": "book 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Sue is a true patriot.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Sue 1 is a patriot.",
+          "type": "situation",
+          "entities": [{"id": "Sue 1", "type": "concrete", "category": "person"},
+            {"id": "patriot", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["true","none","person"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants are not animals?",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Are all elephants not animals?",
+          "type": "query",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","mouse","X"],
+              ["forall","Y",
+                ["implies",
+                  ["isa","cat","Y"],
+                  ["normally", ["has degree rel2","afraid of","X","Y","none","animal"]]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.95]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["isa","artifact","window 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","break"],
+                ["has actor","E","John 1"],
+                ["has target","E","window 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id", "S3", ["and", ["holds", "W0", ["isa","wolf","Emily 1"]], ["state time","W0","present"]]],
+    ["@id","S4",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","muggle","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Leo 1"],
+            ["isa","picture","picture 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","paint"],
+                ["has actor","E","Leo 1"],
+                ["has target","E","picture 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W2"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 1"],
+            ["isa","bathroom","bathroom 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","go"],
+                ["has actor","E","Mary 1"],
+                ["has destination","E","bathroom 2","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W3"]
+      ]
+    ],
+    ["@id","S7",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Sara 1"],
+            ["isa","artifact","book 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","read"],
+                ["has actor","E","Sara 1"],
+                ["has target","E","book 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W4"]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","patriot","Sue 1"], ["has degree property","true","Sue 1","none","person"]]
+        ],
+        ["state time","W0","present"]
+      ]
+    ],
+    ["@id","S10",
+      ["question",
+        ["forall", "X", ["implies", ["isa","elephant","X"], ["not", ["isa","animal","X"]]]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","window","#:window 2"],
+ "@nl": "John 1 broke the window 2."},
+{"@name": "entity_S3",
+ "@logic": ["isa","animal","#:Emily 1"],
+ "@nl": "Emily 1 is a wolf."},
+{"@name": "entity_S8",
+ "@logic": ["isa","book","#:book 2"],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "entity_S9",
+ "@logic": ["isa","person","#:Sue 1"],
+ "@nl": "Sue 1 is a patriot."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","mouse","?:X"],
+            ["-isa","cat","?:Y"],
+            ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","cat",1], ["$not", ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Mice are afraid of cats."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 broke the window 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","artifact","#:window 2"],
+ "@nl": "John 1 broke the window 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1 broke the window 2."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "break", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 broke the window 2."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:John 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 broke the window 2."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "#:window 2", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 broke the window 2."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 broke the window 2."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "John 1 broke the window 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","wolf","#:Emily 1"],
+ "@nl": "Emily 1 is a wolf."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","muggle","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Muggles cannot disappear."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Leo 1"],
+ "@nl": "Leo 1 painted the picture 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","picture","#:picture 2"],
+ "@nl": "Leo 1 painted the picture 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Leo 1 painted the picture 2."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk1_activity", "paint", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Leo 1 painted the picture 2."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk1_activity", "#:Leo 1", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Leo 1 painted the picture 2."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk1_activity", "#:picture 2", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Leo 1 painted the picture 2."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Leo 1 painted the picture 2."},
+{"@name": "sent_S5",
+ "@logic": ["next","W0","W2"],
+ "@nl": "Leo 1 painted the picture 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 went to the bathroom 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","bathroom","#:bathroom 2"],
+ "@nl": "Mary 1 went to the bathroom 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Mary 1 went to the bathroom 2."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk2_activity", "go", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 1 went to the bathroom 2."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk2_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 1 went to the bathroom 2."},
+{"@name": "sent_S6",
+ "@logic": ["has destination", "sk2_activity", "#:bathroom 2", "at", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 1 went to the bathroom 2."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 1 went to the bathroom 2."},
+{"@name": "sent_S6",
+ "@logic": ["next","W0","W3"],
+ "@nl": "Mary 1 went to the bathroom 2."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"]],
+ "@nl": "All elephants are animals."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Sara 1"],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","artifact","#:book 2"],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk3_activity", "read", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk3_activity", "#:Sara 1", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk3_activity", "#:book 2", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S8",
+ "@logic": ["next","W0","W4"],
+ "@nl": "Sara 1 read the book 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","patriot","#:Sue 1"],
+ "@nl": "Sue 1 is a patriot."},
+{"@name": "sent_S9",
+ "@logic": ["has degree property", "true", "#:Sue 1", "none", "person", ["$ctxt","present","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Sue 1 is a patriot."},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","elephant","?:X"], ["-isa","animal","?:X"]],
+ "@nl": "Are all elephants not animals?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["isa","elephant","sk4_elephant"], ["$defq0"]],
+ "@nl": "Are all elephants not animals?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["isa","animal","sk4_elephant"], ["$defq0"]],
+ "@nl": "Are all elephants not animals?"},
+{"@name": "sent_S10",
+ "@question": ["$defq0"],
+ "@nl": "Are all elephants not animals?"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "break", ["$ctxt","?:Fv29","?:Fv30","?:Fv32","?:Fv33"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv29","?:Fv30","?:Fv32","?:Fv33"]],
+            ["-next","?:Fv30","?:Fv31"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv31","?:Fv32","?:Fv33"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv31","?:Fv32","?:Fv33"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "break", "?:X", ["$ctxt","?:Fv34","?:Fv35","?:Fv37","?:Fv38"]],
+            ["-next","?:Fv35","?:Fv36"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","mouse","$some_mouse"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","mouse","$some_not_mouse"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","cat","$some_cat"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","cat","$some_not_cat"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","muggle","$some_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","muggle","$some_not_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv39"], ["has type","?:E","go","?:Fv39"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W3","W4"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S7","assumption",1], [["isa","elephant","$some_elephant"]]],
+          [2, ["in","sent_S7","assumption",1], [["-isa","elephant","?:X"], ["isa","animal","?:X"]]],
+          [3, ["in","sent_S10","assumption",1], [["-$defq0"], ["-isa","elephant","?:X"], ["-isa","animal","?:X"]]],
+          [4, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [5, ["mp",3,4,"fromga",1], [["-isa","elephant","?:X"], ["-isa","animal","?:X"]]],
+          [6, ["mp",1,5,"fromga",1], [["-isa","animal","$some_elephant"]]],
+          [7, ["mp",1,2,6,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) All elephants are animals.",
+"  (2) Elephants are not animals?",
+"Proof steps (by contradiction):",
+"  (1) An elephant is an elephant  [sentence 1]",
+"  (2) If some X is an elephant then X is an animal  [sentence 1]",
+"  (3) If answer holds and some X is an elephant then X is not an animal  [sentence 2]",
+"  (4) Answer holds  [assumption]",
+"  (5) If some X is an elephant then X is not an animal  [from steps 3, 4]",
+"  (6) An elephant is not an animal  [from steps 1, 5]",
+"  (7) Contradiction  [from steps 1, 2, 6]"
+],
+  "llm_usage": [{
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37232,
+      "cached_input_tokens": 0,
+      "output_tokens": 1207,
+      "raw": {
+        "promptTokenCount": 37232,
+        "candidatesTokenCount": 152,
+        "totalTokenCount": 38439,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37232}],
+        "thoughtsTokenCount": 1055,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37270,
+      "cached_input_tokens": 36836,
+      "output_tokens": 983,
+      "raw": {
+        "promptTokenCount": 37270,
+        "candidatesTokenCount": 175,
+        "totalTokenCount": 38253,
+        "cachedContentTokenCount": 36836,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37270}],
+        "cacheTokensDetails": [{"modality": "TEXT", "tokenCount": 36836}],
+        "thoughtsTokenCount": 808,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37211,
+      "cached_input_tokens": 36836,
+      "output_tokens": 395,
+      "raw": {
+        "promptTokenCount": 37211,
+        "candidatesTokenCount": 58,
+        "totalTokenCount": 37606,
+        "cachedContentTokenCount": 36836,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37211}],
+        "cacheTokensDetails": [{"modality": "TEXT", "tokenCount": 36836}],
+        "thoughtsTokenCount": 337,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37206,
+      "cached_input_tokens": 0,
+      "output_tokens": 806,
+      "raw": {
+        "promptTokenCount": 37206,
+        "candidatesTokenCount": 124,
+        "totalTokenCount": 38012,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37206}],
+        "thoughtsTokenCount": 682,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37270,
+      "cached_input_tokens": 0,
+      "output_tokens": 903,
+      "raw": {
+        "promptTokenCount": 37270,
+        "candidatesTokenCount": 175,
+        "totalTokenCount": 38173,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37270}],
+        "thoughtsTokenCount": 728,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37271,
+      "cached_input_tokens": 0,
+      "output_tokens": 701,
+      "raw": {
+        "promptTokenCount": 37271,
+        "candidatesTokenCount": 152,
+        "totalTokenCount": 37972,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37271}],
+        "thoughtsTokenCount": 549,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37204,
+      "cached_input_tokens": 36836,
+      "output_tokens": 582,
+      "raw": {
+        "promptTokenCount": 37204,
+        "candidatesTokenCount": 64,
+        "totalTokenCount": 37786,
+        "cachedContentTokenCount": 36836,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37204}],
+        "cacheTokensDetails": [{"modality": "TEXT", "tokenCount": 36836}],
+        "thoughtsTokenCount": 518,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37270,
+      "cached_input_tokens": 36836,
+      "output_tokens": 866,
+      "raw": {
+        "promptTokenCount": 37270,
+        "candidatesTokenCount": 155,
+        "totalTokenCount": 38136,
+        "cachedContentTokenCount": 36836,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37270}],
+        "cacheTokensDetails": [{"modality": "TEXT", "tokenCount": 36836}],
+        "thoughtsTokenCount": 711,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37228,
+      "cached_input_tokens": 0,
+      "output_tokens": 1743,
+      "raw": {
+        "promptTokenCount": 37228,
+        "candidatesTokenCount": 84,
+        "totalTokenCount": 38971,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37228}],
+        "thoughtsTokenCount": 1659,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37205,
+      "cached_input_tokens": 0,
+      "output_tokens": 1185,
+      "raw": {
+        "promptTokenCount": 37205,
+        "candidatesTokenCount": 65,
+        "totalTokenCount": 38390,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37205}],
+        "thoughtsTokenCount": 1120,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T23:27:55Z"
+}

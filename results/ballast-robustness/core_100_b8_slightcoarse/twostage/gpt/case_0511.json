@@ -1,0 +1,415 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 511,
+  "input_text": "Winona is a sheep. John is near a spoon. Emily is a wolf. Foxes cannot fly. Muggles cannot disappear. Sue is a true patriot. All elephants are animals. The book was read by Sara. The picture was painted by Leo. Elephants are not animals?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Winona is a sheep.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Winona 1 is a sheep.",
+          "type": "situation",
+          "entities": [{"id": "Winona 1", "type": "concrete", "category": "animal"},
+            {"id": "sheep", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is near a spoon.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "John 2 is near a spoon 3.",
+          "type": "situation",
+          "entities": [{"id": "John 2", "type": "concrete", "category": "person"},
+            {"id": "spoon 3", "type": "concrete", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Emily is a wolf.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Emily 4 is a wolf.",
+          "type": "situation",
+          "entities": [{"id": "Emily 4", "type": "concrete", "category": "animal"},
+            {"id": "wolf", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Foxes cannot fly.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Foxes cannot fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "foxes", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "Muggles cannot disappear.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Muggles cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "muggles", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "Sue is a true patriot.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Sue 5 is a true patriot.",
+          "type": "situation",
+          "entities": [{"id": "Sue 5", "type": "concrete", "category": "person"},
+            {"id": "patriot", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["true","none","patriot"]]
+        }
+      ]
+    },
+    {
+      "raw": "All elephants are animals.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "All elephants are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The book was read by Sara.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Sara 6 read the book 7.",
+          "type": "situation",
+          "entities": [{"id": "Sara 6", "type": "concrete", "category": "person"},
+            {"id": "book 7", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "read", "mode": "event", "roles": {"actor": "Sara 6", "target": "book 7"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The picture was painted by Leo.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Leo 8 painted the picture 9.",
+          "type": "situation",
+          "entities": [{"id": "Leo 8", "type": "concrete", "category": "person"},
+            {"id": "picture 9", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "paint", "mode": "event", "roles": {"actor": "Leo 8", "target": "picture 9"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants are not animals?",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Are elephants not animals?",
+          "type": "query",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","sheep","Winona 1"]]],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 2"],
+          ["isa","spoon","spoon 3"],
+          ["is rel2","near","John 2","spoon 3"]
+        ]
+      ]
+    ],
+    ["@id", "S3", ["holds", "W0", ["isa","wolf","Emily 4"]]],
+    ["@id","S4",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","fox","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","muggle","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and", ["isa","patriot","Sue 5"], ["has degree property","true","Sue 5","none","patriot"]]
+      ]
+    ],
+    ["@id","S7",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Sara 6"],
+          ["isa","book","book 7"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","read"],
+              ["has actor","E","Sara 6"],
+              ["has target","E","book 7"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Leo 8"],
+          ["isa","picture","picture 9"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","paint"],
+              ["has actor","E","Leo 8"],
+              ["has target","E","picture 9"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["question",
+        ["forall", "X", ["implies", ["isa","elephant","X"], ["not", ["isa","animal","X"]]]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","animal","#:Winona 1"],
+ "@nl": "Winona 1 is a sheep."},
+{"@name": "entity_S3",
+ "@logic": ["isa","animal","#:Emily 4"],
+ "@nl": "Emily 4 is a wolf."},
+{"@name": "entity_S6",
+ "@logic": ["isa","person","#:Sue 5"],
+ "@nl": "Sue 5 is a true patriot."},
+{"@name": "sent_S1",
+ "@logic": ["isa","sheep","#:Winona 1"],
+ "@nl": "Winona 1 is a sheep."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:John 2"],
+ "@nl": "John 2 is near a spoon 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","spoon","#:spoon 3"],
+ "@nl": "John 2 is near a spoon 3."},
+{"@name": "sent_S2",
+ "@logic": ["has degree rel2", "near", "#:John 2", "#:spoon 3", "none", "?:Fv70", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 2 is near a spoon 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","wolf","#:Emily 4"],
+ "@nl": "Emily 4 is a wolf."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","fox","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Foxes cannot fly."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","muggle","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Muggles cannot disappear."},
+{"@name": "sent_S6",
+ "@logic": ["isa","patriot","#:Sue 5"],
+ "@nl": "Sue 5 is a true patriot."},
+{"@name": "sent_S6",
+ "@logic": ["has degree property", "true", "#:Sue 5", "none", "patriot", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Sue 5 is a true patriot."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"]],
+ "@nl": "All elephants are animals."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Sara 6"],
+ "@nl": "Sara 6 read the book 7."},
+{"@name": "sent_S8",
+ "@logic": ["isa","book","#:book 7"],
+ "@nl": "Sara 6 read the book 7."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Sara 6 read the book 7."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk0_activity", "read", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Sara 6 read the book 7."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk0_activity", "#:Sara 6", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Sara 6 read the book 7."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk0_activity", "#:book 7", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Sara 6 read the book 7."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Sara 6 read the book 7."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Leo 8"],
+ "@nl": "Leo 8 painted the picture 9."},
+{"@name": "sent_S9",
+ "@logic": ["isa","picture","#:picture 9"],
+ "@nl": "Leo 8 painted the picture 9."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Leo 8 painted the picture 9."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk1_activity", "paint", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Leo 8 painted the picture 9."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk1_activity", "#:Leo 8", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Leo 8 painted the picture 9."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk1_activity", "#:picture 9", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Leo 8 painted the picture 9."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Leo 8 painted the picture 9."},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","elephant","?:X"], ["-isa","animal","?:X"]],
+ "@nl": "Are elephants not animals?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["isa","elephant","sk2_elephant"], ["$defq0"]],
+ "@nl": "Are elephants not animals?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["isa","animal","sk2_elephant"], ["$defq0"]],
+ "@nl": "Are elephants not animals?"},
+{"@name": "sent_S10",
+ "@question": ["$defq0"],
+ "@nl": "Are elephants not animals?"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fox","$some_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","fox","$some_not_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","muggle","$some_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","muggle","$some_not_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv29"], ["has type","?:E","go","?:Fv29"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S7","assumption",1], [["isa","elephant","$some_elephant"]]],
+          [2, ["in","sent_S7","assumption",1], [["-isa","elephant","?:X"], ["isa","animal","?:X"]]],
+          [3, ["in","sent_S10","assumption",1], [["-$defq0"], ["-isa","elephant","?:X"], ["-isa","animal","?:X"]]],
+          [4, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [5, ["mp", 1, [3,1], 4, "fromga", 1], [["-isa","animal","$some_elephant"]]],
+          [6, ["mp",1,2,5,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) All elephants are animals.",
+"  (2) Elephants are not animals?",
+"Proof steps (by contradiction):",
+"  (1) An elephant is an elephant  [sentence 1]",
+"  (2) If some X is an elephant then X is an animal  [sentence 1]",
+"  (3) If answer holds and some X is an elephant then X is not an animal  [sentence 2]",
+"  (4) Answer holds  [assumption]",
+"  (5) An elephant is not an animal  [from steps 1, 3, 4]",
+"  (6) Contradiction  [from steps 1, 2, 5]"
+],
+  "timestamp": "2026-06-12T21:17:32Z"
+}

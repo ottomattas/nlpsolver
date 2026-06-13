@@ -1,0 +1,875 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 1188,
+  "input_text": "Winona is a cat. The tree growing near the river was tall. Probably Tallinn is in Estonia. Elephants have long not big trunks. There is a ghost in the room. Anna handed Mark a silver key. \"Riga is not in America. While John was cooking, Mary read a book. A chocolate cake fell. Mary read a book?",
+  "expected_answer": true,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Winona is a cat.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Winona 1 is a cat.",
+          "type": "real",
+          "entities": [{"id": "Winona 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "The tree growing near the river was tall.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The tree 1 that grows near the river 2 was tall.",
+          "type": "situation",
+          "entities": [{"id": "tree 1", "type": "concrete", "category": "plant"},
+            {"id": "river 2", "type": "concrete", "category": "place"}
+          ],
+          "adjectives": [["tall","none","tree"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Probably Tallinn is in Estonia.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Tallinn 1 is in Estonia 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Estonia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have long not big trunks.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Elephants have trunks that are long and not big.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"}
+          ],
+          "adjectives": [["long","none","trunk"], ["big","none","trunk"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "There is a ghost in the room.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "A ghost 1 is in the room 2.",
+          "type": "situation",
+          "entities": [{"id": "ghost 1", "type": "concrete", "category": "abstract"},
+            {"id": "room 2", "type": "concrete", "category": "place"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Anna handed Mark a silver key.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Anna 1 handed Mark 2 a silver key 3.",
+          "type": "situation",
+          "entities": [{"id": "Anna 1", "type": "concrete", "category": "person"},
+            {"id": "Mark 2", "type": "concrete", "category": "person"},
+            {"id": "key 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "hand",
+              "mode": "event",
+              "roles": {"actor": "Anna 1", "recipient": "Mark 2", "target": "key 3"}
+            }
+          ],
+          "adjectives": [["silver","none","key"]],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Riga is not in America.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Riga 1 is not in America 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Riga 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Riga"
+            },
+            {
+              "id": "America 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/America"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "While John was cooking, Mary read a book.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "John 1 was cooking.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "cook", "mode": "event", "roles": {"actor": "John 1"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S9",
+          "text": "Mary 2 read a book 3.",
+          "type": "situation",
+          "entities": [{"id": "Mary 2", "type": "concrete", "category": "person"},
+            {"id": "book 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "read", "mode": "event", "roles": {"actor": "Mary 2", "target": "book 3"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A chocolate cake fell.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "A chocolate cake 1 fell.",
+          "type": "situation",
+          "entities": [{"id": "cake 1", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "fall", "mode": "event", "roles": {"actor": "cake 1"}}],
+          "adjectives": [["chocolate","none","cake"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary read a book?",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Did Mary 2 read a book?",
+          "type": "query",
+          "entities": [{"id": "Mary 2", "type": "concrete", "category": "person"},
+            {"id": "book", "type": "generic", "category": "artifact"}
+          ],
+          "actions": [{"root": "read", "mode": "event", "roles": {"actor": "Mary 2", "target": "book"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","cat","Winona 1"]]],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","tree","tree 1"],
+            ["isa","river","river 2"],
+            ["is rel2","near","tree 1","river 2"],
+            ["has degree property","tall","tree 1","none","tree"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Estonia"]
+        ],
+        ["@p","S3",0.8]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally",
+                ["exists","Y",
+                  ["and",
+                    ["isa","trunk","Y"],
+                    ["has part","X","Y"],
+                    ["has degree property","long","Y","none","trunk"],
+                    ["not", ["has degree property","big","Y","none","trunk"]]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S4",0.99]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","ghost","ghost 1"],
+          ["isa","room","room 2"],
+          ["is rel2","in","ghost 1","room 2"]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Anna 1"],
+            ["isa","person","Mark 2"],
+            ["isa","key","key 3"],
+            ["has degree property","silver","key 3","none","key"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","hand"],
+                ["has actor","E","Anna 1"],
+                ["has recipient","E","Mark 2"],
+                ["has target","E","key 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","place","https://en.wikipedia.org/wiki/Riga"],
+          ["isa","place","https://en.wikipedia.org/wiki/America"],
+          ["not",
+            ["is rel2","in","https://en.wikipedia.org/wiki/Riga","https://en.wikipedia.org/wiki/America"]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","cook"],
+              ["has actor","E","John 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 2"],
+          ["isa","book","book 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","read"],
+              ["has actor","E","Mary 2"],
+              ["has target","E","book 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["and",
+          ["isa","cake","cake 1"],
+          ["has degree property","chocolate","cake 1","none","cake"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","fall"],
+              ["has actor","E","cake 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","read"],
+            ["has actor","E","Mary 2"],
+            ["exists", "Y", ["and", ["isa","book","Y"], ["has target","E","Y"]]],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_fixes": ["json: removed content after top-level close bracket"],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","animal","#:Winona 1"],
+ "@nl": "Winona 1 is a cat."},
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Estonia 2"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "entity_S7",
+ "@logic": ["isa","place","#:Riga 1"],
+ "@nl": "Riga 1 is not in America 2."},
+{"@name": "entity_S7",
+ "@logic": ["isa","place","#:America 2"],
+ "@nl": "Riga 1 is not in America 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","cat","#:Winona 1"],
+ "@nl": "Winona 1 is a cat."},
+{"@name": "sent_S2",
+ "@logic": ["isa","tree","#:tree 1"],
+ "@nl": "The tree 1 that grows near the river 2 was tall."},
+{"@name": "sent_S2",
+ "@logic": ["isa","river","#:river 2"],
+ "@nl": "The tree 1 that grows near the river 2 was tall."},
+{"@name": "sent_S2",
+ "@logic": ["has degree rel2", "near", "#:tree 1", "#:river 2", "none", "?:Fv119", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The tree 1 that grows near the river 2 was tall."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "tall", "#:tree 1", "none", "tree", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The tree 1 that grows near the river 2 was tall."},
+{"@name": "sent_S3",
+ "@logic": ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@confidence": 0.6,
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk0","?:X"]]],
+ "@nl": "Elephants have trunks that are long and not big."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk0","?:X"], ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Elephants have trunks that are long and not big."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has degree property", "long", ["sk0","?:X"], "none", "trunk", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Elephants have trunks that are long and not big."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-has degree property", "big", ["sk0","?:X"], "none", "trunk", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$block", ["$","elephant",1], ["has degree property", "big", ["sk0","?:X"], "none", "trunk", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have trunks that are long and not big."},
+{"@name": "sent_S5",
+ "@logic": ["isa","ghost","#:ghost 1"],
+ "@nl": "A ghost 1 is in the room 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","room","#:room 2"],
+ "@nl": "A ghost 1 is in the room 2."},
+{"@name": "sent_S5",
+ "@logic": ["is rel2", "in", "#:ghost 1", "#:room 2", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A ghost 1 is in the room 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Anna 1"],
+ "@nl": "Anna 1 handed Mark 2 a silver key 3."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Mark 2"],
+ "@nl": "Anna 1 handed Mark 2 a silver key 3."},
+{"@name": "sent_S6",
+ "@logic": ["isa","important","#:key 3"],
+ "@nl": "Anna 1 handed Mark 2 a silver key 3."},
+{"@name": "sent_S6",
+ "@logic": ["has property", "silver", "#:key 3", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 1 handed Mark 2 a silver key 3."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Anna 1 handed Mark 2 a silver key 3."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk1_activity", "give", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 1 handed Mark 2 a silver key 3."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk1_activity", "#:Anna 1", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 1 handed Mark 2 a silver key 3."},
+{"@name": "sent_S6",
+ "@logic": ["has recipient", "sk1_activity", "#:Mark 2", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 1 handed Mark 2 a silver key 3."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk1_activity", "#:key 3", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 1 handed Mark 2 a silver key 3."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Anna 1 handed Mark 2 a silver key 3."},
+{"@name": "sent_S6",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Anna 1 handed Mark 2 a silver key 3."},
+{"@name": "sent_S6",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Anna 1 handed Mark 2 a silver key 3."},
+{"@name": "sent_S7",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/Riga"],
+ "@nl": "Riga 1 is not in America 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/America"],
+ "@nl": "Riga 1 is not in America 2."},
+{"@name": "sent_S7",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Riga", "https://en.wikipedia.org/wiki/America", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Riga 1 is not in America 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 was cooking."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "John 1 was cooking."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk2_activity", "cook", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "John 1 was cooking."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk2_activity", "#:John 1", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "John 1 was cooking."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "John 1 was cooking."},
+{"@name": "sent_S8",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "John 1 was cooking."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Mary 2 read a book 3."},
+{"@name": "sent_S9",
+ "@logic": ["isa","book","#:book 3"],
+ "@nl": "Mary 2 read a book 3."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Mary 2 read a book 3."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk3_activity", "read", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 2 read a book 3."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk3_activity", "#:Mary 2", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 2 read a book 3."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk3_activity", "#:book 3", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 2 read a book 3."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 2 read a book 3."},
+{"@name": "sent_S9",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Mary 2 read a book 3."},
+{"@name": "sent_S10",
+ "@logic": ["isa","cake","#:cake 1"],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S10",
+ "@logic": ["has property", "chocolate", "#:cake 1", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S10",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S10",
+ "@logic": ["has type", "sk4_activity", "fall", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S10",
+ "@logic": ["has actor", "sk4_activity", "#:cake 1", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S10",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S10",
+ "@logic": ["actuality","sk4_activity"],
+ "@nl": "A chocolate cake 1 fell."},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk5_activity"]],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk5_activity", "read", ["$ctxt","past","?:Fv28","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk5_activity", "#:Mary 2", ["$ctxt","past","?:Fv30","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","book","sk6_book"]],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk5_activity", "sk6_book", ["$ctxt","past","?:Fv34","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk5_activity", "past", "in", ["$ctxt","past","?:Fv36","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk5_activity"]],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "read", ["$ctxt","past","?:Fv40","?:Fv23","?:Fv24"]],
+            ["-has actor", "?:E", "#:Mary 2", ["$ctxt","past","?:Fv42","?:Fv23","?:Fv24"]],
+            ["-isa","book","?:Y"],
+            ["-has target", "?:E", "?:Y", ["$ctxt","past","?:Fv46","?:Fv23","?:Fv24"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S11",
+ "@question": ["$defq0"],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "long", "$some_long_trunk", "none", "trunk", ["$ctxt","?:Fv98","?:Fv95","?:Fv96","?:Fv97"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_long_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "long", "$some_not_long_trunk", "none", "trunk", ["$ctxt","?:Fv106","?:Fv103","?:Fv104","?:Fv105"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "big", "$some_big_trunk", "none", "trunk", ["$ctxt","?:Fv110","?:Fv107","?:Fv108","?:Fv109"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_big_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "big", "$some_not_big_trunk", "none", "trunk", ["$ctxt","?:Fv118","?:Fv115","?:Fv116","?:Fv117"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","tall","?:X","none","?:Fv120","?:Fv50"],
+            ["has degree property","high","?:X","none","?:Fv121","?:Fv50"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","high","?:X","none","?:Fv122","?:Fv51"],
+            ["has degree property","tall","?:X","none","?:Fv123","?:Fv51"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv52"], ["has type","?:E","give","?:Fv52"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","river","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","river","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv124", ["$ctxt","past","?:Fv53","?:Fv54","?:Fv55"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv125", ["$ctxt","present","?:Fv53","?:Fv54","?:Fv55"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv126", ["$ctxt","present","?:Fv53","?:Fv54","?:Fv55"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv56","?:Fv57","?:Fv58"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv56","?:Fv57","?:Fv58"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv56","?:Fv57","?:Fv58"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "none", "?:Fv127", ["$ctxt","past","?:Fv59","?:Fv60","?:Fv61"]],
+            ["has degree property", "long", "?:X", "none", "?:Fv128", ["$ctxt","present","?:Fv59","?:Fv60","?:Fv61"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "none", "?:Fv129", ["$ctxt","present","?:Fv59","?:Fv60","?:Fv61"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv62","?:Fv63","?:Fv64"]],
+            ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv62","?:Fv63","?:Fv64"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv62","?:Fv63","?:Fv64"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "none", "?:Fv130", ["$ctxt","past","?:Fv65","?:Fv66","?:Fv67"]],
+            ["has degree property", "tall", "?:X", "none", "?:Fv131", ["$ctxt","present","?:Fv65","?:Fv66","?:Fv67"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "none", "?:Fv132", ["$ctxt","present","?:Fv65","?:Fv66","?:Fv67"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv68","?:Fv69","?:Fv70"]],
+            ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv68","?:Fv69","?:Fv70"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv68","?:Fv69","?:Fv70"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has target","?:Esb","?:Ysb","?:Csb"],
+            ["-has recipient","?:Esb","?:Xsb","?:Csb"],
+            ["has recipient","?:Ysb","?:Xsb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S11","assumption",1], [["$defq0"], ["-has type", "?:X", "read", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has actor", "?:X", "#:Mary 2", ["$ctxt","past","?:V","?:Z","?:U"]], ["-has target", "?:X", "?:W", ["$ctxt","past","?:2006","?:Z","?:U"]], ["-isa","book","?:W"], ["-isa","activity","?:X"], ["-actuality","?:X"]]],
+          [2, ["in","sent_S9","assumption",1], [["has type", "sk3_activity", "read", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S11","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,1], 2, 3, "fromga", 1], [["-isa","activity","sk3_activity"], ["-actuality","sk3_activity"], ["-has actor", "sk3_activity", "#:Mary 2", ["$ctxt","past","?:X3","?:Y3","?:Z3"]], ["-has target", "sk3_activity", "?:U3", ["$ctxt","past","?:V3","?:Y3","?:Z3"]], ["-isa","book","?:U3"]]],
+          [5, ["in","sent_S9","assumption",1], [["isa","activity","sk3_activity"]]],
+          [6, ["in","sent_S9","assumption",1], [["actuality","sk3_activity"]]],
+          [7, ["simp",4,5,6,"fromga",1], [["-has actor", "sk3_activity", "#:Mary 2", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has target", "sk3_activity", "?:U", ["$ctxt","past","?:V","?:Y","?:Z"]], ["-isa","book","?:U"]]],
+          [8, ["in","sent_S9","assumption",1], [["has actor", "sk3_activity", "#:Mary 2", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [9, ["mp",7,8,"fromga",1], [["-has target", "sk3_activity", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-isa","book","?:X"]]],
+          [10, ["in","sent_S9","assumption",1], [["has target", "sk3_activity", "#:book 3", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [11, ["mp",9,10,"fromga",1], [["-isa","book","#:book 3"]]],
+          [12, ["in","sent_S9","assumption",1], [["isa","book","#:book 3"]]],
+          [13, ["simp",11,12,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) While John was cooking, Mary read a book.",
+"  (2) Mary read a book?",
+"Proof steps (by contradiction):",
+"  (1) If X is a read event and Mary performs X and X targets some W and W is a book and X is an activity then answer holds  [sentence 2]",
+"  (2) The event act3 is a read event  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) If the event act3 is an activity and Mary performs the act3 then the act3 does not target U3  [from steps 1, 2, 3]",
+"  (5) The event act3 is an activity  [sentence 1]",
+"  (6)   [sentence 1]",
+"  (7) If Mary performs the event act3 then the act3 does not target U  [from steps 4, 5, 6]",
+"  (8) Mary performs the event act3  [sentence 1]",
+"  (9) The act3 does not target X  [from steps 7, 8]",
+"  (10) The event act3 targets the book C  [sentence 1]",
+"  (11) The book C is not a book  [from steps 9, 10]",
+"  (12) The book C is a book  [sentence 1]",
+"  (13) Contradiction  [from steps 11, 12]"
+],
+  "llm_usage": [{
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34090,
+      "cached_input_tokens": 34048,
+      "output_tokens": 181,
+      "raw": {
+        "prompt_tokens": 34090,
+        "completion_tokens": 181,
+        "total_tokens": 34271,
+        "prompt_tokens_details": {"cached_tokens": 34048},
+        "completion_tokens_details": {"reasoning_tokens": 152},
+        "prompt_cache_hit_tokens": 34048,
+        "prompt_cache_miss_tokens": 42
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34142,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1330,
+      "raw": {
+        "prompt_tokens": 34142,
+        "completion_tokens": 1330,
+        "total_tokens": 35472,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1245},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 222
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34146,
+      "cached_input_tokens": 33920,
+      "output_tokens": 812,
+      "raw": {
+        "prompt_tokens": 34146,
+        "completion_tokens": 812,
+        "total_tokens": 34958,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 674},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 226
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34117,
+      "cached_input_tokens": 33920,
+      "output_tokens": 350,
+      "raw": {
+        "prompt_tokens": 34117,
+        "completion_tokens": 350,
+        "total_tokens": 34467,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 291},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 197
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34222,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1078,
+      "raw": {
+        "prompt_tokens": 34222,
+        "completion_tokens": 1078,
+        "total_tokens": 35300,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 935},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 302
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34142,
+      "cached_input_tokens": 34048,
+      "output_tokens": 885,
+      "raw": {
+        "prompt_tokens": 34142,
+        "completion_tokens": 885,
+        "total_tokens": 35027,
+        "prompt_tokens_details": {"cached_tokens": 34048},
+        "completion_tokens_details": {"reasoning_tokens": 804},
+        "prompt_cache_hit_tokens": 34048,
+        "prompt_cache_miss_tokens": 94
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34246,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1743,
+      "raw": {
+        "prompt_tokens": 34246,
+        "completion_tokens": 1743,
+        "total_tokens": 35989,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1576},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 326
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34139,
+      "cached_input_tokens": 34048,
+      "output_tokens": 866,
+      "raw": {
+        "prompt_tokens": 34139,
+        "completion_tokens": 866,
+        "total_tokens": 35005,
+        "prompt_tokens_details": {"cached_tokens": 34048},
+        "completion_tokens_details": {"reasoning_tokens": 774},
+        "prompt_cache_hit_tokens": 34048,
+        "prompt_cache_miss_tokens": 91
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34147,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1140,
+      "raw": {
+        "prompt_tokens": 34147,
+        "completion_tokens": 1140,
+        "total_tokens": 35287,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1055},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 227
+      }
+    }
+  ],
+  "timestamp": "2026-06-13T00:46:56Z"
+}

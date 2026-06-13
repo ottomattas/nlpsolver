@@ -1,0 +1,889 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 1188,
+  "input_text": "Emily is a wolf. The tree growing near the river was tall. Tallinn is hardly in Latvia. Greg is a bad man. The horse kept in the stable was calm. Elephants have long not big trunks. Agatha is in trouble. While John was cooking, Mary read a book. A chocolate cake fell. Mary read a book?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Emily is a wolf.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Emily 1 is a wolf.",
+          "type": "situation",
+          "entities": [{"id": "Emily 1", "type": "concrete", "category": "animal"},
+            {"id": "wolf", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The tree growing near the river was tall.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The tree 2 grew near the river 3.",
+          "type": "situation",
+          "entities": [{"id": "tree 2", "type": "concrete", "category": "plant"},
+            {"id": "river 3", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "grow",
+              "mode": "event",
+              "roles": {"actor": "tree 2", "location": "river 3", "location_prep": "near"}
+            }
+          ],
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "The tree 2 was tall.",
+          "type": "situation",
+          "entities": [{"id": "tree 2", "type": "concrete", "category": "plant"}],
+          "adjectives": [["tall","none","tree"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is hardly in Latvia.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Tallinn 1 is hardly in Latvia 4.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 4",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Greg is a bad man.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Greg 5 is a man.",
+          "type": "situation",
+          "entities": [{"id": "Greg 5", "type": "concrete", "category": "person"}]
+        },
+        {
+          "unit_id": "S6",
+          "text": "Greg 5 is bad.",
+          "type": "situation",
+          "entities": [{"id": "Greg 5", "type": "concrete", "category": "person"}],
+          "adjectives": [["bad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "The horse kept in the stable was calm.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "The horse 6 was kept in the stable 7.",
+          "type": "situation",
+          "entities": [{"id": "horse 6", "type": "concrete", "category": "animal"},
+            {"id": "stable 7", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "keep",
+              "mode": "event",
+              "roles": {"target": "horse 6", "location": "stable 7"}
+            }
+          ],
+          "time": "past"
+        },
+        {
+          "unit_id": "S8",
+          "text": "The horse 6 was calm.",
+          "type": "situation",
+          "entities": [{"id": "horse 6", "type": "concrete", "category": "animal"}],
+          "adjectives": [["calm","none","animal"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have long not big trunks.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Elephants have trunks that are long and not big.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"}
+          ],
+          "adjectives": [["long","none","trunk"], ["big","none","trunk"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Agatha is in trouble.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Agatha 8 is in trouble 9.",
+          "type": "situation",
+          "entities": [{"id": "Agatha 8", "type": "concrete", "category": "person"},
+            {"id": "trouble 9", "type": "concrete", "category": "abstract"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "While John was cooking, Mary read a book.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "John 10 was cooking.",
+          "type": "situation",
+          "entities": [{"id": "John 10", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "cook", "mode": "event", "roles": {"actor": "John 10"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S12",
+          "text": "Mary 2 read a book 11.",
+          "type": "situation",
+          "entities": [{"id": "Mary 2", "type": "concrete", "category": "person"},
+            {"id": "book 11", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "read", "mode": "event", "roles": {"actor": "Mary 2", "target": "book 11"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A chocolate cake fell.",
+      "units": [{
+          "unit_id": "S13",
+          "text": "A chocolate cake 12 fell.",
+          "type": "situation",
+          "entities": [{"id": "cake 12", "type": "concrete", "category": "artifact"},
+            {"id": "chocolate", "type": "generic", "scope": "kind", "category": "substance"}
+          ],
+          "actions": [{"root": "fall", "mode": "event", "roles": {"actor": "cake 12"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary read a book?",
+      "units": [{
+          "unit_id": "S14",
+          "text": "Did Mary 2 read a book?",
+          "type": "query",
+          "entities": [{"id": "Mary 2", "type": "concrete", "category": "person"},
+            {"id": "book", "type": "generic", "category": "artifact"}
+          ],
+          "actions": [{"root": "read", "mode": "event", "roles": {"actor": "Mary 2", "target": "book"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","wolf","Emily 1"]]],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","tree","tree 2"],
+          ["isa","river","river 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","grow"],
+              ["has actor","E","tree 2"],
+              ["has location","E","river 3","near"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","tree","tree 2"], ["has degree property","tall","tree 2","none","tree"]]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+        ],
+        ["@p","S4",0.05]
+      ]
+    ],
+    ["@id", "S5", ["holds", "W0", ["isa","man","Greg 5"]]],
+    ["@id", "S6", ["holds", "W0", ["has degree property","bad","Greg 5","none","person"]]],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","horse","horse 6"],
+          ["isa","stable","stable 7"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","keep"],
+              ["has target","E","horse 6"],
+              ["has location","E","stable 7","in"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and", ["isa","horse","horse 6"], ["has degree property","calm","horse 6","none","animal"]]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally",
+                ["exists","Y",
+                  ["and",
+                    ["isa","trunk","Y"],
+                    ["has part","X","Y"],
+                    ["has degree property","long","Y","none","trunk"],
+                    ["not", ["has degree property","big","Y","none","trunk"]]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S9",0.99]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Agatha 8"],
+          ["isa","trouble","trouble 9"],
+          ["is rel2","in","Agatha 8","trouble 9"]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 10"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","cook"],
+              ["has actor","E","John 10"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S12",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 2"],
+          ["isa","book","book 11"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","read"],
+              ["has actor","E","Mary 2"],
+              ["has target","E","book 11"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S13",
+      ["holds","W0",
+        ["and",
+          ["isa","cake","cake 12"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","fall"],
+              ["has actor","E","cake 12"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S14",
+      ["question",
+        ["exists","X",
+          ["and",
+            ["isa","book","X"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","read"],
+                ["has actor","E","Mary 2"],
+                ["has target","E","X"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","animal","#:Emily 1"],
+ "@nl": "Emily 1 is a wolf."},
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is hardly in Latvia 4."},
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:Latvia 4"],
+ "@nl": "Tallinn 1 is hardly in Latvia 4."},
+{"@name": "entity_S5",
+ "@logic": ["isa","person","#:Greg 5"],
+ "@nl": "Greg 5 is a man."},
+{"@name": "entity_S7",
+ "@logic": ["isa","animal","#:horse 6"],
+ "@nl": "The horse 6 was kept in the stable 7."},
+{"@name": "sent_S1",
+ "@logic": ["isa","wolf","#:Emily 1"],
+ "@nl": "Emily 1 is a wolf."},
+{"@name": "sent_S2",
+ "@logic": ["isa","tree","#:tree 2"],
+ "@nl": "The tree 2 grew near the river 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","river","#:river 3"],
+ "@nl": "The tree 2 grew near the river 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The tree 2 grew near the river 3."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "grow", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The tree 2 grew near the river 3."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:tree 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The tree 2 grew near the river 3."},
+{"@name": "sent_S2",
+ "@logic": ["has location", "sk0_activity", "#:river 3", "near", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The tree 2 grew near the river 3."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The tree 2 grew near the river 3."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The tree 2 grew near the river 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","tree","#:tree 2"],
+ "@nl": "The tree 2 was tall."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "tall", "#:tree 2", "none", "tree", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The tree 2 was tall."},
+{"@name": "sent_S4",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@confidence": 0.9,
+ "@nl": "Tallinn 1 is hardly in Latvia 4."},
+{"@name": "sent_S5",
+ "@logic": ["isa","man","#:Greg 5"],
+ "@nl": "Greg 5 is a man."},
+{"@name": "sent_S6",
+ "@logic": ["-has degree property", "good", "#:Greg 5", "none", "person", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Greg 5 is bad."},
+{"@name": "sent_S7",
+ "@logic": ["isa","horse","#:horse 6"],
+ "@nl": "The horse 6 was kept in the stable 7."},
+{"@name": "sent_S7",
+ "@logic": ["isa","stable","#:stable 7"],
+ "@nl": "The horse 6 was kept in the stable 7."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The horse 6 was kept in the stable 7."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk1_activity", "keep", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The horse 6 was kept in the stable 7."},
+{"@name": "sent_S7",
+ "@logic": ["has target", "sk1_activity", "#:horse 6", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The horse 6 was kept in the stable 7."},
+{"@name": "sent_S7",
+ "@logic": ["has location", "sk1_activity", "#:stable 7", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The horse 6 was kept in the stable 7."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The horse 6 was kept in the stable 7."},
+{"@name": "sent_S7",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The horse 6 was kept in the stable 7."},
+{"@name": "sent_S8",
+ "@logic": ["isa","horse","#:horse 6"],
+ "@nl": "The horse 6 was calm."},
+{"@name": "sent_S8",
+ "@logic": ["has degree property", "calm", "#:horse 6", "none", "animal", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The horse 6 was calm."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk2","?:X"]]],
+ "@nl": "Elephants have trunks that are long and not big."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk2","?:X"], ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Elephants have trunks that are long and not big."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has degree property", "long", ["sk2","?:X"], "none", "trunk", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Elephants have trunks that are long and not big."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-has degree property", "big", ["sk2","?:X"], "none", "trunk", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["$block", ["$","elephant",1], ["has degree property", "big", ["sk2","?:X"], "none", "trunk", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Elephants have trunks that are long and not big."},
+{"@name": "sent_S10",
+ "@logic": ["isa","person","#:Agatha 8"],
+ "@nl": "Agatha 8 is in trouble 9."},
+{"@name": "sent_S10",
+ "@logic": ["isa","trouble","#:trouble 9"],
+ "@nl": "Agatha 8 is in trouble 9."},
+{"@name": "sent_S10",
+ "@logic": ["is rel2", "in", "#:Agatha 8", "#:trouble 9", ["$ctxt","present","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Agatha 8 is in trouble 9."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:John 10"],
+ "@nl": "John 10 was cooking."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "John 10 was cooking."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk3_activity", "cook", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "John 10 was cooking."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk3_activity", "#:John 10", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "John 10 was cooking."},
+{"@name": "sent_S11",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "John 10 was cooking."},
+{"@name": "sent_S11",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "John 10 was cooking."},
+{"@name": "sent_S12",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Mary 2 read a book 11."},
+{"@name": "sent_S12",
+ "@logic": ["isa","book","#:book 11"],
+ "@nl": "Mary 2 read a book 11."},
+{"@name": "sent_S12",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Mary 2 read a book 11."},
+{"@name": "sent_S12",
+ "@logic": ["has type", "sk4_activity", "read", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Mary 2 read a book 11."},
+{"@name": "sent_S12",
+ "@logic": ["has actor", "sk4_activity", "#:Mary 2", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Mary 2 read a book 11."},
+{"@name": "sent_S12",
+ "@logic": ["has target", "sk4_activity", "#:book 11", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Mary 2 read a book 11."},
+{"@name": "sent_S12",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Mary 2 read a book 11."},
+{"@name": "sent_S12",
+ "@logic": ["actuality","sk4_activity"],
+ "@nl": "Mary 2 read a book 11."},
+{"@name": "sent_S13",
+ "@logic": ["isa","cake","#:cake 12"],
+ "@nl": "A chocolate cake 12 fell."},
+{"@name": "sent_S13",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "A chocolate cake 12 fell."},
+{"@name": "sent_S13",
+ "@logic": ["has type", "sk5_activity", "fall", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "A chocolate cake 12 fell."},
+{"@name": "sent_S13",
+ "@logic": ["has actor", "sk5_activity", "#:cake 12", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "A chocolate cake 12 fell."},
+{"@name": "sent_S13",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "A chocolate cake 12 fell."},
+{"@name": "sent_S13",
+ "@logic": ["actuality","sk5_activity"],
+ "@nl": "A chocolate cake 12 fell."},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","book","sk6_book"]],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk7_activity"]],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk7_activity", "read", ["$ctxt","past","?:Fv37","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk7_activity", "#:Mary 2", ["$ctxt","past","?:Fv39","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk7_activity", "sk6_book", ["$ctxt","past","?:Fv41","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk7_activity", "past", "in", ["$ctxt","past","?:Fv43","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk7_activity"]],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-isa","book","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "read", ["$ctxt","past","?:Fv49","?:Fv29","?:Fv30"]],
+            ["-has actor", "?:E", "#:Mary 2", ["$ctxt","past","?:Fv51","?:Fv29","?:Fv30"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","past","?:Fv53","?:Fv29","?:Fv30"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S14",
+ "@question": ["$defq0"],
+ "@nl": "Did Mary 2 read a book?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "long", "$some_long_trunk", "none", "trunk", ["$ctxt","?:Fv105","?:Fv102","?:Fv103","?:Fv104"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_long_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "long", "$some_not_long_trunk", "none", "trunk", ["$ctxt","?:Fv113","?:Fv110","?:Fv111","?:Fv112"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "big", "$some_big_trunk", "none", "trunk", ["$ctxt","?:Fv117","?:Fv114","?:Fv115","?:Fv116"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_big_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "big", "$some_not_big_trunk", "none", "trunk", ["$ctxt","?:Fv125","?:Fv122","?:Fv123","?:Fv124"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","tall","?:X","none","?:Fv126","?:Fv57"],
+            ["has degree property","high","?:X","none","?:Fv127","?:Fv57"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","high","?:X","none","?:Fv128","?:Fv58"],
+            ["has degree property","tall","?:X","none","?:Fv129","?:Fv58"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","river","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","river","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_positional_actor_loc",
+ "@logic": [["-has location","?:E","?:L","near","?:Fv59"],
+            ["-has actor","?:E","?:X","?:Fv59"],
+            ["has degree rel2","near","?:X","?:L","none","?:Fv130","?:Fv59"],
+            ["$block", 0, ["$not", ["has degree rel2","near","?:X","?:L","none","?:Fv131","?:Fv59"]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_positional_actor_loc]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv132", ["$ctxt","past","?:Fv60","?:Fv61","?:Fv62"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv133", ["$ctxt","present","?:Fv60","?:Fv61","?:Fv62"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv134", ["$ctxt","present","?:Fv60","?:Fv61","?:Fv62"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv63","?:Fv64","?:Fv65"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv63","?:Fv64","?:Fv65"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv63","?:Fv64","?:Fv65"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "none", "?:Fv135", ["$ctxt","past","?:Fv66","?:Fv67","?:Fv68"]],
+            ["has degree property", "long", "?:X", "none", "?:Fv136", ["$ctxt","present","?:Fv66","?:Fv67","?:Fv68"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "none", "?:Fv137", ["$ctxt","present","?:Fv66","?:Fv67","?:Fv68"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv69","?:Fv70","?:Fv71"]],
+            ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv69","?:Fv70","?:Fv71"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv69","?:Fv70","?:Fv71"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "none", "?:Fv138", ["$ctxt","past","?:Fv72","?:Fv73","?:Fv74"]],
+            ["has degree property", "tall", "?:X", "none", "?:Fv139", ["$ctxt","present","?:Fv72","?:Fv73","?:Fv74"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "none", "?:Fv140", ["$ctxt","present","?:Fv72","?:Fv73","?:Fv74"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv75","?:Fv76","?:Fv77"]],
+            ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv75","?:Fv76","?:Fv77"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv75","?:Fv76","?:Fv77"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S14","assumption",1], [["$defq0"], ["-has type", "?:X", "read", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has actor", "?:X", "#:Mary 2", ["$ctxt","past","?:V","?:Z","?:U"]], ["-has target", "?:X", "?:W", ["$ctxt","past","?:2006","?:Z","?:U"]], ["-isa","book","?:W"], ["-isa","activity","?:X"], ["-actuality","?:X"]]],
+          [2, ["in","sent_S12","assumption",1], [["has type", "sk4_activity", "read", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S14","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,1], 2, 3, "fromga", 1], [["-isa","activity","sk4_activity"], ["-actuality","sk4_activity"], ["-has actor", "sk4_activity", "#:Mary 2", ["$ctxt","past","?:X3","?:Y3","?:Z3"]], ["-has target", "sk4_activity", "?:U3", ["$ctxt","past","?:V3","?:Y3","?:Z3"]], ["-isa","book","?:U3"]]],
+          [5, ["in","sent_S12","assumption",1], [["isa","activity","sk4_activity"]]],
+          [6, ["in","sent_S12","assumption",1], [["actuality","sk4_activity"]]],
+          [7, ["simp",4,5,6,"fromga",1], [["-has actor", "sk4_activity", "#:Mary 2", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has target", "sk4_activity", "?:U", ["$ctxt","past","?:V","?:Y","?:Z"]], ["-isa","book","?:U"]]],
+          [8, ["in","sent_S12","assumption",1], [["has actor", "sk4_activity", "#:Mary 2", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [9, ["mp",7,8,"fromga",1], [["-has target", "sk4_activity", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-isa","book","?:X"]]],
+          [10, ["in","sent_S12","assumption",1], [["has target", "sk4_activity", "#:book 11", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [11, ["mp",9,10,"fromga",1], [["-isa","book","#:book 11"]]],
+          [12, ["in","sent_S12","assumption",1], [["isa","book","#:book 11"]]],
+          [13, ["simp",11,12,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) While John was cooking, Mary read a book.",
+"  (2) Mary read a book?",
+"Proof steps (by contradiction):",
+"  (1) If X is a read event and Mary performs X and X targets some W and W is a book and X is an activity then answer holds  [sentence 2]",
+"  (2) The event act4 is a read event  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) If the event act4 is an activity and Mary performs the act4 then the act4 does not target U3  [from steps 1, 2, 3]",
+"  (5) The event act4 is an activity  [sentence 1]",
+"  (6)   [sentence 1]",
+"  (7) If Mary performs the event act4 then the act4 does not target U  [from steps 4, 5, 6]",
+"  (8) Mary performs the event act4  [sentence 1]",
+"  (9) The act4 does not target X  [from steps 7, 8]",
+"  (10) The event act4 targets the book M  [sentence 1]",
+"  (11) The book M is not a book  [from steps 9, 10]",
+"  (12) The book M is a book  [sentence 1]",
+"  (13) Contradiction  [from steps 11, 12]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33482,
+      "cached_input_tokens": 33280,
+      "output_tokens": 43,
+      "raw": {
+        "input_tokens": 33482,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 43,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33525
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33615,
+      "cached_input_tokens": 33280,
+      "output_tokens": 193,
+      "raw": {
+        "input_tokens": 33615,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 193,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33808
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33520,
+      "cached_input_tokens": 33280,
+      "output_tokens": 79,
+      "raw": {
+        "input_tokens": 33520,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 79,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33599
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33530,
+      "cached_input_tokens": 33408,
+      "output_tokens": 78,
+      "raw": {
+        "input_tokens": 33530,
+        "input_tokens_details": {"cached_tokens": 33408},
+        "output_tokens": 78,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33608
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33608,
+      "cached_input_tokens": 33280,
+      "output_tokens": 177,
+      "raw": {
+        "input_tokens": 33608,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 177,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33785
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33522,
+      "cached_input_tokens": 33280,
+      "output_tokens": 147,
+      "raw": {
+        "input_tokens": 33522,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 147,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33669
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33491,
+      "cached_input_tokens": 33280,
+      "output_tokens": 80,
+      "raw": {
+        "input_tokens": 33491,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 80,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33571
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33616,
+      "cached_input_tokens": 33280,
+      "output_tokens": 211,
+      "raw": {
+        "input_tokens": 33616,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 211,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33827
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33523,
+      "cached_input_tokens": 33408,
+      "output_tokens": 102,
+      "raw": {
+        "input_tokens": 33523,
+        "input_tokens_details": {"cached_tokens": 33408},
+        "output_tokens": 102,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33625
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33521,
+      "cached_input_tokens": 33280,
+      "output_tokens": 114,
+      "raw": {
+        "input_tokens": 33521,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 114,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33635
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T22:36:08Z"
+}

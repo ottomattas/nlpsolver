@@ -1,0 +1,933 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 117,
+  "input_text": "John told Mary a story. Jessica is a mouse. Americans can not disappear. The students studied hard and passed the exam. The letter was written in June. Mr Dursley is an American. The blue car costs two dollars. Bears eat all boxers. The length of Nile is 10 meters. This book is more interesting than that one. Mr Dursley can disappear?",
+  "expected_answer": false,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "Likely false.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John told Mary a story.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 told Mary 2 a story 3.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Mary 2", "type": "concrete", "category": "person"},
+            {"id": "story 3", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{
+              "root": "tell",
+              "mode": "event",
+              "roles": {"actor": "John 1", "recipient": "Mary 2", "target": "story 3"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Jessica is a mouse.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Jessica 4 is a mouse.",
+          "type": "situation",
+          "entities": [{"id": "Jessica 4", "type": "concrete", "category": "person"},
+            {"id": "mouse", "type": "generic", "category": "animal"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Americans can not disappear.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Americans cannot disappear.",
+          "type": "normal_rule",
+          "entities": [{"id": "Americans", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability"}],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "The students studied hard and passed the exam.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The students 5 studied hard.",
+          "type": "situation",
+          "entities": [{"id": "students 5", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "study", "mode": "event", "roles": {"manner": "hard"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S5",
+          "text": "The students 5 passed the exam 6.",
+          "type": "situation",
+          "entities": [{"id": "students 5", "type": "concrete", "category": "person"},
+            {"id": "exam 6", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "pass", "mode": "event", "roles": {"target": "exam 6"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The letter was written in June.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The letter 7 was written.",
+          "type": "situation",
+          "entities": [{"id": "letter 7", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "write", "mode": "event", "roles": {"target": "letter 7"}}],
+          "time": "June",
+          "time_prep": "in",
+          "state_tense": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is an American.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Mr Dursley 8 is an American.",
+          "type": "situation",
+          "entities": [{"id": "Mr Dursley 8", "type": "concrete", "category": "person"},
+            {"id": "American", "type": "generic", "category": "person"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "The blue car costs two dollars.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "The blue car 9 costs two dollars.",
+          "type": "situation",
+          "entities": [{"id": "car 9", "type": "concrete", "category": "artifact"},
+            {"id": "two dollars", "type": "concrete", "category": "measure"}
+          ],
+          "adjectives": [["blue","none","none"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Bears eat all boxers.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Bears eat all boxers.",
+          "type": "strict_rule",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "boxers", "type": "generic", "category": "person"}
+          ],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"target": "boxers"}}]
+        }
+      ]
+    },
+    {
+      "raw": "The length of Nile is 10 meters.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "The length 11 of Nile 10 is 10 meters.",
+          "type": "real",
+          "entities": [{"id": "length 11", "type": "concrete", "text": "length"},
+            {
+              "id": "Nile 10",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            },
+            {"id": "10 meters", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 11","Nile 10"]]
+        },
+        {
+          "unit_id": "S11",
+          "text": "The length 11 is the length of Nile 10.",
+          "type": "real",
+          "entities": [{"id": "length 11", "type": "concrete", "text": "length"},
+            {
+              "id": "Nile 10",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            }
+          ],
+          "definites": [["length of","length 11","Nile 10"]]
+        }
+      ]
+    },
+    {
+      "raw": "This book is more interesting than that one.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "This book 12 is more interesting than that book 13.",
+          "type": "situation",
+          "entities": [{"id": "book 12", "type": "concrete", "category": "artifact"},
+            {"id": "book 13", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["interesting","high","book"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley can disappear?",
+      "units": [{
+          "unit_id": "S13",
+          "text": "Can Mr Dursley 8 disappear?",
+          "type": "query",
+          "entities": [{"id": "Mr Dursley 8", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability"}]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","person","Mary 2"],
+          ["isa","story","story 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","tell"],
+              ["has actor","E","John 1"],
+              ["has recipient","E","Mary 2"],
+              ["has target","E","story 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and", ["holds", "W0", ["isa","mouse","Jessica 4"]], ["state time","W0","present"]]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","American","X"],
+              ["normally",
+                ["not",
+                  ["exists","E",
+                    ["and",
+                      ["isa","activity","E"],
+                      ["has type","E","disappear"],
+                      ["has actor","E","X"],
+                      ["capability","E"]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S3",0.95]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","students 5"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","study"],
+                ["has actor","E","students 5"],
+                ["has manner","E","hard"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","students 5"],
+            ["isa","abstract","exam 6"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","pass"],
+                ["has actor","E","students 5"],
+                ["has target","E","exam 6"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","letter","letter 7"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","write"],
+              ["has target","E","letter 7"],
+              ["has time","E","June","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds", "W0", ["and", ["isa","person","Mr Dursley 8"], ["isa","American","Mr Dursley 8"]]]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","car","car 9"],
+            ["has degree property","blue","car 9","none","none"],
+            ["=", ["$measure_of","price","car 9","W0"], ["$measure",2,"dollar"]]
+          ]
+        ],
+        ["state time","W0","present"]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","bear","X"],
+            ["forall","Y",
+              ["implies",
+                ["isa","boxer","Y"],
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","eat"],
+                    ["has actor","E","X"],
+                    ["has target","E","Y"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["and",
+          ["isa","Nile","https://en.wikipedia.org/wiki/Nile"],
+          ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$measure",10,"meter"]]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 11"],
+            ["isa","Nile","https://en.wikipedia.org/wiki/Nile"],
+            ["have","https://en.wikipedia.org/wiki/Nile","length 11"]
+          ]
+        ],
+        ["@definite","S11","W0","length of","Nile 10","length 11"]
+      ]
+    ],
+    ["@id","S12",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","book","book 12"],
+            ["isa","book","book 13"],
+            ["has degree rel2","interesting","book 12","book 13","high","book"]
+          ]
+        ],
+        ["state time","W0","present"]
+      ]
+    ],
+    ["@id","S13",
+      ["question",
+        ["and",
+          ["isa","person","Mr Dursley 8"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","disappear"],
+              ["has actor","E","Mr Dursley 8"],
+              ["capability","E"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","person","#:Jessica 4"],
+ "@nl": "Jessica 4 is a mouse."},
+{"@name": "entity_S4",
+ "@logic": ["isa","student","#:students 5"],
+ "@nl": "The students 5 studied hard."},
+{"@name": "entity_S4",
+ "@logic": ["isa","student","#:students 5"],
+ "@nl": "The students 5 studied hard."},
+{"@name": "entity_S5",
+ "@logic": ["isa","exam","#:exam 6"],
+ "@nl": "The students 5 passed the exam 6."},
+{"@name": "entity_S8",
+ "@logic": ["isa","measure","two dollars"],
+ "@nl": "The blue car 9 costs two dollars."},
+{"@name": "entity_S10",
+ "@logic": ["isa","place","#:Nile 10"],
+ "@nl": "The length 11 of Nile 10 is 10 meters."},
+{"@name": "entity_S10",
+ "@logic": ["isa","measure","10 meters"],
+ "@nl": "The length 11 of Nile 10 is 10 meters."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 told Mary 2 a story 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "John 1 told Mary 2 a story 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","story","#:story 3"],
+ "@nl": "John 1 told Mary 2 a story 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "John 1 told Mary 2 a story 3."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "tell", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 told Mary 2 a story 3."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:John 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 told Mary 2 a story 3."},
+{"@name": "sent_S1",
+ "@logic": ["has recipient", "sk0_activity", "#:Mary 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 told Mary 2 a story 3."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk0_activity", "#:story 3", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 told Mary 2 a story 3."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 told Mary 2 a story 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","mouse","#:Jessica 4"],
+ "@nl": "Jessica 4 is a mouse."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","american","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-capability","?:E"],
+            ["$block", ["$","american",3], ["capability","?:E"]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Americans cannot disappear."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:students 5"],
+ "@nl": "The students 5 studied hard."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The students 5 studied hard."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "study", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The students 5 studied hard."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk1_activity", "#:students 5", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The students 5 studied hard."},
+{"@name": "sent_S4",
+ "@logic": ["has manner", "sk1_activity", "hard", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The students 5 studied hard."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The students 5 studied hard."},
+{"@name": "sent_S4",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The students 5 studied hard."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:students 5"],
+ "@nl": "The students 5 passed the exam 6."},
+{"@name": "sent_S5",
+ "@logic": ["isa","abstract","#:exam 6"],
+ "@nl": "The students 5 passed the exam 6."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The students 5 passed the exam 6."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk2_activity", "pass", ["$ctxt","past","W1","?:Fv11","?:Fv12"]],
+ "@nl": "The students 5 passed the exam 6."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:students 5", ["$ctxt","past","W1","?:Fv11","?:Fv12"]],
+ "@nl": "The students 5 passed the exam 6."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk2_activity", "#:exam 6", ["$ctxt","past","W1","?:Fv11","?:Fv12"]],
+ "@nl": "The students 5 passed the exam 6."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W1","?:Fv11","?:Fv12"]],
+ "@nl": "The students 5 passed the exam 6."},
+{"@name": "sent_S5",
+ "@logic": ["next","W1","W2"],
+ "@nl": "The students 5 passed the exam 6."},
+{"@name": "sent_S6",
+ "@logic": ["isa","letter","#:letter 7"],
+ "@nl": "The letter 7 was written."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The letter 7 was written."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk3_activity", "write", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The letter 7 was written."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk3_activity", "#:letter 7", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The letter 7 was written."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk3_activity", "June", "in", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The letter 7 was written."},
+{"@name": "sent_S6",
+ "@logic": ["=", ["$theof1","time","W0","?:Fv15"], ["$datetime","June"]],
+ "@nl": "The letter 7 was written."},
+{"@name": "sent_S6",
+ "@logic": ["is_past_world","W0"],
+ "@nl": "The letter 7 was written."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Mr Dursley 8"],
+ "@nl": "Mr Dursley 8 is an American."},
+{"@name": "sent_S7",
+ "@logic": ["isa","american","#:Mr Dursley 8"],
+ "@nl": "Mr Dursley 8 is an American."},
+{"@name": "sent_S8",
+ "@logic": ["isa","car","#:car 9"],
+ "@nl": "The blue car 9 costs two dollars."},
+{"@name": "sent_S8",
+ "@logic": ["has property", "blue", "#:car 9", ["$ctxt","present","W0","?:Fv18","?:Fv19"]],
+ "@nl": "The blue car 9 costs two dollars."},
+{"@name": "sent_S8",
+ "@logic": ["=", ["$measure_of","price","#:car 9","W0"], ["$list",2,"#:dollar"]],
+ "@nl": "The blue car 9 costs two dollars."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bear","?:X"], ["-isa","boxer","?:Y"], ["isa", "activity", ["sk4","?:X"]]],
+ "@nl": "Bears eat all boxers."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has type", ["sk4","?:X"], "eat", ["$ctxt","?:Fv23","?:Fv22","?:Fv20","?:Fv21"]]
+           ],
+ "@nl": "Bears eat all boxers."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has actor", ["sk4","?:X"], "?:X", ["$ctxt","?:Fv23","?:Fv22","?:Fv20","?:Fv21"]]
+           ],
+ "@nl": "Bears eat all boxers."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has target", ["sk4","?:X"], "?:Y", ["$ctxt","?:Fv23","?:Fv22","?:Fv20","?:Fv21"]]
+           ],
+ "@nl": "Bears eat all boxers."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["typical", ["sk4","?:X"], ["$ctxt","?:Fv23","?:Fv22","?:Fv20","?:Fv21"]]
+           ],
+ "@nl": "Bears eat all boxers."},
+{"@name": "sent_S10",
+ "@logic": ["isa","nile","https://en.wikipedia.org/wiki/Nile"],
+ "@nl": "The length 11 of Nile 10 is 10 meters."},
+{"@name": "sent_S10",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$list",10,"#:meter"]],
+ "@nl": "The length 11 of Nile 10 is 10 meters."},
+{"@name": "sent_S11",
+ "@logic": ["isa", "length", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv26","?:Fv27"]]],
+ "@nl": "The length 11 is the length of Nile 10."},
+{"@name": "sent_S11",
+ "@logic": ["isa","nile","https://en.wikipedia.org/wiki/Nile"],
+ "@nl": "The length 11 is the length of Nile 10."},
+{"@name": "sent_S11",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Nile", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv26","?:Fv27"]], ["$ctxt","present","W0","?:Fv26","?:Fv27"]],
+ "@nl": "The length 11 is the length of Nile 10."},
+{"@name": "sent_S12",
+ "@logic": ["isa","book","#:book 12"],
+ "@nl": "This book 12 is more interesting than that book 13."},
+{"@name": "sent_S12",
+ "@logic": ["isa","book","#:book 13"],
+ "@nl": "This book 12 is more interesting than that book 13."},
+{"@name": "sent_S12",
+ "@logic": ["has degree rel2", "interesting", "#:book 12", "#:book 13", "high", "book", ["$ctxt","present","W0","?:Fv28","?:Fv29"]],
+ "@nl": "This book 12 is more interesting than that book 13."},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:Mr Dursley 8"]],
+ "@nl": "Can Mr Dursley 8 disappear?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk5_activity"]],
+ "@nl": "Can Mr Dursley 8 disappear?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk5_activity", "disappear", ["$ctxt","?:Fv38","?:Fv37","?:Fv30","?:Fv31"]]
+           ],
+ "@nl": "Can Mr Dursley 8 disappear?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk5_activity", "#:Mr Dursley 8", ["$ctxt","?:Fv40","?:Fv39","?:Fv30","?:Fv31"]]
+           ],
+ "@nl": "Can Mr Dursley 8 disappear?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["capability","sk5_activity"]],
+ "@nl": "Can Mr Dursley 8 disappear?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:Mr Dursley 8"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv46","?:Fv45","?:Fv30","?:Fv31"]],
+            ["-has actor", "?:E", "#:Mr Dursley 8", ["$ctxt","?:Fv48","?:Fv47","?:Fv30","?:Fv31"]],
+            ["-capability","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Can Mr Dursley 8 disappear?"},
+{"@name": "sent_S13",
+ "@question": ["$defq0"],
+ "@nl": "Can Mr Dursley 8 disappear?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Nile", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv26","?:Fv27"]], ["$ctxt","present","W0","?:Fv26","?:Fv27"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Nile", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv26","?:Fv27"]], ["$ctxt","present","W0","?:Fv26","?:Fv27"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "length of", ["$theof1","length","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "length", ["$theof1","length","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","price","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "price", ["$measure_of","price","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","American","$some_not_American"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","boxer","$some_boxer"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","boxer","$some_not_boxer"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv49"], ["has type","?:E","give","?:Fv49"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv50"], ["has type","?:E","go","?:Fv50"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv51","?:Fv52","?:Fv53"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv54","?:Fv55","?:Fv56"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has target","?:Esb","?:Ysb","?:Csb"],
+            ["-has recipient","?:Esb","?:Xsb","?:Csb"],
+            ["has recipient","?:Ysb","?:Xsb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_measure_rel_bridge",
+ "@logic": [["-=", ["$measure_of","length","?:S","?:W"], "?:V"],
+            ["is rel2","length of","?:V","?:S","?:Ctxt"]
+           ],
+ "@nl": "[generated: frm_measure_rel_bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "blockers": [["$block", ["$","american",3], ["capability","sk5_activity"]]],
+        "confidence": 0.9,
+        "negative proof": [[1, ["in","sent_S13","assumption",1], [["-$defq0"], ["has actor", "sk5_activity", "#:Mr Dursley 8", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [2, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [3, ["mp",1,2,"fromga",1], [["has actor", "sk5_activity", "#:Mr Dursley 8", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [4, ["in","sent_S3","assumption",0.9], [["-has type", "?:X", "disappear", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "?:X", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["$block", ["$","american",3], ["capability","?:X"]], ["-isa","american","?:W"], ["-isa","activity","?:X"], ["-capability","?:X"]]],
+          [5, ["in","sent_S13","assumption",1], [["-$defq0"], ["has type", "sk5_activity", "disappear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [6, ["mp",5,2,"fromga",1], [["has type", "sk5_activity", "disappear", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]],
+          [7, ["in","sent_S13","assumption",1], [["-$defq0"], ["isa","activity","sk5_activity"]]],
+          [8, ["mp",7,2,"fromga",1], [["isa","activity","sk5_activity"]]],
+          [9, ["in","sent_S13","assumption",1], [["-$defq0"], ["capability","sk5_activity"]]],
+          [10, ["mp",9,2,"fromga",1], [["capability","sk5_activity"]]],
+          [11, ["mp", 3, [4,1], 6, 8, 10, "fromga", 0.9], [["-isa","american","#:Mr Dursley 8"], ["$block", ["$","american",3], ["capability","sk5_activity"]]]],
+          [12, ["in","sent_S7","assumption",1], [["isa","american","#:Mr Dursley 8"]]],
+          [13, ["mp",11,12,"fromga",0.9], [["$block", ["$","american",3], ["capability","sk5_activity"]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 90%.",
+"Sentences used:",
+"  (1) Americans can not disappear.",
+"  (2) Mr Dursley is an American.",
+"  (3) Mr Dursley can disappear?",
+"Proof steps:",
+"  (1) If answer holds then Mr Dursley performs the event act5  [sentence 3]",
+"  (2) Answer holds  [assumption]",
+"  (3) Mr Dursley performs the event act5  [from steps 1, 2]",
+"  (4) If X is a disappear event and some american W performs X and X is an activity then X is not a capability, except when X is a capability  [sentence 1, confidence 90%]",
+"  (5) If answer holds then the event act5 is a disappear event  [sentence 3]",
+"  (6) The event act5 is a disappear event  [from steps 5, 2]",
+"  (7) If answer holds then the event act5 is an activity  [sentence 3]",
+"  (8) The event act5 is an activity  [from steps 7, 2]",
+"  (9) If answer holds then the event act5 is a capability  [sentence 3]",
+"  (10) The event act5 is a capability  [from steps 9, 2]",
+"  (11) Mr Dursley is not an american, except when the event act5 is a capability  [from steps 3, 4, 6, 8, 10, confidence 90%]",
+"  (12) Mr Dursley is an american  [sentence 2]",
+"  (13) Outstanding exception: the event act5 is a capability  [from steps 11, 12, confidence 90%]",
+"Exceptions checked and not holding:",
+"  act5 is a capability"
+],
+  "llm_usage": [{
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37282,
+      "cached_input_tokens": 0,
+      "output_tokens": 1100,
+      "raw": {
+        "promptTokenCount": 37282,
+        "candidatesTokenCount": 154,
+        "totalTokenCount": 38382,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37282}],
+        "thoughtsTokenCount": 946,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37211,
+      "cached_input_tokens": 0,
+      "output_tokens": 1075,
+      "raw": {
+        "promptTokenCount": 37211,
+        "candidatesTokenCount": 58,
+        "totalTokenCount": 38286,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37211}],
+        "thoughtsTokenCount": 1017,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37209,
+      "cached_input_tokens": 0,
+      "output_tokens": 1088,
+      "raw": {
+        "promptTokenCount": 37209,
+        "candidatesTokenCount": 153,
+        "totalTokenCount": 38297,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37209}],
+        "thoughtsTokenCount": 935,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37364,
+      "cached_input_tokens": 0,
+      "output_tokens": 1288,
+      "raw": {
+        "promptTokenCount": 37364,
+        "candidatesTokenCount": 320,
+        "totalTokenCount": 38652,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37364}],
+        "thoughtsTokenCount": 968,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37238,
+      "cached_input_tokens": 36836,
+      "output_tokens": 1311,
+      "raw": {
+        "promptTokenCount": 37238,
+        "candidatesTokenCount": 108,
+        "totalTokenCount": 38549,
+        "cachedContentTokenCount": 36836,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37238}],
+        "cacheTokensDetails": [{"modality": "TEXT", "tokenCount": 36836}],
+        "thoughtsTokenCount": 1203,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37220,
+      "cached_input_tokens": 0,
+      "output_tokens": 696,
+      "raw": {
+        "promptTokenCount": 37220,
+        "candidatesTokenCount": 64,
+        "totalTokenCount": 37916,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37220}],
+        "thoughtsTokenCount": 632,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37231,
+      "cached_input_tokens": 0,
+      "output_tokens": 447,
+      "raw": {
+        "promptTokenCount": 37231,
+        "candidatesTokenCount": 110,
+        "totalTokenCount": 37678,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37231}],
+        "thoughtsTokenCount": 337,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37233,
+      "cached_input_tokens": 0,
+      "output_tokens": 1199,
+      "raw": {
+        "promptTokenCount": 37233,
+        "candidatesTokenCount": 152,
+        "totalTokenCount": 38432,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37233}],
+        "thoughtsTokenCount": 1047,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37407,
+      "cached_input_tokens": 0,
+      "output_tokens": 3991,
+      "raw": {
+        "promptTokenCount": 37407,
+        "candidatesTokenCount": 225,
+        "totalTokenCount": 41398,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37407}],
+        "thoughtsTokenCount": 3766,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37243,
+      "cached_input_tokens": 0,
+      "output_tokens": 955,
+      "raw": {
+        "promptTokenCount": 37243,
+        "candidatesTokenCount": 117,
+        "totalTokenCount": 38198,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37243}],
+        "thoughtsTokenCount": 838,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37212,
+      "cached_input_tokens": 0,
+      "output_tokens": 1035,
+      "raw": {
+        "promptTokenCount": 37212,
+        "candidatesTokenCount": 113,
+        "totalTokenCount": 38247,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37212}],
+        "thoughtsTokenCount": 922,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T22:58:46Z"
+}

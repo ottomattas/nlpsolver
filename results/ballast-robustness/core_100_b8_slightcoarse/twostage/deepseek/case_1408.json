@@ -1,0 +1,691 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 1408,
+  "input_text": "Penguins are birds. Tom wanted to leave. Penguins do not fly. All elephants have a head. If X is cool then X is red. Birds fly. Emily is a wolf. Mary was in a room. The window was broken. John is a penguin. Jessica is a mouse. Nile's length is 80 kilometers. John flies?",
+  "expected_answer": false,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Penguins are birds.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Penguins are birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Tom wanted to leave.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Tom 1 wanted to leave.",
+          "type": "situation",
+          "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "want",
+              "mode": "volition",
+              "roles": {
+                "actor": "Tom 1",
+                "content": {"root": "leave", "mode": "event", "roles": {"actor": "Tom 1"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Penguins do not fly.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Penguins do not fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "All elephants have a head.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "All elephants have a head.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "head", "type": "generic", "scope": "dependent"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "If X is cool then X is red.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "If X is cool then X is red.",
+          "type": "normal_rule",
+          "entities": [{"id": "X", "type": "generic"}],
+          "adjectives": [["cool","none","entity"], ["red","none","entity"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "Birds fly.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Birds fly.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Emily is a wolf.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Emily 1 is a wolf.",
+          "type": "real",
+          "entities": [{"id": "Emily 1", "type": "concrete", "category": "animal"},
+            {"id": "wolf", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mary was in a room.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Mary 1 was in a room 2.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "room 2", "type": "concrete", "category": "place"}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The window was broken.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "The window 1 was broken.",
+          "type": "situation",
+          "entities": [{"id": "window 1", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["broken","none","window"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is a penguin.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "John 1 is a penguin.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"},
+            {"id": "penguins", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Jessica is a mouse.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Jessica 1 is a mouse.",
+          "type": "real",
+          "entities": [{"id": "Jessica 1", "type": "concrete", "category": "animal"},
+            {"id": "mouse", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Nile's length is 80 kilometers.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "The length 1 of Nile 2 is 80 kilometers.",
+          "type": "real",
+          "entities": [{"id": "length 1", "type": "concrete", "text": "length"},
+            {
+              "id": "Nile 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            },
+            {"id": "80 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 1","Nile 2"]]
+        },
+        {
+          "unit_id": "S13",
+          "text": "The length 1 is the length of Nile 2.",
+          "type": "real",
+          "entities": [{"id": "length 1", "type": "concrete", "text": "length"},
+            {
+              "id": "Nile 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            }
+          ],
+          "definites": [["length of","length 1","Nile 2"]]
+        }
+      ]
+    },
+    {
+      "raw": "John flies?",
+      "units": [{
+          "unit_id": "S14",
+          "text": "Does John 1 fly?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "habitual"}]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","penguins","X"], ["isa","birds","X"]]]]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Tom 1"],
+            ["exists","E1",
+              ["and",
+                ["isa","activity","E1"],
+                ["has type","E1","want"],
+                ["has actor","E1","Tom 1"],
+                ["has time","E1","past","in"],
+                ["exists","E2",
+                  ["and",
+                    ["has content","E1","E2"],
+                    ["isa","activity","E2"],
+                    ["has type","E2","leave"],
+                    ["has actor","E2","Tom 1"],
+                    ["has time","E2","past","in"]
+                  ]
+                ],
+                ["volition","E1"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguins","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","elephant","X"],
+            ["exists", "Y", ["and", ["isa","head","Y"], ["has part","X","Y"]]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["normally",
+              ["implies",
+                ["has degree property","cool","X","none","entity"],
+                ["has degree property","red","X","none","entity"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S5",0.95]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","fly"],
+                    ["has actor","E","X"],
+                    ["capability","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S6",0.99]
+      ]
+    ],
+    ["@id", "S7", ["holds", "W0", ["isa","wolf","Emily 1"]]],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 1"],
+            ["isa","room","room 2"],
+            ["is rel2","in","Mary 1","room 2"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","window","window 1"],
+            ["has degree property","broken","window 1","none","window"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S10", ["holds", "W0", ["isa","penguins","John 1"]]],
+    ["@id", "S11", ["holds", "W0", ["isa","mouse","Jessica 1"]]],
+    ["@id","S12",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 1"],
+            ["isa","Nile","https://en.wikipedia.org/wiki/Nile"],
+            ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$measure",80,"kilometer"]]
+          ]
+        ],
+        ["@definite","S12","W0","length of","https://en.wikipedia.org/wiki/Nile","length 1"]
+      ]
+    ],
+    ["@id","S13",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 1"],
+            ["is rel2","length of","length 1","https://en.wikipedia.org/wiki/Nile"]
+          ]
+        ],
+        ["@definite","S13","W0","length of","https://en.wikipedia.org/wiki/Nile","length 1"]
+      ]
+    ],
+    ["@id","S14",
+      ["question",
+        ["normally",
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","fly"],
+              ["has actor","E","John 1"],
+              ["typical","E"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "entity_S7",
+ "@logic": ["isa","animal","#:Emily 1"],
+ "@nl": "Emily 1 is a wolf."},
+{"@name": "entity_S10",
+ "@logic": ["isa","animal","#:John 1"],
+ "@nl": "John 1 is a penguin."},
+{"@name": "entity_S11",
+ "@logic": ["isa","animal","#:Jessica 1"],
+ "@nl": "Jessica 1 is a mouse."},
+{"@name": "entity_S12",
+ "@logic": ["isa","place","#:Nile 2"],
+ "@nl": "The length 1 of Nile 2 is 80 kilometers."},
+{"@name": "entity_S12",
+ "@logic": ["isa","measure","80 kilometers"],
+ "@nl": "The length 1 of Nile 2 is 80 kilometers."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","penguin","?:X"], ["isa","bird","?:X"]],
+ "@nl": "Penguins are birds."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:Tom 1"],
+ "@nl": "Tom 1 wanted to leave."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Tom 1 wanted to leave."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "want", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 1 wanted to leave."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:Tom 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 1 wanted to leave."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 1 wanted to leave."},
+{"@name": "sent_S2",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "Tom 1 wanted to leave."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Tom 1 wanted to leave."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "leave", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 1 wanted to leave."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:Tom 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 1 wanted to leave."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Tom 1 wanted to leave."},
+{"@name": "sent_S2",
+ "@logic": ["volition","sk0_activity"],
+ "@nl": "Tom 1 wanted to leave."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Penguins do not fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "head", ["sk2","?:X"]]],
+ "@nl": "All elephants have a head."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk2","?:X"], ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "All elephants have a head."},
+{"@name": "sent_S5",
+ "@logic": [["-has degree property", "cool", "?:X", "none", "?:Fv116", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]],
+            ["has property", "red", "?:X", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]],
+            ["$block", ["$","$generic",2], ["$not", ["has property", "red", "?:X", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "If X is cool then X is red."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk3","?:X"]]],
+ "@nl": "Birds fly."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk3","?:X"], "fly", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Birds fly."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk3","?:X"], "?:X", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]]
+           ],
+ "@nl": "Birds fly."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","bird","?:X"],
+            ["capability", ["sk3","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk3","?:X"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Birds fly."},
+{"@name": "sent_S7",
+ "@logic": ["isa","wolf","#:Emily 1"],
+ "@nl": "Emily 1 is a wolf."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 was in a room 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","room","#:room 2"],
+ "@nl": "Mary 1 was in a room 2."},
+{"@name": "sent_S8",
+ "@logic": ["is rel2", "in", "#:Mary 1", "#:room 2", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Mary 1 was in a room 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","window","#:window 1"],
+ "@nl": "The window 1 was broken."},
+{"@name": "sent_S9",
+ "@logic": ["has property", "broken", "#:window 1", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "The window 1 was broken."},
+{"@name": "sent_S10",
+ "@logic": ["isa","penguin","#:John 1"],
+ "@nl": "John 1 is a penguin."},
+{"@name": "sent_S11",
+ "@logic": ["isa","mouse","#:Jessica 1"],
+ "@nl": "Jessica 1 is a mouse."},
+{"@name": "sent_S12",
+ "@logic": ["isa", "length", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv35","?:Fv36"]]],
+ "@nl": "The length 1 of Nile 2 is 80 kilometers."},
+{"@name": "sent_S12",
+ "@logic": ["isa","nile","https://en.wikipedia.org/wiki/Nile"],
+ "@nl": "The length 1 of Nile 2 is 80 kilometers."},
+{"@name": "sent_S12",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The length 1 of Nile 2 is 80 kilometers."},
+{"@name": "sent_S13",
+ "@logic": ["isa", "length", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv35","?:Fv36"]]],
+ "@nl": "The length 1 is the length of Nile 2."},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk4_activity"]],
+ "@nl": "Does John 1 fly?"},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk4_activity", "fly", ["$ctxt","?:Fv40","?:Fv39","?:Fv37","?:Fv38"]]
+           ],
+ "@nl": "Does John 1 fly?"},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk4_activity", "#:John 1", ["$ctxt","?:Fv40","?:Fv39","?:Fv37","?:Fv38"]]
+           ],
+ "@nl": "Does John 1 fly?"},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["typical", "sk4_activity", ["$ctxt","?:Fv40","?:Fv39","?:Fv37","?:Fv38"]]],
+ "@nl": "Does John 1 fly?"},
+{"@name": "sent_S14",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv40","?:Fv39","?:Fv37","?:Fv38"]],
+            ["-has actor", "?:E", "#:John 1", ["$ctxt","?:Fv40","?:Fv39","?:Fv37","?:Fv38"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv40","?:Fv39","?:Fv37","?:Fv38"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 1 fly?"},
+{"@name": "sent_S14",
+ "@question": ["$defq0"],
+ "@nl": "Does John 1 fly?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Nile", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv35","?:Fv36"]], ["$ctxt","present","W0","?:Fv35","?:Fv36"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Nile", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv35","?:Fv36"]], ["$ctxt","present","W0","?:Fv35","?:Fv36"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "length of", ["$theof1","length","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "length", ["$theof1","length","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguins"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_birds"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_birds"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","head","$some_head"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","head","$some_not_head"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "cool", "$some_cool_entity", "none", "?:Fv117", ["$ctxt","?:Fv95","?:Fv92","?:Fv93","?:Fv94"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cool", "$some_not_cool_entity", "none", "?:Fv118", ["$ctxt","?:Fv103","?:Fv100","?:Fv101","?:Fv102"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "red", "$some_red_entity", ["$ctxt","?:Fv107","?:Fv104","?:Fv105","?:Fv106"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "red", "$some_not_red_entity", ["$ctxt","?:Fv115","?:Fv112","?:Fv113","?:Fv114"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv41"], ["has type","?:E","go","?:Fv41"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv45","?:Fv46","?:Fv47"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_measure_rel_bridge",
+ "@logic": [["-=", ["$measure_of","length","?:S","?:W"], "?:V"],
+            ["is rel2","length of","?:V","?:S","?:Ctxt"]
+           ],
+ "@nl": "[generated: frm_measure_rel_bridge]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S14","assumption",1], [["-$defq0"], ["typical", "sk4_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [2, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [3, ["mp",1,2,"fromga",1], [["typical", "sk4_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [4, ["in","frm_31","axiom",1], [["-typical","?:X","?:Y"], ["capability","?:X"]]],
+          [5, ["mp",3,4,"fromga",1], [["capability","sk4_activity"]]],
+          [6, ["in","sent_S3","assumption",1], [["-has type", "?:X", "fly", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "?:X", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","penguin","?:W"], ["-isa","activity","?:X"], ["-capability","?:X"]]],
+          [7, ["in","sent_S14","assumption",1], [["-$defq0"], ["has type", "sk4_activity", "fly", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [8, ["mp",7,2,"fromga",1], [["has type", "sk4_activity", "fly", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]],
+          [9, ["in","sent_S14","assumption",1], [["-$defq0"], ["isa","activity","sk4_activity"]]],
+          [10, ["mp",9,2,"fromga",1], [["isa","activity","sk4_activity"]]],
+          [11, ["mp", 5, [6,4], 8, 10, "fromga", 1], [["-has actor", "sk4_activity", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","penguin","?:X"]]],
+          [12, ["in","sent_S10","assumption",1], [["isa","penguin","#:John 1"]]],
+          [13, ["in","sent_S14","assumption",1], [["-$defq0"], ["has actor", "sk4_activity", "#:John 1", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [14, ["mp",13,2,"fromga",1], [["has actor", "sk4_activity", "#:John 1", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]],
+          [15, ["mp", [11,1], 12, 14, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Penguins do not fly.",
+"  (2) John is a penguin.",
+"  (3) John flies?",
+"Knowledge used:",
+"  If an event X is typical then X is a capability. Why: assumed basic knowledge.",
+"Proof steps (by contradiction):",
+"  (1) If answer holds then the event act3 is typical  [sentence 3]",
+"  (2) Answer holds  [assumption]",
+"  (3) The event act3 is typical  [from steps 1, 2]",
+"  (4) If an event X is typical then X is a capability  [background knowledge]",
+"  (5) The event act3 is a capability  [from steps 3, 4]",
+"  (6) If X is a fly event and some penguin W performs X and X is an activity then X is not a capability  [sentence 1]",
+"  (7) If answer holds then the event act3 is a fly event  [sentence 3]",
+"  (8) The event act3 is a fly event  [from steps 7, 2]",
+"  (9) If answer holds then the event act3 is an activity  [sentence 3]",
+"  (10) The event act3 is an activity  [from steps 9, 2]",
+"  (11) X does not perform the act3  [from steps 5, 6, 8, 10]",
+"  (12) John is a penguin  [sentence 2]",
+"  (13) If answer holds then John performs the event act3  [sentence 3]",
+"  (14) John performs the event act3  [from steps 13, 2]",
+"  (15) Contradiction  [from steps 11, 12, 14]"
+],
+  "timestamp": "2026-06-12T21:35:20Z"
+}

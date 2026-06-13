@@ -1,0 +1,1184 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 1375,
+  "input_text": "Big and not strong elephants are nice. The street is in Tallinn. If an animal is cool and defeated then it is green. John is an animal. Mary's brother carrying a box entered. John is cool. Mr Dursley is a catholic. Mike is an animal. Muggles cannot disappear. If X1 is a father of Y1, Y1 is a child of X1. Mike is cool. Baby bears can not eat berries. John is defeated. Sandra travelled to the kitchen. John is not green?",
+  "expected_answer": false,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Likely false.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Big and not strong elephants are nice.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Elephants that are big and not strong are nice.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"}],
+          "adjectives": [["big","none","elephant"], ["strong","none","elephant"], ["nice","none","entity"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "The street is in Tallinn.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The street 1 is in Tallinn 2.",
+          "type": "real",
+          "entities": [{"id": "street 1", "type": "concrete", "category": "place"},
+            {
+              "id": "Tallinn 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "If an animal is cool and defeated then it is green.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "If an animal is cool and defeated, the animal is green.",
+          "type": "normal_rule",
+          "entities": [{"id": "animal", "type": "generic", "category": "animal"}],
+          "adjectives": [["cool","none","animal"], ["defeated","none","animal"], ["green","none","animal"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "John is an animal.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "John 1 is an animal.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "Mary's brother carrying a box entered.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Mary 2's brother 3 entered.",
+          "type": "situation",
+          "entities": [{"id": "Mary 2", "type": "concrete", "category": "person"},
+            {"id": "brother 3", "type": "concrete", "text": "brother", "category": "person"},
+            {"id": "box 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "enter", "mode": "event", "roles": {"actor": "brother 3"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S6",
+          "text": "Mary 2's brother 3 was carrying a box 4.",
+          "type": "situation",
+          "entities": [{"id": "Mary 2", "type": "concrete", "category": "person"},
+            {"id": "brother 3", "type": "concrete", "text": "brother", "category": "person"},
+            {"id": "box 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "carry", "mode": "event", "roles": {"actor": "brother 3", "target": "box 4"}}],
+          "pre_state": "W0",
+          "time": "past"
+        },
+        {
+          "unit_id": "S7",
+          "text": "Brother 3 is the brother of Mary 2.",
+          "type": "situation",
+          "entities": [{"id": "brother 3", "type": "concrete", "text": "brother", "category": "person"},
+            {"id": "Mary 2", "type": "concrete", "category": "person"}
+          ],
+          "pre_state": "W0"
+        }
+      ]
+    },
+    {
+      "raw": "John is cool.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "John 1 is cool.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["cool","none","animal"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is a catholic.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Mr Dursley 5 is a catholic.",
+          "type": "situation",
+          "entities": [{"id": "Mr Dursley 5", "type": "concrete", "category": "person"}],
+          "adjectives": [["catholic","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is an animal.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Mike 6 is an animal.",
+          "type": "situation",
+          "entities": [{"id": "Mike 6", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "Muggles cannot disappear.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Muggles cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "muggles", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a father of Y1, Y1 is a child of X1.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "If X1 is a father of Y1, Y1 is a child of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic", "category": "person"},
+            {"id": "Y1", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is cool.",
+      "units": [{
+          "unit_id": "S13",
+          "text": "Mike 6 is cool.",
+          "type": "situation",
+          "entities": [{"id": "Mike 6", "type": "concrete", "category": "animal"}],
+          "adjectives": [["cool","none","animal"]]
+        }
+      ]
+    },
+    {
+      "raw": "Baby bears can not eat berries.",
+      "units": [{
+          "unit_id": "S14",
+          "text": "Baby bears cannot eat berries.",
+          "type": "strict_rule",
+          "entities": [{"id": "baby bears", "type": "generic", "subtype": "compound", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "dependent", "category": "plant"}
+          ],
+          "actions": [{"root": "eat", "mode": "capability", "roles": {"target": "berries"}}]
+        }
+      ]
+    },
+    {
+      "raw": "John is defeated.",
+      "units": [{
+          "unit_id": "S15",
+          "text": "John 1 is defeated.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["defeated","none","animal"]]
+        }
+      ]
+    },
+    {
+      "raw": "Sandra travelled to the kitchen.",
+      "units": [{
+          "unit_id": "S16",
+          "text": "Sandra 7 travelled to the kitchen 8.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 7", "type": "concrete", "category": "person"},
+            {"id": "kitchen 8", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "travel",
+              "mode": "event",
+              "roles": {"actor": "Sandra 7", "destination": "kitchen 8"}
+            }
+          ],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is not green?",
+      "units": [{
+          "unit_id": "S17",
+          "text": "Is John 1 not green?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["green","none","animal"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["and",
+                ["isa","elephant","X"],
+                ["has degree property","big","X","none","elephant"],
+                ["not", ["has degree property","strong","X","none","elephant"]]
+              ],
+              ["normally", ["has degree property","nice","X","none","entity"]]
+            ]
+          ]
+        ],
+        ["@p","S1",0.95]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","street","street 1"],
+          ["is rel2","in","street 1","https://en.wikipedia.org/wiki/Tallinn"]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["and",
+                ["isa","animal","X"],
+                ["has degree property","cool","X","none","animal"],
+                ["has degree property","defeated","X","none","animal"]
+              ],
+              ["normally", ["has degree property","green","X","none","animal"]]
+            ]
+          ]
+        ],
+        ["@p","S3",0.95]
+      ]
+    ],
+    ["@id", "S4", ["holds", "W0", ["isa","animal","John 1"]]],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 2"],
+            ["isa","person","brother 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","enter"],
+                ["has actor","E","brother 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 2"],
+          ["isa","person","brother 3"],
+          ["isa","artifact","box 4"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","carry"],
+              ["has actor","E","brother 3"],
+              ["has target","E","box 4"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","person","brother 3"],
+          ["isa","person","Mary 2"],
+          ["is rel2","brother of","brother 3","Mary 2"]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and", ["isa","animal","John 1"], ["has degree property","cool","John 1","none","animal"]]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mr Dursley 5"],
+          ["has degree property","catholic","Mr Dursley 5","none","person"]
+        ]
+      ]
+    ],
+    ["@id", "S10", ["holds", "W0", ["isa","animal","Mike 6"]]],
+    ["@id","S11",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","muggle","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S12",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies", ["is rel2","father of","X1","Y1"], ["is rel2","child of","Y1","X1"]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S13",
+      ["holds","W0",
+        ["and", ["isa","animal","Mike 6"], ["has degree property","cool","Mike 6","none","animal"]]
+      ]
+    ],
+    ["@id","S14",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","baby bear","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","eat"],
+                  ["has actor","E","X"],
+                  ["exists", "Y", ["and", ["isa","berry","Y"], ["has target","E","Y"]]],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S15",
+      ["holds","W0",
+        ["and",
+          ["isa","animal","John 1"],
+          ["has degree property","defeated","John 1","none","animal"]
+        ]
+      ]
+    ],
+    ["@id","S16",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Sandra 7"],
+            ["isa","kitchen","kitchen 8"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","travel"],
+                ["has actor","E","Sandra 7"],
+                ["has destination","E","kitchen 8","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id", "S17", ["question", ["not", ["has degree property","green","John 1","none","animal"]]]]
+  ],
+  "stage_2_fixes": ["json: stripped non-JSON wrapper text"],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:Tallinn 2"],
+ "@nl": "The street 1 is in Tallinn 2."},
+{"@name": "entity_S5",
+ "@logic": ["isa","brother","#:brother 3"],
+ "@nl": "Mary 2's brother 3 entered."},
+{"@name": "entity_S5",
+ "@logic": ["isa","box","#:box 4"],
+ "@nl": "Mary 2's brother 3 entered."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-has degree property", "big", "?:X", "none", "elephant", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["has degree property", "strong", "?:X", "none", "elephant", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["has degree property", "good", "?:X", "none", "?:Fv189", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","elephant",2], ["$not", ["has degree property", "good", "?:X", "none", "?:Fv190", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Elephants that are big and not strong are nice."},
+{"@name": "sent_S2",
+ "@logic": ["isa","street","#:street 1"],
+ "@nl": "The street 1 is in Tallinn 2."},
+{"@name": "sent_S2",
+ "@logic": ["is rel2", "in", "#:street 1", "https://en.wikipedia.org/wiki/Tallinn", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The street 1 is in Tallinn 2."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","animal","?:X"],
+            ["-has degree property", "cool", "?:X", "none", "animal", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-has property", "defeated", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["has property", "green", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$block", ["$","animal",3], ["$not", ["has property", "green", "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "If an animal is cool and defeated, the animal is green."},
+{"@name": "sent_S4",
+ "@logic": ["isa","animal","#:John 1"],
+ "@nl": "John 1 is an animal."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Mary 2's brother 3 entered."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:brother 3"],
+ "@nl": "Mary 2's brother 3 entered."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Mary 2's brother 3 entered."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk0_activity", "enter", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 2's brother 3 entered."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk0_activity", "#:brother 3", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 2's brother 3 entered."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 2's brother 3 entered."},
+{"@name": "sent_S5",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Mary 2's brother 3 entered."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Mary 2's brother 3 was carrying a box 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:brother 3"],
+ "@nl": "Mary 2's brother 3 was carrying a box 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","artifact","#:box 4"],
+ "@nl": "Mary 2's brother 3 was carrying a box 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Mary 2's brother 3 was carrying a box 4."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk1_activity", "carry", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 2's brother 3 was carrying a box 4."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk1_activity", "#:brother 3", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 2's brother 3 was carrying a box 4."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk1_activity", "#:box 4", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 2's brother 3 was carrying a box 4."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mary 2's brother 3 was carrying a box 4."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:brother 3"],
+ "@nl": "Brother 3 is the brother of Mary 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Brother 3 is the brother of Mary 2."},
+{"@name": "sent_S7",
+ "@logic": ["is rel2", "brother of", "#:brother 3", "#:Mary 2", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Brother 3 is the brother of Mary 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","animal","#:John 1"],
+ "@nl": "John 1 is cool."},
+{"@name": "sent_S8",
+ "@logic": ["has degree property", "cool", "#:John 1", "none", "animal", ["$ctxt","present","W0","?:Fv19","?:Fv20"]],
+ "@nl": "John 1 is cool."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Mr Dursley 5"],
+ "@nl": "Mr Dursley 5 is a catholic."},
+{"@name": "sent_S9",
+ "@logic": ["has property", "catholic", "#:Mr Dursley 5", ["$ctxt","present","W0","?:Fv21","?:Fv22"]],
+ "@nl": "Mr Dursley 5 is a catholic."},
+{"@name": "sent_S10",
+ "@logic": ["isa","animal","#:Mike 6"],
+ "@nl": "Mike 6 is an animal."},
+{"@name": "sent_S11",
+ "@logic": [["-isa","muggle","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv28","?:Fv27","?:Fv25","?:Fv26"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv28","?:Fv27","?:Fv25","?:Fv26"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Muggles cannot disappear."},
+{"@name": "sent_S12",
+ "@logic": [["-is rel2", "father of", "?:X1", "?:Y1", ["$ctxt","?:Fv32","?:Fv31","?:Fv29","?:Fv30"]],
+            ["is rel2", "child of", "?:Y1", "?:X1", ["$ctxt","?:Fv32","?:Fv31","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "If X1 is a father of Y1, Y1 is a child of X1."},
+{"@name": "sent_S13",
+ "@logic": ["isa","animal","#:Mike 6"],
+ "@nl": "Mike 6 is cool."},
+{"@name": "sent_S13",
+ "@logic": ["has degree property", "cool", "#:Mike 6", "none", "animal", ["$ctxt","present","W0","?:Fv33","?:Fv34"]],
+ "@nl": "Mike 6 is cool."},
+{"@name": "sent_S14",
+ "@logic": [["-isa","baby bear","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "eat", ["$ctxt","?:Fv38","?:Fv37","?:Fv35","?:Fv36"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv38","?:Fv37","?:Fv35","?:Fv36"]],
+            ["-isa","berry","?:Y"],
+            ["-has target", "?:E", "?:Y", ["$ctxt","?:Fv38","?:Fv37","?:Fv35","?:Fv36"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Baby bears cannot eat berries."},
+{"@name": "sent_S15",
+ "@logic": ["isa","animal","#:John 1"],
+ "@nl": "John 1 is defeated."},
+{"@name": "sent_S15",
+ "@logic": ["has property", "defeated", "#:John 1", ["$ctxt","present","W0","?:Fv39","?:Fv40"]],
+ "@nl": "John 1 is defeated."},
+{"@name": "sent_S16",
+ "@logic": ["isa","person","#:Sandra 7"],
+ "@nl": "Sandra 7 travelled to the kitchen 8."},
+{"@name": "sent_S16",
+ "@logic": ["isa","kitchen","#:kitchen 8"],
+ "@nl": "Sandra 7 travelled to the kitchen 8."},
+{"@name": "sent_S16",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Sandra 7 travelled to the kitchen 8."},
+{"@name": "sent_S16",
+ "@logic": ["has type", "sk2_activity", "go", ["$ctxt","past","W1","?:Fv41","?:Fv42"]],
+ "@nl": "Sandra 7 travelled to the kitchen 8."},
+{"@name": "sent_S16",
+ "@logic": ["has actor", "sk2_activity", "#:Sandra 7", ["$ctxt","past","W1","?:Fv41","?:Fv42"]],
+ "@nl": "Sandra 7 travelled to the kitchen 8."},
+{"@name": "sent_S16",
+ "@logic": ["has destination", "sk2_activity", "#:kitchen 8", "at", ["$ctxt","past","W1","?:Fv41","?:Fv42"]],
+ "@nl": "Sandra 7 travelled to the kitchen 8."},
+{"@name": "sent_S16",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W1","?:Fv41","?:Fv42"]],
+ "@nl": "Sandra 7 travelled to the kitchen 8."},
+{"@name": "sent_S16",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Sandra 7 travelled to the kitchen 8."},
+{"@name": "sent_S17",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-has property", "green", "#:John 1", ["$ctxt","present","W2","?:Fv43","?:Fv44"]]
+           ],
+ "@nl": "Is John 1 not green?"},
+{"@name": "sent_S17",
+ "@sourcetype": "question",
+ "@logic": [["has property", "green", "#:John 1", ["$ctxt","present","W2","?:Fv43","?:Fv44"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 not green?"},
+{"@name": "sent_S7",
+ "@logic": ["have", "#:Mary 2", "#:brother 3", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Brother 3 is the brother of Mary 2."},
+{"@name": "sent_S17",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 not green?"},
+{"@name": "sent_S17",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "green", "#:John 1", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "green", "#:John 1", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 not green?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S11",
+ "@sourcetype": "populate",
+ "@logic": ["isa","muggle","$some_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S11",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","muggle","$some_not_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S14",
+ "@sourcetype": "populate",
+ "@logic": ["isa","baby bear","$some_baby_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S14",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","baby bear","$some_not_baby_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S14",
+ "@sourcetype": "populate",
+ "@logic": ["isa","berry","$some_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S14",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","berry","$some_not_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "big", "$some_big_elephant", "none", "elephant", ["$ctxt","?:Fv112","?:Fv109","?:Fv110","?:Fv111"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_big_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "big", "$some_not_big_elephant", "none", "elephant", ["$ctxt","?:Fv120","?:Fv117","?:Fv118","?:Fv119"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "strong", "$some_strong_elephant", "none", "elephant", ["$ctxt","?:Fv124","?:Fv121","?:Fv122","?:Fv123"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_strong_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "strong", "$some_not_strong_elephant", "none", "elephant", ["$ctxt","?:Fv132","?:Fv129","?:Fv130","?:Fv131"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "good", "$some_nice_entity", "none", "?:Fv191", ["$ctxt","?:Fv136","?:Fv133","?:Fv134","?:Fv135"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "good", "$some_not_nice_entity", "none", "?:Fv192", ["$ctxt","?:Fv144","?:Fv141","?:Fv142","?:Fv143"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cool", "$some_not_cool_animal", "none", "animal", ["$ctxt","?:Fv148","?:Fv145","?:Fv146","?:Fv147"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "defeated", "$some_not_defeated_animal", ["$ctxt","?:Fv152","?:Fv149","?:Fv150","?:Fv151"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "green", "$some_green_animal", ["$ctxt","?:Fv156","?:Fv153","?:Fv154","?:Fv155"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_green_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "green", "$some_not_green_animal", ["$ctxt","?:Fv164","?:Fv161","?:Fv162","?:Fv163"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_big_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "big", "$some_big_elephant", "none", "elephant", ["$ctxt","?:Fv172","?:Fv169","?:Fv170","?:Fv171"]],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","baby bear","?:X"], ["isa","bear","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","baby","?:X"], ["-isa","bear","?:X"], ["isa","baby bear","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property","baby","?:X","?:Ct"], ["-isa","bear","?:X"], ["isa","baby bear","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property", "baby", "?:X", "?:Ct", ["$ctxt","?:Fv188","?:Fv185","?:Fv186","?:Fv187"]],
+            ["-isa","bear","?:X"],
+            ["isa","baby bear","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv46"], ["has type","?:E","go","?:Fv46"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv193", ["$ctxt","past","?:Fv47","?:Fv48","?:Fv49"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv194", ["$ctxt","present","?:Fv47","?:Fv48","?:Fv49"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv195", ["$ctxt","present","?:Fv47","?:Fv48","?:Fv49"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv50","?:Fv51","?:Fv52"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv50","?:Fv51","?:Fv52"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv50","?:Fv51","?:Fv52"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "green", "?:X", ["$ctxt","past","?:Fv53","?:Fv54","?:Fv55"]],
+            ["has property", "green", "?:X", ["$ctxt","present","?:Fv53","?:Fv54","?:Fv55"]],
+            ["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Fv53","?:Fv54","?:Fv55"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "green", "?:X", ["$ctxt","past","?:Fv56","?:Fv57","?:Fv58"]],
+            ["has property", "green", "?:X", ["$ctxt","present","?:Fv56","?:Fv57","?:Fv58"]],
+            ["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Fv56","?:Fv57","?:Fv58"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv196", ["$ctxt","past","?:Fv59","?:Fv60","?:Fv61"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv197", ["$ctxt","present","?:Fv59","?:Fv60","?:Fv61"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv198", ["$ctxt","present","?:Fv59","?:Fv60","?:Fv61"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv62","?:Fv63","?:Fv64"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv62","?:Fv63","?:Fv64"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv62","?:Fv63","?:Fv64"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "blockers": [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]],
+          ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.936843,
+        "negative proof": [[1, ["in","sent_S3","assumption",0.9], [["$block", ["$","animal",3], ["$not", ["has property", "green", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["-has degree property", "cool", "?:X", "none", "animal", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has property", "defeated", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["has property", "green", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","animal","?:X"]]],
+          [2, ["in","sent_S8","assumption",1], [["has degree property", "cool", "#:John 1", "none", "animal", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 0.9], [["-isa","animal","#:John 1"], ["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]], ["-has property", "defeated", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]], ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [4, ["in","sent_S15","assumption",1], [["has property", "defeated", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [5, ["mp", [3,2], 4, "fromassumption", 0.9], [["-isa","animal","#:John 1"], ["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]],
+          [6, ["in","sent_S4","assumption",1], [["isa","animal","#:John 1"]]],
+          [7, ["simp",5,6,"fromassumption",0.9], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]], ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [8, ["in","frm_93","axiom",1], [["-has property", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]], ["has property", "?:X", "?:Y", ["$ctxt","past","?:W","?:U","?:V"]], ["-before","?:Z","?:W"]]],
+          [9, ["mp", [7,1], 8, "fromassumption", 0.9], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]], ["has property", "green", "#:John 1", ["$ctxt","past","?:Z","?:X","?:Y"]], ["-before","W0","?:Z"]]],
+          [10, ["in","sent_S16","assumption",1], [["next","W1","W2"]]],
+          [11, ["in","frm_91","axiom",1], [["-next","?:X","?:Y"], ["before","?:X","?:Y"]]],
+          [12, ["mp",10,11,"fromassumption",1], [["before","W1","W2"]]],
+          [13, ["in","frm_92","axiom",1], [["-before","?:X","?:Y"], ["-before","?:Z","?:X"], ["before","?:Z","?:Y"]]],
+          [14, ["mp",12,13,"fromassumption",1], [["-before","?:X","W1"], ["before","?:X","W2"]]],
+          [15, ["in","frm_world_geom","assumption",1], [["next","W0","W1"]]],
+          [16, ["mp",15,11,"fromassumption",1], [["before","W0","W1"]]],
+          [17, ["mp",14,16,"fromassumption",1], [["before","W0","W2"]]],
+          [18, ["mp", [9,2], 17, "fromassumption", 0.9], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]], ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X","?:Y"]]]],
+          [19, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["-has property", "green", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["has property", "green", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [20, ["mp", [18,1], [19,1], "fromassumption", 0.855], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]], ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [21, ["in","sent_S17","assumption",1], [["-$defq0"], ["-has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [22, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [23, ["mp", [20,2], [21,1], 22, "fromga", 0.855], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]]],
+          [24, ["in","sent_S17","assumption",0.99], [["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["-has property", "green", "#:John 1", ["$ctxt","past","?:X","?:Y","?:Z"]], ["has property", "green", "#:John 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [25, ["mp", [18,1], [24,1], "fromassumption", 0.891], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]], ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [26, ["mp", [25,2], [21,1], 22, "fromga", 0.891], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]]],
+          [27, ["cumul",23,26,"fromga",0.899472], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]]],
+          [28, ["in","sent_S5","assumption",1], [["next","W0","W1"]]],
+          [29, ["mp",28,11,"fromassumption",1], [["before","W0","W1"]]],
+          [30, ["mp",14,29,"fromassumption",1], [["before","W0","W2"]]],
+          [31, ["mp", [9,2], 30, "fromassumption", 0.9], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]], ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X","?:Y"]]]],
+          [32, ["mp", [31,1], [24,1], "fromassumption", 0.891], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]], ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [33, ["mp", [32,2], [21,1], 22, "fromga", 0.891], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]]],
+          [34, ["cumul",27,33,"fromga",0.911155], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]]],
+          [35, ["in","frm_world_geom","assumption",1], [["next","W1","W2"]]],
+          [36, ["mp",35,11,"fromassumption",1], [["before","W1","W2"]]],
+          [37, ["mp",36,13,"fromassumption",1], [["-before","?:X","W1"], ["before","?:X","W2"]]],
+          [38, ["mp",37,29,"fromassumption",1], [["before","W0","W2"]]],
+          [39, ["mp", [9,2], 38, "fromassumption", 0.9], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]], ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X","?:Y"]]]],
+          [40, ["mp", [39,1], [19,1], "fromassumption", 0.855], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]], ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [41, ["mp", [40,2], [21,1], 22, "fromga", 0.855], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]]],
+          [42, ["cumul",34,41,"fromga",0.923816], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]]],
+          [43, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["-has property", "green", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["has property", "green", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [44, ["mp", [18,1], [43,1], "fromassumption", 0.855], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]], ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [45, ["mp", [44,2], [21,1], 22, "fromga", 0.855], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]]],
+          [46, ["cumul",42,45,"fromga",0.936843], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]]]
+        ]
+      },
+      {
+        "answer": false,
+        "blockers": [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X3","?:Y3"]]]],
+          ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.909153,
+        "negative proof": [[1, ["in","frm_97","axiom",1], [["-has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","present","?:V","?:W","?:2006"]], ["has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","past","?:2007","?:W","?:2006"]], ["-before","?:V","?:2007"]]],
+          [2, ["in","sent_S8","assumption",1], [["has degree property", "cool", "#:John 1", "none", "animal", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp",1,2,"fromassumption",1], [["has degree property", "cool", "#:John 1", "none", "animal", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-before","W0","?:X"]]],
+          [4, ["in","sent_S16","assumption",1], [["next","W1","W2"]]],
+          [5, ["in","frm_91","axiom",1], [["-next","?:X","?:Y"], ["before","?:X","?:Y"]]],
+          [6, ["mp",4,5,"fromassumption",1], [["before","W1","W2"]]],
+          [7, ["in","frm_92","axiom",1], [["-before","?:X","?:Y"], ["-before","?:Z","?:X"], ["before","?:Z","?:Y"]]],
+          [8, ["mp",6,7,"fromassumption",1], [["-before","?:X","W1"], ["before","?:X","W2"]]],
+          [9, ["in","sent_S5","assumption",1], [["next","W0","W1"]]],
+          [10, ["mp",9,5,"fromassumption",1], [["before","W0","W1"]]],
+          [11, ["mp",8,10,"fromassumption",1], [["before","W0","W2"]]],
+          [12, ["mp", [3,1], 11, "fromassumption", 1], [["has degree property", "cool", "#:John 1", "none", "animal", ["$ctxt","past","W2","?:X","?:Y"]]]],
+          [13, ["in","sent_S3","assumption",0.9], [["$block", ["$","animal",3], ["$not", ["has property", "green", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["-has degree property", "cool", "?:X", "none", "animal", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has property", "defeated", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["has property", "green", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","animal","?:X"]]],
+          [14, ["mp", 12, [13,1], "fromassumption", 0.9], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X3","?:Y3"]]]], ["-has property", "defeated", "#:John 1", ["$ctxt","past","W2","?:X3","?:Y3"]], ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X3","?:Y3"]], ["-isa","animal","#:John 1"]]],
+          [15, ["in","frm_93","axiom",1], [["-has property", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]], ["has property", "?:X", "?:Y", ["$ctxt","past","?:W","?:U","?:V"]], ["-before","?:Z","?:W"]]],
+          [16, ["in","sent_S15","assumption",1], [["has property", "defeated", "#:John 1", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [17, ["mp",15,16,"fromassumption",1], [["has property", "defeated", "#:John 1", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-before","W0","?:X"]]],
+          [18, ["mp", [17,1], 11, "fromassumption", 1], [["has property", "defeated", "#:John 1", ["$ctxt","past","W2","?:X3","?:Y3"]]]],
+          [19, ["in","sent_S4","assumption",1], [["isa","animal","#:John 1"]]],
+          [20, ["simp",14,18,19,"fromassumption",0.9], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X","?:Y"]]]], ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X","?:Y"]]]],
+          [21, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["-has property", "green", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["has property", "green", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [22, ["mp", [20,1], [21,1], "fromassumption", 0.855], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]], ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [23, ["in","sent_S17","assumption",1], [["-$defq0"], ["-has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [24, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [25, ["mp", [22,2], [23,1], 24, "fromga", 0.855], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]]],
+          [26, ["in","sent_S17","assumption",0.99], [["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["-has property", "green", "#:John 1", ["$ctxt","past","?:X","?:Y","?:Z"]], ["has property", "green", "#:John 1", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [27, ["mp", [20,1], [26,1], "fromassumption", 0.891], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]], ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [28, ["mp", [27,2], [23,1], 24, "fromga", 0.891], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]]],
+          [29, ["cumul",25,28,"fromga",0.898766], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]]],
+          [30, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has property", "green", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["-has property", "green", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["has property", "green", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [31, ["mp", [20,1], [30,1], "fromassumption", 0.855], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]], ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X","?:Y"]]]],
+          [32, ["mp", [31,2], [23,1], 24, "fromga", 0.855], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]]],
+          [33, ["cumul",29,32,"fromga",0.909153], [["$block", ["$","animal",3], ["$not", ["has property", "green", "#:John 1", ["$ctxt","past","W2","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "green", "#:John 1", ["$ctxt","present","W2","?:X3","?:Y3"]]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 91%.",
+"Sentences used:",
+"  (1) If an animal is cool and defeated then it is green.",
+"  (2) John is an animal.",
+"  (3) Mary's brother carrying a box entered.",
+"  (4) John is cool.",
+"  (5) John is defeated.",
+"  (6) Sandra travelled to the kitchen.",
+"  (7) John is not green?",
+"Knowledge used:",
+"  If some Y is some z some X and a situation V is earlier than a situation E2 then Y is z X. Why: assumed basic knowledge.",
+"  If a situation X is followed by a situation Y then X is earlier than Y. Why: assumed basic knowledge.",
+"  If a situation X is earlier than a situation Y and a situation Z is earlier than X then Z is earlier than Y. Why: assumed basic knowledge.",
+"  If some Y is some X and a situation Z is earlier than a situation W then Y is X. Why: assumed basic knowledge.",
+"  If some X is green then normally X is green. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If some Y is some z some X and a situation V is earlier than a situation E2 then Y is z X  [background knowledge]",
+"  (2) John is a cool animal  [sentence 4]",
+"  (3) If the situation W0 is earlier than a situation X then John is a cool animal  [from steps 1, 2]",
+"  (4) The situation W1 is followed by the situation W2  [sentence 6]",
+"  (5) If a situation X is followed by a situation Y then X is earlier than Y  [background knowledge]",
+"  (6) The situation W1 is earlier than the situation W2  [from steps 4, 5]",
+"  (7) If a situation X is earlier than a situation Y and a situation Z is earlier than X then Z is earlier than Y  [background knowledge]",
+"  (8) If a situation X is earlier than the situation W1 then X is earlier than the situation W2  [from steps 6, 7]",
+"  (9) The situation W0 is followed by the situation W1  [sentence 3]",
+"  (10) The situation W0 is earlier than the situation W1  [from steps 9, 5]",
+"  (11) The situation W0 is earlier than the situation W2  [from steps 8, 10]",
+"  (12) John is a cool animal  [from steps 3, 11]",
+"  (13) If some X is a cool animal and X is defeated and X is an animal then normally X is green  [sentence 1, confidence 90%]",
+"  (14) If John is defeated and John is an animal then normally John is green  [from steps 12, 13, confidence 90%]",
+"  (15) If some Y is some X and a situation Z is earlier than a situation W then Y is X  [background knowledge]",
+"  (16) John is defeated  [sentence 5]",
+"  (17) If the situation W0 is earlier than a situation X then John is defeated  [from steps 15, 16]",
+"  (18) John is defeated  [from steps 17, 11]",
+"  (19) John is an animal  [sentence 2]",
+"  (20) Normally John is green  [from steps 14, 18, 19, confidence 90%]",
+"  (21) If some X is green then normally X is green  [background knowledge, confidence 95%]",
+"  (22) Normally John is green, except when John is not green  [from steps 20, 21, confidence 86%]",
+"  (23) If answer holds then John is not green  [sentence 7]",
+"  (24) Answer holds  [assumption]",
+"  (25) Outstanding exception: John is not green and John is not green  [from steps 22, 23, 24, confidence 86%]",
+"  (26) If John is green then normally John is green  [sentence 7, confidence 99%]",
+"  (27) Normally John is green, except when John is not green  [from steps 20, 26, confidence 89%]",
+"  (28) Outstanding exception: John is not green and John is not green  [from steps 27, 23, 24, confidence 89%]",
+"  (29) Outstanding exception: John is not green and John is not green  [from steps 25, 28, confidence 90%]",
+"  (30) If some X is green then normally X is green  [background knowledge, confidence 95%]",
+"  (31) Normally John is green, except when John is not green  [from steps 20, 30, confidence 86%]",
+"  (32) Outstanding exception: John is not green and John is not green  [from steps 31, 23, 24, confidence 86%]",
+"  (33) Outstanding exception: John is not green and John is not green  [from steps 29, 32, confidence 91%]",
+"Exceptions checked and not holding:",
+"  John is not green",
+"  John is not green"
+],
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39014,
+      "cached_input_tokens": 38891,
+      "output_tokens": 59,
+      "raw": {
+        "input_tokens": 123,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 59,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39018,
+      "cached_input_tokens": 38891,
+      "output_tokens": 100,
+      "raw": {
+        "input_tokens": 127,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 100,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38965,
+      "cached_input_tokens": 38891,
+      "output_tokens": 31,
+      "raw": {
+        "input_tokens": 74,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 31,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39324,
+      "cached_input_tokens": 38891,
+      "output_tokens": 664,
+      "raw": {
+        "input_tokens": 433,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 664,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38978,
+      "cached_input_tokens": 38891,
+      "output_tokens": 49,
+      "raw": {
+        "input_tokens": 87,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 49,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38989,
+      "cached_input_tokens": 38891,
+      "output_tokens": 55,
+      "raw": {
+        "input_tokens": 98,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 55,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38965,
+      "cached_input_tokens": 38891,
+      "output_tokens": 31,
+      "raw": {
+        "input_tokens": 74,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 31,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38988,
+      "cached_input_tokens": 38891,
+      "output_tokens": 125,
+      "raw": {
+        "input_tokens": 97,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 125,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39015,
+      "cached_input_tokens": 38891,
+      "output_tokens": 67,
+      "raw": {
+        "input_tokens": 124,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 67,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38978,
+      "cached_input_tokens": 38891,
+      "output_tokens": 49,
+      "raw": {
+        "input_tokens": 87,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 49,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39029,
+      "cached_input_tokens": 38891,
+      "output_tokens": 331,
+      "raw": {
+        "input_tokens": 138,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 331,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38978,
+      "cached_input_tokens": 38891,
+      "output_tokens": 49,
+      "raw": {
+        "input_tokens": 87,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 49,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39051,
+      "cached_input_tokens": 38891,
+      "output_tokens": 115,
+      "raw": {
+        "input_tokens": 160,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 115,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38982,
+      "cached_input_tokens": 38891,
+      "output_tokens": 36,
+      "raw": {
+        "input_tokens": 91,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 36,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T22:53:37Z"
+}

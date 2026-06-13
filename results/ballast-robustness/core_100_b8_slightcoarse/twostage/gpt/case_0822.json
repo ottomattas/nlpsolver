@@ -1,0 +1,623 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 822,
+  "input_text": "Muggles cannot disappear. Wolves are afraid of sheep. Mary decided to leave. \"Riga is outside America. The ball was kicked by Mike. John has a car which is nice and red. The woman holding a lamp sang. The room was cleaned. If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1. The red car is nice?",
+  "expected_answer": true,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Muggles cannot disappear.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Muggles cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "muggles", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "Wolves are afraid of sheep.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Wolves are afraid of sheep.",
+          "type": "normal_rule",
+          "entities": [{"id": "wolves", "type": "generic", "category": "animal"},
+            {"id": "sheep", "type": "generic", "category": "animal"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Mary decided to leave.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Mary 1 decided to leave.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "decide",
+              "mode": "intention",
+              "roles": {
+                "actor": "Mary 1",
+                "content": {"root": "leave", "mode": "event", "roles": {"actor": "Mary 1"}}
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "\"Riga is outside America.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Riga 1 is outside America 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Riga 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Riga"
+            },
+            {"id": "America 2", "type": "concrete", "category": "place"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The ball was kicked by Mike.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Mike 2 kicked the ball 3.",
+          "type": "situation",
+          "entities": [{"id": "Mike 2", "type": "concrete", "category": "person"},
+            {"id": "ball 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "kick", "mode": "event", "roles": {"actor": "Mike 2", "target": "ball 3"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John has a car which is nice and red.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "John 3 has a car 4 which is nice and red.",
+          "type": "situation",
+          "entities": [{"id": "John 3", "type": "concrete", "category": "person"},
+            {"id": "car 4", "type": "concrete", "category": "artifact"}
+          ]
+        },
+        {
+          "unit_id": "S7",
+          "text": "The car 4 is nice.",
+          "type": "situation",
+          "entities": [{"id": "car 4", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["nice","none","entity"]]
+        },
+        {
+          "unit_id": "S8",
+          "text": "The car 4 is red.",
+          "type": "situation",
+          "entities": [{"id": "car 4", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["red","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "The woman holding a lamp sang.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "The woman 5 holding a lamp 6 sang.",
+          "type": "situation",
+          "entities": [{"id": "woman 5", "type": "concrete", "category": "person"},
+            {"id": "lamp 6", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "sing", "mode": "event", "roles": {"actor": "woman 5"}},
+            {"root": "hold", "mode": "event", "roles": {"actor": "woman 5", "target": "lamp 6"}}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The room was cleaned.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "The room 7 was cleaned.",
+          "type": "situation",
+          "entities": [{"id": "room 7", "type": "concrete", "category": "place"}],
+          "actions": [{"root": "clean", "mode": "event", "roles": {"target": "room 7"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"},
+            {"id": "Y1", "type": "generic"},
+            {"id": "Z1", "type": "generic"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The red car is nice?",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Is the red car nice?",
+          "type": "query",
+          "entities": [{"id": "car 4", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["red","none","none"], ["nice","none","entity"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","muggle","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["forall","Y",
+              ["implies",
+                ["and", ["isa","wolf","X"], ["isa","sheep","Y"]],
+                ["normally", ["has degree rel2","afraid of","X","Y","none","entity"]]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 1"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","decide"],
+              ["has actor","E1","Mary 1"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","leave"],
+                  ["has actor","E2","Mary 1"]
+                ]
+              ],
+              ["intention","E1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds", "W0", ["is rel2","outside","https://en.wikipedia.org/wiki/Riga","America 2"]]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mike 2"],
+          ["isa","ball","ball 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","kick"],
+              ["has actor","E","Mike 2"],
+              ["has target","E","ball 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and", ["isa","person","John 3"], ["isa","car","car 4"], ["have","John 3","car 4"]]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and", ["isa","car","car 4"], ["has degree property","nice","car 4","none","entity"]]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and", ["isa","car","car 4"], ["has degree property","red","car 4","none","none"]]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["and",
+          ["isa","woman","woman 5"],
+          ["isa","lamp","lamp 6"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","sing"],
+              ["has actor","E1","woman 5"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","hold"],
+              ["has actor","E2","woman 5"],
+              ["has target","E2","lamp 6"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["and",
+          ["isa","room","room 7"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","clean"],
+              ["has target","E","room 7"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["holds","W0",
+        ["forall","X",
+          ["forall","Y",
+            ["forall","Z",
+              ["implies",
+                ["and", ["is rel2","father of","X","Y"], ["is rel2","father of","Y","Z"]],
+                ["is rel2","grandfather of","X","Z"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S12",
+      ["question",
+        ["and",
+          ["isa","car","car 4"],
+          ["has degree property","red","car 4","none","none"],
+          ["has degree property","nice","car 4","none","entity"]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:Riga 1"],
+ "@nl": "Riga 1 is outside America 2."},
+{"@name": "entity_S4",
+ "@logic": ["isa","place","#:America 2"],
+ "@nl": "Riga 1 is outside America 2."},
+{"@name": "entity_S9",
+ "@logic": ["isa","person","#:woman 5"],
+ "@nl": "The woman 5 holding a lamp 6 sang."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","muggle","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Muggles cannot disappear."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","wolf","?:X"],
+            ["-isa","sheep","?:Y"],
+            ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$block", ["$","sheep",1], ["$not", ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Wolves are afraid of sheep."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "decide", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:Mary 1", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S3",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "leave", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:Mary 1", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S3",
+ "@logic": ["intention","sk0_activity"],
+ "@nl": "Mary 1 decided to leave."},
+{"@name": "sent_S4",
+ "@logic": ["is rel2", "outside", "https://en.wikipedia.org/wiki/Riga", "#:America 2", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Riga 1 is outside America 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mike 2"],
+ "@nl": "Mike 2 kicked the ball 3."},
+{"@name": "sent_S5",
+ "@logic": ["isa","ball","#:ball 3"],
+ "@nl": "Mike 2 kicked the ball 3."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Mike 2 kicked the ball 3."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk2_activity", "kick", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mike 2 kicked the ball 3."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:Mike 2", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mike 2 kicked the ball 3."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk2_activity", "#:ball 3", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mike 2 kicked the ball 3."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mike 2 kicked the ball 3."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:John 3"],
+ "@nl": "John 3 has a car 4 which is nice and red."},
+{"@name": "sent_S6",
+ "@logic": ["isa","car","#:car 4"],
+ "@nl": "John 3 has a car 4 which is nice and red."},
+{"@name": "sent_S6",
+ "@logic": ["have", "#:John 3", "#:car 4", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "John 3 has a car 4 which is nice and red."},
+{"@name": "sent_S7",
+ "@logic": ["isa","car","#:car 4"],
+ "@nl": "The car 4 is nice."},
+{"@name": "sent_S7",
+ "@logic": ["has degree property", "good", "#:car 4", "none", "?:Fv77", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The car 4 is nice."},
+{"@name": "sent_S8",
+ "@logic": ["isa","car","#:car 4"],
+ "@nl": "The car 4 is red."},
+{"@name": "sent_S8",
+ "@logic": ["has property", "red", "#:car 4", ["$ctxt","present","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The car 4 is red."},
+{"@name": "sent_S9",
+ "@logic": ["isa","woman","#:woman 5"],
+ "@nl": "The woman 5 holding a lamp 6 sang."},
+{"@name": "sent_S9",
+ "@logic": ["isa","lamp","#:lamp 6"],
+ "@nl": "The woman 5 holding a lamp 6 sang."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The woman 5 holding a lamp 6 sang."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk3_activity", "sing", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 5 holding a lamp 6 sang."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk3_activity", "#:woman 5", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 5 holding a lamp 6 sang."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 5 holding a lamp 6 sang."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "The woman 5 holding a lamp 6 sang."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk4_activity", "hold", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 5 holding a lamp 6 sang."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk4_activity", "#:woman 5", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 5 holding a lamp 6 sang."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk4_activity", "#:lamp 6", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 5 holding a lamp 6 sang."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 5 holding a lamp 6 sang."},
+{"@name": "sent_S10",
+ "@logic": ["isa","room","#:room 7"],
+ "@nl": "The room 7 was cleaned."},
+{"@name": "sent_S10",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "The room 7 was cleaned."},
+{"@name": "sent_S10",
+ "@logic": ["has type", "sk5_activity", "clean", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The room 7 was cleaned."},
+{"@name": "sent_S10",
+ "@logic": ["has target", "sk5_activity", "#:room 7", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The room 7 was cleaned."},
+{"@name": "sent_S10",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The room 7 was cleaned."},
+{"@name": "sent_S11",
+ "@logic": [["-is rel2", "father of", "?:X", "?:Y", ["$ctxt","?:Fv28","?:Fv27","?:Fv25","?:Fv26"]],
+            ["-is rel2", "father of", "?:Y", "?:Z", ["$ctxt","?:Fv28","?:Fv27","?:Fv25","?:Fv26"]],
+            ["is rel2", "grandfather of", "?:X", "?:Z", ["$ctxt","?:Fv28","?:Fv27","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1."},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","car","#:car 4"]],
+ "@nl": "Is the red car nice?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "red", "#:car 4", ["$ctxt","present","?:Fv31","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Is the red car nice?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "good", "#:car 4", "none", "?:Fv78", ["$ctxt","present","?:Fv31","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Is the red car nice?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-isa","car","#:car 4"],
+            ["-has property", "red", "#:car 4", ["$ctxt","present","?:Fv31","?:Fv29","?:Fv30"]],
+            ["-has degree property", "good", "#:car 4", "none", "?:Fv79", ["$ctxt","present","?:Fv31","?:Fv29","?:Fv30"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is the red car nice?"},
+{"@name": "sent_S12",
+ "@question": ["$defq0"],
+ "@nl": "Is the red car nice?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "good", "#:car 4", "none", "?:Fv80", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "good", "#:car 4", "none", "?:Fv81", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "good", "#:car 4", "none", "?:Fv82", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the red car nice?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "red", "#:car 4", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "red", "#:car 4", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "red", "#:car 4", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the red car nice?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","muggle","$some_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","muggle","$some_not_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","wolf","$some_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","wolf","$some_not_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","sheep","$some_sheep"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","sheep","$some_not_sheep"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","in","?:X","?:Fv37"],
+            ["-has property","outside","?:X","?:Fv37"],
+            ["$block", 0, ["has property","outside","?:X","?:Fv37"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","in","?:X","?:Fv38"],
+            ["-has property","outside","?:X","?:Fv38"],
+            ["$block", 0, ["has property","in","?:X","?:Fv38"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv39","?:Fv40","?:Fv41"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S12","assumption",1], [["-isa","car","#:car 4"], ["$defq0"], ["-has degree property", "good", "#:car 4", "none", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]], ["-has property", "red", "#:car 4", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [2, ["in","sent_S7","assumption",1], [["has degree property", "good", "#:car 4", "none", "?:X", ["$ctxt","present","W0","?:Y","?:Z"]]]],
+          [3, ["in","sent_S12","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,2], 2, 3, "fromga", 1], [["-isa","car","#:car 4"], ["-has property", "red", "#:car 4", ["$ctxt","present","W0","?:X3","?:Y3"]]]],
+          [5, ["in","sent_S6","assumption",1], [["isa","car","#:car 4"]]],
+          [6, ["simp",4,5,"fromga",1], [["-has property", "red", "#:car 4", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [7, ["in","sent_S8","assumption",1], [["has property", "red", "#:car 4", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [8, ["mp",6,7,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John has a car which is nice and red.",
+"  (2) The red car is nice?",
+"Proof steps (by contradiction):",
+"  (1) If the car D is good and the car D is red then answer holds  [sentence 2]",
+"  (2) The car D is good  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) The car D is not red  [from steps 1, 2, 3]",
+"  (5) The car D is a car  [sentence 1]",
+"  (6) The car D is not red  [from steps 4, 5]",
+"  (7) The car D is red  [sentence 1]",
+"  (8) Contradiction  [from steps 6, 7]"
+],
+  "timestamp": "2026-06-12T21:17:38Z"
+}

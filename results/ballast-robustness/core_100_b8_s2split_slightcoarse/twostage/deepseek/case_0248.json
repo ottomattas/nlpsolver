@@ -1,0 +1,828 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 248,
+  "input_text": "If X is cool then X is red. The students studied hard and passed the exam. Mr Dursley is an American. A village road was narrow. Mary's uncle arrived. Mark is at a house. John is not in the box. Tallinn is in Latvia with a probability 10 percent. An elephant was strong. Who has an uncle?",
+  "expected_answer": "Mary.",
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Mary.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "If X is cool then X is red.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "If X is cool then X is red.",
+          "type": "normal_rule",
+          "entities": [{"id": "X", "type": "generic"}],
+          "adjectives": [["cool","none","entity"], ["red","none","entity"]]
+        }
+      ]
+    },
+    {
+      "raw": "The students studied hard and passed the exam.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The students 1 studied hard.",
+          "type": "situation",
+          "entities": [{"id": "students 1", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "study", "mode": "event", "roles": {"actor": "students 1", "manner": "hard"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S3",
+          "text": "The students 1 passed the exam 2.",
+          "type": "situation",
+          "entities": [{"id": "students 1", "type": "concrete", "category": "person"},
+            {"id": "exam 2", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "pass", "mode": "event", "roles": {"actor": "students 1", "target": "exam 2"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is an American.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mr Dursley 1 is an American.",
+          "type": "real",
+          "entities": [{"id": "Mr Dursley 1", "type": "concrete", "category": "person"},
+            {"id": "American", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "A village road was narrow.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "A village road 1 was narrow.",
+          "type": "situation",
+          "entities": [{"id": "village road 1", "type": "concrete", "category": "place"}],
+          "adjectives": [["narrow","none","road"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mary's uncle arrived.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Mary 1's uncle 2 arrived.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "uncle 2", "type": "concrete", "text": "uncle", "category": "person"}
+          ],
+          "actions": [{"root": "arrive", "mode": "event", "roles": {"actor": "uncle 2"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S7",
+          "text": "Uncle 2 is the uncle of Mary 1.",
+          "type": "situation",
+          "entities": [{"id": "uncle 2", "type": "concrete", "text": "uncle", "category": "person"},
+            {"id": "Mary 1", "type": "concrete", "category": "person"}
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mark is at a house.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Mark 1 is at a house 2.",
+          "type": "situation",
+          "entities": [{"id": "Mark 1", "type": "concrete", "category": "person"},
+            {"id": "house 2", "type": "concrete", "category": "place"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is not in the box.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "John 1 is not in the box 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "box 2", "type": "concrete", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is in Latvia with a probability 10 percent.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Tallinn 1 is in Latvia 2.",
+          "type": "normal_rule",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ],
+          "confidence": 0.1
+        }
+      ]
+    },
+    {
+      "raw": "An elephant was strong.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "An elephant 1 was strong.",
+          "type": "situation",
+          "entities": [{"id": "elephant 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["strong","none","elephant"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Who has an uncle?",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Which entity has an uncle?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "uncle", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X1",
+          ["normally",
+            ["implies",
+              ["has degree property","cool","X1","none","entity"],
+              ["has degree property","red","X1","none","entity"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","student","students 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","study"],
+              ["has actor","E","students 1"],
+              ["has manner","E","hard"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","student","students 1"],
+          ["isa","exam","exam 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","pass"],
+              ["has actor","E","students 1"],
+              ["has target","E","exam 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S4", ["holds", "W0", ["isa","American","Mr Dursley 1"]]],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","village road","village road 1"],
+            ["has degree property","narrow","village road 1","none","road"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 1"],
+            ["isa","uncle","uncle 2"],
+            ["is rel2","uncle of","uncle 2","Mary 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","arrive"],
+                ["has actor","E","uncle 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","uncle","uncle 2"],
+            ["isa","person","Mary 1"],
+            ["is rel2","uncle of","uncle 2","Mary 1"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mark 1"],
+          ["isa","house","house 2"],
+          ["is rel2","at","Mark 1","house 2"]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","box","box 2"],
+          ["not", ["is rel2","in","John 1","box 2"]]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","place","https://en.wikipedia.org/wiki/Tallinn"],
+            ["isa","place","https://en.wikipedia.org/wiki/Latvia"],
+            ["normally",
+              ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+            ]
+          ]
+        ],
+        ["@p","S10",0.1]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","elephant","elephant 1"],
+            ["has degree property","strong","elephant 1","none","elephant"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S12", ["ask", "X", ["exists", "Y", ["and", ["isa","uncle","Y"], ["have","X","Y"]]]]]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","person","#:students 1"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "entity_S2",
+ "@logic": ["isa","student","#:students 1"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "entity_S4",
+ "@logic": ["isa","person","#:Mr Dursley 1"],
+ "@nl": "Mr Dursley 1 is an American."},
+{"@name": "entity_S6",
+ "@logic": ["isa","person","#:uncle 2"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "entity_S10",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is in Latvia 2."},
+{"@name": "entity_S10",
+ "@logic": ["isa","place","#:Latvia 2"],
+ "@nl": "Tallinn 1 is in Latvia 2."},
+{"@name": "entity_S11",
+ "@logic": ["isa","animal","#:elephant 1"],
+ "@nl": "An elephant 1 was strong."},
+{"@name": "sent_S1",
+ "@logic": [["-has degree property", "cool", "?:X1", "none", "?:Fv105", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["has property", "red", "?:X1", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","$generic",2], ["$not", ["has property", "red", "?:X1", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@nl": "If X is cool then X is red."},
+{"@name": "sent_S2",
+ "@logic": ["isa","student","#:students 1"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "study", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:students 1", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S2",
+ "@logic": ["has manner", "sk0_activity", "hard", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The students 1 studied hard."},
+{"@name": "sent_S3",
+ "@logic": ["isa","student","#:students 1"],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","exam","#:exam 2"],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "pass", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:students 1", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk1_activity", "#:exam 2", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The students 1 passed the exam 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","american","#:Mr Dursley 1"],
+ "@nl": "Mr Dursley 1 is an American."},
+{"@name": "sent_S5",
+ "@logic": ["isa","village road","#:village road 1"],
+ "@nl": "A village road 1 was narrow."},
+{"@name": "sent_S5",
+ "@logic": ["-has degree property", "wide", "#:village road 1", "none", "road", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A village road 1 was narrow."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["isa","uncle","#:uncle 2"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["is rel2", "uncle of", "#:uncle 2", "#:Mary 1", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk2_activity", "arrive", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk2_activity", "#:uncle 2", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S7",
+ "@logic": ["isa","uncle","#:uncle 2"],
+ "@nl": "Uncle 2 is the uncle of Mary 1."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Uncle 2 is the uncle of Mary 1."},
+{"@name": "sent_S7",
+ "@logic": ["is rel2", "uncle of", "#:uncle 2", "#:Mary 1", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Uncle 2 is the uncle of Mary 1."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Mark 1"],
+ "@nl": "Mark 1 is at a house 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","house","#:house 2"],
+ "@nl": "Mark 1 is at a house 2."},
+{"@name": "sent_S8",
+ "@logic": ["is rel2", "at", "#:Mark 1", "#:house 2", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Mark 1 is at a house 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is not in the box 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","box","#:box 2"],
+ "@nl": "John 1 is not in the box 2."},
+{"@name": "sent_S9",
+ "@logic": ["-is rel2", "in", "#:John 1", "#:box 2", ["$ctxt","present","W0","?:Fv19","?:Fv20"]],
+ "@nl": "John 1 is not in the box 2."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","place","https://en.wikipedia.org/wiki/Tallinn"],
+            ["-isa","place","https://en.wikipedia.org/wiki/Latvia"],
+            ["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["$block", ["$","place",1], ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]]]
+           ],
+ "@confidence": 0.8,
+ "@nl": "Tallinn 1 is in Latvia 2."},
+{"@name": "sent_S11",
+ "@logic": ["isa","elephant","#:elephant 1"],
+ "@nl": "An elephant 1 was strong."},
+{"@name": "sent_S11",
+ "@logic": ["has degree property", "strong", "#:elephant 1", "none", "elephant", ["$ctxt","past","W0","?:Fv25","?:Fv26"]],
+ "@nl": "An elephant 1 was strong."},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"], ["isa", "uncle", ["sk3","?:X"]]],
+ "@nl": "Which entity has an uncle?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0","?:X"],
+            ["have", "?:X", ["sk3","?:X"], ["$ctxt","present","?:Fv33","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Which entity has an uncle?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-isa","uncle","?:Y"],
+            ["-have", "?:X", "?:Y", ["$ctxt","present","?:Fv36","?:Fv27","?:Fv28"]],
+            ["$defq0","?:X"]
+           ],
+ "@nl": "Which entity has an uncle?"},
+{"@name": "sent_S6",
+ "@logic": ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 1's uncle 2 arrived."},
+{"@name": "sent_S12",
+ "@question": ["$defq0","?:X"],
+ "@askvars": 1,
+ "@who_query": true,
+ "@nl": "Which entity has an uncle?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.97,
+ "@logic": [["-have", "?:Br1", "?:Br2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["have", "?:Br1", "?:Br2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Which entity has an uncle?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "cool", "$some_cool_entity", "none", "?:Fv106", ["$ctxt","?:Fv68","?:Fv65","?:Fv66","?:Fv67"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cool", "$some_not_cool_entity", "none", "?:Fv107", ["$ctxt","?:Fv76","?:Fv73","?:Fv74","?:Fv75"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "red", "$some_red_entity", ["$ctxt","?:Fv80","?:Fv77","?:Fv78","?:Fv79"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "red", "$some_not_red_entity", ["$ctxt","?:Fv88","?:Fv85","?:Fv86","?:Fv87"]],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","village road","?:X"], ["isa","road","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","village","?:X"], ["-isa","road","?:X"], ["isa","village road","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property","village","?:X","?:Ct"],
+            ["-isa","road","?:X"],
+            ["isa","village road","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property", "village", "?:X", "?:Ct", ["$ctxt","?:Fv104","?:Fv101","?:Fv102","?:Fv103"]],
+            ["-isa","road","?:X"],
+            ["isa","village road","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv37"], ["has type","?:E","give","?:Fv37"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv38"], ["has type","?:E","go","?:Fv38"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","house","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","house","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "none", "?:Fv108", ["$ctxt","past","?:Fv39","?:Fv40","?:Fv41"]],
+            ["-has degree property", "wide", "?:X", "none", "?:Fv109", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "none", "?:Fv110", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["-has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv45","?:Fv46","?:Fv47"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv48","?:Fv49","?:Fv50"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv111", ["$ctxt","past","?:Fv51","?:Fv52","?:Fv53"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv112", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv113", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv54","?:Fv55","?:Fv56"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "pop_what",
+ "@logic": ["isa","student","$some_students"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","exam","$some_exam"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","american","$some_american"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","box","$some_box"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","student","$some_student"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","village road","$some_village_road"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","house","$some_house"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","uncle","$some_uncle"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","place","$some_place"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","#:Mary 1"]],
+        "blockers": [["$block", 0, ["$not", ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","present","W0","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.97,
+        "positive proof": [[1, ["in","sent_S12","assumption",0.97], [["$block", 0, ["$not", ["have", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]]]], ["-have", "?:X", "?:Y", ["$ctxt","past","?:Z","?:U","?:V"]], ["have", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]]]],
+          [2, ["in","sent_S6","assumption",1], [["have", "#:Mary 1", "#:uncle 2", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["mp", [1,1], 2, "fromassumption", 0.97], [["$block", 0, ["$not", ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","present","W0","?:X","?:Y"]]]], ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [4, ["in","sent_S12","assumption",1], [["-have", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]], ["-isa","uncle","?:Y"], ["$defq0","?:X"]]],
+          [5, ["mp", [3,1], 4, "fromassumption", 0.97], [["-isa","uncle","#:uncle 2"], ["$defq0","#:Mary 1"], ["$block", 0, ["$not", ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","present","W0","?:X3","?:Y3"]]]]]],
+          [6, ["in","sent_S7","assumption",1], [["isa","uncle","#:uncle 2"]]],
+          [7, ["simp",5,6,"fromassumption",0.97], [["$defq0","#:Mary 1"], ["$block", 0, ["$not", ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","present","W0","?:X","?:Y"]]]]]],
+          [8, ["in","sent_S12","goal",1], [["-$defq0","?:X"], ["$ans","?:X"]]],
+          [9, ["mp",7,8,"fromga",0.97], [["$block", 0, ["$not", ["have", "#:Mary 1", "#:uncle 2", ["$ctxt","present","W0","?:X3","?:Y3"]]]], ["$ans","#:Mary 1"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 97%.",
+"Sentences used:",
+"  (1) Mary's uncle arrived.",
+"  (2) Who has an uncle?",
+"Proof steps:",
+"  (1) If some X has some Y then normally X has Y  [sentence 2, confidence 97%]",
+"  (2) Mary has the uncle B  [sentence 1]",
+"  (3) Normally Mary has the uncle B  [from steps 1, 2, confidence 97%]",
+"  (4) If some X has some Y and Y is an uncle then X is the answer  [sentence 2]",
+"  (5) Mary is the answer, except when Mary does not have the uncle B  [from steps 3, 4, confidence 97%]",
+"  (6) The uncle B is an uncle  [sentence 1]",
+"  (7) Mary is the answer, except when Mary does not have the uncle B  [from steps 5, 6, confidence 97%]",
+"  (8) technical answer unwrap step  [from question]",
+"  (9) Mary is an answer, except when Mary does not have the uncle B  [from steps 7, 8, confidence 97%]",
+"Exceptions checked and not holding:",
+"  Mary does not have uncle B"
+],
+  "llm_usage": [{
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34110,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1236,
+      "raw": {
+        "prompt_tokens": 34110,
+        "completion_tokens": 1236,
+        "total_tokens": 35346,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1174},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 190
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34253,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1197,
+      "raw": {
+        "prompt_tokens": 34253,
+        "completion_tokens": 1197,
+        "total_tokens": 35450,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1000},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 333
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34114,
+      "cached_input_tokens": 33920,
+      "output_tokens": 649,
+      "raw": {
+        "prompt_tokens": 34114,
+        "completion_tokens": 649,
+        "total_tokens": 34763,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 618},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 194
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34114,
+      "cached_input_tokens": 33920,
+      "output_tokens": 999,
+      "raw": {
+        "prompt_tokens": 34114,
+        "completion_tokens": 999,
+        "total_tokens": 35113,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 920},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 194
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34248,
+      "cached_input_tokens": 33920,
+      "output_tokens": 3322,
+      "raw": {
+        "prompt_tokens": 34248,
+        "completion_tokens": 3322,
+        "total_tokens": 37570,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 3110},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 328
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34113,
+      "cached_input_tokens": 33920,
+      "output_tokens": 610,
+      "raw": {
+        "prompt_tokens": 34113,
+        "completion_tokens": 610,
+        "total_tokens": 34723,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 554},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 193
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34115,
+      "cached_input_tokens": 33920,
+      "output_tokens": 291,
+      "raw": {
+        "prompt_tokens": 34115,
+        "completion_tokens": 291,
+        "total_tokens": 34406,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 232},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 195
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34157,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1253,
+      "raw": {
+        "prompt_tokens": 34157,
+        "completion_tokens": 1253,
+        "total_tokens": 35410,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1155},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 237
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34111,
+      "cached_input_tokens": 33920,
+      "output_tokens": 441,
+      "raw": {
+        "prompt_tokens": 34111,
+        "completion_tokens": 441,
+        "total_tokens": 34552,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 377},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 191
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34103,
+      "cached_input_tokens": 33920,
+      "output_tokens": 342,
+      "raw": {
+        "prompt_tokens": 34103,
+        "completion_tokens": 342,
+        "total_tokens": 34445,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 300},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 183
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T23:17:04Z"
+}

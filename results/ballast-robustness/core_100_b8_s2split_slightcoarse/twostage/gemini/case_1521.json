@@ -1,0 +1,808 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 1521,
+  "input_text": "Greg is a bad man. The letter was written in June. Anna handed Mark a key. The dog was barking and the cat was too. Agatha is in trouble. It is not probable that John is a child of Mike. Eve introduced Mary. Frogs are small animals. Elephants have a trunk with a probability 10 percent. John is a child of Mike?",
+  "expected_answer": "Probably false.",
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "Unknown.",
+  "correctness": false,
+  "stage1": [{
+      "raw": "Greg is a bad man.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Greg 1 is a bad man.",
+          "type": "situation",
+          "entities": [{"id": "Greg 1", "type": "concrete", "category": "person"},
+            {"id": "man", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["bad","none","person"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "The letter was written in June.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The letter 1 was written in June.",
+          "type": "situation",
+          "entities": [{"id": "letter 1", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "write", "mode": "event", "roles": {"target": "letter 1"}}],
+          "time": "June",
+          "time_prep": "in",
+          "state_tense": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Anna handed Mark a key.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Anna 1 handed Mark 2 a key 3.",
+          "type": "situation",
+          "entities": [{"id": "Anna 1", "type": "concrete", "category": "person"},
+            {"id": "Mark 2", "type": "concrete", "category": "person"},
+            {"id": "key 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "hand",
+              "mode": "event",
+              "roles": {"actor": "Anna 1", "recipient": "Mark 2", "target": "key 3"}
+            }
+          ],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The dog was barking and the cat was too.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The dog 1 was barking.",
+          "type": "situation",
+          "entities": [{"id": "dog 1", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "bark", "mode": "event"}],
+          "pre_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S5",
+          "text": "The cat 2 was barking.",
+          "type": "situation",
+          "entities": [{"id": "cat 2", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "bark", "mode": "event"}],
+          "pre_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Agatha is in trouble.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Agatha 1 is in trouble.",
+          "type": "situation",
+          "entities": [{"id": "Agatha 1", "type": "concrete", "category": "person"},
+            {"id": "trouble", "type": "generic", "category": "abstract"}
+          ],
+          "pre_state": "W1",
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "It is not probable that John is a child of Mike.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "John 1 is a child of Mike 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Mike 2", "type": "concrete", "category": "person"}
+          ],
+          "confidence": 0.2,
+          "pre_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "Eve introduced Mary.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Eve 1 introduced Mary 2.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "Mary 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "introduce", "mode": "event", "roles": {"actor": "Eve 1", "target": "Mary 2"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Frogs are small animals.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Frogs are small animals.",
+          "type": "normal_rule",
+          "entities": [{"id": "frogs", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["small","none","animal"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have a trunk with a probability 10 percent.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Elephants have a trunk.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunk", "type": "generic", "scope": "dependent"}
+          ],
+          "confidence": 0.1
+        }
+      ]
+    },
+    {
+      "raw": "John is a child of Mike?",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Is John 1 a child of Mike 2?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Mike 2", "type": "concrete", "category": "person"}
+          ],
+          "pre_state": "W2"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","man","Greg 1"], ["has degree property","bad","Greg 1","none","person"]]
+        ],
+        ["state time","W0","present"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","letter","letter 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","write"],
+              ["has target","E","letter 1"],
+              ["has time","E","June","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Anna 1"],
+            ["isa","person","Mark 2"],
+            ["isa","key","key 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","hand"],
+                ["has actor","E","Anna 1"],
+                ["has recipient","E","Mark 2"],
+                ["has target","E","key 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W1",
+        ["and",
+          ["isa","dog","dog 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","bark"],
+              ["has actor","E","dog 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W1",
+        ["and",
+          ["isa","cat","cat 2"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","bark"],
+              ["has actor","E1","cat 2"],
+              ["has time","E1","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Agatha 1"],
+            ["exists", "X", ["and", ["isa","trouble","X"], ["is rel2","in","Agatha 1","X"]]]
+          ]
+        ],
+        ["state time","W1","present"]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","John 1"],
+            ["isa","person","Mike 2"],
+            ["is rel2","child of","John 1","Mike 2"]
+          ]
+        ],
+        ["@p","S7",0.2]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Eve 1"],
+            ["isa","person","Mary 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","introduce"],
+                ["has actor","E","Eve 1"],
+                ["has target","E","Mary 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","frog","X"],
+              ["normally",
+                ["and", ["isa","animal","X"], ["has degree property","small","X","none","animal"]]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S9",0.99]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+            ]
+          ]
+        ],
+        ["@p","S10",0.1]
+      ]
+    ],
+    ["@id","S11",
+      ["question",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","person","Mike 2"],
+          ["is rel2","child of","John 1","Mike 2"]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:Greg 1"],
+ "@nl": "Greg 1 is a bad man."},
+{"@name": "entity_S4",
+ "@logic": ["isa","animal","#:dog 1"],
+ "@nl": "The dog 1 was barking."},
+{"@name": "entity_S5",
+ "@logic": ["isa","animal","#:cat 2"],
+ "@nl": "The cat 2 was barking."},
+{"@name": "entity_S7",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "entity_S7",
+ "@logic": ["isa","person","#:Mike 2"],
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","man","#:Greg 1"],
+ "@nl": "Greg 1 is a bad man."},
+{"@name": "sent_S1",
+ "@logic": ["-has degree property", "good", "#:Greg 1", "none", "person", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Greg 1 is a bad man."},
+{"@name": "sent_S2",
+ "@logic": ["isa","letter","#:letter 1"],
+ "@nl": "The letter 1 was written in June."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The letter 1 was written in June."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "write", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The letter 1 was written in June."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "#:letter 1", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The letter 1 was written in June."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "June", "in", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The letter 1 was written in June."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The letter 1 was written in June."},
+{"@name": "sent_S2",
+ "@logic": ["=", ["$theof1","time","W0","?:Fv5"], ["$datetime","June"]],
+ "@nl": "The letter 1 was written in June."},
+{"@name": "sent_S2",
+ "@logic": ["is_past_world","W0"],
+ "@nl": "The letter 1 was written in June."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Anna 1"],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Mark 2"],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","important","#:key 3"],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "give", ["$ctxt","past","W0","?:Fv6","?:Fv7"]],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:Anna 1", ["$ctxt","past","W0","?:Fv6","?:Fv7"]],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S3",
+ "@logic": ["has recipient", "sk1_activity", "#:Mark 2", ["$ctxt","past","W0","?:Fv6","?:Fv7"]],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S3",
+ "@logic": ["has target", "sk1_activity", "#:key 3", ["$ctxt","past","W0","?:Fv6","?:Fv7"]],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv6","?:Fv7"]],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S3",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Anna 1 handed Mark 2 a key 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","dog","#:dog 1"],
+ "@nl": "The dog 1 was barking."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The dog 1 was barking."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk2_activity", "bark", ["$ctxt","past","W1","?:Fv8","?:Fv9"]],
+ "@nl": "The dog 1 was barking."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk2_activity", "#:dog 1", ["$ctxt","past","W1","?:Fv8","?:Fv9"]],
+ "@nl": "The dog 1 was barking."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W1","?:Fv8","?:Fv9"]],
+ "@nl": "The dog 1 was barking."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The dog 1 was barking."},
+{"@name": "sent_S5",
+ "@logic": ["isa","cat","#:cat 2"],
+ "@nl": "The cat 2 was barking."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The cat 2 was barking."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk3_activity", "bark", ["$ctxt","past","W1","?:Fv10","?:Fv11"]],
+ "@nl": "The cat 2 was barking."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk3_activity", "#:cat 2", ["$ctxt","past","W1","?:Fv10","?:Fv11"]],
+ "@nl": "The cat 2 was barking."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W1","?:Fv10","?:Fv11"]],
+ "@nl": "The cat 2 was barking."},
+{"@name": "sent_S5",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "The cat 2 was barking."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Agatha 1"],
+ "@nl": "Agatha 1 is in trouble."},
+{"@name": "sent_S6",
+ "@logic": ["isa","trouble","sk4_trouble"],
+ "@nl": "Agatha 1 is in trouble."},
+{"@name": "sent_S6",
+ "@logic": ["is rel2", "in", "#:Agatha 1", "sk4_trouble", ["$ctxt","present","W1","?:Fv12","?:Fv13"]],
+ "@nl": "Agatha 1 is in trouble."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","person","#:John 1"],
+            ["-isa","person","#:Mike 2"],
+            ["-is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","W1","?:Fv14","?:Fv15"]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "John 1 is a child of Mike 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 introduced Mary 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Eve 1 introduced Mary 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "Eve 1 introduced Mary 2."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk5_activity", "introduce", ["$ctxt","past","W1","?:Fv16","?:Fv17"]],
+ "@nl": "Eve 1 introduced Mary 2."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk5_activity", "#:Eve 1", ["$ctxt","past","W1","?:Fv16","?:Fv17"]],
+ "@nl": "Eve 1 introduced Mary 2."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk5_activity", "#:Mary 2", ["$ctxt","past","W1","?:Fv16","?:Fv17"]],
+ "@nl": "Eve 1 introduced Mary 2."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W1","?:Fv16","?:Fv17"]],
+ "@nl": "Eve 1 introduced Mary 2."},
+{"@name": "sent_S8",
+ "@logic": ["actuality","sk5_activity"],
+ "@nl": "Eve 1 introduced Mary 2."},
+{"@name": "sent_S8",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Eve 1 introduced Mary 2."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","frog","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Frogs are small animals."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","frog","?:X"],
+            ["has degree property", "small", "?:X", "none", "animal", ["$ctxt","?:Fv21","?:Fv20","?:Fv18","?:Fv19"]],
+            ["$block", ["$","frog",1], ["$not", ["has degree property", "small", "?:X", "none", "animal", ["$ctxt","?:Fv21","?:Fv20","?:Fv18","?:Fv19"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Frogs are small animals."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-isa","trunk","?:Y"],
+            ["-has part", "?:X", "?:Y", ["$ctxt","?:Fv25","?:Fv24","?:Fv22","?:Fv23"]],
+            ["$block", ["$","elephant",1], ["has part", "?:X", "?:Y", ["$ctxt","?:Fv25","?:Fv24","?:Fv22","?:Fv23"]]]
+           ],
+ "@confidence": 0.8,
+ "@nl": "Elephants have a trunk."},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:John 1"]],
+ "@nl": "Is John 1 a child of Mike 2?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:Mike 2"]],
+ "@nl": "Is John 1 a child of Mike 2?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","W2","?:Fv26","?:Fv27"]]
+           ],
+ "@nl": "Is John 1 a child of Mike 2?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:John 1"],
+            ["-isa","person","#:Mike 2"],
+            ["-is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","W2","?:Fv26","?:Fv27"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 a child of Mike 2?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S11",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 a child of Mike 2?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["is rel2", "child of", "#:John 1", "#:Mike 2", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 a child of Mike 2?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trouble","$some_trouble"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trouble","$some_not_trouble"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","frog","$some_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","frog","$some_not_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "small", "$some_small_animal", "none", "animal", ["$ctxt","?:Fv98","?:Fv95","?:Fv96","?:Fv97"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_small_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "small", "$some_not_small_animal", "none", "animal", ["$ctxt","?:Fv106","?:Fv103","?:Fv104","?:Fv105"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv37"], ["has type","?:E","give","?:Fv37"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","introduce","?:Fv38"], ["has type","?:E","present","?:Fv38"]],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv107","?:Fv39"],
+            ["-has degree property","high","?:X","none","?:Fv108","?:Fv39"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv109","?:Fv40"],
+            ["has degree property","small","?:X","none","?:Fv110","?:Fv40"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv111", ["$ctxt","past","?:Fv41","?:Fv42","?:Fv43"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv112", ["$ctxt","present","?:Fv41","?:Fv42","?:Fv43"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv113", ["$ctxt","present","?:Fv41","?:Fv42","?:Fv43"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv44","?:Fv45","?:Fv46"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv44","?:Fv45","?:Fv46"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv44","?:Fv45","?:Fv46"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has target","?:Esb","?:Ysb","?:Csb"],
+            ["-has recipient","?:Esb","?:Xsb","?:Csb"],
+            ["has recipient","?:Ysb","?:Xsb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37228,
+      "cached_input_tokens": 0,
+      "output_tokens": 949,
+      "raw": {
+        "promptTokenCount": 37228,
+        "candidatesTokenCount": 83,
+        "totalTokenCount": 38177,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37228}],
+        "thoughtsTokenCount": 866,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37240,
+      "cached_input_tokens": 36836,
+      "output_tokens": 675,
+      "raw": {
+        "promptTokenCount": 37240,
+        "candidatesTokenCount": 108,
+        "totalTokenCount": 37915,
+        "cachedContentTokenCount": 36836,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37240}],
+        "cacheTokensDetails": [{"modality": "TEXT", "tokenCount": 36836}],
+        "thoughtsTokenCount": 567,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37300,
+      "cached_input_tokens": 0,
+      "output_tokens": 926,
+      "raw": {
+        "promptTokenCount": 37300,
+        "candidatesTokenCount": 178,
+        "totalTokenCount": 38226,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37300}],
+        "thoughtsTokenCount": 748,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37304,
+      "cached_input_tokens": 0,
+      "output_tokens": 827,
+      "raw": {
+        "promptTokenCount": 37304,
+        "candidatesTokenCount": 244,
+        "totalTokenCount": 38131,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37304}],
+        "thoughtsTokenCount": 583,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37224,
+      "cached_input_tokens": 0,
+      "output_tokens": 1346,
+      "raw": {
+        "promptTokenCount": 37224,
+        "candidatesTokenCount": 111,
+        "totalTokenCount": 38570,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37224}],
+        "thoughtsTokenCount": 1235,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37235,
+      "cached_input_tokens": 36836,
+      "output_tokens": 1037,
+      "raw": {
+        "promptTokenCount": 37235,
+        "candidatesTokenCount": 102,
+        "totalTokenCount": 38272,
+        "cachedContentTokenCount": 36836,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37235}],
+        "cacheTokensDetails": [{"modality": "TEXT", "tokenCount": 36836}],
+        "thoughtsTokenCount": 935,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37266,
+      "cached_input_tokens": 0,
+      "output_tokens": 930,
+      "raw": {
+        "promptTokenCount": 37266,
+        "candidatesTokenCount": 155,
+        "totalTokenCount": 38196,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37266}],
+        "thoughtsTokenCount": 775,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37229,
+      "cached_input_tokens": 0,
+      "output_tokens": 1073,
+      "raw": {
+        "promptTokenCount": 37229,
+        "candidatesTokenCount": 130,
+        "totalTokenCount": 38302,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37229}],
+        "thoughtsTokenCount": 943,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37221,
+      "cached_input_tokens": 0,
+      "output_tokens": 1248,
+      "raw": {
+        "promptTokenCount": 37221,
+        "candidatesTokenCount": 128,
+        "totalTokenCount": 38469,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37221}],
+        "thoughtsTokenCount": 1120,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37223,
+      "cached_input_tokens": 0,
+      "output_tokens": 1275,
+      "raw": {
+        "promptTokenCount": 37223,
+        "candidatesTokenCount": 74,
+        "totalTokenCount": 38498,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37223}],
+        "thoughtsTokenCount": 1201,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "timestamp": "2026-06-13T01:53:19Z"
+}

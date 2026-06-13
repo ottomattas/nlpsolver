@@ -1,0 +1,690 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 519,
+  "input_text": "John was bad. All the boxes are red except for the small one. The length of Nile is 80 kilometers. Mary washed and dried the cup. Some elephants are animals. Mr Dursley is an American. Anna handed a key to Mark. Baby bears can not eat berries. Sandra travelled to the hallway. Some elephants are not animals?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John was bad.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 was bad.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["bad","none","person"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "All the boxes are red except for the small one.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "All the boxes are red except for the small one.",
+          "type": "normal_rule",
+          "entities": [{"id": "boxes", "type": "generic", "category": "artifact"}],
+          "adjectives": [["red","none","box"], ["small","none","box"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "The length of Nile is 80 kilometers.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The length 2 of Nile 1 is 80 kilometers.",
+          "type": "real",
+          "entities": [{
+              "id": "Nile 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            },
+            {"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "80 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 2","Nile 1"]]
+        },
+        {
+          "unit_id": "S4",
+          "text": "The length 2 is the length of Nile 1.",
+          "type": "real",
+          "entities": [{"id": "length 2", "type": "concrete", "text": "length"},
+            {
+              "id": "Nile 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            }
+          ],
+          "definites": [["length of","length 2","Nile 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mary washed and dried the cup.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Mary 3 washed the cup 4.",
+          "type": "situation",
+          "entities": [{"id": "Mary 3", "type": "concrete", "category": "person"},
+            {"id": "cup 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "wash", "mode": "event", "roles": {"actor": "Mary 3", "target": "cup 4"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S6",
+          "text": "Mary 3 dried the cup 4.",
+          "type": "situation",
+          "entities": [{"id": "Mary 3", "type": "concrete", "category": "person"},
+            {"id": "cup 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "dry", "mode": "event", "roles": {"actor": "Mary 3", "target": "cup 4"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Some elephants are animals.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Some elephants are animals.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is an American.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Mr Dursley 5 is an American.",
+          "type": "real",
+          "entities": [{"id": "Mr Dursley 5", "type": "concrete", "category": "person"}],
+          "adjectives": [["American","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Anna handed a key to Mark.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Anna 6 handed a key 7 to Mark 8.",
+          "type": "situation",
+          "entities": [{"id": "Anna 6", "type": "concrete", "category": "person"},
+            {"id": "key 7", "type": "concrete", "category": "artifact"},
+            {"id": "Mark 8", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "hand",
+              "mode": "event",
+              "roles": {"actor": "Anna 6", "target": "key 7", "recipient": "Mark 8"}
+            }
+          ],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Baby bears can not eat berries.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Baby bears cannot eat berries.",
+          "type": "strict_rule",
+          "entities": [{"id": "baby bears", "type": "generic", "subtype": "compound", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "dependent", "category": "plant"}
+          ],
+          "actions": [{"root": "eat", "mode": "capability", "roles": {"target": "berries"}}]
+        }
+      ]
+    },
+    {
+      "raw": "Sandra travelled to the hallway.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Sandra 9 travelled to the hallway 10.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 9", "type": "concrete", "category": "person"},
+            {"id": "hallway 10", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "travel",
+              "mode": "event",
+              "roles": {"actor": "Sandra 9", "destination": "hallway 10"}
+            }
+          ],
+          "pre_state": "W3",
+          "next_state": "W4",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Some elephants are not animals?",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Are some elephants not animals?",
+          "type": "query",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","person","John 1"], ["has degree property","bad","John 1","none","person"]]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["and", ["isa","box","X"], ["not", ["has degree property","small","X","none","box"]]],
+              ["normally", ["has degree property","red","X","none","box"]]
+            ]
+          ]
+        ],
+        ["@p","S2",0.95]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$measure",80,"kilometer"]]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$measure",80,"kilometer"]]
+        ],
+        ["@definite","S4","W0","length of","Nile 1","length 2"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 3"],
+            ["isa","cup","cup 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","wash"],
+                ["has actor","E","Mary 3"],
+                ["has target","E","cup 4"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Mary 3"],
+            ["isa","cup","cup 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","dry"],
+                ["has actor","E","Mary 3"],
+                ["has target","E","cup 4"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds", "W0", ["exists", "X", ["and", ["isa","elephant","X"], ["isa","animal","X"]]]],
+        ["@p","S7",0.99]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mr Dursley 5"],
+          ["has degree property","American","Mr Dursley 5","none","person"]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","Anna 6"],
+            ["isa","key","key 7"],
+            ["isa","person","Mark 8"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","hand"],
+                ["has actor","E","Anna 6"],
+                ["has target","E","key 7"],
+                ["has recipient","E","Mark 8"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","baby bear","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","eat"],
+                  ["has actor","E","X"],
+                  ["exists", "Y", ["and", ["isa","berry","Y"], ["has target","E","Y"]]],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W3",
+          ["and",
+            ["isa","person","Sandra 9"],
+            ["isa","hallway","hallway 10"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","travel"],
+                ["has actor","E","Sandra 9"],
+                ["has destination","E","hallway 10","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W3","W4"]
+      ]
+    ],
+    ["@id","S12",
+      ["question", ["exists", "X", ["and", ["isa","elephant","X"], ["not", ["isa","animal","X"]]]]]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Nile 1"],
+ "@nl": "The length 2 of Nile 1 is 80 kilometers."},
+{"@name": "entity_S3",
+ "@logic": ["isa","measure","80 kilometers"],
+ "@nl": "The length 2 of Nile 1 is 80 kilometers."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 was bad."},
+{"@name": "sent_S1",
+ "@logic": ["-has degree property", "good", "#:John 1", "none", "person", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 was bad."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","box","?:X"],
+            ["has degree property", "small", "?:X", "none", "box", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["has property", "red", "?:X", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["$block", ["$","box",1], ["$not", ["has property", "red", "?:X", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "All the boxes are red except for the small one."},
+{"@name": "sent_S3",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The length 2 of Nile 1 is 80 kilometers."},
+{"@name": "sent_S4",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The length 2 is the length of Nile 1."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mary 3"],
+ "@nl": "Mary 3 washed the cup 4."},
+{"@name": "sent_S5",
+ "@logic": ["isa","cup","#:cup 4"],
+ "@nl": "Mary 3 washed the cup 4."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Mary 3 washed the cup 4."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk0_activity", "wash", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 3 washed the cup 4."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk0_activity", "#:Mary 3", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 3 washed the cup 4."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk0_activity", "#:cup 4", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 3 washed the cup 4."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 3 washed the cup 4."},
+{"@name": "sent_S5",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Mary 3 washed the cup 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Mary 3"],
+ "@nl": "Mary 3 dried the cup 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","cup","#:cup 4"],
+ "@nl": "Mary 3 dried the cup 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Mary 3 dried the cup 4."},
+{"@name": "sent_S6",
+ "@logic": ["-has type", "sk1_activity", "sweet", ["$ctxt","past","W1","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 3 dried the cup 4."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk1_activity", "#:Mary 3", ["$ctxt","past","W1","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 3 dried the cup 4."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk1_activity", "#:cup 4", ["$ctxt","past","W1","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 3 dried the cup 4."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv13","?:Fv14"]],
+ "@nl": "Mary 3 dried the cup 4."},
+{"@name": "sent_S6",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Mary 3 dried the cup 4."},
+{"@name": "sent_S7",
+ "@logic": ["isa","elephant","sk2_elephant"],
+ "@confidence": 0.9899,
+ "@nl": "Some elephants are animals."},
+{"@name": "sent_S7",
+ "@logic": ["isa","animal","sk2_elephant"],
+ "@confidence": 0.9899,
+ "@nl": "Some elephants are animals."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Mr Dursley 5"],
+ "@nl": "Mr Dursley 5 is an American."},
+{"@name": "sent_S8",
+ "@logic": ["has property", "American", "#:Mr Dursley 5", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Mr Dursley 5 is an American."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Anna 6"],
+ "@nl": "Anna 6 handed a key 7 to Mark 8."},
+{"@name": "sent_S9",
+ "@logic": ["isa","important","#:key 7"],
+ "@nl": "Anna 6 handed a key 7 to Mark 8."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Mark 8"],
+ "@nl": "Anna 6 handed a key 7 to Mark 8."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Anna 6 handed a key 7 to Mark 8."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk3_activity", "give", ["$ctxt","past","W2","?:Fv19","?:Fv20"]],
+ "@nl": "Anna 6 handed a key 7 to Mark 8."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk3_activity", "#:Anna 6", ["$ctxt","past","W2","?:Fv19","?:Fv20"]],
+ "@nl": "Anna 6 handed a key 7 to Mark 8."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk3_activity", "#:key 7", ["$ctxt","past","W2","?:Fv19","?:Fv20"]],
+ "@nl": "Anna 6 handed a key 7 to Mark 8."},
+{"@name": "sent_S9",
+ "@logic": ["has recipient", "sk3_activity", "#:Mark 8", ["$ctxt","past","W2","?:Fv19","?:Fv20"]],
+ "@nl": "Anna 6 handed a key 7 to Mark 8."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W2","?:Fv19","?:Fv20"]],
+ "@nl": "Anna 6 handed a key 7 to Mark 8."},
+{"@name": "sent_S9",
+ "@logic": ["next","W2","W3"],
+ "@nl": "Anna 6 handed a key 7 to Mark 8."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","baby bear","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "eat", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["-isa","berry","?:Y"],
+            ["-has target", "?:E", "?:Y", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Baby bears cannot eat berries."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:Sandra 9"],
+ "@nl": "Sandra 9 travelled to the hallway 10."},
+{"@name": "sent_S11",
+ "@logic": ["isa","hallway","#:hallway 10"],
+ "@nl": "Sandra 9 travelled to the hallway 10."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "Sandra 9 travelled to the hallway 10."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk4_activity", "go", ["$ctxt","past","W3","?:Fv25","?:Fv26"]],
+ "@nl": "Sandra 9 travelled to the hallway 10."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk4_activity", "#:Sandra 9", ["$ctxt","past","W3","?:Fv25","?:Fv26"]],
+ "@nl": "Sandra 9 travelled to the hallway 10."},
+{"@name": "sent_S11",
+ "@logic": ["has destination", "sk4_activity", "#:hallway 10", "at", ["$ctxt","past","W3","?:Fv25","?:Fv26"]],
+ "@nl": "Sandra 9 travelled to the hallway 10."},
+{"@name": "sent_S11",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W3","?:Fv25","?:Fv26"]],
+ "@nl": "Sandra 9 travelled to the hallway 10."},
+{"@name": "sent_S11",
+ "@logic": ["next","W3","W4"],
+ "@nl": "Sandra 9 travelled to the hallway 10."},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","elephant","sk5_elephant"]],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","animal","sk5_elephant"]],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"], ["$defq0"]],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "sent_S12",
+ "@question": ["$defq0"],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","box","$some_box"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","box","$some_not_box"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","baby bear","$some_baby_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","baby bear","$some_not_baby_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","berry","$some_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","berry","$some_not_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "small", "$some_small_box", "none", "box", ["$ctxt","?:Fv105","?:Fv102","?:Fv103","?:Fv104"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","box","$some_small_box"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "small", "$some_not_small_box", "none", "box", ["$ctxt","?:Fv113","?:Fv110","?:Fv111","?:Fv112"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "red", "$some_red_box", ["$ctxt","?:Fv117","?:Fv114","?:Fv115","?:Fv116"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","box","$some_red_box"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "red", "$some_not_red_box", ["$ctxt","?:Fv125","?:Fv122","?:Fv123","?:Fv124"]],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","baby bear","?:X"], ["isa","bear","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","baby","?:X"], ["-isa","bear","?:X"], ["isa","baby bear","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property","baby","?:X","?:Ct"], ["-isa","bear","?:X"], ["isa","baby bear","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property", "baby", "?:X", "?:Ct", ["$ctxt","?:Fv141","?:Fv138","?:Fv139","?:Fv140"]],
+            ["-isa","bear","?:X"],
+            ["isa","baby bear","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv142","?:Fv38"],
+            ["-has degree property","high","?:X","none","?:Fv143","?:Fv38"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv144","?:Fv39"],
+            ["has degree property","small","?:X","none","?:Fv145","?:Fv39"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv40"], ["has type","?:E","give","?:Fv40"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv41"], ["has type","?:E","go","?:Fv41"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv45","?:Fv46","?:Fv47"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv146", ["$ctxt","past","?:Fv48","?:Fv49","?:Fv50"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv147", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv148", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv51","?:Fv52","?:Fv53"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has target","?:Esb","?:Ysb","?:Csb"],
+            ["-has recipient","?:Esb","?:Xsb","?:Csb"],
+            ["has recipient","?:Ysb","?:Xsb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W3","W4"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "timestamp": "2026-06-12T21:17:33Z"
+}

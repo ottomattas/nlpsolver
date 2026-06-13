@@ -1,0 +1,592 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 588,
+  "input_text": "Agatha is in trouble. A tall and quiet man entered. John is bad. Mike is badly defeated. The price of the car is 3 dollars. Tallinn is in Estonia. A leg of Mary is clean. The teacher showed the students the map. The window was broken. A woman entered?",
+  "expected_answer": null,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Agatha is in trouble.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Agatha 1 is in trouble.",
+          "type": "situation",
+          "entities": [{"id": "Agatha 1", "type": "concrete", "category": "person"},
+            {"id": "trouble", "type": "generic", "category": "abstract"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "A tall and quiet man entered.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "A tall and quiet man 1 entered.",
+          "type": "situation",
+          "entities": [{"id": "man 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["tall","none","man"], ["quiet","none","man"]],
+          "actions": [{"root": "enter", "mode": "event"}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is bad.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 1 is bad.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["bad","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is badly defeated.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mike 1 is badly defeated.",
+          "type": "situation",
+          "entities": [{"id": "Mike 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["defeated","high","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "The price of the car is 3 dollars.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "The price 1 of the car 2 is 3 dollars.",
+          "type": "real",
+          "entities": [{"id": "price 1", "type": "concrete", "text": "price"},
+            {"id": "car 2", "type": "concrete", "category": "artifact"},
+            {"id": "3 dollars", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["price of","price 1","car 2"]]
+        },
+        {
+          "unit_id": "S6",
+          "text": "The price 1 is the price of the car 2.",
+          "type": "real",
+          "entities": [{"id": "price 1", "type": "concrete", "text": "price"},
+            {"id": "car 2", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["price of","price 1","car 2"]]
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is in Estonia.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Tallinn 1 is in Estonia 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Estonia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "A leg of Mary is clean.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "A leg 1 of Mary 2 is clean.",
+          "type": "situation",
+          "entities": [{"id": "leg 1", "type": "concrete"},
+            {"id": "Mary 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["clean","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "The teacher showed the students the map.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "The teacher 1 showed the students 2 the map 3.",
+          "type": "situation",
+          "entities": [{"id": "teacher 1", "type": "concrete", "category": "person"},
+            {"id": "students 2", "type": "concrete", "category": "person"},
+            {"id": "map 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 1", "recipient": "students 2", "target": "map 3"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The window was broken.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "The window 1 was broken.",
+          "type": "situation",
+          "entities": [{"id": "window 1", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "break", "mode": "event", "roles": {"target": "window 1"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A woman entered?",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Did a woman enter?",
+          "type": "query",
+          "entities": [{"id": "woman", "type": "generic", "category": "person"}],
+          "actions": [{"root": "enter", "mode": "event", "roles": {"actor": "woman"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Agatha 1"],
+          ["exists", "X", ["and", ["isa","trouble","X"], ["is rel2","in","Agatha 1","X"]]]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","man","man 1"],
+          ["has degree property","tall","man 1","none","man"],
+          ["has degree property","quiet","man 1","none","man"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","enter"],
+              ["has actor","E","man 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and", ["isa","person","John 1"], ["has degree property","bad","John 1","none","person"]]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mike 1"],
+          ["has degree property","defeated","Mike 1","high","person"]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","car","car 2"],
+          ["isa","price","price 1"],
+          ["=", ["$measure_of","price","car 2","W0"], ["$measure",3,"dollar"]]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","car","car 2"],
+            ["isa","price","price 1"],
+            ["is rel2","price of","price 1","car 2"]
+          ]
+        ],
+        ["@definite","S6","W0","price of","car 2","price 1"]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Estonia"]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 2"],
+          ["isa","leg","leg 1"],
+          ["has part","Mary 2","leg 1"],
+          ["has degree property","clean","leg 1","none","none"]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["and",
+          ["isa","person","teacher 1"],
+          ["isa","person","students 2"],
+          ["isa","map","map 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","show"],
+              ["has actor","E","teacher 1"],
+              ["has recipient","E","students 2"],
+              ["has target","E","map 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","window","window 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","break"],
+                ["has target","E","window 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S11",
+      ["question",
+        ["exists","X",
+          ["and",
+            ["isa","woman","X"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","enter"],
+                ["has actor","E","X"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","person","#:man 1"],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "entity_S5",
+ "@logic": ["isa","measure","3 dollars"],
+ "@nl": "The price 1 of the car 2 is 3 dollars."},
+{"@name": "entity_S7",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "entity_S7",
+ "@logic": ["isa","place","#:Estonia 2"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "entity_S9",
+ "@logic": ["isa","teacher","#:teacher 1"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "entity_S9",
+ "@logic": ["isa","student","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "entity_S9",
+ "@logic": ["isa","student","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Agatha 1"],
+ "@nl": "Agatha 1 is in trouble."},
+{"@name": "sent_S1",
+ "@logic": ["isa","trouble","sk0_trouble"],
+ "@nl": "Agatha 1 is in trouble."},
+{"@name": "sent_S1",
+ "@logic": ["is rel2", "in", "#:Agatha 1", "sk0_trouble", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Agatha 1 is in trouble."},
+{"@name": "sent_S2",
+ "@logic": ["isa","man","#:man 1"],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "tall", "#:man 1", "none", "man", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S2",
+ "@logic": ["-has degree property", "active", "#:man 1", "none", "man", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk1_activity", "enter", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk1_activity", "#:man 1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "A tall and quiet man 1 entered."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is bad."},
+{"@name": "sent_S3",
+ "@logic": ["-has degree property", "good", "#:John 1", "none", "person", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "John 1 is bad."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mike 1"],
+ "@nl": "Mike 1 is badly defeated."},
+{"@name": "sent_S4",
+ "@logic": ["has property", "defeated", "#:Mike 1", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mike 1 is badly defeated."},
+{"@name": "sent_S5",
+ "@logic": ["isa","car","#:car 2"],
+ "@nl": "The price 1 of the car 2 is 3 dollars."},
+{"@name": "sent_S5",
+ "@logic": ["isa", "price", ["$theof1", "price", "#:car 2", ["$ctxt","present","W0","?:Fv11","?:Fv12"]]],
+ "@nl": "The price 1 of the car 2 is 3 dollars."},
+{"@name": "sent_S5",
+ "@logic": ["=", ["$measure_of","price","#:car 2","W0"], ["$list",3,"#:dollar"]],
+ "@nl": "The price 1 of the car 2 is 3 dollars."},
+{"@name": "sent_S6",
+ "@logic": ["isa","car","#:car 2"],
+ "@nl": "The price 1 is the price of the car 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa", "price", ["$theof1", "price", "#:car 2", ["$ctxt","present","W0","?:Fv11","?:Fv12"]]],
+ "@nl": "The price 1 is the price of the car 2."},
+{"@name": "sent_S7",
+ "@logic": ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "A leg 1 of Mary 2 is clean."},
+{"@name": "sent_S8",
+ "@logic": ["isa","leg","#:leg 1"],
+ "@nl": "A leg 1 of Mary 2 is clean."},
+{"@name": "sent_S8",
+ "@logic": ["has part", "#:Mary 2", "#:leg 1", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "A leg 1 of Mary 2 is clean."},
+{"@name": "sent_S8",
+ "@logic": ["has degree property", "clean", "#:leg 1", "none", "?:Fv79", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "A leg 1 of Mary 2 is clean."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:teacher 1"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S9",
+ "@logic": ["isa","map","#:map 3"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk2_activity", "show", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk2_activity", "#:teacher 1", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S9",
+ "@logic": ["has recipient", "sk2_activity", "#:students 2", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk2_activity", "#:map 3", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S9",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S10",
+ "@logic": ["isa","window","#:window 1"],
+ "@nl": "The window 1 was broken."},
+{"@name": "sent_S10",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The window 1 was broken."},
+{"@name": "sent_S10",
+ "@logic": ["has type", "sk3_activity", "break", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The window 1 was broken."},
+{"@name": "sent_S10",
+ "@logic": ["has target", "sk3_activity", "#:window 1", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The window 1 was broken."},
+{"@name": "sent_S10",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The window 1 was broken."},
+{"@name": "sent_S10",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "The window 1 was broken."},
+{"@name": "sent_S10",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The window 1 was broken."},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","woman","sk4_woman"]],
+ "@nl": "Did a woman enter?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk5_activity"]],
+ "@nl": "Did a woman enter?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk5_activity", "enter", ["$ctxt","past","?:Fv28","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "Did a woman enter?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk5_activity", "sk4_woman", ["$ctxt","past","?:Fv30","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "Did a woman enter?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk5_activity", "past", "in", ["$ctxt","past","?:Fv32","?:Fv21","?:Fv22"]]
+           ],
+ "@nl": "Did a woman enter?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk5_activity"]],
+ "@nl": "Did a woman enter?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-isa","woman","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "enter", ["$ctxt","past","?:Fv38","?:Fv21","?:Fv22"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","past","?:Fv40","?:Fv21","?:Fv22"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did a woman enter?"},
+{"@name": "sent_S11",
+ "@question": ["$defq0"],
+ "@nl": "Did a woman enter?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:car 2", ["$theof1", "price", "#:car 2", ["$ctxt","present","W0","?:Fv11","?:Fv12"]], ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:car 2", ["$theof1", "price", "#:car 2", ["$ctxt","present","W0","?:Fv11","?:Fv12"]], ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "price of", ["$theof1","price","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "price", ["$theof1","price","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","price","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "price", ["$measure_of","price","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "break", ["$ctxt","?:Fv44","?:Fv45","?:Fv47","?:Fv48"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv44","?:Fv45","?:Fv47","?:Fv48"]],
+            ["-next","?:Fv45","?:Fv46"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv46","?:Fv47","?:Fv48"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "break", "?:X", ["$ctxt","?:Fv49","?:Fv50","?:Fv52","?:Fv53"]],
+            ["-next","?:Fv50","?:Fv51"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trouble","$some_trouble"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trouble","$some_not_trouble"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","tall","?:X","none","?:Fv80","?:Fv54"],
+            ["has degree property","high","?:X","none","?:Fv81","?:Fv54"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","high","?:X","none","?:Fv82","?:Fv55"],
+            ["has degree property","tall","?:X","none","?:Fv83","?:Fv55"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","man","?:X","?:Fv56"], ["-has property","woman","?:X","?:Fv56"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "none", "?:Fv84", ["$ctxt","past","?:Fv57","?:Fv58","?:Fv59"]],
+            ["has degree property", "tall", "?:X", "none", "?:Fv85", ["$ctxt","present","?:Fv57","?:Fv58","?:Fv59"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "none", "?:Fv86", ["$ctxt","present","?:Fv57","?:Fv58","?:Fv59"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv60","?:Fv61","?:Fv62"]],
+            ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv60","?:Fv61","?:Fv62"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv60","?:Fv61","?:Fv62"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has target","?:Esb","?:Ysb","?:Csb"],
+            ["-has recipient","?:Esb","?:Xsb","?:Csb"],
+            ["has recipient","?:Ysb","?:Xsb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_measure_rel_bridge",
+ "@logic": [["-=", ["$measure_of","price","?:S","?:W"], "?:V"],
+            ["is rel2","price of","?:V","?:S","?:Ctxt"]
+           ],
+ "@nl": "[generated: frm_measure_rel_bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "timestamp": "2026-06-12T21:18:18Z"
+}

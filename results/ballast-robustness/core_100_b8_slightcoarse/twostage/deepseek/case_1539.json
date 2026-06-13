@@ -1,0 +1,548 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 1539,
+  "input_text": "Mark is under a house. The teacher showed the students a map. Tallinn is in Estonia. Mike and Mickey are male. John is an elephant with a probability 50 percent. Eve planned to travel. A big bear was strong. Gertrude is a cat. The cup filled with water fell. John is an elephant?",
+  "expected_answer": null,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Mark is under a house.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mark 1 is under a house 2.",
+          "type": "situation",
+          "entities": [{"id": "Mark 1", "type": "concrete", "category": "person"},
+            {"id": "house 2", "type": "concrete", "category": "place"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The teacher showed the students a map.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The teacher 1 showed the students 2 a map 3.",
+          "type": "situation",
+          "entities": [{"id": "teacher 1", "type": "concrete", "category": "person"},
+            {"id": "students 2", "type": "concrete", "category": "person"},
+            {"id": "map 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 1", "recipient": "students 2", "target": "map 3"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is in Estonia.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Tallinn 1 is in Estonia 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Estonia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mike and Mickey are male.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mike 1 is male.",
+          "type": "situation",
+          "entities": [{"id": "Mike 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["male","none","person"]]
+        },
+        {
+          "unit_id": "S5",
+          "text": "Mickey 2 is male.",
+          "type": "situation",
+          "entities": [{"id": "Mickey 2", "type": "concrete", "category": "person"}],
+          "adjectives": [["male","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "John is an elephant with a probability 50 percent.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "John 1 is an elephant.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}],
+          "confidence": 0.5
+        }
+      ]
+    },
+    {
+      "raw": "Eve planned to travel.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Eve 1 planned to travel.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "plan",
+              "mode": "intention",
+              "roles": {
+                "actor": "Eve 1",
+                "content": {"root": "travel", "mode": "event", "roles": {"actor": "Eve 1"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A big bear was strong.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "A big bear 1 was strong.",
+          "type": "situation",
+          "entities": [{"id": "bear 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","bear"], ["strong","none","bear"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Gertrude is a cat.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Gertrude 1 is a cat.",
+          "type": "real",
+          "entities": [{"id": "Gertrude 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "The cup filled with water fell.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "The cup 1 was filled with water 2.",
+          "type": "situation",
+          "entities": [{"id": "cup 1", "type": "concrete", "category": "artifact"},
+            {"id": "water 2", "type": "concrete", "category": "substance"}
+          ],
+          "pre_state": "W0",
+          "time": "past"
+        },
+        {
+          "unit_id": "S11",
+          "text": "The cup 1 fell.",
+          "type": "situation",
+          "entities": [{"id": "cup 1", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "fall", "mode": "event", "roles": {"actor": "cup 1"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is an elephant?",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Is John 1 an elephant?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mark 1"],
+          ["isa","house","house 2"],
+          ["is rel2","under","Mark 1","house 2"]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["and",
+          ["isa","person","teacher 1"],
+          ["isa","person","students 2"],
+          ["isa","map","map 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","show"],
+              ["has actor","E","teacher 1"],
+              ["has recipient","E","students 2"],
+              ["has target","E","map 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","place","https://en.wikipedia.org/wiki/Tallinn"],
+          ["isa","place","https://en.wikipedia.org/wiki/Estonia"],
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Estonia"]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and", ["isa","person","Mike 1"], ["has degree property","male","Mike 1","none","person"]]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mickey 2"],
+          ["has degree property","male","Mickey 2","none","person"]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["and", ["holds", "W0", ["normally", ["isa","elephant","John 1"]]], ["@p","S6",0.5]]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","plan"],
+              ["has actor","E1","Eve 1"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","travel"],
+                  ["has actor","E2","Eve 1"],
+                  ["has time","E2","past","in"]
+                ]
+              ],
+              ["intention","E1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","bear","bear 1"],
+            ["has degree property","big","bear 1","none","bear"],
+            ["has degree property","strong","bear 1","none","bear"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S9", ["holds", "W0", ["isa","cat","Gertrude 1"]]],
+    ["@id","S10",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","cup","cup 1"],
+            ["isa","water","water 2"],
+            ["is rel2","filled with","cup 1","water 2"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","cup","cup 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","fall"],
+                ["has actor","E","cup 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id", "S12", ["question", ["isa","elephant","John 1"]]]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","teacher","#:teacher 1"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "entity_S2",
+ "@logic": ["isa","student","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "entity_S2",
+ "@logic": ["isa","student","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Estonia 2"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "entity_S6",
+ "@logic": ["isa","animal","#:John 1"],
+ "@nl": "John 1 is an elephant."},
+{"@name": "entity_S8",
+ "@logic": ["isa","animal","#:bear 1"],
+ "@nl": "A big bear 1 was strong."},
+{"@name": "entity_S9",
+ "@logic": ["isa","animal","#:Gertrude 1"],
+ "@nl": "Gertrude 1 is a cat."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mark 1"],
+ "@nl": "Mark 1 is under a house 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","house","#:house 2"],
+ "@nl": "Mark 1 is under a house 2."},
+{"@name": "sent_S1",
+ "@logic": ["is rel2", "under", "#:Mark 1", "#:house 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mark 1 is under a house 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:teacher 1"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","person","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","map","#:map 3"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "show", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:teacher 1", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S2",
+ "@logic": ["has recipient", "sk0_activity", "#:students 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk0_activity", "#:map 3", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S2",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "The teacher 1 showed the students 2 a map 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/Tallinn"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/Estonia"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "sent_S3",
+ "@logic": ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mike 1"],
+ "@nl": "Mike 1 is male."},
+{"@name": "sent_S4",
+ "@logic": ["has property", "male", "#:Mike 1", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "Mike 1 is male."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Mickey 2"],
+ "@nl": "Mickey 2 is male."},
+{"@name": "sent_S5",
+ "@logic": ["has property", "male", "#:Mickey 2", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mickey 2 is male."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk1_activity", "plan", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk1_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S7",
+ "@logic": ["has content","sk1_activity","sk2_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk2_activity", "go", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk2_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S7",
+ "@logic": ["intention","sk1_activity"],
+ "@nl": "Eve 1 planned to travel."},
+{"@name": "sent_S8",
+ "@logic": ["isa","bear","#:bear 1"],
+ "@nl": "A big bear 1 was strong."},
+{"@name": "sent_S8",
+ "@logic": ["has degree property", "big", "#:bear 1", "none", "bear", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "A big bear 1 was strong."},
+{"@name": "sent_S8",
+ "@logic": ["has degree property", "strong", "#:bear 1", "none", "bear", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "A big bear 1 was strong."},
+{"@name": "sent_S9",
+ "@logic": ["isa","cat","#:Gertrude 1"],
+ "@nl": "Gertrude 1 is a cat."},
+{"@name": "sent_S10",
+ "@logic": ["isa","cup","#:cup 1"],
+ "@nl": "The cup 1 was filled with water 2."},
+{"@name": "sent_S10",
+ "@logic": ["isa","water","#:water 2"],
+ "@nl": "The cup 1 was filled with water 2."},
+{"@name": "sent_S10",
+ "@logic": ["is rel2", "filled with", "#:cup 1", "#:water 2", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The cup 1 was filled with water 2."},
+{"@name": "sent_S11",
+ "@logic": ["isa","cup","#:cup 1"],
+ "@nl": "The cup 1 fell."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The cup 1 fell."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk3_activity", "fall", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The cup 1 fell."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk3_activity", "#:cup 1", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The cup 1 fell."},
+{"@name": "sent_S11",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The cup 1 fell."},
+{"@name": "sent_S11",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "The cup 1 fell."},
+{"@name": "sent_S11",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The cup 1 fell."},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","elephant","#:John 1"]],
+ "@nl": "Is John 1 an elephant?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-isa","elephant","#:John 1"], ["$defq0"]],
+ "@nl": "Is John 1 an elephant?"},
+{"@name": "sent_S12",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 an elephant?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","animal","?:X"], ["isa","male","?:X"]],
+ "@confidence": 0.8,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","male","?:X"], ["isa","animal","?:X"]],
+ "@confidence": 0.8,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv34"], ["has type","?:E","go","?:Fv34"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","house","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","house","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_containment_in",
+ "@logic": [["-is rel2","filled with","?:X","?:Y","?:Fv35"], ["is rel2","in","?:Y","?:X","?:Fv35"]],
+ "@nl": "[generated: frm_containment_in]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv56", ["$ctxt","past","?:Fv36","?:Fv37","?:Fv38"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv57", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv58", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv39","?:Fv40","?:Fv41"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv59", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv60", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv61", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv45","?:Fv46","?:Fv47"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has target","?:Esb","?:Ysb","?:Csb"],
+            ["-has recipient","?:Esb","?:Xsb","?:Csb"],
+            ["has recipient","?:Ysb","?:Xsb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "timestamp": "2026-06-12T21:36:16Z"
+}

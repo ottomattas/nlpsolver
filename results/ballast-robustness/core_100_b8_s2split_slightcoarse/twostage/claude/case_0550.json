@@ -1,0 +1,916 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 550,
+  "input_text": "John is near a spoon. The tall man walked into the small room. The dog was barking and the cat was too. A coffee cup broke. The red car is faster than the blue car. The tree was cut by the farmer. Some bears eat all berries. The song was sung by Mary. Americans cannot disappear. Is the green car faster than the red car?",
+  "expected_answer": null,
+  "llm_name": "claude",
+  "llm_version": "claude-sonnet-4-6",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is near a spoon.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is near a spoon 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "spoon 2", "type": "concrete", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The tall man walked into the small room.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "The tall man 2 walked into the small room 3.",
+          "type": "situation",
+          "entities": [{"id": "man 2", "type": "concrete", "category": "person"},
+            {"id": "room 3", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "walk", "mode": "event", "roles": {"destination": "room 3"}}],
+          "adjectives": [["tall","none","person"], ["small","none","place"]],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The dog was barking and the cat was too.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The dog 4 was barking.",
+          "type": "situation",
+          "entities": [{"id": "dog 4", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "bark", "mode": "event"}],
+          "pre_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "The cat 5 was barking.",
+          "type": "situation",
+          "entities": [{"id": "cat 5", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "bark", "mode": "event"}],
+          "pre_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A coffee cup broke.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "A coffee cup 6 broke.",
+          "type": "situation",
+          "entities": [{
+              "id": "coffee cup 6",
+              "type": "concrete",
+              "subtype": "compound",
+              "category": "artifact"
+            }
+          ],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The red car is faster than the blue car.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The red car 7 is faster than the blue car 8.",
+          "type": "situation",
+          "entities": [{"id": "car 7", "type": "concrete", "category": "artifact"},
+            {"id": "car 8", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["red","none","none"], ["blue","none","none"], ["fast","high","car"]],
+          "pre_state": "W2"
+        }
+      ]
+    },
+    {
+      "raw": "The tree was cut by the farmer.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "The farmer 9 cut the tree 10.",
+          "type": "situation",
+          "entities": [{"id": "farmer 9", "type": "concrete", "category": "person"},
+            {"id": "tree 10", "type": "concrete", "category": "plant"}
+          ],
+          "actions": [{"root": "cut", "mode": "event", "roles": {"actor": "farmer 9", "target": "tree 10"}}],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Some bears eat all berries.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Some bears eat all berries.",
+          "type": "normal_rule",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "kind", "category": "plant"}
+          ],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"target": "berries"}}],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "The song was sung by Mary.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Mary 11 sang the song 12.",
+          "type": "situation",
+          "entities": [{"id": "Mary 11", "type": "concrete", "category": "person"},
+            {"id": "song 12", "type": "concrete", "category": "abstract"}
+          ],
+          "actions": [{"root": "sing", "mode": "event", "roles": {"actor": "Mary 11", "target": "song 12"}}],
+          "pre_state": "W3",
+          "next_state": "W4",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Americans cannot disappear.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Americans cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "Americans", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "Is the green car faster than the red car?",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Is the green car 13 faster than the red car 7?",
+          "type": "query",
+          "entities": [{"id": "car 13", "type": "concrete", "category": "artifact"},
+            {"id": "car 7", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["green","none","none"], ["red","none","none"], ["fast","high","car"]],
+          "pre_state": "W4"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","spoon","spoon 2"],
+          ["is rel2","near","John 1","spoon 2"]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","man","man 2"],
+            ["isa","room","room 3"],
+            ["has degree property","tall","man 2","none","person"],
+            ["has degree property","small","room 3","none","place"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","walk"],
+                ["has actor","E","man 2"],
+                ["has destination","E","room 3","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W1",
+        ["and",
+          ["isa","dog","dog 4"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","bark"],
+              ["has actor","E","dog 4"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W1",
+        ["and",
+          ["isa","cat","cat 5"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","bark"],
+              ["has actor","E","cat 5"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W1",
+          ["and", ["isa","coffee cup","coffee cup 6"], ["has property","broke","coffee cup 6"]]
+        ],
+        ["next","W1","W2"],
+        ["state time","W1","past"]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W2",
+        ["and",
+          ["isa","car","car 7"],
+          ["isa","car","car 8"],
+          ["has degree property","red","car 7","none","none"],
+          ["has degree property","blue","car 8","none","none"],
+          ["has degree rel2","fast","car 7","car 8","high","car"]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","farmer","farmer 9"],
+            ["isa","tree","tree 10"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","cut"],
+                ["has actor","E","farmer 9"],
+                ["has target","E","tree 10"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["exists","X",
+            ["and",
+              ["isa","bear","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","eat"],
+                    ["has actor","E","X"],
+                    ["has target","E","berries"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S8",0.99]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W3",
+          ["and",
+            ["isa","person","Mary 11"],
+            ["isa","song","song 12"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","sing"],
+                ["has actor","E","Mary 11"],
+                ["has target","E","song 12"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W3","W4"]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","American","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S11", ["question", ["has degree rel2","fast","car 13","car 7","high","car"]]]
+  ],
+  "stage_2_fixes": ["json: stripped non-JSON wrapper text"],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","person","#:man 2"],
+ "@nl": "The tall man 2 walked into the small room 3."},
+{"@name": "entity_S3",
+ "@logic": ["isa","animal","#:dog 4"],
+ "@nl": "The dog 4 was barking."},
+{"@name": "entity_S4",
+ "@logic": ["isa","animal","#:cat 5"],
+ "@nl": "The cat 5 was barking."},
+{"@name": "entity_S7",
+ "@logic": ["isa","person","#:farmer 9"],
+ "@nl": "The farmer 9 cut the tree 10."},
+{"@name": "entity_S11",
+ "@logic": ["isa","artifact","#:car 13"],
+ "@nl": "Is the green car 13 faster than the red car 7?"},
+{"@name": "entity_S11",
+ "@logic": ["isa","car","#:car 13"],
+ "@nl": "Is the green car 13 faster than the red car 7?"},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is near a spoon 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","spoon","#:spoon 2"],
+ "@nl": "John 1 is near a spoon 2."},
+{"@name": "sent_S1",
+ "@logic": ["has degree rel2", "near", "#:John 1", "#:spoon 2", "none", "?:Fv100", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is near a spoon 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","man","#:man 2"],
+ "@nl": "The tall man 2 walked into the small room 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","room","#:room 3"],
+ "@nl": "The tall man 2 walked into the small room 3."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "tall", "#:man 2", "none", "person", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The tall man 2 walked into the small room 3."},
+{"@name": "sent_S2",
+ "@logic": ["has degree property", "small", "#:room 3", "none", "place", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The tall man 2 walked into the small room 3."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The tall man 2 walked into the small room 3."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk0_activity", "walk", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The tall man 2 walked into the small room 3."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk0_activity", "#:man 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The tall man 2 walked into the small room 3."},
+{"@name": "sent_S2",
+ "@logic": ["has destination", "sk0_activity", "#:room 3", "at", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The tall man 2 walked into the small room 3."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "The tall man 2 walked into the small room 3."},
+{"@name": "sent_S2",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The tall man 2 walked into the small room 3."},
+{"@name": "sent_S3",
+ "@logic": ["isa","dog","#:dog 4"],
+ "@nl": "The dog 4 was barking."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The dog 4 was barking."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk1_activity", "bark", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The dog 4 was barking."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk1_activity", "#:dog 4", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The dog 4 was barking."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv5","?:Fv6"]],
+ "@nl": "The dog 4 was barking."},
+{"@name": "sent_S4",
+ "@logic": ["isa","cat","#:cat 5"],
+ "@nl": "The cat 5 was barking."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The cat 5 was barking."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk2_activity", "bark", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "The cat 5 was barking."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk2_activity", "#:cat 5", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "The cat 5 was barking."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W1","?:Fv7","?:Fv8"]],
+ "@nl": "The cat 5 was barking."},
+{"@name": "sent_S5",
+ "@logic": ["isa","coffee cup","#:coffee cup 6"],
+ "@nl": "A coffee cup 6 broke."},
+{"@name": "sent_S5",
+ "@logic": ["has property", "broke", "#:coffee cup 6", ["$ctxt","past","W1","?:Fv9","?:Fv10"]],
+ "@nl": "A coffee cup 6 broke."},
+{"@name": "sent_S5",
+ "@logic": ["next","W1","W2"],
+ "@nl": "A coffee cup 6 broke."},
+{"@name": "sent_S6",
+ "@logic": ["isa","car","#:car 7"],
+ "@nl": "The red car 7 is faster than the blue car 8."},
+{"@name": "sent_S6",
+ "@logic": ["isa","car","#:car 8"],
+ "@nl": "The red car 7 is faster than the blue car 8."},
+{"@name": "sent_S6",
+ "@logic": ["has property", "red", "#:car 7", ["$ctxt","present","W2","?:Fv11","?:Fv12"]],
+ "@nl": "The red car 7 is faster than the blue car 8."},
+{"@name": "sent_S6",
+ "@logic": ["has property", "blue", "#:car 8", ["$ctxt","present","W2","?:Fv11","?:Fv12"]],
+ "@nl": "The red car 7 is faster than the blue car 8."},
+{"@name": "sent_S6",
+ "@logic": ["has degree rel2", "fast", "#:car 7", "#:car 8", "high", "car", ["$ctxt","present","W2","?:Fv11","?:Fv12"]],
+ "@nl": "The red car 7 is faster than the blue car 8."},
+{"@name": "sent_S7",
+ "@logic": ["isa","farmer","#:farmer 9"],
+ "@nl": "The farmer 9 cut the tree 10."},
+{"@name": "sent_S7",
+ "@logic": ["isa","tree","#:tree 10"],
+ "@nl": "The farmer 9 cut the tree 10."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The farmer 9 cut the tree 10."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk3_activity", "cut", ["$ctxt","past","W2","?:Fv13","?:Fv14"]],
+ "@nl": "The farmer 9 cut the tree 10."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk3_activity", "#:farmer 9", ["$ctxt","past","W2","?:Fv13","?:Fv14"]],
+ "@nl": "The farmer 9 cut the tree 10."},
+{"@name": "sent_S7",
+ "@logic": ["has target", "sk3_activity", "#:tree 10", ["$ctxt","past","W2","?:Fv13","?:Fv14"]],
+ "@nl": "The farmer 9 cut the tree 10."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W2","?:Fv13","?:Fv14"]],
+ "@nl": "The farmer 9 cut the tree 10."},
+{"@name": "sent_S7",
+ "@logic": ["next","W2","W3"],
+ "@nl": "The farmer 9 cut the tree 10."},
+{"@name": "sent_S8",
+ "@logic": ["isa","bear","sk4_bear"],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk5_activity", "eat", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk5_activity", "sk4_bear", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S8",
+ "@logic": ["isa","berry","sk6_berry"],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk5_activity", "sk6_berry", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]],
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S8",
+ "@logic": [["typical", "sk5_activity", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]],
+            ["$block", ["$","$generic",1], ["$not", ["typical", "sk5_activity", ["$ctxt","?:Fv18","?:Fv17","?:Fv15","?:Fv16"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Some bears eat all berries."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Mary 11"],
+ "@nl": "Mary 11 sang the song 12."},
+{"@name": "sent_S9",
+ "@logic": ["isa","song","#:song 12"],
+ "@nl": "Mary 11 sang the song 12."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk7_activity"],
+ "@nl": "Mary 11 sang the song 12."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk7_activity", "sing", ["$ctxt","past","W3","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 11 sang the song 12."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk7_activity", "#:Mary 11", ["$ctxt","past","W3","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 11 sang the song 12."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk7_activity", "#:song 12", ["$ctxt","past","W3","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 11 sang the song 12."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk7_activity", "past", "in", ["$ctxt","past","W3","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 11 sang the song 12."},
+{"@name": "sent_S9",
+ "@logic": ["next","W3","W4"],
+ "@nl": "Mary 11 sang the song 12."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","american","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Americans cannot disappear."},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree rel2", "fast", "#:car 13", "#:car 7", "high", "?:Fv115", ["$ctxt","present","W4","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Is the green car 13 faster than the red car 7?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-has degree rel2", "fast", "#:car 13", "#:car 7", "high", "?:Fv116", ["$ctxt","present","W4","?:Fv25","?:Fv26"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is the green car 13 faster than the red car 7?"},
+{"@name": "sent_S11",
+ "@question": ["$defq0"],
+ "@nl": "Is the green car 13 faster than the red car 7?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-has degree rel2", "fast", "#:car 13", "#:car 7", "high", "car", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree rel2", "fast", "#:car 13", "#:car 7", "high", "car", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree rel2", "fast", "#:car 13", "#:car 7", "high", "car", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the green car 13 faster than the red car 7?"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","American","$some_American"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","American","$some_not_American"],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","coffee cup","?:X"], ["isa","cup","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","coffee","?:X"], ["-isa","cup","?:X"], ["isa","coffee cup","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property","coffee","?:X","?:Ct"],
+            ["-isa","cup","?:X"],
+            ["isa","coffee cup","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property", "coffee", "?:X", "?:Ct", ["$ctxt","?:Fv99","?:Fv96","?:Fv97","?:Fv98"]],
+            ["-isa","cup","?:X"],
+            ["isa","coffee cup","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","tall","?:X","none","?:Fv101","?:Fv28"],
+            ["has degree property","high","?:X","none","?:Fv102","?:Fv28"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","high","?:X","none","?:Fv103","?:Fv29"],
+            ["has degree property","tall","?:X","none","?:Fv104","?:Fv29"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv105","?:Fv30"],
+            ["-has degree property","high","?:X","none","?:Fv106","?:Fv30"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv107","?:Fv31"],
+            ["has degree property","small","?:X","none","?:Fv108","?:Fv31"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","walk","?:X"], ["isa","pass","?:X"]],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","pass","?:X"], ["isa","walk","?:X"]],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv34"],
+            ["-has property","red","?:X","?:Fv34"],
+            ["$block", 0, ["has property","red","?:X","?:Fv34"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl",
+ "@logic": [["-has property","blue","?:X","?:Fv35"],
+            ["-has property","red","?:X","?:Fv35"],
+            ["$block", 0, ["has property","blue","?:X","?:Fv35"]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","car","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","car","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv36","?:Fv37","?:Fv38"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv39","?:Fv40","?:Fv41"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv39","?:Fv40","?:Fv41"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv45","?:Fv46","?:Fv47"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv109", ["$ctxt","past","?:Fv48","?:Fv49","?:Fv50"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv110", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv111", ["$ctxt","present","?:Fv48","?:Fv49","?:Fv50"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv51","?:Fv52","?:Fv53"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "none", "?:Fv112", ["$ctxt","past","?:Fv54","?:Fv55","?:Fv56"]],
+            ["has degree property", "tall", "?:X", "none", "?:Fv113", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "none", "?:Fv114", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv57","?:Fv58","?:Fv59"]],
+            ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv57","?:Fv58","?:Fv59"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv57","?:Fv58","?:Fv59"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W3","W4"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38993,
+      "cached_input_tokens": 38891,
+      "output_tokens": 83,
+      "raw": {
+        "input_tokens": 102,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 83,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39073,
+      "cached_input_tokens": 38891,
+      "output_tokens": 192,
+      "raw": {
+        "input_tokens": 182,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 192,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39090,
+      "cached_input_tokens": 38891,
+      "output_tokens": 218,
+      "raw": {
+        "input_tokens": 199,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 218,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38997,
+      "cached_input_tokens": 38891,
+      "output_tokens": 70,
+      "raw": {
+        "input_tokens": 106,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 70,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39040,
+      "cached_input_tokens": 38891,
+      "output_tokens": 94,
+      "raw": {
+        "input_tokens": 149,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 94,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39053,
+      "cached_input_tokens": 38891,
+      "output_tokens": 113,
+      "raw": {
+        "input_tokens": 162,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 113,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39029,
+      "cached_input_tokens": 38891,
+      "output_tokens": 389,
+      "raw": {
+        "input_tokens": 138,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 389,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39051,
+      "cached_input_tokens": 38891,
+      "output_tokens": 156,
+      "raw": {
+        "input_tokens": 160,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 156,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 38980,
+      "cached_input_tokens": 38891,
+      "output_tokens": 124,
+      "raw": {
+        "input_tokens": 89,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 124,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    },
+    {
+      "llm": "claude",
+      "version": "claude-sonnet-4-6",
+      "input_tokens": 39042,
+      "cached_input_tokens": 38891,
+      "output_tokens": 38,
+      "raw": {
+        "input_tokens": 151,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 38891,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 38,
+        "service_tier": "standard",
+        "inference_geo": "global"
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T22:12:40Z"
+}

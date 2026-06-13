@@ -1,0 +1,988 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 1429,
+  "input_text": "Unexpectedly, the door opened. Birds fly and eat. Mary journeyed to the bathroom. Probably elephants have no trunks. If X1 is a grandfather of Y1, Y1 is not a child of X1. Catholics can not disappear. Baby birds do not fly. The horse kept in the stable was calm. John is a baby bird. The man carrying a red bag waved. Eve sent Tom a letter. Mike is a bird. John does not fly?",
+  "expected_answer": true,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Unexpectedly, the door opened.",
+      "units": [{
+          "actions": [{"mode": "event", "roles": {"manner": "unexpectedly"}, "root": "open"}],
+          "entities": [{"category": "artifact", "id": "door 1", "type": "concrete"}],
+          "next_state": "W1",
+          "pre_state": "W0",
+          "text": "The door 1 opened unexpectedly.",
+          "time": "past",
+          "type": "situation",
+          "unit_id": "S1"
+        }
+      ]
+    },
+    {
+      "raw": "Birds fly and eat.",
+      "units": [{
+          "actions": [{"mode": "capability", "root": "fly"}],
+          "confidence": 0.99,
+          "entities": [{"category": "animal", "id": "birds", "type": "generic"}],
+          "text": "Birds can fly.",
+          "type": "normal_rule",
+          "unit_id": "S2"
+        },
+        {
+          "actions": [{"mode": "habitual", "root": "eat"}],
+          "confidence": 0.99,
+          "entities": [{"category": "animal", "id": "birds", "type": "generic"}],
+          "text": "Birds eat.",
+          "type": "normal_rule",
+          "unit_id": "S3"
+        }
+      ]
+    },
+    {
+      "raw": "Mary journeyed to the bathroom.",
+      "units": [{
+          "actions": [{"mode": "event", "roles": {"destination": "bathroom 3"}, "root": "go"}],
+          "entities": [{"category": "person", "id": "Mary 2", "type": "concrete"},
+            {"category": "place", "id": "bathroom 3", "type": "concrete"}
+          ],
+          "next_state": "W2",
+          "pre_state": "W1",
+          "text": "Mary 2 went to the bathroom 3.",
+          "time": "past",
+          "type": "situation",
+          "unit_id": "S4"
+        }
+      ]
+    },
+    {
+      "raw": "Probably elephants have no trunks.",
+      "units": [{
+          "confidence": 0.8,
+          "entities": [{"category": "animal", "id": "elephants", "type": "generic"},
+            {"id": "trunks", "scope": "dependent", "type": "generic"}
+          ],
+          "text": "Elephants do not have trunks.",
+          "type": "normal_rule",
+          "unit_id": "S5"
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a grandfather of Y1, Y1 is not a child of X1.",
+      "units": [{
+          "entities": [{"id": "X1", "type": "generic"}, {"id": "Y1", "type": "generic"}],
+          "text": "If X1 is a grandfather of Y1, Y1 is not a child of X1.",
+          "type": "strict_rule",
+          "unit_id": "S6"
+        }
+      ]
+    },
+    {
+      "raw": "Catholics can not disappear.",
+      "units": [{
+          "actions": [{"mode": "capability", "root": "disappear"}],
+          "entities": [{"category": "person", "id": "Catholics", "type": "generic"}],
+          "text": "Catholics cannot disappear.",
+          "type": "strict_rule",
+          "unit_id": "S7"
+        }
+      ]
+    },
+    {
+      "raw": "Baby birds do not fly.",
+      "units": [{
+          "actions": [{"mode": "capability", "root": "fly"}],
+          "entities": [{"category": "animal", "id": "baby birds", "subtype": "compound", "type": "generic"}],
+          "text": "Baby birds cannot fly.",
+          "type": "strict_rule",
+          "unit_id": "S8"
+        }
+      ]
+    },
+    {
+      "raw": "The horse kept in the stable was calm.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "A horse 4 was kept in the stable 5.",
+          "type": "situation",
+          "entities": [{"id": "horse 4", "type": "concrete", "category": "animal"},
+            {"id": "stable 5", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "keep",
+              "mode": "event",
+              "roles": {"target": "horse 4", "location": "stable 5", "location_prep": "in"}
+            }
+          ],
+          "pre_state": "W2",
+          "time": "past"
+        },
+        {
+          "unit_id": "S10",
+          "text": "The horse 4 was calm.",
+          "type": "situation",
+          "entities": [{"id": "horse 4", "type": "concrete", "category": "animal"}],
+          "adjectives": [["calm","none","animal"]],
+          "pre_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is a baby bird.",
+      "units": [{
+          "entities": [{"category": "person", "id": "John 6", "type": "concrete"},
+            {"category": "animal", "id": "baby bird", "subtype": "compound", "type": "generic"}
+          ],
+          "pre_state": "W2",
+          "text": "John 6 is a baby bird.",
+          "type": "situation",
+          "unit_id": "S11"
+        }
+      ]
+    },
+    {
+      "raw": "The man carrying a red bag waved.",
+      "units": [{
+          "actions": [{"mode": "event", "roles": {"target": "bag 8"}, "root": "carry"}],
+          "adjectives": [["red","none","none"]],
+          "entities": [{"category": "person", "id": "man 7", "type": "concrete"},
+            {"category": "artifact", "id": "bag 8", "type": "concrete"}
+          ],
+          "pre_state": "W2",
+          "text": "A man 7 was carrying a red bag 8.",
+          "time": "past",
+          "type": "situation",
+          "unit_id": "S12"
+        },
+        {
+          "actions": [{"mode": "event", "root": "wave"}],
+          "entities": [{"category": "person", "id": "man 7", "type": "concrete"}],
+          "next_state": "W3",
+          "pre_state": "W2",
+          "text": "The man 7 waved.",
+          "time": "past",
+          "type": "situation",
+          "unit_id": "S13"
+        }
+      ]
+    },
+    {
+      "raw": "Eve sent Tom a letter.",
+      "units": [{
+          "actions": [{
+              "mode": "event",
+              "roles": {"actor": "Eve 9", "recipient": "Tom 10", "target": "letter 11"},
+              "root": "send"
+            }
+          ],
+          "entities": [{"category": "person", "id": "Eve 9", "type": "concrete"},
+            {"category": "person", "id": "Tom 10", "type": "concrete"},
+            {"category": "artifact", "id": "letter 11", "type": "concrete"}
+          ],
+          "next_state": "W4",
+          "pre_state": "W3",
+          "text": "Eve 9 sent Tom 10 a letter 11.",
+          "time": "past",
+          "type": "situation",
+          "unit_id": "S14"
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a bird.",
+      "units": [{
+          "entities": [{"category": "person", "id": "Mike 12", "type": "concrete"},
+            {"category": "animal", "id": "bird", "type": "generic"}
+          ],
+          "pre_state": "W4",
+          "text": "Mike 12 is a bird.",
+          "type": "situation",
+          "unit_id": "S15"
+        }
+      ]
+    },
+    {
+      "raw": "John does not fly?",
+      "units": [{
+          "actions": [{"mode": "capability", "root": "fly"}],
+          "entities": [{"category": "person", "id": "John 6", "type": "concrete"}],
+          "pre_state": "W4",
+          "text": "Can John 6 not fly?",
+          "type": "query",
+          "unit_id": "S16"
+        }
+      ]
+    }
+  ],
+  "stage_1_retries": ["sanity #1: entity_used_as_location"],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","door","door 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","open"],
+                ["has actor","E","door 1"],
+                ["has manner","E","unexpectedly"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","fly"],
+                    ["has actor","E","X"],
+                    ["capability","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","eat"],
+                    ["has actor","E","X"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S3",0.99]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","person","Mary 2"],
+            ["isa","bathroom","bathroom 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","go"],
+                ["has actor","E","Mary 2"],
+                ["has destination","E","bathroom 3","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally",
+                ["not", ["exists", "Y", ["and", ["isa","trunk","Y"], ["has part","X","Y"]]]]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S5",0.8]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["forall","X",
+          ["forall","Y",
+            ["implies",
+              ["is rel2","grandfather of","X","Y"],
+              ["not", ["is rel2","child of","Y","X"]]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","Catholic","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","baby bird","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W2",
+        ["and",
+          ["isa","horse","horse 4"],
+          ["isa","stable","stable 5"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","keep"],
+              ["has target","E","horse 4"],
+              ["has location","E","stable 5","in"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","horse","horse 4"],
+            ["has degree property","calm","horse 4","none","animal"]
+          ]
+        ],
+        ["state time","W2","past"]
+      ]
+    ],
+    ["@id","S11",
+      ["holds", "W2", ["and", ["isa","person","John 6"], ["isa","baby bird","John 6"]]]
+    ],
+    ["@id","S12",
+      ["holds","W2",
+        ["and",
+          ["isa","person","man 7"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","carry"],
+              ["has actor","E","man 7"],
+              ["exists","Y",
+                ["and",
+                  ["isa","bag","Y"],
+                  ["has degree property","red","Y","none","none"],
+                  ["has target","E","Y"]
+                ]
+              ],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S13",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","man 7"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","wave"],
+                ["has actor","E","man 7"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S14",
+      ["and",
+        ["holds","W3",
+          ["and",
+            ["isa","person","Eve 9"],
+            ["isa","person","Tom 10"],
+            ["isa","letter","letter 11"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","send"],
+                ["has actor","E","Eve 9"],
+                ["has recipient","E","Tom 10"],
+                ["has target","E","letter 11"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W3","W4"]
+      ]
+    ],
+    ["@id", "S15", ["holds", "W4", ["and", ["isa","person","Mike 12"], ["isa","bird","Mike 12"]]]],
+    ["@id","S16",
+      ["question",
+        ["not",
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","fly"],
+              ["has actor","E","John 6"],
+              ["capability","E"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S9",
+ "@logic": ["isa","animal","#:horse 4"],
+ "@nl": "A horse 4 was kept in the stable 5."},
+{"@name": "entity_S12",
+ "@logic": ["isa","man","#:man 7"],
+ "@nl": "A man 7 was carrying a red bag 8."},
+{"@name": "entity_S12",
+ "@logic": ["isa","artifact","#:bag 8"],
+ "@nl": "A man 7 was carrying a red bag 8."},
+{"@name": "entity_S12",
+ "@logic": ["isa","bag","#:bag 8"],
+ "@nl": "A man 7 was carrying a red bag 8."},
+{"@name": "sent_S1",
+ "@logic": ["isa","door","#:door 1"],
+ "@nl": "The door 1 opened unexpectedly."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The door 1 opened unexpectedly."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk0_activity", "open", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The door 1 opened unexpectedly."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk0_activity", "#:door 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The door 1 opened unexpectedly."},
+{"@name": "sent_S1",
+ "@logic": ["has manner", "sk0_activity", "unexpectedly", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The door 1 opened unexpectedly."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "The door 1 opened unexpectedly."},
+{"@name": "sent_S1",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The door 1 opened unexpectedly."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk1","?:X"]]],
+ "@nl": "Birds can fly."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk1","?:X"], "fly", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Birds can fly."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk1","?:X"], "?:X", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "Birds can fly."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bird","?:X"],
+            ["capability", ["sk1","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk1","?:X"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Birds can fly."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk2","?:X"]]],
+ "@nl": "Birds eat."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk2","?:X"], "eat", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Birds eat."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk2","?:X"], "?:X", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "Birds eat."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","bird","?:X"],
+            ["typical", ["sk2","?:X"], ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$block", ["$","bird",1], ["$not", ["typical", ["sk2","?:X"], ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Birds eat."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Mary 2 went to the bathroom 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","bathroom","#:bathroom 3"],
+ "@nl": "Mary 2 went to the bathroom 3."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Mary 2 went to the bathroom 3."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk3_activity", "go", ["$ctxt","past","W1","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 2 went to the bathroom 3."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk3_activity", "#:Mary 2", ["$ctxt","past","W1","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 2 went to the bathroom 3."},
+{"@name": "sent_S4",
+ "@logic": ["has destination", "sk3_activity", "#:bathroom 3", "at", ["$ctxt","past","W1","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 2 went to the bathroom 3."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W1","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 2 went to the bathroom 3."},
+{"@name": "sent_S4",
+ "@logic": ["next","W1","W2"],
+ "@nl": "Mary 2 went to the bathroom 3."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","elephant","?:X"],
+            ["-isa","trunk","?:Y"],
+            ["-has part", "?:X", "?:Y", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["$block", ["$","elephant",1], ["has part", "?:X", "?:Y", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "Elephants do not have trunks."},
+{"@name": "sent_S6",
+ "@logic": [["-is rel2", "grandfather of", "?:X", "?:Y", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["-is rel2", "child of", "?:Y", "?:X", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "If X1 is a grandfather of Y1, Y1 is not a child of X1."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","catholic","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv24","?:Fv23","?:Fv21","?:Fv22"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Catholics cannot disappear."},
+{"@name": "sent_S8",
+ "@logic": [["-isa","baby bird","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv28","?:Fv27","?:Fv25","?:Fv26"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv28","?:Fv27","?:Fv25","?:Fv26"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Baby birds cannot fly."},
+{"@name": "sent_S9",
+ "@logic": ["isa","horse","#:horse 4"],
+ "@nl": "A horse 4 was kept in the stable 5."},
+{"@name": "sent_S9",
+ "@logic": ["isa","stable","#:stable 5"],
+ "@nl": "A horse 4 was kept in the stable 5."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "A horse 4 was kept in the stable 5."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk4_activity", "keep", ["$ctxt","past","W2","?:Fv29","?:Fv30"]],
+ "@nl": "A horse 4 was kept in the stable 5."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk4_activity", "#:horse 4", ["$ctxt","past","W2","?:Fv29","?:Fv30"]],
+ "@nl": "A horse 4 was kept in the stable 5."},
+{"@name": "sent_S9",
+ "@logic": ["has location", "sk4_activity", "#:stable 5", "in", ["$ctxt","past","W2","?:Fv29","?:Fv30"]],
+ "@nl": "A horse 4 was kept in the stable 5."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W2","?:Fv29","?:Fv30"]],
+ "@nl": "A horse 4 was kept in the stable 5."},
+{"@name": "sent_S10",
+ "@logic": ["isa","horse","#:horse 4"],
+ "@nl": "The horse 4 was calm."},
+{"@name": "sent_S10",
+ "@logic": ["has degree property", "calm", "#:horse 4", "none", "animal", ["$ctxt","past","W2","?:Fv31","?:Fv32"]],
+ "@nl": "The horse 4 was calm."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:John 6"],
+ "@nl": "John 6 is a baby bird."},
+{"@name": "sent_S11",
+ "@logic": ["isa","baby bird","#:John 6"],
+ "@nl": "John 6 is a baby bird."},
+{"@name": "sent_S12",
+ "@logic": ["isa","person","#:man 7"],
+ "@nl": "A man 7 was carrying a red bag 8."},
+{"@name": "sent_S12",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "A man 7 was carrying a red bag 8."},
+{"@name": "sent_S12",
+ "@logic": ["has type", "sk5_activity", "carry", ["$ctxt","past","W2","?:Fv35","?:Fv36"]],
+ "@nl": "A man 7 was carrying a red bag 8."},
+{"@name": "sent_S12",
+ "@logic": ["has actor", "sk5_activity", "#:man 7", ["$ctxt","past","W2","?:Fv35","?:Fv36"]],
+ "@nl": "A man 7 was carrying a red bag 8."},
+{"@name": "sent_S12",
+ "@logic": ["isa","bag","sk6_bag"],
+ "@nl": "A man 7 was carrying a red bag 8."},
+{"@name": "sent_S12",
+ "@logic": ["has property", "red", "sk6_bag", ["$ctxt","past","W2","?:Fv35","?:Fv36"]],
+ "@nl": "A man 7 was carrying a red bag 8."},
+{"@name": "sent_S12",
+ "@logic": ["has target", "sk5_activity", "sk6_bag", ["$ctxt","past","W2","?:Fv35","?:Fv36"]],
+ "@nl": "A man 7 was carrying a red bag 8."},
+{"@name": "sent_S12",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W2","?:Fv35","?:Fv36"]],
+ "@nl": "A man 7 was carrying a red bag 8."},
+{"@name": "sent_S13",
+ "@logic": ["isa","person","#:man 7"],
+ "@nl": "The man 7 waved."},
+{"@name": "sent_S13",
+ "@logic": ["isa","activity","sk7_activity"],
+ "@nl": "The man 7 waved."},
+{"@name": "sent_S13",
+ "@logic": ["has type", "sk7_activity", "wave", ["$ctxt","past","W2","?:Fv37","?:Fv38"]],
+ "@nl": "The man 7 waved."},
+{"@name": "sent_S13",
+ "@logic": ["has actor", "sk7_activity", "#:man 7", ["$ctxt","past","W2","?:Fv37","?:Fv38"]],
+ "@nl": "The man 7 waved."},
+{"@name": "sent_S13",
+ "@logic": ["has time", "sk7_activity", "past", "in", ["$ctxt","past","W2","?:Fv37","?:Fv38"]],
+ "@nl": "The man 7 waved."},
+{"@name": "sent_S13",
+ "@logic": ["next","W2","W3"],
+ "@nl": "The man 7 waved."},
+{"@name": "sent_S14",
+ "@logic": ["isa","person","#:Eve 9"],
+ "@nl": "Eve 9 sent Tom 10 a letter 11."},
+{"@name": "sent_S14",
+ "@logic": ["isa","person","#:Tom 10"],
+ "@nl": "Eve 9 sent Tom 10 a letter 11."},
+{"@name": "sent_S14",
+ "@logic": ["isa","letter","#:letter 11"],
+ "@nl": "Eve 9 sent Tom 10 a letter 11."},
+{"@name": "sent_S14",
+ "@logic": ["isa","activity","sk8_activity"],
+ "@nl": "Eve 9 sent Tom 10 a letter 11."},
+{"@name": "sent_S14",
+ "@logic": ["has type", "sk8_activity", "give", ["$ctxt","past","W3","?:Fv39","?:Fv40"]],
+ "@nl": "Eve 9 sent Tom 10 a letter 11."},
+{"@name": "sent_S14",
+ "@logic": ["has actor", "sk8_activity", "#:Eve 9", ["$ctxt","past","W3","?:Fv39","?:Fv40"]],
+ "@nl": "Eve 9 sent Tom 10 a letter 11."},
+{"@name": "sent_S14",
+ "@logic": ["has recipient", "sk8_activity", "#:Tom 10", ["$ctxt","past","W3","?:Fv39","?:Fv40"]],
+ "@nl": "Eve 9 sent Tom 10 a letter 11."},
+{"@name": "sent_S14",
+ "@logic": ["has target", "sk8_activity", "#:letter 11", ["$ctxt","past","W3","?:Fv39","?:Fv40"]],
+ "@nl": "Eve 9 sent Tom 10 a letter 11."},
+{"@name": "sent_S14",
+ "@logic": ["has time", "sk8_activity", "past", "in", ["$ctxt","past","W3","?:Fv39","?:Fv40"]],
+ "@nl": "Eve 9 sent Tom 10 a letter 11."},
+{"@name": "sent_S14",
+ "@logic": ["next","W3","W4"],
+ "@nl": "Eve 9 sent Tom 10 a letter 11."},
+{"@name": "sent_S15",
+ "@logic": ["isa","person","#:Mike 12"],
+ "@nl": "Mike 12 is a bird."},
+{"@name": "sent_S15",
+ "@logic": ["isa","bird","#:Mike 12"],
+ "@nl": "Mike 12 is a bird."},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv49","?:Fv48","?:Fv43","?:Fv44"]],
+            ["-has actor", "?:E", "#:John 6", ["$ctxt","?:Fv51","?:Fv50","?:Fv43","?:Fv44"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Can John 6 not fly?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["isa","activity","sk9_activity"], ["$defq0"]],
+ "@nl": "Can John 6 not fly?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["has type", "sk9_activity", "fly", ["$ctxt","?:Fv55","?:Fv54","?:Fv43","?:Fv44"]],
+            ["$defq0"]
+           ],
+ "@nl": "Can John 6 not fly?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["has actor", "sk9_activity", "#:John 6", ["$ctxt","?:Fv57","?:Fv56","?:Fv43","?:Fv44"]],
+            ["$defq0"]
+           ],
+ "@nl": "Can John 6 not fly?"},
+{"@name": "sent_S16",
+ "@sourcetype": "question",
+ "@logic": [["capability","sk9_activity"], ["$defq0"]],
+ "@nl": "Can John 6 not fly?"},
+{"@name": "sent_haspart_bridge",
+ "@logic": [["-isa","trunk","?:Y"],
+            ["-have","?:X","?:Y","?:Ctxt"],
+            ["has part","?:X","?:Y","?:Ctxt"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: sent_haspart_bridge]"},
+{"@name": "sent_S16",
+ "@question": ["$defq0"],
+ "@nl": "Can John 6 not fly?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","Catholic","$some_Catholic"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","Catholic","$some_not_Catholic"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","baby bird","$some_not_baby_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bag","$some_bag"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bag","$some_not_bag"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "red", "$some_red", ["$ctxt","?:Fv120","?:Fv117","?:Fv118","?:Fv119"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "red", "$some_not_red", ["$ctxt","?:Fv124","?:Fv121","?:Fv122","?:Fv123"]],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","baby bird","?:X"], ["isa","bird","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","baby","?:X"], ["-isa","bird","?:X"], ["isa","baby bird","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property","baby","?:X","?:Ct"], ["-isa","bird","?:X"], ["isa","baby bird","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property", "baby", "?:X", "?:Ct", ["$ctxt","?:Fv140","?:Fv137","?:Fv138","?:Fv139"]],
+            ["-isa","bird","?:X"],
+            ["isa","baby bird","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","open","?:X"], ["isa","outside","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","outside","?:X"], ["isa","open","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv60"], ["has type","?:E","go","?:Fv60"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv61"], ["has type","?:E","go","?:Fv61"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv62"], ["has type","?:E","give","?:Fv62"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","artifact","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","bird","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","artifact","?:X"], ["-isa","bird","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv63","?:Fv64","?:Fv65"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv63","?:Fv64","?:Fv65"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv63","?:Fv64","?:Fv65"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv66","?:Fv67","?:Fv68"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv66","?:Fv67","?:Fv68"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv66","?:Fv67","?:Fv68"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has destination","?:Esb","?:Xsb","?:Psb","?:Csb"],
+            ["has location","?:Esb","?:Xsb","?:Psb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has target","?:Esb","?:Ysb","?:Csb"],
+            ["-has recipient","?:Esb","?:Xsb","?:Csb"],
+            ["has recipient","?:Ysb","?:Xsb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W3","W4"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S8","assumption",1], [["-has type", "?:X", "fly", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "?:X", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","baby bird","?:W"], ["-isa","activity","?:X"], ["-capability","?:X"]]],
+          [2, ["in","sent_S16","assumption",1], [["$defq0"], ["has actor", "sk9_activity", "#:John 6", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [3, ["in","sent_S16","goal",1], [["-$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has actor", "sk9_activity", "#:John 6", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [5, ["in","sent_S16","assumption",1], [["$defq0"], ["has type", "sk9_activity", "fly", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [6, ["mp",5,3,"fromga",1], [["has type", "sk9_activity", "fly", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]],
+          [7, ["in","sent_S16","assumption",1], [["isa","activity","sk9_activity"], ["$defq0"]]],
+          [8, ["mp", [7,1], 3, "fromga", 1], [["isa","activity","sk9_activity"]]],
+          [9, ["in","sent_S16","assumption",1], [["capability","sk9_activity"], ["$defq0"]]],
+          [10, ["mp", [9,1], 3, "fromga", 1], [["capability","sk9_activity"]]],
+          [11, ["mp", [1,1], 4, 6, 8, 10, "fromga", 1], [["-isa","baby bird","#:John 6"]]],
+          [12, ["in","sent_S11","assumption",1], [["isa","baby bird","#:John 6"]]],
+          [13, ["simp",11,12,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Baby birds do not fly.",
+"  (2) John is a baby bird.",
+"  (3) John does not fly?",
+"Proof steps (by contradiction):",
+"  (1) If X is a fly event and some baby bird W performs X and X is an activity then X is not a capability  [sentence 1]",
+"  (2) Answer holds or John performs the event act7  [sentence 3]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) John performs the event act7  [from steps 2, 3]",
+"  (5) Answer holds or the event act7 is a fly event  [sentence 3]",
+"  (6) The event act7 is a fly event  [from steps 5, 3]",
+"  (7) The event act7 is an activity or answer holds  [sentence 3]",
+"  (8) The event act7 is an activity  [from steps 7, 3]",
+"  (9) The event act7 is a capability or answer holds  [sentence 3]",
+"  (10) The event act7 is a capability  [from steps 9, 3]",
+"  (11) John is not a baby bird  [from steps 1, 4, 6, 8, 10]",
+"  (12) John is a baby bird  [sentence 2]",
+"  (13) Contradiction  [from steps 11, 12]"
+],
+  "llm_usage": [{
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 33668,
+      "cached_input_tokens": 0,
+      "output_tokens": 8711,
+      "raw": {
+        "promptTokenCount": 33668,
+        "candidatesTokenCount": 2691,
+        "totalTokenCount": 42379,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 33668}],
+        "thoughtsTokenCount": 6020,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 38827,
+      "cached_input_tokens": 0,
+      "output_tokens": 5686,
+      "raw": {
+        "promptTokenCount": 38827,
+        "candidatesTokenCount": 2071,
+        "totalTokenCount": 44513,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 38827}],
+        "thoughtsTokenCount": 3615,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T21:34:34Z"
+}

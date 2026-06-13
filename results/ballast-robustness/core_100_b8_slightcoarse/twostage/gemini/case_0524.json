@@ -1,0 +1,726 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 524,
+  "input_text": "Frogs are small animals. If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1. Jessica is a mouse. Mary decided to leave. The hand of a man is nice. John likes all boxers. The toy of the child was broken. No penguin can fly. A kitchen door was open. Mike is a boxer. John likes Mike?",
+  "expected_answer": true,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Frogs are small animals.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Frogs are small animals.",
+          "type": "normal_rule",
+          "entities": [{"id": "frogs", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["small","none","animal"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic", "category": "person"},
+            {"id": "Y1", "type": "generic", "category": "person"},
+            {"id": "Z1", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Jessica is a mouse.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Jessica 1 is a mouse.",
+          "type": "situation",
+          "entities": [{"id": "Jessica 1", "type": "concrete", "category": "animal"},
+            {"id": "mouse", "type": "generic", "category": "animal"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Mary decided to leave.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mary 2 decided to leave.",
+          "type": "situation",
+          "entities": [{"id": "Mary 2", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "decide",
+              "mode": "intention",
+              "roles": {
+                "actor": "Mary 2",
+                "content": {"root": "leave", "mode": "event", "roles": {"actor": "Mary 2"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The hand of a man is nice.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "The hand 3 of a man 4 is nice.",
+          "type": "situation",
+          "entities": [{"id": "hand 3", "type": "concrete", "text": "hand", "category": "artifact"},
+            {"id": "man 4", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["nice","none","hand"]],
+          "definites": [["hand of","hand 3","man 4"]],
+          "time": "present"
+        },
+        {
+          "unit_id": "S6",
+          "text": "The hand 3 is the hand of a man 4.",
+          "type": "situation",
+          "entities": [{"id": "hand 3", "type": "concrete", "text": "hand", "category": "artifact"},
+            {"id": "man 4", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["hand of","hand 3","man 4"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "John likes all boxers.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "John 5 likes all boxers.",
+          "type": "normal_rule",
+          "entities": [{"id": "John 5", "type": "concrete", "category": "person"},
+            {"id": "boxers", "type": "generic", "category": "person"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "The toy of the child was broken.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "The toy 6 of the child 7 was broken.",
+          "type": "situation",
+          "entities": [{"id": "toy 6", "type": "concrete", "category": "artifact"},
+            {"id": "child 7", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["broken","none","toy"]],
+          "definites": [["toy of","toy 6","child 7"]],
+          "time": "past"
+        },
+        {
+          "unit_id": "S9",
+          "text": "The toy 6 is the toy of the child 7.",
+          "type": "situation",
+          "entities": [{"id": "toy 6", "type": "concrete", "category": "artifact"},
+            {"id": "child 7", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["toy of","toy 6","child 7"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "No penguin can fly.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "No penguin can fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguin", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "A kitchen door was open.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "A kitchen door 8 was open.",
+          "type": "situation",
+          "entities": [{
+              "id": "kitchen door 8",
+              "type": "concrete",
+              "subtype": "compound",
+              "category": "artifact"
+            }
+          ],
+          "adjectives": [["open","none","kitchen door"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a boxer.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Mike 9 is a boxer.",
+          "type": "situation",
+          "entities": [{"id": "Mike 9", "type": "concrete", "category": "person"},
+            {"id": "boxer", "type": "generic", "category": "person"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "John likes Mike?",
+      "units": [{
+          "unit_id": "S13",
+          "text": "Does John 5 like Mike 9?",
+          "type": "query",
+          "entities": [{"id": "John 5", "type": "concrete", "category": "person"},
+            {"id": "Mike 9", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["like","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","frog","X"],
+              ["normally",
+                ["and", ["isa","animal","X"], ["has degree property","small","X","none","animal"]]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S1",0.99]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["forall","Z1",
+              ["implies",
+                ["and", ["is rel2","father of","X1","Y1"], ["is rel2","father of","Y1","Z1"]],
+                ["is rel2","grandfather of","X1","Z1"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and", ["holds", "W0", ["isa","mouse","Jessica 1"]], ["state time","W0","present"]]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 2"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","decide"],
+              ["has actor","E1","Mary 2"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","leave"],
+                  ["has actor","E2","Mary 2"],
+                  ["has time","E2","past","in"]
+                ]
+              ],
+              ["intention","E1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","hand","hand 3"],
+            ["isa","person","man 4"],
+            ["has part","man 4","hand 3"],
+            ["has degree property","nice","hand 3","none","hand"]
+          ]
+        ],
+        ["state time","W0","present"],
+        ["@definite","S5","W0","hand of","man 4","hand 3"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","hand","hand 3"], ["isa","person","man 4"], ["has part","man 4","hand 3"]]
+        ],
+        ["state time","W0","present"],
+        ["@definite","S6","W0","hand of","man 4","hand 3"]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 5"],
+            ["forall","X",
+              ["implies", ["isa","boxer","X"], ["normally", ["is rel2","like","John 5","X"]]]
+            ]
+          ]
+        ],
+        ["@p","S7",0.99]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","toy","toy 6"],
+            ["isa","person","child 7"],
+            ["have","child 7","toy 6"],
+            ["has degree property","broken","toy 6","none","toy"]
+          ]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S8","W0","toy of","child 7","toy 6"]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","toy","toy 6"], ["isa","person","child 7"], ["have","child 7","toy 6"]]
+        ],
+        ["state time","W0","past"],
+        ["@definite","S9","W0","toy of","child 7","toy 6"]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","kitchen door","kitchen door 8"],
+            ["has degree property","open","kitchen door 8","none","kitchen door"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S12",
+      ["and", ["holds", "W0", ["isa","boxer","Mike 9"]], ["state time","W0","present"]]
+    ],
+    ["@id","S13",
+      ["question",
+        ["and",
+          ["isa","person","John 5"],
+          ["isa","person","Mike 9"],
+          ["has degree rel2","like","John 5","Mike 9","none","person"]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: inner_content_event_missing_time"],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","animal","#:Jessica 1"],
+ "@nl": "Jessica 1 is a mouse."},
+{"@name": "entity_S5",
+ "@logic": ["isa","hand","#:hand 3"],
+ "@nl": "The hand 3 of a man 4 is nice."},
+{"@name": "entity_S5",
+ "@logic": ["isa","man","#:man 4"],
+ "@nl": "The hand 3 of a man 4 is nice."},
+{"@name": "entity_S8",
+ "@logic": ["isa","toy","#:toy 6"],
+ "@nl": "The toy 6 of the child 7 was broken."},
+{"@name": "entity_S8",
+ "@logic": ["isa","child","#:child 7"],
+ "@nl": "The toy 6 of the child 7 was broken."},
+{"@name": "entity_S12",
+ "@logic": ["isa","person","#:Mike 9"],
+ "@nl": "Mike 9 is a boxer."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","frog","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Frogs are small animals."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","frog","?:X"],
+            ["has degree property", "small", "?:X", "none", "animal", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["$block", ["$","frog",1], ["$not", ["has degree property", "small", "?:X", "none", "animal", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Frogs are small animals."},
+{"@name": "sent_S2",
+ "@logic": [["-is rel2", "father of", "?:X1", "?:Y1", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-is rel2", "father of", "?:Y1", "?:Z1", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["is rel2", "grandfather of", "?:X1", "?:Z1", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "If X1 is a father of Y1 and Y1 is a father of Z1, X1 is a grandfather of Z1."},
+{"@name": "sent_S3",
+ "@logic": ["isa","mouse","#:Jessica 1"],
+ "@nl": "Jessica 1 is a mouse."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Mary 2 decided to leave."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Mary 2 decided to leave."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk0_activity", "decide", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 2 decided to leave."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk0_activity", "#:Mary 2", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 2 decided to leave."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 2 decided to leave."},
+{"@name": "sent_S4",
+ "@logic": ["has content","sk0_activity","sk1_activity"],
+ "@nl": "Mary 2 decided to leave."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Mary 2 decided to leave."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "leave", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 2 decided to leave."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk1_activity", "#:Mary 2", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 2 decided to leave."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 2 decided to leave."},
+{"@name": "sent_S4",
+ "@logic": ["intention","sk0_activity"],
+ "@nl": "Mary 2 decided to leave."},
+{"@name": "sent_S5",
+ "@logic": ["isa", "hand", ["$theof1", "hand", "#:man 4", ["$ctxt","present","W0","?:Fv13","?:Fv14"]]],
+ "@nl": "The hand 3 of a man 4 is nice."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:man 4"],
+ "@nl": "The hand 3 of a man 4 is nice."},
+{"@name": "sent_S5",
+ "@logic": ["has part", "#:man 4", ["$theof1", "hand", "#:man 4", ["$ctxt","present","W0","?:Fv13","?:Fv14"]], ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The hand 3 of a man 4 is nice."},
+{"@name": "sent_S5",
+ "@logic": ["has degree property", "good", ["$theof1", "hand", "#:man 4", ["$ctxt","present","W0","?:Fv13","?:Fv14"]], "none", "hand", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The hand 3 of a man 4 is nice."},
+{"@name": "sent_S6",
+ "@logic": ["isa", "hand", ["$theof1", "hand", "#:man 4", ["$ctxt","present","W0","?:Fv13","?:Fv14"]]],
+ "@nl": "The hand 3 is the hand of a man 4."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:man 4"],
+ "@nl": "The hand 3 is the hand of a man 4."},
+{"@name": "sent_S6",
+ "@logic": ["has part", "#:man 4", ["$theof1", "hand", "#:man 4", ["$ctxt","present","W0","?:Fv13","?:Fv14"]], ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The hand 3 is the hand of a man 4."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:John 5"],
+ "@nl": "John 5 likes all boxers."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","boxer","?:X"],
+            ["has degree rel2", "like", "#:John 5", "?:X", "none", "?:Fv121", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["$block", ["$","boxer",1], ["$not", ["has degree rel2", "like", "#:John 5", "?:X", "none", "?:Fv122", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "John 5 likes all boxers."},
+{"@name": "sent_S8",
+ "@logic": ["isa", "toy", ["$theof1", "toy", "#:child 7", ["$ctxt","past","W0","?:Fv21","?:Fv22"]]],
+ "@nl": "The toy 6 of the child 7 was broken."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:child 7"],
+ "@nl": "The toy 6 of the child 7 was broken."},
+{"@name": "sent_S8",
+ "@logic": ["have", "#:child 7", ["$theof1", "toy", "#:child 7", ["$ctxt","past","W0","?:Fv21","?:Fv22"]], ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The toy 6 of the child 7 was broken."},
+{"@name": "sent_S8",
+ "@logic": ["has property", "broken", ["$theof1", "toy", "#:child 7", ["$ctxt","past","W0","?:Fv21","?:Fv22"]], ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The toy 6 of the child 7 was broken."},
+{"@name": "sent_S9",
+ "@logic": ["isa", "toy", ["$theof1", "toy", "#:child 7", ["$ctxt","past","W0","?:Fv21","?:Fv22"]]],
+ "@nl": "The toy 6 is the toy of the child 7."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:child 7"],
+ "@nl": "The toy 6 is the toy of the child 7."},
+{"@name": "sent_S9",
+ "@logic": ["have", "#:child 7", ["$theof1", "toy", "#:child 7", ["$ctxt","past","W0","?:Fv21","?:Fv22"]], ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The toy 6 is the toy of the child 7."},
+{"@name": "sent_S10",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv28","?:Fv27","?:Fv25","?:Fv26"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv28","?:Fv27","?:Fv25","?:Fv26"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "No penguin can fly."},
+{"@name": "sent_S11",
+ "@logic": ["isa","kitchen door","#:kitchen door 8"],
+ "@nl": "A kitchen door 8 was open."},
+{"@name": "sent_S11",
+ "@logic": ["has degree property", "open", "#:kitchen door 8", "none", "kitchen door", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "A kitchen door 8 was open."},
+{"@name": "sent_S12",
+ "@logic": ["isa","boxer","#:Mike 9"],
+ "@nl": "Mike 9 is a boxer."},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:John 5"]],
+ "@nl": "Does John 5 like Mike 9?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:Mike 9"]],
+ "@nl": "Does John 5 like Mike 9?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:Fv130", ["$ctxt","present","?:Fv35","?:Fv33","?:Fv34"]]
+           ],
+ "@nl": "Does John 5 like Mike 9?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:John 5"],
+            ["-isa","person","#:Mike 9"],
+            ["-has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:Fv131", ["$ctxt","present","?:Fv35","?:Fv33","?:Fv34"]],
+            ["$defq0"]
+           ],
+ "@nl": "Does John 5 like Mike 9?"},
+{"@name": "sent_S13",
+ "@question": ["$defq0"],
+ "@nl": "Does John 5 like Mike 9?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.95,
+ "@logic": [["-has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "person", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Does John 5 like Mike 9?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:man 4", ["$theof1", "hand", "#:man 4", ["$ctxt","present","W0","?:Fv13","?:Fv14"]], ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:man 4", ["$theof1", "hand", "#:man 4", ["$ctxt","present","W0","?:Fv13","?:Fv14"]], ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:child 7", ["$theof1", "toy", "#:child 7", ["$ctxt","past","W0","?:Fv21","?:Fv22"]], ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:child 7", ["$theof1", "toy", "#:child 7", ["$ctxt","past","W0","?:Fv21","?:Fv22"]], ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "hand of", ["$theof1","hand","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "hand", ["$theof1","hand","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "toy of", ["$theof1","toy","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "toy", ["$theof1","toy","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","frog","$some_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","frog","$some_not_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","boxer","$some_not_boxer"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S10",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "small", "$some_small_animal", "none", "animal", ["$ctxt","?:Fv96","?:Fv93","?:Fv94","?:Fv95"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_small_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "small", "$some_not_small_animal", "none", "animal", ["$ctxt","?:Fv104","?:Fv101","?:Fv102","?:Fv103"]],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","kitchen door","?:X"], ["isa","door","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","kitchen","?:X"], ["-isa","door","?:X"], ["isa","kitchen door","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property","kitchen","?:X","?:Ct"],
+            ["-isa","door","?:X"],
+            ["isa","kitchen door","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property", "kitchen", "?:X", "?:Ct", ["$ctxt","?:Fv120","?:Fv117","?:Fv118","?:Fv119"]],
+            ["-isa","door","?:X"],
+            ["isa","kitchen door","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","hand","?:Fv45"], ["has type","?:E","give","?:Fv45"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv123","?:Fv46"],
+            ["-has degree property","high","?:X","none","?:Fv124","?:Fv46"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv125","?:Fv47"],
+            ["has degree property","small","?:X","none","?:Fv126","?:Fv47"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv48"], ["has type","?:E","go","?:Fv48"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","open","?:X"], ["isa","outside","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","outside","?:X"], ["isa","open","?:X"]],
+ "@confidence": 0.64,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv127", ["$ctxt","past","?:Fv51","?:Fv52","?:Fv53"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv128", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv129", ["$ctxt","present","?:Fv51","?:Fv52","?:Fv53"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv54","?:Fv55","?:Fv56"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "blockers": [["$block", ["$","boxer",1], ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:X3", ["$ctxt","present","?:Y3","?:Z3","?:U3"]]]]
+        ],
+        "confidence": 0.98,
+        "positive proof": [[1, ["in","sent_S7","assumption",0.98], [["$block", ["$","boxer",1], ["$not", ["has degree rel2", "like", "#:John 5", "?:X", "none", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]]]], ["has degree rel2", "like", "#:John 5", "?:X", "none", "?:2006", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-isa","boxer","?:X"]]],
+          [2, ["in","sent_S12","assumption",1], [["isa","boxer","#:Mike 9"]]],
+          [3, ["mp", [1,2], 2, "fromassumption", 0.98], [["$block", ["$","boxer",1], ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]],
+          [4, ["in","sent_S13","assumption",1], [["-isa","person","#:Mike 9"], ["-isa","person","#:John 5"], ["$defq0"], ["-has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [5, ["in","sent_S13","goal",1], [["-$defq0"]]],
+          [6, ["mp", [3,1], [4,3], 5, "fromga", 0.98], [["-isa","person","#:Mike 9"], ["-isa","person","#:John 5"], ["$block", ["$","boxer",1], ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]]]],
+          [7, ["in","entity_S12","assumption",1], [["isa","person","#:Mike 9"]]],
+          [8, ["mp",6,7,"fromga",0.98], [["-isa","person","#:John 5"], ["$block", ["$","boxer",1], ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]]]],
+          [9, ["in","sent_S7","assumption",1], [["isa","person","#:John 5"]]],
+          [10, ["mp",8,9,"fromga",0.98], [["$block", ["$","boxer",1], ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:X3", ["$ctxt","present","?:Y3","?:Z3","?:U3"]]]]]]
+        ]
+      },
+      {
+        "answer": true,
+        "blockers": [["$block", ["$","boxer",1], ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:X3", ["$ctxt","past","?:Y3","?:Z3","?:U3"]]]],
+          ["$block", 0, ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "person", ["$ctxt","present","?:Y3","?:Z3","?:U3"]]]]
+        ],
+        "confidence": 0.931,
+        "positive proof": [[1, ["in","sent_S7","assumption",0.98], [["$block", ["$","boxer",1], ["$not", ["has degree rel2", "like", "#:John 5", "?:X", "none", "?:Y", ["$ctxt","?:Z","?:U","?:V","?:W"]]]], ["has degree rel2", "like", "#:John 5", "?:X", "none", "?:2006", ["$ctxt","?:Z","?:U","?:V","?:W"]], ["-isa","boxer","?:X"]]],
+          [2, ["in","sent_S12","assumption",1], [["isa","boxer","#:Mike 9"]]],
+          [3, ["mp", [1,2], 2, "fromassumption", 0.98], [["$block", ["$","boxer",1], ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]], ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]]]],
+          [4, ["in","sent_S13","assumption",0.95], [["$block", 0, ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["-has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "person", ["$ctxt","past","?:X","?:Y","?:Z"]], ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "person", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["mp", [3,1], [4,1], "fromassumption", 0.931], [["$block", ["$","boxer",1], ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]]]], ["$block", 0, ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "person", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "person", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [6, ["in","sent_S13","assumption",1], [["-isa","person","#:Mike 9"], ["-isa","person","#:John 5"], ["$defq0"], ["-has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [7, ["in","sent_S13","goal",1], [["-$defq0"]]],
+          [8, ["mp", [5,2], [6,3], 7, "fromga", 0.931], [["-isa","person","#:Mike 9"], ["-isa","person","#:John 5"], ["$block", ["$","boxer",1], ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]]]], ["$block", 0, ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "person", ["$ctxt","present","?:Y","?:Z","?:U"]]]]]],
+          [9, ["in","entity_S12","assumption",1], [["isa","person","#:Mike 9"]]],
+          [10, ["mp",8,9,"fromga",0.931], [["-isa","person","#:John 5"], ["$block", ["$","boxer",1], ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]]]], ["$block", 0, ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "person", ["$ctxt","present","?:Y","?:Z","?:U"]]]]]],
+          [11, ["in","sent_S7","assumption",1], [["isa","person","#:John 5"]]],
+          [12, ["mp",10,11,"fromga",0.931], [["$block", ["$","boxer",1], ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "?:X3", ["$ctxt","past","?:Y3","?:Z3","?:U3"]]]], ["$block", 0, ["$not", ["has degree rel2", "like", "#:John 5", "#:Mike 9", "none", "person", ["$ctxt","present","?:Y3","?:Z3","?:U3"]]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 98%.",
+"Sentences used:",
+"  (1) John likes all boxers.",
+"  (2) Mike is a boxer.",
+"  (3) John likes Mike?",
+"Knowledge used:",
+"  Mike is a person. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If some X is a boxer then John is like of X, except when John is not like of X  [sentence 1, confidence 98%]",
+"  (2) Mike is a boxer  [sentence 2]",
+"  (3) John is like of Mike, except when John is not like of Mike  [from steps 1, 2, confidence 98%]",
+"  (4) If Mike is a person and John is a person and John is like of Mike then answer holds  [sentence 3]",
+"  (5) assume for contradiction: the answer is no  [from question]",
+"  (6) If Mike is a person then John is not a person, except when John is not like of Mike  [from steps 3, 4, 5, confidence 98%]",
+"  (7) Mike is a person  [background knowledge]",
+"  (8) John is not a person, except when John is not like of Mike  [from steps 6, 7, confidence 98%]",
+"  (9) John is a person  [sentence 1]",
+"  (10) Outstanding exception: John is not like of Mike  [from steps 8, 9, confidence 98%]",
+"Exceptions checked and not holding:",
+"  John is not like of Mike"
+],
+  "timestamp": "2026-06-12T21:17:16Z"
+}

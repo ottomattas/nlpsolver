@@ -1,0 +1,602 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 536,
+  "input_text": "Winona is a cat. A man was yellow. The rain continued. Penguins live in water. Amazon's length is 20 kilometers. Elephants are animals. John has a roof. Tom wanted to leave. Mike is a bird. All elephants are not animals?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Winona is a cat.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Winona 1 is a cat.",
+          "type": "situation",
+          "entities": [{"id": "Winona 1", "type": "concrete", "category": "animal"},
+            {"id": "cat", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "A man was yellow.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "A man 2 was yellow.",
+          "type": "situation",
+          "entities": [{"id": "man 2", "type": "concrete", "category": "person"}],
+          "adjectives": [["yellow","none","person"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The rain continued.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The rain 3 continued.",
+          "type": "situation",
+          "entities": [{"id": "rain 3", "type": "concrete", "category": "event"}],
+          "actions": [{"root": "continue", "mode": "event", "roles": {"actor": "rain 3"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S4",
+          "text": "The rain 3 was falling.",
+          "type": "situation",
+          "entities": [{"id": "rain 3", "type": "concrete", "category": "event"}],
+          "actions": [{"root": "fall", "mode": "event", "roles": {"actor": "rain 3"}}],
+          "pre_state": "W0",
+          "time": "past"
+        },
+        {
+          "unit_id": "S5",
+          "text": "The rain 3 is falling.",
+          "type": "situation",
+          "entities": [{"id": "rain 3", "type": "concrete", "category": "event"}],
+          "actions": [{"root": "fall", "mode": "event", "roles": {"actor": "rain 3"}}],
+          "pre_state": "W1",
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "Penguins live in water.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Penguins live in water.",
+          "type": "normal_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"},
+            {"id": "water", "type": "generic", "scope": "kind", "category": "substance"}
+          ],
+          "actions": [{
+              "root": "live",
+              "mode": "habitual",
+              "roles": {"actor": "penguins", "location": "water"}
+            }
+          ],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "Amazon's length is 20 kilometers.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "The length 2 of Amazon 1 is 20 kilometers.",
+          "type": "real",
+          "entities": [{
+              "id": "Amazon 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Amazon_River"
+            },
+            {"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "20 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 2","Amazon 1"]]
+        },
+        {
+          "unit_id": "S8",
+          "text": "The length 2 is the length of Amazon 1.",
+          "type": "real",
+          "entities": [{"id": "length 2", "type": "concrete", "text": "length"},
+            {
+              "id": "Amazon 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Amazon_River"
+            }
+          ],
+          "definites": [["length of","length 2","Amazon 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "Elephants are animals.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Elephants are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John has a roof.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "John 4 has a roof 5.",
+          "type": "situation",
+          "entities": [{"id": "John 4", "type": "concrete", "category": "person"},
+            {"id": "roof 5", "type": "concrete", "text": "roof", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Tom wanted to leave.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Tom 6 wanted to leave.",
+          "type": "situation",
+          "entities": [{"id": "Tom 6", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "want",
+              "mode": "volition",
+              "roles": {
+                "actor": "Tom 6",
+                "content": {"root": "leave", "mode": "event", "roles": {"actor": "Tom 6"}}
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mike is a bird.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Mike 7 is a bird.",
+          "type": "situation",
+          "entities": [{"id": "Mike 7", "type": "concrete", "category": "animal"},
+            {"id": "bird", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "All elephants are not animals?",
+      "units": [{
+          "unit_id": "S13",
+          "text": "Are all elephants not animals?",
+          "type": "query",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","cat","Winona 1"]]],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","man","man 2"], ["has degree property","yellow","man 2","none","person"]]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","rain","rain 3"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","continue"],
+                ["has actor","E","rain 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","rain","rain 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","fall"],
+              ["has actor","E","rain 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W1",
+        ["and",
+          ["isa","rain","rain 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","fall"],
+              ["has actor","E","rain 3"],
+              ["has time","E","present","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","penguin","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","live"],
+                    ["has actor","E","X"],
+                    ["has location","E","water","in"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S6",0.95]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Amazon_River","W0"], ["$measure",20,"kilometer"]]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 2"],
+            ["isa","place","https://en.wikipedia.org/wiki/Amazon_River"]
+          ]
+        ],
+        ["@definite","S8","W0","length of","https://en.wikipedia.org/wiki/Amazon_River","length 2"]
+      ]
+    ],
+    ["@id","S9",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["and", ["isa","person","John 4"], ["isa","roof","roof 5"], ["have","John 4","roof 5"]]
+      ]
+    ],
+    ["@id","S11",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Tom 6"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","want"],
+              ["has actor","E1","Tom 6"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","leave"],
+                  ["has actor","E2","Tom 6"]
+                ]
+              ],
+              ["volition","E1"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S12", ["holds", "W0", ["isa","bird","Mike 7"]]],
+    ["@id","S13",
+      ["question",
+        ["forall", "X", ["implies", ["isa","elephant","X"], ["not", ["isa","animal","X"]]]]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","animal","#:Winona 1"],
+ "@nl": "Winona 1 is a cat."},
+{"@name": "entity_S2",
+ "@logic": ["isa","person","#:man 2"],
+ "@nl": "A man 2 was yellow."},
+{"@name": "entity_S7",
+ "@logic": ["isa","place","#:Amazon 1"],
+ "@nl": "The length 2 of Amazon 1 is 20 kilometers."},
+{"@name": "entity_S7",
+ "@logic": ["isa","measure","20 kilometers"],
+ "@nl": "The length 2 of Amazon 1 is 20 kilometers."},
+{"@name": "entity_S12",
+ "@logic": ["isa","animal","#:Mike 7"],
+ "@nl": "Mike 7 is a bird."},
+{"@name": "sent_S1",
+ "@logic": ["isa","cat","#:Winona 1"],
+ "@nl": "Winona 1 is a cat."},
+{"@name": "sent_S2",
+ "@logic": ["isa","man","#:man 2"],
+ "@nl": "A man 2 was yellow."},
+{"@name": "sent_S2",
+ "@logic": ["has property", "yellow", "#:man 2", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "A man 2 was yellow."},
+{"@name": "sent_S3",
+ "@logic": ["isa","rain","#:rain 3"],
+ "@nl": "The rain 3 continued."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The rain 3 continued."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "continue", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The rain 3 continued."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:rain 3", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The rain 3 continued."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv5","?:Fv6"]],
+ "@nl": "The rain 3 continued."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The rain 3 continued."},
+{"@name": "sent_S4",
+ "@logic": ["isa","rain","#:rain 3"],
+ "@nl": "The rain 3 was falling."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The rain 3 was falling."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "fall", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The rain 3 was falling."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk1_activity", "#:rain 3", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The rain 3 was falling."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The rain 3 was falling."},
+{"@name": "sent_S5",
+ "@logic": ["isa","rain","#:rain 3"],
+ "@nl": "The rain 3 is falling."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The rain 3 is falling."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk2_activity", "fall", ["$ctxt","present","W1","?:Fv9","?:Fv10"]],
+ "@nl": "The rain 3 is falling."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:rain 3", ["$ctxt","present","W1","?:Fv9","?:Fv10"]],
+ "@nl": "The rain 3 is falling."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "present", "in", ["$ctxt","present","W1","?:Fv9","?:Fv10"]],
+ "@nl": "The rain 3 is falling."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","penguin","?:X"], ["isa", "activity", ["sk3","?:X"]]],
+ "@nl": "Penguins live in water."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has type", ["sk3","?:X"], "live", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Penguins live in water."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has actor", ["sk3","?:X"], "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Penguins live in water."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","penguin","?:X"], ["isa", "water", ["sk4","?:X"]]],
+ "@nl": "Penguins live in water."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has location", ["sk3","?:X"], ["sk4","?:X"], "in", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]
+           ],
+ "@nl": "Penguins live in water."},
+{"@name": "sent_S6",
+ "@logic": [["-isa","penguin","?:X"],
+            ["typical", ["sk3","?:X"], ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["$block", ["$","penguin",1], ["$not", ["typical", ["sk3","?:X"], ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Penguins live in water."},
+{"@name": "sent_S7",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Amazon_River","W0"], ["$list",20000,"#:meter"]],
+ "@nl": "The length 2 of Amazon 1 is 20 kilometers."},
+{"@name": "sent_S8",
+ "@logic": ["isa","length","#:length 2"],
+ "@nl": "The length 2 is the length of Amazon 1."},
+{"@name": "sent_S8",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/Amazon_River"],
+ "@nl": "The length 2 is the length of Amazon 1."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Elephants are animals."},
+{"@name": "sent_S10",
+ "@logic": ["isa","person","#:John 4"],
+ "@nl": "John 4 has a roof 5."},
+{"@name": "sent_S10",
+ "@logic": ["isa","roof","#:roof 5"],
+ "@nl": "John 4 has a roof 5."},
+{"@name": "sent_S10",
+ "@logic": ["have", "#:John 4", "#:roof 5", ["$ctxt","present","W0","?:Fv23","?:Fv24"]],
+ "@nl": "John 4 has a roof 5."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:Tom 6"],
+ "@nl": "Tom 6 wanted to leave."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "Tom 6 wanted to leave."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk5_activity", "want", ["$ctxt","present","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Tom 6 wanted to leave."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk5_activity", "#:Tom 6", ["$ctxt","present","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Tom 6 wanted to leave."},
+{"@name": "sent_S11",
+ "@logic": ["has content","sk5_activity","sk6_activity"],
+ "@nl": "Tom 6 wanted to leave."},
+{"@name": "sent_S11",
+ "@logic": ["isa","activity","sk6_activity"],
+ "@nl": "Tom 6 wanted to leave."},
+{"@name": "sent_S11",
+ "@logic": ["has type", "sk6_activity", "leave", ["$ctxt","present","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Tom 6 wanted to leave."},
+{"@name": "sent_S11",
+ "@logic": ["has actor", "sk6_activity", "#:Tom 6", ["$ctxt","present","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Tom 6 wanted to leave."},
+{"@name": "sent_S11",
+ "@logic": ["volition","sk5_activity"],
+ "@nl": "Tom 6 wanted to leave."},
+{"@name": "sent_S12",
+ "@logic": ["isa","bird","#:Mike 7"],
+ "@nl": "Mike 7 is a bird."},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","elephant","?:X"], ["-isa","animal","?:X"]],
+ "@nl": "Are all elephants not animals?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["isa","elephant","sk7_elephant"], ["$defq0"]],
+ "@nl": "Are all elephants not animals?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["isa","animal","sk7_elephant"], ["$defq0"]],
+ "@nl": "Are all elephants not animals?"},
+{"@name": "sent_S13",
+ "@question": ["$defq0"],
+ "@nl": "Are all elephants not animals?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","continue","?:Fv33"], ["has type","?:E","keep","?:Fv33"]],
+ "@confidence": 0.92,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","keep","?:Fv34"], ["has type","?:E","continue","?:Fv34"]],
+ "@confidence": 0.92,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","bird","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "yellow", "?:X", ["$ctxt","past","?:Fv35","?:Fv36","?:Fv37"]],
+            ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]],
+            ["$block", 0, ["$not", ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "yellow", "?:X", ["$ctxt","past","?:Fv38","?:Fv39","?:Fv40"]],
+            ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv38","?:Fv39","?:Fv40"]],
+            ["$block", 0, ["$not", ["has property", "yellow", "?:X", ["$ctxt","present","?:Fv38","?:Fv39","?:Fv40"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S9","assumption",1], [["isa","elephant","$some_elephant"]]],
+          [2, ["in","sent_S13","assumption",1], [["-$defq0"], ["-isa","elephant","?:X"], ["-isa","animal","?:X"]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp", 1, [2,1], 3, "fromga", 1], [["-isa","animal","$some_elephant"]]],
+          [5, ["in","sent_S9","assumption",1], [["-isa","elephant","?:X"], ["isa","animal","?:X"]]],
+          [6, ["mp",1,5,"fromassumption",1], [["isa","animal","$some_elephant"]]],
+          [7, ["simp",4,6,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Elephants are animals.",
+"  (2) All elephants are not animals?",
+"Proof steps (by contradiction):",
+"  (1) An elephant is an elephant  [sentence 1]",
+"  (2) If answer holds and some X is an elephant then X is not an animal  [sentence 2]",
+"  (3) Answer holds  [assumption]",
+"  (4) An elephant is not an animal  [from steps 1, 2, 3]",
+"  (5) If some X is an elephant then X is an animal  [sentence 1]",
+"  (6) An elephant is an animal  [from steps 1, 5]",
+"  (7) Contradiction  [from steps 4, 6]"
+],
+  "timestamp": "2026-06-12T21:17:32Z"
+}

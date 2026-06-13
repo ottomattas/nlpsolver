@@ -1,0 +1,743 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 6,
+  "input_text": "Elephants are animals. Bears eat all boxers. John is not in the box. The manager, Anna, called Eve. A blue square is cool. The ball was kicked by Mike. Penguins live in the water. The student carrying the books greeted the teacher. Birds fly or swim. Who is an animal?",
+  "expected_answer": "An elephant.",
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "An elephant.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Elephants are animals.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Elephants are animals.",
+          "type": "strict_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Bears eat all boxers.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Bears eat all boxers.",
+          "type": "normal_rule",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "boxers", "type": "generic"}
+          ],
+          "actions": [{"root": "eat", "mode": "habitual", "roles": {"target": "boxers"}}],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "John is not in the box.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "John 1 is not in the box 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "box 2", "type": "concrete", "category": "artifact"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The manager, Anna, called Eve.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The manager Anna 3 called Eve 4.",
+          "type": "situation",
+          "entities": [{"id": "Anna 3", "type": "concrete", "category": "person"},
+            {"id": "Eve 4", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "call", "mode": "event", "roles": {"actor": "Anna 3", "target": "Eve 4"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A blue square is cool.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "A blue square 5 is cool.",
+          "type": "situation",
+          "entities": [{"id": "square 5", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["blue","none","square"], ["cool","none","square"]]
+        }
+      ]
+    },
+    {
+      "raw": "The ball was kicked by Mike.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Mike 6 kicked the ball 7.",
+          "type": "situation",
+          "entities": [{"id": "Mike 6", "type": "concrete", "category": "person"},
+            {"id": "ball 7", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "kick", "mode": "event", "roles": {"actor": "Mike 6", "target": "ball 7"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Penguins live in the water.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Penguins live in the water.",
+          "type": "normal_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"},
+            {"id": "water", "type": "generic", "scope": "kind", "category": "substance"}
+          ],
+          "actions": [{
+              "root": "live",
+              "mode": "habitual",
+              "roles": {"location": "water", "location_prep": "in"}
+            }
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "The student carrying the books greeted the teacher.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "The student 8 carrying the books 9 greeted the teacher 10.",
+          "type": "situation",
+          "entities": [{"id": "student 8", "type": "concrete", "category": "person"},
+            {"id": "books 9", "type": "concrete", "category": "artifact"},
+            {"id": "teacher 10", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "carry", "mode": "event", "roles": {"actor": "student 8", "target": "books 9"}},
+            {
+              "root": "greet",
+              "mode": "event",
+              "roles": {"actor": "student 8", "target": "teacher 10"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Birds fly or swim.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Birds fly or swim.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}, {"root": "swim", "mode": "capability"}],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Who is an animal?",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Which entity is an animal?",
+          "type": "query",
+          "entities": [{"id": "entity", "type": "generic", "wh_placeholder": true},
+            {"id": "animal", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","elephant","X"], ["isa","animal","X"]]]]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bear","X"],
+              ["forall","Y",
+                ["implies",
+                  ["isa","boxer","Y"],
+                  ["normally",
+                    ["exists","E",
+                      ["and",
+                        ["isa","activity","E"],
+                        ["has type","E","eat"],
+                        ["has actor","E","X"],
+                        ["has target","E","Y"],
+                        ["typical","E"]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.99]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","box","box 2"],
+          ["not", ["is rel2","in","John 1","box 2"]]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Anna 3"],
+          ["isa","person","Eve 4"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","call"],
+              ["has actor","E","Anna 3"],
+              ["has target","E","Eve 4"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","square","square 5"],
+          ["has degree property","blue","square 5","none","square"],
+          ["has degree property","cool","square 5","none","square"]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mike 6"],
+          ["isa","ball","ball 7"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","kick"],
+              ["has actor","E","Mike 6"],
+              ["has target","E","ball 7"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","penguin","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","live"],
+                    ["has actor","E","X"],
+                    ["has location","E","water","in"],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S7",0.99]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","student 8"],
+          ["isa","book","books 9"],
+          ["isa","person","teacher 10"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","carry"],
+              ["has actor","E1","student 8"],
+              ["has target","E1","books 9"],
+              ["has time","E1","past","in"]
+            ]
+          ],
+          ["exists","E2",
+            ["and",
+              ["isa","activity","E2"],
+              ["has type","E2","greet"],
+              ["has actor","E2","student 8"],
+              ["has target","E2","teacher 10"],
+              ["has time","E2","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["or",
+                  ["exists","E1",
+                    ["and",
+                      ["isa","activity","E1"],
+                      ["has type","E1","fly"],
+                      ["has actor","E1","X"],
+                      ["capability","E1"]
+                    ]
+                  ],
+                  ["exists","E2",
+                    ["and",
+                      ["isa","activity","E2"],
+                      ["has type","E2","swim"],
+                      ["has actor","E2","X"],
+                      ["capability","E2"]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S9",0.99]
+      ]
+    ],
+    ["@id", "S10", ["ask", "X", ["isa","animal","X"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S8",
+ "@logic": ["isa","student","#:student 8"],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "entity_S8",
+ "@logic": ["isa","book","#:books 9"],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "entity_S8",
+ "@logic": ["isa","teacher","#:teacher 10"],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"]],
+ "@nl": "Elephants are animals."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"], ["-isa","boxer","?:Y"], ["isa", "activity", ["sk0","?:X"]]],
+ "@nl": "Bears eat all boxers."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has type", ["sk0","?:X"], "eat", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Bears eat all boxers."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has actor", ["sk0","?:X"], "?:X", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Bears eat all boxers."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["has target", ["sk0","?:X"], "?:Y", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]
+           ],
+ "@nl": "Bears eat all boxers."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","boxer","?:Y"],
+            ["typical", ["sk0","?:X"], ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$block", ["$","boxer",1], ["$not", ["typical", ["sk0","?:X"], ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Bears eat all boxers."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is not in the box 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","box","#:box 2"],
+ "@nl": "John 1 is not in the box 2."},
+{"@name": "sent_S3",
+ "@logic": ["-is rel2", "in", "#:John 1", "#:box 2", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "John 1 is not in the box 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Anna 3"],
+ "@nl": "The manager Anna 3 called Eve 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Eve 4"],
+ "@nl": "The manager Anna 3 called Eve 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The manager Anna 3 called Eve 4."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "call", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The manager Anna 3 called Eve 4."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk1_activity", "#:Anna 3", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The manager Anna 3 called Eve 4."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk1_activity", "#:Eve 4", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The manager Anna 3 called Eve 4."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The manager Anna 3 called Eve 4."},
+{"@name": "sent_S5",
+ "@logic": ["-isa","round","#:square 5"],
+ "@nl": "A blue square 5 is cool."},
+{"@name": "sent_S5",
+ "@logic": ["has property", "blue", "#:square 5", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "A blue square 5 is cool."},
+{"@name": "sent_S5",
+ "@logic": ["-has degree property", "cool", "#:square 5", "none", "round", ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "A blue square 5 is cool."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Mike 6"],
+ "@nl": "Mike 6 kicked the ball 7."},
+{"@name": "sent_S6",
+ "@logic": ["isa","ball","#:ball 7"],
+ "@nl": "Mike 6 kicked the ball 7."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Mike 6 kicked the ball 7."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk2_activity", "kick", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mike 6 kicked the ball 7."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk2_activity", "#:Mike 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mike 6 kicked the ball 7."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk2_activity", "#:ball 7", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mike 6 kicked the ball 7."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "Mike 6 kicked the ball 7."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","penguin","?:X"], ["isa", "activity", ["sk3","?:X"]]],
+ "@nl": "Penguins live in the water."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has type", ["sk3","?:X"], "live", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Penguins live in the water."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has actor", ["sk3","?:X"], "?:X", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Penguins live in the water."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","penguin","?:X"], ["isa", "water", ["sk4","?:X"]]],
+ "@nl": "Penguins live in the water."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","penguin","?:X"],
+            ["has location", ["sk3","?:X"], ["sk4","?:X"], "in", ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]
+           ],
+ "@nl": "Penguins live in the water."},
+{"@name": "sent_S7",
+ "@logic": [["-isa","penguin","?:X"],
+            ["typical", ["sk3","?:X"], ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]],
+            ["$block", ["$","penguin",1], ["$not", ["typical", ["sk3","?:X"], ["$ctxt","?:Fv20","?:Fv19","?:Fv17","?:Fv18"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Penguins live in the water."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:student 8"],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "sent_S8",
+ "@logic": ["isa","book","#:books 9"],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:teacher 10"],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk5_activity", "carry", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk5_activity", "#:student 8", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk5_activity", "#:books 9", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk6_activity"],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk6_activity", "greet", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk6_activity", "#:student 8", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk6_activity", "#:teacher 10", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk6_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The student 8 carrying the books 9 greeted the teacher 10."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["isa", "activity", ["sk7","?:X"]],
+            ["isa", "activity", ["sk8","?:X"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["isa", "activity", ["sk7","?:X"]],
+            ["has type", ["sk8","?:X"], "swim", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["isa", "activity", ["sk7","?:X"]],
+            ["has actor", ["sk8","?:X"], "?:X", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["isa", "activity", ["sk7","?:X"]],
+            ["capability", ["sk8","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk8","?:X"]]]]
+           ],
+ "@confidence": 0.9971,
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk7","?:X"], "fly", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["isa", "activity", ["sk8","?:X"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk7","?:X"], "fly", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["has type", ["sk8","?:X"], "swim", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk7","?:X"], "fly", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["has actor", ["sk8","?:X"], "?:X", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk7","?:X"], "fly", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["capability", ["sk8","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk8","?:X"]]]]
+           ],
+ "@confidence": 0.9971,
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk7","?:X"], "?:X", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["isa", "activity", ["sk8","?:X"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk7","?:X"], "?:X", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["has type", ["sk8","?:X"], "swim", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk7","?:X"], "?:X", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["has actor", ["sk8","?:X"], "?:X", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk7","?:X"], "?:X", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["capability", ["sk8","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk8","?:X"]]]]
+           ],
+ "@confidence": 0.9971,
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["isa", "activity", ["sk8","?:X"]],
+            ["capability", ["sk7","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk7","?:X"]]]]
+           ],
+ "@confidence": 0.9971,
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk8","?:X"], "swim", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["capability", ["sk7","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk7","?:X"]]]]
+           ],
+ "@confidence": 0.9971,
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk8","?:X"], "?:X", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["capability", ["sk7","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk7","?:X"]]]]
+           ],
+ "@confidence": 0.9971,
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","bird","?:X"],
+            ["capability", ["sk7","?:X"]],
+            ["capability", ["sk8","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk8","?:X"]]]]
+           ],
+ "@confidence": 0.9971,
+ "@nl": "Birds fly or swim."},
+{"@name": "sent_S10",
+ "@question": ["isa","animal","?:X"],
+ "@askvars": 1,
+ "@nl": "Which entity is an animal?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","boxer","$some_boxer"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","boxer","$some_not_boxer"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S7",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","swim","?:Fv31"], ["has type","?:E","go","?:Fv31"]],
+ "@confidence": 0.51,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv32"], ["has type","?:E","go","?:Fv32"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv33","?:Fv34","?:Fv35"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv33","?:Fv34","?:Fv35"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv36","?:Fv37","?:Fv38"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv36","?:Fv37","?:Fv38"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "pop_what",
+ "@logic": ["isa","ball","$some_ball"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","book","$some_books"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","box","$some_box"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","book","$some_book"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","person","$some_person"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","student","$some_student"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["isa","teacher","$some_teacher"],
+ "@nl": "[population: class witnesses for what-query]"},
+{"@name": "pop_what",
+ "@logic": ["-isa","round","$some_square"],
+ "@nl": "[population: class witnesses for what-query]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": [["$ans","$some_elephant"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S1","assumption",1], [["-isa","elephant","?:X"], ["isa","animal","?:X"]]],
+          [2, ["in","sent_S1","assumption",1], [["isa","elephant","$some_elephant"]]],
+          [3, ["mp",1,2,"fromassumption",1], [["isa","animal","$some_elephant"]]],
+          [4, ["in","sent_S10","goal",1], [["-isa","animal","?:X"], ["$ans","?:X"]]],
+          [5, ["mp",3,4,"fromga",1], [["$ans","$some_elephant"]]]
+        ]
+      },
+      {
+        "answer": [["$ans","$some_animal"]],
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S1","assumption",1], [["isa","animal","$some_animal"]]],
+          [2, ["in","sent_S10","goal",1], [["-isa","animal","?:X"], ["$ans","?:X"]]],
+          [3, ["mp",1,2,"fromga",1], [["$ans","$some_animal"]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Elephants are animals.",
+"  (2) Who is an animal?",
+"Proof steps:",
+"  (1) If some X is an elephant then X is an animal  [sentence 1]",
+"  (2) An elephant is an elephant  [sentence 1]",
+"  (3) An elephant is an animal  [from steps 1, 2]",
+"  (4) X is an answer  [from question]",
+"  (5) An elephant is an answer  [from steps 3, 4]"
+],
+  "timestamp": "2026-06-12T21:16:02Z"
+}

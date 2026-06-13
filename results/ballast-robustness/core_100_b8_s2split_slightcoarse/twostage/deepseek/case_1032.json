@@ -1,0 +1,816 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 1032,
+  "input_text": "John is a not strong elephant. Probably Tallinn is in Estonia. If X1 is not a parent of Y1, Y1 is not a child of X1. The red straw is 10 meters long. The house was built by Tom. The cat sat on the mat and purred. The hand of a man is nice. Mr Dursley is an American. Bears can eat berries. Tom destroyed the house?",
+  "expected_answer": null,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is a not strong elephant.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is an elephant.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}]
+        },
+        {
+          "unit_id": "S2",
+          "text": "John 1 is not strong.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["strong","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Probably Tallinn is in Estonia.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Tallinn 1 is in Estonia 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Estonia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is not a parent of Y1, Y1 is not a child of X1.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "If X1 is not a parent of Y1, Y1 is not a child of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"}, {"id": "Y1", "type": "generic"}]
+        }
+      ]
+    },
+    {
+      "raw": "The red straw is 10 meters long.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "The red straw 1 is 10 meters long.",
+          "type": "real",
+          "entities": [{"id": "straw 1", "type": "concrete", "category": "artifact"},
+            {"id": "10 meters", "type": "concrete", "category": "measure"}
+          ],
+          "adjectives": [["red","none","none"]]
+        }
+      ]
+    },
+    {
+      "raw": "The house was built by Tom.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Tom 1 built the house 2.",
+          "type": "situation",
+          "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"},
+            {"id": "house 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "build", "mode": "event", "roles": {"agent": "Tom 1", "target": "house 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The cat sat on the mat and purred.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "The cat 1 sat on the mat 2.",
+          "type": "situation",
+          "entities": [{"id": "cat 1", "type": "concrete", "category": "animal"},
+            {"id": "mat 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "sit", "mode": "event", "roles": {"location": "mat 2", "location_prep": "on"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S8",
+          "text": "The cat 1 purred.",
+          "type": "situation",
+          "entities": [{"id": "cat 1", "type": "concrete", "category": "animal"}],
+          "actions": [{"root": "purr", "mode": "event"}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The hand of a man is nice.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "The hand 1 of the man 2 is nice.",
+          "type": "situation",
+          "entities": [{"id": "hand 1", "type": "concrete", "text": "hand"},
+            {"id": "man 2", "type": "concrete", "category": "person"}
+          ],
+          "adjectives": [["nice","none","hand"]],
+          "definites": [["hand of","hand 1","man 2"]]
+        },
+        {
+          "unit_id": "S10",
+          "text": "The hand 1 is the hand of the man 2.",
+          "type": "situation",
+          "entities": [{"id": "hand 1", "type": "concrete", "text": "hand"},
+            {"id": "man 2", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is an American.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Mr Dursley 1 is an American.",
+          "type": "real",
+          "entities": [{"id": "Mr Dursley 1", "type": "concrete", "category": "person"}]
+        }
+      ]
+    },
+    {
+      "raw": "Bears can eat berries.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Bears can eat berries.",
+          "type": "normal_rule",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "dependent", "category": "plant"}
+          ],
+          "actions": [{"root": "eat", "mode": "capability", "roles": {"target": "berries"}}]
+        }
+      ]
+    },
+    {
+      "raw": "Tom destroyed the house?",
+      "units": [{
+          "unit_id": "S13",
+          "text": "Did Tom 1 destroy the house 2?",
+          "type": "query",
+          "entities": [{"id": "Tom 1", "type": "concrete", "category": "person"},
+            {"id": "house 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "destroy", "mode": "event", "roles": {"agent": "Tom 1", "target": "house 2"}}],
+          "pre_state": "W1",
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["isa","elephant","John 1"]]],
+    ["@id","S2",
+      ["holds", "W0", ["not", ["has degree property","strong","John 1","none","person"]]]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Estonia"]
+        ],
+        ["@p","S3",0.8]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies",
+              ["not", ["is rel2","parent of","X1","Y1"]],
+              ["not", ["is rel2","child of","Y1","X1"]]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","straw","straw 1"],
+          ["has degree property","red","straw 1","none","none"],
+          ["=", ["$measure_of","length","straw 1","W0"], ["$measure",10,"meter"]]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Tom 1"],
+            ["isa","house","house 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","build"],
+                ["has actor","E","Tom 1"],
+                ["has target","E","house 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","cat","cat 1"],
+          ["isa","mat","mat 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","sit"],
+              ["has actor","E","cat 1"],
+              ["has location","E","mat 2","on"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","cat","cat 1"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","purr"],
+              ["has actor","E","cat 1"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","hand","hand 1"],
+            ["isa","man","man 2"],
+            ["has part","man 2","hand 1"],
+            ["has degree property","nice","hand 1","none","hand"]
+          ]
+        ],
+        ["@definite","S9","W0","hand of","man 2","hand 1"]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["and", ["isa","hand","hand 1"], ["isa","man","man 2"], ["has part","man 2","hand 1"]]
+      ]
+    ],
+    ["@id", "S11", ["holds", "W0", ["isa","American","Mr Dursley 1"]]],
+    ["@id","S12",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","bear","X"],
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","eat"],
+                  ["has actor","E","X"],
+                  ["exists", "Y", ["and", ["isa","berry","Y"], ["has target","E","Y"]]],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S13",
+      ["question",
+        ["and",
+          ["isa","person","Tom 1"],
+          ["isa","house","house 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","destroy"],
+              ["has actor","E","Tom 1"],
+              ["has target","E","house 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_fixes": ["json: removed content after top-level close bracket"],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is an elephant."},
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Estonia 2"],
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "entity_S5",
+ "@logic": ["isa","measure","10 meters"],
+ "@nl": "The red straw 1 is 10 meters long."},
+{"@name": "entity_S7",
+ "@logic": ["isa","animal","#:cat 1"],
+ "@nl": "The cat 1 sat on the mat 2."},
+{"@name": "entity_S9",
+ "@logic": ["isa","person","#:man 2"],
+ "@nl": "The hand 1 of the man 2 is nice."},
+{"@name": "entity_S11",
+ "@logic": ["isa","person","#:Mr Dursley 1"],
+ "@nl": "Mr Dursley 1 is an American."},
+{"@name": "sent_S1",
+ "@logic": ["isa","elephant","#:John 1"],
+ "@nl": "John 1 is an elephant."},
+{"@name": "sent_S2",
+ "@logic": ["-has degree property", "strong", "#:John 1", "none", "person", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@nl": "John 1 is not strong."},
+{"@name": "sent_S3",
+ "@logic": ["is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","present","W0","?:Fv5","?:Fv6"]],
+ "@confidence": 0.6,
+ "@nl": "Tallinn 1 is in Estonia 2."},
+{"@name": "sent_S4",
+ "@logic": [["is rel2", "parent of", "?:X1", "?:Y1", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["-is rel2", "child of", "?:Y1", "?:X1", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]
+           ],
+ "@nl": "If X1 is not a parent of Y1, Y1 is not a child of X1."},
+{"@name": "sent_S5",
+ "@logic": ["isa","straw","#:straw 1"],
+ "@nl": "The red straw 1 is 10 meters long."},
+{"@name": "sent_S5",
+ "@logic": ["has property", "red", "#:straw 1", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "The red straw 1 is 10 meters long."},
+{"@name": "sent_S5",
+ "@logic": ["=", ["$measure_of","length","#:straw 1","W0"], ["$list",10,"#:meter"]],
+ "@nl": "The red straw 1 is 10 meters long."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Tom 1"],
+ "@nl": "Tom 1 built the house 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","house","#:house 2"],
+ "@nl": "Tom 1 built the house 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Tom 1 built the house 2."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk0_activity", "build", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Tom 1 built the house 2."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk0_activity", "#:Tom 1", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Tom 1 built the house 2."},
+{"@name": "sent_S6",
+ "@logic": ["has target", "sk0_activity", "#:house 2", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Tom 1 built the house 2."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Tom 1 built the house 2."},
+{"@name": "sent_S6",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Tom 1 built the house 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","cat","#:cat 1"],
+ "@nl": "The cat 1 sat on the mat 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","mat","#:mat 2"],
+ "@nl": "The cat 1 sat on the mat 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The cat 1 sat on the mat 2."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk1_activity", "sit", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The cat 1 sat on the mat 2."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk1_activity", "#:cat 1", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The cat 1 sat on the mat 2."},
+{"@name": "sent_S7",
+ "@logic": ["has location", "sk1_activity", "#:mat 2", "on", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The cat 1 sat on the mat 2."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The cat 1 sat on the mat 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","cat","#:cat 1"],
+ "@nl": "The cat 1 purred."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "The cat 1 purred."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk2_activity", "purr", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The cat 1 purred."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk2_activity", "#:cat 1", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The cat 1 purred."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The cat 1 purred."},
+{"@name": "sent_S9",
+ "@logic": ["isa", "hand", ["$theof1", "hand", "#:man 2", ["$ctxt","present","W0","?:Fv19","?:Fv20"]]],
+ "@nl": "The hand 1 of the man 2 is nice."},
+{"@name": "sent_S9",
+ "@logic": ["isa","man","#:man 2"],
+ "@nl": "The hand 1 of the man 2 is nice."},
+{"@name": "sent_S9",
+ "@logic": ["has part", "#:man 2", ["$theof1", "hand", "#:man 2", ["$ctxt","present","W0","?:Fv19","?:Fv20"]], ["$ctxt","present","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The hand 1 of the man 2 is nice."},
+{"@name": "sent_S9",
+ "@logic": ["has degree property", "good", ["$theof1", "hand", "#:man 2", ["$ctxt","present","W0","?:Fv19","?:Fv20"]], "none", "hand", ["$ctxt","present","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The hand 1 of the man 2 is nice."},
+{"@name": "sent_S10",
+ "@logic": ["isa", "hand", ["$theof1", "hand", "#:man 2", ["$ctxt","present","W0","?:Fv19","?:Fv20"]]],
+ "@nl": "The hand 1 is the hand of the man 2."},
+{"@name": "sent_S10",
+ "@logic": ["isa","man","#:man 2"],
+ "@nl": "The hand 1 is the hand of the man 2."},
+{"@name": "sent_S10",
+ "@logic": ["has part", "#:man 2", ["$theof1", "hand", "#:man 2", ["$ctxt","present","W0","?:Fv19","?:Fv20"]], ["$ctxt","present","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The hand 1 is the hand of the man 2."},
+{"@name": "sent_S11",
+ "@logic": ["isa","american","#:Mr Dursley 1"],
+ "@nl": "Mr Dursley 1 is an American."},
+{"@name": "sent_S12",
+ "@logic": [["-isa","bear","?:X"], ["isa", "activity", ["sk3","?:X"]]],
+ "@nl": "Bears can eat berries."},
+{"@name": "sent_S12",
+ "@logic": [["-isa","bear","?:X"],
+            ["has type", ["sk3","?:X"], "eat", ["$ctxt","?:Fv28","?:Fv27","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Bears can eat berries."},
+{"@name": "sent_S12",
+ "@logic": [["-isa","bear","?:X"],
+            ["has actor", ["sk3","?:X"], "?:X", ["$ctxt","?:Fv28","?:Fv27","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Bears can eat berries."},
+{"@name": "sent_S12",
+ "@logic": [["-isa","bear","?:X"], ["isa", "berry", ["sk4","?:X"]]],
+ "@nl": "Bears can eat berries."},
+{"@name": "sent_S12",
+ "@logic": [["-isa","bear","?:X"],
+            ["has target", ["sk3","?:X"], ["sk4","?:X"], ["$ctxt","?:Fv28","?:Fv27","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Bears can eat berries."},
+{"@name": "sent_S12",
+ "@logic": [["-isa","bear","?:X"],
+            ["capability", ["sk3","?:X"]],
+            ["$block", ["$","bear",1], ["$not", ["capability", ["sk3","?:X"]]]]
+           ],
+ "@nl": "Bears can eat berries."},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","person","#:Tom 1"]],
+ "@nl": "Did Tom 1 destroy the house 2?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","house","#:house 2"]],
+ "@nl": "Did Tom 1 destroy the house 2?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk5_activity"]],
+ "@nl": "Did Tom 1 destroy the house 2?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk5_activity", "destroy", ["$ctxt","past","?:Fv38","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Tom 1 destroy the house 2?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk5_activity", "#:Tom 1", ["$ctxt","past","?:Fv40","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Tom 1 destroy the house 2?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk5_activity", "#:house 2", ["$ctxt","past","?:Fv42","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Tom 1 destroy the house 2?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk5_activity", "past", "in", ["$ctxt","past","?:Fv44","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Tom 1 destroy the house 2?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-isa","person","#:Tom 1"],
+            ["-isa","house","#:house 2"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "destroy", ["$ctxt","past","?:Fv52","?:Fv29","?:Fv30"]],
+            ["-has actor", "?:E", "#:Tom 1", ["$ctxt","past","?:Fv54","?:Fv29","?:Fv30"]],
+            ["-has target", "?:E", "#:house 2", ["$ctxt","past","?:Fv56","?:Fv29","?:Fv30"]],
+            ["$defq0"]
+           ],
+ "@nl": "Did Tom 1 destroy the house 2?"},
+{"@name": "sent_S13",
+ "@question": ["$defq0"],
+ "@nl": "Did Tom 1 destroy the house 2?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:man 2", ["$theof1", "hand", "#:man 2", ["$ctxt","present","W0","?:Fv19","?:Fv20"]], ["$ctxt","present","W0","?:Fv19","?:Fv20"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "hand of", ["$theof1","hand","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "hand", ["$theof1","hand","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "destroy", ["$ctxt","?:Fv60","?:Fv61","?:Fv63","?:Fv64"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv60","?:Fv61","?:Fv63","?:Fv64"]],
+            ["-next","?:Fv61","?:Fv62"],
+            ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv62","?:Fv63","?:Fv64"]],
+            ["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv62","?:Fv63","?:Fv64"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "destroy", "?:X", ["$ctxt","?:Fv65","?:Fv66","?:Fv68","?:Fv69"]],
+            ["-next","?:Fv66","?:Fv67"],
+            ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv67","?:Fv68","?:Fv69"]],
+            ["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv67","?:Fv68","?:Fv69"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["isa","berry","$some_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","berry","$some_not_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "strong", "$some_strong_person", "none", "person", ["$ctxt","?:Fv113","?:Fv110","?:Fv111","?:Fv112"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","person","$some_strong_person"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","place","?:Fv70"], ["has type","?:E","sit","?:Fv70"]],
+ "@confidence": 0.74,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","sit","?:Fv71"], ["has type","?:E","place","?:Fv71"]],
+ "@confidence": 0.74,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","hand","?:Fv72"], ["has type","?:E","give","?:Fv72"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","house","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","house","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_carrier_lift",
+ "@logic": [["-isa","mat","?:X","?:Fv73"], ["isa","carrier","?:X","?:Fv73"]],
+ "@nl": "[generated: frm_carrier_lift]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv74","?:Fv75","?:Fv76"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv74","?:Fv75","?:Fv76"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv74","?:Fv75","?:Fv76"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv77","?:Fv78","?:Fv79"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv77","?:Fv78","?:Fv79"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv77","?:Fv78","?:Fv79"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv118", ["$ctxt","past","?:Fv80","?:Fv81","?:Fv82"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv119", ["$ctxt","present","?:Fv80","?:Fv81","?:Fv82"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv120", ["$ctxt","present","?:Fv80","?:Fv81","?:Fv82"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv83","?:Fv84","?:Fv85"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv83","?:Fv84","?:Fv85"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv83","?:Fv84","?:Fv85"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "llm_usage": [{
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34156,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1340,
+      "raw": {
+        "prompt_tokens": 34156,
+        "completion_tokens": 1340,
+        "total_tokens": 35496,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1275},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 236
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34151,
+      "cached_input_tokens": 33920,
+      "output_tokens": 794,
+      "raw": {
+        "prompt_tokens": 34151,
+        "completion_tokens": 794,
+        "total_tokens": 34945,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 734},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 231
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34124,
+      "cached_input_tokens": 34048,
+      "output_tokens": 396,
+      "raw": {
+        "prompt_tokens": 34124,
+        "completion_tokens": 396,
+        "total_tokens": 34520,
+        "prompt_tokens_details": {"cached_tokens": 34048},
+        "completion_tokens_details": {"reasoning_tokens": 325},
+        "prompt_cache_hit_tokens": 34048,
+        "prompt_cache_miss_tokens": 76
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34131,
+      "cached_input_tokens": 33920,
+      "output_tokens": 816,
+      "raw": {
+        "prompt_tokens": 34131,
+        "completion_tokens": 816,
+        "total_tokens": 34947,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 740},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 211
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34172,
+      "cached_input_tokens": 33920,
+      "output_tokens": 946,
+      "raw": {
+        "prompt_tokens": 34172,
+        "completion_tokens": 946,
+        "total_tokens": 35118,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 807},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 252
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34237,
+      "cached_input_tokens": 33920,
+      "output_tokens": 984,
+      "raw": {
+        "prompt_tokens": 34237,
+        "completion_tokens": 984,
+        "total_tokens": 35221,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 780},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 317
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34233,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1432,
+      "raw": {
+        "prompt_tokens": 34233,
+        "completion_tokens": 1432,
+        "total_tokens": 35665,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1289},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 313
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34096,
+      "cached_input_tokens": 33920,
+      "output_tokens": 359,
+      "raw": {
+        "prompt_tokens": 34096,
+        "completion_tokens": 359,
+        "total_tokens": 34455,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 328},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 176
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34139,
+      "cached_input_tokens": 33920,
+      "output_tokens": 962,
+      "raw": {
+        "prompt_tokens": 34139,
+        "completion_tokens": 962,
+        "total_tokens": 35101,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 859},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 219
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34162,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1000,
+      "raw": {
+        "prompt_tokens": 34162,
+        "completion_tokens": 1000,
+        "total_tokens": 35162,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 908},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 242
+      }
+    }
+  ],
+  "timestamp": "2026-06-13T00:32:57Z"
+}

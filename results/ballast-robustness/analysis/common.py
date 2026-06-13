@@ -30,19 +30,26 @@ PRICES = {
 }
 
 
-def dose_dir(dose, model, source="snapshot"):
-  """Directory of per-case JSONs for (dose, model)."""
+def dose_dir(dose, model, source="snapshot", tag=None):
+  """Directory of per-case JSONs for (dose, model).
+
+  tag selects a condition variant cell (e.g. 'slightcoarse',
+  's2split_slightcoarse') written to core_100_b<dose>_<tag>/; None = the
+  plain two-stage baseline cell.  b0 is always the untagged Gate-1 snapshot.
+  """
   if dose == 0:
     return os.path.join(PA_ROOT, "core_100", "twostage", model)
   testname = f"core_100_b{dose}"
+  if tag:
+    testname += "_" + tag
   root = LIVE_ROOT if source == "live" else BR_ROOT
   return os.path.join(root, testname, "twostage", model)
 
 
-def load(dose, model, source="snapshot"):
-  """{case_id: case_dict} for one (dose, model)."""
+def load(dose, model, source="snapshot", tag=None):
+  """{case_id: case_dict} for one (dose, model[, tag])."""
   out = {}
-  for fp in glob.glob(os.path.join(dose_dir(dose, model, source), "case_*.json")):
+  for fp in glob.glob(os.path.join(dose_dir(dose, model, source, tag), "case_*.json")):
     try:
       d = json.load(open(fp))
     except Exception:

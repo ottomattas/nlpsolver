@@ -1,0 +1,562 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 1389,
+  "input_text": "Foxes cannot fly. Most bears are big. Sue is a true patriot. Mary's leg is clean. The road leading to the village was narrow. Mr Dursley is an American. If animal or bird is nice and simple, it is cute. Eve sent Tom a long letter. Jessica is a mouse. John is cute?",
+  "expected_answer": null,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Foxes cannot fly.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Foxes cannot fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "foxes", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "Most bears are big.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Most bears are big.",
+          "type": "normal_rule",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"}],
+          "adjectives": [["big","none","bear"]],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "Sue is a true patriot.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Sue 1 is a true patriot.",
+          "type": "real",
+          "entities": [{"id": "Sue 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["true","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mary's leg is clean.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mary 1's leg 2 is clean.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "leg 2", "type": "concrete", "text": "leg"}
+          ],
+          "adjectives": [["clean","none","leg"]],
+          "definites": [["leg of","leg 2","Mary 1"]]
+        },
+        {
+          "unit_id": "S5",
+          "text": "The leg 2 is the leg of Mary 1.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "leg 2", "type": "concrete", "text": "leg"}
+          ],
+          "definites": [["leg of","leg 2","Mary 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "The road leading to the village was narrow.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The road 1 leading to the village 2 was narrow.",
+          "type": "situation",
+          "entities": [{"id": "road 1", "type": "concrete", "category": "place"},
+            {"id": "village 2", "type": "concrete", "category": "place"}
+          ],
+          "adjectives": [["narrow","none","road"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is an American.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Mr Dursley 1 is an American.",
+          "type": "real",
+          "entities": [{"id": "Mr Dursley 1", "type": "concrete", "category": "person"}]
+        }
+      ]
+    },
+    {
+      "raw": "If animal or bird is nice and simple, it is cute.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "If an animal or a bird is nice and simple, the animal or the bird is cute.",
+          "type": "normal_rule",
+          "entities": [{"id": "animal", "type": "generic", "category": "animal"},
+            {"id": "bird", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["nice","none","entity"], ["simple","none","entity"], ["cute","none","entity"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "Eve sent Tom a long letter.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Eve 1 sent Tom 2 a long letter 3.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "Tom 2", "type": "concrete", "category": "person"},
+            {"id": "letter 3", "type": "concrete", "category": "artifact"}
+          ],
+          "adjectives": [["long","none","letter"]],
+          "actions": [{
+              "root": "send",
+              "mode": "event",
+              "roles": {"actor": "Eve 1", "recipient": "Tom 2", "target": "letter 3"}
+            }
+          ],
+          "time": "past",
+          "pre_state": "W0",
+          "next_state": "W1"
+        }
+      ]
+    },
+    {
+      "raw": "Jessica is a mouse.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Jessica 1 is a mouse.",
+          "type": "real",
+          "entities": [{"id": "Jessica 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "John is cute?",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Is John 1 cute?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["cute","none","person"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","fox","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bear","X"],
+              ["normally", ["has degree property","big","X","none","bear"]]
+            ]
+          ]
+        ],
+        ["@p","S2",0.8]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and", ["isa","patriot","Sue 1"], ["has degree property","true","Sue 1","none","person"]]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","leg","leg 2"],
+            ["has part","Mary 1","leg 2"],
+            ["has degree property","clean","leg 2","none","leg"]
+          ]
+        ],
+        ["@definite","S4","W0","leg of","Mary 1","leg 2"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds", "W0", ["and", ["isa","leg","leg 2"], ["has part","Mary 1","leg 2"]]],
+        ["@definite","S5","W0","leg of","Mary 1","leg 2"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","road","road 1"],
+            ["isa","village","village 2"],
+            ["is rel2","leads to","road 1","village 2"],
+            ["has degree property","narrow","road 1","none","road"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S7", ["holds", "W0", ["isa","American","Mr Dursley 1"]]],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["normally",
+              ["implies",
+                ["and",
+                  ["or", ["isa","animal","X"], ["isa","bird","X"]],
+                  ["has degree property","nice","X","none","entity"],
+                  ["has degree property","simple","X","none","entity"]
+                ],
+                ["has degree property","cute","X","none","entity"]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S8",0.95]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Eve 1"],
+            ["isa","person","Tom 2"],
+            ["isa","letter","letter 3"],
+            ["has degree property","long","letter 3","none","letter"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","send"],
+                ["has actor","E","Eve 1"],
+                ["has recipient","E","Tom 2"],
+                ["has target","E","letter 3"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id", "S10", ["holds", "W0", ["isa","mouse","Jessica 1"]]],
+    ["@id", "S11", ["question", ["has degree property","cute","John 1","none","person"]]]
+  ],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","person","#:Sue 1"],
+ "@nl": "Sue 1 is a true patriot."},
+{"@name": "entity_S4",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1's leg 2 is clean."},
+{"@name": "entity_S7",
+ "@logic": ["isa","person","#:Mr Dursley 1"],
+ "@nl": "Mr Dursley 1 is an American."},
+{"@name": "entity_S10",
+ "@logic": ["isa","animal","#:Jessica 1"],
+ "@nl": "Jessica 1 is a mouse."},
+{"@name": "entity_S11",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "Is John 1 cute?"},
+{"@name": "sent_S1",
+ "@logic": [["-isa","fox","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Foxes cannot fly."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","bear","?:X"],
+            ["has degree property", "big", "?:X", "none", "bear", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$block", ["$","bear",1], ["$not", ["has degree property", "big", "?:X", "none", "bear", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "Most bears are big."},
+{"@name": "sent_S3",
+ "@logic": ["isa","patriot","#:Sue 1"],
+ "@nl": "Sue 1 is a true patriot."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "true", "#:Sue 1", "none", "person", ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Sue 1 is a true patriot."},
+{"@name": "sent_S4",
+ "@logic": ["isa", "leg", ["$theof1", "leg", "#:Mary 1", ["$ctxt","present","W0","?:Fv11","?:Fv12"]]],
+ "@nl": "Mary 1's leg 2 is clean."},
+{"@name": "sent_S4",
+ "@logic": ["has part", "#:Mary 1", ["$theof1", "leg", "#:Mary 1", ["$ctxt","present","W0","?:Fv11","?:Fv12"]], ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 1's leg 2 is clean."},
+{"@name": "sent_S4",
+ "@logic": ["has degree property", "clean", ["$theof1", "leg", "#:Mary 1", ["$ctxt","present","W0","?:Fv11","?:Fv12"]], "none", "leg", ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mary 1's leg 2 is clean."},
+{"@name": "sent_S5",
+ "@logic": ["isa", "leg", ["$theof1", "leg", "#:Mary 1", ["$ctxt","present","W0","?:Fv11","?:Fv12"]]],
+ "@nl": "The leg 2 is the leg of Mary 1."},
+{"@name": "sent_S5",
+ "@logic": ["has part", "#:Mary 1", ["$theof1", "leg", "#:Mary 1", ["$ctxt","present","W0","?:Fv11","?:Fv12"]], ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "The leg 2 is the leg of Mary 1."},
+{"@name": "sent_S6",
+ "@logic": ["isa","road","#:road 1"],
+ "@nl": "The road 1 leading to the village 2 was narrow."},
+{"@name": "sent_S6",
+ "@logic": ["isa","village","#:village 2"],
+ "@nl": "The road 1 leading to the village 2 was narrow."},
+{"@name": "sent_S6",
+ "@logic": ["is rel2", "leads to", "#:road 1", "#:village 2", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The road 1 leading to the village 2 was narrow."},
+{"@name": "sent_S6",
+ "@logic": ["-has degree property", "wide", "#:road 1", "none", "road", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The road 1 leading to the village 2 was narrow."},
+{"@name": "sent_S7",
+ "@logic": ["isa","american","#:Mr Dursley 1"],
+ "@nl": "Mr Dursley 1 is an American."},
+{"@name": "sent_S8",
+ "@logic": [["-isa","animal","?:X"],
+            ["-has degree property", "good", "?:X", "none", "?:Fv138", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]],
+            ["-has degree property", "simple", "?:X", "none", "?:Fv139", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]],
+            ["has degree property", "cute", "?:X", "none", "?:Fv140", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]],
+            ["$block", ["$","animal",3], ["$not", ["has degree property", "cute", "?:X", "none", "?:Fv141", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]]]]
+           ],
+ "@confidence": 0.9487,
+ "@nl": "If an animal or a bird is nice and simple, the animal or the bird is cute."},
+{"@name": "sent_S8",
+ "@logic": [["-isa","bird","?:X"],
+            ["-has degree property", "good", "?:X", "none", "?:Fv142", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]],
+            ["-has degree property", "simple", "?:X", "none", "?:Fv143", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]],
+            ["has degree property", "cute", "?:X", "none", "?:Fv144", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]],
+            ["$block", ["$","bird",3], ["$not", ["has degree property", "cute", "?:X", "none", "?:Fv145", ["$ctxt","?:Fv22","?:Fv21","?:Fv19","?:Fv20"]]]]
+           ],
+ "@confidence": 0.9487,
+ "@nl": "If an animal or a bird is nice and simple, the animal or the bird is cute."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 sent Tom 2 a long letter 3."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Tom 2"],
+ "@nl": "Eve 1 sent Tom 2 a long letter 3."},
+{"@name": "sent_S9",
+ "@logic": ["isa","letter","#:letter 3"],
+ "@nl": "Eve 1 sent Tom 2 a long letter 3."},
+{"@name": "sent_S9",
+ "@logic": ["has degree property", "long", "#:letter 3", "none", "letter", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Eve 1 sent Tom 2 a long letter 3."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Eve 1 sent Tom 2 a long letter 3."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk0_activity", "give", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Eve 1 sent Tom 2 a long letter 3."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk0_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Eve 1 sent Tom 2 a long letter 3."},
+{"@name": "sent_S9",
+ "@logic": ["has recipient", "sk0_activity", "#:Tom 2", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Eve 1 sent Tom 2 a long letter 3."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk0_activity", "#:letter 3", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Eve 1 sent Tom 2 a long letter 3."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Eve 1 sent Tom 2 a long letter 3."},
+{"@name": "sent_S9",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Eve 1 sent Tom 2 a long letter 3."},
+{"@name": "sent_S10",
+ "@logic": ["isa","mouse","#:Jessica 1"],
+ "@nl": "Jessica 1 is a mouse."},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "cute", "#:John 1", "none", "?:Fv161", ["$ctxt","present","W1","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Is John 1 cute?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-has degree property", "cute", "#:John 1", "none", "?:Fv162", ["$ctxt","present","W1","?:Fv27","?:Fv28"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 cute?"},
+{"@name": "sent_S11",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 cute?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "cute", "#:John 1", "none", "person", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "cute", "#:John 1", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "cute", "#:John 1", "none", "person", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 cute?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:Mary 1", ["$theof1", "leg", "#:Mary 1", ["$ctxt","present","W0","?:Fv11","?:Fv12"]], ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:Mary 1", ["$theof1", "leg", "#:Mary 1", ["$ctxt","present","W0","?:Fv11","?:Fv12"]], ["$ctxt","present","W0","?:Fv11","?:Fv12"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "leg of", ["$theof1","leg","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "leg", ["$theof1","leg","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","fox","$some_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","fox","$some_not_fox"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "big", "$some_big_bear", "none", "bear", ["$ctxt","?:Fv93","?:Fv90","?:Fv91","?:Fv92"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_big_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "big", "$some_not_big_bear", "none", "bear", ["$ctxt","?:Fv101","?:Fv98","?:Fv99","?:Fv100"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "good", "$some_nice_entity", "none", "?:Fv146", ["$ctxt","?:Fv105","?:Fv102","?:Fv103","?:Fv104"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "good", "$some_not_nice_entity", "none", "?:Fv147", ["$ctxt","?:Fv113","?:Fv110","?:Fv111","?:Fv112"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "simple", "$some_simple_entity", "none", "?:Fv148", ["$ctxt","?:Fv117","?:Fv114","?:Fv115","?:Fv116"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "simple", "$some_not_simple_entity", "none", "?:Fv149", ["$ctxt","?:Fv125","?:Fv122","?:Fv123","?:Fv124"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "cute", "$some_cute_entity", "none", "?:Fv150", ["$ctxt","?:Fv129","?:Fv126","?:Fv127","?:Fv128"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S8",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "cute", "$some_not_cute_entity", "none", "?:Fv151", ["$ctxt","?:Fv137","?:Fv134","?:Fv135","?:Fv136"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv30"], ["has type","?:E","go","?:Fv30"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv31"], ["has type","?:E","give","?:Fv31"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv152", ["$ctxt","past","?:Fv32","?:Fv33","?:Fv34"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv153", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv154", ["$ctxt","present","?:Fv32","?:Fv33","?:Fv34"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv35","?:Fv36","?:Fv37"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "none", "?:Fv155", ["$ctxt","past","?:Fv38","?:Fv39","?:Fv40"]],
+            ["has degree property", "long", "?:X", "none", "?:Fv156", ["$ctxt","present","?:Fv38","?:Fv39","?:Fv40"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "none", "?:Fv157", ["$ctxt","present","?:Fv38","?:Fv39","?:Fv40"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv41","?:Fv42","?:Fv43"]],
+            ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv41","?:Fv42","?:Fv43"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv41","?:Fv42","?:Fv43"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "none", "?:Fv158", ["$ctxt","past","?:Fv44","?:Fv45","?:Fv46"]],
+            ["-has degree property", "wide", "?:X", "none", "?:Fv159", ["$ctxt","present","?:Fv44","?:Fv45","?:Fv46"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "none", "?:Fv160", ["$ctxt","present","?:Fv44","?:Fv45","?:Fv46"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv47","?:Fv48","?:Fv49"]],
+            ["-has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv47","?:Fv48","?:Fv49"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv47","?:Fv48","?:Fv49"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has target","?:Esb","?:Ysb","?:Csb"],
+            ["-has recipient","?:Esb","?:Xsb","?:Csb"],
+            ["has recipient","?:Ysb","?:Xsb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "timestamp": "2026-06-12T21:35:20Z"
+}

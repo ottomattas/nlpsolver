@@ -1,0 +1,560 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 519,
+  "input_text": "John was bad. No penguin can fly. The length of Nile is 80 kilometers. Wolves are afraid of sheep. Some elephants are animals. Mr Dursley is an American. The teacher showed the students the map. A promotion was given to Mary. The cat slept on the velvet sofa. Some elephants are not animals?",
+  "expected_answer": null,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "Unknown.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John was bad.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 was bad.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["bad","none","person"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "No penguin can fly.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "No penguin can fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguin", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "The length of Nile is 80 kilometers.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The length 1 of the Nile 2 is 80 kilometers.",
+          "type": "real",
+          "entities": [{"id": "length 1", "type": "concrete", "text": "length"},
+            {
+              "id": "Nile 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            },
+            {"id": "80 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 1","Nile 2"]]
+        },
+        {
+          "unit_id": "S4",
+          "text": "The length 1 is the length of the Nile 2.",
+          "type": "real",
+          "entities": [{"id": "length 1", "type": "concrete", "text": "length"},
+            {
+              "id": "Nile 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Nile"
+            }
+          ],
+          "definites": [["length of","length 1","Nile 2"]]
+        }
+      ]
+    },
+    {
+      "raw": "Wolves are afraid of sheep.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Wolves are afraid of sheep.",
+          "type": "normal_rule",
+          "entities": [{"id": "wolves", "type": "generic", "category": "animal"},
+            {"id": "sheep", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["afraid of","none","wolf"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Some elephants are animals.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "Some elephants are animals.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is an American.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Mr Dursley 1 is an American.",
+          "type": "real",
+          "entities": [{"id": "Mr Dursley 1", "type": "concrete", "category": "person"}]
+        }
+      ]
+    },
+    {
+      "raw": "The teacher showed the students the map.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "The teacher 1 showed the students 2 the map 3.",
+          "type": "situation",
+          "entities": [{"id": "teacher 1", "type": "concrete", "category": "person"},
+            {"id": "students 2", "type": "concrete", "category": "person"},
+            {"id": "map 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 1", "recipient": "students 2", "target": "map 3"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A promotion was given to Mary.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "A promotion 1 was given to Mary 2.",
+          "type": "situation",
+          "entities": [{"id": "promotion 1", "type": "concrete", "category": "abstract"},
+            {"id": "Mary 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "give",
+              "mode": "event",
+              "roles": {"target": "promotion 1", "recipient": "Mary 2"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The cat slept on the velvet sofa.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "The cat 1 slept on the velvet sofa 2.",
+          "type": "situation",
+          "entities": [{"id": "cat 1", "type": "concrete", "category": "animal"},
+            {"id": "sofa 2", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "sleep",
+              "mode": "event",
+              "roles": {"location": "sofa 2", "location_prep": "on"}
+            }
+          ],
+          "adjectives": [["velvet","none","sofa"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Some elephants are not animals?",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Are some elephants not animals?",
+          "type": "query",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "animals", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","person","John 1"], ["has degree property","bad","John 1","none","person"]]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 1"],
+            ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$measure",80,"kilometer"]]
+          ]
+        ],
+        ["@definite","S3","W0","length of","https://en.wikipedia.org/wiki/Nile","length 1"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","length","length 1"],
+            ["is rel2","length of","length 1","https://en.wikipedia.org/wiki/Nile"]
+          ]
+        ],
+        ["@definite","S4","W0","length of","https://en.wikipedia.org/wiki/Nile","length 1"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","wolf","X"],
+              ["forall","Y",
+                ["implies",
+                  ["isa","sheep","Y"],
+                  ["normally", ["has degree rel2","afraid of","X","Y","none","wolf"]]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S5",0.99]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds", "W0", ["exists", "X", ["and", ["isa","elephant","X"], ["isa","animal","X"]]]],
+        ["@p","S6",0.99]
+      ]
+    ],
+    ["@id","S7",
+      ["holds", "W0", ["and", ["isa","person","Mr Dursley 1"], ["isa","American","Mr Dursley 1"]]]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","teacher 1"],
+          ["isa","person","students 2"],
+          ["isa","map","map 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","show"],
+              ["has actor","E","teacher 1"],
+              ["has recipient","E","students 2"],
+              ["has target","E","map 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["and",
+          ["isa","promotion","promotion 1"],
+          ["isa","person","Mary 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","give"],
+              ["has target","E","promotion 1"],
+              ["has recipient","E","Mary 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["and",
+          ["isa","cat","cat 1"],
+          ["isa","sofa","sofa 2"],
+          ["has degree property","velvet","sofa 2","none","sofa"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","sleep"],
+              ["has actor","E","cat 1"],
+              ["has location","E","sofa 2","on"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["question", ["exists", "X", ["and", ["isa","elephant","X"], ["not", ["isa","animal","X"]]]]]
+    ]
+  ],
+  "stage_2_fixes": ["json: removed content after top-level close bracket"],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","place","#:Nile 2"],
+ "@nl": "The length 1 of the Nile 2 is 80 kilometers."},
+{"@name": "entity_S3",
+ "@logic": ["isa","measure","80 kilometers"],
+ "@nl": "The length 1 of the Nile 2 is 80 kilometers."},
+{"@name": "entity_S8",
+ "@logic": ["isa","teacher","#:teacher 1"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "entity_S8",
+ "@logic": ["isa","student","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "entity_S8",
+ "@logic": ["isa","student","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "entity_S10",
+ "@logic": ["isa","animal","#:cat 1"],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 was bad."},
+{"@name": "sent_S1",
+ "@logic": ["-has degree property", "good", "#:John 1", "none", "person", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 was bad."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "No penguin can fly."},
+{"@name": "sent_S3",
+ "@logic": ["isa", "length", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv9","?:Fv10"]]],
+ "@nl": "The length 1 of the Nile 2 is 80 kilometers."},
+{"@name": "sent_S3",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Nile","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The length 1 of the Nile 2 is 80 kilometers."},
+{"@name": "sent_S4",
+ "@logic": ["isa", "length", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv9","?:Fv10"]]],
+ "@nl": "The length 1 is the length of the Nile 2."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","wolf","?:X"],
+            ["-isa","sheep","?:Y"],
+            ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["$block", ["$","sheep",1], ["$not", ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Wolves are afraid of sheep."},
+{"@name": "sent_S6",
+ "@logic": ["isa","elephant","sk0_elephant"],
+ "@confidence": 0.9899,
+ "@nl": "Some elephants are animals."},
+{"@name": "sent_S6",
+ "@logic": ["isa","animal","sk0_elephant"],
+ "@confidence": 0.9899,
+ "@nl": "Some elephants are animals."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Mr Dursley 1"],
+ "@nl": "Mr Dursley 1 is an American."},
+{"@name": "sent_S7",
+ "@logic": ["isa","american","#:Mr Dursley 1"],
+ "@nl": "Mr Dursley 1 is an American."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:teacher 1"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:students 2"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S8",
+ "@logic": ["isa","map","#:map 3"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk1_activity", "show", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk1_activity", "#:teacher 1", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S8",
+ "@logic": ["has recipient", "sk1_activity", "#:students 2", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk1_activity", "#:map 3", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The teacher 1 showed the students 2 the map 3."},
+{"@name": "sent_S9",
+ "@logic": ["isa","promotion","#:promotion 1"],
+ "@nl": "A promotion 1 was given to Mary 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "A promotion 1 was given to Mary 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "A promotion 1 was given to Mary 2."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk2_activity", "give", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "A promotion 1 was given to Mary 2."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk2_activity", "#:promotion 1", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "A promotion 1 was given to Mary 2."},
+{"@name": "sent_S9",
+ "@logic": ["has recipient", "sk2_activity", "#:Mary 2", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "A promotion 1 was given to Mary 2."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "A promotion 1 was given to Mary 2."},
+{"@name": "sent_S10",
+ "@logic": ["isa","cat","#:cat 1"],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S10",
+ "@logic": ["isa","sofa","#:sofa 2"],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S10",
+ "@logic": ["has property", "velvet", "#:sofa 2", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S10",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S10",
+ "@logic": ["has type", "sk3_activity", "sleep", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S10",
+ "@logic": ["has actor", "sk3_activity", "#:cat 1", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S10",
+ "@logic": ["has location", "sk3_activity", "#:sofa 2", "on", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S10",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv23","?:Fv24"]],
+ "@nl": "The cat 1 slept on the velvet sofa 2."},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","elephant","sk4_elephant"]],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["-isa","animal","sk4_elephant"]],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "sent_S11",
+ "@sourcetype": "question",
+ "@logic": [["-isa","elephant","?:X"], ["isa","animal","?:X"], ["$defq0"]],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "sent_S11",
+ "@question": ["$defq0"],
+ "@nl": "Are some elephants not animals?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Nile", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv9","?:Fv10"]], ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "https://en.wikipedia.org/wiki/Nile", ["$theof1", "length", "https://en.wikipedia.org/wiki/Nile", ["$ctxt","present","W0","?:Fv9","?:Fv10"]], ["$ctxt","present","W0","?:Fv9","?:Fv10"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "length of", ["$theof1","length","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "length", ["$theof1","length","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","wolf","$some_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","wolf","$some_not_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","sheep","$some_sheep"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","sheep","$some_not_sheep"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["isa","animal","$some_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S6",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","animal","$some_not_animal"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv37"], ["has type","?:E","go","?:Fv37"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv38"], ["has type","?:E","give","?:Fv38"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has target","?:Esb","?:Ysb","?:Csb"],
+            ["-has recipient","?:Esb","?:Xsb","?:Csb"],
+            ["has recipient","?:Ysb","?:Xsb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_measure_rel_bridge",
+ "@logic": [["-=", ["$measure_of","length","?:S","?:W"], "?:V"],
+            ["is rel2","length of","?:V","?:S","?:Ctxt"]
+           ],
+ "@nl": "[generated: frm_measure_rel_bridge]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {"result": "no information"},
+  "timestamp": "2026-06-12T21:17:18Z"
+}

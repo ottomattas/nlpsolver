@@ -50,13 +50,18 @@ def main():
                   help="read llmpipe/testresults/ instead of the snapshot")
   ap.add_argument("-doses", default="2", help="ballast doses, e.g. 2,4,8")
   ap.add_argument("-models", default="gpt,claude")
+  ap.add_argument("-tag", default=None,
+                  help="condition-variant cell suffix to read for doses>0 "
+                       "(e.g. slightcoarse, s2split_slightcoarse); b0 stays "
+                       "the plain baseline. Omit for the two-stage baseline.")
   args = ap.parse_args()
   source = "live" if args.live else "snapshot"
   doses = [0] + [int(s) for s in args.doses.split(",") if s.strip()]
   models = [m for m in args.models.split(",") if m]
 
+  cond = f"; condition={args.tag}" if args.tag else ""
   print("\nDose-response: accuracy (%) per model x ballast dose "
-        f"({source} data; b0 = plan-01 Gate-1 twostage)\n")
+        f"({source} data; b0 = plan-01 Gate-1 twostage{cond})\n")
   hdr = f"{'model':9}" + "".join(f"{'b' + str(d):>9}" for d in doses)
   print(hdr)
   print("-" * len(hdr))
@@ -64,7 +69,7 @@ def main():
   for m in models:
     row = f"{m:9}"
     for d in doses:
-      cc = C.load(d, m, source if d else "snapshot")
+      cc = C.load(d, m, source if d else "snapshot", tag=args.tag if d else None)
       data[(m, d)] = cc
       n = len(cc)
       if n == 0:

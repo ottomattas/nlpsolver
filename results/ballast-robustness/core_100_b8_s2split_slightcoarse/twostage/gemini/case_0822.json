@@ -1,0 +1,952 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 822,
+  "input_text": "Muggles cannot disappear. Wolves are afraid of sheep. Mary journeyed to the bathroom. The ball was kicked by Mike. Sandra moved to the kitchen. John has a car which is nice and red. The woman holding a lamp sang. \"Riga is not in America. Agatha is in trouble. The red car is nice?",
+  "expected_answer": true,
+  "llm_name": "gemini",
+  "llm_version": "gemini-2.5-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Muggles cannot disappear.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Muggles cannot disappear.",
+          "type": "strict_rule",
+          "entities": [{"id": "muggles", "type": "generic", "category": "person"}],
+          "actions": [{"root": "disappear", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "Wolves are afraid of sheep.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Wolves are afraid of sheep.",
+          "type": "normal_rule",
+          "entities": [{"id": "wolves", "type": "generic", "category": "animal"},
+            {"id": "sheep", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["afraid of","none","animal"]],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "Mary journeyed to the bathroom.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Mary 1 journeyed to the bathroom 2.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"},
+            {"id": "bathroom 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "journey", "mode": "event", "roles": {"destination": "bathroom 2"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The ball was kicked by Mike.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Mike 3 kicked the ball 4.",
+          "type": "situation",
+          "entities": [{"id": "Mike 3", "type": "concrete", "category": "person"},
+            {"id": "ball 4", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "kick", "mode": "event", "roles": {"actor": "Mike 3", "target": "ball 4"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Sandra moved to the kitchen.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Sandra 5 moved to the kitchen 6.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 5", "type": "concrete", "category": "person"},
+            {"id": "kitchen 6", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{"root": "move", "mode": "event", "roles": {"destination": "kitchen 6"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John has a car which is nice and red.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "John 7 has a car 8.",
+          "type": "situation",
+          "entities": [{"id": "John 7", "type": "concrete", "category": "person"},
+            {"id": "car 8", "type": "concrete", "category": "artifact"}
+          ],
+          "time": "present"
+        },
+        {
+          "unit_id": "S7",
+          "text": "The car 8 is nice and red.",
+          "type": "situation",
+          "entities": [{"id": "car 8", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["nice","none","car"], ["red","none","none"]],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "The woman holding a lamp sang.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "The woman 9 sang.",
+          "type": "situation",
+          "entities": [{"id": "woman 9", "type": "concrete", "category": "person"}],
+          "actions": [{"root": "sing", "mode": "event"}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S9",
+          "text": "The woman 9 held a lamp 10.",
+          "type": "situation",
+          "entities": [{"id": "woman 9", "type": "concrete", "category": "person"},
+            {"id": "lamp 10", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "hold", "mode": "event", "roles": {"target": "lamp 10"}}],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Riga is not in America.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Riga 11 is not in America 12.",
+          "type": "real",
+          "entities": [{
+              "id": "Riga 11",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Riga"
+            },
+            {
+              "id": "America 12",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Americas"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Agatha is in trouble.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Agatha 13 is in trouble.",
+          "type": "situation",
+          "entities": [{"id": "Agatha 13", "type": "concrete", "category": "person"},
+            {"id": "trouble", "type": "generic", "category": "abstract"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "The red car is nice?",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Is the red car 8 nice?",
+          "type": "query",
+          "entities": [{"id": "car 8", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["red","none","none"], ["nice","none","car"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","muggle","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","disappear"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","wolf","X"],
+              ["forall","Y",
+                ["implies",
+                  ["isa","sheep","Y"],
+                  ["normally", ["has degree rel2","afraid of","X","Y","none","animal"]]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S2",0.95]
+      ]
+    ],
+    ["@id","S3",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mary 1"],
+            ["isa","place","bathroom 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","journey"],
+                ["has actor","E","Mary 1"],
+                ["has destination","E","bathroom 2","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Mike 3"],
+            ["isa","ball","ball 4"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","kick"],
+                ["has actor","E","Mike 3"],
+                ["has target","E","ball 4"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W2"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Sandra 5"],
+            ["isa","kitchen","kitchen 6"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","move"],
+                ["has actor","E","Sandra 5"],
+                ["has destination","E","kitchen 6","at"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W3"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","person","John 7"], ["isa","car","car 8"], ["have","John 7","car 8"]]
+        ],
+        ["state time","W0","present"]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","car","car 8"],
+            ["has degree property","nice","car 8","none","car"],
+            ["has degree property","red","car 8","none","none"]
+          ]
+        ],
+        ["state time","W0","present"]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","woman","woman 9"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","sing"],
+                ["has actor","E","woman 9"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W4"]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["and",
+          ["isa","woman","woman 9"],
+          ["isa","lamp","lamp 10"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","hold"],
+              ["has actor","E1","woman 9"],
+              ["has target","E1","lamp 10"],
+              ["has time","E1","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["holds","W0",
+        ["not",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Riga","https://en.wikipedia.org/wiki/Americas"]
+        ]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Agatha 13"],
+            ["exists", "X", ["and", ["isa","trouble","X"], ["is rel2","in","Agatha 13","X"]]]
+          ]
+        ],
+        ["state time","W0","present"]
+      ]
+    ],
+    ["@id","S12",
+      ["question",
+        ["and",
+          ["isa","car","car 8"],
+          ["has degree property","red","car 8","none","none"],
+          ["has degree property","nice","car 8","none","car"]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S3",
+ "@logic": ["isa","bathroom","#:bathroom 2"],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "entity_S8",
+ "@logic": ["isa","person","#:woman 9"],
+ "@nl": "The woman 9 sang."},
+{"@name": "entity_S10",
+ "@logic": ["isa","place","#:Riga 11"],
+ "@nl": "Riga 11 is not in America 12."},
+{"@name": "entity_S10",
+ "@logic": ["isa","place","#:America 12"],
+ "@nl": "Riga 11 is not in America 12."},
+{"@name": "sent_S1",
+ "@logic": [["-isa","muggle","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "disappear", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv4","?:Fv3","?:Fv1","?:Fv2"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Muggles cannot disappear."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","wolf","?:X"],
+            ["-isa","sheep","?:Y"],
+            ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$block", ["$","sheep",1], ["$not", ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Wolves are afraid of sheep."},
+{"@name": "sent_S3",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","place","#:bathroom 2"],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["has type", "sk0_activity", "go", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["has actor", "sk0_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["has destination", "sk0_activity", "#:bathroom 2", "at", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S3",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Mary 1 journeyed to the bathroom 2."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Mike 3"],
+ "@nl": "Mike 3 kicked the ball 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","ball","#:ball 4"],
+ "@nl": "Mike 3 kicked the ball 4."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Mike 3 kicked the ball 4."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk1_activity", "kick", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mike 3 kicked the ball 4."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk1_activity", "#:Mike 3", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mike 3 kicked the ball 4."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk1_activity", "#:ball 4", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mike 3 kicked the ball 4."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "Mike 3 kicked the ball 4."},
+{"@name": "sent_S4",
+ "@logic": ["next","W0","W2"],
+ "@nl": "Mike 3 kicked the ball 4."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Sandra 5"],
+ "@nl": "Sandra 5 moved to the kitchen 6."},
+{"@name": "sent_S5",
+ "@logic": ["isa","kitchen","#:kitchen 6"],
+ "@nl": "Sandra 5 moved to the kitchen 6."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Sandra 5 moved to the kitchen 6."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk2_activity", "go", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Sandra 5 moved to the kitchen 6."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk2_activity", "#:Sandra 5", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Sandra 5 moved to the kitchen 6."},
+{"@name": "sent_S5",
+ "@logic": ["has destination", "sk2_activity", "#:kitchen 6", "at", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Sandra 5 moved to the kitchen 6."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Sandra 5 moved to the kitchen 6."},
+{"@name": "sent_S5",
+ "@logic": ["next","W0","W3"],
+ "@nl": "Sandra 5 moved to the kitchen 6."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:John 7"],
+ "@nl": "John 7 has a car 8."},
+{"@name": "sent_S6",
+ "@logic": ["isa","car","#:car 8"],
+ "@nl": "John 7 has a car 8."},
+{"@name": "sent_S6",
+ "@logic": ["have", "#:John 7", "#:car 8", ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "John 7 has a car 8."},
+{"@name": "sent_S7",
+ "@logic": ["isa","car","#:car 8"],
+ "@nl": "The car 8 is nice and red."},
+{"@name": "sent_S7",
+ "@logic": ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The car 8 is nice and red."},
+{"@name": "sent_S7",
+ "@logic": ["has property", "red", "#:car 8", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The car 8 is nice and red."},
+{"@name": "sent_S8",
+ "@logic": ["isa","woman","#:woman 9"],
+ "@nl": "The woman 9 sang."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The woman 9 sang."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk3_activity", "sing", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The woman 9 sang."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk3_activity", "#:woman 9", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The woman 9 sang."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The woman 9 sang."},
+{"@name": "sent_S8",
+ "@logic": ["next","W0","W4"],
+ "@nl": "The woman 9 sang."},
+{"@name": "sent_S9",
+ "@logic": ["isa","woman","#:woman 9"],
+ "@nl": "The woman 9 held a lamp 10."},
+{"@name": "sent_S9",
+ "@logic": ["isa","lamp","#:lamp 10"],
+ "@nl": "The woman 9 held a lamp 10."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "The woman 9 held a lamp 10."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk4_activity", "hold", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 9 held a lamp 10."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk4_activity", "#:woman 9", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 9 held a lamp 10."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk4_activity", "#:lamp 10", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 9 held a lamp 10."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv21","?:Fv22"]],
+ "@nl": "The woman 9 held a lamp 10."},
+{"@name": "sent_S9",
+ "@logic": ["actuality","sk4_activity"],
+ "@nl": "The woman 9 held a lamp 10."},
+{"@name": "sent_S10",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Riga", "https://en.wikipedia.org/wiki/Americas", ["$ctxt","present","W0","?:Fv23","?:Fv24"]],
+ "@nl": "Riga 11 is not in America 12."},
+{"@name": "sent_S11",
+ "@logic": ["isa","person","#:Agatha 13"],
+ "@nl": "Agatha 13 is in trouble."},
+{"@name": "sent_S11",
+ "@logic": ["isa","trouble","sk5_trouble"],
+ "@nl": "Agatha 13 is in trouble."},
+{"@name": "sent_S11",
+ "@logic": ["is rel2", "in", "#:Agatha 13", "sk5_trouble", ["$ctxt","present","W0","?:Fv25","?:Fv26"]],
+ "@nl": "Agatha 13 is in trouble."},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","car","#:car 8"]],
+ "@nl": "Is the red car 8 nice?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Is the red car 8 nice?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:Fv27","?:Fv28"]]
+           ],
+ "@nl": "Is the red car 8 nice?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question",
+ "@logic": [["-isa","car","#:car 8"],
+            ["-has property", "red", "#:car 8", ["$ctxt","present","W1","?:Fv27","?:Fv28"]],
+            ["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:Fv27","?:Fv28"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is the red car 8 nice?"},
+{"@name": "sent_S12",
+ "@question": ["$defq0"],
+ "@nl": "Is the red car 8 nice?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has property", "red", "#:car 8", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has property", "red", "#:car 8", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the red car 8 nice?"},
+{"@name": "sent_S12",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is the red car 8 nice?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","muggle","$some_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","muggle","$some_not_muggle"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","wolf","$some_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","wolf","$some_not_wolf"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","sheep","$some_sheep"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","sheep","$some_not_sheep"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S11",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trouble","$some_trouble"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S11",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trouble","$some_not_trouble"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv34"], ["has type","?:E","go","?:Fv34"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","car","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","car","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv35","?:Fv36","?:Fv37"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv35","?:Fv36","?:Fv37"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "red", "?:X", ["$ctxt","past","?:Fv38","?:Fv39","?:Fv40"]],
+            ["has property", "red", "?:X", ["$ctxt","present","?:Fv38","?:Fv39","?:Fv40"]],
+            ["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Fv38","?:Fv39","?:Fv40"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W3","W4"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "blockers": [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]],
+          ["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]]
+        ],
+        "confidence": 0.990428,
+        "positive proof": [[1, ["in","frm_93","axiom",1], [["-has property", "?:X", "?:Y", ["$ctxt","present","?:Z","?:U","?:V"]], ["has property", "?:X", "?:Y", ["$ctxt","past","?:W","?:U","?:V"]], ["-before","?:Z","?:W"]]],
+          [2, ["in","sent_S7","assumption",1], [["has property", "red", "#:car 8", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [3, ["mp",1,2,"fromassumption",1], [["has property", "red", "#:car 8", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-before","W0","?:X"]]],
+          [4, ["in","frm_91","axiom",1], [["-next","?:X","?:Y"], ["before","?:X","?:Y"]]],
+          [5, ["in","sent_S3","assumption",1], [["next","W0","W1"]]],
+          [6, ["mp",4,5,"fromassumption",1], [["before","W0","W1"]]],
+          [7, ["mp", [3,1], 6, "fromassumption", 1], [["has property", "red", "#:car 8", ["$ctxt","past","W1","?:X","?:Y"]]]],
+          [8, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["-has property", "red", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["has property", "red", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [9, ["mp", 7, [8,1], "fromassumption", 0.95], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [10, ["in","sent_S12","assumption",1], [["-isa","car","#:car 8"], ["$defq0"], ["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X","?:Y"]], ["-has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [11, ["in","sent_S12","goal",1], [["-$defq0"]]],
+          [12, ["mp", [10,1], 11, "fromga", 1], [["-isa","car","#:car 8"], ["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]], ["-has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]],
+          [13, ["in","sent_S6","assumption",1], [["isa","car","#:car 8"]]],
+          [14, ["simp",12,13,"fromga",1], [["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X","?:Y"]], ["-has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [15, ["mp", [9,1], [14,1], "fromga", 0.95], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]], ["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [16, ["in","frm_57","axiom",0.99], [["$block", 0, ["$not", ["has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","?:V","?:W","?:2006","?:2007"]]]], ["-has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","?:V","?:2008","?:2006","?:2007"]], ["has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","?:V","?:W","?:2006","?:2007"]], ["-next","?:2008","?:W"]]],
+          [17, ["mp", [15,1], [16,2], "fromga", 0.9405], [["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X","?:Y"]]]], ["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]], ["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","?:Z","?:X","?:Y"]], ["-next","?:Z","W1"]]],
+          [18, ["in","sent_S7","assumption",1], [["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W0","?:X","?:Y"]]]],
+          [19, ["mp", [17,2], 18, "fromga", 0.9405], [["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["-next","W0","W1"]]],
+          [20, ["simp",19,5,"fromga",0.9405], [["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [21, ["in","sent_S7","assumption",1], [["isa","car","#:car 8"]]],
+          [22, ["mp",10,21,11,"fromga",1], [["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X","?:Y"]], ["-has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [23, ["mp", [9,1], [22,1], "fromga", 0.95], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]], ["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [24, ["in","sent_S12","assumption",0.99], [["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","past","?:X","?:Y","?:Z"]], ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [25, ["mp", [23,1], [24,2], "fromga", 0.9405], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","past","W1","?:X3","?:Y3"]]]],
+          [26, ["in","frm_97","axiom",1], [["-has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","present","?:V","?:W","?:2006"]], ["has degree property", "?:X", "?:Y", "?:Z", "?:U", ["$ctxt","past","?:2007","?:W","?:2006"]], ["-before","?:V","?:2007"]]],
+          [27, ["mp",26,18,"fromassumption",1], [["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-before","W0","?:X"]]],
+          [28, ["mp", [27,1], 6, "fromassumption", 1], [["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","past","W1","?:X3","?:Y3"]]]],
+          [29, ["simp",25,28,"fromga",0.9405], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [30, ["in","sent_S12","assumption",0.99], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","?:X","?:Y","?:Z"]]]], ["-has property", "red", "#:car 8", ["$ctxt","past","?:X","?:Y","?:Z"]], ["has property", "red", "#:car 8", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [31, ["mp", 7, [30,1], "fromassumption", 0.99], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [32, ["mp", [31,1], [22,1], "fromga", 0.99], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]], ["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [33, ["mp", [32,1], [24,2], "fromga", 0.9801], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","past","W1","?:X3","?:Y3"]]]],
+          [34, ["simp",33,28,"fromga",0.9801], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [35, ["cumul",29,34,"fromga",0.981972], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [36, ["mp",10,13,11,"fromga",1], [["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X","?:Y"]], ["-has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [37, ["mp", [31,1], [36,1], "fromga", 0.99], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]], ["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [38, ["mp", [37,1], [24,2], "fromga", 0.9801], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","past","W1","?:X3","?:Y3"]]]],
+          [39, ["simp",38,28,"fromga",0.9801], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [40, ["cumul",35,39,"fromga",0.984496], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [41, ["cumul",20,40,"fromga",0.987968], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [42, ["in","frm_stable_persist","assumption",0.95], [["$block", 0, ["$not", ["has property", "red", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]], ["-has property", "red", "?:X", ["$ctxt","past","?:Y","?:Z","?:U"]], ["has property", "red", "?:X", ["$ctxt","present","?:Y","?:Z","?:U"]]]],
+          [43, ["mp", 7, [42,1], "fromassumption", 0.95], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]], ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [44, ["mp", [43,1], [22,1], "fromga", 0.95], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X","?:Y"]]]], ["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X","?:Y"]]]],
+          [45, ["mp", [44,1], [24,2], "fromga", 0.9405], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["-has degree property", "good", "#:car 8", "none", "car", ["$ctxt","past","W1","?:X3","?:Y3"]]]],
+          [46, ["simp",45,28,"fromga",0.9405], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]],
+          [47, ["cumul",41,46,"fromga",0.990428], [["$block", 0, ["$not", ["has property", "red", "#:car 8", ["$ctxt","present","W1","?:X3","?:Y3"]]]], ["$block", 0, ["$not", ["has degree property", "good", "#:car 8", "none", "car", ["$ctxt","present","W1","?:X3","?:Y3"]]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Confidence 99%.",
+"Sentences used:",
+"  (1) Mary journeyed to the bathroom.",
+"  (2) John has a car which is nice and red.",
+"  (3) The red car is nice?",
+"Knowledge used:",
+"  If some Y is some X and a situation Z is earlier than a situation W then Y is X. Why: assumed basic knowledge.",
+"  If a situation X is followed by a situation Y then X is earlier than Y. Why: assumed basic knowledge.",
+"  If some X is red then normally X is red. Why: assumed basic knowledge.",
+"  If some Y is some z some X and a situation E3 is followed by a situation W then normally Y is z X. Why: assumed basic knowledge.",
+"  If some Y is some z some X and a situation V is earlier than a situation E2 then Y is z X. Why: assumed basic knowledge.",
+"Proof steps:",
+"  (1) If some Y is some X and a situation Z is earlier than a situation W then Y is X  [background knowledge]",
+"  (2) The car I is red  [sentence 2]",
+"  (3) If the situation W0 is earlier than a situation X then the car I is red  [from steps 1, 2]",
+"  (4) If a situation X is followed by a situation Y then X is earlier than Y  [background knowledge]",
+"  (5) The situation W0 is followed by the situation W1  [sentence 1]",
+"  (6) The situation W0 is earlier than the situation W1  [from steps 4, 5]",
+"  (7) The car I is red  [from steps 3, 6]",
+"  (8) If some X is red then normally X is red  [background knowledge, confidence 95%]",
+"  (9) Normally the car I is red  [from steps 7, 8, confidence 95%]",
+"  (10) If the car I is good and the car I is red then answer holds  [sentence 3]",
+"  (11) assume for contradiction: the answer is no  [from question]",
+"  (12) If the car I is good then the car I is not red  [from steps 10, 11]",
+"  (13) The car I is a car  [sentence 2]",
+"  (14) If the car I is good then the car I is not red  [from steps 12, 13]",
+"  (15) The car I is not good, except when the car I is not red  [from steps 9, 14, confidence 95%]",
+"  (16) If some Y is some z some X and a situation E3 is followed by a situation W then normally Y is z X  [background knowledge, confidence 99%]",
+"  (17) If the car I is good then Z is not followed by the situation W1, except when the car I is not good and the car I is not red  [from steps 15, 16, confidence 94%]",
+"  (18) The car I is good  [sentence 2]",
+"  (19) The situation W0 is not followed by the situation W1, except when the car I is not good and the car I is not red  [from steps 17, 18, confidence 94%]",
+"  (20) Outstanding exception: the car I is not good and the car I is not red  [from steps 19, 5, confidence 94%]",
+"  (21) The car I is a car  [sentence 2]",
+"  (22) If the car I is good then the car I is not red  [from steps 10, 21, 11]",
+"  (23) The car I is not good, except when the car I is not red  [from steps 9, 22, confidence 95%]",
+"  (24) If the car I is good then normally the car I is good  [sentence 3, confidence 99%]",
+"  (25) The car I is not good, except when the car I is not red and the car I is not good  [from steps 23, 24, confidence 94%]",
+"  (26) If some Y is some z some X and a situation V is earlier than a situation E2 then Y is z X  [background knowledge]",
+"  (27) If the situation W0 is earlier than a situation X then the car I is good  [from steps 26, 18]",
+"  (28) The car I is good  [from steps 27, 6]",
+"  (29) Outstanding exception: the car I is not red and the car I is not good  [from steps 25, 28, confidence 94%]",
+"  (30) If the car I is red then normally the car I is red  [sentence 3, confidence 99%]",
+"  (31) Normally the car I is red  [from steps 7, 30, confidence 99%]",
+"  (32) The car I is not good, except when the car I is not red  [from steps 31, 22, confidence 99%]",
+"  (33) The car I is not good, except when the car I is not red and the car I is not good  [from steps 32, 24, confidence 98%]",
+"  (34) Outstanding exception: the car I is not red and the car I is not good  [from steps 33, 28, confidence 98%]",
+"  (35) Outstanding exception: the car I is not red and the car I is not good  [from steps 29, 34, confidence 98%]",
+"  (36) If the car I is good then the car I is not red  [from steps 10, 13, 11]",
+"  (37) The car I is not good, except when the car I is not red  [from steps 31, 36, confidence 99%]",
+"  (38) The car I is not good, except when the car I is not red and the car I is not good  [from steps 37, 24, confidence 98%]",
+"  (39) Outstanding exception: the car I is not red and the car I is not good  [from steps 38, 28, confidence 98%]",
+"  (40) Outstanding exception: the car I is not red and the car I is not good  [from steps 35, 39, confidence 98%]",
+"  (41) Outstanding exception: the car I is not red and the car I is not good  [from steps 20, 40, confidence 99%]",
+"  (42) If some X is red then normally X is red  [background knowledge, confidence 95%]",
+"  (43) Normally the car I is red  [from steps 7, 42, confidence 95%]",
+"  (44) The car I is not good, except when the car I is not red  [from steps 43, 22, confidence 95%]",
+"  (45) The car I is not good, except when the car I is not red and the car I is not good  [from steps 44, 24, confidence 94%]",
+"  (46) Outstanding exception: the car I is not red and the car I is not good  [from steps 45, 28, confidence 94%]",
+"  (47) Outstanding exception: the car I is not red and the car I is not good  [from steps 41, 46, confidence 99%]",
+"Exceptions checked and not holding:",
+"  car I is not red",
+"  car I is not good"
+],
+  "llm_usage": [{
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37206,
+      "cached_input_tokens": 0,
+      "output_tokens": 1280,
+      "raw": {
+        "promptTokenCount": 37206,
+        "candidatesTokenCount": 124,
+        "totalTokenCount": 38486,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37206}],
+        "thoughtsTokenCount": 1156,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37232,
+      "cached_input_tokens": 0,
+      "output_tokens": 1126,
+      "raw": {
+        "promptTokenCount": 37232,
+        "candidatesTokenCount": 137,
+        "totalTokenCount": 38358,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37232}],
+        "thoughtsTokenCount": 989,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37264,
+      "cached_input_tokens": 0,
+      "output_tokens": 1502,
+      "raw": {
+        "promptTokenCount": 37264,
+        "candidatesTokenCount": 152,
+        "totalTokenCount": 38766,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37264}],
+        "thoughtsTokenCount": 1350,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37270,
+      "cached_input_tokens": 0,
+      "output_tokens": 1041,
+      "raw": {
+        "promptTokenCount": 37270,
+        "candidatesTokenCount": 155,
+        "totalTokenCount": 38311,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37270}],
+        "thoughtsTokenCount": 886,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37262,
+      "cached_input_tokens": 0,
+      "output_tokens": 1700,
+      "raw": {
+        "promptTokenCount": 37262,
+        "candidatesTokenCount": 157,
+        "totalTokenCount": 38962,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37262}],
+        "thoughtsTokenCount": 1543,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37302,
+      "cached_input_tokens": 0,
+      "output_tokens": 1096,
+      "raw": {
+        "promptTokenCount": 37302,
+        "candidatesTokenCount": 214,
+        "totalTokenCount": 38398,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37302}],
+        "thoughtsTokenCount": 882,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37346,
+      "cached_input_tokens": 36836,
+      "output_tokens": 1769,
+      "raw": {
+        "promptTokenCount": 37346,
+        "candidatesTokenCount": 261,
+        "totalTokenCount": 39115,
+        "cachedContentTokenCount": 36836,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37346}],
+        "cacheTokensDetails": [{"modality": "TEXT", "tokenCount": 36836}],
+        "thoughtsTokenCount": 1508,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37249,
+      "cached_input_tokens": 0,
+      "output_tokens": 2675,
+      "raw": {
+        "promptTokenCount": 37249,
+        "candidatesTokenCount": 71,
+        "totalTokenCount": 39924,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37249}],
+        "thoughtsTokenCount": 2604,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37218,
+      "cached_input_tokens": 0,
+      "output_tokens": 1127,
+      "raw": {
+        "promptTokenCount": 37218,
+        "candidatesTokenCount": 114,
+        "totalTokenCount": 38345,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37218}],
+        "thoughtsTokenCount": 1013,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "llm": "gemini",
+      "version": "gemini-2.5-flash",
+      "input_tokens": 37213,
+      "cached_input_tokens": 0,
+      "output_tokens": 435,
+      "raw": {
+        "promptTokenCount": 37213,
+        "candidatesTokenCount": 79,
+        "totalTokenCount": 37648,
+        "promptTokensDetails": [{"modality": "TEXT", "tokenCount": 37213}],
+        "thoughtsTokenCount": 356,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T23:47:18Z"
+}

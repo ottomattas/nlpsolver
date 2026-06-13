@@ -1,0 +1,815 @@
+{
+  "test_name": "core_100_b8_slightcoarse",
+  "case_id": 1424,
+  "input_text": "Mike is cool. Penguins are birds. The big mouse is strong. The cake was eaten. Penguins do not fly. The brother of the friend of Eve arrived. Bike's length is 10 kilometers. Birds fly. Elephants have probably long trunks. The road leading to the village was narrow. John is a sparrow. Penguins fly?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "Mike is cool.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Mike 1 is cool.",
+          "type": "situation",
+          "entities": [{"id": "Mike 1", "type": "concrete", "category": "person"}],
+          "adjectives": [["cool","none","person"]]
+        }
+      ]
+    },
+    {
+      "raw": "Penguins are birds.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Penguins are birds.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"},
+            {"id": "birds", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The big mouse is strong.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "The big mouse 2 is strong.",
+          "type": "situation",
+          "entities": [{"id": "mouse 2", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","mouse"], ["strong","none","mouse"]]
+        }
+      ]
+    },
+    {
+      "raw": "The cake was eaten.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "The cake 3 was eaten.",
+          "type": "situation",
+          "entities": [{"id": "cake 3", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "eat", "mode": "event", "roles": {"target": "cake 3"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Penguins do not fly.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Penguins cannot fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    },
+    {
+      "raw": "The brother of the friend of Eve arrived.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "The brother 4 of the friend 5 of Eve 6 arrived.",
+          "type": "situation",
+          "entities": [{"id": "brother 4", "type": "concrete", "text": "brother", "category": "person"},
+            {"id": "friend 5", "type": "concrete", "text": "friend", "category": "person"},
+            {"id": "Eve 6", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{"root": "arrive", "mode": "event"}],
+          "definites": [["brother of","brother 4","friend 5"], ["friend of","friend 5","Eve 6"]],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        },
+        {
+          "unit_id": "S7",
+          "text": "The friend 5 is the friend of Eve 6.",
+          "type": "situation",
+          "entities": [{"id": "friend 5", "type": "concrete", "text": "friend", "category": "person"},
+            {"id": "Eve 6", "type": "concrete", "category": "person"}
+          ],
+          "definites": [["friend of","friend 5","Eve 6"]],
+          "pre_state": "W0",
+          "time": "past"
+        },
+        {
+          "unit_id": "S8",
+          "text": "The brother 4 is the brother of the friend 5.",
+          "type": "situation",
+          "entities": [{"id": "brother 4", "type": "concrete", "text": "brother", "category": "person"},
+            {"id": "friend 5", "type": "concrete", "text": "friend", "category": "person"}
+          ],
+          "definites": [["brother of","brother 4","friend 5"]],
+          "pre_state": "W0",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Bike's length is 10 kilometers.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "The length 8 of the bike 7 is 10 kilometers.",
+          "type": "situation",
+          "entities": [{"id": "bike 7", "type": "concrete", "category": "artifact"},
+            {"id": "length 8", "type": "concrete", "text": "length"},
+            {"id": "10 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 8","bike 7"]]
+        },
+        {
+          "unit_id": "S10",
+          "text": "The length 8 is the length of the bike 7.",
+          "type": "situation",
+          "entities": [{"id": "length 8", "type": "concrete", "text": "length"},
+            {"id": "bike 7", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["length of","length 8","bike 7"]]
+        }
+      ]
+    },
+    {
+      "raw": "Birds fly.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Birds can fly.",
+          "type": "normal_rule",
+          "entities": [{"id": "birds", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}],
+          "confidence": 0.95
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have probably long trunks.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Elephants have long trunks.",
+          "type": "normal_rule",
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"}
+          ],
+          "adjectives": [["long","none","trunk"]],
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "raw": "The road leading to the village was narrow.",
+      "units": [{
+          "unit_id": "S13",
+          "text": "The road 9 leading to the village 10 was narrow.",
+          "type": "situation",
+          "entities": [{"id": "road 9", "type": "concrete", "category": "place"},
+            {"id": "village 10", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "lead",
+              "mode": "event",
+              "roles": {"actor": "road 9", "destination": "village 10"}
+            }
+          ],
+          "adjectives": [["narrow","none","road"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "John is a sparrow.",
+      "units": [{
+          "unit_id": "S14",
+          "text": "John 11 is a sparrow.",
+          "type": "situation",
+          "entities": [{"id": "John 11", "type": "concrete", "category": "animal"},
+            {"id": "sparrow", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Penguins fly?",
+      "units": [{
+          "unit_id": "S15",
+          "text": "Can penguins fly?",
+          "type": "query",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability"}]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id", "S1", ["holds", "W0", ["has degree property","cool","Mike 1","none","person"]]],
+    ["@id","S2",
+      ["holds", "W0", ["forall", "X", ["implies", ["isa","penguin","X"], ["isa","bird","X"]]]]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["and",
+          ["isa","mouse","mouse 2"],
+          ["has degree property","big","mouse 2","none","mouse"],
+          ["has degree property","strong","mouse 2","none","mouse"]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["holds","W0",
+        ["and",
+          ["isa","cake","cake 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","eat"],
+              ["has target","E","cake 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","brother","brother 4"],
+            ["isa","friend","friend 5"],
+            ["isa","person","Eve 6"],
+            ["has part","friend 5","brother 4"],
+            ["is rel2","friend of","friend 5","Eve 6"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","arrive"],
+                ["has actor","E","brother 4"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"],
+        ["@definite","S6","W0","brother of","friend 5","brother 4"],
+        ["@definite","S6","W0","friend of","Eve 6","friend 5"]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","friend","friend 5"],
+            ["isa","person","Eve 6"],
+            ["is rel2","friend of","friend 5","Eve 6"]
+          ]
+        ],
+        ["@definite","S7","W0","friend of","Eve 6","friend 5"]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","brother","brother 4"],
+            ["isa","friend","friend 5"],
+            ["has part","friend 5","brother 4"]
+          ]
+        ],
+        ["@definite","S8","W0","brother of","friend 5","brother 4"]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["and",
+          ["isa","bike","bike 7"],
+          ["=", ["$measure_of","length","bike 7","W0"], ["$measure",10,"kilometer"]]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds", "W0", ["and", ["isa","length","length 8"], ["isa","bike","bike 7"]]],
+        ["@definite","S10","W0","length of","bike 7","length 8"]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","bird","X"],
+              ["normally",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","fly"],
+                    ["has actor","E","X"],
+                    ["capability","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S11",0.95]
+      ]
+    ],
+    ["@id","S12",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally",
+                ["exists","Y",
+                  ["and",
+                    ["isa","trunk","Y"],
+                    ["has part","X","Y"],
+                    ["has degree property","long","Y","none","trunk"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S12",0.8]
+      ]
+    ],
+    ["@id","S13",
+      ["holds","W0",
+        ["and",
+          ["isa","road","road 9"],
+          ["isa","village","village 10"],
+          ["has degree property","narrow","road 9","none","road"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","lead"],
+              ["has actor","E","road 9"],
+              ["has destination","E","village 10","to"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S14",
+      ["holds", "W0", ["and", ["isa","animal","John 11"], ["isa","sparrow","John 11"]]]
+    ],
+    ["@id","S15",
+      ["question",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "clauses": [
+{"@name": "entity_S1",
+ "@logic": ["isa","person","#:Mike 1"],
+ "@nl": "Mike 1 is cool."},
+{"@name": "entity_S3",
+ "@logic": ["isa","animal","#:mouse 2"],
+ "@nl": "The big mouse 2 is strong."},
+{"@name": "entity_S6",
+ "@logic": ["isa","person","#:brother 4"],
+ "@nl": "The brother 4 of the friend 5 of Eve 6 arrived."},
+{"@name": "entity_S6",
+ "@logic": ["isa","brother","#:brother 4"],
+ "@nl": "The brother 4 of the friend 5 of Eve 6 arrived."},
+{"@name": "entity_S6",
+ "@logic": ["isa","person","#:friend 5"],
+ "@nl": "The brother 4 of the friend 5 of Eve 6 arrived."},
+{"@name": "entity_S6",
+ "@logic": ["isa","friend","#:friend 5"],
+ "@nl": "The brother 4 of the friend 5 of Eve 6 arrived."},
+{"@name": "entity_S9",
+ "@logic": ["isa","measure","10 kilometers"],
+ "@nl": "The length 8 of the bike 7 is 10 kilometers."},
+{"@name": "sent_S1",
+ "@logic": ["has degree property", "cool", "#:Mike 1", "none", "person", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Mike 1 is cool."},
+{"@name": "sent_S2",
+ "@logic": [["-isa","penguin","?:X"], ["isa","bird","?:X"]],
+ "@nl": "Penguins are birds."},
+{"@name": "sent_S3",
+ "@logic": ["isa","mouse","#:mouse 2"],
+ "@nl": "The big mouse 2 is strong."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "big", "#:mouse 2", "none", "mouse", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The big mouse 2 is strong."},
+{"@name": "sent_S3",
+ "@logic": ["has degree property", "strong", "#:mouse 2", "none", "mouse", ["$ctxt","present","W0","?:Fv7","?:Fv8"]],
+ "@nl": "The big mouse 2 is strong."},
+{"@name": "sent_S4",
+ "@logic": ["isa","cake","#:cake 3"],
+ "@nl": "The cake 3 was eaten."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "The cake 3 was eaten."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk0_activity", "eat", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The cake 3 was eaten."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk0_activity", "#:cake 3", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The cake 3 was eaten."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "The cake 3 was eaten."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv14","?:Fv13","?:Fv11","?:Fv12"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Penguins cannot fly."},
+{"@name": "sent_S6",
+ "@logic": ["isa", "brother", ["$theof1", "brother", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv15","?:Fv16"]]],
+ "@nl": "The brother 4 of the friend 5 of Eve 6 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["isa", "friend", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]]],
+ "@nl": "The brother 4 of the friend 5 of Eve 6 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Eve 6"],
+ "@nl": "The brother 4 of the friend 5 of Eve 6 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["has part", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$theof1", "brother", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The brother 4 of the friend 5 of Eve 6 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The brother 4 of the friend 5 of Eve 6 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["has type", "sk1_activity", "arrive", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The brother 4 of the friend 5 of Eve 6 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["has actor", "sk1_activity", ["$theof1", "brother", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The brother 4 of the friend 5 of Eve 6 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "The brother 4 of the friend 5 of Eve 6 arrived."},
+{"@name": "sent_S6",
+ "@logic": ["next","W0","W1"],
+ "@nl": "The brother 4 of the friend 5 of Eve 6 arrived."},
+{"@name": "sent_S7",
+ "@logic": ["isa", "friend", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]]],
+ "@nl": "The friend 5 is the friend of Eve 6."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Eve 6"],
+ "@nl": "The friend 5 is the friend of Eve 6."},
+{"@name": "sent_S7",
+ "@logic": ["is rel2", "friend of", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], "#:Eve 6", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The friend 5 is the friend of Eve 6."},
+{"@name": "sent_S8",
+ "@logic": ["isa", "brother", ["$theof1", "brother", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv15","?:Fv16"]]],
+ "@nl": "The brother 4 is the brother of the friend 5."},
+{"@name": "sent_S8",
+ "@logic": ["isa", "friend", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]]],
+ "@nl": "The brother 4 is the brother of the friend 5."},
+{"@name": "sent_S8",
+ "@logic": ["has part", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$theof1", "brother", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "The brother 4 is the brother of the friend 5."},
+{"@name": "sent_S9",
+ "@logic": ["isa","bike","#:bike 7"],
+ "@nl": "The length 8 of the bike 7 is 10 kilometers."},
+{"@name": "sent_S9",
+ "@logic": ["=", ["$measure_of","length","#:bike 7","W0"], ["$list",10000,"#:meter"]],
+ "@nl": "The length 8 of the bike 7 is 10 kilometers."},
+{"@name": "sent_S10",
+ "@logic": ["isa","length","#:length 8"],
+ "@nl": "The length 8 is the length of the bike 7."},
+{"@name": "sent_S10",
+ "@logic": ["isa","bike","#:bike 7"],
+ "@nl": "The length 8 is the length of the bike 7."},
+{"@name": "sent_S11",
+ "@logic": [["-isa","bird","?:X"], ["isa", "activity", ["sk2","?:X"]]],
+ "@nl": "Birds can fly."},
+{"@name": "sent_S11",
+ "@logic": [["-isa","bird","?:X"],
+            ["has type", ["sk2","?:X"], "fly", ["$ctxt","?:Fv28","?:Fv27","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Birds can fly."},
+{"@name": "sent_S11",
+ "@logic": [["-isa","bird","?:X"],
+            ["has actor", ["sk2","?:X"], "?:X", ["$ctxt","?:Fv28","?:Fv27","?:Fv25","?:Fv26"]]
+           ],
+ "@nl": "Birds can fly."},
+{"@name": "sent_S11",
+ "@logic": [["-isa","bird","?:X"],
+            ["capability", ["sk2","?:X"]],
+            ["$block", ["$","bird",1], ["$not", ["capability", ["sk2","?:X"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "Birds can fly."},
+{"@name": "sent_S12",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk3","?:X"]]],
+ "@nl": "Elephants have long trunks."},
+{"@name": "sent_S12",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk3","?:X"], ["$ctxt","?:Fv32","?:Fv31","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Elephants have long trunks."},
+{"@name": "sent_S12",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has degree property", "long", ["sk3","?:X"], "none", "trunk", ["$ctxt","?:Fv32","?:Fv31","?:Fv29","?:Fv30"]],
+            ["$block", ["$","elephant",1], ["$not", ["has degree property", "long", ["sk3","?:X"], "none", "trunk", ["$ctxt","?:Fv32","?:Fv31","?:Fv29","?:Fv30"]]]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "Elephants have long trunks."},
+{"@name": "sent_S13",
+ "@logic": ["isa","road","#:road 9"],
+ "@nl": "The road 9 leading to the village 10 was narrow."},
+{"@name": "sent_S13",
+ "@logic": ["isa","village","#:village 10"],
+ "@nl": "The road 9 leading to the village 10 was narrow."},
+{"@name": "sent_S13",
+ "@logic": ["-has degree property", "wide", "#:road 9", "none", "road", ["$ctxt","past","W0","?:Fv33","?:Fv34"]],
+ "@nl": "The road 9 leading to the village 10 was narrow."},
+{"@name": "sent_S13",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "The road 9 leading to the village 10 was narrow."},
+{"@name": "sent_S13",
+ "@logic": ["has type", "sk4_activity", "lead", ["$ctxt","past","W0","?:Fv33","?:Fv34"]],
+ "@nl": "The road 9 leading to the village 10 was narrow."},
+{"@name": "sent_S13",
+ "@logic": ["has actor", "sk4_activity", "#:road 9", ["$ctxt","past","W0","?:Fv33","?:Fv34"]],
+ "@nl": "The road 9 leading to the village 10 was narrow."},
+{"@name": "sent_S13",
+ "@logic": ["has destination", "sk4_activity", "#:village 10", "to", ["$ctxt","past","W0","?:Fv33","?:Fv34"]],
+ "@nl": "The road 9 leading to the village 10 was narrow."},
+{"@name": "sent_S13",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv33","?:Fv34"]],
+ "@nl": "The road 9 leading to the village 10 was narrow."},
+{"@name": "sent_S14",
+ "@logic": ["isa","animal","#:John 11"],
+ "@nl": "John 11 is a sparrow."},
+{"@name": "sent_S14",
+ "@logic": ["isa","sparrow","#:John 11"],
+ "@nl": "John 11 is a sparrow."},
+{"@name": "sent_S15",
+ "@sourcetype": "question_subject",
+ "@logic": ["isa","penguin","skq_S15_penguin"],
+ "@nl": "Can penguins fly?"},
+{"@name": "sent_S15",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk5_activity"]],
+ "@nl": "Can penguins fly?"},
+{"@name": "sent_S15",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk5_activity", "fly", ["$ctxt","?:Fv40","?:Fv39","?:Fv37","?:Fv38"]]
+           ],
+ "@nl": "Can penguins fly?"},
+{"@name": "sent_S15",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk5_activity", "skq_S15_penguin", ["$ctxt","?:Fv40","?:Fv39","?:Fv37","?:Fv38"]]
+           ],
+ "@nl": "Can penguins fly?"},
+{"@name": "sent_S15",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["capability","sk5_activity"]],
+ "@nl": "Can penguins fly?"},
+{"@name": "sent_S15",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv40","?:Fv39","?:Fv37","?:Fv38"]],
+            ["-has actor", "?:E", "skq_S15_penguin", ["$ctxt","?:Fv40","?:Fv39","?:Fv37","?:Fv38"]],
+            ["-capability","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Can penguins fly?"},
+{"@name": "sent_S7",
+ "@logic": ["have", "#:Eve 6", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "The friend 5 is the friend of Eve 6."},
+{"@name": "sent_S15",
+ "@question": ["$defq0"],
+ "@nl": "Can penguins fly?"},
+{"@name": "frm_theof",
+ "@logic": ["have", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$theof1", "brother", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:Eve 6", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:Eve 6", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$theof1", "brother", ["$theof1", "friend", "#:Eve 6", ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv15","?:Fv16"]], ["$ctxt","past","W0","?:Fv15","?:Fv16"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "brother of", ["$theof1","brother","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "brother", ["$theof1","brother","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "friend of", ["$theof1","friend","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "friend", ["$theof1","friend","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bird","$some_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bird","$some_not_bird"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "long", "$some_long_trunk", "none", "trunk", ["$ctxt","?:Fv111","?:Fv108","?:Fv109","?:Fv110"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_long_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S12",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "long", "$some_not_long_trunk", "none", "trunk", ["$ctxt","?:Fv119","?:Fv116","?:Fv117","?:Fv118"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","person","?:X"], ["isa","friend","?:X"]],
+ "@confidence": 0.75,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-isa","friend","?:X"], ["isa","person","?:X"]],
+ "@confidence": 0.75,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv43"], ["has type","?:E","go","?:Fv43"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv120", ["$ctxt","past","?:Fv44","?:Fv45","?:Fv46"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv121", ["$ctxt","present","?:Fv44","?:Fv45","?:Fv46"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv122", ["$ctxt","present","?:Fv44","?:Fv45","?:Fv46"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv47","?:Fv48","?:Fv49"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv47","?:Fv48","?:Fv49"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv47","?:Fv48","?:Fv49"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "none", "?:Fv123", ["$ctxt","past","?:Fv50","?:Fv51","?:Fv52"]],
+            ["has degree property", "long", "?:X", "none", "?:Fv124", ["$ctxt","present","?:Fv50","?:Fv51","?:Fv52"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "none", "?:Fv125", ["$ctxt","present","?:Fv50","?:Fv51","?:Fv52"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv53","?:Fv54","?:Fv55"]],
+            ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv53","?:Fv54","?:Fv55"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv53","?:Fv54","?:Fv55"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "none", "?:Fv126", ["$ctxt","past","?:Fv56","?:Fv57","?:Fv58"]],
+            ["-has degree property", "wide", "?:X", "none", "?:Fv127", ["$ctxt","present","?:Fv56","?:Fv57","?:Fv58"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "none", "?:Fv128", ["$ctxt","present","?:Fv56","?:Fv57","?:Fv58"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv59","?:Fv60","?:Fv61"]],
+            ["-has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv59","?:Fv60","?:Fv61"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv59","?:Fv60","?:Fv61"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv129", ["$ctxt","past","?:Fv62","?:Fv63","?:Fv64"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv130", ["$ctxt","present","?:Fv62","?:Fv63","?:Fv64"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv131", ["$ctxt","present","?:Fv62","?:Fv63","?:Fv64"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv65","?:Fv66","?:Fv67"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv65","?:Fv66","?:Fv67"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv65","?:Fv66","?:Fv67"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S15","assumption",1], [["-$defq0"], ["capability","sk5_activity"]]],
+          [2, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [3, ["mp",1,2,"fromga",1], [["capability","sk5_activity"]]],
+          [4, ["in","sent_S5","assumption",1], [["-has type", "?:X", "fly", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "?:X", "?:W", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","penguin","?:W"], ["-isa","activity","?:X"], ["-capability","?:X"]]],
+          [5, ["in","sent_S15","assumption",1], [["-$defq0"], ["has type", "sk5_activity", "fly", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [6, ["mp",5,2,"fromga",1], [["has type", "sk5_activity", "fly", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]],
+          [7, ["in","sent_S15","assumption",1], [["-$defq0"], ["isa","activity","sk5_activity"]]],
+          [8, ["mp",7,2,"fromga",1], [["isa","activity","sk5_activity"]]],
+          [9, ["mp", 3, [4,4], 6, 8, "fromga", 1], [["-has actor", "sk5_activity", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","penguin","?:X"]]],
+          [10, ["in","sent_S15","assumption",1], [["isa","penguin","skq_S15_penguin"]]],
+          [11, ["in","sent_S15","assumption",1], [["-$defq0"], ["has actor", "sk5_activity", "skq_S15_penguin", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [12, ["mp",11,2,"fromga",1], [["has actor", "sk5_activity", "skq_S15_penguin", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]],
+          [13, ["mp", [9,1], 10, 12, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Penguins do not fly.",
+"  (2) Penguins fly?",
+"Proof steps (by contradiction):",
+"  (1) If answer holds then the event act4 is a capability  [sentence 2]",
+"  (2) Answer holds  [assumption]",
+"  (3) The event act4 is a capability  [from steps 1, 2]",
+"  (4) If X is a fly event and some penguin W performs X and X is an activity then X is not a capability  [sentence 1]",
+"  (5) If answer holds then the event act4 is a fly event  [sentence 2]",
+"  (6) The event act4 is a fly event  [from steps 5, 2]",
+"  (7) If answer holds then the event act4 is an activity  [sentence 2]",
+"  (8) The event act4 is an activity  [from steps 7, 2]",
+"  (9) X does not perform the act4  [from steps 3, 4, 6, 8]",
+"  (10) Skq_S15_penguin is a penguin  [sentence 2]",
+"  (11) If answer holds then skq_S15_penguin performs the event act4  [sentence 2]",
+"  (12) Skq_S15_penguin performs the event act4  [from steps 11, 2]",
+"  (13) Contradiction  [from steps 9, 10, 12]"
+],
+  "timestamp": "2026-06-12T21:26:42Z"
+}

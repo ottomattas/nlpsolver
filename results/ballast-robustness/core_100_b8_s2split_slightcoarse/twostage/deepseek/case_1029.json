@@ -1,0 +1,925 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 1029,
+  "input_text": "John is a father of Mike. Tallinn is in Latvia with a probability 10 percent. Sheep are afraid of mice. The letter was written by Eve. The bike costs as much as the car. The city was destroyed. Paul ate a sandwich and Bill a salad. Elephants have probably long trunks. Mr Dursley is a Muggle. Eve wrote the letter?",
+  "expected_answer": true,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "True.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is a father of Mike.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is a father of Mike 2.",
+          "type": "real",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "Mike 2", "type": "concrete", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is in Latvia with a probability 10 percent.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Tallinn 3 is in Latvia 4.",
+          "type": "real",
+          "confidence": 0.1,
+          "entities": [{
+              "id": "Tallinn 3",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 4",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Sheep are afraid of mice.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Sheep are afraid of mice.",
+          "type": "normal_rule",
+          "entities": [{"id": "sheep", "type": "generic", "category": "animal"},
+            {"id": "mice", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "The letter was written by Eve.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Eve 5 wrote the letter 6.",
+          "type": "situation",
+          "entities": [{"id": "Eve 5", "type": "concrete", "category": "person"},
+            {"id": "letter 6", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "write", "mode": "event", "roles": {"actor": "Eve 5", "target": "letter 6"}}],
+          "pre_state": "W0",
+          "next_state": "W1",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The bike costs as much as the car.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "The price 9 of bike 7 equals the price 10 of car 8.",
+          "type": "situation",
+          "entities": [{"id": "bike 7", "type": "concrete", "category": "artifact"},
+            {"id": "car 8", "type": "concrete", "category": "artifact"},
+            {"id": "price 9", "type": "concrete", "text": "price"},
+            {"id": "price 10", "type": "concrete", "text": "price"}
+          ],
+          "definites": [["price of","price 9","bike 7"], ["price of","price 10","car 8"]]
+        },
+        {
+          "unit_id": "S6",
+          "text": "The price 9 is the price of the bike 7.",
+          "type": "situation",
+          "entities": [{"id": "price 9", "type": "concrete", "text": "price"},
+            {"id": "bike 7", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["price of","price 9","bike 7"]]
+        },
+        {
+          "unit_id": "S7",
+          "text": "The price 10 is the price of the car 8.",
+          "type": "situation",
+          "entities": [{"id": "price 10", "type": "concrete", "text": "price"},
+            {"id": "car 8", "type": "concrete", "category": "artifact"}
+          ],
+          "definites": [["price of","price 10","car 8"]]
+        }
+      ]
+    },
+    {
+      "raw": "The city was destroyed.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "The city 11 was destroyed.",
+          "type": "situation",
+          "entities": [{"id": "city 11", "type": "concrete", "category": "place"}],
+          "actions": [{"root": "destroy", "mode": "event", "roles": {"target": "city 11"}}],
+          "pre_state": "W1",
+          "next_state": "W2",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Paul ate a sandwich and Bill a salad.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Paul 12 ate a sandwich 13.",
+          "type": "situation",
+          "entities": [{"id": "Paul 12", "type": "concrete", "category": "person"},
+            {"id": "sandwich 13", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "eat", "mode": "event", "roles": {"actor": "Paul 12", "target": "sandwich 13"}}],
+          "pre_state": "W2",
+          "next_state": "W3",
+          "time": "past"
+        },
+        {
+          "unit_id": "S10",
+          "text": "Bill 14 ate a salad 15.",
+          "type": "situation",
+          "entities": [{"id": "Bill 14", "type": "concrete", "category": "person"},
+            {"id": "salad 15", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "eat", "mode": "event", "roles": {"actor": "Bill 14", "target": "salad 15"}}],
+          "pre_state": "W3",
+          "next_state": "W4",
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Elephants have probably long trunks.",
+      "units": [{
+          "unit_id": "S11",
+          "text": "Elephants have long trunks.",
+          "type": "normal_rule",
+          "confidence": 0.8,
+          "entities": [{"id": "elephants", "type": "generic", "category": "animal"},
+            {"id": "trunks", "type": "generic", "scope": "dependent"}
+          ],
+          "adjectives": [["long","none","trunk"]]
+        }
+      ]
+    },
+    {
+      "raw": "Mr Dursley is a Muggle.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Mr Dursley 16 is a Muggle.",
+          "type": "real",
+          "entities": [{"id": "Mr Dursley 16", "type": "concrete", "category": "person"}]
+        }
+      ]
+    },
+    {
+      "raw": "Eve wrote the letter?",
+      "units": [{
+          "unit_id": "S13",
+          "text": "Did Eve 5 write the letter 6?",
+          "type": "query",
+          "entities": [{"id": "Eve 5", "type": "concrete", "category": "person"},
+            {"id": "letter 6", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{"root": "write", "mode": "event", "roles": {"actor": "Eve 5", "target": "letter 6"}}],
+          "time": "past"
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["and",
+          ["isa","person","John 1"],
+          ["isa","person","Mike 2"],
+          ["is rel2","father of","John 1","Mike 2"]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["and",
+        ["holds","W0",
+          ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+        ],
+        ["@p","S2",0.1]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X",
+          ["forall","Y",
+            ["implies",
+              ["and", ["isa","sheep","X"], ["isa","mice","Y"]],
+              ["normally", ["is rel2","afraid of","X","Y"]]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","Eve 5"],
+            ["isa","letter","letter 6"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","write"],
+                ["has actor","E","Eve 5"],
+                ["has target","E","letter 6"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W0","W1"]
+      ]
+    ],
+    ["@id","S5",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","bike","bike 7"],
+            ["isa","car","car 8"],
+            ["=", ["$measure_of","price","bike 7","W0"], ["$measure_of","price","car 8","W0"]]
+          ]
+        ],
+        ["@definite","S5","W0","price of","bike 7","price 9"],
+        ["@definite","S5","W0","price of","car 8","price 10"]
+      ]
+    ],
+    ["@id","S6",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","price","price 9"],
+            ["isa","bike","bike 7"],
+            ["is rel2","price of","price 9","bike 7"]
+          ]
+        ],
+        ["@definite","S6","W0","price of","bike 7","price 9"]
+      ]
+    ],
+    ["@id","S7",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","price","price 10"],
+            ["isa","car","car 8"],
+            ["is rel2","price of","price 10","car 8"]
+          ]
+        ],
+        ["@definite","S7","W0","price of","car 8","price 10"]
+      ]
+    ],
+    ["@id","S8",
+      ["and",
+        ["holds","W1",
+          ["and",
+            ["isa","city","city 11"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","destroy"],
+                ["has target","E","city 11"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W1","W2"],
+        ["state time","W1","past"]
+      ]
+    ],
+    ["@id","S9",
+      ["and",
+        ["holds","W2",
+          ["and",
+            ["isa","person","Paul 12"],
+            ["isa","sandwich","sandwich 13"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","eat"],
+                ["has actor","E","Paul 12"],
+                ["has target","E","sandwich 13"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W2","W3"]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W3",
+          ["and",
+            ["isa","person","Bill 14"],
+            ["isa","salad","salad 15"],
+            ["exists","E1",
+              ["and",
+                ["isa","activity","E1"],
+                ["has type","E1","eat"],
+                ["has actor","E1","Bill 14"],
+                ["has target","E1","salad 15"],
+                ["has time","E1","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["next","W3","W4"]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["implies",
+              ["isa","elephant","X"],
+              ["normally",
+                ["exists","Y",
+                  ["and",
+                    ["isa","trunk","Y"],
+                    ["has part","X","Y"],
+                    ["has degree property","long","Y","none","trunk"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S11",0.8]
+      ]
+    ],
+    ["@id", "S12", ["holds", "W0", ["isa","Muggle","Mr Dursley 16"]]],
+    ["@id","S13",
+      ["question",
+        ["exists","E",
+          ["and",
+            ["isa","activity","E"],
+            ["has type","E","write"],
+            ["has actor","E","Eve 5"],
+            ["has target","E","letter 6"],
+            ["has time","E","past","in"]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_fixes": ["json: removed content after top-level close bracket"],
+  "clauses": [
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:Tallinn 3"],
+ "@nl": "Tallinn 3 is in Latvia 4."},
+{"@name": "entity_S2",
+ "@logic": ["isa","place","#:Latvia 4"],
+ "@nl": "Tallinn 3 is in Latvia 4."},
+{"@name": "entity_S12",
+ "@logic": ["isa","person","#:Mr Dursley 16"],
+ "@nl": "Mr Dursley 16 is a Muggle."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is a father of Mike 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mike 2"],
+ "@nl": "John 1 is a father of Mike 2."},
+{"@name": "sent_S1",
+ "@logic": ["is rel2", "father of", "#:John 1", "#:Mike 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is a father of Mike 2."},
+{"@name": "sent_S2",
+ "@logic": ["-is rel2", "in", "https://en.wikipedia.org/wiki/Tallinn", "https://en.wikipedia.org/wiki/Latvia", ["$ctxt","present","W0","?:Fv3","?:Fv4"]],
+ "@confidence": 0.8,
+ "@nl": "Tallinn 3 is in Latvia 4."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","sheep","?:X"],
+            ["-isa","mice","?:Y"],
+            ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["$block", ["$","mice",1], ["$not", ["is rel2", "afraid of", "?:X", "?:Y", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]]]]
+           ],
+ "@nl": "Sheep are afraid of mice."},
+{"@name": "sent_S4",
+ "@logic": ["isa","person","#:Eve 5"],
+ "@nl": "Eve 5 wrote the letter 6."},
+{"@name": "sent_S4",
+ "@logic": ["isa","letter","#:letter 6"],
+ "@nl": "Eve 5 wrote the letter 6."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "Eve 5 wrote the letter 6."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk0_activity", "write", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Eve 5 wrote the letter 6."},
+{"@name": "sent_S4",
+ "@logic": ["has actor", "sk0_activity", "#:Eve 5", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Eve 5 wrote the letter 6."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk0_activity", "#:letter 6", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Eve 5 wrote the letter 6."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv9","?:Fv10"]],
+ "@nl": "Eve 5 wrote the letter 6."},
+{"@name": "sent_S4",
+ "@logic": ["actuality","sk0_activity"],
+ "@nl": "Eve 5 wrote the letter 6."},
+{"@name": "sent_S4",
+ "@logic": ["next","W0","W1"],
+ "@nl": "Eve 5 wrote the letter 6."},
+{"@name": "sent_S5",
+ "@logic": ["isa","bike","#:bike 7"],
+ "@nl": "The price 9 of bike 7 equals the price 10 of car 8."},
+{"@name": "sent_S5",
+ "@logic": ["isa","car","#:car 8"],
+ "@nl": "The price 9 of bike 7 equals the price 10 of car 8."},
+{"@name": "sent_S5",
+ "@logic": ["=", ["$measure_of","price","#:bike 7","W0"], ["$measure_of","price","#:car 8","W0"]],
+ "@nl": "The price 9 of bike 7 equals the price 10 of car 8."},
+{"@name": "sent_S6",
+ "@logic": ["isa", "price", ["$theof1", "price", "#:bike 7", ["$ctxt","present","W0","?:Fv13","?:Fv14"]]],
+ "@nl": "The price 9 is the price of the bike 7."},
+{"@name": "sent_S6",
+ "@logic": ["isa","bike","#:bike 7"],
+ "@nl": "The price 9 is the price of the bike 7."},
+{"@name": "sent_S7",
+ "@logic": ["isa", "price", ["$theof1", "price", "#:car 8", ["$ctxt","present","W0","?:Fv15","?:Fv16"]]],
+ "@nl": "The price 10 is the price of the car 8."},
+{"@name": "sent_S7",
+ "@logic": ["isa","car","#:car 8"],
+ "@nl": "The price 10 is the price of the car 8."},
+{"@name": "sent_S8",
+ "@logic": ["isa","city","#:city 11"],
+ "@nl": "The city 11 was destroyed."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "The city 11 was destroyed."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk1_activity", "destroy", ["$ctxt","past","W1","?:Fv17","?:Fv18"]],
+ "@nl": "The city 11 was destroyed."},
+{"@name": "sent_S8",
+ "@logic": ["has target", "sk1_activity", "#:city 11", ["$ctxt","past","W1","?:Fv17","?:Fv18"]],
+ "@nl": "The city 11 was destroyed."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W1","?:Fv17","?:Fv18"]],
+ "@nl": "The city 11 was destroyed."},
+{"@name": "sent_S8",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "The city 11 was destroyed."},
+{"@name": "sent_S8",
+ "@logic": ["next","W1","W2"],
+ "@nl": "The city 11 was destroyed."},
+{"@name": "sent_S9",
+ "@logic": ["isa","person","#:Paul 12"],
+ "@nl": "Paul 12 ate a sandwich 13."},
+{"@name": "sent_S9",
+ "@logic": ["isa","sandwich","#:sandwich 13"],
+ "@nl": "Paul 12 ate a sandwich 13."},
+{"@name": "sent_S9",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Paul 12 ate a sandwich 13."},
+{"@name": "sent_S9",
+ "@logic": ["has type", "sk2_activity", "eat", ["$ctxt","past","W2","?:Fv19","?:Fv20"]],
+ "@nl": "Paul 12 ate a sandwich 13."},
+{"@name": "sent_S9",
+ "@logic": ["has actor", "sk2_activity", "#:Paul 12", ["$ctxt","past","W2","?:Fv19","?:Fv20"]],
+ "@nl": "Paul 12 ate a sandwich 13."},
+{"@name": "sent_S9",
+ "@logic": ["has target", "sk2_activity", "#:sandwich 13", ["$ctxt","past","W2","?:Fv19","?:Fv20"]],
+ "@nl": "Paul 12 ate a sandwich 13."},
+{"@name": "sent_S9",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W2","?:Fv19","?:Fv20"]],
+ "@nl": "Paul 12 ate a sandwich 13."},
+{"@name": "sent_S9",
+ "@logic": ["actuality","sk2_activity"],
+ "@nl": "Paul 12 ate a sandwich 13."},
+{"@name": "sent_S9",
+ "@logic": ["next","W2","W3"],
+ "@nl": "Paul 12 ate a sandwich 13."},
+{"@name": "sent_S10",
+ "@logic": ["isa","person","#:Bill 14"],
+ "@nl": "Bill 14 ate a salad 15."},
+{"@name": "sent_S10",
+ "@logic": ["isa","salad","#:salad 15"],
+ "@nl": "Bill 14 ate a salad 15."},
+{"@name": "sent_S10",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "Bill 14 ate a salad 15."},
+{"@name": "sent_S10",
+ "@logic": ["has type", "sk3_activity", "eat", ["$ctxt","past","W3","?:Fv21","?:Fv22"]],
+ "@nl": "Bill 14 ate a salad 15."},
+{"@name": "sent_S10",
+ "@logic": ["has actor", "sk3_activity", "#:Bill 14", ["$ctxt","past","W3","?:Fv21","?:Fv22"]],
+ "@nl": "Bill 14 ate a salad 15."},
+{"@name": "sent_S10",
+ "@logic": ["has target", "sk3_activity", "#:salad 15", ["$ctxt","past","W3","?:Fv21","?:Fv22"]],
+ "@nl": "Bill 14 ate a salad 15."},
+{"@name": "sent_S10",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W3","?:Fv21","?:Fv22"]],
+ "@nl": "Bill 14 ate a salad 15."},
+{"@name": "sent_S10",
+ "@logic": ["actuality","sk3_activity"],
+ "@nl": "Bill 14 ate a salad 15."},
+{"@name": "sent_S10",
+ "@logic": ["next","W3","W4"],
+ "@nl": "Bill 14 ate a salad 15."},
+{"@name": "sent_S11",
+ "@logic": [["-isa","elephant","?:X"], ["isa", "trunk", ["sk4","?:X"]]],
+ "@nl": "Elephants have long trunks."},
+{"@name": "sent_S11",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has part", "?:X", ["sk4","?:X"], ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Elephants have long trunks."},
+{"@name": "sent_S11",
+ "@logic": [["-isa","elephant","?:X"],
+            ["has degree property", "long", ["sk4","?:X"], "none", "trunk", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["$block", ["$","elephant",1], ["$not", ["has degree property", "long", ["sk4","?:X"], "none", "trunk", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]]]]
+           ],
+ "@confidence": 0.6,
+ "@nl": "Elephants have long trunks."},
+{"@name": "sent_S12",
+ "@logic": ["isa","muggle","#:Mr Dursley 16"],
+ "@nl": "Mr Dursley 16 is a Muggle."},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk5_activity"]],
+ "@nl": "Did Eve 5 write the letter 6?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk5_activity", "write", ["$ctxt","past","?:Fv34","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Eve 5 write the letter 6?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk5_activity", "#:Eve 5", ["$ctxt","past","?:Fv36","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Eve 5 write the letter 6?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk5_activity", "#:letter 6", ["$ctxt","past","?:Fv38","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Eve 5 write the letter 6?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has time", "sk5_activity", "past", "in", ["$ctxt","past","?:Fv40","?:Fv29","?:Fv30"]]
+           ],
+ "@nl": "Did Eve 5 write the letter 6?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["actuality","sk5_activity"]],
+ "@nl": "Did Eve 5 write the letter 6?"},
+{"@name": "sent_S13",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "write", ["$ctxt","past","?:Fv44","?:Fv29","?:Fv30"]],
+            ["-has actor", "?:E", "#:Eve 5", ["$ctxt","past","?:Fv46","?:Fv29","?:Fv30"]],
+            ["-has target", "?:E", "#:letter 6", ["$ctxt","past","?:Fv48","?:Fv29","?:Fv30"]],
+            ["-actuality","?:E"],
+            ["$defq0"]
+           ],
+ "@nl": "Did Eve 5 write the letter 6?"},
+{"@name": "sent_S13",
+ "@question": ["$defq0"],
+ "@nl": "Did Eve 5 write the letter 6?"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:bike 7", ["$theof1", "price", "#:bike 7", ["$ctxt","present","W0","?:Fv13","?:Fv14"]], ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:car 8", ["$theof1", "price", "#:car 8", ["$ctxt","present","W0","?:Fv15","?:Fv16"]], ["$ctxt","present","W0","?:Fv15","?:Fv16"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:bike 7", ["$theof1", "price", "#:bike 7", ["$ctxt","present","W0","?:Fv13","?:Fv14"]], ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["have", "#:bike 7", ["$theof1", "price", "#:bike 7", ["$ctxt","present","W0","?:Fv13","?:Fv14"]], ["$ctxt","present","W0","?:Fv13","?:Fv14"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["is rel2", "price of", ["$theof1","price","?:S","?:C"], "?:S", "?:C"],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_theof",
+ "@logic": ["isa", "price", ["$theof1","price","?:S","?:C"]],
+ "@nl": "[generated: frm_theof]"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","price","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "price", ["$measure_of","price","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "destroy", ["$ctxt","?:Fv52","?:Fv53","?:Fv55","?:Fv56"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv52","?:Fv53","?:Fv55","?:Fv56"]],
+            ["-next","?:Fv53","?:Fv54"],
+            ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]],
+            ["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv54","?:Fv55","?:Fv56"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "destroy", "?:X", ["$ctxt","?:Fv57","?:Fv58","?:Fv60","?:Fv61"]],
+            ["-next","?:Fv58","?:Fv59"],
+            ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv59","?:Fv60","?:Fv61"]],
+            ["$block", 0, ["$not", ["has property", "destroyed", "?:X", ["$ctxt","present","?:Fv59","?:Fv60","?:Fv61"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","sheep","$some_sheep"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","sheep","$some_not_sheep"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","mice","$some_mice"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","mice","$some_not_mice"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S11",
+ "@sourcetype": "populate",
+ "@logic": ["isa","elephant","$some_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S11",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","elephant","$some_not_elephant"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S11",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S11",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","trunk","$some_not_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S11",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "long", "$some_long_trunk", "none", "trunk", ["$ctxt","?:Fv111","?:Fv108","?:Fv109","?:Fv110"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S11",
+ "@sourcetype": "populate",
+ "@logic": ["isa","trunk","$some_long_trunk"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S11",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "long", "$some_not_long_trunk", "none", "trunk", ["$ctxt","?:Fv119","?:Fv116","?:Fv117","?:Fv118"]],
+ "@nl": "[population: from input]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","car","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "none", "?:Fv120", ["$ctxt","past","?:Fv62","?:Fv63","?:Fv64"]],
+            ["has degree property", "long", "?:X", "none", "?:Fv121", ["$ctxt","present","?:Fv62","?:Fv63","?:Fv64"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "none", "?:Fv122", ["$ctxt","present","?:Fv62","?:Fv63","?:Fv64"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv65","?:Fv66","?:Fv67"]],
+            ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv65","?:Fv66","?:Fv67"]],
+            ["$block", 0, ["$not", ["has degree property", "long", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv65","?:Fv66","?:Fv67"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_measure_rel_bridge",
+ "@logic": [["-=", ["$measure_of","price","?:S","?:W"], "?:V"],
+            ["is rel2","price of","?:V","?:S","?:Ctxt"]
+           ],
+ "@nl": "[generated: frm_measure_rel_bridge]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W0","W1"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W1","W2"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W2","W3"],
+ "@nl": "[generated: frm_world_geom]"},
+{"@name": "frm_world_geom",
+ "@sourcetype": "world_geometry",
+ "@logic": ["next","W3","W4"],
+ "@nl": "[generated: frm_world_geom]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": true,
+        "confidence": 1,
+        "positive proof": [[1, ["in","sent_S13","assumption",1], [["$defq0"], ["-has type", "?:X", "write", ["$ctxt","past","?:Y","?:Z","?:U"]], ["-has actor", "?:X", "#:Eve 5", ["$ctxt","past","?:V","?:Z","?:U"]], ["-has target", "?:X", "#:letter 6", ["$ctxt","past","?:W","?:Z","?:U"]], ["-isa","activity","?:X"], ["-actuality","?:X"]]],
+          [2, ["in","sent_S4","assumption",1], [["has type", "sk0_activity", "write", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [3, ["in","sent_S13","goal",1], [["-$defq0"]]],
+          [4, ["mp", [1,1], 2, 3, "fromga", 1], [["-isa","activity","sk0_activity"], ["-actuality","sk0_activity"], ["-has actor", "sk0_activity", "#:Eve 5", ["$ctxt","past","?:X","?:Y","?:Z"]], ["-has target", "sk0_activity", "#:letter 6", ["$ctxt","past","?:U","?:Y","?:Z"]]]],
+          [5, ["in","sent_S4","assumption",1], [["has actor", "sk0_activity", "#:Eve 5", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [6, ["mp", [4,2], 5, "fromga", 1], [["-isa","activity","sk0_activity"], ["-actuality","sk0_activity"], ["-has target", "sk0_activity", "#:letter 6", ["$ctxt","past","?:X3","?:Y3","?:Z3"]]]],
+          [7, ["in","sent_S4","assumption",1], [["isa","activity","sk0_activity"]]],
+          [8, ["in","sent_S4","assumption",1], [["actuality","sk0_activity"]]],
+          [9, ["simp",6,7,8,"fromga",1], [["-has target", "sk0_activity", "#:letter 6", ["$ctxt","past","?:X","?:Y","?:Z"]]]],
+          [10, ["in","sent_S4","assumption",1], [["has target", "sk0_activity", "#:letter 6", ["$ctxt","past","W0","?:X","?:Y"]]]],
+          [11, ["mp",9,10,"fromga",1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) The letter was written by Eve.",
+"  (2) Eve wrote the letter?",
+"Proof steps (by contradiction):",
+"  (1) If X is a write event and Eve performs X and X targets the letter G and X is an activity then answer holds  [sentence 2]",
+"  (2) The event act1 is a write event  [sentence 1]",
+"  (3) assume for contradiction: the answer is no  [from question]",
+"  (4) If the event act1 is an activity and Eve performs the act1 then the act1 does not target the letter G  [from steps 1, 2, 3]",
+"  (5) Eve performs the event act1  [sentence 1]",
+"  (6) If the event act1 is an activity then the act1 does not target the letter G  [from steps 4, 5]",
+"  (7) The event act1 is an activity  [sentence 1]",
+"  (8)   [sentence 1]",
+"  (9) The act1 does not target the letter G  [from steps 6, 7, 8]",
+"  (10) The event act1 targets the letter G  [sentence 1]",
+"  (11) Contradiction  [from steps 9, 10]"
+],
+  "llm_usage": [{
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34114,
+      "cached_input_tokens": 33920,
+      "output_tokens": 335,
+      "raw": {
+        "prompt_tokens": 34114,
+        "completion_tokens": 335,
+        "total_tokens": 34449,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 278},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 194
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34156,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1148,
+      "raw": {
+        "prompt_tokens": 34156,
+        "completion_tokens": 1148,
+        "total_tokens": 35304,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1088},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 236
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34108,
+      "cached_input_tokens": 33920,
+      "output_tokens": 878,
+      "raw": {
+        "prompt_tokens": 34108,
+        "completion_tokens": 878,
+        "total_tokens": 34986,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 787},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 188
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34175,
+      "cached_input_tokens": 33920,
+      "output_tokens": 685,
+      "raw": {
+        "prompt_tokens": 34175,
+        "completion_tokens": 685,
+        "total_tokens": 34860,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 575},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 255
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34407,
+      "cached_input_tokens": 33920,
+      "output_tokens": 2184,
+      "raw": {
+        "prompt_tokens": 34407,
+        "completion_tokens": 2184,
+        "total_tokens": 36591,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1856},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 487
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34139,
+      "cached_input_tokens": 33920,
+      "output_tokens": 917,
+      "raw": {
+        "prompt_tokens": 34139,
+        "completion_tokens": 917,
+        "total_tokens": 35056,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 819},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 219
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34312,
+      "cached_input_tokens": 33920,
+      "output_tokens": 909,
+      "raw": {
+        "prompt_tokens": 34312,
+        "completion_tokens": 909,
+        "total_tokens": 35221,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 642},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 392
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34131,
+      "cached_input_tokens": 33920,
+      "output_tokens": 624,
+      "raw": {
+        "prompt_tokens": 34131,
+        "completion_tokens": 624,
+        "total_tokens": 34755,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 530},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 211
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34098,
+      "cached_input_tokens": 33920,
+      "output_tokens": 766,
+      "raw": {
+        "prompt_tokens": 34098,
+        "completion_tokens": 766,
+        "total_tokens": 34864,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 733},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 178
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34157,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1433,
+      "raw": {
+        "prompt_tokens": 34157,
+        "completion_tokens": 1433,
+        "total_tokens": 35590,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1362},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 237
+      }
+    }
+  ],
+  "timestamp": "2026-06-13T00:17:47Z"
+}

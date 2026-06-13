@@ -1,0 +1,811 @@
+{
+  "test_name": "core_100_b8_s2split_slightcoarse",
+  "case_id": 15,
+  "input_text": "A promotion was given to Mary. Bears ate berries in a forest. Penguins do not fly. Sheep are afraid of mice. Paul, a carpenter, carried a box. Eve kept the milk in the fridge. Sandra journeyed to the kitchen. Emily is a cat. John is a tall man and not a tall man?",
+  "expected_answer": false,
+  "llm_name": "gpt",
+  "llm_version": "gpt-5.1",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "A promotion was given to Mary.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "Someone gave a promotion 1 to Mary 2.",
+          "type": "situation",
+          "entities": [{"id": "someone", "type": "generic", "category": "person"},
+            {"id": "promotion 1", "type": "concrete", "category": "abstract"},
+            {"id": "Mary 2", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "give",
+              "mode": "event",
+              "roles": {"actor": "someone", "target": "promotion 1", "recipient": "Mary 2"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Bears ate berries in a forest.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "Bears ate berries in a forest.",
+          "type": "situation",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "dependent", "category": "plant"},
+            {"id": "forest", "type": "generic", "scope": "dependent", "category": "place"}
+          ],
+          "actions": [{
+              "root": "eat",
+              "mode": "event",
+              "roles": {"actor": "bears", "target": "berries", "location": "forest", "location_prep": "in"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Penguins do not fly.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Penguins do not fly.",
+          "type": "strict_rule",
+          "entities": [{"id": "penguins", "type": "generic", "category": "animal"}],
+          "actions": [{"root": "fly", "mode": "capability", "roles": {"actor": "penguins"}}]
+        }
+      ]
+    },
+    {
+      "raw": "Sheep are afraid of mice.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "Sheep are afraid of mice.",
+          "type": "normal_rule",
+          "entities": [{"id": "sheep", "type": "generic", "category": "animal"},
+            {"id": "mice", "type": "generic", "category": "animal"}
+          ],
+          "adjectives": [["afraid of mice","none","sheep"]],
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "raw": "Paul, a carpenter, carried a box.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Paul 1 carried a box 2.",
+          "type": "situation",
+          "entities": [{"id": "Paul 1", "type": "concrete", "category": "person"},
+            {"id": "box 2", "type": "concrete", "category": "artifact"},
+            {"id": "carpenter", "type": "generic", "category": "person"}
+          ],
+          "actions": [{"root": "carry", "mode": "event", "roles": {"actor": "Paul 1", "target": "box 2"}}],
+          "time": "past"
+        },
+        {
+          "unit_id": "S6",
+          "text": "Paul 1 is a carpenter.",
+          "type": "real",
+          "entities": [{"id": "Paul 1", "type": "concrete", "category": "person"},
+            {"id": "carpenter", "type": "generic", "category": "person"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Eve kept the milk in the fridge.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Eve 1 kept the milk 2 in the fridge 3.",
+          "type": "situation",
+          "entities": [{"id": "Eve 1", "type": "concrete", "category": "person"},
+            {"id": "milk 2", "type": "concrete", "category": "substance"},
+            {"id": "fridge 3", "type": "concrete", "category": "artifact"}
+          ],
+          "actions": [{
+              "root": "keep",
+              "mode": "event",
+              "roles": {"actor": "Eve 1", "target": "milk 2", "location": "fridge 3", "location_prep": "in"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Sandra journeyed to the kitchen.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "Sandra 1 went to the kitchen 2.",
+          "type": "situation",
+          "entities": [{"id": "Sandra 1", "type": "concrete", "category": "person"},
+            {"id": "kitchen 2", "type": "concrete", "category": "place"}
+          ],
+          "actions": [{
+              "root": "go",
+              "mode": "event",
+              "roles": {"actor": "Sandra 1", "destination": "kitchen 2"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Emily is a cat.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Emily 1 is a cat.",
+          "type": "real",
+          "entities": [{"id": "Emily 1", "type": "concrete", "category": "animal"},
+            {"id": "cat", "type": "generic", "category": "animal"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "John is a tall man and not a tall man?",
+      "units": [{
+          "unit_id": "S10",
+          "text": "Is John 1 a tall man and not a tall man?",
+          "type": "query",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "man", "type": "generic", "category": "person"}
+          ],
+          "adjectives": [["tall","none","man"]]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["holds","W0",
+        ["exists","X",
+          ["and",
+            ["isa","someone","X"],
+            ["isa","promotion","promotion 1"],
+            ["isa","person","Mary 2"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","give"],
+                ["has actor","E","X"],
+                ["has target","E","promotion 1"],
+                ["has recipient","E","Mary 2"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["exists","X",
+          ["and",
+            ["isa","bear","X"],
+            ["exists","Y",
+              ["and",
+                ["isa","berry","Y"],
+                ["exists","Z",
+                  ["and",
+                    ["isa","forest","Z"],
+                    ["exists","E",
+                      ["and",
+                        ["isa","activity","E"],
+                        ["has type","E","eat"],
+                        ["has actor","E","X"],
+                        ["has target","E","Y"],
+                        ["has location","E","Z","in"],
+                        ["has time","E","past","in"]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","penguin","X"],
+            ["not",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","fly"],
+                  ["has actor","E","X"],
+                  ["capability","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["forall","X",
+            ["forall","Y",
+              ["implies",
+                ["and", ["isa","sheep","X"], ["isa","mouse","Y"]],
+                ["normally", ["has degree rel2","afraid of mice","X","Y","none","sheep"]]
+              ]
+            ]
+          ]
+        ],
+        ["@p","S4",0.99]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Paul 1"],
+          ["isa","box","box 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","carry"],
+              ["has actor","E","Paul 1"],
+              ["has target","E","box 2"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S6", ["holds", "W0", ["and", ["isa","person","Paul 1"], ["isa","carpenter","Paul 1"]]]],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Eve 1"],
+          ["isa","milk","milk 2"],
+          ["isa","fridge","fridge 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","keep"],
+              ["has actor","E","Eve 1"],
+              ["has target","E","milk 2"],
+              ["has location","E","fridge 3","in"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Sandra 1"],
+          ["isa","kitchen","kitchen 2"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","go"],
+              ["has actor","E","Sandra 1"],
+              ["has destination","E","kitchen 2","at"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id", "S9", ["holds", "W0", ["isa","cat","Emily 1"]]],
+    ["@id","S10",
+      ["question",
+        ["and",
+          ["and", ["isa","man","John 1"], ["has degree property","tall","John 1","none","man"]],
+          ["not",
+            ["and", ["isa","man","John 1"], ["has degree property","tall","John 1","none","man"]]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_retries": ["sanity #1: dropped_specific_noun"],
+  "clauses": [
+{"@name": "entity_S9",
+ "@logic": ["isa","animal","#:Emily 1"],
+ "@nl": "Emily 1 is a cat."},
+{"@name": "entity_S10",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S1",
+ "@logic": ["isa","someone","sk0_someone"],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","promotion","#:promotion 1"],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:Mary 2"],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S1",
+ "@logic": ["has type", "sk1_activity", "give", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S1",
+ "@logic": ["has actor", "sk1_activity", "sk0_someone", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S1",
+ "@logic": ["has target", "sk1_activity", "#:promotion 1", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S1",
+ "@logic": ["has recipient", "sk1_activity", "#:Mary 2", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S1",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv1","?:Fv2"]],
+ "@nl": "Someone gave a promotion 1 to Mary 2."},
+{"@name": "sent_S2",
+ "@logic": ["isa","bear","sk2_bear"],
+ "@nl": "Bears ate berries in a forest."},
+{"@name": "sent_S2",
+ "@logic": ["isa","berry","sk3_berry"],
+ "@nl": "Bears ate berries in a forest."},
+{"@name": "sent_S2",
+ "@logic": ["isa","forest","sk4_forest"],
+ "@nl": "Bears ate berries in a forest."},
+{"@name": "sent_S2",
+ "@logic": ["isa","activity","sk5_activity"],
+ "@nl": "Bears ate berries in a forest."},
+{"@name": "sent_S2",
+ "@logic": ["has type", "sk5_activity", "eat", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Bears ate berries in a forest."},
+{"@name": "sent_S2",
+ "@logic": ["has actor", "sk5_activity", "sk2_bear", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Bears ate berries in a forest."},
+{"@name": "sent_S2",
+ "@logic": ["has target", "sk5_activity", "sk3_berry", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Bears ate berries in a forest."},
+{"@name": "sent_S2",
+ "@logic": ["has location", "sk5_activity", "sk4_forest", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Bears ate berries in a forest."},
+{"@name": "sent_S2",
+ "@logic": ["has time", "sk5_activity", "past", "in", ["$ctxt","past","W0","?:Fv3","?:Fv4"]],
+ "@nl": "Bears ate berries in a forest."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","penguin","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "fly", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv8","?:Fv7","?:Fv5","?:Fv6"]],
+            ["-capability","?:E"]
+           ],
+ "@nl": "Penguins do not fly."},
+{"@name": "sent_S4",
+ "@logic": [["-isa","sheep","?:X"],
+            ["-isa","mouse","?:Y"],
+            ["is rel2", "afraid of mice", "?:X", "?:Y", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]],
+            ["$block", ["$","mouse",1], ["$not", ["is rel2", "afraid of mice", "?:X", "?:Y", ["$ctxt","?:Fv12","?:Fv11","?:Fv9","?:Fv10"]]]]
+           ],
+ "@confidence": 0.98,
+ "@nl": "Sheep are afraid of mice."},
+{"@name": "sent_S5",
+ "@logic": ["isa","person","#:Paul 1"],
+ "@nl": "Paul 1 carried a box 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","box","#:box 2"],
+ "@nl": "Paul 1 carried a box 2."},
+{"@name": "sent_S5",
+ "@logic": ["isa","activity","sk6_activity"],
+ "@nl": "Paul 1 carried a box 2."},
+{"@name": "sent_S5",
+ "@logic": ["has type", "sk6_activity", "carry", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Paul 1 carried a box 2."},
+{"@name": "sent_S5",
+ "@logic": ["has actor", "sk6_activity", "#:Paul 1", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Paul 1 carried a box 2."},
+{"@name": "sent_S5",
+ "@logic": ["has target", "sk6_activity", "#:box 2", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Paul 1 carried a box 2."},
+{"@name": "sent_S5",
+ "@logic": ["has time", "sk6_activity", "past", "in", ["$ctxt","past","W0","?:Fv13","?:Fv14"]],
+ "@nl": "Paul 1 carried a box 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","person","#:Paul 1"],
+ "@nl": "Paul 1 is a carpenter."},
+{"@name": "sent_S6",
+ "@logic": ["isa","carpenter","#:Paul 1"],
+ "@nl": "Paul 1 is a carpenter."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Eve 1"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S7",
+ "@logic": ["isa","milk","#:milk 2"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S7",
+ "@logic": ["isa","fridge","#:fridge 3"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk7_activity"],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk7_activity", "keep", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk7_activity", "#:Eve 1", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S7",
+ "@logic": ["has target", "sk7_activity", "#:milk 2", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S7",
+ "@logic": ["has location", "sk7_activity", "#:fridge 3", "in", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk7_activity", "past", "in", ["$ctxt","past","W0","?:Fv17","?:Fv18"]],
+ "@nl": "Eve 1 kept the milk 2 in the fridge 3."},
+{"@name": "sent_S8",
+ "@logic": ["isa","person","#:Sandra 1"],
+ "@nl": "Sandra 1 went to the kitchen 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","kitchen","#:kitchen 2"],
+ "@nl": "Sandra 1 went to the kitchen 2."},
+{"@name": "sent_S8",
+ "@logic": ["isa","activity","sk8_activity"],
+ "@nl": "Sandra 1 went to the kitchen 2."},
+{"@name": "sent_S8",
+ "@logic": ["has type", "sk8_activity", "go", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Sandra 1 went to the kitchen 2."},
+{"@name": "sent_S8",
+ "@logic": ["has actor", "sk8_activity", "#:Sandra 1", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Sandra 1 went to the kitchen 2."},
+{"@name": "sent_S8",
+ "@logic": ["has destination", "sk8_activity", "#:kitchen 2", "at", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Sandra 1 went to the kitchen 2."},
+{"@name": "sent_S8",
+ "@logic": ["has time", "sk8_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Sandra 1 went to the kitchen 2."},
+{"@name": "sent_S9",
+ "@logic": ["isa","cat","#:Emily 1"],
+ "@nl": "Emily 1 is a cat."},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","man","#:John 1"]],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:Fv25","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["-isa","man","#:John 1"],
+            ["-has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:Fv25","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-isa","man","#:John 1"],
+            ["-has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:Fv25","?:Fv23","?:Fv24"]],
+            ["isa","man","#:John 1"],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question",
+ "@logic": [["-isa","man","#:John 1"],
+            ["-has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:Fv25","?:Fv23","?:Fv24"]],
+            ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:Fv25","?:Fv23","?:Fv24"]],
+            ["$defq0"]
+           ],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S10",
+ "@question": ["$defq0"],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S10",
+ "@sourcetype": "question_bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","past","?:W","?:L","?:K"]],
+            ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:W","?:L","?:K"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:W","?:L","?:K"]]]]
+           ],
+ "@nl": "Is John 1 a tall man and not a tall man?"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","someone","$some_someone"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","someone","$some_not_someone"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S1",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","berry","$some_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","berry","$some_not_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["isa","forest","$some_forest"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S2",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","forest","$some_not_forest"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","penguin","$some_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","penguin","$some_not_penguin"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","sheep","$some_sheep"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","sheep","$some_not_sheep"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","mouse","$some_mouse"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","mouse","$some_not_mouse"],
+ "@nl": "[population: from input]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv37"], ["has type","?:E","give","?:Fv37"]],
+ "@confidence": 0.91,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","fly","?:Fv38"], ["has type","?:E","go","?:Fv38"]],
+ "@confidence": 0.52,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has type","?:E","pass","?:Fv39"], ["has type","?:E","go","?:Fv39"]],
+ "@confidence": 0.89,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","tall","?:X","none","?:Fv112","?:Fv40"],
+            ["has degree property","high","?:X","none","?:Fv113","?:Fv40"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","high","?:X","none","?:Fv114","?:Fv41"],
+            ["has degree property","tall","?:X","none","?:Fv115","?:Fv41"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","forest","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","forest","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "none", "?:Fv116", ["$ctxt","past","?:Fv42","?:Fv43","?:Fv44"]],
+            ["has degree property", "tall", "?:X", "none", "?:Fv117", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "none", "?:Fv118", ["$ctxt","present","?:Fv42","?:Fv43","?:Fv44"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv45","?:Fv46","?:Fv47"]],
+            ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]],
+            ["$block", 0, ["$not", ["has degree property", "tall", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv45","?:Fv46","?:Fv47"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has destination","?:Esb","?:Xsb","?:Psb","?:Csb"],
+            ["has location","?:Esb","?:Xsb","?:Psb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has target","?:Esb","?:Ysb","?:Csb"],
+            ["-has recipient","?:Esb","?:Xsb","?:Csb"],
+            ["has recipient","?:Ysb","?:Xsb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"negative_pref\", \"posunitpara\"], \"query_preference\": 1} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S10","assumption",1], [["-isa","man","#:John 1"], ["-$defq0"], ["-has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [2, ["in","sent_S10","assumption",1], [["-$defq0"], ["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [3, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [4, ["mp",2,3,"fromga",1], [["has degree property", "tall", "#:John 1", "none", "man", ["$ctxt","present","?:X","?:Y","?:Z"]]]],
+          [5, ["in","sent_S10","assumption",1], [["-$defq0"], ["isa","man","#:John 1"]]],
+          [6, ["mp",5,3,"fromga",1], [["isa","man","#:John 1"]]],
+          [7, ["mp", [1,2], 4, 6, 3, "fromga", 1], false]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) John is a tall man and not a tall man?",
+"Proof steps (by contradiction):",
+"  (1) If John is a man and answer holds then John is not a tall man  [sentence 1]",
+"  (2) If answer holds then John is a tall man  [sentence 1]",
+"  (3) Answer holds  [assumption]",
+"  (4) John is a tall man  [from steps 2, 3]",
+"  (5) If answer holds then John is a man  [sentence 1]",
+"  (6) John is a man  [from steps 5, 3]",
+"  (7) Contradiction  [from steps 1, 4, 6, 3]"
+],
+  "llm_usage": [{
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33556,
+      "cached_input_tokens": 33280,
+      "output_tokens": 154,
+      "raw": {
+        "input_tokens": 33556,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 154,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33710
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 34038,
+      "cached_input_tokens": 33280,
+      "output_tokens": 148,
+      "raw": {
+        "input_tokens": 34038,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 148,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 34186
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33566,
+      "cached_input_tokens": 33280,
+      "output_tokens": 170,
+      "raw": {
+        "input_tokens": 33566,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 170,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33736
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33489,
+      "cached_input_tokens": 33280,
+      "output_tokens": 110,
+      "raw": {
+        "input_tokens": 33489,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 110,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33599
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33510,
+      "cached_input_tokens": 33280,
+      "output_tokens": 124,
+      "raw": {
+        "input_tokens": 33510,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 124,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33634
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33622,
+      "cached_input_tokens": 33280,
+      "output_tokens": 170,
+      "raw": {
+        "input_tokens": 33622,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 170,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33792
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33580,
+      "cached_input_tokens": 33280,
+      "output_tokens": 151,
+      "raw": {
+        "input_tokens": 33580,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 151,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33731
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33533,
+      "cached_input_tokens": 33280,
+      "output_tokens": 128,
+      "raw": {
+        "input_tokens": 33533,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 128,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33661
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33481,
+      "cached_input_tokens": 33280,
+      "output_tokens": 43,
+      "raw": {
+        "input_tokens": 33481,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 43,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33524
+      }
+    },
+    {
+      "llm": "gpt",
+      "version": "gpt-5.1",
+      "input_tokens": 33509,
+      "cached_input_tokens": 33280,
+      "output_tokens": 108,
+      "raw": {
+        "input_tokens": 33509,
+        "input_tokens_details": {"cached_tokens": 33280},
+        "output_tokens": 108,
+        "output_tokens_details": {"reasoning_tokens": 0},
+        "total_tokens": 33617
+      }
+    }
+  ],
+  "timestamp": "2026-06-12T21:54:06Z"
+}
