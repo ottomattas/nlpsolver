@@ -1,0 +1,27 @@
+Old ballast suites — gpt+claude chunking provenance
+====================================================
+
+These are the 100-subset ballast suites at git rev 88ca7b0 (the
+PRE-splitter-fix generation). They are NOT the suites at HEAD:
+llmpipe/tests/ballast/tests_core_100_b{8,16}.py at HEAD are the
+REGENERATED (post-fix) suites and differ case-by-case.
+
+Why both exist
+--------------
+The collected gpt+claude b8/b16 baselines were run on the 88ca7b0
+generation. To keep the chunking comparison (-slightcoarse and
+-s2split -slightcoarse) case-identical for gpt+claude, their chunking
+cells were run on THESE same suites, not the regenerated ones. The
+gemini+deepseek baselines (Phase 3) and their chunking cells were run on
+the regenerated HEAD suites, so for those models HEAD is the right pairing.
+
+Validation does not require these files: the committed per-case JSONs
+under core_100_b*_*/twostage/<llm>/ embed input_text, so dose_response.py
+reconstructs accuracy self-contained. These files are here only so the
+gpt+claude chunking cells can be RE-RUN from HEAD without git archaeology:
+
+  python3 runtests.py results/ballast-robustness/oldsuites/tests_core_100_b8.py \
+      -llms gpt,claude -maxtokens 32000 -timeout 300 -slightcoarse -tag slightcoarse
+  (and the -s2split -slightcoarse variant; b16 analogously)
+
+Source: git show 88ca7b0:llmpipe/tests/ballast/tests_core_100_b8.py
