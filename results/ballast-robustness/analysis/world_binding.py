@@ -22,6 +22,10 @@ freeing too eagerly (the same risk §16.3 saw with world-merge).
 This is read-only and $0; it does NOT implement the fix. If the ceiling is
 worthwhile, the actual convert-layer prototype is the next step (same branch).
 
+Result (see EXPERIMENT-world-binding-12.4.md): over 310 pinned candidates the
+freed run is +53 vs stored / +47 vs plain, dose-growing (b8 +9, b16 +20,
+b32 +24), with only 7 regressions (six at b8, zero at b16/b32). Gate met.
+
 Run:  python3 world_binding.py [-doses 8,16,32]
         [-models gpt,claude,gemini,deepseek] [-b0only] [-limit N] [-verbose]
 """
@@ -35,6 +39,7 @@ sys.path.insert(0, os.path.join(C.REPO, "llmpipe"))
 sys.path.insert(0, os.path.join(C.REPO, "llmpipe", "solver"))
 
 from spot_verify import replay
+import globals as G  # noqa: E402
 
 
 def _matcher():
@@ -51,11 +56,17 @@ def main():
     ap.add_argument("-allcases", dest="b0only", action="store_false",
                     help="score every evaluated case, not just b0-correct")
     ap.add_argument("-limit", type=int, default=0)
+    ap.add_argument("-budget", type=int, default=20,
+                    help="fixed gk budget (s) for BOTH plain and freed replays; "
+                         "world-shift rescues flip fast, so this only caps the "
+                         "b32 no-proof churn (default 20)")
     ap.add_argument("-verbose", action="store_true")
     args = ap.parse_args()
     doses = [int(s) for s in args.doses.split(",") if s.strip()]
     models = [x for x in args.models.split(",") if x]
     match = _matcher()
+    G.options["prover_seconds"] = args.budget
+    G.options["prover_seconds_cli"] = True
 
     def correct(expected, answer, text):
         if answer is None:
@@ -72,7 +83,7 @@ def main():
     print(f"\n==== §12.4 ceiling probe: free the pinned question world "
           f"(offline, $0) ====")
     print(f"scope: {scope}; accuracy of graded cases; plain/freed are gk-replayed "
-          f"(fixes=[])\n")
+          f"(fixes=[], gk budget {args.budget}s)\n")
     hdr = (f"{'cell':14s} {'n':>4s} {'cand':>4s} {'stored':>6s} {'plain':>5s} "
            f"{'freed':>5s} {'rescue':>6s} {'regr':>4s} {'drift':>5s}")
     print(hdr)

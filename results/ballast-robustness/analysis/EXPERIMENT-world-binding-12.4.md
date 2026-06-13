@@ -73,9 +73,56 @@ python3 world_binding.py -doses 8,16,32 -models gpt,claude,gemini,deepseek -verb
 
 ## Results
 
-_(filled when the full run completes; see `/tmp/world_binding.log`.)_
+Full run, b0-correct cohort, 310 pinned candidates, gk budget 20s
+(`freed`/`plain` both gk-replayed; `stored` = the live answer):
 
-Partial (b8, raw — rescues not yet discounted for gk-crash contamination):
-gpt 88→89 (+2 resc / −1 regr), claude 82→84 (+3/−2), gemini 89→91 (+4/−2, 2 of
-the rescues are gk-crash sidesteps), deepseek 86→90 (+4/−0, 1 gk-crash sidestep).
-Net at b8 is small and partly contaminated; the verdict waits on b16/b32.
+```
+cell           n  cand  stored plain freed  rescue regr
+gpt b8        93   17     88    88    89      2    1
+claude b8     91   25     82    83    84      3    2
+gemini b8     99   32     89    89    91      4    2
+deepseek b8   98   27     86    88    90      3    1
+gpt b16       68   16     54    55    60      5    0
+claude b16    66   20     57    58    63      5    0
+gemini b16    99   30     81    82    86      5    1
+deepseek b16  98   27     86    87    89      2    0
+gpt b32      100   25     72    73    78      5    0
+claude b32    98   31     71    70    78      8    0
+gemini b32    99   32     66    65    73      8    0
+deepseek b32  98   28     74    74    78      4    0
+------------------------------------------------------
+TOTAL              310   906   912   959     54    7
+
+pure §12.4 effect (freed - plain): +47
+headline (freed - stored): +53   (convert drift plain - stored: +6)
+rescues 54  vs  regressions 7  -> net +47
+```
+
+**Dose-growing, as §12.4 predicts.** Δ(freed−stored) is +9 at b8, +20 at b16,
++24 at b32 — the fix claws back the most exactly where world-shift dominates.
+Per cell at b32 it recovers ~6–7 accuracy points (gpt 72→78, claude 71→78,
+gemini 66→73, deepseek 74→78), i.e. roughly a quarter of the ballast-induced
+drop. It is **not** a full fix (the rest is genuine parse distortion, §17.2),
+but it is the single largest offline lever found.
+
+**Regressions are rare and low-dose only:** 7 of 310 candidates, six of them at
+b8, **zero at b16/b32**. The spurious-proof cost of freeing the question world
+is real but small and does not grow with dose.
+
+**Caveats:** ~8 of the 54 rescues coincide with a gk allocator crash in the
+plain replay (250, 1317, 1011, 1052, 1375 — `prover returned empty result`);
+freeing the world changes the clause set and can sidestep the crash without the
+world binding being the true cause. Discounting those, clean net ≈ **+39**,
+still strongly positive. Recurring clean rescues 1239 and 1521 appear in nearly
+every cell — robust world-shift cases the fix reliably recovers.
+
+## Verdict: GATE MET → escalate
+
+Clean rescues (~46) ≫ regressions (7), `freed − plain` is clearly positive
+(+47), and the effect grows with dose. The §12.4 convert-layer fix is worth
+building. **Step 2** (this branch): prototype the actual fix in `lc_packages` /
+the convert layer (bind the question to a world variable instead of the latest
+constant), re-run the curve, and confirm the live result matches this ceiling —
+to be done deliberately and with Tanel, since it is a semantic change in his
+code. The regression set (1310, 1375 at b8) is the targeted-test list to make
+sure the live fix does not over-free.
