@@ -48,6 +48,7 @@ options={
   "prenorm_flag":False,  # if True, run an experimental pre-Stage-1 LLM phase that unifies repeated entity/property/relation wordings
   "s2split_flag":False,  # if True, run Stage 2 sentence-by-sentence: one LLM call per Stage-1 sentence package, outputs joined (worlds renumbered, rule c')
   "slightcoarse_flag":False,  # if True, enable the light shape-unification pack: off-inventory predicate rename, shape bridges (destination/location, beneficiary lift, measure/comparative), property-shape compound composition, broad-supertype isa
+  "freequestionworld_flag":False,  # (experiment/world-binding-12.4) if True, after convert+semnormalize, free the pinned world constant in question clauses' $ctxt to a variable (prototype of the §12.4 convert-layer fix; see lc_ctxt.free_question_world)
   "crossstage_retry_flag":True,  # if False, disable the ultracoarse cross-stage unsatisfiable-guard retry (avoids live corrective LLM calls)
   "nokb_flag":True,  # if True, do not use the shared memory knowledge base
   "prover_axiomfiles":False,  # if not False, use these as axioms instead of the default prover_axiomfile below

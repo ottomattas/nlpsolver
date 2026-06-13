@@ -27,6 +27,58 @@
 # Counter for fresh free-variable names (reset per top-level rawlogic_convert call).
 _fv_nr = 0
 
+
+# ======== (-freequestionworld) experimental: free the pinned question world ========
+# experiment/world-binding-12.4 (results.md §12.4): a stateless question gets its
+# $ctxt world pinned to a concrete world constant (the dynamic-matrix branch of
+# inject_ctxt_question below keeps the query's concrete world). Ballast event
+# sentences advance the world chain, so the question lands in a world where the
+# answer no longer holds -- the dominant no_proof cause ("pipeline-world-shift").
+# Freeing that world to a fresh variable lets the question unify with whichever
+# world the relevant fact holds in. Offline ceiling: +47/+53, dose-growing, 7/310
+# regressions (analysis/world_binding.py, EXPERIMENT-world-binding-12.4.md). This
+# is the live prototype of that fix: applied post-sem_normalize when
+# options["freequestionworld_flag"] is set; an exact mirror of the validated
+# offline probe spot_verify.free_question_world.
+
+def _is_world_const(s):
+  return isinstance(s, str) and len(s) >= 2 and s[0] == "W" and s[1:].isdigit()
+
+
+def _contains_defq(t):
+  if isinstance(t, str):
+    return "$defq" in t
+  if isinstance(t, list):
+    return any(_contains_defq(x) for x in t)
+  if isinstance(t, dict):
+    return any(_contains_defq(v) for v in t.values())
+  return False
+
+
+def free_question_world(logic):
+  """Replace the pinned world CONSTANT in question clauses' $ctxt terms with a
+  fresh variable (?:WQFREE), in place; return the (clause-name, world) subs made.
+  A question clause is an @question entry or a $defq carrier @logic clause."""
+  subs = []
+
+  def is_question_clause(cl):
+    return "@question" in cl or _contains_defq(cl.get("@logic", ""))
+
+  def walk(t, where):
+    if isinstance(t, list):
+      if len(t) >= 3 and t[0] == "$ctxt" and _is_world_const(t[2]):
+        subs.append((where, t[2]))
+        t[2] = "?:WQFREE"
+      for x in t:
+        walk(x, where)
+
+  for cl in logic:
+    if isinstance(cl, dict) and is_question_clause(cl):
+      for key in ("@logic", "@question"):
+        if key in cl:
+          walk(cl[key], cl.get("@name", "?"))
+  return subs
+
 # Predicates that receive a $ctxt term as their last argument during context injection.
 CTXT_ELIGIBLE = frozenset({
   "has property", "have", "has part", "can", "is rel2",

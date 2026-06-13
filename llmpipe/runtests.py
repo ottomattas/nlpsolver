@@ -613,6 +613,11 @@ def main():
                   help="Light shape unification: predicate rename, shape "
                        "bridges, property-shape compound composition, "
                        "broad-supertype isa (see solve.py -slightcoarse)")
+  ap.add_argument("-freequestionworld", action="store_true",
+                  help="(experiment/world-binding-12.4) §12.4 prototype: after "
+                       "convert+semnormalize, free the pinned world constant in "
+                       "question clauses' $ctxt to a variable (see solve.py "
+                       "-freequestionworld / lc_ctxt.free_question_world)")
   ap.add_argument("-ultracoarse", action="store_true",
                   help="Enable -ultracoarse abstraction (event-folding, simple "
                        "properties, entity canonicalization)")
@@ -711,6 +716,8 @@ def main():
     run_opts["s2split_flag"] = True
   if args.slightcoarse:
     run_opts["slightcoarse_flag"] = True
+  if args.freequestionworld:
+    run_opts["freequestionworld_flag"] = True
   if args.ultracoarse:
     run_opts["coarse_flag"] = True
     run_opts["ultracoarse_flag"] = True

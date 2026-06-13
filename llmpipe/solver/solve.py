@@ -48,6 +48,7 @@ import llmcall
 
 # logic improvement (stub: pass-through until real logic-convert rules are added)
 from logconvert import rawlogic_convert
+from lc_ctxt import free_question_world  # (-freequestionworld) §12.4 prototype
 
 # proof post-processing (stub: pass-through until answer extraction is implemented)
 from procproofs import process_proof
@@ -282,6 +283,13 @@ def english_to_answer(text, options=None, collect=None):
   if not globals.options.get("nosemnormal_flag"):
     logic = semnormalize.sem_normalize_clauses(logic)
 
+  # --- (-freequestionworld) §12.4 prototype: free the pinned question world ---
+  # Mirrors the offline ceiling probe (spot_verify.free_question_world); applied
+  # after sem_normalize, right before the prover, so the live answer matches the
+  # validated offline result.
+  if globals.options.get("freequestionworld_flag"):
+    free_question_world(logic)
+
   # --- call the theorem prover ---
   try:
     proof_result = prover.call_prover(logic, s1_json=s1_json)
@@ -491,6 +499,8 @@ def _parse_cmd_line():
       opts["s2split_flag"] = True
     elif el in ["-slightcoarse", "--slightcoarse"]:
       opts["slightcoarse_flag"] = True
+    elif el in ["-freequestionworld", "--freequestionworld"]:
+      opts["freequestionworld_flag"] = True
     elif el in ["-nocrossstage", "--nocrossstage"]:
       opts["crossstage_retry_flag"] = False
     elif el in ["-llm", "--llm"]:
