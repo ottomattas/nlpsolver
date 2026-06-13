@@ -23,6 +23,12 @@ clean suites). §12.6 extends the map to the Phase 3 cells; §13.2 and the
 §12.2 table carry a same-day correction — every "prover returned empty
 result" run in the study is a deterministic gk datarec hit, not a
 timeout, and the bug is sensitive to the gk input serialisation.
+**2026-06-13: §14 adds the b32 dose extension** (all four models, 100-subset
+— the curve degrades smoothly past b16, no cliff) **and §15 the chunked
+stage-2 evaluation** (Tanel's -s2split/-slightcoarse: slightcoarse inert,
+s2split trades cases and is not a net robustness win — confirming the
+§12.4 prediction that chunking cannot touch the dominant convert-layer
+cause).
 
 ---
 
@@ -786,4 +792,182 @@ python3 runtests.py tests/ballast/tests_core_100_b16.py -llms gemini,deepseek -m
 cd results/ballast-robustness/analysis
 python3 dose_response.py -doses 8,16 -models gemini,deepseek
 python3 token_ledger.py  -doses 8,16 -models gemini,deepseek
+```
+
+---
+
+## 14. b32 dose extension (all four models, 100-subset)
+
+Plan-04 ask from the 2026-06-12 supervision meeting: push the dose one
+notch past b16 on the 100-subset and see whether accuracy *plunges* or
+keeps degrading *smoothly*. Run at `-maxtokens 64000` (b32 ~doubles input
+vs b16; deepseek peaked at 18.3K output and gemini 15.1K at b16, so 32K
+was no longer a safe ceiling — Tanel's output-limit NB). deepseek at
+`-timeout 600`. Suites: `tests_core_100_b32.py` (3 cases — 335/370/750 —
+carry a documented inertness relaxation; see the manifest).
+
+### 14.1 The curve
+
+```
+model        b0     b8     b16    b32
+gpt         100     93     78     72
+claude       98     89     83     71
+gemini       99     90     82     66
+deepseek     98     87     88     74
+```
+
+**Smooth, no cliff.** Every model continues the gentle b16->b32 slide; none
+falls off. Notes:
+- **deepseek is the most ballast-robust** of the four (74 at b32, and the
+  only model that *rose* b8->b16); **gemini degrades most** (66).
+- **claude holds up under load**: 71 at b32, effectively tied with gpt
+  (72) despite trailing it at b8 — the model ranking reshuffles with dose.
+- The earlier contaminated reading of claude b32 (41) was the Anthropic
+  workspace cap incident (§14.3), not a real number; the clean refill is 71.
+
+### 14.2 Failure mechanism at b32 (cause_map + dose_response buckets)
+
+`no_proof` (clauses produced, prover returns "Unknown") dominates every
+cell and grows with dose; `wrong_answer` stays flat at 2-3 per model at
+*every* dose (confident-but-wrong does NOT grow with ballast — the failure
+mode is lost recall, not hallucinated answers). Cause-map at b32 (failing
+valid runs; pass-side control in parens):
+
+```
+bucket                gpt    claude  gemini  deepseek
+gk-error              2(0)   0(0)    1(0)    0(0)
+stage2-malformed      0(0)   1(4)    2(4)    6(9)
+stage1-id-break       5(2)   3(0)    5(0)    4(1)
+pipeline-world-shift  6(8)   5(14)   8(10)   3(10)
+stage1-distortion     4(10)  6(8)    3(9)    2(15)
+stage2-distortion     4(16)  4(10)   7(11)   6(10)
+unexplained           5(32)  6(33)   7(28)   3(25)
+```
+
+- **world-shift stays noisy** (high pass-side control counts): it fires on
+  passing runs too, so it is a property of the convert layer, not a
+  reliable failure cause — same caveat as §12.4.
+- **LLM-side distortion (stage1+stage2) grows with dose** and is the real
+  neural degradation signal: ~8-10 cases per model at b32.
+- **gk datarec crashes reappear at b32** as clause counts grow: gpt 550
+  (270 clauses) and 1052 (301), gemini 1 — the same deterministic
+  serialization-sensitive allocator hit documented in §12.2/§13.2, just
+  more frequent at higher clause counts.
+- **deepseek's 4 empty results** (612/893/1029/1188, answer `''`) are the
+  known load-sensitive timeout pattern (§13.2), not parse loss — they
+  bucket as stage2-malformed but are operational, not model, failures.
+
+### 14.3 Incident: Anthropic workspace spend cap (RESOLVED)
+
+Overnight (00:15-05:03 UTC) claude returned `400 ... reached your
+specified workspace API usage limits ... regain access 2026-07-01` — a
+monthly workspace spend cap (Console limit, independent of account
+balance/tier), not a rate limit. It tainted two claude cells (b32,
+s2split-b16) with empty responses and wedged the runner in a retryable-400
+loop. Fix: raised the workspace limit in the Console; both cells re-ran
+clean (b32 -ids of the 50 capped cases at -maxtokens 64000; s2split-b16 of
+the 36 capped+missing). claude's cache-served (slightcoarse) and
+pre-incident cells (s2split b8) were unaffected.
+
+### 14.4 Reproduce
+
+```bash
+# from llmpipe/ (cache snapshot makes b0..b16 replays free; b32 is fresh)
+python3 runtests.py tests/ballast/tests_core_100_b32.py -llms gpt,claude,gemini -maxtokens 64000 -timeout 300
+python3 runtests.py tests/ballast/tests_core_100_b32.py -llms deepseek          -maxtokens 64000 -timeout 600
+
+cd results/ballast-robustness/analysis
+python3 dose_response.py -doses 8,16,32 -models gpt,claude,gemini,deepseek
+python3 cause_map.py     -doses 32      -models gpt,claude,gemini,deepseek
+```
+
+---
+
+## 15. Chunked stage 2 evaluation (-s2split, -slightcoarse)
+
+Tanel's chunking implementation (email 2026-06-12, merged `b8f5eb8`):
+`-s2split` = one stage-2 LLM call per stage-1 sentence package, joined into
+one clause set (case ids unchanged); `-slightcoarse` = a symbolic-side
+shape-unification pack (predicate rename, shape bridges, broad-supertype
+isa) with no extra LLM calls. Two conditions on the 100-subset at b8/b16:
+`-slightcoarse` alone, and `-s2split -slightcoarse`. Each model runs on the
+suite its baseline used (gpt+claude on rev-88ca7b0, gemini+deepseek on
+HEAD); confirm with `dose_response.py -provenance`.
+
+### 15.1 Accuracy vs the plain baseline
+
+```
+                      b8                    b16
+model      base  slcoarse  s2split   base  slcoarse  s2split
+gpt         93      94       85        78     78       76
+claude      89      88       89        83     84       82
+gemini      90      89       87        82     82       83
+deepseek    87      88       88        88     86       86
+```
+
+- **`-slightcoarse` alone is inert** (+-1-2, within noise): it is a
+  symbolic-only change, ran entirely from cache, $0. Expected.
+- **`-s2split` does NOT improve robustness.** It clearly *hurts* gpt at b8
+  (93->85) and is flat-to-slightly-negative everywhere else.
+
+### 15.2 What s2split actually does: it trades cases (per-case flips)
+
+Splitting is not uniformly bad — it rescues some cases and breaks others.
+Flips vs the same-dose plain baseline (rescued | broken):
+
+```
+gpt      b8   rescued 1 [1475]                 broken 9 [524,553,605,663,893,979,1146,1156,1310]
+gpt      b16  rescued 1 [1052]                 broken 3 [6,979,1318]
+claude   b8   rescued 3 [250,470,1315]         broken 3 [552,1146,1310]
+claude   b16  rescued 3 [248,562,1011]         broken 4 [6,552,1049,1146]
+gemini   b8   rescued 3 [524,1317,1365]        broken 6 [470,553,612,1054,1310,1500]
+gemini   b16  rescued 6 [36,250,888,1054,1085,1112]  broken 5 [6,605,663,893,1317]
+deepseek b8   rescued 3 [409,470,1011]         broken 2 [524,1500]
+deepseek b16  rescued 2 [747,822]              broken 4 [6,524,1335,1429]
+```
+
+The rescues are real (per-sentence isolation restores output discipline on
+some stage-2 distortions, exactly as §12.4 predicted), but s2split also
+breaks fresh cases — predominantly at chunk boundaries, the id-break risk
+§12.4 flagged. For gpt at b8 the breakage dominates 9:1; elsewhere it is
+roughly a wash.
+
+### 15.3 This is exactly what the cause map predicted (§12.4)
+
+§12.4 made three predictions about the chunking fix; the data confirms all
+three:
+1. *Chunked stage 2 should help genuinely stage-2 causes* — yes, the
+   rescues are stage-2-distortion cases.
+2. *But the largest cause (world-shift/no-proof, ~39%) sits below both LLM
+   stages and no chunking will touch it* — confirmed: the b32 and chunking
+   `no_proof` share is undented, so the ceiling on what splitting can buy
+   is exactly the stage-2 slice.
+3. *Chunking risks adding id-breaks at boundaries unless a global entity
+   registry is kept* — confirmed: the newly-broken cases cluster at chunk
+   joins. The net effect (rescues - breaks) is <= 0 because (2) caps the
+   upside and (3) supplies a downside.
+
+**Verdict:** on this suite, `-s2split` is not a net robustness win; the
+surgical convert-layer fix proposed in §12.4 (bind stateless questions to a
+world variable) remains the higher-leverage lever, since it targets the
+dominant cause that chunking provably cannot reach.
+
+### 15.4 Cost (new cells, list prices)
+
+Chunking + b32 cells combined: gpt ~$35, claude ~$74, gemini ~$54,
+deepseek ~$2 (~$165 total). `-slightcoarse` cells were cache-served (~$0);
+the spend is the s2split per-sentence stage-2 calls and the b32 64K
+outputs.
+
+### 15.5 Reproduce
+
+```bash
+# from llmpipe/ — gpt+claude on the rev-88ca7b0 suites, gemini+deepseek on HEAD
+python3 runtests.py ../results/ballast-robustness/oldsuites/tests_core_100_b8.py  -llms gpt,claude      -maxtokens 32000 -timeout 300 -slightcoarse -tag slightcoarse
+python3 runtests.py tests/ballast/tests_core_100_b8.py                            -llms gemini,deepseek -maxtokens 32000 -timeout 300 -s2split -slightcoarse -tag s2split_slightcoarse
+# ... (b16 analogously; see oldsuites/PROVENANCE.txt)
+
+cd results/ballast-robustness/analysis
+python3 dose_response.py -doses 8,16 -tag slightcoarse        -models gpt,claude,gemini,deepseek
+python3 dose_response.py -doses 8,16 -tag s2split_slightcoarse -models gpt,claude,gemini,deepseek -provenance
 ```
