@@ -940,7 +940,39 @@ breaks fresh cases — predominantly at chunk boundaries, the id-break risk
 §12.4 flagged. For gpt at b8 the breakage dominates 9:1; elsewhere it is
 roughly a wash.
 
-### 15.3 This is exactly what the cause map predicted (§12.4)
+### 15.3 Per-stage anatomy of the gpt b8 breakages (stage-1 vs stage-2)
+
+Which stage do the breakages live in (Tanel's follow-up ask)? Answered
+offline from the stored traces, zero LLM calls. `-s2split` reuses the
+**same** stage-1 call as the baseline (cache hit), so for the 9 gpt b8
+cases split breaks, stage 1 is byte-identical to baseline — the regression
+is **100% in the per-sentence stage-2 reassembly**:
+
+```
+case  base_ans          split_ans  stage1_identical  base_cl  split_cl  dcl
+524   True.             Unknown.   yes                    83        95   +12
+553   False.            Unknown.   yes                    86        94    +8
+605   Likely false.     Unknown.   yes                    87        93    +6
+663   Probably true.    Unknown.   yes                    75        81    +6
+893   Likely false.     Unknown.   yes                    73        79    +6
+979   At the hospital.  Unknown.   yes                    68        75    +7
+1146  The guests.       Unknown.   yes                   102       113   +11
+1156  True.             Unknown.   yes                   100       106    +6
+1310  At the garden.    Unknown.   yes                   134       142    +8
+```
+
+Every one: stage 1 identical, clause set grows (+6..+12), a correct answer
+flips to `Unknown.` (no_proof). Mechanism (worked example, case 524, 83->95
+clauses): per-sentence stage 2 processes each sentence in isolation and
+re-emits the world-context and definite-reference machinery that whole-text
+stage 2 emits once — W0-bearing clauses go 15->24 and `$theof` definitions
+9->18. The result is a larger, fragmented clause set the prover no longer
+closes. This realises the §12.4 prediction: id/context breaks at the chunk
+boundaries because the per-sentence calls share no global entity/world
+registry. Verify by diffing the two cells `core_100_b8/twostage/gpt` vs
+`core_100_b8_s2split_slightcoarse/twostage/gpt` (`stage1`, `clauses` fields).
+
+### 15.4 This is exactly what the cause map predicted (§12.4)
 
 §12.4 made three predictions about the chunking fix; the data confirms all
 three:
@@ -960,14 +992,14 @@ surgical convert-layer fix proposed in §12.4 (bind stateless questions to a
 world variable) remains the higher-leverage lever, since it targets the
 dominant cause that chunking provably cannot reach.
 
-### 15.4 Cost (new cells, list prices)
+### 15.5 Cost (new cells, list prices)
 
 Chunking + b32 cells combined: gpt ~$35, claude ~$74, gemini ~$54,
 deepseek ~$2 (~$165 total). `-slightcoarse` cells were cache-served (~$0);
 the spend is the s2split per-sentence stage-2 calls and the b32 64K
 outputs.
 
-### 15.5 Reproduce
+### 15.6 Reproduce
 
 ```bash
 # from llmpipe/ — gpt+claude on the rev-88ca7b0 suites, gemini+deepseek on HEAD
