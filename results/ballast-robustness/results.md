@@ -1166,3 +1166,124 @@ python3 tracking_horizon.py -doses 8,16,32 -models gpt,claude,gemini,deepseek
 python3 reconcile_s2split.py -doses 8,16 -models gpt,claude,gemini,deepseek -verbose
 python3 reconcile_s2split.py -doses 8,16 -models gpt,claude,gemini,deepseek -no-world-merge
 ```
+
+## 17. Five more offline probes (stored traces + cache, ~$0)
+
+Five further questions about the *shape* of the degradation, all answered from
+the stored traces with no new LLM calls. One script: `extra_probes.py`
+(`python3 extra_probes.py`). These characterise the failures (they do not move
+the headline numbers) and, where they bear on it, reinforce §15.4 that the
+lever is the §12.4 world-binding fix, not chunking.
+
+### 17.1 The gpt b4 dip is real, not splitter contamination
+
+The dose curve (§2) is non-monotonic for gpt: it dips hard at b4 and recovers
+at b8. Recomputing each cell with the §7 splitter-bug exclusions removed shows
+the dip survives — it is not an artefact of contaminated cases:
+
+```
+            b2          b4          b8          b16         b32
+gpt      98.0(n98)   85.1(n94)   94.6(n93)   79.4(n68)   72.0(n100)
+claude   95.9(n98)   94.7(n94)   90.3(n93)   85.3(n68)   71.0(n100)
+```
+
+gpt drops ~10 points at b4 and climbs back ~10 at b8; claude is cleanly
+monotone (96→95→90→85→71). Because each dose is an *independent* ballast draw
+(b4 is not a subset of b8), a gpt-only dip at one dose points to specific
+*toxic distractors* in the b4 draw interacting with gpt, not to sentence count.
+Full causal attribution would need a per-distractor leave-one-out probe; the
+finding here is only that the dip is genuine and model-specific. (gemini and
+deepseek were not run at b2/b4.)
+
+### 17.2 The parse "loss" is distortion, not omission
+
+§16.1 split the no_proof mass into "clause-loss" vs world-shift. Bucketing all
+166 no_proof failures by mechanism (heuristic `cause_map`, no gk) shows that
+"clause-loss" almost never means a *dropped sentence*:
+
+```
+pipeline-world-shift   46  (28%)
+stage2-distortion      29  (17%)
+stage1-id-break        28  (17%)
+unexplained            27  (16%)
+stage1-distortion      19  (11%)
+stage1-capture          6   (4%)
+convert/pipeline        5   (3%)
+stage2-malformed        5   (3%)
+stage1-omission         1   (1%)
+```
+
+Whole-sentence omission is a single case (1%). Under ballast the model does not
+*forget* a sentence; it *corrupts* the representation — distortion (stage-1 +
+stage-2 = 28%), id-break (17%) and world-shift (28%) account for the mass. The
+§16.1 "clause-loss" label is therefore better read as clause-*change*: the
+original sentence's clause is present but altered enough that its normalised
+form no longer matches b0.
+
+### 17.3 World-inflation drives the world-shift failures specifically
+
+Eventive ballast advances the world chain (`W0`→`W1`→…); stative ballast does
+not. Per case, the ballast-induced world inflation is `dworld =
+worlds(dose) − worlds(b0)`. Within each fixed-dose cell (so total ballast
+*count* is held constant — any signal is a pure event effect), `dworld` does
+*not* cleanly predict failure in general (mixed across models, only biting at
+b16/b32). But splitting flips by *type* and pooling `dworld` z-scored within
+each cell:
+
+```
+              n     mean_z(dworld)
+held         906        -0.03
+wshift_flip   46        +0.31
+other_flip   155        +0.09
+```
+
+World-shift flips carry +0.31 SD more ballast world-inflation than the cell
+average; non-world-shift flips do not (+0.09 ≈ held). So eventive ballast →
+extra worlds → *world-shift* failures specifically — the dominant no_proof
+cause (28%, §17.2) and the exact §12.4 target. Chunking cannot reach this; the
+world-binding fix can. (Effect is modest, n=46 world-shift flips, but
+directionally clean and mechanistically coherent.)
+
+### 17.4 A shared "hard core" emerges only at high dose
+
+Failure-set overlap across the four models, restricted to cases all four
+evaluated:
+
+```
+       eval-common   fail in 1 / 2 / 3 / 4 models    any-fail   all-fail(core)
+b8         93           13 /  2 /  3 /  2               20            2
+b16        68           14 /  6 /  1 /  3               24            3
+b32       100           19 / 13 / 12 /  9               53            9
+```
+
+At b8, failures are mostly model-idiosyncratic (13/20 fail in exactly one
+model; only 2 fail in all four). By b32 a genuine shared core appears — 9 cases
+fail in all four models and 21 fail in ≥3. Low-dose failures are largely model
+noise; high dose exposes intrinsically hard inputs. The 9-case b32 core is a
+clean, model-independent target for characterisation (likely long coref chains
+/ many entities — cf. the §16.2 tracking horizon).
+
+### 17.5 Stage-1 self-confidence is a high-dose early-warning signal
+
+The pipeline already emits a per-unit `confidence` in stage 1. Among
+b0-correct cases, the per-case *minimum* stage-1 confidence is lower for cases
+that go on to fail:
+
+```
+pooled min stage-1 confidence:  fail = 0.612 (n=183)   ok = 0.729 (n=789)
+```
+
+The gap is noisy at b8 (where failures are idiosyncratic, §17.4) but consistent
+across all four models at b32 (e.g. gpt 0.63 vs 0.74, hazard 39% vs 22% on a
+median split; gemini 0.54 vs 0.63; deepseek 0.58 vs 0.71). The model's own
+reported uncertainty is thus a usable trigger: a cheap abstain / targeted
+re-parse on low-confidence units could catch a share of failures with no
+chunking and no extra LLM budget.
+
+### 17.6 Reproduce
+
+```bash
+cd results/ballast-robustness/analysis
+python3 extra_probes.py                       # all five
+python3 extra_probes.py -probe core           # or one at a time
+```
