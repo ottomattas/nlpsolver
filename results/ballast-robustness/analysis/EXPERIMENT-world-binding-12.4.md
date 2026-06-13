@@ -126,3 +126,63 @@ constant), re-run the curve, and confirm the live result matches this ceiling �
 to be done deliberately and with Tanel, since it is a semantic change in his
 code. The regression set (1310, 1375 at b8) is the targeted-test list to make
 sure the live fix does not over-free.
+
+## Step 2: live prototype (`-freequestionworld`)
+
+Built the fix as a **flag-gated, additive** pipeline pass — no default-path
+behaviour changes, no edits to Tanel's convert dispatch:
+
+- `lc_ctxt.free_question_world(logic)` — the §12.4 transform, an exact mirror of
+  the validated offline `spot_verify.free_question_world` (replace the pinned
+  world *constant* in question clauses' `$ctxt` with a fresh variable).
+- `solve.py` applies it **after `sem_normalize`, right before the prover** (the
+  same point as the offline replay), gated by `options["freequestionworld_flag"]`.
+- Flag exposed on both entrypoints: `solve.py -freequestionworld` and
+  `runtests.py -freequestionworld` (→ `globals.options`, mirrors `-slightcoarse`
+  wiring). `globals.py` registers the key. Default off.
+
+Why a flag, not a dispatch edit: the offline gate is met, but the real choice
+(free the dynamic-matrix question world *at source* in `inject_ctxt_question`)
+is Tanel's semantic call. The flag reproduces the ceiling live so the decision
+can be made on live evidence without committing to a default change.
+
+### Live confirmation (gpt b16, stage-1/2 cache-served, $0 LLM)
+
+Targeted rescue check — the four recurring world-shift cases, plain vs freed:
+
+```
+case   plain   freed
+0663   FAIL    OK
+1173   FAIL    OK
+1239   FAIL    OK
+1521   FAIL    OK
+```
+
+4/4 flip wrong→right, exactly as the offline probe predicted.
+
+Full cell (all 100), live pipeline:
+
+```
+              passed  failed
+stored (base)   78      22
+plain  (-fqw off, current code)  77   23   (convert drift vs stored: -1)
+freed  (-fqw on)                 83   17
+```
+
+- **`freed − plain` = +6** (the clean, pure flag effect: same current code, the
+  world binding is the only difference).
+- `freed − stored` = +5.
+- **Rescues (6):** 663, 1052, 1173, 1239, 1375, 1521 — incl. the recurring
+  world-shift pair 1239/1521 and two gk-allocator-crash sidesteps (1052, 1375,
+  per the caveat above).
+- **Regressions: 0.** The lone `freed`-vs-`stored` new failure (1176) is **convert
+  drift, not the flag** — it already fails in the plain current-code run
+  (`freed − plain` regressions = ∅). This confirms the offline ceiling's "zero
+  regressions at b16" live.
+
+The live prototype reproduces the offline ceiling for gpt b16 (cohort 55→60 =
++5; full cell freed−plain = +6, the +1 being the two crash-sidestep rescues).
+**Conclusion: the live `-freequestionworld` flag matches the offline ceiling.**
+Remaining step (with Tanel): extend the curve to the other 11 cells and decide
+whether to move the freeing into `inject_ctxt_question` at source (default-on)
+vs. keep it flag-gated.
