@@ -1,0 +1,1401 @@
+{
+  "test_name": "core_100_b16_s2split_slightcoarse",
+  "case_id": 1099,
+  "input_text": "John is in the box. If X1 is a father of Y1, Y1 is a child of X1. Frogs are small. A coffee cup broke. Bears do not eat berries in a forest. There is a ghost in the room. Mary was heard to sing. A blue square is cool. Cities in Estonia are estonian. The horse kept in the stable was calm. Gertrude is a cat. The teacher showed the map to the students. The letter was written. A village road was narrow. The length of Emajogi is 80 kilometers. The big mouse is strong. Tallinn is in Latvia with a probability 50 percent. Bears eat berries in a forest?",
+  "expected_answer": false,
+  "llm_name": "deepseek",
+  "llm_version": "deepseek-v4-flash",
+  "answer": "False.",
+  "correctness": true,
+  "stage1": [{
+      "raw": "John is in the box.",
+      "units": [{
+          "unit_id": "S1",
+          "text": "John 1 is in the box 2.",
+          "type": "situation",
+          "entities": [{"id": "John 1", "type": "concrete", "category": "person"},
+            {"id": "box 2", "type": "concrete", "category": "artifact"}
+          ],
+          "time": "present"
+        }
+      ]
+    },
+    {
+      "raw": "If X1 is a father of Y1, Y1 is a child of X1.",
+      "units": [{
+          "unit_id": "S2",
+          "text": "If X1 is a father of Y1, Y1 is a child of X1.",
+          "type": "strict_rule",
+          "entities": [{"id": "X1", "type": "generic"}, {"id": "Y1", "type": "generic"}]
+        }
+      ]
+    },
+    {
+      "raw": "Frogs are small.",
+      "units": [{
+          "unit_id": "S3",
+          "text": "Frogs are small.",
+          "type": "normal_rule",
+          "entities": [{"id": "frogs", "type": "generic", "category": "animal"}],
+          "adjectives": [["small","none","frog"]]
+        }
+      ]
+    },
+    {
+      "raw": "A coffee cup broke.",
+      "units": [{
+          "unit_id": "S4",
+          "text": "A coffee cup 1 broke.",
+          "type": "situation",
+          "entities": [{
+              "id": "coffee cup 1",
+              "type": "concrete",
+              "subtype": "compound",
+              "category": "artifact"
+            }
+          ],
+          "actions": [{"root": "break", "mode": "event"}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Bears do not eat berries in a forest.",
+      "units": [{
+          "unit_id": "S5",
+          "text": "Bears do not eat berries in a forest.",
+          "type": "normal_rule",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "dependent", "category": "plant"},
+            {"id": "forest", "type": "generic", "category": "place"}
+          ],
+          "actions": [{
+              "root": "eat",
+              "mode": "habitual",
+              "roles": {"target": "berries", "location": "forest", "location_prep": "in"}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "There is a ghost in the room.",
+      "units": [{
+          "unit_id": "S6",
+          "text": "A ghost 1 is in the room 2.",
+          "type": "situation",
+          "entities": [{"id": "ghost 1", "type": "concrete"},
+            {"id": "room 2", "type": "concrete", "category": "place"}
+          ]
+        }
+      ]
+    },
+    {
+      "raw": "Mary was heard to sing.",
+      "units": [{
+          "unit_id": "S7",
+          "text": "Mary 1 was heard to sing.",
+          "type": "situation",
+          "entities": [{"id": "Mary 1", "type": "concrete", "category": "person"}],
+          "actions": [{
+              "root": "hear",
+              "mode": "event",
+              "roles": {
+                "target": "Mary 1",
+                "content": {"root": "sing", "mode": "event", "roles": {"actor": "Mary 1"}}
+              }
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A blue square is cool.",
+      "units": [{
+          "unit_id": "S8",
+          "text": "A blue square 1 is cool.",
+          "type": "situation",
+          "entities": [{"id": "square 1", "type": "concrete", "category": "artifact"}],
+          "adjectives": [["blue","none","square"], ["cool","none","square"]]
+        }
+      ]
+    },
+    {
+      "raw": "Cities in Estonia are estonian.",
+      "units": [{
+          "unit_id": "S9",
+          "text": "Cities in Estonia 1 are Estonian.",
+          "type": "strict_rule",
+          "entities": [{"id": "cities", "type": "generic", "category": "place"},
+            {
+              "id": "Estonia 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Estonia"
+            }
+          ],
+          "adjectives": [["Estonian","none","city"]]
+        }
+      ]
+    },
+    {
+      "raw": "The horse kept in the stable was calm.",
+      "units": [{
+          "unit_id": "S10",
+          "text": "The horse 1 was kept in the stable 2.",
+          "type": "situation",
+          "entities": [{"id": "horse 1", "type": "concrete", "category": "animal"},
+            {"id": "stable 2", "type": "concrete", "category": "place"}
+          ],
+          "time": "past"
+        },
+        {
+          "unit_id": "S11",
+          "text": "The horse 1 was calm.",
+          "type": "situation",
+          "entities": [{"id": "horse 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["calm","none","horse"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "Gertrude is a cat.",
+      "units": [{
+          "unit_id": "S12",
+          "text": "Gertrude 1 is a cat.",
+          "type": "real",
+          "entities": [{"id": "Gertrude 1", "type": "concrete", "category": "animal"}]
+        }
+      ]
+    },
+    {
+      "raw": "The teacher showed the map to the students.",
+      "units": [{
+          "unit_id": "S13",
+          "text": "The teacher 1 showed the map 2 to the students 3.",
+          "type": "situation",
+          "entities": [{"id": "teacher 1", "type": "concrete", "category": "person"},
+            {"id": "map 2", "type": "concrete", "category": "artifact"},
+            {"id": "students 3", "type": "concrete", "category": "person"}
+          ],
+          "actions": [{
+              "root": "show",
+              "mode": "event",
+              "roles": {"actor": "teacher 1", "target": "map 2", "recipient": "students 3"}
+            }
+          ],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The letter was written.",
+      "units": [{
+          "unit_id": "S14",
+          "text": "The letter 1 was written.",
+          "type": "situation",
+          "entities": [{"id": "letter 1", "type": "concrete", "category": "artifact"}],
+          "actions": [{"root": "write", "mode": "event", "roles": {"target": "letter 1"}}],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "A village road was narrow.",
+      "units": [{
+          "unit_id": "S15",
+          "text": "A village road 1 was narrow.",
+          "type": "situation",
+          "entities": [{"id": "road 1", "type": "concrete", "category": "place"}],
+          "adjectives": [["narrow","none","road"]],
+          "time": "past"
+        }
+      ]
+    },
+    {
+      "raw": "The length of Emajogi is 80 kilometers.",
+      "units": [{
+          "unit_id": "S16",
+          "text": "The length 2 of Emajogi 1 is 80 kilometers.",
+          "type": "real",
+          "entities": [{
+              "id": "Emajogi 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Emajogi"
+            },
+            {"id": "length 2", "type": "concrete", "text": "length"},
+            {"id": "80 kilometers", "type": "concrete", "category": "measure"}
+          ],
+          "definites": [["length of","length 2","Emajogi 1"]]
+        },
+        {
+          "unit_id": "S17",
+          "text": "The length 2 is the length of Emajogi 1.",
+          "type": "real",
+          "entities": [{"id": "length 2", "type": "concrete", "text": "length"},
+            {
+              "id": "Emajogi 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Emajogi"
+            }
+          ],
+          "definites": [["length of","length 2","Emajogi 1"]]
+        }
+      ]
+    },
+    {
+      "raw": "The big mouse is strong.",
+      "units": [{
+          "unit_id": "S18",
+          "text": "The big mouse 1 is strong.",
+          "type": "situation",
+          "entities": [{"id": "mouse 1", "type": "concrete", "category": "animal"}],
+          "adjectives": [["big","none","mouse"], ["strong","none","mouse"]]
+        }
+      ]
+    },
+    {
+      "raw": "Tallinn is in Latvia with a probability 50 percent.",
+      "units": [{
+          "unit_id": "S19",
+          "text": "Tallinn 1 is in Latvia 2.",
+          "type": "real",
+          "entities": [{
+              "id": "Tallinn 1",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Tallinn"
+            },
+            {
+              "id": "Latvia 2",
+              "type": "concrete",
+              "category": "place",
+              "url": "https://en.wikipedia.org/wiki/Latvia"
+            }
+          ],
+          "confidence": 0.5
+        }
+      ]
+    },
+    {
+      "raw": "Bears eat berries in a forest?",
+      "units": [{
+          "unit_id": "S20",
+          "text": "Do bears eat berries in a forest?",
+          "type": "query",
+          "entities": [{"id": "bears", "type": "generic", "category": "animal"},
+            {"id": "berries", "type": "generic", "scope": "dependent", "category": "plant"},
+            {"id": "forest", "type": "generic", "category": "place"}
+          ],
+          "actions": [{
+              "root": "eat",
+              "mode": "habitual",
+              "roles": {"target": "berries", "location": "forest", "location_prep": "in"}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stage2": ["and",
+    ["@id","S1",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","person","John 1"],
+            ["isa","box","box 2"],
+            ["is rel2","in","John 1","box 2"]
+          ]
+        ],
+        ["state time","W0","present"]
+      ]
+    ],
+    ["@id","S2",
+      ["holds","W0",
+        ["forall","X1",
+          ["forall","Y1",
+            ["implies", ["is rel2","father of","X1","Y1"], ["is rel2","child of","Y1","X1"]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S3",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","frog","X"],
+            ["normally", ["has degree property","small","X","none","frog"]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S4",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","coffee cup","coffee cup 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","break"],
+                ["has target","E","coffee cup 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S5",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["isa","bear","X"],
+            ["normally",
+              ["not",
+                ["exists","E",
+                  ["and",
+                    ["isa","activity","E"],
+                    ["has type","E","eat"],
+                    ["has actor","E","X"],
+                    ["exists", "Y", ["and", ["isa","berry","Y"], ["has target","E","Y"]]],
+                    ["exists", "Z", ["and", ["isa","forest","Z"], ["has location","E","Z","in"]]],
+                    ["typical","E"]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S6",
+      ["holds","W0",
+        ["and",
+          ["isa","ghost","ghost 1"],
+          ["isa","room","room 2"],
+          ["is rel2","in","ghost 1","room 2"]
+        ]
+      ]
+    ],
+    ["@id","S7",
+      ["holds","W0",
+        ["and",
+          ["isa","person","Mary 1"],
+          ["exists","E1",
+            ["and",
+              ["isa","activity","E1"],
+              ["has type","E1","hear"],
+              ["has target","E1","Mary 1"],
+              ["has time","E1","past","in"],
+              ["exists","E2",
+                ["and",
+                  ["has content","E1","E2"],
+                  ["isa","activity","E2"],
+                  ["has type","E2","sing"],
+                  ["has actor","E2","Mary 1"],
+                  ["has time","E2","past","in"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S8",
+      ["holds","W0",
+        ["and",
+          ["isa","square","square 1"],
+          ["has degree property","blue","square 1","none","square"],
+          ["has degree property","cool","square 1","none","square"]
+        ]
+      ]
+    ],
+    ["@id","S9",
+      ["holds","W0",
+        ["forall","X",
+          ["implies",
+            ["and",
+              ["isa","city","X"],
+              ["is rel2","in","X","https://en.wikipedia.org/wiki/Estonia"]
+            ],
+            ["has degree property","Estonian","X","none","city"]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S10",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","horse","horse 1"],
+            ["isa","stable","stable 2"],
+            ["is rel2","in","horse 1","stable 2"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S11",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","horse","horse 1"],
+            ["has degree property","calm","horse 1","none","horse"]
+          ]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id", "S12", ["holds", "W0", ["isa","cat","Gertrude 1"]]],
+    ["@id","S13",
+      ["holds","W0",
+        ["and",
+          ["isa","teacher","teacher 1"],
+          ["isa","map","map 2"],
+          ["isa","student","students 3"],
+          ["exists","E",
+            ["and",
+              ["isa","activity","E"],
+              ["has type","E","show"],
+              ["has actor","E","teacher 1"],
+              ["has target","E","map 2"],
+              ["has recipient","E","students 3"],
+              ["has time","E","past","in"]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S14",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","letter","letter 1"],
+            ["exists","E",
+              ["and",
+                ["isa","activity","E"],
+                ["has type","E","write"],
+                ["has target","E","letter 1"],
+                ["has time","E","past","in"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S15",
+      ["and",
+        ["holds","W0",
+          ["and", ["isa","road","road 1"], ["has degree property","narrow","road 1","none","road"]]
+        ],
+        ["state time","W0","past"]
+      ]
+    ],
+    ["@id","S16",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","place","https://en.wikipedia.org/wiki/Emajogi"],
+            ["isa","length","length 2"],
+            ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$measure",80,"kilometer"]]
+          ]
+        ]
+      ]
+    ],
+    ["@id","S17",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","place","https://en.wikipedia.org/wiki/Emajogi"],
+            ["isa","length","length 2"]
+          ]
+        ],
+        ["@definite","S17","W0","length of","https://en.wikipedia.org/wiki/Emajogi","length 2"]
+      ]
+    ],
+    ["@id","S18",
+      ["holds","W0",
+        ["and",
+          ["isa","mouse","mouse 1"],
+          ["has degree property","big","mouse 1","none","mouse"],
+          ["has degree property","strong","mouse 1","none","mouse"]
+        ]
+      ]
+    ],
+    ["@id","S19",
+      ["and",
+        ["holds","W0",
+          ["and",
+            ["isa","place","https://en.wikipedia.org/wiki/Tallinn"],
+            ["isa","place","https://en.wikipedia.org/wiki/Latvia"],
+            ["is rel2","in","https://en.wikipedia.org/wiki/Tallinn","https://en.wikipedia.org/wiki/Latvia"]
+          ]
+        ],
+        ["@p","S19",0.5]
+      ]
+    ],
+    ["@id","S20",
+      ["question",
+        ["forall","X",
+          ["implies",
+            ["isa","bear","X"],
+            ["normally",
+              ["exists","E",
+                ["and",
+                  ["isa","activity","E"],
+                  ["has type","E","eat"],
+                  ["has actor","E","X"],
+                  ["exists", "Y", ["and", ["isa","berry","Y"], ["has target","E","Y"]]],
+                  ["exists", "Z", ["and", ["isa","forest","Z"], ["has location","E","Z","in"]]],
+                  ["typical","E"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ],
+  "stage_2_fixes": ["json: removed content after top-level close bracket","json: removed content after top-level close bracket"],
+  "clauses": [
+{"@name": "entity_S9",
+ "@logic": ["isa","place","#:Estonia 1"],
+ "@nl": "Cities in Estonia 1 are Estonian."},
+{"@name": "entity_S10",
+ "@logic": ["isa","animal","#:horse 1"],
+ "@nl": "The horse 1 was kept in the stable 2."},
+{"@name": "entity_S12",
+ "@logic": ["isa","animal","#:Gertrude 1"],
+ "@nl": "Gertrude 1 is a cat."},
+{"@name": "entity_S13",
+ "@logic": ["isa","person","#:teacher 1"],
+ "@nl": "The teacher 1 showed the map 2 to the students 3."},
+{"@name": "entity_S13",
+ "@logic": ["isa","person","#:students 3"],
+ "@nl": "The teacher 1 showed the map 2 to the students 3."},
+{"@name": "entity_S13",
+ "@logic": ["isa","student","#:students 3"],
+ "@nl": "The teacher 1 showed the map 2 to the students 3."},
+{"@name": "entity_S16",
+ "@logic": ["isa","place","#:Emajogi 1"],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "entity_S16",
+ "@logic": ["isa","measure","80 kilometers"],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "entity_S18",
+ "@logic": ["isa","animal","#:mouse 1"],
+ "@nl": "The big mouse 1 is strong."},
+{"@name": "entity_S19",
+ "@logic": ["isa","place","#:Tallinn 1"],
+ "@nl": "Tallinn 1 is in Latvia 2."},
+{"@name": "entity_S19",
+ "@logic": ["isa","place","#:Latvia 2"],
+ "@nl": "Tallinn 1 is in Latvia 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","person","#:John 1"],
+ "@nl": "John 1 is in the box 2."},
+{"@name": "sent_S1",
+ "@logic": ["isa","box","#:box 2"],
+ "@nl": "John 1 is in the box 2."},
+{"@name": "sent_S1",
+ "@logic": ["is rel2", "in", "#:John 1", "#:box 2", ["$ctxt","present","W0","?:Fv1","?:Fv2"]],
+ "@nl": "John 1 is in the box 2."},
+{"@name": "sent_S2",
+ "@logic": [["-is rel2", "father of", "?:X1", "?:Y1", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]],
+            ["is rel2", "child of", "?:Y1", "?:X1", ["$ctxt","?:Fv6","?:Fv5","?:Fv3","?:Fv4"]]
+           ],
+ "@nl": "If X1 is a father of Y1, Y1 is a child of X1."},
+{"@name": "sent_S3",
+ "@logic": [["-isa","frog","?:X"],
+            ["has degree property", "small", "?:X", "none", "frog", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]],
+            ["$block", ["$","frog",1], ["$not", ["has degree property", "small", "?:X", "none", "frog", ["$ctxt","?:Fv10","?:Fv9","?:Fv7","?:Fv8"]]]]
+           ],
+ "@nl": "Frogs are small."},
+{"@name": "sent_S4",
+ "@logic": ["isa","coffee cup","#:coffee cup 1"],
+ "@nl": "A coffee cup 1 broke."},
+{"@name": "sent_S4",
+ "@logic": ["isa","activity","sk0_activity"],
+ "@nl": "A coffee cup 1 broke."},
+{"@name": "sent_S4",
+ "@logic": ["has type", "sk0_activity", "break", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A coffee cup 1 broke."},
+{"@name": "sent_S4",
+ "@logic": ["has target", "sk0_activity", "#:coffee cup 1", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A coffee cup 1 broke."},
+{"@name": "sent_S4",
+ "@logic": ["has time", "sk0_activity", "past", "in", ["$ctxt","past","W0","?:Fv11","?:Fv12"]],
+ "@nl": "A coffee cup 1 broke."},
+{"@name": "sent_S5",
+ "@logic": [["-isa","bear","?:X"],
+            ["-isa","activity","?:E"],
+            ["-has type", "?:E", "eat", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["-has actor", "?:E", "?:X", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["-isa","berry","?:Y"],
+            ["-has target", "?:E", "?:Y", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["-isa","forest","?:Z"],
+            ["-has location", "?:E", "?:Z", "in", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]],
+            ["$block", ["$","bear",5], ["typical", "?:E", ["$ctxt","?:Fv16","?:Fv15","?:Fv13","?:Fv14"]]]
+           ],
+ "@nl": "Bears do not eat berries in a forest."},
+{"@name": "sent_S6",
+ "@logic": ["isa","ghost","#:ghost 1"],
+ "@nl": "A ghost 1 is in the room 2."},
+{"@name": "sent_S6",
+ "@logic": ["isa","room","#:room 2"],
+ "@nl": "A ghost 1 is in the room 2."},
+{"@name": "sent_S6",
+ "@logic": ["is rel2", "in", "#:ghost 1", "#:room 2", ["$ctxt","present","W0","?:Fv17","?:Fv18"]],
+ "@nl": "A ghost 1 is in the room 2."},
+{"@name": "sent_S7",
+ "@logic": ["isa","person","#:Mary 1"],
+ "@nl": "Mary 1 was heard to sing."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk1_activity"],
+ "@nl": "Mary 1 was heard to sing."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk1_activity", "hear", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 1 was heard to sing."},
+{"@name": "sent_S7",
+ "@logic": ["has target", "sk1_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 1 was heard to sing."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk1_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 1 was heard to sing."},
+{"@name": "sent_S7",
+ "@logic": ["has content","sk1_activity","sk2_activity"],
+ "@nl": "Mary 1 was heard to sing."},
+{"@name": "sent_S7",
+ "@logic": ["isa","activity","sk2_activity"],
+ "@nl": "Mary 1 was heard to sing."},
+{"@name": "sent_S7",
+ "@logic": ["has type", "sk2_activity", "sing", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 1 was heard to sing."},
+{"@name": "sent_S7",
+ "@logic": ["has actor", "sk2_activity", "#:Mary 1", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 1 was heard to sing."},
+{"@name": "sent_S7",
+ "@logic": ["has time", "sk2_activity", "past", "in", ["$ctxt","past","W0","?:Fv19","?:Fv20"]],
+ "@nl": "Mary 1 was heard to sing."},
+{"@name": "sent_S7",
+ "@logic": ["actuality","sk1_activity"],
+ "@nl": "Mary 1 was heard to sing."},
+{"@name": "sent_S8",
+ "@logic": ["-isa","round","#:square 1"],
+ "@nl": "A blue square 1 is cool."},
+{"@name": "sent_S8",
+ "@logic": ["has property", "blue", "#:square 1", ["$ctxt","present","W0","?:Fv21","?:Fv22"]],
+ "@nl": "A blue square 1 is cool."},
+{"@name": "sent_S8",
+ "@logic": ["-has degree property", "cool", "#:square 1", "none", "round", ["$ctxt","present","W0","?:Fv21","?:Fv22"]],
+ "@nl": "A blue square 1 is cool."},
+{"@name": "sent_S9",
+ "@logic": [["-isa","city","?:X"],
+            ["-is rel2", "in", "?:X", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]],
+            ["has property", "Estonian", "?:X", ["$ctxt","?:Fv26","?:Fv25","?:Fv23","?:Fv24"]]
+           ],
+ "@nl": "Cities in Estonia 1 are Estonian."},
+{"@name": "sent_S10",
+ "@logic": ["isa","horse","#:horse 1"],
+ "@nl": "The horse 1 was kept in the stable 2."},
+{"@name": "sent_S10",
+ "@logic": ["isa","stable","#:stable 2"],
+ "@nl": "The horse 1 was kept in the stable 2."},
+{"@name": "sent_S10",
+ "@logic": ["is rel2", "in", "#:horse 1", "#:stable 2", ["$ctxt","past","W0","?:Fv27","?:Fv28"]],
+ "@nl": "The horse 1 was kept in the stable 2."},
+{"@name": "sent_S11",
+ "@logic": ["isa","horse","#:horse 1"],
+ "@nl": "The horse 1 was calm."},
+{"@name": "sent_S11",
+ "@logic": ["has degree property", "calm", "#:horse 1", "none", "horse", ["$ctxt","past","W0","?:Fv29","?:Fv30"]],
+ "@nl": "The horse 1 was calm."},
+{"@name": "sent_S12",
+ "@logic": ["isa","cat","#:Gertrude 1"],
+ "@nl": "Gertrude 1 is a cat."},
+{"@name": "sent_S13",
+ "@logic": ["isa","teacher","#:teacher 1"],
+ "@nl": "The teacher 1 showed the map 2 to the students 3."},
+{"@name": "sent_S13",
+ "@logic": ["isa","map","#:map 2"],
+ "@nl": "The teacher 1 showed the map 2 to the students 3."},
+{"@name": "sent_S13",
+ "@logic": ["isa","student","#:students 3"],
+ "@nl": "The teacher 1 showed the map 2 to the students 3."},
+{"@name": "sent_S13",
+ "@logic": ["isa","activity","sk3_activity"],
+ "@nl": "The teacher 1 showed the map 2 to the students 3."},
+{"@name": "sent_S13",
+ "@logic": ["has type", "sk3_activity", "show", ["$ctxt","past","W0","?:Fv33","?:Fv34"]],
+ "@nl": "The teacher 1 showed the map 2 to the students 3."},
+{"@name": "sent_S13",
+ "@logic": ["has actor", "sk3_activity", "#:teacher 1", ["$ctxt","past","W0","?:Fv33","?:Fv34"]],
+ "@nl": "The teacher 1 showed the map 2 to the students 3."},
+{"@name": "sent_S13",
+ "@logic": ["has target", "sk3_activity", "#:map 2", ["$ctxt","past","W0","?:Fv33","?:Fv34"]],
+ "@nl": "The teacher 1 showed the map 2 to the students 3."},
+{"@name": "sent_S13",
+ "@logic": ["has recipient", "sk3_activity", "#:students 3", ["$ctxt","past","W0","?:Fv33","?:Fv34"]],
+ "@nl": "The teacher 1 showed the map 2 to the students 3."},
+{"@name": "sent_S13",
+ "@logic": ["has time", "sk3_activity", "past", "in", ["$ctxt","past","W0","?:Fv33","?:Fv34"]],
+ "@nl": "The teacher 1 showed the map 2 to the students 3."},
+{"@name": "sent_S14",
+ "@logic": ["isa","letter","#:letter 1"],
+ "@nl": "The letter 1 was written."},
+{"@name": "sent_S14",
+ "@logic": ["isa","activity","sk4_activity"],
+ "@nl": "The letter 1 was written."},
+{"@name": "sent_S14",
+ "@logic": ["has type", "sk4_activity", "write", ["$ctxt","past","W0","?:Fv35","?:Fv36"]],
+ "@nl": "The letter 1 was written."},
+{"@name": "sent_S14",
+ "@logic": ["has target", "sk4_activity", "#:letter 1", ["$ctxt","past","W0","?:Fv35","?:Fv36"]],
+ "@nl": "The letter 1 was written."},
+{"@name": "sent_S14",
+ "@logic": ["has time", "sk4_activity", "past", "in", ["$ctxt","past","W0","?:Fv35","?:Fv36"]],
+ "@nl": "The letter 1 was written."},
+{"@name": "sent_S15",
+ "@logic": ["isa","road","#:road 1"],
+ "@nl": "A village road 1 was narrow."},
+{"@name": "sent_S15",
+ "@logic": ["-has degree property", "wide", "#:road 1", "none", "road", ["$ctxt","past","W0","?:Fv37","?:Fv38"]],
+ "@nl": "A village road 1 was narrow."},
+{"@name": "sent_S16",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/Emajogi"],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "sent_S16",
+ "@logic": ["isa","length","#:length 2"],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "sent_S16",
+ "@logic": ["=", ["$measure_of","length","https://en.wikipedia.org/wiki/Emajogi","W0"], ["$list",80000,"#:meter"]],
+ "@nl": "The length 2 of Emajogi 1 is 80 kilometers."},
+{"@name": "sent_S17",
+ "@logic": ["isa","place","https://en.wikipedia.org/wiki/Emajogi"],
+ "@nl": "The length 2 is the length of Emajogi 1."},
+{"@name": "sent_S17",
+ "@logic": ["isa","length","#:length 2"],
+ "@nl": "The length 2 is the length of Emajogi 1."},
+{"@name": "sent_S18",
+ "@logic": ["isa","mouse","#:mouse 1"],
+ "@nl": "The big mouse 1 is strong."},
+{"@name": "sent_S18",
+ "@logic": ["has degree property", "big", "#:mouse 1", "none", "mouse", ["$ctxt","present","W0","?:Fv43","?:Fv44"]],
+ "@nl": "The big mouse 1 is strong."},
+{"@name": "sent_S18",
+ "@logic": ["has degree property", "strong", "#:mouse 1", "none", "mouse", ["$ctxt","present","W0","?:Fv43","?:Fv44"]],
+ "@nl": "The big mouse 1 is strong."},
+{"@name": "sent_S20",
+ "@sourcetype": "question_subject",
+ "@logic": ["isa","bear","skq_S20_bear"],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S20",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","activity","sk5_activity"]],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S20",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has type", "sk5_activity", "eat", ["$ctxt","?:Fv50","?:Fv49","?:Fv47","?:Fv48"]]
+           ],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S20",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has actor", "sk5_activity", "skq_S20_bear", ["$ctxt","?:Fv50","?:Fv49","?:Fv47","?:Fv48"]]
+           ],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S20",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","berry","sk6_berry"]],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S20",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has target", "sk5_activity", "sk6_berry", ["$ctxt","?:Fv50","?:Fv49","?:Fv47","?:Fv48"]]
+           ],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S20",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["isa","forest","sk7_forest"]],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S20",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"],
+            ["has location", "sk5_activity", "sk7_forest", "in", ["$ctxt","?:Fv50","?:Fv49","?:Fv47","?:Fv48"]]
+           ],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S20",
+ "@sourcetype": "question",
+ "@logic": [["-$defq0"], ["typical", "sk5_activity", ["$ctxt","?:Fv50","?:Fv49","?:Fv47","?:Fv48"]]],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S20",
+ "@sourcetype": "question",
+ "@logic": [["-isa","activity","?:E"],
+            ["-has type", "?:E", "eat", ["$ctxt","?:Fv50","?:Fv49","?:Fv47","?:Fv48"]],
+            ["-has actor", "?:E", "skq_S20_bear", ["$ctxt","?:Fv50","?:Fv49","?:Fv47","?:Fv48"]],
+            ["-isa","berry","?:Y"],
+            ["-has target", "?:E", "?:Y", ["$ctxt","?:Fv50","?:Fv49","?:Fv47","?:Fv48"]],
+            ["-isa","forest","?:Z"],
+            ["-has location", "?:E", "?:Z", "in", ["$ctxt","?:Fv50","?:Fv49","?:Fv47","?:Fv48"]],
+            ["-typical", "?:E", ["$ctxt","?:Fv50","?:Fv49","?:Fv47","?:Fv48"]],
+            ["$defq0"]
+           ],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "sent_S20",
+ "@question": ["$defq0"],
+ "@nl": "Do bears eat berries in a forest?"},
+{"@name": "frm_measure",
+ "@logic": ["have", "?:S", ["$measure_of","length","?:S","?:W"], ["$ctxt","?:T","?:W","?:L","?:K"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_measure",
+ "@logic": ["isa", "length", ["$measure_of","length","?:S","?:W"]],
+ "@nl": "[generated: frm_measure]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has type", "?:E", "break", ["$ctxt","?:Fv51","?:Fv52","?:Fv54","?:Fv55"]],
+            ["-has target", "?:E", "?:X", ["$ctxt","?:Fv51","?:Fv52","?:Fv54","?:Fv55"]],
+            ["-next","?:Fv52","?:Fv53"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv53","?:Fv54","?:Fv55"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv53","?:Fv54","?:Fv55"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "frm_verb_result",
+ "@logic": [["-has property", "break", "?:X", ["$ctxt","?:Fv56","?:Fv57","?:Fv59","?:Fv60"]],
+            ["-next","?:Fv57","?:Fv58"],
+            ["has property", "broken", "?:X", ["$ctxt","present","?:Fv58","?:Fv59","?:Fv60"]],
+            ["$block", 0, ["$not", ["has property", "broken", "?:X", ["$ctxt","present","?:Fv58","?:Fv59","?:Fv60"]]]]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_verb_result]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","frog","$some_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","frog","$some_not_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["isa","activity","$some_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S4",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","activity","$some_not_activity"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","bear","$some_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","bear","$some_not_bear"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","berry","$some_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","berry","$some_not_berry"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["isa","forest","$some_forest"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S5",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","forest","$some_not_forest"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","city","$some_city"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-isa","city","$some_not_city"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["has degree property", "small", "$some_small_frog", "none", "frog", ["$ctxt","?:Fv144","?:Fv141","?:Fv142","?:Fv143"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["isa","frog","$some_small_frog"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S3",
+ "@sourcetype": "populate",
+ "@logic": ["-has degree property", "small", "$some_not_small_frog", "none", "frog", ["$ctxt","?:Fv152","?:Fv149","?:Fv150","?:Fv151"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["has property", "Estonian", "$some_Estonian_city", ["$ctxt","?:Fv156","?:Fv153","?:Fv154","?:Fv155"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","city","$some_Estonian_city"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["-has property", "Estonian", "$some_not_Estonian_city", ["$ctxt","?:Fv164","?:Fv161","?:Fv162","?:Fv163"]],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["isa","city","$some_city_in_Estonia"],
+ "@nl": "[population: from input]"},
+{"@name": "sent_S9",
+ "@sourcetype": "populate",
+ "@logic": ["is rel2", "in", "$some_city_in_Estonia", "https://en.wikipedia.org/wiki/Estonia", ["$ctxt","?:Fv172","?:Fv169","?:Fv170","?:Fv171"]],
+ "@nl": "[population: from input]"},
+{"@name": "compound_sub",
+ "@logic": [["-isa","coffee cup","?:X"], ["isa","cup","?:X"]],
+ "@nl": "[generated: compound_sub]"},
+{"@name": "compound_comp",
+ "@logic": [["-isa","coffee","?:X"], ["-isa","cup","?:X"], ["isa","coffee cup","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property","coffee","?:X","?:Ct"],
+            ["-isa","cup","?:X"],
+            ["isa","coffee cup","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "compound_comp",
+ "@logic": [["-has property", "coffee", "?:X", "?:Ct", ["$ctxt","?:Fv188","?:Fv185","?:Fv186","?:Fv187"]],
+            ["-isa","cup","?:X"],
+            ["isa","coffee cup","?:X"]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: compound_comp]"},
+{"@name": "frm_syn",
+ "@logic": [["-has degree property","small","?:X","none","?:Fv189","?:Fv61"],
+            ["-has degree property","high","?:X","none","?:Fv190","?:Fv61"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_syn",
+ "@logic": [["has degree property","high","?:X","none","?:Fv191","?:Fv62"],
+            ["has degree property","small","?:X","none","?:Fv192","?:Fv62"]
+           ],
+ "@confidence": 0.9,
+ "@nl": "[generated: frm_syn]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa",
+ "@logic": [["-isa","animal","?:X"], ["-isa","place","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","forest","?:X"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_excl_isa_xg",
+ "@logic": [["-isa","animal","?:X"], ["-isa","forest","?:Y"], ["-=","?:X","?:Y"]],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_excl_isa_xg]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "none", "?:Fv193", ["$ctxt","past","?:Fv63","?:Fv64","?:Fv65"]],
+            ["has degree property", "big", "?:X", "none", "?:Fv194", ["$ctxt","present","?:Fv63","?:Fv64","?:Fv65"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "none", "?:Fv195", ["$ctxt","present","?:Fv63","?:Fv64","?:Fv65"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv66","?:Fv67","?:Fv68"]],
+            ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv66","?:Fv67","?:Fv68"]],
+            ["$block", 0, ["$not", ["has degree property", "big", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv66","?:Fv67","?:Fv68"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv69","?:Fv70","?:Fv71"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv69","?:Fv70","?:Fv71"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv69","?:Fv70","?:Fv71"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has property", "blue", "?:X", ["$ctxt","past","?:Fv72","?:Fv73","?:Fv74"]],
+            ["has property", "blue", "?:X", ["$ctxt","present","?:Fv72","?:Fv73","?:Fv74"]],
+            ["$block", 0, ["$not", ["has property", "blue", "?:X", ["$ctxt","present","?:Fv72","?:Fv73","?:Fv74"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "none", "?:Fv196", ["$ctxt","past","?:Fv75","?:Fv76","?:Fv77"]],
+            ["-has degree property", "wide", "?:X", "none", "?:Fv197", ["$ctxt","present","?:Fv75","?:Fv76","?:Fv77"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "none", "?:Fv198", ["$ctxt","present","?:Fv75","?:Fv76","?:Fv77"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv78","?:Fv79","?:Fv80"]],
+            ["-has degree property", "wide", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv78","?:Fv79","?:Fv80"]],
+            ["$block", 0, ["$not", ["has degree property", "narrow", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv78","?:Fv79","?:Fv80"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "none", "?:Fv199", ["$ctxt","past","?:Fv81","?:Fv82","?:Fv83"]],
+            ["has degree property", "small", "?:X", "none", "?:Fv200", ["$ctxt","present","?:Fv81","?:Fv82","?:Fv83"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "none", "?:Fv201", ["$ctxt","present","?:Fv81","?:Fv82","?:Fv83"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv84","?:Fv85","?:Fv86"]],
+            ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv84","?:Fv85","?:Fv86"]],
+            ["$block", 0, ["$not", ["has degree property", "small", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv84","?:Fv85","?:Fv86"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "none", "?:Fv202", ["$ctxt","past","?:Fv87","?:Fv88","?:Fv89"]],
+            ["has degree property", "strong", "?:X", "none", "?:Fv203", ["$ctxt","present","?:Fv87","?:Fv88","?:Fv89"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "none", "?:Fv204", ["$ctxt","present","?:Fv87","?:Fv88","?:Fv89"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_stable_persist",
+ "@logic": [["-has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","past","?:Fv90","?:Fv91","?:Fv92"]],
+            ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv90","?:Fv91","?:Fv92"]],
+            ["$block", 0, ["$not", ["has degree property", "strong", "?:X", "?:D", "?:RC", ["$ctxt","present","?:Fv90","?:Fv91","?:Fv92"]]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_stable_persist]"},
+{"@name": "frm_s2bridge",
+ "@confidence": 0.99,
+ "@logic": [["-has target","?:Esb","?:Ysb","?:Csb"],
+            ["-has recipient","?:Esb","?:Xsb","?:Csb"],
+            ["has recipient","?:Ysb","?:Xsb","?:Csb"]
+           ],
+ "@nl": "[generated: frm_s2bridge]"},
+{"@name": "frm_perception_factive",
+ "@logic": [["-has type","?:E1","hear","?:Ct1"],
+            ["-has content","?:E1","?:E2"],
+            ["actuality","?:E2"],
+            ["$block", 0, ["$not", ["actuality","?:E2"]]]
+           ],
+ "@confidence": 0.95,
+ "@nl": "[generated: frm_perception_factive]"}
+],
+  "gk_command": "/Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk/gk-macos-arm64 /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/axioms_std.js -strategytext {\"strategy\": [\"unit\"], \"query_preference\": 0} -seconds 2 <gk-input> -defaults -confidence 0.1 -keepconfidence 0.1 --datafolder /Users/ottomattas/Downloads/_/repos/nlpsolver/llmpipe/../gk",
+  "proof": {
+    "result": "answer found",
+    "answers": [{
+        "answer": false,
+        "blockers": [["$block", ["$","bear",5], ["typical", "sk5_activity", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]
+        ],
+        "confidence": 1,
+        "negative proof": [[1, ["in","sent_S20","assumption",1], [["-$defq0"], ["has location", "sk5_activity", "sk7_forest", "in", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [2, ["in","$auto_negated_question","goal",1], [["$defq0"]]],
+          [3, ["mp",1,2,"fromga",1], [["has location", "sk5_activity", "sk7_forest", "in", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [4, ["in","sent_S5","assumption",1], [["$block", ["$","bear",5], ["typical", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]]], ["-has location", "?:X", "?:W", "in", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has type", "?:X", "eat", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has actor", "?:X", "?:2006", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-has target", "?:X", "?:2007", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-typical", "?:X", ["$ctxt","?:Y","?:Z","?:U","?:V"]], ["-isa","forest","?:W"], ["-isa","berry","?:2007"], ["-isa","bear","?:2006"], ["-isa","activity","?:X"]]],
+          [5, ["in","sent_S20","assumption",1], [["-$defq0"], ["has type", "sk5_activity", "eat", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [6, ["mp",5,2,"fromga",1], [["has type", "sk5_activity", "eat", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]],
+          [7, ["in","sent_S20","assumption",1], [["-$defq0"], ["typical", "sk5_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [8, ["mp",7,2,"fromga",1], [["typical", "sk5_activity", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]],
+          [9, ["in","sent_S20","assumption",1], [["-$defq0"], ["isa","forest","sk7_forest"]]],
+          [10, ["mp",9,2,"fromga",1], [["isa","forest","sk7_forest"]]],
+          [11, ["in","sent_S20","assumption",1], [["-$defq0"], ["isa","activity","sk5_activity"]]],
+          [12, ["mp",11,2,"fromga",1], [["isa","activity","sk5_activity"]]],
+          [13, ["mp", 3, [4,1], 6, 8, 10, 12, "fromga", 1], [["$block", ["$","bear",5], ["typical", "sk5_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]], ["-has actor", "sk5_activity", "?:V", ["$ctxt","?:X","?:Y","?:Z","?:U"]], ["-has target", "sk5_activity", "?:W", ["$ctxt","?:X","?:Y","?:Z","?:U"]], ["-isa","berry","?:W"], ["-isa","bear","?:V"]]],
+          [14, ["in","sent_S20","assumption",1], [["-$defq0"], ["has target", "sk5_activity", "sk6_berry", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [15, ["mp",14,2,"fromga",1], [["has target", "sk5_activity", "sk6_berry", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [16, ["in","sent_S20","assumption",1], [["-$defq0"], ["isa","berry","sk6_berry"]]],
+          [17, ["mp",16,2,"fromga",1], [["isa","berry","sk6_berry"]]],
+          [18, ["mp", [13,2], 15, 17, "fromga", 1], [["$block", ["$","bear",5], ["typical", "sk5_activity", ["$ctxt","?:X","?:Y","?:Z","?:U"]]], ["-has actor", "sk5_activity", "?:V", ["$ctxt","?:X","?:Y","?:Z","?:U"]], ["-isa","bear","?:V"]]],
+          [19, ["in","sent_S20","assumption",1], [["isa","bear","skq_S20_bear"]]],
+          [20, ["in","sent_S20","assumption",1], [["-$defq0"], ["has actor", "sk5_activity", "skq_S20_bear", ["$ctxt","?:X","?:Y","?:Z","?:U"]]]],
+          [21, ["mp",20,2,"fromga",1], [["has actor", "sk5_activity", "skq_S20_bear", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]],
+          [22, ["mp", [18,2], 19, 21, "fromga", 1], [["$block", ["$","bear",5], ["typical", "sk5_activity", ["$ctxt","?:X3","?:Y3","?:Z3","?:U3"]]]]]
+        ]
+      }
+    ]
+  },
+  "nl_proof": [
+"Explained:",
+"",
+"Sentences used:",
+"  (1) Bears do not eat berries in a forest.",
+"  (2) Bears eat berries in a forest?",
+"Proof steps:",
+"  (1) If answer holds then the event act6 takes place in some forest for1  [sentence 2]",
+"  (2) Answer holds  [assumption]",
+"  (3) The event act6 takes place in for1  [from steps 1, 2]",
+"  (4) If X takes place in some forest W and X is a eat event and some bear E1 performs X and X targets some berry E2 and X is an activity then X is not typical, except when X is typical  [sentence 1]",
+"  (5) If answer holds then the event act6 is a eat event  [sentence 2]",
+"  (6) The event act6 is a eat event  [from steps 5, 2]",
+"  (7) If answer holds then the event act6 is typical  [sentence 2]",
+"  (8) The event act6 is typical  [from steps 7, 2]",
+"  (9) If answer holds then for1 is a forest  [sentence 2]",
+"  (10) For1 is a forest  [from steps 9, 2]",
+"  (11) If answer holds then the event act6 is an activity  [sentence 2]",
+"  (12) The event act6 is an activity  [from steps 11, 2]",
+"  (13) If some bear V performs the event act6 then the act6 does not target W, except when the act6 is typical  [from steps 3, 4, 6, 8, 10, 12]",
+"  (14) If answer holds then the event act6 targets some berry ber1  [sentence 2]",
+"  (15) The event act6 targets ber1  [from steps 14, 2]",
+"  (16) If answer holds then ber1 is a berry  [sentence 2]",
+"  (17) Ber1 is a berry  [from steps 16, 2]",
+"  (18) V does not perform the act6, except when the act6 is typical  [from steps 13, 15, 17]",
+"  (19) Skq_S20_bear is a bear  [sentence 2]",
+"  (20) If answer holds then skq_S20_bear performs the event act6  [sentence 2]",
+"  (21) Skq_S20_bear performs the event act6  [from steps 20, 2]",
+"  (22) Outstanding exception: the event act6 is typical  [from steps 18, 19, 21]",
+"Exceptions checked and not holding:",
+"  act6 is typical"
+],
+  "llm_usage": [{
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34119,
+      "cached_input_tokens": 33920,
+      "output_tokens": 498,
+      "raw": {
+        "prompt_tokens": 34119,
+        "completion_tokens": 498,
+        "total_tokens": 34617,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 418},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 199
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34120,
+      "cached_input_tokens": 34048,
+      "output_tokens": 625,
+      "raw": {
+        "prompt_tokens": 34120,
+        "completion_tokens": 625,
+        "total_tokens": 34745,
+        "prompt_tokens_details": {"cached_tokens": 34048},
+        "completion_tokens_details": {"reasoning_tokens": 561},
+        "prompt_cache_hit_tokens": 34048,
+        "prompt_cache_miss_tokens": 72
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34120,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1297,
+      "raw": {
+        "prompt_tokens": 34120,
+        "completion_tokens": 1297,
+        "total_tokens": 35417,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1202},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 200
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34179,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1270,
+      "raw": {
+        "prompt_tokens": 34179,
+        "completion_tokens": 1270,
+        "total_tokens": 35449,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1138},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 259
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34111,
+      "cached_input_tokens": 33920,
+      "output_tokens": 269,
+      "raw": {
+        "prompt_tokens": 34111,
+        "completion_tokens": 269,
+        "total_tokens": 34380,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 210},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 191
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34151,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1564,
+      "raw": {
+        "prompt_tokens": 34151,
+        "completion_tokens": 1564,
+        "total_tokens": 35715,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1424},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 231
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34114,
+      "cached_input_tokens": 33920,
+      "output_tokens": 359,
+      "raw": {
+        "prompt_tokens": 34114,
+        "completion_tokens": 359,
+        "total_tokens": 34473,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 297},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 194
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34198,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1560,
+      "raw": {
+        "prompt_tokens": 34198,
+        "completion_tokens": 1560,
+        "total_tokens": 35758,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1410},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 278
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34093,
+      "cached_input_tokens": 33920,
+      "output_tokens": 244,
+      "raw": {
+        "prompt_tokens": 34093,
+        "completion_tokens": 244,
+        "total_tokens": 34337,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 214},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 173
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34194,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1317,
+      "raw": {
+        "prompt_tokens": 34194,
+        "completion_tokens": 1317,
+        "total_tokens": 35511,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 1182},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 274
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34123,
+      "cached_input_tokens": 33920,
+      "output_tokens": 657,
+      "raw": {
+        "prompt_tokens": 34123,
+        "completion_tokens": 657,
+        "total_tokens": 34780,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 578},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 203
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34112,
+      "cached_input_tokens": 34048,
+      "output_tokens": 746,
+      "raw": {
+        "prompt_tokens": 34112,
+        "completion_tokens": 746,
+        "total_tokens": 34858,
+        "prompt_tokens_details": {"cached_tokens": 34048},
+        "completion_tokens_details": {"reasoning_tokens": 685},
+        "prompt_cache_hit_tokens": 34048,
+        "prompt_cache_miss_tokens": 64
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34114,
+      "cached_input_tokens": 33920,
+      "output_tokens": 275,
+      "raw": {
+        "prompt_tokens": 34114,
+        "completion_tokens": 275,
+        "total_tokens": 34389,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 213},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 194
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34155,
+      "cached_input_tokens": 33920,
+      "output_tokens": 1037,
+      "raw": {
+        "prompt_tokens": 34155,
+        "completion_tokens": 1037,
+        "total_tokens": 35192,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 929},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 235
+      }
+    },
+    {
+      "llm": "deepseek",
+      "version": "deepseek-v4-flash",
+      "input_tokens": 34173,
+      "cached_input_tokens": 33920,
+      "output_tokens": 993,
+      "raw": {
+        "prompt_tokens": 34173,
+        "completion_tokens": 993,
+        "total_tokens": 35166,
+        "prompt_tokens_details": {"cached_tokens": 33920},
+        "completion_tokens_details": {"reasoning_tokens": 867},
+        "prompt_cache_hit_tokens": 33920,
+        "prompt_cache_miss_tokens": 253
+      }
+    }
+  ],
+  "timestamp": "2026-06-13T06:03:09Z"
+}
