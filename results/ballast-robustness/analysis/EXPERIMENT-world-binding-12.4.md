@@ -182,7 +182,26 @@ freed  (-fqw on)                 83   17
 
 The live prototype reproduces the offline ceiling for gpt b16 (cohort 55→60 =
 +5; full cell freed−plain = +6, the +1 being the two crash-sidestep rescues).
-**Conclusion: the live `-freequestionworld` flag matches the offline ceiling.**
-Remaining step (with Tanel): extend the curve to the other 11 cells and decide
-whether to move the freeing into `inject_ctxt_question` at source (default-on)
-vs. keep it flag-gated.
+
+### Full live curve (all 12 cells, freed − published baseline, cache-served $0)
+
+```
+        gpt        claude      gemini      deepseek    net
+b8      93->95 +2  89->91 +2   90->93 +3   87->92 +5   +12
+b16     78->83 +5  83->93 +10  82->88 +6   88->91 +3   +24
+b32     72->77 +5  71->77 +6   66->74 +8   74->82 +8   +27
+----------------------------------------------------------------
+                                                  TOTAL +63
+```
+
+**Every one of the 12 cells is positive, the effect grows monotonically with
+dose (+12 → +24 → +27), and b32 (+27) exceeds the offline ceiling's +24
+prediction.** The live `-freequestionworld` flag matches (and at b32 slightly
+beats) the offline ceiling at full scale. The freed−baseline figures fold in a
+small convert-drift term (≈ −1/cell, see gpt b16 above), so the pure flag effect
+is marginally higher.
+
+**Conclusion: confirmed live across all four models and all three doses.**
+Remaining decision (Tanel's call): move the freeing into `inject_ctxt_question`
+at source (default-on) vs. keep it flag-gated. The b8 regression set (1310, 1375)
+is the targeted-test list to ensure a default-on version does not over-free.
